@@ -39,6 +39,16 @@ export function isDataQuery(url: string): boolean {
   return false;
 }
 
+//bmc code starts
+export function isProxyDataQuery(url: string): boolean {
+  if (url.indexOf('api/datasources/proxy') !== -1) {
+    return true;
+  }
+
+  return false;
+}
+
+//bmc code ends
 export function isLocalUrl(url: string) {
   return !url.match(/^http/);
 }

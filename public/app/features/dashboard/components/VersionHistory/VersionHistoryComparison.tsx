@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -26,13 +27,31 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
       <Stack justifyContent="space-between" alignItems="center">
         <Stack alignItems="center">
           <span className={cx(styles.versionInfo, styles.noMarginBottom)}>
-            <strong>Version {baseInfo.version}</strong> updated by {baseInfo.createdBy} {baseInfo.ageString}
-            {baseInfo.message}
+            <Trans
+              i18nKey={'bmcgrafana.dashboards.settings.versions.comparision.version-from-details'}
+              components={{ bold: <strong /> }}
+              defaults="<bold>Version {{baseVersion}}</bold> updated by {{baseCreatedBy}} {{baseAgeString}} {{baseMsg}}"
+              values={{
+                baseVersion: baseInfo.version,
+                baseCreatedBy: baseInfo.createdBy,
+                baseAgeString: baseInfo.ageString,
+                baseMsg: baseInfo.message,
+              }}
+            />
           </span>
           <Icon name="arrow-right" size="sm" />
           <span className={styles.versionInfo}>
-            <strong>Version {newInfo.version}</strong> updated by {newInfo.createdBy} {newInfo.ageString}
-            {newInfo.message}
+            <Trans
+              i18nKey={'bmcgrafana.dashboards.settings.versions.comparision.version-to-details'}
+              components={{ bold: <strong /> }}
+              defaults="<bold>Version {{newVersion}}</bold> updated by {{newCreatedBy}} {{newAgeString}} {{newMsg}}"
+              values={{
+                newVersion: newInfo.version,
+                newCreatedBy: newInfo.createdBy,
+                newAgeString: newInfo.ageString,
+                newMsg: newInfo.message,
+              }}
+            />
           </span>
         </Stack>
         {isNewLatest && (
@@ -49,7 +68,11 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                   });
                 }}
               >
-                Restore to version {baseInfo.version}
+                <Trans
+                  i18nKey={'bmcgrafana.dashboards.settings.versions.comparision.restore-base-version'}
+                  defaults="Restore to version {{baseVersion}}"
+                  values={{ baseVersion: baseInfo.version }}
+                />
               </Button>
             )}
           </ModalsController>
@@ -61,7 +84,10 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
       ))}
 
       <Box paddingTop={2}>
-        <CollapsableSection isOpen={false} label="View JSON Diff">
+        <CollapsableSection
+          isOpen={false}
+          label={t('bmcgrafana.dashboards.settings.versions.comparision.view-json-diff', 'View JSON Diff')}
+        >
           <DiffViewer
             oldValue={JSON.stringify(diffData.lhs, null, 2)}
             newValue={JSON.stringify(diffData.rhs, null, 2)}

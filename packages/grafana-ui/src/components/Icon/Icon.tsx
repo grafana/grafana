@@ -100,6 +100,9 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
           />
         }
         {...rest}
+        // BMC Code : Accessibility Change (Next 2 lines)
+        role="img"
+        aria-label={iconName === 'info-circle' ? 'information' : iconName}
       />
     );
   }

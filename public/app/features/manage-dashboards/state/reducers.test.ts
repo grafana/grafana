@@ -17,6 +17,7 @@ import {
   setInputs,
   setJsonDashboard,
   setLibraryPanelInputs,
+  ViewInput,
 } from './reducers';
 
 describe('importDashboardReducer', () => {
@@ -85,6 +86,7 @@ describe('importDashboardReducer', () => {
           setInputs([
             { type: InputType.DataSource },
             { type: InputType.Constant },
+            { type: InputType.View },
             { type: InputType.LibraryPanel },
             { type: 'temp' },
           ])
@@ -94,6 +96,7 @@ describe('importDashboardReducer', () => {
           inputs: {
             dataSources: [{ type: InputType.DataSource }] as DataSourceInput[],
             constants: [{ type: InputType.Constant }] as DataSourceInput[],
+            vqbViews: [{ type: InputType.View }] as ViewInput[],
             libraryPanels: [],
           },
         });
@@ -108,6 +111,7 @@ describe('importDashboardReducer', () => {
           inputs: {
             dataSources: [{ type: InputType.DataSource }] as DataSourceInput[],
             constants: [{ type: InputType.Constant }] as DataSourceInput[],
+            vqbViews: [{ type: InputType.View }] as ViewInput[],
             libraryPanels: [{ model: { uid: 'asasAHSJ' } }] as LibraryPanelInput[],
           },
         })
@@ -124,6 +128,7 @@ describe('importDashboardReducer', () => {
           inputs: {
             dataSources: [{ type: InputType.DataSource }] as DataSourceInput[],
             constants: [{ type: InputType.Constant }] as DataSourceInput[],
+            vqbViews: [{ type: InputType.View }] as ViewInput[],
             libraryPanels: [
               {
                 model: { uid: 'sadjahsdk', name: 'A name', type: 'text' } as LibraryElementDTO,

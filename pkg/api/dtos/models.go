@@ -51,6 +51,15 @@ type CurrentUser struct {
 	AuthenticatedBy            string             `json:"authenticatedBy"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 	Analytics                  AnalyticsSettings  `json:"analytics"`
+	// BMC code
+	// for MSP
+	HasExternalOrg     bool     `json:"hasExternalOrg"`
+	IsUnrestrictedUser bool     `json:"isUnrestrictedUser"`
+	MspOrgs            []string `json:"mspOrgs"`
+	// for msp end
+	IsLanguageSet bool    `json:"isLanguageSet"`
+	BHDRoles      []int64 `json:"bhdRoles"`
+	// BMC code end
 }
 
 type AnalyticsSettings struct {

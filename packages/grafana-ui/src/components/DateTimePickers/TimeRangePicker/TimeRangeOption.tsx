@@ -76,6 +76,10 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         tabIndex={-1}
         id={id}
         onChange={() => onSelect(value)}
+        //BMC Accessibility Change: Added role & aria-label
+        role="button"
+        aria-label={value.display}
+        //BMC Accessibility Change End
       />
       <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
         {value.display}

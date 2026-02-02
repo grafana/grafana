@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { DataSourceVariableModel } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
@@ -13,11 +14,15 @@ import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
 import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
 
+// BMC Change: To enable localization for below text
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
     id: 'datasource',
-    description: 'Enables you to dynamically switch the data source for multiple panels.',
-    name: 'Data source',
+    description: t(
+      'bmcgrafana.dashboards.settings.variables.editor.select-variable-type.data-source.description',
+      'Enables you to dynamically switch the data source for multiple panels.'
+    ),
+    name: t('bmcgrafana.dashboards.settings.variables.editor.select-variable-type.data-source.name', 'Data source'),
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
     picker: optionPickerFactory<DataSourceVariableModel>(),

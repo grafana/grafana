@@ -3,8 +3,11 @@ import { useState } from 'react';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
-import { appEvents } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
+//bmc code : next line
+import FolderLocaleSettings from 'app/features/bmc-content-localization/FolderLocaleSettings';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 import { FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -21,6 +24,8 @@ interface Props {
 export function FolderActionsButton({ folder }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
+  //bmc code : next line
+  const [showLocalesDrawer, setshowLocalesDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
   const [deleteFolder] = useDeleteFolderMutation();
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
@@ -89,11 +94,22 @@ export function FolderActionsButton({ folder }: Props) {
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete');
-
+  //bmc code : next line
   const menu = (
     <Menu>
       {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
+      {/* BMC code - next line. Have added check for canEditFolders, need to verify */}
+      {canEditFolders &&
+      getFeatureStatus('bhd-localization') &&
+      (contextSrv.isEditor || contextSrv.hasRole('Admin')) ? (
+        <MenuItem
+          onClick={() => {
+            setshowLocalesDrawer(true);
+          }}
+          label={t('bmc.manage-locales.title', 'Manage locales')}
+        />
+      ) : null}
       {canDeleteFolders && <MenuItem destructive onClick={showDeleteModal} label={deleteLabel} />}
     </Menu>
   );
@@ -102,6 +118,10 @@ export function FolderActionsButton({ folder }: Props) {
     return null;
   }
 
+  // BMC code
+  // to be ignored for extraction
+  const localizedFolderTitle = t(`bmc-dynamic.${folder.uid}.name`, folder.title);
+  // BMC code - end
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
@@ -113,11 +133,22 @@ export function FolderActionsButton({ folder }: Props) {
       {showPermissionsDrawer && (
         <Drawer
           title={t('browse-dashboards.action.manage-permissions-button', 'Manage permissions')}
-          subtitle={folder.title}
+          subtitle={localizedFolderTitle}
           onClose={() => setShowPermissionsDrawer(false)}
           size="md"
         >
           <Permissions resource="folders" resourceId={folder.uid} canSetPermissions={canSetPermissions} />
+        </Drawer>
+      )}
+      {/* BMC code - next drawer */}
+      {showLocalesDrawer && (
+        <Drawer
+          title={t('bmc.manage-locales.title', 'Manage locales')}
+          subtitle={localizedFolderTitle}
+          onClose={() => setshowLocalesDrawer(false)}
+          size="md"
+        >
+          <FolderLocaleSettings resourceUID={folder.uid} folderName={folder.title}></FolderLocaleSettings>
         </Drawer>
       )}
     </>

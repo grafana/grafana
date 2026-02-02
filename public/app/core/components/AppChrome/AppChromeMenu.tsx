@@ -44,6 +44,9 @@ export function AppChromeMenu({}: Props) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
+  //BMC Accessibility Change: Omit role from dialogProps
+  const { role, ...dialogWithoutRole } = dialogProps;
+  //BMC Accessibility Change End
   const styles = useStyles2(getStyles);
 
   return (
@@ -59,7 +62,15 @@ export function AppChromeMenu({}: Props) {
           <>
             {isOpen && (
               <FocusScope contain autoFocus restoreFocus>
-                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+                <MegaMenu
+                  className={styles.menu}
+                  onClose={onClose}
+                  ref={ref}
+                  {...overlayProps}
+                  //BMC Accessibility Change
+                  {...dialogWithoutRole}
+                  //BMC Accessibility Change End
+                />
               </FocusScope>
             )}
           </>

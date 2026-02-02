@@ -3,13 +3,43 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { DashFolderLinkRegexp, t } from '../internationalization';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
   return navTree.map((navItem) => {
+    // BMC Code Starts: Reports Localization
+    if (navItem.pluginId === 'reports') {
+      if (navItem.text === 'History') {
+        navItem.id = 'reports/history';
+      } else if (navItem.text === 'Settings') {
+        navItem.id = 'reports/settings';
+      } else if (navItem.text === 'Manage Ownership') {
+        navItem.id = 'reports/manage-ownership';
+      }
+    }
+    if (navItem.pluginId === 'bmc-insightfinder-app') {
+      if (navItem.text === 'Configure Views') {
+        navItem.id = 'insight-finder/configure-views';
+      } else if (navItem.text === 'Settings') {
+        navItem.id = 'insight-finder/settings';
+      }
+    }
+    if (navItem.id?.startsWith(ID_PREFIX)) {
+      const match = navItem.url?.match(DashFolderLinkRegexp);
+      if (match) {
+        navItem.text = t(`bmc-dynamic.${match[1]}.name`, navItem.text);
+      }
+    }
+    // BMC Code Ends
     const children = navItem.children && translateNav(navItem.children);
+
+    // BMC Code: Added sorting logic for starred dashboards
+    if (navItem.id === 'starred' && navItem.children) {
+      navItem.children.sort((a, b) => a.text.toLowerCase().localeCompare(b.text.toLowerCase()));
+    }
 
     return {
       ...navItem,
@@ -42,7 +72,8 @@ const navTreeSlice = createSlice({
             url,
           };
           starredItems.children.push(newStarredItem);
-          starredItems.children.sort((a, b) => a.text.localeCompare(b.text));
+          //BMC Code : Added toLowerCase() for case insensitive sorting
+          starredItems.children.sort((a, b) => a.text.toLowerCase().localeCompare(b.text.toLowerCase()));
         } else {
           const index = starredItems.children?.findIndex((item) => item.id === ID_PREFIX + id) ?? -1;
           if (index > -1) {
@@ -83,7 +114,8 @@ const navTreeSlice = createSlice({
         if (navItem) {
           navItem.text = title;
           navItem.url = url;
-          starredItems.children?.sort((a, b) => a.text.localeCompare(b.text));
+          //BMC Code : Added toLowerCase() for case insensitive sorting
+          starredItems.children?.sort((a, b) => a.text.toLowerCase().localeCompare(b.text.toLowerCase()));
         }
       }
     },

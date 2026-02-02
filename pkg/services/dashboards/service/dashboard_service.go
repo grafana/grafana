@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/services/msp"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/maps"
@@ -405,7 +406,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		dash.FolderUID = folder.UID
 	}
 
-	isParentFolderChanged, err := dr.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
+	// BMC Change: Next line (Keep as v11.2.x)
+	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
 	}
@@ -520,11 +522,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	if !dashWithIdExists && !dashWithUidExists {
 		return false, nil
 	}
-
+	
 	if dashWithIdExists && dashWithUidExists && existingById.ID != existingByUid.ID {
 		return false, dashboards.ErrDashboardWithSameUIDExists
 	}
-
+	
 	existing := existingById
 
 	if !dashWithIdExists && dashWithUidExists {
@@ -1012,13 +1014,22 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
+			// BMC code - changes for MSP: provide default permissions to org0 team
+			if dto.User.GetHasExternalOrg() {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+					TeamID: msp.GetUnrestrictedTeamID(dto.User.GetOrgID()), Permission: dashboardaccess.PERMISSION_EDIT.String(),
+				})
+			}
+			// BMC code ends
 		}
 	}
 
 	if dash.FolderUID == "" {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+			// BMC code Start - Fix for DRJ71-4418 - Changes related to folder and Dashboard permission in 9.x
+			//{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			//{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+			// End
 		}...)
 	}
 
@@ -1128,6 +1139,13 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
+
+// BMC CODE STARTS
+func (dr *DashboardServiceImpl) GetDashboardsByFolderUID(ctx context.Context, query *dashboards.GetDashboardsByFolderUIDQuery) ([]*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetDashboardsByFolderUID(ctx, query)
+}
+
+//BMC CODE ENDS
 
 func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
 	return dr.getDashboardsSharedWithUser(ctx, user)

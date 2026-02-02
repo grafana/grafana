@@ -35,8 +35,16 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
   return (
     <Modal isOpen={true} title={t('share-playlist.title', 'Share playlist')} onDismiss={onDismiss}>
       <FieldSet>
-        <Field label={t('share-playlist.mode', 'Mode')}>
-          <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
+        {/**BMC Accessibility Changes next few lines: added aria-label */}
+        <Field label={t('share-playlist.mode', 'Mode')} htmlFor="share-playlist-mode">
+          <RadioButtonGroup
+            id="share-playlist-mode"
+            value={mode}
+            options={modes}
+            onChange={setMode}
+            aria-label={t('share-playlist.mode', 'Mode')}
+          />
+          {/*BMC Accessibility Changes end */}
         </Field>
         <Field>
           <Checkbox

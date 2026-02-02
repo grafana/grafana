@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getAllSuggestions } from '../../state/getAllSuggestions';
 
@@ -47,7 +48,11 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
           return (
             <div>
               <div className={styles.filterRow}>
-                <div className={styles.infoText}>Based on current data</div>
+                {/*BMC Change: To enable localization for below text*/}
+                <div className={styles.infoText}>
+                  <Trans i18nKey="bmcgrafana.dashboards.edit-panel.based-on-current-data">Based on current data</Trans>
+                </div>
+                {/* BMC Change ends */}
               </div>
               <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
                 {filteredSuggestions.map((suggestion, index) => (

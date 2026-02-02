@@ -56,4 +56,7 @@ export enum LoadingState {
   Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
+  // BMC changes start
+  RefreshToLoad = 'Refresh to load'
+  // BMC changes end
 }

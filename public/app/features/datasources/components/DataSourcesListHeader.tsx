@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import { t } from 'app/core/internationalization';
 import { StoreState, useSelector, useDispatch } from 'app/types';
 
 import { getDataSourcesSearchQuery, getDataSourcesSort, setDataSourcesSearchQuery, setIsSortAscending } from '../state';
@@ -15,8 +16,9 @@ const sortOptions = [
   // We use this unicode 'en dash' character (U+2013), because it looks nicer
   // than simple dash in this context. This is also used in the response of
   // the `sorting` endpoint, which is used in the search dashboard page.
-  { label: 'Sort by A–Z', value: ascendingSortValue },
-  { label: 'Sort by Z–A', value: descendingSortValue },
+  // BMC Change: Next couple lines
+  { label: t('bmcgrafana.datesource.configuration.sort-asc', 'Sort by A–Z'), value: ascendingSortValue },
+  { label: t('bmcgrafana.datesource.configuration.sort-desc', 'Sort by Z–A'), value: descendingSortValue },
 ];
 
 export function DataSourcesListHeader() {

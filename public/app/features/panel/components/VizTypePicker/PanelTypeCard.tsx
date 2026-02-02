@@ -41,14 +41,28 @@ const PanelTypeCardComponent = ({
     [styles.current]: isCurrent,
   });
 
+  // BMC Accessibility Change: Add keyboard support
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isDisabled) {
+      return;
+    }
+    // Activate on Enter or Space key
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      // Trigger a native click event which will call the onClick handler naturally
+      event.currentTarget.click();
+    }
+  };
+
   return (
-    // TODO: fix keyboard a11y
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       className={cssClass}
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
       data-testid={selectors.components.PluginVisualization.item(plugin.name)}
       onClick={isDisabled ? undefined : onClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={isDisabled ? -1 : 0}
       title={isCurrent ? 'Click again to close this section' : plugin.name}
     >
       <img className={cx(styles.img, { [styles.disabled]: isDisabled })} src={plugin.info.logos.small} alt="" />

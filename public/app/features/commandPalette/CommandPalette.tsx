@@ -62,6 +62,9 @@ export function CommandPalette() {
               <div className={styles.searchContainer}>
                 <Icon name="search" size="md" />
                 <KBarSearch
+                  //BMC Accessibility Change next 1 line : Added the aria-label
+                  aria-label={t('bmcgrafana.command-palette.search-box.aria-label', 'Search or jump to...')}
+                  //BMC Accessibility Change End
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />

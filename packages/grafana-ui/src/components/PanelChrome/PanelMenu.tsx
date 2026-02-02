@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import { ReactElement, useCallback } from 'react';
+// BMC Code : Accessibility Change Next line(added useState hook)
+import { ReactElement, useCallback, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -27,9 +28,13 @@ export function PanelMenu({
   onOpenMenu,
 }: PanelMenuProps) {
   const testId = title ? selectors.components.Panels.Panel.menu(title) : `panel-menu-button`;
+  // BMC Code : Accessibility Change Next line
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleVisibility = useCallback(
     (show: boolean) => {
+      // BMC Code : Accessibility Change Next line
+      setIsOpen(show);
       if (show && onOpenMenu) {
         onOpenMenu();
       }
@@ -46,6 +51,8 @@ export function PanelMenu({
         iconSize="md"
         narrow
         data-testid={testId}
+        // BMC Code : Accessibility Change Next line
+        isOpen = {isOpen}
         className={cx(menuButtonClass, dragClassCancel)}
       />
     </Dropdown>

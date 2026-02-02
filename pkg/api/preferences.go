@@ -86,7 +86,8 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating user preferences", err)
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
@@ -94,7 +95,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService,
+	return prefapi.UpdatePreferencesFor(c, hs.DashboardService,
 		hs.preferenceService, c.SignedInUser.GetOrgID(), userID, 0, &dtoCmd)
 }
 
@@ -110,7 +111,8 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating user preferences", err)
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
@@ -123,7 +125,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
 	if dtoCmd.Theme != nil && !pref.IsValidThemeID(*dtoCmd.Theme) {
-		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
+		return response.Error(http.StatusBadRequest, "Invalid theme when updating preferences", nil)
 	}
 
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
@@ -156,6 +158,9 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
+		// BMC code
+		TimeFormat:        dtoCmd.TimeFormat,
+		EnabledQueryTypes: dtoCmd.EnabledQueryTypes,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
@@ -191,10 +196,11 @@ func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Res
 func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating org. preferences", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c, hs.DashboardService, hs.preferenceService, c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
@@ -210,7 +216,8 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating org. preferences", err)
 	}
 	return hs.patchPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
 }

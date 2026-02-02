@@ -11,6 +11,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -60,7 +61,8 @@ func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Res
 func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
 	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while revoking the auth token", err)
 	}
 
 	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
@@ -165,8 +167,10 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 		return response.Error(http.StatusInternalServerError, "Failed to logout user", err)
 	}
 
+	//BMC code change
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User logged out",
+		"bhdCode": bhdcodes.AdminLoggedOut,
 	})
 }
 
@@ -279,8 +283,10 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *contextmodel.ReqContext, us
 		return response.Error(http.StatusInternalServerError, "Failed to revoke user auth token", err)
 	}
 
+	//BMC code change
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User auth token revoked",
+		"bhdCode": bhdcodes.UsersUserAuthTokenRevoked,
 	})
 }
 

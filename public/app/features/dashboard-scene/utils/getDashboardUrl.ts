@@ -1,5 +1,5 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
+import { locationSearchToObject } from '@grafana/runtime';
 
 export interface DashboardUrlOptions {
   uid?: string;
@@ -77,7 +77,22 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   const relativeUrl = urlUtil.renderUrl(path, params);
 
   if (options.absolute) {
-    return config.appUrl + relativeUrl.slice(1);
+    // BMC Change: Use tenant URL (current origin + appSubUrl) instead of super admin URL
+    // return config.appUrl + relativeUrl.slice(1);
+    const urlWithBase = locationUtil.assureBaseUrl(relativeUrl);
+
+    // If assureBaseUrl already returned an absolute URL, just use it
+    if (urlWithBase.startsWith('http://') || urlWithBase.startsWith('https://')) {
+      return urlWithBase;
+    }
+
+    // Build an absolute URL using the current window origin to ensure we stay on the tenant
+    return `${window.location.origin}${urlWithBase}`;
+  }
+
+  // BMC Change: Check for Home Dashboard
+  if (options.isHomeDashboard) {
+    return locationUtil.assureBaseUrl(relativeUrl);
   }
 
   return relativeUrl;

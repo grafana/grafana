@@ -33,6 +33,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
 			AdmissionHandler:    opts.AdmissionHandler,
+			ConversionHandler:   opts.ConversionHandler,
 			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}

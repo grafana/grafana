@@ -1,7 +1,8 @@
 import { PropsWithChildren, useMemo } from 'react';
 
-import { VariableType, VariableHide } from '@grafana/data';
+import { VariableHide, VariableType } from '@grafana/data';
 import { Field, RadioButtonGroup } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   onChange: (option: VariableHide) => void;
@@ -9,22 +10,42 @@ interface Props {
   type: VariableType;
 }
 
-const HIDE_OPTIONS = [
-  { label: 'Label and value', value: VariableHide.dontHide },
-  { label: 'Value', value: VariableHide.hideLabel },
-  { label: 'Nothing', value: VariableHide.hideVariable },
-];
+export const HIDE_OPTIONS = () => {
+  return [
+    {
+      label: t('bmcgrafana.dashboards.settings.variables.editor.variable-hide-select.label-value', 'Label and value'),
+      value: VariableHide.dontHide,
+    },
+    {
+      label: t('bmcgrafana.dashboards.settings.variables.editor.variable-hide-select.value', 'Value'),
+      value: VariableHide.hideLabel,
+    },
+    {
+      label: t('bmcgrafana.dashboards.settings.variables.editor.variable-hide-select.nothing', 'Nothing'),
+      value: VariableHide.hideVariable,
+    },
+  ];
+};
 
 export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<Props>) {
-  const value = useMemo(() => HIDE_OPTIONS.find((o) => o.value === hide)?.value ?? HIDE_OPTIONS[0].value, [hide]);
+  const hideoptions = useMemo(() => {
+    return HIDE_OPTIONS();
+  }, []);
+
+  const value = useMemo(
+    () => hideoptions.find((o) => o.value === hide)?.value ?? hideoptions[0].value,
+    [hide, hideoptions]
+  );
 
   if (type === 'constant') {
     return null;
   }
-
+  {
+    /*BMC Change: To enable localization for below text*/
+  }
   return (
-    <Field label="Show on dashboard">
-      <RadioButtonGroup options={HIDE_OPTIONS} onChange={onChange} value={value} />
+    <Field label={t('bmcgrafana.dashboards.settings.variables.editor.variable-hide-select.label', 'Show on dashboard')}>
+      <RadioButtonGroup options={hideoptions} onChange={onChange} value={value} />
     </Field>
   );
 }

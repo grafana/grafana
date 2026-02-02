@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { BootData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { t } from '../../utils/i18n';
 import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 
@@ -16,13 +17,17 @@ export interface Props {
   inputId?: string;
 }
 
-export type WeekStart = 'saturday' | 'sunday' | 'monday';
-const weekStarts: ComboboxOption[] = [
-  { value: '', label: 'Default' },
-  { value: 'saturday', label: 'Saturday' },
-  { value: 'sunday', label: 'Sunday' },
-  { value: 'monday', label: 'Monday' },
-];
+// BMC Change: Next function
+const getWeekStarts = (): ComboboxOption[] => {
+  return [
+    { value: '', label: t('common.locale.default', 'Default') },
+    { value: 'saturday', label: t('bmcgrafana.grafana-ui.weekdays.saturday', 'Saturday') },
+    { value: 'sunday', label: t('bmcgrafana.grafana-ui.weekdays.sunday', 'Sunday') },
+    { value: 'monday', label: t('bmcgrafana.grafana-ui.weekdays.monday', 'Monday') },
+  ];
+};
+
+export type WeekStart = 'saturday' | 'sunday' | 'monday' | 'browser';
 
 export function isWeekStart(value: string): value is WeekStart {
   return ['saturday', 'sunday', 'monday'].includes(value);
@@ -48,12 +53,16 @@ export function getWeekStart(override?: string): WeekStart {
     return preference;
   }
 
-  return 'monday';
+  // BMC Change: Next line: default to browser as use_browser_locale set to true
+  return 'browser';
 }
 
 export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
-
+  // BMC Change: Next Hook
+  const weekStarts = useMemo(() => {
+    return getWeekStarts();
+  }, []);
   const onChangeWeekStart = useCallback(
     (selectable: ComboboxOption | null) => {
       if (selectable && selectable.value !== undefined) {
@@ -63,7 +72,7 @@ export const WeekStartPicker = (props: Props) => {
     [onChange]
   );
 
-  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value]);
+  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value, weekStarts]);
 
   return (
     <Combobox
@@ -71,6 +80,8 @@ export const WeekStartPicker = (props: Props) => {
       value={selected}
       placeholder={selectors.components.WeekStartPicker.placeholder}
       autoFocus={autoFocus}
+      // BMC Change: Next aria-labelledby
+      aria-labelledby="week-start-picker"
       width={width}
       options={weekStarts}
       onChange={onChangeWeekStart}

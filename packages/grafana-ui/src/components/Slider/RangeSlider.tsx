@@ -25,6 +25,8 @@ export const RangeSlider = ({
   formatTooltipResult,
   value,
   tooltipAlwaysVisible = true,
+  // BMC Code : Accessibility Change ( Next line )
+  ariaLabelForHandle = []
 }: RangeSliderProps) => {
   const handleChange = useCallback(
     (v: number | number[]) => {
@@ -73,6 +75,8 @@ export const RangeSlider = ({
         vertical={!isHorizontal}
         reverse={reverse}
         handleRender={tipHandleRender}
+        // BMC Code : Accessibility Change ( Next line )
+        ariaLabelForHandle={ariaLabelForHandle}
       />
     </div>
   );

@@ -32,6 +32,8 @@ import {
   ValueFormatCategory,
   stringFormater,
   booleanValueFormatter,
+  //BMC Code : Next line
+  europeanFormat,
 } from './valueFormats';
 
 export const getCategories = (): ValueFormatCategory[] => [
@@ -55,6 +57,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Hexadecimal', id: 'hex', fn: toHex },
       { name: 'Scientific notation', id: 'sci', fn: sci },
       { name: 'Locale format', id: 'locale', fn: locale },
+      //BMC Code : Next line is added to support european value formatting
+      { name: 'European format (Deprecated)', id: 'european', fn: europeanFormat },
       { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
     ],
   },

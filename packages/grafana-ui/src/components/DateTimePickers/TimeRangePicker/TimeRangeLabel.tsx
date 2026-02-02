@@ -41,6 +41,9 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
     placeholder: css({
       color: theme.colors.text.disabled,
       opacity: 1,
+      // BMC Change: Below properties
+      display: 'flex',
+      whiteSpace: 'nowrap',
     }),
   };
 };

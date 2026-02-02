@@ -7,12 +7,13 @@ import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { convertToType } from './utils';
 
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions>> {
-  return function Render({ options, onChange }) {
-    const { validator } = config;
+  return function Render({ options, onChange, field }) {
+    const { validator, converter = convertToType } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
 
@@ -21,10 +22,11 @@ export function basicMatcherEditor<T = any>(
         setInvalid(!validator(value));
         onChange({
           ...options,
-          value: value,
+          // BMC Change: Next line
+          value: converter ? converter(value, field) : value,
         });
       },
-      [setInvalid, validator, onChange, options]
+      [setInvalid, validator, onChange, options, converter, field]
     );
 
     return (

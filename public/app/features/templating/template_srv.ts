@@ -1,32 +1,38 @@
 import { escape, isString } from 'lodash';
 
 import {
-  deprecationWarning,
-  ScopedVars,
-  TimeRange,
   AdHocVariableFilter,
   AdHocVariableModel,
-  TypedVariableModel,
   ScopedVar,
+  ScopedVars,
+  TimeRange,
+  TypedVariableModel,
+  dateTimeFormat,
+  deprecationWarning,
+  rangeUtil,
 } from '@grafana/data';
 import {
-  getDataSourceSrv,
-  setTemplateSrv,
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
+  config,
+  getDataSourceSrv,
+  setTemplateSrv,
 } from '@grafana/runtime';
-import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
+import { SceneObject, VariableCustomFormatterFn, sceneGraph } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
+import { getState } from 'app/store/store';
 
 import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { getFeatureStatus } from '../dashboard/services/featureFlagSrv';
 import { variableAdapters } from '../variables/adapters';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
-import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
-import { variableRegex } from '../variables/utils';
+import { getFilteredVariables, getVariableWithName, getVariables } from '../variables/state/selectors';
+import { dateRangeExtract, variableRegex } from '../variables/utils';
 
 import { getFieldAccessor } from './fieldAccessorCache';
-import { formatVariableValue } from './formatVariableValue';
+import { containsSingleQuote, formatVariableValue } from './formatVariableValue';
 import { macroRegistry } from './macroRegistry';
 
 /**
@@ -251,11 +257,70 @@ export class TemplateSrv implements BaseTemplateSrv {
     return value;
   }
 
+  // BMC changes - update function definition, emptyValue & customAllValue parameters added
+  private _formatVariableValueBMC(
+    value: any,
+    format: string | Function | undefined,
+    partialVar: any,
+    scopeVars?: ScopedVars,
+    emptyValue?: string,
+    customAllValue?: boolean
+  ) {
+    // for some scopedVars there is no variable
+    if (scopeVars && scopeVars.hasOwnProperty(partialVar.name)) {
+      return typeof format === 'function' ? format?.(value, partialVar) : value;
+    }
+    const variable = this.getVariableAtIndex(partialVar.name) || {};
+    if (!variable.type) {
+      return typeof format === 'function' ? format?.(value, partialVar) : value;
+    }
+    // BMC Code Change Start
+    let discardForAll = variable.discardForAll;
+    if (getFeatureStatus('bhd-ar-all-values-v2') && discardForAll === undefined) {
+      discardForAll = false;
+    } else if (getFeatureStatus('bhd-ar-all-values') && discardForAll === undefined) {
+      discardForAll = true;
+    }
+    if (
+      emptyValue &&
+      (variable.current.value?.[0] === ALL_VARIABLE_VALUE || variable.current.value === ALL_VARIABLE_VALUE) &&
+      customAllValue === true &&
+      variable.includeAll &&
+      discardForAll
+    ) {
+      return emptyValue;
+    }
+
+    // For Scenes - treat generic "no selection" as the trigger for emptyValue.
+    if (config.featureToggles.dashboardScene && emptyValue) {      
+      const isEmptyArray = Array.isArray(value) && value.length === 0;
+      const isEmptyString = value === '';
+      const isNullish = value === null || value === undefined;
+      if (isEmptyArray || isEmptyString || isNullish) {
+        return emptyValue;
+      }
+    } else {
+      // Legacy behavior: only treat explicit "None" selection as empty.
+      if (
+        value.length === 0 &&
+        emptyValue &&
+        (variable.current.text?.[0] === NONE_VARIABLE_TEXT || variable.current.text === NONE_VARIABLE_TEXT)
+      ) {
+        return emptyValue;
+      }
+    }
+
+    return typeof format === 'function' ? format?.(value, partialVar) : value;
+  }
+  // BMC Code Change End
+
   replace(
     target?: string,
     scopedVars?: ScopedVars,
     format?: string | Function | undefined,
-    interpolations?: VariableInterpolation[]
+    interpolations?: VariableInterpolation[],
+    emptyValue?: string,
+    customAllValue?: boolean
   ): string {
     // Scenes compatability (primary method) is via SceneObject inside scopedVars. This way we get a much more accurate "local" scope for the evaluation
     if (scopedVars && scopedVars.__sceneObject) {
@@ -265,7 +330,10 @@ export class TemplateSrv implements BaseTemplateSrv {
         sceneObject,
         target,
         scopedVars,
-        format as string | VariableCustomFormatterFn | undefined,
+        // BMC Change: Custom formmatter function
+        ((value, variable) => {
+          return this._formatVariableValueBMC(value, format, variable, undefined, emptyValue, customAllValue);
+        }) as string | VariableCustomFormatterFn | undefined,
         interpolations
       );
     }
@@ -276,7 +344,10 @@ export class TemplateSrv implements BaseTemplateSrv {
         window.__grafanaSceneContext,
         target,
         scopedVars,
-        format as string | VariableCustomFormatterFn | undefined,
+        // BMC Change: Custom formmatter function
+        ((value, variable) => {
+          return this._formatVariableValueBMC(value, format, variable, undefined, emptyValue, customAllValue);
+        }) as string | VariableCustomFormatterFn | undefined,
         interpolations
       );
     }
@@ -286,9 +357,24 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     this.regex.lastIndex = 0;
+    // BMC Change Start
+    const varMap: { [key: string]: number } = {};
+    // BMC Change End
 
     return this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
-      const value = this._evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
+      // BMC Change Start
+      const hasSingleQuote = containsSingleQuote(target, match, varMap);
+      const emptyVal = emptyValue && hasSingleQuote ? emptyValue.substring(1, emptyValue.length - 1) : emptyValue;
+      // BMC Change End
+      const value = this._evaluateVariableExpression(
+        match,
+        variableName,
+        fieldPath,
+        fmt,
+        scopedVars,
+        emptyVal,
+        customAllValue
+      );
 
       // If we get passed this interpolations map we will also record all the expressions that were replaced
       if (interpolations) {
@@ -299,12 +385,15 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
+  // BMC changes - update function definition, emptyValue parameter added
   private _evaluateVariableExpression(
     match: string,
     variableName: string,
     fieldPath: string,
     format: string | VariableCustomFormatterFn | undefined,
-    scopedVars: ScopedVars | undefined
+    scopedVars: ScopedVars | undefined,
+    emptyValue?: string,
+    customAllValue?: boolean
   ) {
     const variable = this.getVariableAtIndex(variableName);
     const scopedVar = scopedVars?.[variableName];
@@ -314,7 +403,9 @@ export class TemplateSrv implements BaseTemplateSrv {
       const text = this.getVariableText(scopedVar, value);
 
       if (value !== null && value !== undefined) {
-        return formatVariableValue(value, format, variable, text);
+        // BMC changes - add emptyValue as a parameter
+        // DRJ71-8653: For scoped vars use the value as is, and no customAllValue applicable.
+        return formatVariableValue(value, format, variable, text, emptyValue, false);
       }
     }
 
@@ -331,12 +422,14 @@ export class TemplateSrv implements BaseTemplateSrv {
       const value = variableAdapters.get(variable.type).getValueForUrl(variable);
       const text = isAdHoc(variable) ? variable.id : variable.current.text;
 
-      return formatVariableValue(value, format, variable, text);
+      // BMC changes - add emptyValue as a parameter
+      return formatVariableValue(value, format, variable, text, emptyValue, customAllValue);
     }
 
     const systemValue = this.grafanaVariables.get(variable.current.value);
     if (systemValue) {
-      return formatVariableValue(systemValue, format, variable);
+      // BMC changes - add emptyValue as a parameter
+      return formatVariableValue(systemValue, format, variable, undefined, emptyValue, customAllValue);
     }
 
     let value = variable.current.value;
@@ -347,18 +440,58 @@ export class TemplateSrv implements BaseTemplateSrv {
       text = ALL_VARIABLE_TEXT;
       // skip formatting of custom all values unless format set to text or percentencode
       if (variable.allValue && format !== VariableFormatID.Text && format !== VariableFormatID.PercentEncode) {
-        return this.replace(value);
+        // BMC changes - add emptyValue as a parameter
+        return this.replace(value, undefined, undefined, undefined, emptyValue, customAllValue);
       }
     }
 
     if (fieldPath) {
       const fieldValue = this.getVariableValue({ value, text }, fieldPath);
       if (fieldValue !== null && fieldValue !== undefined) {
-        return formatVariableValue(fieldValue, format, variable, text);
+        return formatVariableValue(fieldValue, format, variable, text, emptyValue, customAllValue);
+      }
+    }
+    // BMC code
+    if (variable.type === 'datepicker' && (format === 'from' || format === 'to')) {
+      const dateTimeVal = dateRangeExtract(value);
+      const timeRange = {
+        from: dateTimeVal[0],
+        to: dateTimeVal[1],
+      };
+      const isRelativeTime = rangeUtil.isRelativeTimeRange(timeRange);
+
+      let convertedTimeRange;
+      if (isRelativeTime) {
+        const fiscalYearStartMonth = getState().dashboard?.getModel()?.fiscalYearStartMonth;
+        convertedTimeRange = rangeUtil.convertRawToRange(
+          {
+            from: rangeUtil.isRelativeTime(dateTimeVal[0]) ? dateTimeVal[0] : dateTimeFormat(dateTimeVal[0]),
+            to: rangeUtil.isRelativeTime(dateTimeVal[1]) ? dateTimeVal[1] : dateTimeFormat(dateTimeVal[1]),
+          },
+          getTimeSrv().timeModel?.getTimezone(),
+          fiscalYearStartMonth
+        );
+      }
+
+      switch (format) {
+        case 'from':
+          if (isRelativeTime) {
+            return convertedTimeRange?.from.toISOString() ?? (customAllValue ? emptyValue! : match);
+          }
+          return dateTimeVal[0] && dateTimeVal[0] !== 'null' ? dateTimeVal[0] : customAllValue ? emptyValue! : match;
+        case 'to':
+          if (isRelativeTime) {
+            return convertedTimeRange?.to.toISOString() ?? (customAllValue ? emptyValue! : match);
+          }
+          return dateTimeVal[1] && dateTimeVal[1] !== 'null' ? dateTimeVal[1] : customAllValue ? emptyValue! : match;
+        default:
+          return match;
       }
     }
 
-    return formatVariableValue(value, format, variable, text);
+    // End
+    // BMC changes - add emptyValue as a parameter
+    return formatVariableValue(value, format, variable, text, emptyValue, customAllValue);
   }
 
   /**
@@ -389,6 +522,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     if (!this.index[name]) {
+      if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+        return this.getVariables().find((v) => v.name === name);
+      }
       return this.dependencies.getVariableWithName(name);
     }
 

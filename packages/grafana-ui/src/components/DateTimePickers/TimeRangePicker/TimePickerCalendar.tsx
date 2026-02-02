@@ -20,7 +20,8 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
     container: css({
       top: 0,
       position: 'absolute',
-      [`${isReversed ? 'left' : 'right'}`]: '546px', // lmao
+      // BMC code change
+      [`${isReversed ? 'left' : 'right'}`]: '650px', // lmao
     }),
 
     modalContainer: css({
@@ -70,6 +71,10 @@ export interface TimePickerCalendarProps {
   isReversed?: boolean;
 }
 
+// BMC Code: Next function
+// Reverted this change from old grafana version to support DRJ71-7631
+const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
+
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
@@ -100,8 +105,9 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
 
   const calendar = (
     <section
-      className={styles.calendar}
+      className={styles.calendar + ' override'}
       ref={ref}
+      onClick={stopPropagation}
       {...overlayProps}
       {...dialogProps}
       data-testid={selectors.components.TimePicker.calendar.label}
@@ -114,7 +120,8 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
 
   if (!showInModal) {
     return (
-      <FocusScope contain restoreFocus autoFocus>
+      // BMC Accessibility: Removed restoreFocus to avoid conflict with manual focus restoration in TimeRangeContent
+      <FocusScope contain autoFocus>
         <div className={styles.container}>{calendar}</div>
       </FocusScope>
     );
@@ -123,8 +130,8 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   return (
     <OverlayContainer>
       <div className={modalBackdrop} />
-
-      <FocusScope contain autoFocus restoreFocus>
+      {/* BMC Accessibility: Removed restoreFocus to avoid conflict with manual focus restoration in TimeRangeContent */}
+      <FocusScope contain autoFocus>
         <div className={styles.modal}>
           <div className={styles.modalContainer}>{calendar}</div>
         </div>

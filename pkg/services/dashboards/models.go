@@ -284,6 +284,14 @@ type GetDashboardsQuery struct {
 	OrgID         int64
 }
 
+// BMC CODE START
+type GetDashboardsByFolderUIDQuery struct {
+	FolderUID string
+	OrgID     int64
+}
+
+//BMC CODE END
+
 type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
 	PluginID string
@@ -449,4 +457,6 @@ type FindPersistedDashboardsQuery struct {
 	// Skip access control checks. This field is used by OpenFGA search implementation.
 	// Should not be used anywhere else.
 	SkipAccessControlFilter bool
+	// BMC Change: Next line
+	Lang string
 }

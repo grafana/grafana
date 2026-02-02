@@ -147,4 +147,7 @@ export enum FieldConfigProperty {
   Actions = 'actions',
   Color = 'color',
   Filterable = 'filterable',
+  // BMC Code: Start
+  EuropeanFormat = 'europeanFormat'
+  // BMC Code: End
 }

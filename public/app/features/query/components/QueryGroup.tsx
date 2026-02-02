@@ -19,6 +19,7 @@ import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
@@ -303,7 +304,9 @@ export class QueryGroup extends PureComponent<Props, State> {
             variant="secondary"
             data-testid={selectors.components.QueryTab.addQuery}
           >
-            Add query
+            {/*BMC Change: To enable localization for below text*/}
+            <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.add-query-button">Add query</Trans>
+            {/* BMC Change ends */}
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
@@ -314,7 +317,11 @@ export class QueryGroup extends PureComponent<Props, State> {
             className={styles.expressionButton}
             data-testid="query-tab-add-expression"
           >
-            <span>Expression&nbsp;</span>
+            {/* BMC Change: To enable localization for below text */}
+            <span>
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.expression-button">Expression&nbsp;</Trans>
+            </span>
+            {/* BMC Change ends */}
           </Button>
         )}
         {this.renderExtraActions()}
@@ -409,7 +416,9 @@ export function QueryGroupTopSection({
       <div data-testid={selectors.components.QueryTab.queryGroupTopSection}>
         <div className={styles.dataSourceRow}>
           <InlineFormLabel htmlFor="data-source-picker" width={'auto'}>
-            Data source
+            {/* BMC Change: To enable localization for below text */}
+            <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.data-source-text">Data source</Trans>
+            {/* BMC Change ends */}
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePickerWithPrompt
@@ -417,7 +426,8 @@ export function QueryGroupTopSection({
               onChange={async (ds, defaultQueries) => {
                 return await onDataSourceChange?.(ds, defaultQueries);
               }}
-              isDataSourceModalOpen={Boolean(locationService.getSearchObject().firstPanel)}
+              // BMC Change: Comment below line to disable DS Modal
+              // isDataSourceModalOpen={Boolean(locationService.getSearchObject().firstPanel)}
             />
           </div>
           {dataSource && (
@@ -426,7 +436,12 @@ export function QueryGroupTopSection({
                 <Button
                   variant="secondary"
                   icon="question-circle"
-                  title="Open data source help"
+                  // BMC Change: To enable localization for below text
+                  title={t(
+                    'bmcgrafana.dashboards.edit-panel.query.question-circle-description',
+                    'Open data source help'
+                  )}
+                  // BMC Change ends
                   onClick={() => setIsHelpOpen(true)}
                   data-testid="query-tab-help-button"
                 />
@@ -448,7 +463,11 @@ export function QueryGroupTopSection({
                     onClick={onOpenQueryInspector}
                     aria-label={selectors.components.QueryTab.queryInspectorButton}
                   >
-                    Query inspector
+                    {/* BMC Change: To enable localization for below text */}
+                    <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-inspector-button">
+                      Query inspector
+                    </Trans>
+                    {/* BMC Change ends */}
                   </Button>
                 </div>
               )}
@@ -466,7 +485,13 @@ export function QueryGroupTopSection({
         )}
       </div>
       {isHelpOpen && (
-        <Modal title="Data source help" isOpen={true} onDismiss={() => setIsHelpOpen(false)}>
+        // BMC Change: To enable localization for below text
+        <Modal
+          title={t('bmcgrafana.dashboards.edit-panel.query.data-source-help-title', 'Data source help')}
+          isOpen={true}
+          onDismiss={() => setIsHelpOpen(false)}
+        >
+          {/* BMC Change ends */}
           <PluginHelp pluginId={dsSettings.meta.id} />
         </Modal>
       )}

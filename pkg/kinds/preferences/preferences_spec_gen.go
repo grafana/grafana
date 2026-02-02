@@ -61,9 +61,20 @@ type Spec struct {
 	CookiePreferences *CookiePreferences `json:"cookiePreferences,omitempty"`
 	// Navigation preferences
 	Navbar *NavbarPreference `json:"navbar,omitempty"`
+	// BMC Change: Starts
+	EnabledQueryTypes *EnabledQueryTypes `json:"enabledQueryTypes,omitempty"`
+	// Format for dashboards, panels and reports timestamps
+	TimeFormat *string `json:"timeFormat,omitempty"`
+	// BMC Change: Ends
 }
 
 // NewSpec creates a new Spec object.
 func NewSpec() *Spec {
 	return &Spec{}
+}
+
+// EnabledQueryTypes defines model for EnabledQueryTypes.
+type EnabledQueryTypes struct {
+	ApplyForAdmin *bool    `json:"applyForAdmin,omitempty"`
+	EnabledTypes  []string `json:"enabledTypes,omitempty"`
 }

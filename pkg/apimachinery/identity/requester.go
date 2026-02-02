@@ -83,6 +83,13 @@ type Requester interface {
 	GetCacheKey() string
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
+
+	// BMC Change: Starts
+	GetHasExternalOrg() bool
+	GetIsUnrestrictedUser() bool
+	GetMspOrgs() []string
+	GetBHDRoles() []int64
+	// BMC Change: Ends
 }
 
 // IntIdentifier converts a typeID to an int64.

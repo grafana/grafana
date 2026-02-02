@@ -3,6 +3,7 @@
   "name": "Jaeger",
   "id": "jaeger",
   "category": "tracing",
+  "state": "alpha",
 
   "backend": true,
   "metrics": true,

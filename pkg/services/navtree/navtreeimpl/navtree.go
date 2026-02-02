@@ -2,6 +2,7 @@ package navtreeimpl
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,6 +45,9 @@ type ServiceImpl struct {
 	// Navigation
 	navigationAppConfig     map[string]NavigationAppConfig
 	navigationAppPathConfig map[string]NavigationAppConfig
+
+	// BMC Change to inject SQL Store
+	sqlStore sqlstore.SQLStore
 }
 
 type NavigationAppConfig struct {
@@ -54,7 +59,7 @@ type NavigationAppConfig struct {
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service, sqlStore *sqlstore.SQLStore) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -69,6 +74,8 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
 		license:              license,
+		// BMC Change to inject SQL Store
+		sqlStore: *sqlStore,
 	}
 
 	service.readNavigationSettings()
@@ -130,19 +137,20 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
-		treeRoot.AddSection(&navtree.NavLink{
-			Text:       "Drilldown",
-			Id:         navtree.NavIDDrilldown,
-			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
-			Icon:       "drilldown",
-			IsNew:      true,
-			SortWeight: navtree.WeightDrilldown,
-			Url:        s.cfg.AppSubURL + "/drilldown",
-			Children:   drilldownChildNavLinks,
-		})
-	}
+	// BMC Change: Commenting below nav node
+	//if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+	//	drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
+	//	treeRoot.AddSection(&navtree.NavLink{
+	//		Text:       "Drilldown",
+	//		Id:         navtree.NavIDDrilldown,
+	//		SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
+	//		Icon:       "drilldown",
+	//		IsNew:      true,
+	//		SortWeight: navtree.WeightDrilldown,
+	//		Url:        s.cfg.AppSubURL + "/drilldown",
+	//		Children:   drilldownChildNavLinks,
+	//	})
+	//}
 
 	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
@@ -289,12 +297,16 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
-	if s.cfg.AddChangePasswordLink() {
-		children = append(children, &navtree.NavLink{
-			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
-			Icon: "lock",
-		})
-	}
+	// BMC code
+	/*
+		if s.cfg.AddChangePasswordLink() {
+			children = append(children, &navtree.NavLink{
+				Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
+				Icon: "lock",
+			})
+		}
+	*/
+	//End
 
 	if !s.cfg.DisableSignoutMenu {
 		// add sign out first
@@ -348,7 +360,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		}
 
 		sort.Slice(starredDashboards, func(i, j int) bool {
-			return starredDashboards[i].Title < starredDashboards[j].Title
+			//BMC Code : Added strings.ToLower to make the sorting case insensitive
+			return strings.ToLower(starredDashboards[i].Title) < strings.ToLower(starredDashboards[j].Title)
+
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
@@ -374,7 +388,8 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
+		// BMC code - next line
+		if s.cfg.SnapshotEnabled && s.sqlStore.IsFeatureEnabled(c.Req.Context(), c.OrgID, "Snapshot") && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
@@ -421,6 +436,28 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, IsCreateAction: true,
 		})
 	}
+
+	// BMC code
+	if c.HasBHDPermission("calculated.fields", "read") || c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor {
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text:     "Calculated fields",
+			Id:       "calc-fields",
+			Url:      setting.AppSubUrl + "/calculated-fields",
+			Icon:     "table",
+			SubTitle: "Create and manage calculated fields for ITSM service",
+		})
+	}
+
+	if c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor {
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text:     "Localization Management",
+			Id:       "global-locales",
+			Url:      setting.AppSubUrl + "/global-locales",
+			Icon:     "globe",
+			SubTitle: "Create and manage global keys for localization",
+		})
+	}
+	// End
 
 	return dashboardChildNavs
 }
@@ -537,14 +574,17 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
 		// Add new connection
-		children = append(children, &navtree.NavLink{
-			Id:       "connections-add-new-connection",
-			Text:     "Add new connection",
-			SubTitle: "Browse and create new connections",
-			Url:      baseUrl + "/add-new-connection",
-			Children: []*navtree.NavLink{},
-			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
-		})
+		// BMC Change: Add this nav node for grafana admin only
+		if ac.ReqGrafanaAdmin(c) {
+			children = append(children, &navtree.NavLink{
+				Id:       "connections-add-new-connection",
+				Text:     "Add new connection",
+				SubTitle: "Browse and create new connections",
+				Url:      baseUrl + "/add-new-connection",
+				Children: []*navtree.NavLink{},
+				Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
+			})
+		}
 
 		// Data sources
 		children = append(children, &navtree.NavLink{

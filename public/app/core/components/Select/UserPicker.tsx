@@ -5,6 +5,7 @@ import { Component } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OrgUser } from 'app/types';
 
 export interface Props {
@@ -65,7 +66,8 @@ export class UserPicker extends Component<Props, State> {
           defaultOptions={true}
           loadOptions={this.search}
           onChange={onSelected}
-          placeholder="Start typing to search for user"
+          //BMC change
+          placeholder={t('bmcgrafana.user-picker.placeholder','Start typing to search for user')}
           noOptionsMessage="No users found"
           aria-label="User picker"
         />

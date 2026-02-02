@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
@@ -33,15 +34,18 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
+		// BMC code change
+		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error(), "bhdCode": bhdcodes.FolderNotFound})
 	}
 
-	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderSameNameExists) {
+		// BMC code change
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
 	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+		// BMC code change
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error(), "bhdCode": bhdcodes.FolderChangedByAnotherUser})
 	}
 
 	// folder errors are wrapped in an error util, so this is the only way of comparing errors

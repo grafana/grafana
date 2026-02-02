@@ -77,7 +77,9 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   };
 
   return (
-    <div id="TimePickerContent" className={cx(styles.container, className)}>
+    // BMC Code - inline change
+    // BMC Code : Accessibility Change ( Next line )
+    <div className={cx(styles.container, className) + ' override'}>
       <div className={styles.body}>
         {(!isFullscreen || !hideQuickRanges) && (
           <div className={styles.rightSide}>
@@ -87,6 +89,9 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 value={searchTerm}
                 onChange={setSearchQuery}
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
+                //BMC Accessibility Change next 1 line:
+                aria-label={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
+                //BMC Accessibility Change end
               />
             </div>
             <div className={styles.scrollContent}>
@@ -279,7 +284,8 @@ const getStyles = (
   container: css({
     background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z3,
-    width: `${isFullscreen ? '546px' : '262px'}`,
+    //BMC Code change
+    width: `${isFullscreen ? '650px' : '262px'}`,
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     [`${isReversed ? 'left' : 'right'}`]: 0,
@@ -296,13 +302,15 @@ const getStyles = (
     display: 'flex',
     flexDirection: 'column',
     borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
-    width: `${!hideQuickRanges ? '60%' : '100%'}`,
+    //BMC Code change
+    width: `${!hideQuickRanges ? '55%' : '100%'}`,
     overflow: 'auto',
     scrollbarWidth: 'thin',
     order: isReversed ? 1 : 0,
   }),
   rightSide: css({
-    width: `${isFullscreen ? '40%' : '100%'}; !important`,
+    //BMC Code change
+    width: `${isFullscreen ? '45%' : '100%'}; !important`,
     borderRight: isReversed ? `1px solid ${theme.colors.border.weak}` : 'none',
     display: 'flex',
     flexDirection: 'column',
@@ -373,5 +381,8 @@ const getEmptyListStyles = (theme: GrafanaTheme2) => ({
   }),
   link: css({
     color: theme.colors.text.link,
+    //BMC Accessibility Change Start : Underline links
+    textDecoration: 'underline',
+    //BMC Accessibility Change End
   }),
 });

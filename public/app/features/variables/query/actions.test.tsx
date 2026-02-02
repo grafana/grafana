@@ -882,6 +882,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     regex: '',
     multi: true,
     includeAll: true,
+    bmcVarCache: false, // BMC code - for variable caching
     state: LoadingState.NotStarted,
     error: null,
     description: null,

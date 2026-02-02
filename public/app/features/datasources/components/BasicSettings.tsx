@@ -58,6 +58,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
 
 export function AlertingEnabled({ enabled }: { enabled: boolean }) {
   const styles = useStyles2(getStyles);
+
   return (
     <div className={styles.badge}>
       {enabled ? (

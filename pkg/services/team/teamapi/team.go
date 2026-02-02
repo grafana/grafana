@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -34,7 +35,8 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	t, err := tapi.teamService.CreateTeam(c.Req.Context(), cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
+	// BMC code - added optional parameter for Id and IsMspTeam
+	t, err := tapi.teamService.CreateTeam(c.Req.Context(), cmd.Name, cmd.Email, c.SignedInUser.GetOrgID(), cmd.Id, cmd.Type, cmd.IsMspTeam)
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusConflict, "Team name taken", err)
@@ -179,6 +181,20 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
 	}
 
+	// BMC: Omit Licensed User team if MSP is enabled and user is not admin/unrestricted
+	if c.SignedInUser.OrgRole != "Admin" && ((len(strings.TrimSpace(c.SignedInUser.SubTenantId)) != 0) || ((len(c.SignedInUser.MspOrgs) > 0) && !c.SignedInUser.IsUnrestrictedUser)) {
+		filteredTeams := make([]*team.TeamDTO, 0, len(queryResult.Teams))
+		for _, t := range queryResult.Teams {
+			if t.Name == "Licensed User" {
+				c.Logger.Debug("Remove Licensed User team from list", "user", c.SignedInUser.UserID)
+				continue
+			}
+			filteredTeams = append(filteredTeams, t)
+		}
+		queryResult.Teams = filteredTeams
+		queryResult.TotalCount = int64(len(filteredTeams))
+	}
+
 	teamIDs := map[string]bool{}
 	for _, team := range queryResult.Teams {
 		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
@@ -274,7 +290,8 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
+	// BMC Code: Next line, instead c.Req.context(), passing reqContext
+	return prefapi.UpdatePreferencesFor(c, tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences

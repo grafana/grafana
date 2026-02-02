@@ -288,6 +288,22 @@ type FrontendSettingsDTO struct {
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
+	// BMC Change - start
+	EnvType                  string   `json:"EnvType"`
+	MapBoxAccessToken        string   `json:"MapBoxAccessToken"`
+	BhdVersion               string   `json:"bhdVersion"`
+	BulkLimit                int      `json:"bulkLimit"`
+	BulkExportLimit          int      `json:"bulkExportLimit"`
+	EmailAttachmentSizeLimit int      `json:"emailAttachmentSizeLimit"`
+	CSVDelimiter             []string `json:"csvDelimiters"`
+	RepeatVariablesLimit     int      `json:"repeatVariablesLimit"`
+	EnabledQueryTypes        struct {
+		EnabledTypes  []string `json:"enabledTypes"`
+		ApplyForAdmin bool     `json:"applyForAdmin"`
+	} `json:"enabledQueryTypes"`
+	ARRowLimitForCachedVariables int `json:"arRowLimitForCachedVariables"`
+	EnableDsMetering             bool `json:"enableDsMetering"`
+	// BMC Change - end
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
 	// Experimental Scope settings
 	ListScopesEndpoint          string `json:"listScopesEndpoint"`

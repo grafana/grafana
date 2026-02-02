@@ -160,3 +160,13 @@ func (f *FakePermissionsService) DeleteResourcePermissions(ctx context.Context, 
 func (f *FakePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
 	return f.ExpectedMappedAction
 }
+
+// BMC Change start
+func (f *FakePermissionsService) GetPermissionsList() []string {
+	return f.GetPermissionsList()
+}
+func (f *FakePermissionsService) GetPermissionsToActions() map[string][]string {
+	return f.GetPermissionsToActions()
+}
+
+//BMC Change end

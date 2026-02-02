@@ -83,7 +83,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
 
       if (this.state.hideTimeControls) {
-        refreshPickerDeactivation = this.state.refreshPicker.activate();
+        // BMC Change: Hide time picker only when hideTimeControls is true, but don't disable the refresh picker
+        // refreshPickerDeactivation = this.state.refreshPicker.activate();
       }
 
       return () => {
@@ -142,12 +143,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
-      {!hideTimeControls && (
-        <Stack justifyContent={'flex-end'}>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </Stack>
-      )}
+      {/* BMC Code: Hide time picker only and keep refresh picker always visible */}
+
+      <Stack justifyContent={'flex-end'}>
+        {!hideTimeControls && <timePicker.Component model={timePicker} />}
+        <refreshPicker.Component model={refreshPicker} />
+      </Stack>
+
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );

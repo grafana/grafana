@@ -26,6 +26,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	isPluginEnabled := func(plugin pluginstore.Plugin) bool {
+
 		if plugin.AutoEnabled {
 			return true
 		}
@@ -42,9 +43,21 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
-		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
+		//BMC code : to check if user has insight finder permission or not
+		var allowed bool
+		if plugin.ID == "bmc-insightfinder-app" {
+			allowed = hasAccess(ac.EvalPermission("insightfinder:access"))
+		} else {
+			allowed = hasAccess(ac.EvalPermission(
+				pluginaccesscontrol.ActionAppAccess,
+				pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID),
+			))
+		}
+
+		if !allowed {
 			continue
 		}
+		// BMC Code: End
 
 		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
@@ -77,12 +90,32 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		Url:        s.cfg.AppSubURL + "/a/" + plugin.ID,
 	}
 
+	// BMC Code: to set icon instead of img for Report & Insight finder plugins
+	if plugin.ID == "reports" {
+		appLink.Img = ""
+		appLink.Icon = "bmc-reports"
+	}
+
+	if plugin.ID == "bmc-insightfinder-app" {
+		appLink.Img = ""
+		appLink.Icon = "bmc-insight-finder"
+	}
+	// BMC Code: End
+
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
 			continue
 		}
 
 		if include.Type == "page" {
+			// BMC code - start
+			// Apply BHD Rbac permissions on report scheduler plugin
+			hasAccess := c.HasAppPluginAccess(plugin.ID, include.Name)
+			if !hasAccess {
+				continue
+			}
+			// BMC code - end
+
 			link := &navtree.NavLink{
 				Text:     include.Name,
 				Icon:     include.Icon,
@@ -197,7 +230,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "More apps",
 				Icon:       "layer-group",
-				SubTitle:   "App plugins that extend the Grafana experience",
+				SubTitle:   "App plugins that extend the BMC Helix Dashboards experience",
 				Id:         navtree.NavIDApps,
 				Children:   []*navtree.NavLink{appLink},
 				SortWeight: navtree.WeightApps,
@@ -306,6 +339,9 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAsserts, Icon: "asserts"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCloudServiceProviders, Icon: "cloud"},
+		// BMC Code Next lines: To add reports & insight finder plugins on root
+		"reports":               {SectionID: navtree.NavIDRoot},
+		"bmc-insightfinder-app": {SectionID: navtree.NavIDRoot},
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {

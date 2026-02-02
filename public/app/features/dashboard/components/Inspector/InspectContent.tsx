@@ -23,6 +23,7 @@ import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { replaceValueForLocale } from '../../utils/dashboard';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
 
@@ -69,7 +70,9 @@ export const InspectContent = ({
     activeTab = InspectTab.JSON;
   }
 
-  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
+  let panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
+  // BMC Change: Next line
+  panelTitle = replaceValueForLocale(panelTitle, panel.locales?.() ?? {});
   const title = t('dashboard.inspect.title', 'Inspect: {{panelTitle}}', { panelTitle });
 
   return (

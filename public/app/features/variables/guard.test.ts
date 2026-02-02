@@ -19,8 +19,10 @@ import {
   createCustomVariable,
   createDashboardVariable,
   createDatasourceVariable,
+  createDatePickerVariable,
   createGroupByVariable,
   createIntervalVariable,
+  createOptimizeVariable,
   createOrgVariable,
   createQueryVariable,
   createSnapshotVariable,
@@ -177,6 +179,8 @@ describe('type guards', () => {
     dashboard: { variable: createDashboardVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
     custom: { variable: createCustomVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
     snapshot: { variable: createSnapshotVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
+    datepicker: { variable: createDatePickerVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
+    optimizepicker: { variable: createOptimizeVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
   };
 
   const variableFacts = Object.values(variableFactsObj);

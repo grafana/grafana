@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { useCallback, useMemo } from 'react';
+// BMC Code : Accessibility Change ( Next 1 lines | useRef added)
+import { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -48,9 +49,14 @@ export const QueryRows = ({ exploreId }: Props) => {
     dispatch(runQueries({ exploreId }));
   }, [dispatch, exploreId]);
 
+  // BMC Code : Accessibility Change start here | useCallback hook modified for new added query & setTimeout to focus newly added row after short delay.
+  const queryRowsRef = useRef<HTMLDivElement>(null);
+  const newQueryAdded = useRef<boolean>(false);
+
   const onChange = useCallback(
     (newQueries: DataQuery[]) => {
       dispatch(changeQueries({ exploreId, queries: newQueries }));
+      newQueryAdded.current = true;
     },
     [dispatch, exploreId]
   );
@@ -62,6 +68,15 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
+  useEffect(() => {
+    if (newQueryAdded.current) {
+      const lastQueryRow = queryRowsRef.current?.lastElementChild as HTMLElement;
+      const inputField = lastQueryRow.querySelector('div') as HTMLElement;
+      inputField?.focus();
+      newQueryAdded.current = false;
+    }
+  }, [queries]);
+  // BMC Code : Accessibility Change ends here.
   const onQueryCopied = () => {
     reportInteraction('grafana_explore_query_row_copy');
   };
@@ -75,31 +90,35 @@ export const QueryRows = ({ exploreId }: Props) => {
   };
 
   return (
-    <QueryEditorRows
-      dsSettings={dsSettings}
-      queries={queries}
-      onQueriesChange={onChange}
-      onAddQuery={onAddQuery}
-      onRunQueries={onRunQueries}
-      onQueryCopied={onQueryCopied}
-      onQueryRemoved={onQueryRemoved}
-      onQueryToggled={onQueryToggled}
-      data={queryResponse}
-      app={CoreApp.Explore}
-      history={history}
-      eventBus={eventBridge}
-      queryRowWrapper={(children, refId) => (
-        <ContentOutlineItem
-          title={refId}
-          icon="arrow"
-          key={refId}
-          panelId="Queries"
-          customTopOffset={-10}
-          level="child"
-        >
-          {children}
-        </ContentOutlineItem>
-      )}
-    />
+    // BMC Code : Accessibility Change ( Next 1 lines | Div container added)
+    <div ref={queryRowsRef} tabIndex={0} role="button">
+      <QueryEditorRows
+        dsSettings={dsSettings}
+        queries={queries}
+        onQueriesChange={onChange}
+        onAddQuery={onAddQuery}
+        onRunQueries={onRunQueries}
+        onQueryCopied={onQueryCopied}
+        onQueryRemoved={onQueryRemoved}
+        onQueryToggled={onQueryToggled}
+        data={queryResponse}
+        app={CoreApp.Explore}
+        history={history}
+        eventBus={eventBridge}
+        queryRowWrapper={(children, refId) => (
+          <ContentOutlineItem
+            title={refId}
+            icon="arrow"
+            key={refId}
+            panelId="Queries"
+            customTopOffset={-10}
+            level="child"
+          >
+            {children}
+          </ContentOutlineItem>
+        )}
+      />
+    </div>
+    // BMC Code : Accessibility Change ( Above 1 lines )
   );
 };

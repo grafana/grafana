@@ -21,6 +21,8 @@ type Builder struct {
 
 	params []any
 	sql    bytes.Buffer
+	// BMC Change: Next line
+	Lang string
 }
 
 // ToSQL builds the SQL query and returns it as a string, together with the SQL parameters.
@@ -39,11 +41,22 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 		// covered by UQE_folder_org_id_uid
-		b.sql.WriteString(
-			`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
+		// BMC Change: Below condition for localized lang
+		if b.Lang != "" {
+			b.sql.WriteString(
+				fmt.Sprintf(`LEFT OUTER JOIN (select f.uid, f.org_id, case when flocale.name is not null and flocale.name != '' then flocale.name else f.title end as title from folder f left join lateral(select resource_uid as uid, "%s"::jsonb  ->> 'name' as name from bhd_localization bl where bl.org_id = f.org_id) flocale on flocale.uid = f.uid) folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`, b.Lang))
+		} else {
+			b.sql.WriteString(
+				`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
+		}
 	} else {
-		b.sql.WriteString(`
-		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id`)
+		if b.Lang != "" {
+			b.sql.WriteString(
+				fmt.Sprintf(`LEFT OUTER JOIN (select f.id, f.uid, f.org_id, f.slug as slug, case when flocale.name is not null and flocale.name != '' then flocale.name else f.title end as title from dashboard f left join lateral (select resource_uid as uid, "%s"::jsonb ->> 'name' as name from bhd_localization bl where bl.org_id = f.org_id) flocale on flocale.uid = f.uid) folder ON folder.id = dashboard.folder_id`, b.Lang))
+		} else {
+			b.sql.WriteString(
+				`LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id`)
+		}
 	}
 	b.sql.WriteString(`
 	LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
@@ -57,8 +70,21 @@ func (b *Builder) buildSelect() {
 	var recQuery string
 	var recQueryParams []any
 
-	b.sql.WriteString(
-		`SELECT
+	if b.Lang != "" {
+		b.sql.WriteString(
+			`SELECT
+			dashboard.id,
+			dashboard.uid,
+			ids.title,
+			dashboard.slug,
+			dashboard_tag.term,
+			dashboard.is_folder,
+			dashboard.folder_id,
+			folder.uid AS folder_uid,
+		`)
+	} else {
+		b.sql.WriteString(
+			`SELECT
 			dashboard.id,
 			dashboard.org_id,
 			dashboard.uid,
@@ -70,6 +96,7 @@ func (b *Builder) buildSelect() {
 			dashboard.deleted,
 			folder.uid AS folder_uid,
 		`)
+	}
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 		b.sql.WriteString(`
 			folder.title AS folder_slug,`)
@@ -149,7 +176,15 @@ func (b *Builder) applyFilters() (ordering string) {
 		}
 	}
 
-	b.sql.WriteString("SELECT dashboard.id FROM dashboard")
+	// BMC Change: Starts, adding query on lang condition
+	// b.sql.WriteString("SELECT dashboard.id FROM dashboard")
+	if b.Lang != "" {
+		b.sql.WriteString(fmt.Sprintf("SELECT dashboard.id, case when locale.name is not null and locale.name != '' then locale.name else dashboard.title end AS title FROM dashboard left join lateral (SELECT resource_uid as uid, \"%s\"::jsonb ->> 'name' as name from bhd_localization bl where bl.org_id = dashboard.org_id) locale on locale.uid = dashboard.uid", b.Lang))
+	} else {
+		b.sql.WriteString("SELECT dashboard.id FROM dashboard")
+	}
+	// BMC Change: Ends
+
 	b.sql.WriteString(strings.Join(joins, ""))
 
 	if len(wheres) > 0 {
@@ -158,7 +193,7 @@ func (b *Builder) applyFilters() (ordering string) {
 	}
 
 	if len(orders) < 1 {
-		orders = append(orders, TitleSorter{}.OrderBy())
+		orders = append(orders, TitleSorter{Localized: b.Lang != ""}.OrderBy())
 	}
 
 	if len(groups) > 0 {

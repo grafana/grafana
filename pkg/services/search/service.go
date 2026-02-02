@@ -50,6 +50,8 @@ type Query struct {
 	FolderUIDs []string
 	Permission dashboardaccess.PermissionType
 	Sort       string
+	// BMC Change: Next line
+	Lang string
 }
 
 type Service interface {
@@ -105,6 +107,8 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Page:          query.Page,
 		Permission:    query.Permission,
 		IsDeleted:     query.IsDeleted,
+		// BMC Change: Next line
+		Lang: query.Lang,
 	}
 
 	if sortOpt, exists := s.sortService.GetSortOption(query.Sort); exists {

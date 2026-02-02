@@ -20,6 +20,7 @@ import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { FEATURE_CONST, getGrafanaFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
@@ -87,24 +88,25 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     if (config.featureToggles.newDashboardSharingComponent) {
       const subMenu: PanelMenuItem[] = [];
-      subMenu.push({
-        text: t('share-panel.menu.share-link-title', 'Share link'),
-        iconClassName: 'link',
-        shortcut: 'p u',
-        onClick: () => {
-          DashboardInteractions.sharingCategoryClicked({
-            item: shareDashboardType.link,
-            shareResource: getTrackingSource(panel?.getRef()),
-          });
+      // BMC Change: Comment below block, to not allow share link option
+      // subMenu.push({
+      //   text: t('share-panel.menu.share-link-title', 'Share link'),
+      //   iconClassName: 'link',
+      //   shortcut: 'p u',
+      //   onClick: () => {
+      //     DashboardInteractions.sharingCategoryClicked({
+      //       item: shareDashboardType.link,
+      //       shareResource: getTrackingSource(panel?.getRef()),
+      //     });
 
-          const drawer = new ShareDrawer({
-            shareView: shareDashboardType.link,
-            panelRef: panel.getRef(),
-          });
+      //     const drawer = new ShareDrawer({
+      //       shareView: shareDashboardType.link,
+      //       panelRef: panel.getRef(),
+      //     });
 
-          dashboard.showModal(drawer);
-        },
-      });
+      //     dashboard.showModal(drawer);
+      //   },
+      // });
       subMenu.push({
         text: t('share-panel.menu.share-embed-title', 'Share embed'),
         iconClassName: 'arrow',
@@ -127,7 +129,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       if (
         contextSrv.isSignedIn &&
         config.snapshotEnabled &&
-        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate) &&
+        // BMC Change: Added getGrafanaFeatureStatus
+        getGrafanaFeatureStatus(FEATURE_CONST.snapshot)
       ) {
         subMenu.push({
           text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
@@ -148,7 +152,26 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           },
         });
       }
+      //BMC Change: Starts
+      subMenu.push({
+        text: t('bmc.common.download', 'Download'),
+        iconClassName: 'save',
+        shortcut: 'p o',
+        onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.download,
+            shareResource: getTrackingSource(panel.getRef()),
+          });
 
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.download,
+            panelRef: panel.getRef(),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+      //BMC Change: Ends
       items.push({
         type: 'submenu',
         text: t('panel.header-menu.share', 'Share'),

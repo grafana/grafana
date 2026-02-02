@@ -4,6 +4,7 @@ import { useAsyncFn } from 'react-use';
 import { locationUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history';
 import { useSelector } from 'app/types';
 
@@ -35,7 +36,7 @@ export const useDashboardRestore = (id: number, version: number) => {
         pathname: newUrl,
         state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
       });
-      notifyApp.success('Dashboard restored', `Restored from version ${version}`);
+      notifyApp.success(t('bmc.notifications.dashboard.restored','Dashboard restored'), t('bmc.notifications.dashboard.restored-version','Restored from version {{version}}', {version}));
     }
   }, [state, version, notifyApp]);
   return { state, onRestoreDashboard };

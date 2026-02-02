@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+// BMC code - comment next line
+// import { useStyles2 } from '@grafana/ui';
 
 import { CatalogPlugin } from '../../types';
 
@@ -11,8 +12,11 @@ type Props = {
 };
 
 export function PluginUpdateAvailableBadge({ plugin }: Props): React.ReactElement | null {
-  const styles = useStyles2(getStyles);
-  return <p className={styles.hasUpdate}>Update available!</p>;
+  // BMC Code : Comment below block
+  // const styles = useStyles2(getStyles);
+  // return <p className={styles.hasUpdate}>Update available!</p>;
+  return null;
+  // BMC Code: End
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {

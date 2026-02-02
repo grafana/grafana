@@ -33,12 +33,19 @@ class UnthemedSwitch extends PureComponent<Props, State> {
   state = {
     id: uniqueId(),
   };
-
+  // BMC Code : Accessibility Change starts here.
+  inputRef = React.createRef<HTMLInputElement>();
+  // BMC Code : Accessibility Change ends here.
   internalOnChange = (event: React.FormEvent<HTMLInputElement>) => {
     event.stopPropagation();
     this.props.onChange(event);
   };
 
+  // BMC Code : Accessibility Change starts here.
+  handleFocus = () => {
+    this.inputRef.current?.focus();
+  };
+  // BMC Code : Accessibility Change ends here.
   render() {
     const {
       labelClass = '',
@@ -80,6 +87,12 @@ class UnthemedSwitch extends PureComponent<Props, State> {
               type="checkbox"
               checked={checked}
               onChange={this.internalOnChange}
+              // BMC Code : Accessibility Change starts here.
+              onFocus={this.handleFocus}
+              ref={this.inputRef}
+              aria-checked={checked}
+              tabIndex={0}
+              // BMC Code : Accessibility Change ends here.
             />
             <span className={styles.slider} />
           </div>

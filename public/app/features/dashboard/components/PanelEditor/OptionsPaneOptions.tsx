@@ -5,6 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -121,7 +122,14 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
           />
         )}
         <div className={styles.formRow}>
-          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
+          {/*BMC Change: To enable localization for below text*/}
+          <FilterInput
+            width={0}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('bmcgrafana.dashboards.edit-panel.search-options', 'Search options')}
+          />
+          {/* BMC Change ends */}
         </div>
         {showSearchRadioButtons && (
           <div className={styles.formRow}>

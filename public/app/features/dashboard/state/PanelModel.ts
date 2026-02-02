@@ -34,6 +34,7 @@ import {
 } from 'app/types/events';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { replaceValueForLocale, replaceValuesRecursive } from '../utils/dashboard';
 import { TimeOverrideResult } from '../utils/panel';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
@@ -52,6 +53,10 @@ type RunPanelQueryOptions = {
   timeData: TimeOverrideResult;
   width: number;
   publicDashboardAccessToken?: string;
+  isfirstload?: boolean;
+  // BMC code changes
+  openEmptyPanel?: boolean;
+  // BMC code changes
 };
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
@@ -70,6 +75,9 @@ const notPersistedProperties: { [str: string]: boolean } = {
   key: true,
   isNew: true,
   refreshWhenInView: true,
+  // BMC Change: Next 2 line
+  locales: true,
+  openEmptyPanel: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -170,7 +178,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   repeatedByRow?: boolean;
   maxPerRow?: number;
   collapsed?: boolean;
-
   panels?: PanelModel[];
   declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
@@ -216,6 +223,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * Change will cause unmount and re-init of panel
    */
   key: string;
+
+  // BMC Change
+  locales?: Function;
 
   /**
    * The PanelModel event bus only used for internal and legacy angular support.
@@ -288,7 +298,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   getOptions() {
-    return this.options;
+    // BMC Change
+    return typeof this.locales === 'function' && !this.isEditing
+      ? replaceValuesRecursive(cloneDeep(this.options), this.locales())
+      : this.options;
   }
 
   get hasChanged(): boolean {
@@ -375,7 +388,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
+  runAllPanelQueries({
+    dashboardUID,
+    dashboardTimezone,
+    timeData,
+    width,
+    isfirstload,
+    openEmptyPanel,
+  }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -393,6 +413,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       queryCachingTTL: this.queryCachingTTL,
       transformations: this.transformations,
       app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
+      isFirstLoad: isfirstload,
+      openEmptyPanel: openEmptyPanel,
     });
   }
 
@@ -584,7 +606,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   getEditClone() {
     const sourceModel = this.getSaveModel();
 
-    const clone = new PanelModel(sourceModel);
+    // BMC Change: Next inline
+    const clone = new PanelModel({ ...sourceModel, locales: this.locales });
     clone.isEditing = true;
     clone.plugin = this.plugin;
 
@@ -597,7 +620,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   getTransformations() {
-    return this.transformations;
+    // BMC Change
+    return typeof this.locales === 'function' && !this.isEditing
+      ? this.transformations?.map((trans) => {
+          return replaceValuesRecursive(cloneDeep(trans), this.locales?.()) as DataTransformerConfig<any>;
+        })
+      : this.transformations;
   }
 
   getFieldOverrideOptions() {
@@ -606,7 +634,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     return {
-      fieldConfig: this.fieldConfig,
+      // BMC Change
+      fieldConfig:
+        typeof this.locales === 'function' && !this.isEditing
+          ? (replaceValuesRecursive(cloneDeep(this.fieldConfig), this.locales()) as FieldConfigSource<any>)
+          : this.fieldConfig,
       replaceVariables: this.replaceVariables,
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme2,
@@ -684,7 +716,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * If you need the raw title without interpolation use title property instead.
    * */
   getDisplayTitle(): string {
-    return this.replaceVariables(this.title, undefined, 'text');
+    // BMC Change: Next line inline
+    return this.replaceVariables(replaceValueForLocale(this.title, this.locales?.() ?? {}), undefined, 'text');
   }
 
   initLibraryPanel(libPanel: LibraryPanel) {

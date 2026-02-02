@@ -3,6 +3,7 @@ import { PropsWithChildren, useMemo, useState } from 'react';
 import { VariableRefresh } from '@grafana/data';
 import { Field, RadioButtonGroup, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   onChange: (option: VariableRefresh) => void;
@@ -10,10 +11,27 @@ interface Props {
   testId?: string;
 }
 
-const REFRESH_OPTIONS = [
-  { label: 'On dashboard load', value: VariableRefresh.onDashboardLoad },
-  { label: 'On time range change', value: VariableRefresh.onTimeRangeChanged },
-];
+const getRefreshOptions = () => {
+  return [
+    {
+      label: t(
+        'bmcgrafana.dashboards.settings.variables.editor.types.query.refresh-options.on-dash-load',
+        'On dashboard load'
+      ),
+      // BMC change - vishaln
+      // Logic must be same for both, so keeping same button to not confuse the user
+      value: VariableRefresh.onDashboardLoad || VariableRefresh.onRefreshButtonClick,
+      // BMC change ends
+    },
+    {
+      label: t(
+        'bmcgrafana.dashboards.settings.variables.editor.types.query.refresh-options.on-time-change',
+        'On time range change'
+      ),
+      value: VariableRefresh.onTimeRangeChanged,
+    },
+  ];
+};
 
 export function QueryVariableRefreshSelect({ onChange, refresh, testId }: PropsWithChildren<Props>) {
   const theme = useTheme2();
@@ -26,13 +44,21 @@ export function QueryVariableRefreshSelect({ onChange, refresh, testId }: PropsW
     },
   });
 
+  const REFRESH_OPTIONS = useMemo(() => getRefreshOptions(), []);
   const value = useMemo(
     () => REFRESH_OPTIONS.find((o) => o.value === refresh)?.value ?? REFRESH_OPTIONS[0].value,
-    [refresh]
+    [REFRESH_OPTIONS, refresh]
   );
 
   return (
-    <Field label="Refresh" description="When to update the values of this variable" data-testid={testId}>
+    <Field
+      label={t('bmcgrafana.dashboards.settings.variables.editor.types.query.refresh', 'Refresh')}
+      description={t(
+        'bmcgrafana.dashboards.settings.variables.editor.types.query.refresh-desc',
+        'When to update the values of this variable'
+      )}
+      data-testid={testId}
+    >
       <RadioButtonGroup
         options={REFRESH_OPTIONS}
         onChange={onChange}

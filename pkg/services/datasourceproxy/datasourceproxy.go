@@ -28,6 +28,9 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
+	// BMC code starts
+	pluginproxy.InitRedisClient(cfg.RemoteVariableCacheSettings)
+	// BMC code ends
 	return &DataSourceProxyService{
 		DataSourceCache:            dataSourceCache,
 		DataSourceRequestValidator: datasourceReqValidator,

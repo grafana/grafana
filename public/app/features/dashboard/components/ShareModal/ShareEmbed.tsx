@@ -85,7 +85,8 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
         label={t('share-modal.embed.html', 'Embed HTML')}
         description={t(
           'share-modal.embed.html-description',
-          'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the users viewing that page need to be signed into Grafana for the graph to load.'
+          // BMC Change Inline: BMC Helix Dashboards name used
+          'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the users viewing that page need to be signed into BMC Helix Dashboards for the graph to load.'
         )}
       >
         <TextArea

@@ -30,8 +30,9 @@ export const createShortLink = memoizeOne(async function (path: string) {
     });
     return shortLink.url;
   } catch (err) {
-    console.error('Error when creating shortened link: ', err);
-    dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    //BMC change
+    console.error('[BHDCode: bhd-00608] - Error when creating shortened link: ', err);
+    dispatch(notifyApp(createErrorNotification(t('bmc.notifications.error.generate-link','Error generating shortened link'))));
   }
 });
 
@@ -39,9 +40,10 @@ export const createAndCopyShortLink = async (path: string) => {
   const shortLink = await createShortLink(path);
   if (shortLink) {
     copyStringToClipboard(shortLink);
-    dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
+    dispatch(notifyApp(createSuccessNotification(t('bmc.notifications.success.copied-link','Shortened link copied to clipboard'))));
   } else {
-    dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    dispatch(notifyApp(createErrorNotification(t('bmc.notifications.error.generate-link','Error generating shortened link'))));
+    console.error('[BHDCode: bhd-00608] - Error generating shortened link')
   }
 };
 

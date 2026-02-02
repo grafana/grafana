@@ -28,6 +28,9 @@ import { DashboardTreeSelection } from '../types';
 
 import { PAGE_SIZE } from './services';
 
+// BMC Change: Next line
+const ErrDashboardUpdateAccessDenied = 'Access denied to save dashboard';
+
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
 }
@@ -362,14 +365,25 @@ export const browseDashboardsAPI = createApi({
 
       onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
-        queryFulfilled.then(async () => {
+        queryFulfilled.then(async (response) => {
           await contextSrv.fetchUserPermissions();
-          dispatch(
+          // BMC Change: Starts
+          // Wait for refetch and then change the location if needed.
+          await dispatch(
             refetchChildren({
               parentUID: folderUid,
               pageSize: PAGE_SIZE,
             })
           );
+          const currentPath = locationService.getLocation().pathname;
+          const newUrl = locationUtil.stripBaseFromUrl(response.data.url);
+
+          if (newUrl !== currentPath) {
+            setTimeout(async () => {
+              locationService.replace(newUrl);
+            });
+          }
+          // BMC Change: Ends
         });
       },
     }),
@@ -387,15 +401,30 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async (response) => {
-          dispatch(
+          // BMC Change: Starts
+          // Wait for fetch user permissions
+          // Wait for refetch and then change the location.
+          await contextSrv.fetchUserPermissions();
+          await dispatch(
             refetchChildren({
               parentUID: folderUid,
               pageSize: PAGE_SIZE,
             })
           );
+          // BMC Change: Ends
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
         });
+      },
+      // BMC Change: transformErrorResponse handler added
+      transformErrorResponse(baseQueryReturnValue, meta, arg) {
+        if (
+          (baseQueryReturnValue as any).status === 403 &&
+          (baseQueryReturnValue as any).data?.message === ErrDashboardUpdateAccessDenied
+        ) {
+          (baseQueryReturnValue as any).data.message =
+            `${ErrDashboardUpdateAccessDenied}, Name or UID might already be in use.`;
+        }
       },
     }),
 

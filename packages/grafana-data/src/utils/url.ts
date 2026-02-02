@@ -63,7 +63,13 @@ function toUrlParams(a: any, encodeAsAngularJS = true) {
     if (typeof v !== 'boolean') {
       s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
     } else {
-      const valueQueryPart = v ? '' : '=' + encodingFunction('false', true);
+      // BMC Change: Inline, to not remove query param true with ''
+      // Also added dirty check for template variable (if start with $)
+      const valueQueryPart = v
+        ? k.charAt(0) === '$'
+          ? ''
+          : '=' + encodingFunction('true', true)
+        : '=' + encodingFunction('false', true);
       s[s.length] = encodingFunction(k, true) + valueQueryPart;
     }
   };

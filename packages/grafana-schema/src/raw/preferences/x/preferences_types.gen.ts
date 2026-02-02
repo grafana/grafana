@@ -38,6 +38,11 @@ export interface Preferences {
    * Cookie preferences
    */
   cookiePreferences?: CookiePreferences;
+
+  /**
+   * Toggle to set available query types for the tenant
+   */
+  enabledQueryTypes?: EnabledQueryTypes;
   /**
    * UID for the home dashboard
    */
@@ -59,6 +64,10 @@ export interface Preferences {
    */
   theme?: string;
   /**
+   * Format for dashboards, panels and reports timestamps
+   */
+  timeFormat?: string;
+  /**
    * The timezone selection
    * TODO: this should use the timezone defined in common
    */
@@ -67,4 +76,21 @@ export interface Preferences {
    * day of the week (sunday, monday, etc)
    */
   weekStart?: string;
+  /**
+   * BMC change - Toggle for loading empty panels - DRJ71-14546
+   */
+  loadEmptyPanels?: boolean
+  /**
+   * BMC change - Toggle for using default variable values from dashboard JSON
+   */
+  useDefaultVariableValues?: boolean
 }
+
+export interface EnabledQueryTypes {
+  applyForAdmin?: boolean;
+  enabledTypes?: Array<string>;
+}
+
+export const defaultEnabledQueryTypes: Partial<EnabledQueryTypes> = {
+  enabledTypes: [],
+};

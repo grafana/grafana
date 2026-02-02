@@ -305,6 +305,11 @@ const TransformationDescriptionOverrides: { [key: string]: string } = {
   [DataTransformerID.renameByRegex]:
     'Rename parts of the query results using a regular expression and replacement pattern.',
   [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
+  // BMC Change: Start
+  [DataTransformerID.advanceFunctions]:
+    'Use to apply advance functions. For example, Accumulative total, Percentile, Top N Rank and so on.',
+  [DataTransformerID.sanitizeFunctions]: 'Sanitize the field to plain text',
+  // BMC Change: Ends
 };
 
 const getTransformationsRedesignDescriptions = (id: string): string => {

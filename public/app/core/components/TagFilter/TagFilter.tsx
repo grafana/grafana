@@ -26,6 +26,8 @@ export interface Props {
   tagOptions: () => Promise<TermCount[]>;
   tags: string[];
   width?: number;
+  // BMC Code : Accessibility Change Next line
+  disableArialabel?: boolean;
 }
 
 const filterOption = (option: SelectableValue<string>, searchQuery: string) => {
@@ -44,6 +46,8 @@ export const TagFilter = ({
   tagOptions,
   tags,
   width,
+  // BMC Code : Accessibility Change Next line
+  disableArialabel,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -52,6 +56,8 @@ export const TagFilter = ({
   const [isLoading, setIsLoading] = useState(false);
   const [previousTags, setPreviousTags] = useState(tags);
   const [customTags, setCustomTags] = useState<TagSelectOption[]>(currentlySelectedTags);
+  // BMC Code : Accessibility Change Next line
+  const [chipTags, setChipTags] = useState<TagSelectOption[]>(currentlySelectedTags);
 
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
@@ -91,20 +97,25 @@ export const TagFilter = ({
     // Load options when tag is selected externally
     if (tags.length > 0 && options.length === 0) {
       onFocus();
+      // BMC Code : Accessibility Change Next line
+      setChipTags(currentlySelectedTags);
     }
-  }, [onFocus, options.length, tags.length]);
+  }, [onFocus, options.length, tags.length, currentlySelectedTags]);
 
   useEffect(() => {
     // Update selected tags to not include (counts) when selected externally
     if (tags !== previousTags) {
       setPreviousTags(tags);
+      // BMC Code : Accessibility Change Next line
+      setChipTags(currentlySelectedTags);
       onFocus();
     }
-  }, [onFocus, previousTags, tags]);
+  }, [onFocus, previousTags, tags, currentlySelectedTags]);
 
   const onTagChange = (newTags: any[]) => {
     newTags.forEach((tag) => (tag.count = 0));
-
+    // BMC Code : Accessibility Change Next line
+    setChipTags(newTags);
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
     onChange((newTags || []).map((tag) => tag.value));
@@ -114,6 +125,17 @@ export const TagFilter = ({
       setCustomTags(newTags.filter((tag) => !tags.includes(tag)));
     }
   };
+
+  // BMC Code : Accessibility Change starts here.
+  const onCustomClearTags = (label: String) => {
+    if (tags.length) {
+      const updatedSelectedTags = currentlySelectedTags?.filter((item) => !label.includes(item.label));
+      const tagsUpdated = tags.filter((item) => !label.includes(item));
+      setChipTags(updatedSelectedTags);
+      onChange(tagsUpdated);
+    }
+  };
+  // BMC Code : Accessibility Change ends here.
 
   const selectOptions = {
     onFocus,
@@ -132,7 +154,8 @@ export const TagFilter = ({
     loadingMessage: t('tag-filter.loading', 'Loading...'),
     noOptionsMessage: t('tag-filter.no-tags', 'No tags found'),
     placeholder: placeholder || t('tag-filter.placeholder', 'Filter by tag'),
-    value: currentlySelectedTags,
+    // BMC Code : Accessibility Change Next line
+    value: chipTags,
     width,
     components: {
       Option: TagOption,
@@ -144,7 +167,14 @@ export const TagFilter = ({
 
         return (
           <components.MultiValueRemove {...props}>
-            <TagBadge key={data.label} label={data.label} removeIcon={true} count={data.count} />
+            <TagBadge
+              key={data.label}
+              label={data.label}
+              removeIcon={true}
+              count={data.count}
+              // BMC Code : Accessibility Change Next line
+              customClearTags={onCustomClearTags}
+            />
           </components.MultiValueRemove>
         );
       },
@@ -159,7 +189,13 @@ export const TagFilter = ({
           <Trans i18nKey="tag-filter.clear-button">Clear tags</Trans>
         </button>
       )}
-      <MultiSelect key={selectKey} {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <MultiSelect
+        key={selectKey}
+        {...selectOptions}
+        prefix={<Icon name="tag-alt" />}
+        // BMC Code : Accessibility Change Next line
+        aria-label={disableArialabel ? '' : 'Filter by tag'}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
 import { AccessControlAction, Organization } from 'app/types';
@@ -45,16 +46,19 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
             <td className="link-td">
               <a href={`admin/orgs/edit/${org.id}`}>{org.name}</a>
             </td>
-            <td className="text-right">
-              <Button
-                variant="destructive"
-                size="sm"
-                icon="times"
-                onClick={() => setDeleteOrg(org)}
-                aria-label="Delete org"
-                disabled={!canDeleteOrgs}
-              />
-            </td>
+            {/* BMC code  - next line */}
+            {config.buildInfo.env === 'development' && (
+              <td className="text-right">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  icon="times"
+                  onClick={() => setDeleteOrg(org)}
+                  aria-label="Delete org"
+                  disabled={!canDeleteOrgs}
+                />
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

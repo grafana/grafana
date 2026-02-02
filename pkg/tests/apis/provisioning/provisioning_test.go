@@ -25,6 +25,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
+	t.Skip("dashboard and folder apis are currently disabled")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

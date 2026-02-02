@@ -1,4 +1,5 @@
 import { NavModelItem } from '@grafana/data';
+import { DashFolderLinkRegexp, t } from 'app/core/internationalization';
 
 import { Breadcrumb } from './types';
 
@@ -47,10 +48,14 @@ export function buildBreadcrumbs(
       if (activeChildIndex > 0) {
         const activeChild = node.children?.[activeChildIndex];
         if (activeChild) {
-          crumbs.unshift({ text: activeChild.text, href: activeChild.url ?? '' });
+          // BMC Change: To add localized name in breadcrumbs
+          addLocalizedCrumbs(activeChild, crumbs);
+          // BMC Change: Ends
         }
       }
-      crumbs.unshift({ text: node.text, href: node.url ?? '' });
+      // BMC Change: To add localized name in breadcrumbs
+      addLocalizedCrumbs(node, crumbs);
+      // BMC Change: Ends
     }
 
     if (node.parentItem) {
@@ -66,4 +71,15 @@ export function buildBreadcrumbs(
   addCrumbs(sectionNav, true);
 
   return crumbs;
+}
+
+// BMC Change: To add localized name in breadcrumbs
+function addLocalizedCrumbs(node: NavModelItem, crumbs: Breadcrumb[]) {
+  let text = node.text;
+  const match = node.url?.match(DashFolderLinkRegexp);
+  if (match) {
+    // to be ignored for extraction
+    text = t(`bmc-dynamic.${match[1]}.name`, text);
+  }
+  crumbs.unshift({ text: text, href: node.url ?? '' });
 }

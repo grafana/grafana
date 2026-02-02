@@ -2,13 +2,15 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { useStyles2, PanelContainer } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export const NoData = () => {
   const css = useStyles2(getStyles);
   return (
     <>
       <PanelContainer data-testid="explore-no-data" className={css.wrapper}>
-        <span className={css.message}>{'No data'}</span>
+        {/* BMC change */}
+        <span className={css.message}>{t('bmcgrafana.explore.no-data','No data')}</span>
       </PanelContainer>
     </>
   );

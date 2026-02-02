@@ -21,7 +21,7 @@ const (
 
 	securitySection            = "security.encryption"
 	encryptionAlgorithmKey     = "algorithm"
-	defaultEncryptionAlgorithm = encryption.AesCfb
+	defaultEncryptionAlgorithm = encryption.AesGcm
 )
 
 // Service must not be used for encryption.

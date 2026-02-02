@@ -30,6 +30,8 @@ export type SearchResultsProps = {
   onDatasourceChange?: (datasource?: string) => void;
   onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
+  // BMC Code : Accessibility Change ( Next 1 line )
+  onResultsChange: (resultsCount: number) => void;
 };
 
 export type TableColumn = Column & {
@@ -50,6 +52,8 @@ export const SearchResultsTable = React.memo(
     onDatasourceChange,
     onClickItem,
     keyboardEvents,
+    // BMC Code : Accessibility Change ( Next 1 line )
+    onResultsChange,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
@@ -62,12 +66,19 @@ export const SearchResultsTable = React.memo(
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
+      // BMC Code : Accessibility Change starts here
+      const totalRows = response.totalRows;
+      if (onResultsChange) {
+        onResultsChange(totalRows);
+      }
+      // BMC Code : Accessibility Change ends here
 
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
       return Array(response.totalRows).fill(0);
-    }, [response]);
+      // BMC Code : Accessibility Change ( Next 1 line )
+    }, [response, onResultsChange]);
 
     // Scroll to the top and clear loader cache when the query results change
     useEffect(() => {

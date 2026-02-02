@@ -4,6 +4,7 @@ import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { isGrafanaAdmin } from 'app/features/plugins/admin/permissions'; // BMC Code
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -124,7 +125,11 @@ export const useDataSourceSettings = () => {
 
 export const useDataSourceRights = (uid: string): DataSourceRights => {
   const dataSource = useDataSource(uid);
-  const readOnly = dataSource.readOnly === true;
+  // BMC Code inline
+  // Forcefully disabling save for BMC Helix and BMC JSON API DS
+  const readOnly =
+    dataSource.readOnly === true ||
+    (['bmchelix-ade-datasource', 'json-datasource'].includes(dataSource.type) && !isGrafanaAdmin());
   const hasWriteRights = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesWrite, dataSource);
   const hasDeleteRights = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesDelete, dataSource);
 

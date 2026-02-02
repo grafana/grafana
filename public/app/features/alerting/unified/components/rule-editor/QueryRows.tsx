@@ -230,6 +230,8 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
     model: {
       ...omit(item.model, 'datasource'),
       datasource: getDataSourceRef(settings),
+      // BMC Change: Next line to make build work
+      refId: item.refId,
     },
     datasourceUid: settings.uid,
   };

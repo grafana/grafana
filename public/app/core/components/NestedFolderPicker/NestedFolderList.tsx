@@ -9,7 +9,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/core/components/Indent/Indent';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -212,7 +212,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         )}
 
         <label className={styles.label} id={labelId}>
-          <Text truncate>{item.title}</Text>
+          {/* BMC Change: Next line */}
+          <Text truncate>{t(`bmc-dynamic.${item.uid}.name`, item.title)}</Text>
         </label>
       </div>
     </div>

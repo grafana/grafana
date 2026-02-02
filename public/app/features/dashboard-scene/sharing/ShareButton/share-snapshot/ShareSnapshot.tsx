@@ -4,6 +4,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
+import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -56,7 +57,8 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   };
 
   const onDeleteSnapshotClick = async () => {
-    await deleteSnapshot(snapshotResult.value?.deleteUrl!);
+    // BMC Code: Correct URL origin to match tenant instance
+    await deleteSnapshot(updateURLOrigin(snapshotResult.value?.deleteUrl!));
     reset();
   };
 
@@ -103,13 +105,19 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
               step === 2 &&
               snapshotResult.value && (
                 <UpsertSnapshotActions
-                  url={snapshotResult.value!.url}
+                  // BMC Code: Correct URL origin to match tenant instance
+                  url={updateURLOrigin(snapshotResult.value!.url)}
                   onDeleteClick={() => setShowDeleteConfirmation(true)}
                   onNewSnapshotClick={reset}
                 />
               )
             )}
-            <TextLink icon="external-link-alt" href="/dashboard/snapshots" external>
+            <TextLink
+              icon="external-link-alt"
+              // BMC code: Inline, Add appSubUrl to the link to fix subPath issue
+              href={`${config.appSubUrl}/dashboard/snapshots`}
+              external
+            >
               {t('snapshot.share.view-all-button', 'View all snapshots')}
             </TextLink>
           </Stack>
@@ -192,3 +200,15 @@ const UpsertSnapshotActions = ({
     </Stack>
   );
 };
+
+// BMC code
+const updateURLOrigin = (url: string) => {
+  let parser = document.createElement('a');
+  parser.href = url;
+  if (parser.origin.localeCompare(window.location.origin) !== 0) {
+    const updatedURL = url.replace(parser.origin, window.location.origin);
+    return updatedURL;
+  }
+  return url;
+};
+// End

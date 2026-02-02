@@ -2,7 +2,7 @@
 import { PureComponent, ReactNode } from 'react';
 
 // Types
-import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta, PanelProps, PluginType } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
 
@@ -74,7 +74,8 @@ export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugi
       links: [],
       logos: {
         large: '',
-        small: 'public/img/grafana_icon.svg',
+        // BMC Code - Icon change
+        small: 'public/img/apple-touch-icon.png',
       },
       screenshots: [],
       updated: '',

@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { VariableValueOption } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
@@ -26,10 +27,16 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
   if (!previewOptions.length) {
     return null;
   }
-
+  {
+    /*BMC Change: To enable localization for below text*/
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
-      <h5>Preview of values</h5>
+      <h5>
+        <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.types.internal.preview-values">
+          Preview of values
+        </Trans>
+      </h5>
       <InlineFieldRow>
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>

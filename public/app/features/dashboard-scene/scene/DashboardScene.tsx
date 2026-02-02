@@ -1,18 +1,22 @@
 import * as H from 'history';
+import { cloneDeep, merge as _merge } from 'lodash';
 
 import {
   AppEvents,
   CoreApp,
   DataQueryRequest,
-  NavIndex,
-  NavModelItem,
-  locationUtil,
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
+  locationUtil,
+  NavIndex,
+  NavModelItem,
 } from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
+  CustomTransformerDefinition,
+  SceneDataTransformer,
   sceneGraph,
+  SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -23,7 +27,7 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
+import { Dashboard, DashboardLink, DataTransformerConfig, LibraryPanel } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
@@ -34,6 +38,8 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -43,6 +49,7 @@ import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
+import { DashboardLocale } from '../../bmc-content-localization/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -55,18 +62,20 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { isInCloneChain } from '../utils/clone';
+import { getOriginalKey, isInCloneChain } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
 import {
+  findOriginalVizPanelByKey,
   getClosestVizPanel,
   getDashboardSceneFor,
   getDefaultVizPanel,
   getLayoutManagerFor,
   getPanelIdForVizPanel,
 } from '../utils/utils';
+import { isVariableSet } from '../utils/variables';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -142,6 +151,12 @@ export interface DashboardSceneState extends SceneObjectState {
   panelsPerRow?: number;
   /** options pane */
   editPane: DashboardEditPane;
+
+  // BMC Change: Starts
+  locales?: DashboardLocale;
+  currentLocales?: DashboardLocale;
+  multilingualPdf?: boolean;
+  // BMC Change: Ends
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -184,6 +199,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   > = getDashboardSceneSerializer();
 
+  // BMC Change: State for localization
+  private nonLocalizedState?: DashboardScene;
+
+  public setnonLocalizedState(nonLocalizedState?: DashboardScene) {
+    this.nonLocalizedState = nonLocalizedState;
+  }
+
+  public getNonLocalizedState(): DashboardScene | undefined {
+    return this.nonLocalizedState;
+  }
+  // BMC Change: Ends
+
   public constructor(state: Partial<DashboardSceneState>) {
     super({
       title: 'Dashboard',
@@ -194,6 +221,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
+      ...dashboardSceneGraph.updateCurrentLocales(state.locales!),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -203,6 +231,183 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  // BMC Change: Starts
+  private _applyLocalization() {
+    if (!getFeatureStatus('bhd-localization') || this.state.isEditing) {
+      return;
+    }
+    this.nonLocalizedState = this.clone();
+    const panels = sceneGraph.findAllObjects(this, (o) => {
+      return Boolean(o instanceof VizPanel);
+    }) as VizPanel[];
+    const rowPanels = sceneGraph.findAllObjects(this, (o) => {
+      return Boolean(o instanceof SceneGridRow);
+    }) as SceneGridRow[];
+    const variables: SceneVariable[] = sceneGraph.findAllObjects(this, (o) => {
+      return Boolean(isVariableSet(o));
+    }) as SceneVariable[];
+    panels?.map((p) => {
+      const panelInContext = p as VizPanel;
+      panelInContext.setState({
+        title: dashboardSceneGraph.replaceValueForLocale(p.state.title, this.state.currentLocales!),
+        description: dashboardSceneGraph.replaceValueForLocale(p.state.description ?? '', this.state.currentLocales!),
+        fieldConfig: {
+          ...p.state.fieldConfig,
+          ...dashboardSceneGraph.replaceValuesRecursive(p.state.fieldConfig, this.state.currentLocales!),
+        },
+        options: dashboardSceneGraph.replaceValuesRecursive(p.state.options, this.state.currentLocales!),
+      });
+      const panelInContextDataProvider = panelInContext.state.$data as SceneDataTransformer;
+      panelInContextDataProvider?.setState({
+        transformations: dashboardSceneGraph.replaceValuesRecursive(
+          panelInContextDataProvider.state.transformations,
+          this.state.currentLocales!
+        ) as Array<DataTransformerConfig | CustomTransformerDefinition>,
+      });
+    });
+    rowPanels?.map((p) => {
+      p.setState({ title: dashboardSceneGraph.replaceValueForLocale(p.state.title, this.state.currentLocales!) });
+    });
+    variables?.map((v) => {
+      if (v.state.label) {
+        v.setState({
+          label: dashboardSceneGraph.replaceValueForLocale(v.state.label, this.state.currentLocales!),
+          description: dashboardSceneGraph.replaceValueForLocale(v.state.description ?? '', this.state.currentLocales!),
+        });
+      }
+    });
+  }
+  public unapplyLocalization(forceSetNonLocalizedState = false) {
+    if (!getFeatureStatus('bhd-localization') || this.nonLocalizedState === undefined) {
+      return;
+    }
+    if (forceSetNonLocalizedState) {
+      this.nonLocalizedState = this.clone();
+    }
+    const nonLocalizedPanels = sceneGraph.findAllObjects(this.nonLocalizedState!, (o) => {
+      return Boolean(o instanceof VizPanel);
+    }) as VizPanel[];
+    const nonLocalizedRowPanels = sceneGraph.findAllObjects(this.nonLocalizedState!, (o) => {
+      return Boolean(o instanceof SceneGridRow);
+    }) as SceneGridRow[];
+    const panels = sceneGraph.findAllObjects(this, (o) => {
+      return Boolean(o instanceof VizPanel);
+    }) as VizPanel[];
+    const rowPanels = sceneGraph.findAllObjects(this, (o) => {
+      return Boolean(o instanceof SceneGridRow);
+    }) as SceneGridRow[];
+    const nonLocalizedVariables: SceneVariable[] = sceneGraph.findAllObjects(this.nonLocalizedState!, (o) => {
+      return Boolean(isVariableSet(o));
+    }) as SceneVariable[];
+    const variables: SceneVariable[] = sceneGraph.findAllObjects(this, (o) => {
+      return Boolean(isVariableSet(o));
+    }) as SceneVariable[];
+
+    panels?.map((p) => {
+      let nonLocalizedPanel = nonLocalizedPanels?.find((np) => np.state.key === p.state.key);
+
+      // need to find the original panel in the non-localized state for repeated panels as well
+      if (!nonLocalizedPanel) {
+        nonLocalizedPanel = findOriginalVizPanelByKey(this.nonLocalizedState!, p.state.key!) ?? undefined;
+      }
+
+      if (nonLocalizedPanel) {
+        (p as VizPanel).setState({
+          title: nonLocalizedPanel?.state.title ?? p.state.title,
+          description: nonLocalizedPanel?.state.description ?? p.state.description,
+          fieldConfig: _merge({}, { ...p.state.fieldConfig }, { ...nonLocalizedPanel?.state.fieldConfig }),
+          options: _merge({}, { ...p.state.options }, { ...nonLocalizedPanel?.state.options }),
+        });
+        const panelInContextDataProvider = p.state.$data as SceneDataTransformer;
+        panelInContextDataProvider?.setState({
+          transformations:
+            (nonLocalizedPanel?.state.$data as SceneDataTransformer)?.state.transformations ??
+            (p.state.$data as SceneDataTransformer).state.transformations,
+        });
+      }
+    });
+    rowPanels?.map((p) => {
+      let nonLocalizedRowPanel = nonLocalizedRowPanels?.find((np) => np.state.key === p.state.key);
+      // need to find the original panel in the non-localized state for repeated rows as well
+      if (!nonLocalizedRowPanel && p.state.key) {
+        const currentKey = p.state.key;
+        nonLocalizedRowPanel = nonLocalizedRowPanels?.find((np) => {
+          const npKey = np.state.key;
+          if (!npKey) {
+            return false;
+          }
+          return (
+            npKey === currentKey || (!isInCloneChain(npKey) && getOriginalKey(npKey) === getOriginalKey(currentKey))
+          );
+        });
+      }
+
+      if (nonLocalizedRowPanel) {
+        p.setState({ title: nonLocalizedRowPanel.state.title ?? p.state.title });
+      }
+    });
+    variables?.map((v) => {
+      const nonLocalizedVariable = nonLocalizedVariables?.find((nv) => nv.state.key === v.state.key);
+      if (nonLocalizedVariable?.state.label) {
+        v.setState({
+          label: nonLocalizedVariable.state.label,
+          description: nonLocalizedVariable.state.description,
+        });
+      }
+    });
+    if (forceSetNonLocalizedState) {
+      this.nonLocalizedState = undefined;
+    }
+  }
+  public applyLocalizationForPanel(panelKey: string) {
+    if (!getFeatureStatus('bhd-localization') || this.state.isEditing) {
+      return;
+    }
+
+    const currentLocales = this.state.currentLocales;
+    if (!currentLocales) {
+      return;
+    }
+
+    const runtimePanel = findOriginalVizPanelByKey(this, panelKey);
+    if (!runtimePanel) {
+      return;
+    }
+
+    const localizePanel = (target: VizPanel) => {
+      const targetDataProvider = target.state.$data as SceneDataTransformer;
+
+      target.setState({
+        title: dashboardSceneGraph.replaceValueForLocale(target.state.title, currentLocales),
+        description: dashboardSceneGraph.replaceValueForLocale(target.state.description ?? '', currentLocales),
+        fieldConfig: {
+          ...target.state.fieldConfig,
+          ...dashboardSceneGraph.replaceValuesRecursive(target.state.fieldConfig, currentLocales),
+        },
+        options: dashboardSceneGraph.replaceValuesRecursive(target.state.options, currentLocales),
+      });
+
+      if (targetDataProvider) {
+        targetDataProvider.setState({
+          transformations: dashboardSceneGraph.replaceValuesRecursive(
+            targetDataProvider.state.transformations,
+            currentLocales
+          ) as Array<DataTransformerConfig | CustomTransformerDefinition>,
+        });
+      }
+    };
+
+    const runtimeGridItem = runtimePanel.parent;
+    if (runtimeGridItem instanceof DashboardGridItem && runtimeGridItem.state.repeatedPanels?.length) {
+      for (const repeatedPanel of runtimeGridItem.state.repeatedPanels!) {
+        localizePanel(repeatedPanel);
+      }
+    } else {
+      localizePanel(runtimePanel);
+    }
+  }
+  // BMC Change: Ends
+
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
     const isNew = locationService.getLocation().pathname === '/dashboard/new';
@@ -210,7 +415,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     window.__grafanaSceneContext = this;
 
     this._initializePanelSearch();
-
+    // BMC Change: Starts
+    if (getFeatureStatus('bhd-localization')) {
+      setTimeout(() => {
+        this._applyLocalization();
+      }, 100);
+    }
+    // BMC Change: Ends
     if (this.state.isEditing) {
       this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
@@ -234,6 +445,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
+    // @ts-expect-error
+    getTimeSrv().init(oldDashboardWrapper);
+
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
@@ -241,6 +455,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._changeTracker.terminate();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
+      this.unapplyLocalization(this.state.isEditing);
     };
   }
 
@@ -258,6 +473,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onEnterEditMode = () => {
+    // BMC Change: Unapply localization
+    this.unapplyLocalization();
+
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
@@ -292,9 +510,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         folderUid: folderUid,
         version: result.version,
       },
+      // BMC code: next line - take from Grafana main, should be removed after upgrade
+      overlay: undefined,
     });
 
     this.state.editPanel?.dashboardSaved();
+
+    // BMC code: take from Grafana main, should be removed after upgrade
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialUrlState = locationService.getLocation();
+    // BMC code end
     this._changeTracker.startTrackingChanges();
   }
 
@@ -358,6 +583,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Disable grid dragging
     this.state.body.editModeChanged?.(false);
+
+    // BMC Change: reapply localization
+
+    this._applyLocalization();
   }
 
   public canDiscard() {
@@ -426,7 +655,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel, title, uid } = this.state;
-    const isNew = !Boolean(uid);
+    // BMC Change: Home Dashboard Check
+    const isNew = !Boolean(uid) && locationService.getLocation().pathname === '/dashboard/new';
 
     let pageNav: NavModelItem = {
       text: title,
@@ -784,6 +1014,35 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       },
     });
   }
+
+  // BMC Change Starts: Locale functions
+  public getDashLocales() {
+    return cloneDeep(this.state.locales);
+  }
+
+  getCurrentLocales = () => {
+    return this.state.currentLocales;
+  };
+
+  getDashCurrentLocales() {
+    if (!!this.state.locales) {
+      const userLang = config.bootData.user.language ?? 'default';
+      const selectLocales = this.state.locales[userLang as keyof DashboardLocale];
+      const reducedLocaleObj = Object.keys(selectLocales).reduce((acc: any, cur: string) => {
+        if (selectLocales[cur]) {
+          acc[cur] = selectLocales[cur];
+        }
+        return acc;
+      }, {});
+      return { ...this.state.locales!['default'], ...reducedLocaleObj };
+    }
+    return {};
+  }
+
+  public updateLocalesChanges(locales: DashboardLocale) {
+    this.setState({ locales, ...dashboardSceneGraph.updateCurrentLocales(locales) });
+  }
+  // BMC Change Ends: Locale functions
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {

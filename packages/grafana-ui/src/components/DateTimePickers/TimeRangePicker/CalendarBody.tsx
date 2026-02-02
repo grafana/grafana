@@ -1,18 +1,21 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import moment from 'moment';
+import { useCallback, useState } from 'react';
 import Calendar, { CalendarType } from 'react-calendar';
 
-import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone, days } from '@grafana/data';
+// eslint-disable-next-line no-restricted-imports
+import { config } from '@grafana/runtime';
 
 import { useStyles2 } from '../../../themes';
 import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
-import { getWeekStart, WeekStart } from '../WeekStartPicker';
+import { getWeekStart, WeekStart, isWeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
-const weekStartMap: Record<WeekStart, CalendarType> = {
+const weekStartMap: Partial<Record<WeekStart, CalendarType>> = {
   saturday: 'islamic',
   sunday: 'gregory',
   monday: 'iso8601',
@@ -22,24 +25,51 @@ export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCale
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
-  const weekStartValue = getWeekStart(weekStart);
+  let weekStartValue = getWeekStart(weekStart);
 
+  // BMC Accessibility Change Start: Announce month when it changes
+  const [liveMonth, setLiveMonth] = useState<string>('');
+  const handleActiveStartDateChange = (activeStartDate: Date | null) => {
+    if (!activeStartDate) return;
+
+    const monthLabel = activeStartDate.toLocaleString(config.bootData.user.language ?? 'en', {
+      month: 'long',
+      year: 'numeric',
+    });
+    setTimeout(() => setLiveMonth(monthLabel), 0);
+  };
+  // BMC Accessibility Change end
+
+  // BMC Change: Next Block: Use weekStartValue to determine calendarType
+  if (weekStartValue === 'browser') {
+    const currentWeekStart = days[moment().startOf('w').day()].toLowerCase();
+    weekStartValue = isWeekStart(currentWeekStart) ? currentWeekStart : 'monday';
+  }
   return (
-    <Calendar
-      selectRange={true}
-      next2Label={null}
-      prev2Label={null}
-      className={styles.body}
-      tileClassName={styles.title}
-      value={value}
-      nextLabel={<Icon name="angle-right" />}
-      nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
-      prevLabel={<Icon name="angle-left" />}
-      prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
-      onChange={onCalendarChange}
-      locale="en"
-      calendarType={weekStartMap[weekStartValue]}
-    />
+    <>
+      <Calendar
+        selectRange={true}
+        next2Label={null}
+        prev2Label={null}
+        className={styles.body}
+        tileClassName={styles.title}
+        value={value}
+        nextLabel={<Icon name="angle-right" />}
+        nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
+        prevLabel={<Icon name="angle-left" />}
+        prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
+        onChange={onCalendarChange}
+        // BMC Change: Next line
+        locale={config.bootData.user.language ?? 'en'}
+        calendarType={weekStartMap[weekStartValue]}
+        //BMC Accessibility Change: Added below prop to announce month when it changes
+        onActiveStartDateChange={({ activeStartDate }) => handleActiveStartDateChange(activeStartDate)}
+      />
+      <div aria-live="polite" aria-atomic="true" role="status" className="sr-only">
+        {liveMonth}
+      </div>
+      {/*BMC Accessibility Change end */}
+    </>
   );
 }
 

@@ -20,19 +20,34 @@ export const PlaylistTable = ({ items, deleteItem, moveItem }: Props) => {
   };
 
   return (
-    <FieldSet label={t('playlist-edit.form.table-heading', 'Dashboards')}>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="playlist-list" direction="vertical">
-          {(provided) => {
-            return (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                <PlaylistTableRows items={items} onDelete={deleteItem} />
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
-      </DragDropContext>
-    </FieldSet>
+    <>
+      {/* BMC Code : Accessibility Change (Next 1 line) */}
+      <FieldSet label={t('playlist-edit.form.table-heading', 'Dashboards')} role="application">
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="playlist-list" direction="vertical">
+            {(provided) => {
+              return (
+                <div 
+                  ref={provided.innerRef} 
+                  {...provided.droppableProps}
+                  // BMC Code : Accessibility Change ( next 2 line)
+                  role="list"
+                  aria-label={t('playlist-edit.form.table-heading', 'Dashboards')}>
+                  <PlaylistTableRows items={items} onDelete={deleteItem} />
+                  {provided.placeholder}
+                </div>
+              );
+            }}
+          </Droppable>
+        </DragDropContext>
+      </FieldSet>
+
+      {/* BMC Code : Accessibility Change (Next 5 line) */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {items.length > 0
+          ? `Playlist items changed. There are ${items.length} dashboards in playlist now.`
+          : 'Playlist is empty. Add dashboards below.'}
+      </div>
+    </>
   );
 };

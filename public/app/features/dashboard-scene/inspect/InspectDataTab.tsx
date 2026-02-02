@@ -47,7 +47,9 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     const { options } = model.useState();
     const panel = model.state.panelRef.resolve();
     const dataProvider = sceneGraph.getData(panel);
-    const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
+    let { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
+    // BMC Change: Apply field config by default
+    data = panel.applyFieldConfig(data);
     const timeRange = sceneGraph.getTimeRange(panel);
 
     if (!data) {

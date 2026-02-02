@@ -1,19 +1,20 @@
-import { useCallback, ChangeEvent, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  Box,
   CollapsableSection,
   Field,
   Input,
-  RadioButtonGroup,
-  TagsInput,
   Label,
-  TextArea,
-  Box,
+  RadioButtonGroup,
   Stack,
   WeekStart,
+  Switch,
+  TagsInput,
+  TextArea,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -29,11 +30,14 @@ import { SettingsPageProps } from './types';
 
 export type Props = SettingsPageProps & ConnectedProps<typeof connector>;
 
-const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
-  { value: 1, label: 'Shared crosshair' },
-  { value: 2, label: 'Shared Tooltip' },
-];
+// BMC code - for localization
+const getGraphTooltipOptions = () => {
+  return [
+    { value: 0, label: t('bmcgrafana.dashboards.settings.general.default-label', 'Default') },
+    { value: 1, label: t('bmcgrafana.dashboards.settings.general.shared-crosshair-label', 'Shared crosshair') },
+    { value: 2, label: t('bmcgrafana.dashboards.settings.general.share-tooltip-label', 'Shared Tooltip') },
+  ];
+};
 
 export function GeneralSettingsUnconnected({
   dashboard,
@@ -41,6 +45,11 @@ export function GeneralSettingsUnconnected({
   updateWeekStart,
   sectionNav,
 }: Props): JSX.Element {
+  // BMC code - for localization
+  const GRAPH_TOOLTIP_OPTIONS = useMemo(() => {
+    return getGraphTooltipOptions();
+  }, []);
+
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
@@ -114,10 +123,18 @@ export function GeneralSettingsUnconnected({
     setRenderCounter(renderCounter + 1);
   };
 
-  const editableOptions = [
-    { label: 'Editable', value: true },
-    { label: 'Read-only', value: false },
-  ];
+  const onMultilingualPdfToggle = () => {
+    dashboard.multilingualPdf = !dashboard.multilingualPdf;
+    setRenderCounter(renderCounter + 1);
+  };
+
+  // BMC code - for localization
+  const editableOptions = useMemo(() => {
+    return [
+      { label: t('bmcgrafana.dashboards.settings.general.editable-label', 'Editable'), value: true },
+      { label: t('bmcgrafana.dashboards.settings.general.read-only-label', 'Read-only'), value: false },
+    ];
+  }, []);
 
   return (
     <Page navModel={sectionNav} pageNav={pageNav}>
@@ -160,7 +177,8 @@ export function GeneralSettingsUnconnected({
             />
           </Field>
           <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
-            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
+            {/* BMC Change: Remove defined width */}
+            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} />
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
@@ -184,6 +202,20 @@ export function GeneralSettingsUnconnected({
             )}
           >
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
+          </Field>
+          {/* BMC Change */}
+          <Field
+            label={t('bmc.dashboard-settings.general.multilingual-pdf', 'Multiligual PDF')}
+            description={t(
+              'bmc.dashboard-settings.general.multilingual-pdf-description',
+              'Enable multilingual PDF generation for simple layout PDF reports'
+            )}
+          >
+            <Switch
+              id="multilingual-pdfs-toggle"
+              value={!!dashboard.multilingualPdf}
+              onChange={onMultilingualPdfToggle}
+            />
           </Field>
         </Box>
 

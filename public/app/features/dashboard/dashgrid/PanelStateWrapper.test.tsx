@@ -19,6 +19,16 @@ jest.mock('app/core/profiler', () => ({
   },
 }));
 
+// BMC code start
+jest.mock('app/core/services/dashboardLoadTime_srv', () => ({
+  dashboardLoadTime: {
+    setDashboardInfo: jest.fn(),
+    setDashboardPanelRendered: jest.fn(),
+    reset: jest.fn(),
+  },
+}));
+// BMC code end
+
 function setupTestContext(options: Partial<Props>) {
   const mockStore = configureMockStore();
   const store = mockStore({ dashboard: { panels: [] } });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import UpdateAllButton from 'app/features/plugins/admin/components/UpdateAllButton';
 import UpdateAllModal from 'app/features/plugins/admin/components/UpdateAllModal';
@@ -27,7 +28,11 @@ export function AddNewConnectionPage() {
   );
 
   return (
-    <Page navId={'connections-add-new-connection'} actions={updateAllButton}>
+    <Page
+      navId={'connections-add-new-connection'}
+      // BMC Change: Inline: disable update plugins button in non development mode
+      actions={config.buildInfo.env === 'development' ? updateAllButton : undefined}
+    >
       <Page.Contents>
         <AddNewConnection />
         <UpdateAllModal

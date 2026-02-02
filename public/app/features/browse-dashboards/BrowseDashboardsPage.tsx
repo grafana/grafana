@@ -146,8 +146,18 @@ const BrowseDashboardsPage = memo(() => {
     >
       <Page.Contents className={styles.pageContents}>
         <div>
+          {
+            //BMC Code : Accessibility Change (Next line, Added a label for FilterInput)
+          }
+          <label htmlFor="dashboard-serach-filter-input" className={styles.hiddenLabel}>
+            {getSearchPlaceholder(searchState.includePanels)}
+          </label>
+          {
+            //BMC Code : Accessibility Change | Added id attribute to bind it to label element
+          }
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
+            id="dashboard-serach-filter-input"
             value={searchState.query}
             escapeRegex={false}
             onChange={(e) => stateManager.onQueryChange(e)}
@@ -204,6 +214,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
       display: 'block',
     },
   }),
+  // BMC Code : Accessibility Change starts here.
+  hiddenLabel: css({
+    border: '0',
+    clip: 'rect(0 0 0 0)',
+    height: '1px',
+    margin: '-1px',
+    overflow: 'hidden',
+    padding: '0',
+    position: 'absolute',
+    width: '1px',
+  }),
+  // BMC Code : Accessibility Change ends here.
 });
 
 BrowseDashboardsPage.displayName = 'BrowseDashboardsPage';

@@ -6,11 +6,11 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   ScopedVars,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { CustomFormatterVariable } from '@grafana/scenes';
@@ -43,6 +43,15 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     if (!queries.length) {
       return of({ data: [] }); // nothing
     }
+
+    // BMC code starts
+    queries.forEach((t) => {
+      // In OOTB dashboards, we put DS as "BMC Helix" or "BMC Helix API". We need to handle the loading of this datasource if main DS is mixed and the targets are a datasource - DRJ71-17946
+      if (typeof t?.datasource === 'string') {
+        t.datasource = { uid: t.datasource };
+      }
+    });
+    // BMC code ends
 
     // Build groups of queries to run in parallel
     const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');

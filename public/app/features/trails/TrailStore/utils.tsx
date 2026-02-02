@@ -1,10 +1,11 @@
 import { LinkButton, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { createSuccessNotification } from '../../../core/copy/appNotification';
 import { HOME_ROUTE } from '../shared';
 
 export function createBookmarkSavedNotification() {
-  const notification = createSuccessNotification('Bookmark created');
+  const notification = createSuccessNotification(t('bmc.notiifcations.success.bookmark-created', 'Bookmark created'));
 
   notification.component = (
     <Stack gap={2} direction={'row'}>

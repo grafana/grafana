@@ -70,7 +70,8 @@ export function AddNewConnection() {
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },
-    { value: 'has-update', label: 'New Updates' },
+    // BMC Change: Commented out has-update filter option
+    // { value: 'has-update', label: 'New Updates' },
   ];
 
   const onClickCardGridItem = (e: MouseEvent<HTMLElement>, item: CardGridItem) => {

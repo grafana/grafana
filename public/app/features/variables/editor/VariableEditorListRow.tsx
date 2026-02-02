@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import { ReactElement } from 'react';
 
-import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
+import { GrafanaTheme2, TypedVariableModel, OptimizeVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
@@ -87,8 +88,12 @@ export function VariableEditorListRow({
                   reportInteraction('Duplicate variable');
                   propsOnDuplicate(identifier);
                 }}
+                // BMC Change: To enable localization for below text
                 name="copy"
-                tooltip="Duplicate variable"
+                tooltip={t(
+                  'bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list-row.copy-title',
+                  'Duplicate variable'
+                )}
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
               />
               <IconButton
@@ -97,8 +102,12 @@ export function VariableEditorListRow({
                   reportInteraction('Delete variable');
                   propsOnDelete(identifier);
                 }}
+                // BMC Change: To enable localization for below text
                 name="trash-alt"
-                tooltip="Remove variable"
+                tooltip={t(
+                  'bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list-row.trash-alt-title',
+                  'Remove variable'
+                )}
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
               />
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
@@ -114,6 +123,11 @@ export function VariableEditorListRow({
 
 function getDefinition(model: TypedVariableModel): string {
   let definition = '';
+  // BMC Code: Below block
+  // ToDo_GF_10.4.2: Verify if this below block is actually needed.
+  if (model.type === 'optimizepicker') {
+    return (model as OptimizeVariableModel).definition || '';
+  }
   if (model.type === 'query') {
     if (model.definition) {
       definition = model.definition;
@@ -144,10 +158,14 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
   }
 
   return (
+    // BMC Change: To enable localization for below text
     <Icon
       name="exclamation-triangle"
       className={styles.iconFailed}
-      title="This variable is not referenced by any variable or dashboard."
+      title={t(
+        'bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list-row.exclamation-triangle-title',
+        'This variable is not referenced by any variable or dashboard.'
+      )}
     />
   );
 }

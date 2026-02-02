@@ -1,11 +1,13 @@
-import { PanelModel } from '@grafana/data';
+import { FieldConfigSource, PanelModel, PanelPlugin } from '@grafana/data';
 import { SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import { DataSourceRef, DataTransformerConfig } from '@grafana/schema';
 
 import { getPanelIdForVizPanel, getQueryRunnerFor } from './utils';
 
 export class PanelModelCompatibilityWrapper implements PanelModel {
-  constructor(private _vizPanel: VizPanel) {}
+  // BMC Change: Inline
+  // Made _vizPanel public for Report generation
+  constructor(public _vizPanel: VizPanel) {}
 
   public get id() {
     const id = getPanelIdForVizPanel(this._vizPanel);
@@ -63,4 +65,22 @@ export class PanelModelCompatibilityWrapper implements PanelModel {
   public get pluginVersion() {
     return this._vizPanel.state.pluginVersion;
   }
+
+  // BMC Change: start
+  // Function to get state key (new panel id)
+  public get key() {
+    return this._vizPanel.state.key!;
+  }
+
+  /**
+   * Compatibility method so callers that expect the classic `PanelModel`
+   * API (like `changePlugin` in `panel/state/actions.ts`) can switch
+   * visualization type when running in scenes.
+   */
+  public changePlugin(newPlugin: PanelPlugin) {
+    const pluginId = newPlugin.meta.id;
+
+    this._vizPanel.changePluginType(pluginId, this.options, this.fieldConfig as FieldConfigSource);
+  }
+  // BMC Change: end
 }

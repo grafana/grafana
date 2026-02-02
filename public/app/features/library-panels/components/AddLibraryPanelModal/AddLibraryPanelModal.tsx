@@ -120,7 +120,13 @@ interface Props extends AddLibraryPanelContentsProps {
 
 export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
   return (
-    <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
+    // BMC Change: To enable localization for below text
+    <Modal
+      title={t('bmcgrafana.dashboards.edit-panel.create-library-panel-text', 'Create library panel')}
+      isOpen={isOpen}
+      onDismiss={props.onDismiss}
+    >
+      {/* BMC Change ends */}
       <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
     </Modal>
   );

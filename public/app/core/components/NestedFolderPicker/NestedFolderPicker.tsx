@@ -262,6 +262,10 @@ export function NestedFolderPicker({
   });
 
   let label = selectedFolder.data?.title;
+  // BMC Change: Next if block
+  if (label) {
+    label = t(`bmc-dynamic.${selectedFolder.data?.uid}.name`, label);
+  }
   if (value === '') {
     label = 'Dashboards';
   }

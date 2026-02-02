@@ -94,3 +94,13 @@ func (e DatasourcePermissionsService) DeleteResourcePermissions(ctx context.Cont
 func (e DatasourcePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
 	return ""
 }
+
+// BMC Change start
+func (e DatasourcePermissionsService) GetPermissionsList() []string {
+	return []string{}
+}
+func (e DatasourcePermissionsService) GetPermissionsToActions() map[string][]string {
+	return map[string][]string{}
+}
+
+//BMC Change end

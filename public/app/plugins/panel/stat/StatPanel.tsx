@@ -120,7 +120,6 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
 
   render() {
     const { height, options, width, data, renderCounter } = this.props;
-
     return (
       <VizRepeater
         getValues={this.getValues}

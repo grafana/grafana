@@ -37,7 +37,10 @@ export default function CheckboxCell({
   return (
     <Checkbox
       data-testid={selectors.pages.BrowseDashboards.table.checkbox(item.uid)}
-      aria-label={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select')}
+      // BMC Code : Accessibility Change (Next 3 lines)
+      aria-label={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select {{title}}', {
+        title: item.title,
+      })}
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}

@@ -57,7 +57,10 @@ export const navigateOptions = (rootStateKey: string, key: NavigationKey, clearO
 
 export const filterOrSearchOptions = (
   passedIdentifier: KeyedVariableIdentifier,
-  searchQuery = ''
+  searchQuery = '',
+  //BMC code- start
+  isCSVSearch = false // Add isCSVSearch as an optional argument
+  //BMC code- end
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { rootStateKey } = passedIdentifier;
@@ -81,8 +84,9 @@ export const filterOrSearchOptions = (
     if (containsSearchFilter(queryTarget)) {
       return searchForOptionsWithDebounce(dispatch, getState, searchQuery, rootStateKey);
     }
-
-    return dispatch(toKeyedAction(rootStateKey, updateOptionsAndFilter(options)));
+    //BMC code- start
+    return dispatch(toKeyedAction(rootStateKey, updateOptionsAndFilter({ options, isCSVSearch }))); // Pass isCSVSearch
+    //BMC code- end
   };
 };
 
@@ -132,21 +136,18 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
 
 export const openOptions =
   (identifier: KeyedVariableIdentifier, callback?: (updated: any) => void): ThunkResult<void> =>
-  async (dispatch, getState) => {
-    const { id, rootStateKey: uid } = identifier;
-    const picker = getVariablesState(uid, getState()).optionsPicker;
-
-    if (picker.id && picker.id !== id) {
-      await dispatch(commitChangesToVariable(uid, callback));
-    }
-
-    const variable = getVariable(identifier, getState());
-    if (!hasOptions(variable)) {
-      return;
-    }
-
-    dispatch(toKeyedAction(uid, showOptions(variable)));
-  };
+    async (dispatch, getState) => {
+      const { id, rootStateKey: uid } = identifier;
+      const picker = getVariablesState(uid, getState()).optionsPicker;
+      if (picker.id && picker.id !== id) {
+        await dispatch(commitChangesToVariable(uid, callback));
+      }
+      const variable = getVariable(identifier, getState());
+      if (!hasOptions(variable)) {
+        return;
+      }
+      dispatch(toKeyedAction(uid, showOptions(variable)));
+    };
 
 export const toggleOptionByHighlight = (key: string, clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {

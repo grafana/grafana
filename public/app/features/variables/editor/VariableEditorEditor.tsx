@@ -7,6 +7,8 @@ import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableTyp
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
+import { KeySelectorProvider } from 'app/features/keySelector/KeySelector';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
@@ -22,6 +24,7 @@ import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp, changeVariableType, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+import { deleteVariableCache } from 'app/features/dashboard-scene/settings/variables/utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableTypeSelect } from './VariableTypeSelect';
@@ -31,6 +34,8 @@ import { OnPropChangeArguments, VariableNameConstraints } from './types';
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
   editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
   variable: getVariable(ownProps.identifier, state),
+  // BMC Change: To enable localization
+  dashboard: state.dashboard.getModel(),
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
@@ -132,6 +137,10 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     this.props.removeVariable(this.props.identifier);
     this.onModalClose();
     locationService.partial({ editIndex: null });
+    // BMC code starts
+    const dashboardUID = this.props.identifier.rootStateKey;
+    deleteVariableCache(this.props.variable, dashboardUID, true);
+    // BMC code ends
   };
 
   onApply = () => {
@@ -158,38 +167,66 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
     return (
       <>
+        {/* BMC Change: To enable localization for below text */}
         <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
           <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
-
-          <VariableLegend>General</VariableLegend>
+          <VariableLegend>
+            <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.variable-legend">General</Trans>
+          </VariableLegend>
           <VariableTextField
             value={this.props.editor.name}
             onChange={this.onNameChange}
-            name="Name"
-            placeholder="Variable name"
-            description="The name of the template variable. (Max. 50 characters)"
+            name={t('bmcgrafana.dashboards.settings.variables.editor.variable-text-field.name.text', 'Name')}
+            placeholder={t(
+              'bmcgrafana.dashboards.settings.variables.editor.variable-text-field.name.placeholder',
+              'Variable name'
+            )}
+            description={t(
+              'bmcgrafana.dashboards.settings.variables.editor.variable-text-field.name.description',
+              'The name of the template variable. (Max. 50 characters)'
+            )}
             invalid={!!this.props.editor.errors.name}
             error={this.props.editor.errors.name}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
             maxLength={VariableNameConstraints.MaxSize}
             required
           />
-
-          <VariableTextField
-            name="Label"
-            description="Optional display name"
-            value={this.props.variable.label ?? ''}
-            placeholder="Label name"
-            onChange={this.onLabelChange}
-            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
-          />
-          <VariableTextAreaField
-            name="Description"
-            value={variable.description ?? ''}
-            placeholder="Descriptive text"
-            onChange={this.onDescriptionChange}
-            width={52}
-          />
+          {/* BMC Change: Starts */}
+          {/*BMC Change: To enable localization for below text*/}
+          <KeySelectorProvider
+            keys={this.props.dashboard?.getDashCurrentLocales()}
+            resourceUid={this.props.dashboard?.uid}
+          >
+            <VariableTextField
+              name={t('bmcgrafana.dashboards.settings.variables.editor.variable-text-field.label.text', 'Label')}
+              description={t(
+                'bmcgrafana.dashboards.settings.variables.editor.variable-text-field.label.description',
+                'Optional display name'
+              )}
+              value={this.props.variable.label ?? ''}
+              placeholder={t(
+                'bmcgrafana.dashboards.settings.variables.editor.variable-text-field.label.placeholder',
+                'Label name'
+              )}
+              onChange={this.onLabelChange}
+              testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
+            />
+            {/*BMC Change: To enable localization for below text*/}
+            <VariableTextAreaField
+              name={t(
+                'bmcgrafana.dashboards.settings.variables.editor.variable-text-field.description.name',
+                'Description'
+              )}
+              value={variable.description ?? ''}
+              placeholder={t(
+                'bmcgrafana.dashboards.settings.variables.editor.variable-text-field.description.placeholder',
+                'Descriptive text'
+              )}
+              onChange={this.onDescriptionChange}
+              width={52}
+            />
+          </KeySelectorProvider>
+          {/* BMC Change: Ends */}
           <VariableHideSelect
             onChange={this.onHideChange}
             hide={this.props.variable.hide}
@@ -203,7 +240,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           <div style={{ marginTop: '16px' }}>
             <HorizontalGroup spacing="md" height="inherit">
               <Button variant="destructive" fill="outline" onClick={this.onModalOpen}>
-                Delete
+                <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.button.delete">Delete</Trans>
               </Button>
               <Button
                 type="submit"
@@ -211,7 +248,8 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 disabled={loading}
                 variant="secondary"
               >
-                Run query
+                {/* BMC Change: Next line */}
+                <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.button.run-query">Run query</Trans>
                 {loading && (
                   <Icon
                     className={styles.spin}
@@ -226,7 +264,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 onClick={this.onApply}
                 data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
               >
-                Apply
+                <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.button.apply">Apply</Trans>
               </Button>
             </HorizontalGroup>
           </div>

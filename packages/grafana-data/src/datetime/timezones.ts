@@ -2,6 +2,7 @@ import { memoize } from 'lodash';
 import moment from 'moment-timezone';
 
 import { TimeZone } from '../types/time';
+import { t } from '../utils/i18n';
 
 import { getTimeZone } from './common';
 
@@ -14,7 +15,7 @@ export enum InternalTimeZones {
 export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   switch (getTimeZone({ timeZone })) {
     case 'browser':
-      return 'Local browser time';
+      return t('bmcgrafana.grafana-data.timezone.local-browser-time', 'Local browser time');
     case 'utc':
       return 'UTC';
     default:
@@ -108,7 +109,8 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
   switch (zone) {
     case InternalTimeZones.utc: {
       return {
-        name: 'Coordinated Universal Time',
+        // BMC Change: Next line
+        name: t('bmcgrafana.grafana-data.timezone.coord-universal-time', 'Coordinated Universal Time'),
         ianaName: 'UTC',
         zone,
         countries: [],
@@ -128,7 +130,8 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         offsetInMins: 0,
         ...info,
         ianaName: info?.ianaName ?? '',
-        name: 'Default',
+        // BMC Change: Next line
+        name: t('common.locale.default', 'Default'),
         zone,
       };
     }
@@ -142,7 +145,8 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         abbreviation: 'Your local time',
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
-        name: 'Browser Time',
+        // BMC Change: Next line
+        name: t('bmcgrafana.grafana-data.timezone.browser-time', 'Browser Time'),
         ianaName: info?.ianaName ?? '',
         zone,
       };

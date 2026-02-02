@@ -2,12 +2,15 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/lib/pq"
 	"go.opentelemetry.io/otel"
 )
 
@@ -445,3 +448,67 @@ func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, t
 	})
 	return err
 }
+
+// BMC code start - RBAC changes
+// Fetch BHD permissions by provided role ids
+func (s *AccessControlStore) GetBHDPermissionsByRoles(ctx context.Context, bhdRoles []int64) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
+	if len(bhdRoles) == 0 {
+		return result, nil
+	}
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		q := `SELECT distinct(bhd_permission_name) as action, CONCAT(bhd_permission_name, ':*') as scope FROM public.bhd_role_permission where bhd_role_id=any(?)`
+		params := make([]interface{}, 0)
+		params = append(params, pq.Array(bhdRoles))
+		if err := sess.SQL(q, params...).Find(&result); err != nil {
+			return err
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (s *AccessControlStore) GetBHDRoleIdByUserId(ctx context.Context, orgID, userID int64) ([]int64, error) {
+	var queryResult = make([]int64, 0)
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		sql := `SELECT bhd_role_id FROM public.user_bhd_role where user_id=?
+		        union
+		        SELECT bhd_role_id FROM public.team_bhd_role  where team_id in (SELECT team_id FROM public.team_member where user_id=?)
+		        order by bhd_role_id`
+		params := make([]interface{}, 0)
+		params = append(params, userID, userID)
+
+		if err := sess.SQL(sql, params...).Find(&queryResult); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return queryResult, nil
+}
+
+func (s *AccessControlStore) ValidateUserId(ctx context.Context, orgID, userID int64) error {
+	var queryResult = make([]int64, 0)
+	ErrUserNotFound := errors.New("user not found")
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		sql := `SELECT id FROM public.user where id=? and org_id=?`
+		params := make([]interface{}, 0)
+		params = append(params, userID, orgID)
+		exists, err := sess.SQL(sql, params...).Get(&queryResult)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return ErrUserNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// BMC code end - RBAC changes

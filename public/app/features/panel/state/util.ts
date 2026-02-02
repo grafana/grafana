@@ -1,11 +1,12 @@
 import { PanelPluginMeta, PluginState, unEscapeStringFromRegex } from '@grafana/data';
 import { config } from 'app/core/config';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 
 export function getAllPanelPluginMeta(): PanelPluginMeta[] {
   const allPanels = config.panels;
-
   return Object.keys(allPanels)
     .filter((key) => allPanels[key]['hideFromList'] === false)
+    .filter((key) => checkMapBoxPluginFeatureStatus(key))
     .map((key) => allPanels[key])
     .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
 }
@@ -55,4 +56,13 @@ export function filterPluginList(
   }
 
   return first.concat(match);
+}
+
+//BMC Code
+export function checkMapBoxPluginFeatureStatus(key: string): boolean {
+  return key === 'bmc-panel-map-box' || key === 'panel-connected-maps'
+    ? getFeatureStatus('eabm')
+      ? true
+      : false
+    : true;
 }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../../core/core';
 import { AccessControlAction } from '../../../../types';
@@ -32,13 +33,16 @@ export function ConnectionsRedirectNotice() {
   return showNotice ? (
     <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
       <div className={styles.alertContent}>
-        <p className={styles.alertParagraph}>
-          Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
-          page, accessible from the main menu.
-        </p>
-        <LinkButton aria-label="Link to Connections" icon="arrow-right" href={ROUTES.DataSources} fill="text">
-          Go to connections
-        </LinkButton>
+        {/* BMC code - for localization */}
+        <Trans i18nKey="bmcgrafana.connections.redirect-notice">
+          <p className={styles.alertParagraph}>
+            Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
+            page, accessible from the main menu.
+          </p>
+          <LinkButton aria-label="Link to Connections" icon="arrow-right" href={ROUTES.DataSources} fill="text">
+            Go to connections
+          </LinkButton>
+        </Trans>
       </div>
     </Alert>
   ) : (

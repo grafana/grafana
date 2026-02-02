@@ -21,6 +21,8 @@ export function PageTabs({ navItem }: Props) {
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
+                //BMC Code: Accessibility (Next 1 line)
+                id={child.id}
                 icon={icon}
                 counter={child.tabCounter}
                 href={child.url}

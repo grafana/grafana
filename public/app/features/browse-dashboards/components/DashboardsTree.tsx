@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -102,6 +102,7 @@ export function DashboardsTree({
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
 
+  // BMC code - added canSelect
   const virtualData = useMemo(
     () => ({
       table,
@@ -109,10 +110,11 @@ export function DashboardsTree({
       onAllSelectionChange,
       onItemSelectionChange,
       treeID,
+      canSelect,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID]
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, canSelect]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -203,12 +205,13 @@ interface VirtualListRowProps {
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
+    canSelect: boolean;
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange, treeID } = data;
+  const { table, isSelected, onItemSelectionChange, treeID, canSelect } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -216,6 +219,17 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
   const dashboardItem = row.original.item;
   const { key, ...rowProps } = row.getRowProps({ style });
+
+  // BMC Code : Accessibility Change starts here.
+  const onRowClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    if (onItemSelectionChange && isSelected && dashboardItem.kind !== 'ui') {
+      onItemSelectionChange(dashboardItem, !isSelected(dashboardItem));
+    }
+  };
+  // BMC Code : Accessibility Change ends here.
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
     return (
@@ -234,6 +248,8 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
       data-testid={selectors.pages.BrowseDashboards.table.row(
         'title' in dashboardItem ? dashboardItem.title : dashboardItem.uid
       )}
+      // BMC Code: Accessibility Change - next line
+      onClick={canSelect ? (event) => onRowClick(event) : undefined}
     >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();

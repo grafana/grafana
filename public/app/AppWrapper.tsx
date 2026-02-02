@@ -1,5 +1,5 @@
 import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType, Fragment, ReactNode } from 'react';
+import { Component, ComponentType, Fragment, ReactNode, Suspense, lazy } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -21,10 +21,14 @@ import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { getFeatureStatus } from './features/dashboard/services/featureFlagSrv';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { isGrafanaAdmin } from './features/plugins/admin/permissions';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
+
+const GainsightAgreement = lazy(() => import('./features/gainsight/GainsightAgreement'));
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -125,6 +129,13 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                         <div className="grafana-app">
+                          {/* BMC code */}
+                            {getFeatureStatus('gainsight') && !isGrafanaAdmin() && (
+                              <Suspense fallback={<></>}>
+                                <GainsightAgreement isModal={true}></GainsightAgreement>
+                              </Suspense>
+                            )}
+                            {/* End */}
                           {config.featureToggles.appSidecar ? (
                             <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
                           ) : (

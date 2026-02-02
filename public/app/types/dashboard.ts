@@ -1,7 +1,9 @@
 import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
+import { Preference } from 'app/core/services/ims_srv';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { CustomConfiguration } from 'app/features/org/state/configuration';
 
 export interface HomeDashboardRedirectDTO {
   redirectUri: string;
@@ -140,6 +142,10 @@ export interface DashboardState {
   initPhase: DashboardInitPhase;
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
+  // BMC code start
+  gainSightUserPreferences?: Preference[];
+  configurableLinks?: CustomConfiguration;
+  // BMC code end
 }
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';

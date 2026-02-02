@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Alert list",
   "id": "alertlist",
+  "state": "alpha",
 
   "skipDataQuery": true,
 

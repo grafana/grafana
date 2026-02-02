@@ -20,5 +20,7 @@
       "small": "img/opentsdb_logo.png",
       "large": "img/opentsdb_logo.png"
     }
-  }
+  },
+
+  "state": "alpha"
 }

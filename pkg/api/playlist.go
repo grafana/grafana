@@ -177,7 +177,8 @@ func (hs *HTTPServer) DeletePlaylist(c *contextmodel.ReqContext) response.Respon
 func (hs *HTTPServer) CreatePlaylist(c *contextmodel.ReqContext) response.Response {
 	cmd := playlist.CreatePlaylistCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while creating playlist", err)
 	}
 	cmd.OrgId = c.SignedInUser.GetOrgID()
 
@@ -202,7 +203,8 @@ func (hs *HTTPServer) CreatePlaylist(c *contextmodel.ReqContext) response.Respon
 func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Response {
 	cmd := playlist.UpdatePlaylistCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating playlist", err)
 	}
 	cmd.OrgId = c.SignedInUser.GetOrgID()
 	cmd.UID = web.Params(c.Req)[":uid"]

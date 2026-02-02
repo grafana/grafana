@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/bhdcodes"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
+	"github.com/grafana/grafana/pkg/setting"
+
 	"golang.org/x/sync/errgroup"
 
 	authlib "github.com/grafana/authlib/types"
@@ -41,15 +45,38 @@ import (
 func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminCreateUserForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while creating new user", err)
 	}
 
 	cmd := user.CreateUserCommand{
+		// BMC code
+		// Start Abhishek_06292020, Extended Create User API to additionally accept userid as optional input parameter
+		Id: form.Id,
+		// End
 		Login:    form.Login,
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
 		OrgID:    form.OrgId,
+	}
+
+	// BMC Code start
+	if cmd.OrgID == setting.IMS_Tenant0 {
+		cmd.OrgID = setting.GF_Tenant0
+	}
+	// BMC Code ends
+
+	// ToDo_GF_10.4.2: Revalidate if below is needed or not
+	// if len(cmd.Login) == 0 {
+	// 	cmd.Login = cmd.Email
+	// 	if len(cmd.Login) == 0 {
+	// 		return response.Error(400, "Validation error, need specify either username or email", nil)
+	// 	}
+	// }
+
+	if len(cmd.Password) < 4 {
+		return response.Error(http.StatusBadRequest, "Password is missing or too short", nil)
 	}
 
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
@@ -59,7 +86,8 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 		}
 
 		if errors.Is(err, user.ErrUserAlreadyExists) {
-			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
+			//BMC Code inline change
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with username '%s' already exists", form.Login), err)
 		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create user", err)
@@ -67,10 +95,12 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 
 	metrics.MApiAdminUserCreate.Inc()
 
+	//BMC code change
 	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
 		UID:     usr.UID,
+		BHDCode: bhdcodes.AdminCreated,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -99,7 +129,8 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 
 	form := dtos.AdminUpdateUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while setting password for user", err)
 	}
 
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
@@ -150,7 +181,8 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminUpdateUserPermissionsForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while setting permissions for the user", err)
 	}
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -370,6 +402,10 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 	if c.SignedInUser.GetID() == authlib.NewTypeID(authlib.TypeUser, id) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
+	//BMC Code - start
+	//Remove helix_jwt_token cookie on logout operation
+	cookies.DeleteCookie(c.Resp, "helix_jwt_token", hs.CookieOptionsFromCfg)
+	//BMC Code - end
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
 }
@@ -415,7 +451,8 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *contextmodel.ReqContext) respons
 func (hs *HTTPServer) AdminRevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
 	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while revoking auth token for user", err)
 	}
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {

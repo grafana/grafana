@@ -10,6 +10,8 @@ import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { DashboardModel } from '../../state/DashboardModel';
+import { replaceValueForLocale } from '../../utils/dashboard';
+
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';
@@ -72,11 +74,27 @@ class SubMenuUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
-  const { uid } = ownProps.dashboard;
+  const { uid, getCurrentLocales } = ownProps.dashboard;
   const templatingState = getVariablesState(uid, state);
+  // BMC Change: Starts
+  // Below snippet is to inject locales context to variables.
+  // As variable label and description is localizable.
+  let variables = getSubMenuVariables(uid, templatingState.variables);
+  if (getCurrentLocales) {
+    variables = variables.map((variable) => {
+      return {
+        ...variable,
+        label: variable.label ? replaceValueForLocale(variable.label!, getCurrentLocales()) : undefined,
+        description: variable.description
+          ? replaceValueForLocale(variable.description!, getCurrentLocales())
+          : undefined,
+      } as TypedVariableModel;
+    });
+  }
   return {
-    variables: getSubMenuVariables(uid, templatingState.variables),
+    variables,
   };
+  // BMC Change: Ends
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {

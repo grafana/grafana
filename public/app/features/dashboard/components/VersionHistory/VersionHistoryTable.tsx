@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
@@ -23,10 +24,26 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
         <thead>
           <tr>
             <th className="width-4"></th>
-            <th className="width-4">Version</th>
-            <th className="width-14">Date</th>
-            <th className="width-10">Updated by</th>
-            <th>Notes</th>
+            <th className="width-4">
+              {/* BMC Change: Next line */}
+              <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.version-list.headers.version-text'}>
+                Version
+              </Trans>
+            </th>
+            <th className="width-14">
+              {/* BMC Change: Next line */}
+              <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.version-list.headers.date-text'}>Date</Trans>
+            </th>
+            <th className="width-10">
+              {/* BMC Change: Next line */}
+              <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.version-list.headers.updated-by-text'}>
+                Updated by
+              </Trans>
+            </th>
+            <th>
+              {/* BMC Change: Next line */}
+              <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.version-list.headers.notes-text'}>Notes</Trans>
+            </th>
             <th></th>
           </tr>
         </thead>
@@ -50,7 +67,8 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
-                  <Tag name="Latest" colorIndex={17} />
+                  // BMC Change: Next line
+                  <Tag name={t('bmcgrafana.dashboards.settings.versions.tags.latest', 'Latest')} colorIndex={17} />
                 ) : (
                   <ModalsController>
                     {({ showModal, hideModal }) => (
@@ -66,7 +84,8 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
                           });
                         }}
                       >
-                        Restore
+                        {/* BMC Change: Next line */}
+                        <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.tags.restore'}>Restore</Trans>
                       </Button>
                     )}
                   </ModalsController>

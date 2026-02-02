@@ -1,6 +1,8 @@
 import { SliderMarks } from '@grafana/data';
 
 import { Orientation } from '../../types/orientation';
+// BMC Code : Accessibility Change ( Next line )
+import { AriaValueFormat } from 'rc-slider/lib/interface';
 
 interface CommonSliderProps {
   min: number;
@@ -14,13 +16,16 @@ interface CommonSliderProps {
   marks?: SliderMarks;
   /** If the value is true, it means a continuous value interval, otherwise, it is a independent value. */
   included?: boolean;
+  // BMC Code : Accessibility Change ( Next 3 lines )
+  ariaLabelForHandle?: string | string[];
+  ariaLabelledByForHandle?: string | string[];
+  ariaValueTextFormatterForHandle?: AriaValueFormat | AriaValueFormat[];
 }
 export interface SliderProps extends CommonSliderProps {
   value?: number;
   onChange?: (value: number) => void;
   onAfterChange?: (value?: number) => void;
   formatTooltipResult?: (value: number) => number;
-  ariaLabelForHandle?: string;
 }
 
 export interface RangeSliderProps extends CommonSliderProps {

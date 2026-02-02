@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "BMC Video",
+  "id": "bmcvideo",
+
+  "skipDataQuery": true,
+  "hideFromList": true,
+
+  "info": {
+    "author": {
+      "name": "BMC Software"
+    },
+    "logos": {
+      "small": "img/icn-bmc-panel.svg",
+      "large": "img/icn-bmc-panel.svg"
+    }
+  }
+}

@@ -10,19 +10,28 @@ export interface FieldValidationMessageProps {
   /** Override component style */
   className?: string;
   horizontal?: boolean;
+  //BMC Code : Accessibility Change (Added errorId prop)
+  errorId?: string;
 }
 
 export const FieldValidationMessage = ({
   children,
   horizontal,
   className,
+  errorId,
 }: React.PropsWithChildren<FieldValidationMessageProps>) => {
   const styles = useStyles2(getFieldValidationMessageStyles);
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
 
   return (
+    //BMC Accessibility Change : Added the aria-label && id in the icon.
     <div role="alert" className={cssName}>
-      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
+      <Icon
+        className={styles.fieldValidationMessageIcon}
+        name="exclamation-triangle"
+        aria-label="Warning"
+        {...(errorId ? { id: errorId } : {})}
+      />
       {children}
     </div>
   );

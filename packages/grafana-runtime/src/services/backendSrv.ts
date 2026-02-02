@@ -187,6 +187,16 @@ export interface BackendSrv {
    * Each chunk includes the full response headers and the `data` property is filled with the chunk.
    */
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>>;
+
+  /**
+   * Stream a request to the backend and observe the response as it arrives.
+   * Useful for long polling or server-sent events. Method from Lib @microsoft/fetch-event-source
+   * This method automatically handles retries and re-establishing the connection
+   * when the network connection is lost.
+   *
+   * Each chunk includes the full response headers and the `data` property is filled with the chunk.
+   */
+  streamRequest?(options: BackendSrvRequest): Observable<FetchResponse<string | undefined>>;
 }
 
 let singletonInstance: BackendSrv;

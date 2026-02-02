@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
@@ -7,6 +8,9 @@ import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { StoreState } from 'app/types';
+
+import { getFeatureStatus } from '../dashboard/services/featureFlagSrv';
+import GainsightAgreement from '../gainsight/GainsightAgreement';
 
 import UserOrganizations from './UserOrganizations';
 import UserProfileEditForm from './UserProfileEditForm';
@@ -70,6 +74,13 @@ export function UserProfileEditPage({
           <Stack direction="column" gap={2} data-testid="user-profile-edit-page">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
             <SharedPreferences resourceUri="user" preferenceType="user" />
+            {/* BMC code */}
+            {getFeatureStatus('gainsight') && (
+              <Suspense fallback={<></>}>
+                <GainsightAgreement isModal={false}></GainsightAgreement>
+              </Suspense>
+            )}
+            {/* End */}
             <Stack direction="column" gap={6}>
               <UserTeams isLoading={teamsAreLoading} teams={teams} />
               <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />

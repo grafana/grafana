@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -45,7 +46,8 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while adding correlation", err)
 	}
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
 	cmd.OrgId = c.SignedInUser.GetOrgID()
@@ -58,7 +60,8 @@ func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
-	return response.JSON(http.StatusOK, CreateCorrelationResponseBody{Result: correlation, Message: "Correlation created"})
+	// BMC code change
+	return response.JSON(http.StatusOK, CreateCorrelationResponseBody{Result: correlation, Message: "Correlation created", BHDCode: bhdcodes.CorrelationCreated})
 }
 
 // swagger:parameters createCorrelation
@@ -111,7 +114,8 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
 	}
 
-	return response.JSON(http.StatusOK, DeleteCorrelationResponseBody{Message: "Correlation deleted"})
+	// BMC code change
+	return response.JSON(http.StatusOK, DeleteCorrelationResponseBody{Message: "Correlation deleted", BHDCode: bhdcodes.CorrelationDeleted})
 }
 
 // swagger:parameters deleteCorrelation
@@ -148,7 +152,7 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 			return response.Error(http.StatusBadRequest, "At least one of label, description or config is required", err)
 		}
 
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "bad request data while updating a correlation", err)
 	}
 
 	cmd.UID = web.Params(c.Req)[":correlationUID"]
@@ -172,7 +176,8 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
 	}
 
-	return response.JSON(http.StatusOK, UpdateCorrelationResponseBody{Message: "Correlation updated", Result: correlation})
+	// BMC code change
+	return response.JSON(http.StatusOK, UpdateCorrelationResponseBody{Message: "Correlation updated", Result: correlation, BHDCode: bhdcodes.CorrelationUpdated})
 }
 
 // swagger:parameters updateCorrelation

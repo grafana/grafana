@@ -5,6 +5,7 @@ import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { KeySelectorProvider } from 'app/features/keySelector/KeySelector';
 import { useSelector } from 'app/types';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
@@ -14,7 +15,7 @@ import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing } =
+  const { controls, overlay, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing, uid } =
     model.useState();
   const { type } = useParams();
   const location = useLocation();
@@ -62,7 +63,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {editPanel && <editPanel.Component model={editPanel} />}
+      {editPanel && (
+        // BMC Change: Inline to wrap key selector
+        <KeySelectorProvider keys={model.getDashCurrentLocales()!} resourceUid={uid!}>
+          <editPanel.Component model={editPanel} />
+        </KeySelectorProvider>
+      )}
       {!editPanel && (
         <DashboardEditPaneSplitter
           dashboard={model}

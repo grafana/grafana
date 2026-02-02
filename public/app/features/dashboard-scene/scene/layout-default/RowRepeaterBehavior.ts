@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 
+import { locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   MultiValueVariable,
@@ -40,6 +41,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
   private _prevRepeatValues?: VariableValueSingle[];
   private _clonedRows?: SceneGridRow[];
+  // BMC Change: Start
+  private _expandedRows = false;
+  // BMC Change: End
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -173,24 +177,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
       const rowCloneKey = getCloneKey(rowToRepeat.state.key!, rowIndex);
 
-      rowClone.setState({
-        key: rowCloneKey,
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: this.state.variableName,
-              value: variableValues[rowIndex],
-              text: String(variableTexts[rowIndex]),
-              isMulti: variable.state.isMulti,
-              includeAll: variable.state.includeAll,
-            }),
-          ],
-        }),
-        children: [],
-      });
-
       const children: SceneGridItemLike[] = [];
 
+      // BMC Change: Below block moved up the rowClone.setState method
       for (const sourceItem of rowContent) {
         const sourceItemY = sourceItem.state.y ?? 0;
 
@@ -213,12 +202,29 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      rowClone.setState({ children });
+      rowClone.setState({
+        key: rowCloneKey,
+        $variables: new SceneVariableSet({
+          variables: [
+            new LocalValueVariable({
+              name: this.state.variableName,
+              value: variableValues[rowIndex],
+              text: String(variableTexts[rowIndex]),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
+            }),
+          ],
+        }),
+        children: children,
+      });
 
       this._clonedRows.push(rowClone);
     }
 
     updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat.state.key!);
+    // BMC Change: Start
+    this._expandRowsForDownload(layout);
+    // BMC Change: End
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -234,7 +240,29 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     // Remove behavior and the scoped local variable
     row.setState({ $behaviors: row.state.$behaviors!.filter((b) => b !== this), $variables: undefined });
   }
+
+  // BMC Change: Start
+  private _expandRowsForDownload(layout: SceneGridLayout) {
+    if (this._expandedRows) {
+      return;
+    }
+
+    const showRepeat = locationService.getSearch().get('showRepeat');
+
+    if (showRepeat !== 'true' || !this._clonedRows?.length) {
+      return;
+    }
+
+    for (const row of this._clonedRows) {
+      if (row.state.isCollapsed) {
+        layout.toggleRow(row);
+      }
+    }
+
+    this._expandedRows = true;
+  }
 }
+// BMC Change: End
 
 function getRowContentHeight(panels: SceneGridItemLike[]): number {
   let maxY = 0;

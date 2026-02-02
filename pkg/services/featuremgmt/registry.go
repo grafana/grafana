@@ -195,7 +195,7 @@ var (
 			Description: "Enable folder nesting",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "true", // enabled by default
+			Expression:  "true", // BMC Change inline // enabled by default
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -856,7 +856,7 @@ var (
 			Name:         "exploreMetrics",
 			Description:  "Enables the new Grafana Metrics Drilldown core app",
 			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
+			Expression:   "false", // BMC Change // enabled by default
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
@@ -1807,6 +1807,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:            "dataplaneAggregator",
+			Description:     "Enable grafana dataplane aggregator",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
 		},
 	}
 )

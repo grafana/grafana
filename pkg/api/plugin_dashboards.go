@@ -27,7 +27,6 @@ func (hs *HTTPServer) GetPluginDashboards(c *contextmodel.ReqContext) response.R
 		if errors.As(err, &notFound) {
 			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
-
 		return response.Error(http.StatusInternalServerError, "Failed to get plugin dashboards", err)
 	}
 

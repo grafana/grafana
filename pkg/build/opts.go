@@ -39,7 +39,7 @@ func BuildOptsFromFlags() BuildOpts {
 	flag.StringVar(&opts.goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&opts.gocc, "cc", "", "CC")
 	flag.StringVar(&opts.libc, "libc", "", "LIBC")
-	flag.StringVar(&buildTagsRaw, "build-tags", "", "Sets custom build tags")
+	flag.StringVar(&buildTagsRaw, "build-tags", "musl", "Sets custom build tags")
 	flag.BoolVar(&opts.cgo, "cgo-enabled", false, "Enable cgo")
 	flag.StringVar(&opts.pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.BoolVar(&opts.race, "race", false, "Use race detector")

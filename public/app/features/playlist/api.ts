@@ -4,6 +4,7 @@ import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
@@ -83,7 +84,10 @@ class K8sAPI implements PlaylistAPI {
   }
 
   async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => this.server.delete(uid).then(() => {}), 'Playlist deleted');
+    await withErrorHandling(
+      () => this.server.delete(uid).then(() => {}),
+      t('bmc.notifications.playlists.playlist-deleted', 'Playlist deleted')
+    );
   }
 
   playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
@@ -128,13 +132,20 @@ async function migrateInternalIDs(playlist: Playlist) {
   }
 }
 
-async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playlist saved') {
+async function withErrorHandling(
+  apiCall: () => Promise<void>,
+  message = t('bmc.notifications.playlists.playlist-saved', 'Playlist saved')
+) {
   try {
     await apiCall();
     dispatch(notifyApp(createSuccessNotification(message)));
   } catch (e) {
     if (e instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(t('bmc.notifications.playlists.playlist-not-saved', 'Unable to save playlist'), e)
+        )
+      );
     }
   }
 }

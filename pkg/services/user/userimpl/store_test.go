@@ -34,7 +34,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss, cfg := db.InitTestDBWithCfg(t)
-	quotaService := quotaimpl.ProvideService(ss, cfg)
+	quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(ss), cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
@@ -922,7 +922,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 func TestMetricsUsage(t *testing.T) {
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(ss, cfg)
+	quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(ss), cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 

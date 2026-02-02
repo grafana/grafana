@@ -1,4 +1,5 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
@@ -16,20 +17,22 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse} from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
 import { ShowModalReactEvent } from '../../types/events';
+import { t } from '../internationalization';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
-import { isDataQuery, isLocalUrl } from '../utils/query';
+import { isDataQuery, isLocalUrl, isProxyDataQuery } from '../utils/query';
 
 import { FetchQueue } from './FetchQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
@@ -148,6 +151,12 @@ export class BackendSrv implements BackendService {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
     const url = parseUrlFromOptions(options);
+    // BMC code starts
+    if (!!this.deviceID && options.headers) {
+      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
+    }
+    options = this.parseRequestOptions(options);
+    // BMC code end
     const init = parseInitFromOptions({
       ...options,
       requestId,
@@ -220,6 +229,76 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  // Start: BMC custom code for SSE
+  streamRequest(options: BackendSrvRequest): Observable<FetchResponse<string | undefined>> {
+    const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
+    const controller = new AbortController();
+    const url = parseUrlFromOptions(options);
+
+    if (this.deviceID && options.headers) {
+      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
+    }
+    options = this.parseRequestOptions(options);
+
+    const init = parseInitFromOptions({
+      ...options,
+      requestId,
+      abortSignal: controller.signal,
+    });
+
+    return new Observable((observer) => {
+      const rspBase: Omit<FetchResponse<string | undefined>, 'data'> = {
+        status: 200,
+        statusText: 'OK',
+        ok: true,
+        headers: new Headers(options.headers),
+        url,
+        type: 'basic',
+        redirected: false,
+        config: options,
+        traceId: undefined,
+      };
+
+      fetchEventSource(url, {
+        ...options,
+        openWhenHidden: true,
+        signal: controller.signal,
+        onopen: async (response) => {
+          console.log(requestId, 'onopen', response);
+          if (!response.ok) {
+            observer.error(new Error(`Request failed with ${response.status}`));
+          }
+        },
+        body: init.body,
+        onmessage: (msg) => {
+          // Each SSE message arrives parsed and complete
+          const dataStr = msg.data ?? '';
+          observer.next({
+            ...rspBase,
+            data: dataStr,
+          });
+        },
+        onerror: (err) => {
+          console.log(requestId, 'onerror', err);
+          controller.abort('unsubscribe');
+          observer.error(err);
+          throw new Error(err.message);
+        },
+        onclose: () => {
+          console.log(requestId, 'onclose');
+          observer.complete();
+        },
+      });
+
+      // Cleanup: abort on unsubscribe
+      return () => {
+        console.log(requestId, 'unsubscribe');
+        controller.abort('unsubscribe');
+      };
+    });
+  }
+  // End: BMC custom code for SSE
+
   private internalFetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     if (options.requestId) {
       this.inFlightRequests.next(options.requestId);
@@ -264,7 +343,6 @@ export class BackendSrv implements BackendService {
 
     // init retry counter
     options.retry = options.retry ?? 0;
-
     if (isLocalUrl(options.url)) {
       if (orgId) {
         options.headers = options.headers ?? {};
@@ -284,6 +362,14 @@ export class BackendSrv implements BackendService {
         options.headers = options.headers ?? {};
         options.headers['X-Grafana-NoCache'] = 'true';
       }
+        
+      //bmc code start
+      const dashboardUid = getDashboardSrv().getCurrent()?.uid;
+      if (dashboardUid &&  isProxyDataQuery(options.url) && config.enableDsMetering) {
+        options.headers = options.headers ?? {};
+        options.headers['X-Dashboard-Uid'] = dashboardUid;
+      }
+      //bmc code end
     }
 
     if (options.hideFromInspector === undefined) {
@@ -339,10 +425,16 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    const data: { message: string } = response.data as any;
+    //BMC code changes
+    const data: { bhdCode: string; message: string } = response.data as any;
 
     if (data?.message) {
-      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+      if (data?.bhdCode) {
+        let localizedMsg = translatedSuccessMessage(data.bhdCode, data.message);
+        this.dependencies.appEvents.emit(AppEvents.alertSuccess, [localizedMsg]);
+      } else {
+        this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+      }
     }
   }
 
@@ -369,6 +461,12 @@ export class BackendSrv implements BackendService {
     let description = '';
     let message = err.data.message;
 
+    //BMC code
+    if (err.data.bhdCode) {
+      message = translatedErrorMessage(err.data.bhdCode, message);
+      console.error(`[BHDCode: ${err.data.bhdCode}] ${err.statusText} - ${err.data.message}`);
+    }
+
     // Sometimes we have a better error message on err.message
     if (message === 'Unexpected error' && err.message) {
       message = err.message;
@@ -376,13 +474,13 @@ export class BackendSrv implements BackendService {
 
     if (message.length > 80) {
       description = message;
-      message = 'Error';
+      message = t('bmc.notifications.error.error-text', 'Error');
     }
 
     // Validation
     if (err.status === 422) {
       description = err.data.message;
-      message = 'Validation failed';
+      message = t('bmc.notifications.error.failed-validation', 'Validation failed');
     }
 
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
@@ -594,7 +692,7 @@ export class BackendSrv implements BackendService {
 
   /** @deprecated */
   search(query: Parameters<typeof this.get>[1]): Promise<DashboardSearchItem[]> {
-    return this.get('/api/search', query);
+    return this.get('/api/search', { ...query, lang: config.bootData.user.language ?? '' });
   }
 
   /** @deprecated */
@@ -638,4 +736,21 @@ export const getBackendSrv = (): BackendSrv => backendSrv;
 interface ValidateDashboardResponse {
   isValid: boolean;
   message?: string;
+}
+
+//BMC code
+function translatedSuccessMessage(bhdCode: string, msg: string): string {
+  if (bhdCode) {
+    const translationKey = `bmc.notification.success.${bhdCode}`;
+    return t(translationKey, msg);
+  }
+  return t('bmc.notifications.success.success-text', 'Success');
+}
+
+export function translatedErrorMessage(bhdCode: string, msg: string): string {
+  if (bhdCode) {
+    const translationKey = `bmc.notification.error.${bhdCode}`;
+    return t(translationKey, msg);
+  }
+  return t('bmc.notifications.error.unknown-error', 'Error unknown');
 }

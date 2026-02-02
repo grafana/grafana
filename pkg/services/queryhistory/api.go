@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -51,7 +52,8 @@ func (s *QueryHistoryService) permissionsMiddleware(handler CallbackHandler, err
 func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateQueryInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while adding new query to query history", err)
 	}
 
 	query, err := s.CreateQueryInQueryHistory(c.Req.Context(), c.SignedInUser, cmd)
@@ -120,6 +122,8 @@ func (s *QueryHistoryService) deleteHandler(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, QueryHistoryDeleteQueryResponse{
 		Message: "Query deleted",
 		ID:      id,
+		//BMC code change
+		BHDCode: bhdcodes.QueryHistoryDeleted,
 	})
 }
 
@@ -142,7 +146,8 @@ func (s *QueryHistoryService) patchCommentHandler(c *contextmodel.ReqContext) re
 
 	cmd := PatchQueryCommentInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while Updating comment for query in query history", err)
 	}
 
 	query, err := s.PatchQueryCommentInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID, cmd)

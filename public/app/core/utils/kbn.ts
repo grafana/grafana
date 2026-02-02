@@ -1,15 +1,16 @@
 import {
   DecimalCount,
   deprecationWarning,
+  escapeRegex,
   formattedValueToString,
   getValueFormat,
   getValueFormats,
   getValueFormatterIndex,
+  rangeUtil,
+  roundDecimals,
   stringToJsRegex,
   TimeRange,
   ValueFormatterIndex,
-  rangeUtil,
-  escapeRegex,
 } from '@grafana/data';
 
 const valueFormats: ValueFormatterIndex = {};
@@ -98,7 +99,8 @@ const kbn = {
     }
 
     const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
-    const formatted = String(Math.round(value * factor) / factor);
+    // BMC code: inline change to use roundDecimals to fix rounding logic
+    const formatted = String(roundDecimals(value, decimals));
 
     // if exponent return directly
     if (formatted.indexOf('e') !== -1 || value === 0) {
@@ -134,9 +136,12 @@ const kbn = {
     if (num === null) {
       return null;
     }
-    const n = Math.pow(10, decimals);
-    const formatted = (n * num).toFixed(decimals);
-    return Math.round(parseFloat(formatted)) / n;
+    // BMC code: use roundDecimals to fix rounding logic
+    // const n = Math.pow(10, decimals);
+    // const formatted = (n * num).toFixed(decimals);
+    // return Math.round(parseFloat(formatted)) / n;
+    return roundDecimals(num, decimals);
+    // BMC code: end
   },
   // FORMAT MENU
   getUnitFormats: getValueFormats,

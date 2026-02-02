@@ -30,9 +30,11 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   const mapDispatchToProps = (dispatch: ThunkDispatch) => {
     return {
       ...bindActionCreators({ openOptions, commitChangesToVariable, navigateOptions }, dispatch),
-      filterOrSearchOptions: (identifier: KeyedVariableIdentifier, filter = '') => {
-        dispatch(filterOrSearchOptions(identifier, filter));
+      //BMC code- start
+      filterOrSearchOptions: (identifier: KeyedVariableIdentifier, filter = '', isCSVSearch: boolean) => {
+        dispatch(filterOrSearchOptions(identifier, filter, isCSVSearch));
       },
+      //BMC code- end
       toggleAllOptions: (identifier: KeyedVariableIdentifier) =>
         dispatch(toKeyedAction(identifier.rootStateKey, toggleAllOptions())),
       toggleOption: (
@@ -96,11 +98,15 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     onToggleAllOptions = () => {
       this.props.toggleAllOptions(toKeyedVariableIdentifier(this.props.variable));
     };
-
-    onFilterOrSearchOptions = (filter: string) => {
-      this.props.filterOrSearchOptions(toKeyedVariableIdentifier(this.props.variable), filter);
+//BMC code- start
+    onFilterOrSearchOptions = (filter: string, isCSVSearch = true) => {
+      this.props.filterOrSearchOptions(
+        toKeyedVariableIdentifier(this.props.variable),
+        filter,
+        isCSVSearch // Pass the flag here
+      );
     };
-
+//BMC code- end
     onNavigate = (key: NavigationKey, clearOthers: boolean) => {
       if (!this.props.variable.rootStateKey) {
         console.error('Variable has no rootStateKey');
@@ -143,7 +149,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     renderOptions(picker: OptionsPickerState) {
-      const { id } = this.props.variable;
+      const { id, options = [] } = this.props.variable;
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
@@ -155,6 +161,8 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             aria-controls={`options-${id}`}
           />
           <VariableOptions
+            // BMC Change: Next Line
+            totalOptions={options.length}
             values={picker.options}
             onToggle={this.onToggleOption}
             onToggleAll={this.onToggleAllOptions}

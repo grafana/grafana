@@ -187,8 +187,12 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       color: theme.colors.text.link,
       fontWeight: theme.typography.fontWeightMedium,
       paddingRight: theme.spacing(1.5),
+      //BMC Accessibility Change next 1 line: added underline
+      textDecoration: 'underline',
+      //BMC Accessibility Change End
       '&:hover': {
-        textDecoration: 'underline',
+        //BMC Code: commented next line since underline is always shown.
+        //textDecoration: 'underline',
         color: theme.colors.text.link,
       },
     }),

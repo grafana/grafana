@@ -30,6 +30,9 @@ export interface RichHistoryQueriesTabProps {
   activeDatasources: string[];
   listOfDatasources: Array<{ name: string; uid: string }>;
   height: number;
+  // BMC Code : Accessibility Change ( Next 2 lines )
+  tabId?: string;
+  tabPanelId?: string;
 }
 
 const getStyles = (theme: GrafanaTheme2, height: number) => {
@@ -77,7 +80,8 @@ const getStyles = (theme: GrafanaTheme2, height: number) => {
       marginBottom: theme.spacing(1),
     }),
     sort: css({
-      width: '170px',
+      // BMC Change: To remove the width and make it dynamic
+      // width: 170px;
     }),
     sessionName: css({
       display: 'flex',
@@ -125,6 +129,9 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     height,
     listOfDatasources,
     activeDatasources,
+    // BMC Code : Accessibility Change ( Next 2 lines )
+    tabId,
+    tabPanelId,
   } = props;
 
   const styles = useStyles2(getStyles, height);
@@ -182,15 +189,20 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
    * are keys and arrays with queries that belong to that headings are values.
    */
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
+  // BMC Code : Accessibility Change ( Next line )
+  const totalResultCount = Object.values(mappedQueriesToHeadings).flat().length;
   const sortOrderOptions = getSortOrderOptions();
   const partialResults = queries.length && queries.length !== totalQueries;
   const timeFilter = [
     richHistorySearchFilters.from || 0,
     richHistorySearchFilters.to || richHistorySettings.retentionPeriod,
   ];
+  // BMC Code : Accessibility Change ( Next line )
+  const ariaLabelDataForHandle = ['Query history range slider min value', 'Query history range slider max value'];
 
   return (
-    <div className={styles.container}>
+    // BMC Code : Accessibility Change ( Next 1 line )
+    <div className={styles.container} role="tabpanel" aria-labelledby={tabId} id={tabPanelId}>
       <div className={styles.containerSlider}>
         <div className={styles.fixedSlider}>
           <div className={styles.labelSlider}>
@@ -209,6 +221,8 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
               onAfterChange={(value) => {
                 updateFilters({ from: value![0], to: value![1] });
               }}
+              // BMC Code : Accessibility Change ( Next line )
+              ariaLabelForHandle={ariaLabelDataForHandle}
             />
           </div>
           <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(timeFilter[1])}</div>
@@ -255,11 +269,19 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
           </div>
         </div>
 
-        {(loading || loadingDs) && (
-          <span>
-            <Trans i18nKey="explore.rich-history-queries-tab.loading-results">Loading results...</Trans>
-          </span>
-        )}
+        {
+          // BMC Code : Accessibility Change starts here.
+        }
+        <div aria-live="polite" id="loading-aria-live-space">
+          {(loading || loadingDs) && (
+            <span>
+              <Trans i18nKey="explore.rich-history-queries-tab.loading-results">Loading results...</Trans>
+            </span>
+          )}
+        </div>
+        {
+          // BMC Code : Accessibility Change ends here.
+        }
 
         {!(loading || loadingDs) &&
           Object.keys(mappedQueriesToHeadings).map((heading) => {
@@ -289,20 +311,28 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
               </div>
             );
           })}
-        {partialResults ? (
-          <div>
-            <Trans
-              i18nKey="explore.rich-history-queries-tab.showing-queries"
-              defaults="Showing {{ shown }} of {{ total }} <0>Load more</0>"
-              values={{ shown: queries.length, total: totalQueries }}
-              components={[
-                <Button onClick={loadMoreRichHistory} key="loadMoreButton">
-                  Load more
-                </Button>,
-              ]}
-            />
-          </div>
-        ) : null}
+        {
+          // BMC Code : Accessibility Change starts here.
+        }
+        <div aria-live="polite" id="load-more-aria-live-space">
+          {partialResults ? (
+            <div>
+              <Trans
+                i18nKey="explore.rich-history-queries-tab.showing-queries"
+                defaults="Showing {{ shown }} of {{ total }} <0>Load more</0>"
+                values={{ shown: queries.length, total: totalQueries }}
+                components={[
+                  <Button onClick={loadMoreRichHistory} key="loadMoreButton">
+                    Load more
+                  </Button>,
+                ]}
+              />
+            </div>
+          ) : null}
+        </div>
+        {
+          // BMC Code : Accessibility Change ends here.
+        }
         <div className={styles.footer}>
           {!config.queryHistoryEnabled
             ? t(
@@ -312,6 +342,23 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
             : ''}
         </div>
       </div>
+      {
+        // BMC Code : Accessibility Change starts here.
+      }
+      <div aria-live="polite" className="sr-only" id="results-count-aria-live-space">
+        {!(loading || loadingDs) && (
+          <Trans
+            i18nKey="bmc.explore.total-result-count-aria-live"
+            defaults="{{ count }} queries loaded"
+            values={{ count: totalResultCount }}
+          >
+            {{ totalResultCount }} queries loaded
+          </Trans>
+        )}
+      </div>
+      {
+        // BMC Code : Accessibility Change ends here.
+      }
     </div>
   );
 }

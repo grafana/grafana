@@ -235,7 +235,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
             className={styles.toolbarButton}
           >
-            Outline
+            {/* BMC Change: Next line */}
+            <Trans i18nKey={'bmcgrafana.explore.outline'}>Outline</Trans>
           </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
@@ -324,7 +325,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}
             primary={true}
-            width={(showSmallTimePicker ? 35 : 108) + 'px'}
+            // BMC Change: to have dynamic width for non small time picker
+            width={showSmallTimePicker ? '35px' : 'auto'}
           />,
           datasourceInstance?.meta.streaming && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>

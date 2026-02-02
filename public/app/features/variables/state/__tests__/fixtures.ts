@@ -5,9 +5,11 @@ import {
   CustomVariableModel,
   DashboardVariableModel,
   DataSourceVariableModel,
+  DatePickerVariableModel,
   GroupByVariableModel,
   IntervalVariableModel,
   LoadingState,
+  OptimizeVariableModel,
   OrgVariableModel,
   QueryVariableModel,
   SnapshotVariableModel,
@@ -59,6 +61,7 @@ export function createQueryVariable(input: Partial<QueryVariableModel> = {}): Qu
     refresh: VariableRefresh.onDashboardLoad,
     multi: false,
     includeAll: false,
+    bmcVarCache: false, // BMC code
     current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
     options: [
       createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
@@ -209,3 +212,26 @@ export function createSnapshotVariable(input: Partial<SnapshotVariableModel> = {
     ...input,
   };
 }
+
+// BMC code
+export function createDatePickerVariable(input: Partial<DatePickerVariableModel> = {}): DatePickerVariableModel {
+  return {
+    ...createBaseVariableModel('datepicker'),
+    originalQuery: null,
+    query: '',
+    current: createVariableOption('prom-prod'),
+    options: [],
+    ...input,
+  };
+}
+export function createOptimizeVariable(input: Partial<OptimizeVariableModel> = {}): OptimizeVariableModel {
+  return {
+    ...createBaseVariableModel('optimizepicker'),
+    originalQuery: null,
+    query: '',
+    current: createVariableOption('prom-prod'),
+    options: [],
+    ...input,
+  };
+}
+// End

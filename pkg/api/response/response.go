@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -232,6 +233,14 @@ func YAMLDownload(status int, body any, filename string) *NormalResponse {
 
 // Success create a successful response
 func Success(message string) *NormalResponse {
+	//BMC code starts
+	bhdCode := bhdcodes.MapMsgToCode(message)
+
+	if bhdCode != "" {
+		return SuccessWithBHDCode(message, bhdCode)
+	}
+	//ends
+
 	resp := make(map[string]any)
 	resp["message"] = message
 	return JSON(http.StatusOK, resp)
@@ -239,6 +248,14 @@ func Success(message string) *NormalResponse {
 
 // Error creates an error response.
 func Error(status int, message string, err error) *NormalResponse {
+	//BMC code starts
+	bhdCode := bhdcodes.MapMsgToCode(message)
+
+	if bhdCode != "" {
+		return ErrorWithBHDCode(status, message, bhdCode, err)
+	}
+	//ends
+
 	data := make(map[string]any)
 
 	switch status {
@@ -286,6 +303,14 @@ func Err(err error) *NormalResponse {
 // If the error provided is not an errutil.Error and is/wraps context.Canceled
 // the function returns an Err(errRequestCanceledBase).
 func ErrOrFallback(status int, message string, err error) *NormalResponse {
+	//BMC code starts
+	bhdCode := bhdcodes.MapMsgToCode(message)
+
+	if bhdCode != "" {
+		return ErrOrFallbackWithBHDCode(status, message, bhdCode, err)
+	}
+	//ends
+
 	grafanaErr := errutil.Error{}
 	if errors.As(err, &grafanaErr) {
 		return Err(err)
@@ -329,4 +354,55 @@ func Respond(status int, body any) *NormalResponse {
 
 func Redirect(location string) *RedirectResponse {
 	return &RedirectResponse{location: location}
+}
+
+// BMC code
+func ErrorWithBHDCode(status int, message string, bhdcode string, err error) *NormalResponse {
+	data := make(map[string]any)
+
+	switch status {
+	case 404:
+		data["message"] = "Not Found"
+		data["bhdCode"] = bhdcodes.ErrorNotFound
+	case 500:
+		data["message"] = "Internal Server Error"
+		data["bhdCode"] = bhdcodes.ErrorInternalServerError
+	}
+
+	if message != "" {
+		data["message"] = message
+	}
+
+	if bhdcode != "" {
+		data["bhdCode"] = bhdcode
+	}
+
+	resp := JSON(status, data)
+
+	if err != nil {
+		resp.errMessage = message
+		resp.err = err
+	}
+
+	return resp
+}
+
+func SuccessWithBHDCode(message string, bhdcode string) *NormalResponse {
+	resp := make(map[string]any)
+	resp["message"] = message
+	resp["bhdCode"] = bhdcode
+	return JSON(http.StatusOK, resp)
+}
+
+func ErrOrFallbackWithBHDCode(status int, message string, bhdcode string, err error) *NormalResponse {
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
+		return Err(err)
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return Err(errRequestCanceledBase.Errorf("response: request canceled: %w", err))
+	}
+
+	return ErrorWithBHDCode(status, message, bhdcode, err)
 }

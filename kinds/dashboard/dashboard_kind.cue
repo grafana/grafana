@@ -201,7 +201,8 @@ lineage: schemas: [{
 			// Whether multiple values can be selected or not from variable value list
 			multi?: bool | *false
 			// Allow custom values to be entered in the variable
-			allowCustomValue?: bool | *true
+  			// BMC code: allowCustomValue defaults to false
+			allowCustomValue?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			// Options to config when to refresh a variable

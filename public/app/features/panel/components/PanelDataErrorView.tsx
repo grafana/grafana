@@ -3,15 +3,17 @@ import { css } from '@emotion/css';
 import {
   CoreApp,
   GrafanaTheme2,
+  LoadingState,
   PanelDataSummary,
-  VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
+  VisualizationSuggestionsBuilder,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
@@ -99,25 +101,29 @@ function getMessageFor(
   if (message) {
     return message;
   }
-
+    // BMC changes start
   if (!data.series || data.series.length === 0 || data.series.every((frame) => frame.length === 0)) {
-    return fieldConfig?.defaults.noValue ?? 'No data';
+    if (data.state === LoadingState.RefreshToLoad) {
+      return t('bmcgrafana.panel-message.refresh-dashboard','Refresh dashboard to fetch data');
+    }
+    return fieldConfig?.defaults.noValue ?? t('bmcgrafana.panel-message.no-data','No data');
   }
 
   if (needsStringField && !dataSummary.hasStringField) {
-    return 'Data is missing a string field';
+    return t('bmcgrafana.panel-message.string-field-missing','Data is missing a string field');
   }
 
   if (needsNumberField && !dataSummary.hasNumberField) {
-    return 'Data is missing a number field';
+    return t('bmcgrafana.panel-message.number-field-missing','Data is missing a number field');
   }
 
   if (needsTimeField && !dataSummary.hasTimeField) {
-    return 'Data is missing a time field';
+    return t('bmcgrafana.panel-message.time-field-missing','Data is missing a time field');
   }
 
-  return 'Cannot visualize data';
+  return t('bmcgrafana.panel-message.no-data-visualization','Cannot visualize data');
 }
+    // BMC changes end
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

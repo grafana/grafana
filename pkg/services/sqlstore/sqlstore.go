@@ -151,7 +151,15 @@ func (ss *SQLStore) Reset() error {
 		return nil
 	}
 
-	return ss.ensureMainOrgAndAdminUser(false)
+	// BMC code
+	if err := ss.ensureMainOrgAndAdminUser(false); err != nil {
+		return err
+	}
+	if err := ss.ensureGrafanaAdminUserIsAssociatedToAllOrgs(); err != nil {
+		return err
+	}
+	return nil
+	// End
 }
 
 // Quote quotes the value in the used SQL dialect
@@ -193,8 +201,9 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			var stats stats.SystemUserCountStats
 			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.dialect.Quote("user")
-			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+			// BMC Change inline: to include login and respective parameter
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.dialect.Quote("user") + ` WHERE login = ?`
+			if _, err := sess.SQL(rawSQL, ss.cfg.AdminUser).Get(&stats); err != nil {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
 			if stats.Count > 0 {

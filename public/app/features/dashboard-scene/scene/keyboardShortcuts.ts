@@ -80,7 +80,19 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         scene.showModal(drawer);
       }),
     });
+    //BMC Change: added download shortcut
+    keybindings.addBinding({
+      key: 'p o',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.download,
+          panelRef: vizPanel.getRef(),
+        });
 
+        scene.showModal(drawer);
+      }),
+    });
+    //BMC Change: Ends
     if (
       contextSrv.isSignedIn &&
       config.snapshotEnabled &&

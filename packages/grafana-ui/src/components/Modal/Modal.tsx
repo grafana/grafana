@@ -32,6 +32,8 @@ export interface Props {
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
+  // BMC Code : Accessibility Change (Next Line)
+  ariaLabelledby?: string;
 }
 
 export function Modal(props: PropsWithChildren<Props>) {
@@ -46,10 +48,20 @@ export function Modal(props: PropsWithChildren<Props>) {
     onDismiss,
     onClickBackdrop,
     trapFocus = true,
+    // BMC Code : Accessibility Change (Next Line)
+    ariaLabelledby,
   } = props;
   const styles = useStyles2(getModalStyles);
 
   const ref = useRef<HTMLDivElement>(null);
+
+  //BMC Accesssibility Change : Next 6 lines.
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  React.useEffect(() => {
+    if (isOpen) {
+      closeButtonRef.current?.focus();
+    }
+  }, [isOpen]);
 
   // Handle interacting outside the dialog and pressing
   // the Escape key to close the modal.
@@ -59,7 +71,8 @@ export function Modal(props: PropsWithChildren<Props>) {
   );
 
   // Get props for the dialog and its title
-  const { dialogProps, titleProps } = useDialog({}, ref);
+  // BMC Code : Accessibility Change (Next Line)
+  const { dialogProps, titleProps } = useDialog({ 'aria-labelledby': ariaLabelledby }, ref);
 
   if (!isOpen) {
     return null;
@@ -86,6 +99,7 @@ export function Modal(props: PropsWithChildren<Props>) {
             }
             <div className={styles.modalHeaderClose}>
               <IconButton
+                ref={closeButtonRef}
                 name="times"
                 size="xl"
                 onClick={onDismiss}

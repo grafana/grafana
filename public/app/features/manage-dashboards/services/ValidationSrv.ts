@@ -1,3 +1,4 @@
+import { t } from 'app/core/internationalization';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 class ValidationError extends Error {
@@ -13,14 +14,16 @@ export class ValidationSrv {
   rootName = 'general';
 
   validateNewDashboardName(folderUID: string, name: string) {
-    return this.validate(folderUID, name, 'A dashboard or a folder with the same name already exists');
+    // BMC change
+    return this.validate(folderUID, name, t('bmcgrafana.save-dashboard.dashboard-already-exists','A dashboard or a folder with the same name already exists'));
   }
 
   validateNewFolderName(name?: string) {
     return this.validate(
       this.rootName,
       name,
-      'A folder or dashboard in the general folder with the same name already exists'
+      // BMC change
+      t('bmcgrafana.save-dashboard.dashboard-already-exists-folder','A folder or dashboard in the general folder with the same name already exists')
     );
   }
 
@@ -29,11 +32,13 @@ export class ValidationSrv {
     const nameLowerCased = name.toLowerCase();
 
     if (name.length === 0) {
-      throw new ValidationError('REQUIRED', 'Name is required');
+      // BMC change
+      throw new ValidationError('REQUIRED', t('bmcgrafana.dashboard-import.name-validation-text','Name is required'));
     }
 
     if (nameLowerCased === this.rootName) {
-      throw new ValidationError('EXISTING', 'This is a reserved name and cannot be used for a folder.');
+      // BMC change
+      throw new ValidationError('EXISTING', t('bmcgrafana.folder.validation-text','This is a reserved name and cannot be used for a folder.'));
     }
 
     const searcher = getGrafanaSearcher();

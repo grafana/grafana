@@ -13,7 +13,9 @@ import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+import { deleteVariableCache } from 'app/features/dashboard-scene/settings/variables/utils';
 
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 
@@ -128,6 +130,14 @@ export const changeQueryVariableQuery =
       dispatch(toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'query', errorText })));
       return;
     }
+
+    // BMC code starts - For deleting variable cache
+    if (variableInState?.bmcVarCache === true) {
+      const dashboardUID = getDashboardSrv().getCurrent()?.uid;
+      // delete call
+      deleteVariableCache(variableInState, dashboardUID, true);
+    }
+    // BMC code ends
 
     dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'query' })));
     dispatch(

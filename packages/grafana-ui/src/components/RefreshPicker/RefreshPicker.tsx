@@ -128,6 +128,9 @@ export class RefreshPicker extends PureComponent<Props> {
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
             aria-label={ariaLabel}
             tooltip={tooltipAutoRefresh}
+            //BMC Accessibility Change: Added aria-haspopup
+            aria-haspopup="menu"
+            //BMC Accessibility Change End
           />
         )}
       </ButtonGroup>

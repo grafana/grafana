@@ -3,7 +3,10 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
 function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDTO) {
-  return folderDTO ? contextSrv.hasPermissionInMetadata(action, folderDTO) : contextSrv.hasPermission(action);
+  // Only some permissions are assigned in the root folder (aka "general" folder), so we can ignore them in most cases
+  return folderDTO && folderDTO.uid !== 'general'
+    ? contextSrv.hasPermissionInMetadata(action, folderDTO)
+    : contextSrv.hasPermission(action);
 }
 
 function checkCanCreateFolders(folderDTO?: FolderDTO) {

@@ -3,7 +3,7 @@ import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteract
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { FormEvent, useCallback, useRef, useState } from 'react';
+import { FormEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
@@ -17,7 +17,7 @@ import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
-import { quickOptions } from '../options';
+import { getQuickOptions } from '../options';
 
 import {
   isRangeValid,
@@ -40,13 +40,15 @@ type InputState = {
   validation: RangeValidation;
 };
 
-const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
-
 /**
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const { timeRange, onChange } = props;
+  // BMC Change: Next hook
+  const validOptions = useMemo(() => {
+    return getQuickOptions().filter((o) => isRelativeFormat(o.from));
+  }, []);
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);

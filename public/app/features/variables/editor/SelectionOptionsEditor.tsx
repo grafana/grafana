@@ -32,6 +32,13 @@ export const SelectionOptionsEditor = ({
     [onPropChange]
   );
 
+  const onIncludeOnlyAvailable = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onPropChange({ propName: 'discardForAll', propValue: event.target.checked });
+    },
+    [onPropChange]
+  );
+
   const onAllValueChanged = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
       onPropChange({ propName: 'allValue', propValue: event.currentTarget.value });
@@ -47,6 +54,9 @@ export const SelectionOptionsEditor = ({
       onMultiChange={onMultiChanged}
       onIncludeAllChange={onIncludeAllChanged}
       onAllValueChange={onAllValueChanged}
+      onIncludeOnlyAvailable={onIncludeOnlyAvailable}
+      query={variable.query}
+      discardForAll={variable.discardForAll}
     />
   );
 };

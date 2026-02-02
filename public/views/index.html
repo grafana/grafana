@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="[[.User.Language]]">
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
-    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    <meta http-equiv="Content-Security-Policy" content="[[.CSPContent]]" />
     [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -14,7 +14,6 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
@@ -29,10 +28,140 @@
     <link rel="stylesheet" href="[[.Assets.Dark]]" />
     [[ end ]]
 
+    <!-- BMC code -->
+
+    <style>
+      .logo::before,
+      .logo-bmc-helix::before,
+      .logo-helix::before,
+      .logo-bmc::before {
+        content: '';
+        width: inherit;
+        display: inline-block;
+        vertical-align: bottom;
+      }
+
+      .logo-helix {
+        background-image: url(public/img/bmc_helix_light.svg);
+      }
+    </style>
+    [[if eq .ThemeType "dark" ]]
+    <style>
+    .logo-helix.logo-light {
+      background-image: url(public/img/bmc_helix_dark.svg);
+    }
+    </style>
+    [[end]]
+    <style id="customStyles" type="text/css"></style>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="[[.Assets.ContentDeliveryURL]]public/app/features/gainsight/dist/AdaptAgreement/styles.css"
+    />
+    <!-- End -->
+	<!-- BMC Change: Apply branding styles and favicon only if not authenticated by render -->
+    [[ if ne .User.AuthenticatedBy "render"]]
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');
-    </script>
 
+      // BMC code start 
+      // Get the branding styles from the ucs and inject them into the page
+      async function injectBrandingStyles() {
+        try {
+          // Fetch the custom CSS file
+          const UCS_ENDPOINT = "../ui_content_service/contents/css/custom.css";
+          const response = await fetch(UCS_ENDPOINT);
+          let cssContent;
+          if (response.ok) {
+            cssContent = await response.text();
+            // Extract the logo
+            const logoLightMatch = cssContent.match(/--logo\s*:\s*([^;]+);/);
+            const logoDarkMatch  = cssContent.match(/--logo-light\s*:\s*([^;]+);/);
+
+            const logoLight = logoLightMatch ? logoLightMatch[1].trim() : null;
+            const logoDark = logoDarkMatch ? logoDarkMatch[1].trim() : null;
+
+            const customStyleElement = document.getElementById("customStyles");
+
+            if (logoLight) {
+              customStyleElement.textContent = `
+                .logo-helix {
+                  background-image: ${logoLight};
+                }
+              `;
+            }
+            if (logoDark) {
+              customStyleElement.textContent += `
+                .logo-helix.logo-light {
+                  background-image: ${logoDark};
+                }
+              `;
+            }
+
+          } else {
+            console.error("Failed to fetch custom CSS:", response.statusText);
+          }
+          // Update favicon
+          updateFaviconFromCSS(cssContent);
+        } catch (error) {
+          console.error("Error fetching or applying custom CSS:", error);
+          console.error("Falling back to default logos and favicon.");
+        }
+      }
+
+      function updateFaviconFromCSS(cssContent) {
+        const defaultFavicon = "[[ .FavIcon ]]";
+        try {
+          const match = cssContent.match(/--favicon-name\s*:\s*url\s*\(\s*(['"])?([\s\S]*?)\1\s*\)/i);
+          const favicon = match ? match[2].trim() : null;
+          // Apply favicon
+          const url = new URL(favicon);
+          setFavicon(favicon);
+
+        } catch (err) {
+          console.warn("Error while fetching favicon from CSS:", err);
+          setFavicon(defaultFavicon);
+        }
+      }
+
+      function setFavicon(href) {
+        let link = document.querySelector("link[rel='icon']");
+        if (!link) {
+          // Create new link if missing
+          link = document.createElement("link");
+          link.rel = "icon";
+          document.head.appendChild(link);
+        }
+        link.href = href;
+        console.log("Favicon set to:", href);
+      }
+
+      // Call it on page load
+      injectBrandingStyles();
+      // BMC code end
+
+    </script>
+    [[ end ]]
+	<!-- BMC Code -->
+    <style>
+      .sso-Container {
+        z-index: 2000 !important;
+      }
+      .sso-ModalButton1 {
+        display: inline-flex;
+        -webkit-box-align: center;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 0px 15px;
+        width: 52px !important;
+        background: rgb(56, 113, 220) !important;
+        color: rgb(255, 255, 255) !important;
+        border: 1px solid transparent !important;
+      }
+    </style>
+    <script nonce="[[.Nonce]]" src="/dashboards/_auth/resource/js/idle-timeout.js" type="text/javascript"></script>
+    <!-- END -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -43,7 +172,8 @@
   <body class="theme-[[ .ThemeType ]] [[.AppNameBodyClass]]">
     <style>
       .preloader {
-        height: 100%;
+        /* BMC code - inline change */
+        height: 90vh;
         flex-direction: column;
         display: flex;
         justify-content: center;
@@ -60,30 +190,33 @@
         animation-fill-mode: forwards;
       }
 
-      .preloader__bounce {
-        text-align: center;
-        animation-name: preloader-bounce;
-        animation-duration: 0.9s;
-        animation-iteration-count: infinite;
-      }
-
+      /* BMC code */
       .preloader__logo {
         display: inline-block;
-        animation-name: preloader-squash;
-        animation-duration: 0.9s;
-        animation-iteration-count: infinite;
-        width: 60px;
-        height: 60px;
+        width: 200px;
+        height: 100px;
         background-repeat: no-repeat;
         background-size: contain;
-        background-image: url('[[.LoadingLogo]]');
+        /* background-image: url('[[.LoadingLogo]]'); */
       }
 
+      .logo {
+        display: inline-block;
+        width: 200px;
+        height: 100px;
+        background-repeat: no-repeat;
+        background-size: contain;
+      }
+
+      /* End */
       .preloader__text {
         margin-top: 16px;
-        font-weight: 500;
-        font-size: 14px;
-        font-family: Sans-serif;
+        /* BMC code */
+        font-weight: 300;
+        font-size: 1.3125rem;
+        text-align: center;
+        font-family: 'Open Sans', 'Roboto', Sans-serif;
+        /* End */
         opacity: 0;
         animation-name: preloader-fade-in;
         animation-duration: 0.9s;
@@ -99,6 +232,16 @@
         color: #d8d9da;
       }
 
+      /* BMC code */
+      .theme-light .preloader__logo {
+        /* background-image: url(public/img/bmc_helix_light.svg); */
+      }
+
+      .theme-dark .preloader__logo {
+        /* background-image: url(public/img/bmc_helix_dark.svg); */
+      }
+
+      /* End */
       @keyframes preloader-fade-in {
         0% {
           opacity: 0;
@@ -107,18 +250,6 @@
         }
         100% {
           opacity: 1;
-        }
-      }
-
-      @keyframes preloader-bounce {
-        from,
-        to {
-          transform: translateY(0px);
-          animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
-        }
-        50% {
-          transform: translateY(-50px);
-          animation-timing-function: cubic-bezier(0.9, 0, 0.7, 1);
         }
       }
 
@@ -151,7 +282,7 @@
       }
 
       /* stop logo animation */
-      .preloader--done .preloader__bounce,
+      /* BMC code - inline change */
       .preloader--done .preloader__logo {
         animation-name: none;
         display: none;
@@ -160,7 +291,8 @@
       .preloader--done .preloader__logo,
       .preloader--done .preloader__text {
         display: none;
-        color: #ff5705 !important;
+        /* BMC code - next line */
+        /* color: #ff5705 !important; */
         font-size: 15px;
       }
 
@@ -172,6 +304,47 @@
         display: block;
       }
 
+      /* BMC code */
+      .main_text {
+        margin-top: 40px;
+        font-size: 32px;
+      }
+
+      .sub_text {
+        margin-top: 12px;
+        font-size: 18px;
+      }
+
+      .bmc_links {
+        color: #33a2e5;
+      }
+
+      .bmc_product_container {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        flex: 0 0 auto;
+        flex-flow: row;
+        align-items: center;
+        justify-content: center;
+        -webkit-flex: 0 0 auto;
+        -webkit-flex-flow: row;
+        -webkit-box-pack: center;
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -webkit-justify-content: center;
+        -ms-flex: 0 0 auto;
+        -ms-flex-flow: row;
+        -ms-flex-pack: center;
+        -ms-flex-align: center;
+        font-weight: 200;
+        font-size: 1.3125rem;
+        line-height: 1.875rem;
+        font-family: 'Open Sans', 'Roboto', Sans-serif;
+      }
+
+      /* End */
       .preloader--done .preloader__text--fail a {
         color: white;
       }
@@ -202,14 +375,29 @@
       }
     </style>
 
+    <!-- BMC code -->
     <div class="preloader">
       <div class="preloader__enter">
-        <div class="preloader__bounce">
-          <div class="preloader__logo" aria-live="polite" role="status" aria-label="Loading Grafana"></div>
+        <div class="bmc_product_container">
+          <div
+            class="logo logo-helix logo-light"
+            style="
+              width: 150px;
+              height: 30px;
+              background-size: contain;
+              background-position: center right;
+              background-repeat: no-repeat;
+            "
+          ></div>
+          <div style="padding: 0 10px">Dashboards</div>
+        </div>
+        <div class="preloader__text" style="font-size: 1.2rem">
+          <i class="fa fa-spinner fa-spin"></i>
+          <span>Loading...</span>
         </div>
       </div>
-      <div class="preloader__text preloader__text--fail">
-        <main>
+      <div class="text-center preloader__text preloader__text--fail">
+        <!-- <main>
           <h1>If you're seeing this Grafana has failed to load its application files</h1>
           <ol class="preloader__error-list">
             <li>This could be caused by your reverse proxy settings.</li>
@@ -223,8 +411,21 @@
                 supported browsers </a
               >.</li>
           </ol>
-        </main>
+        </main> -->
+        <div>
+          <img src="public/img/bmc_app_failure_icon.svg" />
+        </div>
+        <div>
+          <h3 class="main_text">Oops... we couldn't load that page.</h3>
+        </div>
+        <div>
+          <span class="sub_text"
+            >The application has failed to load. Contact
+            <a class="bmc_links" href="https://www.bmc.com/support" target="_blank">BMC Support</a>.</span
+          >
+        </div>
       </div>
+      <!-- End -->
       <script nonce="[[.Nonce]]">
         // Check to see if browser is not supported by Grafana
         // Source file in app/core/utils/browser.ts & tests make edits there and copy compiled typescript here
@@ -317,6 +518,12 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
     </script>
+
+    <!-- BMC Code -->
+    <script nonce="[[.Nonce]]">
+      _AUTH_VALIDATION_DOMAIN = '/dashboards';
+    </script>
+    <!-- END -->
 
     [[if .GoogleTagManagerId]]
     <!-- Google Tag Manager -->

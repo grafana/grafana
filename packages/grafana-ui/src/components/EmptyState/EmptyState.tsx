@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { AriaRole, ReactNode } from 'react';
+// BMC Code : Accessibility Change next line.
+import { AriaRole, ReactNode, useState, useEffect } from 'react';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -49,9 +50,29 @@ export const EmptyState = ({
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   const imageToShow = image ?? getDefaultImageForVariant(variant);
+  // BMC Code : Accessibility Change starts here.
+  const [resultMessage, setResultMessage] = useState('');
+
+  useEffect(() => {
+    if (variant === 'not-found') {
+      setResultMessage(message);
+    } else {
+      setResultMessage('');
+    }
+  }, [variant, message]);
+  // BMC Code : Accessibility Change ends here.
 
   return (
     <Box paddingY={4} display="flex" direction="column" alignItems="center" role={role}>
+      {
+        // BMC Code : Accessibility Change starts here.
+      }
+      <div className="sr-only" aria-live="polite" aria-atomic="true" role='status'>
+        {resultMessage}
+      </div>
+      {
+        // BMC Code : Accessibility Change ends here.
+      }
       <div className={styles.container}>
         {!hideImage && imageToShow}
         <Stack direction="column" alignItems="center">
@@ -79,14 +100,14 @@ function getDefaultImageForVariant(variant: Props['variant']) {
       return <GrotNotFound width={300} />;
     }
     case 'completed': {
-      return <SVG src={GrotCompleted} width={300} />;
+      // BMC Change: Next line inline
+      return <SVG src={GrotCompleted} width={0} height={0} />;
     }
     default: {
       throw new Error(`Unknown variant: ${variant}`);
     }
   }
 }
-
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',

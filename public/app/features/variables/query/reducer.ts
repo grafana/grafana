@@ -9,6 +9,7 @@ import {
   VariableRefresh,
   VariableSort,
 } from '@grafana/data';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT, NONE_VARIABLE_VALUE } from '../constants';
 import { getInstanceState } from '../state/selectors';
@@ -34,6 +35,7 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   options: [],
   current: {},
   definition: '',
+  bmcVarCache: false, // BMC code
 };
 
 export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
@@ -165,11 +167,21 @@ export const queryVariableSlice = createSlice({
         return;
       }
 
-      const { includeAll, sort } = instanceState;
+      const { includeAll, sort, query } = instanceState;
       const options = metricNamesToVariableValues(templatedRegex, sort, results);
 
       if (includeAll) {
-        options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
+        // BMC change inline-block
+        options.unshift({
+          text:
+            (query?.startsWith?.('remedy') || query?.sourceType === 'remedy') &&
+            getFeatureStatus('bhd-ar-all-values-v2') &&
+            instanceState.discardForAll === true
+              ? 'Omit'
+              : ALL_VARIABLE_TEXT,
+          value: ALL_VARIABLE_VALUE,
+          selected: false,
+        });
       }
 
       if (!options.length) {

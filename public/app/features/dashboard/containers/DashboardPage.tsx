@@ -11,11 +11,14 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { dashboardLoadTime } from 'app/core/services/dashboardLoadTime_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { KeySelectorProvider } from 'app/features/keySelector/KeySelector';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
@@ -151,6 +154,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   initDashboard() {
     const { dashboard, params, queryParams } = this.props;
 
+    // BMC code starts
+    // Start dashboard load time
+    dashboardLoadTime.reset();
+    // BMC Code ends
+
     if (dashboard) {
       this.closeDashboard();
     }
@@ -181,6 +189,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (
       prevProps.params.uid !== params.uid ||
+      // BMC Change: Next line to detect Home to New Dashboard redirect (Multiple times)
+      prevProps.route.routeName !== this.props.route.routeName ||
       (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
     ) {
       this.initDashboard();
@@ -230,7 +240,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     if (this.state.panelNotFound) {
-      this.props.notifyApp(createErrorNotification(`Panel not found`));
+      this.props.notifyApp(
+        createErrorNotification(t('bmc.notifications.dashboard.panel-not-found', 'Panel not found'))
+      );
       locationService.partial({ editPanel: null, viewPanel: null });
     }
 
@@ -470,13 +482,15 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           )}
         </Page>
         {editPanel && (
-          <PanelEditor
-            dashboard={dashboard}
-            sourcePanel={editPanel}
-            tab={this.props.queryParams.tab}
-            sectionNav={sectionNav}
-            pageNav={pageNav}
-          />
+          <KeySelectorProvider keys={dashboard.getDashCurrentLocales()} resourceUid={dashboard.uid}>
+            <PanelEditor
+              dashboard={dashboard}
+              sourcePanel={editPanel}
+              tab={this.props.queryParams.tab}
+              sectionNav={sectionNav}
+              pageNav={pageNav}
+            />
+          </KeySelectorProvider>
         )}
         {queryParams.editview && (
           <DashboardSettings

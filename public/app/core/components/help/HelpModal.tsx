@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
@@ -152,8 +152,22 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
 
   const modKey = useMemo(() => getModKey(), []);
   const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
+  // BMC Accessibility Change Start: Capture helpModal to restore focus when the modal closes
+  const helpModalRef = useRef<HTMLElement | null>(document.activeElement as HTMLElement | null);
+
+  const handleDismiss = () => {
+    const helpModal = helpModalRef.current;
+    if (helpModal && typeof helpModal.focus === 'function') {
+      onDismiss();
+      requestAnimationFrame(() => {
+        opener.focus();
+      });
+    }
+  };
+  // BMC Accessibility Change End
   return (
-    <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+    //BMC Code change: Replaced onDismiss with handleDismiss
+    <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={handleDismiss} onClickBackdrop={handleDismiss}>
       <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>

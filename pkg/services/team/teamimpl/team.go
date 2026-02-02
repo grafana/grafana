@@ -32,13 +32,14 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Ser
 	}, nil
 }
 
-func (s *Service) CreateTeam(ctx context.Context, name, email string, orgID int64) (team.Team, error) {
+// BMC code - inline change for Id and IsMspTeams
+func (s *Service) CreateTeam(ctx context.Context, name, email string, orgID int64, Id int64, teamType int, IsMspTeams ...bool) (team.Team, error) {
 	_, span := s.tracer.Start(ctx, "team.CreateTeam", trace.WithAttributes(
 		attribute.Int64("orgID", orgID),
 		attribute.String("name", name),
 	))
 	defer span.End()
-	return s.store.Create(name, email, orgID)
+	return s.store.Create(name, email, orgID, Id, teamType, IsMspTeams...)
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
@@ -95,6 +96,14 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	defer span.End()
 	return s.store.GetIDsByUser(ctx, query)
 }
+
+// BMC code
+
+func (s *Service) GetTeamsByIds(ctx context.Context, orgID int64, teamIDs []int64) ([]*team.TeamDTO, error) {
+	return s.store.GetTeamsByIds(ctx, orgID, teamIDs)
+}
+
+// End
 
 func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
 	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(

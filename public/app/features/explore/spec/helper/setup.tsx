@@ -105,6 +105,9 @@ export function setupExplore(options?: SetupOptions): {
     post: jest.fn(),
     put: jest.fn().mockRejectedValue(undefined),
     request: jest.fn().mockRejectedValue(undefined),
+    // BMC code start
+    streamRequest: jest.fn().mockRejectedValue(undefined),
+    // BMC code ends
   });
 
   setPluginLinksHook(() => ({ links: [], isLoading: false }));

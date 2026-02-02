@@ -19,6 +19,7 @@ interface Props {
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
   setOperator: (item: SelectableValue<string>) => void;
+  filterInputRef?: React.Ref<HTMLInputElement>; // BMC Accessibility change: Ref for focus management
 }
 
 const ITEM_HEIGHT = 28;
@@ -77,6 +78,7 @@ export const FilterList = ({
   setSearchFilter,
   operator,
   setOperator,
+  filterInputRef,
 }: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
@@ -172,7 +174,16 @@ export const FilterList = ({
 
   return (
     <Stack direction="column" gap={0.25}>
-      {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
+      {/* BMC Accessibility change: Added aria-label and ref for focus management */}
+      {!showOperators && (
+        <FilterInput
+          ref={filterInputRef}
+          placeholder="Filter values"
+          onChange={setSearchFilter}
+          value={searchFilter}
+          aria-label="Filter values"
+        />
+      )}
       {showOperators && (
         <Stack direction="row" gap={0}>
           <ButtonSelect
@@ -182,7 +193,17 @@ export const FilterList = ({
             value={operator}
             tooltip={operator.description}
           />
-          <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+          <FilterInput
+            //BMC Accessibility change: Forward ref for focus management
+            ref={filterInputRef}
+            placeholder="Filter values"
+            //BMC Accessibility Change next 1 line
+            aria-label="Filter values"
+            //BMC Accessibility Change end
+            onChange={setSearchFilter}
+            value={searchFilter}
+          />
+         
         </Stack>
       )}
       {items.length > 0 ? (

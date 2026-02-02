@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent, useRef, useState } from 'react';
 import * as React from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -124,7 +125,8 @@ export function UserProfile({
           </table>
         </div>
         <Stack gap={2}>
-          {canDelete && (
+          {/* BMC Change inline */}
+          {canDelete && config.buildInfo.env === 'development' && (
             <>
               <Button variant="destructive" onClick={showDeleteUserModal(true)} ref={deleteUserRef}>
                 <Trans i18nKey="admin.user-profile.delete-button">Delete user</Trans>
@@ -139,14 +141,16 @@ export function UserProfile({
               />
             </>
           )}
+          {/* BMC Change inline: Disable the action */}
           {user.isDisabled && canEnable && (
-            <Button variant="secondary" onClick={handleUserEnable}>
+            <Button variant="secondary" onClick={handleUserEnable} disabled>
               <Trans i18nKey="admin.user-profile.enable-button">Enable user</Trans>
             </Button>
           )}
           {!user.isDisabled && canDisable && (
             <>
-              <Button variant="secondary" onClick={showDisableUserModal(true)} ref={disableUserRef}>
+              {/* BMC code - inline change. Disable button for server admin */}
+              <Button variant="secondary" onClick={showDisableUserModal(true)} ref={disableUserRef} disabled>
                 <Trans i18nKey="admin.user-profile.disable-button">Disable user</Trans>
               </Button>
               <ConfirmModal
@@ -279,11 +283,13 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
           )}
         </td>
         <td>
+          {/* BMC code - inline change. Disable button for server admin */}
           <ConfirmButton
             confirmText="Save"
-            onClick={this.onEditClick}
+            // onClick={this.onEditClick}
             onConfirm={this.onSave}
             onCancel={this.onCancelClick}
+            disabled={true}
           >
             {t('admin.user-profile.edit-button', 'Edit')}
           </ConfirmButton>

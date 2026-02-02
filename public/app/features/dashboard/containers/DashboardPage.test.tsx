@@ -60,6 +60,16 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+// BMC code start
+jest.mock('app/core/services/dashboardLoadTime_srv', () => ({
+  dashboardLoadTime: {
+    setDashboardInfo: jest.fn(),
+    setDashboardPanelRendered: jest.fn(),
+    reset: jest.fn(),
+  },
+}));
+// BMC code end
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),

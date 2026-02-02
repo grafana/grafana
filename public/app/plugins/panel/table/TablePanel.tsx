@@ -185,4 +185,13 @@ const tableStyles = {
   selectWrapper: css({
     padding: '8px 8px 0px 8px',
   }),
+  // BMC code
+  // eslint-disable-next-line @emotion/syntax-preference
+  noDataWrapper: css`
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `,
+  // End
 };

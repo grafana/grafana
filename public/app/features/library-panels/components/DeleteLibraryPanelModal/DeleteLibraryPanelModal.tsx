@@ -2,6 +2,7 @@ import { FC, useEffect, useMemo, useReducer } from 'react';
 
 import { LoadingState } from '@grafana/data';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getModalStyles } from '../../styles';
 import { LibraryElementDTO } from '../../types';
@@ -30,7 +31,14 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   const done = loadingState === LoadingState.Done;
 
   return (
-    <Modal className={styles.modal} title="Delete library panel" icon="trash-alt" onDismiss={onDismiss} isOpen={true}>
+    <Modal
+      className={styles.modal}
+      // BMC Change: Next line
+      title={t('bmcgrafana.library-panels.delete.title', 'Delete library panel')}
+      icon="trash-alt"
+      onDismiss={onDismiss}
+      isOpen={true}
+    >
       {!done ? <LoadingIndicator /> : null}
       {done ? (
         <div>
@@ -39,10 +47,10 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
 
           <Modal.ButtonRow>
             <Button variant="secondary" onClick={onDismiss} fill="outline">
-              Cancel
+              <Trans i18nKey={'library-panel.modal.button-cancel'}>Cancel</Trans>
             </Button>
             <Button variant="destructive" onClick={onConfirm} disabled={connected}>
-              Delete
+              <Trans i18nKey={'bmcgrafana.library-panels.delete.delete-text'}>Delete</Trans>
             </Button>
           </Modal.ButtonRow>
         </div>
@@ -51,18 +59,29 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   );
 };
 
-const LoadingIndicator = () => <span>Loading library panel...</span>;
+const LoadingIndicator = () => (
+  <span>
+    <Trans i18nKey={'bmcgrafana.library-panels.delete.loading-text'}>Loading library panel...</Trans>
+  </span>
+);
 
 const Confirm = () => {
   const styles = useStyles2(getModalStyles);
 
-  return <div className={styles.modalText}>Do you want to delete this panel?</div>;
+  return (
+    <div className={styles.modalText}>
+      <Trans i18nKey={'bmcgrafana.library-panels.delete.confirmation-text'}>Do you want to delete this panel?</Trans>
+    </div>
+  );
 };
 
 const HasConnectedDashboards: FC<{ dashboardTitles: string[] }> = ({ dashboardTitles }) => {
   const styles = useStyles2(getModalStyles);
-  const suffix = dashboardTitles.length === 1 ? 'dashboard.' : 'dashboards.';
-  const message = `${dashboardTitles.length} ${suffix}`;
+  // BMC Change: Starts
+  // For localization ease removing logic to calculate suffix.
+  // const suffix = dashboardTitles.length === 1 ? 'dashboard.' : 'dashboards.';
+  const message = `${dashboardTitles.length}`;
+  // BMC Change: Ends
   if (dashboardTitles.length === 0) {
     return null;
   }
@@ -70,14 +89,20 @@ const HasConnectedDashboards: FC<{ dashboardTitles: string[] }> = ({ dashboardTi
   return (
     <div>
       <p className={styles.textInfo}>
-        {'This library panel can not be deleted because it is connected to '}
-        <strong>{message}</strong>
-        {' Remove the library panel from the dashboards listed below and retry.'}
+        {/* BMC Change: To enable localization for below text */}
+        {t(
+          'bmcgrafana.library-panels.delete.cannot-delete-text',
+          'This library panel can not be deleted because it is connected to {{message}} dashboard(s). Remove the library panel from the dashboards listed below and retry.',
+          { message }
+        )}
       </p>
       <table className={styles.myTable}>
         <thead>
           <tr>
-            <th>Dashboard name</th>
+            <th>
+              {/* BMC Change: Next line */}
+              <Trans i18nKey={'bmcgrafana.library-panels.delete.dashboard-name-title'}>Dashboard name</Trans>
+            </th>
           </tr>
         </thead>
         <tbody>

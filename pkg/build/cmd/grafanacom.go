@@ -186,6 +186,48 @@ func Builds(baseURL *url.URL, grafana, version string, packages []packaging.Buil
 	return builds, nil
 }
 
+func Builds(baseURL *url.URL, grafana, version string, packages []packaging.BuildArtifact) ([]GCOMPackage, error) {
+	builds := make([]GCOMPackage, len(packages))
+	for i, v := range packages {
+		var (
+			os   = v.Distro
+			arch = v.Arch
+		)
+
+		if v.Distro == "windows" {
+			os = "win"
+			if v.Ext == "msi" {
+				os = "win-installer"
+			}
+		}
+
+		if v.Distro == "rhel" {
+			if arch == "aarch64" {
+				arch = "arm64"
+			}
+		}
+
+		if v.Distro == "deb" {
+			if arch == "armhf" {
+				arch = "armv7"
+				if v.RaspberryPi {
+					log.Println(v.Distro, arch, "raspberrypi == true")
+					arch = "armv6"
+				}
+			}
+		}
+
+		u := gcom.GetURL(baseURL, version, grafana, v.Distro, v.Arch, v.Ext, v.Musl, v.RaspberryPi)
+		builds[i] = GCOMPackage{
+			OS:   os,
+			URL:  u.String(),
+			Arch: arch,
+		}
+	}
+
+	return builds, nil
+}
+
 // publishPackages publishes packages to grafana.com.
 func publishPackages(cfg packaging.PublishConfig) error {
 	log.Printf("Publishing Grafana packages, version %s, %s edition, %s mode, dryRun: %v, simulating: %v...\n",

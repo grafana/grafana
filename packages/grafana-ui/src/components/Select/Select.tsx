@@ -12,6 +12,7 @@ import {
 
 /** @deprecated Use Combobox component instead */
 export function Select<T, Rest = {}>(props: SelectCommonProps<T> & Rest) {
+  // @ts-ignore
   return <SelectBase {...props} />;
 }
 

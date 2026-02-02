@@ -34,6 +34,8 @@ describe('importDashboard', () => {
       uid: '12',
       gnetId: 'asd',
       constants: [],
+      // BMC code: Next line
+      vqbViews: [],
       dataSources: [
         {
           id: 1,

@@ -147,10 +147,11 @@ export const getWeekdayIndex = (day: string) => {
   return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
 };
 
+// BMC Change: Starts
+export const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 export const getWeekdayIndexByEnglishName = (day: string) =>
-  ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].findIndex(
-    (wd) => wd.toLowerCase() === day.toLowerCase()
-  );
+  days.findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
+// BMC Change: Ends
 
 export const setWeekStart = (weekStart?: string) => {
   const suffix = '-weekStart';

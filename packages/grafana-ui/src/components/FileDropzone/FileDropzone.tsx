@@ -6,7 +6,7 @@ import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzo
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
@@ -188,8 +188,10 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   const renderErrorMessages = (errors: FileError[]) => {
     const size = formattedValueToString(formattedSize);
     return (
+      
       <div className={styles.errorAlert}>
-        <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
+      {/* BMC change */}
+        <Alert title={t('bmcgrafana.file-drop-zone.upload-failed','Upload failed')} severity="error" onRemove={clearAlert}>
           {errors.map((error) => {
             switch (error.code) {
               case ErrorCode.FileTooLarge:
@@ -198,6 +200,34 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
                     <Trans i18nKey="grafana-ui.file-dropzone.file-too-large">File is larger than {{ size }}</Trans>
                   </div>
                 );
+              // BMC code: next cases
+              case ErrorCode.TooManyFiles:
+                const maxFiles = options?.maxFiles ?? 10;
+                return (
+                  <div key={error.message + error.code}>
+                    <Trans i18nKey="bmcgrafana.grafana-ui.file-dropzone.bulk-limit-error">
+                      Select upto {{ maxFiles }} dashboards only
+                    </Trans>
+                  </div>
+                );
+              case ErrorCode.FileInvalidType:
+                let acceptedTypes = '';
+                if (options?.accept) {
+                  if (Array.isArray(options.accept)) {
+                    acceptedTypes = options.accept.join(', ');
+                  } else if (isString(options.accept)) {
+                    acceptedTypes = options.accept;
+                  } else {
+                    acceptedTypes = Object.values(options.accept).flat().join(', ');
+                  }
+                }
+                const message = `${t('bmcgrafana.file-drop-zone.file-invalid-type-prefix', 'File type must be one of')} ${acceptedTypes}`;
+                return (
+                  <div key={error.message + error.code}>
+                    {message}
+                  </div>
+                );
+              // BMC code: end
               default:
                 return <div key={error.message + error.code}>{error.message}</div>;
             }
@@ -219,7 +249,8 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
       </div>
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
       <small className={cx(styles.small, styles.acceptContainer)}>
-        {options?.maxSize && `Max file size: ${formattedValueToString(formattedSize)}`}
+        {/* BMC change */}
+        {options?.maxSize && `${t('bmcgrafana.file-drop-zone.max-file-size', 'Max file size')}: ${formattedValueToString(formattedSize)}`}
         {options?.maxSize && options?.accept && <span className={styles.acceptSeparator}>{'|'}</span>}
         {options?.accept && getAcceptedFileTypeText(options.accept)}
       </small>
@@ -276,19 +307,20 @@ function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDrop
   return files.length ? 'Replace file' : 'Upload file';
 }
 
+//BMC change - starts
 function getAcceptedFileTypeText(accept: string | string[] | Accept) {
+  let types = '';
   if (isString(accept)) {
-    return `Accepted file type: ${accept}`;
+    types = accept;
+  } else if (Array.isArray(accept)) {
+    types = accept.join(', ');
+  } else {
+    types = Object.values(accept).flat().join(', ');
   }
-
-  if (Array.isArray(accept)) {
-    return `Accepted file types: ${accept.join(', ')}`;
-  }
-
-  // react-dropzone has updated the type of the "accept" parameter since v13.0.0:
-  // https://github.com/react-dropzone/react-dropzone/blob/master/src/index.js#L95
-  return `Accepted file types: ${Object.values(accept).flat().join(', ')}`;
+  // Build message this way to avoid HTML escaping of forward slashes
+  return `${t('bmcgrafana.file-drop-zone.accepted-file-types-prefix', 'Accepted file types')}: ${types}`;
 }
+//BMC change - ends
 
 function mapToCustomFile(file: File): DropzoneFile {
   return {

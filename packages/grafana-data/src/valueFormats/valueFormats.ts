@@ -2,10 +2,11 @@ import { clamp } from 'lodash';
 
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types/time';
+import { roundDecimals } from '../utils/numbers';
 
 import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
-import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
+import { currency, getOffsetFromSIPrefix, SIPrefix } from './symbolFormatters';
 
 export interface FormattedValue {
   text: string;
@@ -63,7 +64,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   }
 
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
-  const formatted = String(Math.round(value * factor) / factor);
+
+  // BMC code: inline change to use roundDecimals to fix rounding logic
+  const formatted = String(roundDecimals(value, decimals));
+  // BMC code: end
 
   // if exponent return directly
   if (formatted.indexOf('e') !== -1 || value === 0) {
@@ -176,9 +180,57 @@ export function locale(value: number, decimals: DecimalCount): FormattedValue {
     return { text: '' };
   }
   return {
-    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals ?? undefined }),
+    text: value.toLocaleString(undefined, {
+      //BMC Code starts here
+      minimumFractionDigits: decimals ?? undefined,
+      maximumFractionDigits: decimals ?? undefined,
+      useGrouping: true,
+      //BMC Code ends here
+    }),
   };
 }
+
+/* BMC Code Starts here */
+/**
+ * Convert number in string format to european format
+ * @param {string} value Number in string format
+ * @param {DecimalCount} decimals Number of decimals to add
+ * @returns {FormattedValue} FormattedValue object containing string form of number in european format
+ */
+export function convertTextToEuropeanFormat(value: string, decimals?: DecimalCount): FormattedValue {
+  if (value == null) {
+    return { text: '' };
+  }
+  let valueNumber = Number(value);
+
+  if (isNaN(valueNumber)) {
+    return { text: value };
+  }
+
+  return {
+    text: valueNumber.toLocaleString('es-ES', {
+      minimumFractionDigits: decimals ?? undefined,
+      maximumFractionDigits: decimals ?? undefined,
+      useGrouping: true,
+    }),
+  };
+}
+// BMC Code ends here
+
+/* BMC Code starts here */
+export function europeanFormat(value: number, decimals?: DecimalCount): FormattedValue {
+  if (value == null) {
+    return { text: '' };
+  }
+  return {
+    text: value.toLocaleString('es-ES', {
+      minimumFractionDigits: decimals ?? undefined,
+      maximumFractionDigits: decimals ?? undefined,
+      useGrouping: true,
+    }),
+  };
+}
+/* BMC Code ends here */
 
 export function simpleCountUnit(symbol: string): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];

@@ -5,10 +5,11 @@ import { DataSourcePluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { ROUTES } from 'app/features/connections/constants';
+import { getFeatureStatus, FEATURE_CONST } from 'app/features/dashboard/services/featureFlagSrv';
 import { addDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
 
-import { isDataSourceEditor } from '../../permissions';
+import { isDataSourceEditor, isGrafanaAdmin } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
 type Props = {
@@ -30,13 +31,16 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
+  // BMC code - next line
+  const canCreateDataSource = getFeatureStatus(FEATURE_CONST.DASHBOARDS_SSRF_FEATURE_NAME) || isGrafanaAdmin();
   const disabledButton = config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
 
   return (
     <Button
       variant="primary"
       onClick={onAddDataSource}
-      disabled={disabledButton}
+      // BMC Code: Next Inline
+      disabled={disabledButton || !canCreateDataSource}
       title={
         disabledButton ? "The plugin isn't usable yet, it may take some time to complete the installation." : undefined
       }

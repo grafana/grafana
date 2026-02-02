@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';
@@ -76,17 +77,31 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
 function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
   return (
+    // BMC Change: To enable localization for below text
     <h5>
-      Renamed or missing variables
-      <Tooltip content="Click to expand a list with all variable references that have been renamed or are missing from the dashboard.">
+      <Trans i18nKey="bmcgrafana.dashboards.settings.variables.variables-tab.variables-unknown-table.title">
+        Renamed or missing variables
+      </Trans>
+      <Tooltip
+        content={t(
+          'bmcgrafana.dashboards.settings.variables.variables-tab.variables-unknown-table.info-circle-description',
+          'Click to expand a list with all variable references that have been renamed or are missing from the dashboard.'
+        )}
+      >
         <Icon name="info-circle" className={style.infoIcon} />
       </Tooltip>
     </h5>
   );
 }
-
+// BMC Change: To enable localization for below text
 function NoUnknowns(): ReactElement {
-  return <span>No renamed or missing variables found.</span>;
+  return (
+    <span>
+      <Trans i18nKey="bmcgrafana.dashboards.settings.variables.variables-tab.variables-unknown-table.decription">
+        No renamed or missing variables found.
+      </Trans>
+    </span>
+  );
 }
 
 function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {

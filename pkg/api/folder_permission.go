@@ -80,12 +80,12 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) response.Response {
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating folder permissions", err)
 	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
-
 	uid := web.Params(c.Req)[":uid"]
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {

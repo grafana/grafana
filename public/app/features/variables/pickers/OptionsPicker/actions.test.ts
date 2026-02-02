@@ -1,4 +1,4 @@
-import { QueryVariableModel, VariableSort, VariableRefresh } from '@grafana/data';
+import { QueryVariableModel, VariableRefresh, VariableSort } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';
@@ -584,6 +584,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     regex: '',
     multi: false,
     includeAll: false,
+    bmcVarCache: false, // bmc code
     ...(extend ?? {}),
   };
 }

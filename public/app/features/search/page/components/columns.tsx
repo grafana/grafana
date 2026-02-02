@@ -114,12 +114,18 @@ export const generateColumns = (
   columns.push({
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
-      let name = access.name.values[p.row.index];
+      //BMC Change: Start
+      // to be ignored for extraction
+      const uid = access.uid.values[p.row.index];
+      let localizedName = t(`bmc-dynamic.${uid}.name`, access.name.values[p.row.index]);
+      //BMC change: End
       const isDeleted = access.isDeleted?.values[p.row.index];
 
-      if (!name?.length) {
+      // BMC Change: Inline
+      if (!localizedName?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
-        name = loading ? 'Loading...' : 'Missing title'; // normal for panels
+        // BMC Change: Inline
+        localizedName = loading ? 'Loading...' : 'Missing title'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
       const { key, ...cellProps } = p.cellProps;
@@ -129,10 +135,12 @@ export const generateColumns = (
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
           ) : isDeleted ? (
-            <span className={classNames}>{name}</span>
+            // BMC Change: Inline
+            <span className={classNames}>{localizedName}</span>
           ) : (
-            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
-              {name}
+            // BMC Change: Inline
+            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={localizedName}>
+              {localizedName}
             </a>
           )}
         </div>
@@ -184,7 +192,8 @@ export const generateColumns = (
         const parts = (access.location?.values[p.row.index] ?? '').split('/');
         const { key, ...cellProps } = p.cellProps;
         return (
-          <div key={key} {...cellProps} className={styles.cell}>
+          // BMC Code : Accessibility Change ( next 1 line)
+          <div key={key} {...cellProps} className={styles.cell} tabIndex={0}>
             {!response.isItemLoaded(p.row.index) ? (
               <Skeleton width={150} />
             ) : (
@@ -215,13 +224,18 @@ export const generateColumns = (
                     }
 
                     return (
-                      <div key={p} className={styles.locationItem}>
+                      // BMC Code : Accessibility Change ( next 1 line)
+                      <div key={p} tabIndex={0} className={styles.locationItem}>
                         {content}
                       </div>
                     );
                   }
-
-                  return <span key={p}>{p}</span>;
+                  // BMC Code : Accessibility Change ( next 1 line)
+                  return (
+                    <span key={p} tabIndex={0}>
+                      {p}
+                    </span>
+                  );
                 })}
               </div>
             )}
@@ -464,12 +478,15 @@ function makeTypeColumn(
       }
       const { key, ...cellProps } = p.cellProps;
       return (
-        <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
+        // BMC Code : Accessibility Change ( next 1 line)
+        <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)} tabIndex={0}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={100} />
           ) : (
             <>
-              <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
+              {/*BMC Accessibility Change Start: Added aria-hidden */}
+              <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} aria-hidden="true" />
+              {/* BMC Accessibility Change End */}
               {txt}
             </>
           )}

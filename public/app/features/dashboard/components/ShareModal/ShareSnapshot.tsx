@@ -13,7 +13,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
-import { getTrackingSource } from './utils';
+import { updateURLOrigin, getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -110,6 +110,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     try {
       const results = await getDashboardSnapshotSrv().create(cmdData);
+      // BMC code
+      results.deleteUrl = updateURLOrigin(results.deleteUrl);
+      results.url = updateURLOrigin(results.url);
+      // End
       this.setState({
         deleteUrl: results.deleteUrl,
         snapshotUrl: results.url,

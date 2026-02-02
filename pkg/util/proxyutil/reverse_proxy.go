@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -38,6 +39,12 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 		ErrorHandler:  errorHandler(logger),
 		ErrorLog:      log.New(&logWrapper{logger: logger}, "", 0),
 		Director:      director,
+		Transport: &http.Transport{
+			IdleConnTimeout: time.Millisecond * 90,
+			DialContext: (&net.Dialer{
+				KeepAlive: time.Millisecond * 90,
+			}).DialContext,
+		},
 	}
 
 	for _, opt := range opts {

@@ -15,6 +15,8 @@ export interface ImportDashboardDTO {
   gnetId: string;
   constants: string[];
   dataSources: DataSourceInstanceSettings[];
+  // BMC code next line
+  vqbViews: any[];
   elements: LibraryElementDTO[];
   folder: { uid: string; title?: string };
 }
@@ -23,6 +25,8 @@ export enum InputType {
   DataSource = 'datasource',
   Constant = 'constant',
   LibraryPanel = 'libraryPanel',
+  // BMC code next line
+  View = 'view',
 }
 
 export enum LibraryPanelInputState {
@@ -44,6 +48,12 @@ export interface DataSourceInput extends DashboardInput {
   pluginId: string;
 }
 
+// BMC Code: start
+export interface ViewInput extends DashboardInput {
+  id: number;
+}
+// BMC Code: end
+
 export interface LibraryPanelInput {
   model: LibraryElementDTO;
   state: LibraryPanelInputState;
@@ -53,6 +63,8 @@ export interface DashboardInputs {
   dataSources: DataSourceInput[];
   constants: DashboardInput[];
   libraryPanels: LibraryPanelInput[];
+  // BMC code next line
+  vqbViews: ViewInput[];
 }
 
 export interface ImportDashboardState {
@@ -61,6 +73,8 @@ export interface ImportDashboardState {
   source: DashboardSource;
   inputs: DashboardInputs;
   state: LoadingState;
+  // BMC code - next line
+  multiple?: boolean;
 }
 
 export const initialImportDashboardState: ImportDashboardState = {
@@ -69,6 +83,8 @@ export const initialImportDashboardState: ImportDashboardState = {
   source: DashboardSource.Json,
   inputs: {} as DashboardInputs,
   state: LoadingState.NotStarted,
+  // BMC code - next line
+  multiple: false,
 };
 
 const importDashboardSlice = createSlice({
@@ -96,12 +112,16 @@ const importDashboardSlice = createSlice({
     clearDashboard: (state: Draft<ImportDashboardState>) => {
       state.dashboard = {};
       state.state = LoadingState.NotStarted;
+      // BMC code - next line
+      state.multiple = false;
     },
     setInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<any[]>) => {
       state.inputs = {
         dataSources: action.payload.filter((p) => p.type === InputType.DataSource),
         constants: action.payload.filter((p) => p.type === InputType.Constant),
         libraryPanels: state.inputs.libraryPanels || [],
+        // BMC Code: Next line
+        vqbViews: action.payload.filter((p) => p.type === InputType.View) || [],
       };
     },
     setLibraryPanelInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<LibraryPanelInput[]>) => {
@@ -114,6 +134,11 @@ const importDashboardSlice = createSlice({
     fetchDashboard: (state: Draft<ImportDashboardState>) => {
       state.state = LoadingState.Loading;
     },
+    // BMC Code: Next method
+    dashboardsLoaded: (state: Draft<ImportDashboardState>) => {
+      state.state = LoadingState.Done;
+      state.multiple = true;
+    },
   },
 });
 
@@ -125,6 +150,8 @@ export const {
   setLibraryPanelInputs,
   fetchFailed,
   fetchDashboard,
+  // BMC Code: Next line
+  dashboardsLoaded,
 } = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;

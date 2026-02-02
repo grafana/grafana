@@ -1,8 +1,16 @@
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  VizPanel,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
+import { ShareDownloadTab } from '../../bmc/Download/ShareDownloadTab';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsJson } from '../ExportButton/ExportAsJson';
@@ -59,11 +67,28 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
 }
 
 function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
-  const { activeShare } = model.useState();
+  const { activeShare, panelRef } = model.useState();
   const dashboard = getDashboardSceneFor(model);
+  // BMC Change: Adding dashboard/panel name along with download title
+  let drawerTitle = activeShare?.getTabLabel();
+
+  if (drawerTitle?.toLowerCase() === 'download') {
+    if (panelRef) {
+      const panel = panelRef.resolve();
+      if (panel) {
+        drawerTitle = sceneGraph.interpolate(panel, `Download: ${panel.state.title}`);
+      }
+    }
+
+    if (!panelRef || !drawerTitle) {
+      const dashboardTitle = dashboard?.state?.title ?? 'Dashboard';
+      drawerTitle = `Download: ${dashboardTitle}`;
+    }
+  }
+  // BMC Change: Ends
 
   return (
-    <Drawer title={activeShare?.getTabLabel()} onClose={model.onDismiss} size="md">
+    <Drawer title={drawerTitle} onClose={model.onDismiss} size="md">
       <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
         {activeShare && <activeShare.Component model={activeShare} />}
       </ShareDrawerContext.Provider>
@@ -91,6 +116,10 @@ function getShareView(
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
       return new ExportAsJson({ onDismiss });
+    //BMC Change: Starts
+    case shareDashboardType.download:
+      return new ShareDownloadTab({ dashboardRef, panelRef, onDismiss });
+    //BMC Change: Ends
     default:
       return new ShareInternally({ onDismiss });
   }
@@ -111,6 +140,10 @@ function getPanelShareView(
       return new SharePanelEmbedTab({ panelRef, onDismiss });
     case shareDashboardType.libraryPanel:
       return new ShareLibraryPanelTab({ panelRef, onDismiss });
+    //BMC Change: Starts
+    case shareDashboardType.download:
+      return new ShareDownloadTab({ dashboardRef, panelRef, onDismiss });
+    //BMC Change: Ends
     default:
       return new SharePanelInternally({ panelRef, onDismiss });
   }

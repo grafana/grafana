@@ -4,6 +4,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t, Trans } from 'app/core/internationalization';
+import { ConfirmExportModal } from 'app/features/search/page/components/ConfirmExportModal';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -77,6 +78,20 @@ export function BrowseActions() {
     );
   };
 
+  // BMC Code: Start
+  const showExportModal = () => {
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: ConfirmExportModal,
+        props: {
+          results: Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]),
+          onExportDone: onActionComplete,
+        },
+      })
+    );
+  };
+  // BMC Code: End
+
   const moveButton = (
     <Button onClick={showMoveModal} variant="secondary" disabled={moveIsInvalid}>
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
@@ -92,6 +107,14 @@ export function BrowseActions() {
       ) : (
         moveButton
       )}
+
+      {/* BMC code */}
+      {0 < Array.from(Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid])).length ? (
+        <Button icon={'import'} variant="secondary" disabled={moveIsInvalid} onClick={showExportModal}>
+          <Trans i18nKey="bmc.search.export">Export</Trans>
+        </Button>
+      ) : null}
+      {/* End */}
 
       <Button onClick={showDeleteModal} variant="destructive">
         <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>

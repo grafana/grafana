@@ -255,6 +255,7 @@ type LibraryElementConnectionsResponse struct {
 type DeleteLibraryElementResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
+	BhdCode string `json:"bhdCode"`
 }
 
 // LibraryElementKind is used for the kind of library element

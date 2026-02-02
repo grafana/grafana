@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { ConstantVariableModel } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
@@ -11,12 +12,15 @@ import { toKeyedVariableIdentifier } from '../utils';
 import { ConstantVariableEditor } from './ConstantVariableEditor';
 import { updateConstantVariableOptions } from './actions';
 import { constantVariableReducer, initialConstantVariableModelState } from './reducer';
-
+// BMC Change: To enable localization for below text
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
     id: 'constant',
-    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share.',
-    name: 'Constant',
+    description: t(
+      'bmcgrafana.dashboards.settings.variables.editor.select-variable-type.constant.description',
+      'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share.'
+    ),
+    name: t('bmcgrafana.dashboards.settings.variables.editor.select-variable-type.constant.name', 'Constant'),
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,
     picker: optionPickerFactory<ConstantVariableModel>(),

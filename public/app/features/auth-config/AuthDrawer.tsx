@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import { loadSettings, saveSettings } from './state/actions';
@@ -48,9 +49,10 @@ export const AuthDrawerUnconnected = ({
         },
       });
       await loadSettings(false);
-      notifyApp.success('Settings saved');
+      notifyApp.success(t('bmc.notifications.settings.saved','Settings saved'));
     } catch (error) {
-      notifyApp.error('Failed to save settings');
+      //BMC code change
+      notifyApp.error(t('bmc.notifications.settings.saved-failed','Failed to save settings'), '', 'bhd-00609');
     }
   };
 
@@ -62,9 +64,10 @@ export const AuthDrawerUnconnected = ({
         },
       });
       await loadSettings(false);
-      notifyApp.success('Settings saved');
+      notifyApp.success(t('bmc.notifications.settings.saved','Settings saved'));
     } catch (error) {
-      notifyApp.error('Failed to save settings');
+      //BMC code change
+      notifyApp.error(t('bmc.notifications.settings.saved-failed','Failed to save settings'), '', 'bhd-00609');
     }
   };
 

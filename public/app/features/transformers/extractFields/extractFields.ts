@@ -66,6 +66,11 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
         obj = {}; // empty
       }
     }
+    // BMC change starts: Null and Empty check
+    if (obj === null || obj === undefined) {
+      continue;
+    }
+    // BMC change ends
 
     if (obj == null) {
       continue;

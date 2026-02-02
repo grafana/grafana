@@ -355,6 +355,8 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
     return hasTextLabel ? textMarker : circleMarker;
   }
 
+  //bmc code change
+  // Check if marker already exists
   let maker = markerMakers.getIfExists(symbol);
   if (maker) {
     return maker.make;
@@ -363,6 +365,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
   // Prepare svg as icon
   if (symbol.endsWith('.svg')) {
     const src = await prepareSVG(getPublicOrAbsoluteUrl(symbol));
+
     maker = {
       id: symbol,
       name: symbol,
@@ -396,9 +399,18 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
           }
         : errorMarker,
     };
+    
+    // bmc code starts
+    // Check if exists then return maker.make else register new
+    const existingMaker = markerMakers.getIfExists(symbol);
+    if (existingMaker) {
+      return existingMaker.make;
+    }
+    
     markerMakers.register(maker);
     return maker.make;
   }
+  // bmc code ends
 
   // default to showing a circle
   return errorMarker;

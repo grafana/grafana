@@ -116,11 +116,14 @@ export type {
   Preferences,
   QueryHistoryPreference,
   CookiePreferences,
+  // BMC Change: Next line
+  EnabledQueryTypes,
   NavbarPreference
 } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated enums and default consts from preferences kind.
-export { defaultNavbarPreference } from './raw/preferences/x/preferences_types.gen';
+// BMC Change: Inline
+export { defaultEnabledQueryTypes, defaultNavbarPreference } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';

@@ -29,6 +29,34 @@ $fa-li-width: calc(30em / 14) !default;
   font-style: normal;
 }
 
+// BMC Change: Starts
+@mixin font-face($name, $path, $style: normal, $weights: (400), $formats: 'truetype') {
+  @each $weight in $weights {
+    @font-face {
+      font-family: $name;
+      font-style: $style;
+      font-weight: $weight;
+      font-display: swap;
+      src: url(#{$path}) format($formats);
+    }
+  }
+}
+
+// Define the file paths and weights for Open Sans
+$open-sans-path: '#{$font-file-path}/open-sans/OpenSans-VariableFont_wdth,wght.ttf';
+$open-sans-italic-path: '#{$font-file-path}/open-sans/OpenSans-Italic-VariableFont_wdth,wght.ttf';
+$open-sans-weights: (300, 400, 500, 600, 700);
+
+@include font-face('Open Sans', $open-sans-path, normal, $open-sans-weights);
+@include font-face('Open Sans', $open-sans-italic-path, italic, $open-sans-weights);
+
+// Define the file path for Barcode Font
+$barcode-font-path: '#{$font-file-path}/barcode/c39hrp24dhtt.ttf';
+$barcode-weights: (400, 500);
+
+@include font-face('c39hrp24dhtt', $barcode-font-path, normal, $barcode-weights);
+
+// BMC Change: Ends
 .#{$fa-css-prefix} {
   display: inline-block;
   font: normal normal normal #{$fa-font-size-base}/#{$fa-line-height-base} FontAwesome; // shortening font declaration

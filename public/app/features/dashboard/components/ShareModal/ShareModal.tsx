@@ -1,11 +1,13 @@
+import { PureComponent, lazy, Suspense } from 'react';
 import * as React from 'react';
 
-import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
+import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2, LoadingPlaceholder } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { getGrafanaFeatureStatus, FEATURE_CONST } from 'app/features/dashboard/services/featureFlagSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -15,10 +17,37 @@ import { AccessControlAction } from 'app/types';
 import { ShareEmbed } from './ShareEmbed';
 import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
-import { ShareLink } from './ShareLink';
+import { ShareLink, Props as ShareProps } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareModalTabModel } from './types';
 import { getTrackingSource, shareDashboardType } from './utils';
+
+// BMC code
+const ExportUtility = lazy(() => import(/* webpackChunkName: "ExportUtility" */ './ExportUtility'));
+
+const renderLoader = () => {
+  return (
+    <div className="preloader">
+      <LoadingPlaceholder text={t('bmc.share-modal.loading', 'Loading') + '...'} />
+    </div>
+  );
+};
+
+export class LazyExportUtility extends PureComponent<ShareProps> {
+  constructor(props: ShareProps) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <Suspense fallback={renderLoader()}>
+        <ExportUtility {...this.props} />
+      </Suspense>
+    );
+  }
+}
+// End
+// prettier-ignore
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -35,10 +64,19 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: shareDashboardType.link, component: ShareLink }];
 
+  // BMC code
+  const canDownloadReport = contextSrv.hasPermission('dashboards:download');
+
+  const downloadLabel = t('bmc.common.download', 'Download');
+  const downloadTab: ShareModalTabModel[] = [{ label: downloadLabel, value: 'download', component: LazyExportUtility }];
+  // end
+
+  // BMC code - inline change
   if (
     contextSrv.isSignedIn &&
     config.snapshotEnabled &&
-    contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+    contextSrv.hasPermission(AccessControlAction.SnapshotsCreate) && 
+    getGrafanaFeatureStatus(FEATURE_CONST.snapshot)
   ) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
@@ -53,6 +91,11 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
       tabs.push({ label: libraryPanelLabel, value: shareDashboardType.libraryPanel, component: ShareLibraryPanel });
     }
     tabs.push(...customPanelTabs);
+    // BMC code
+    if (!panel.isEditing && canDownloadReport) {
+      tabs.push(...downloadTab);
+    }
+    // End
   } else {
     const exportLabel = t('share-modal.tab-title.export', 'Export');
     tabs.push({
@@ -61,15 +104,19 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
       component: ShareExport,
     });
     tabs.push(...customDashboardTabs);
-
-    if (isPublicDashboardsEnabled()) {
-      tabs.push({
-        label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
-        value: shareDashboardType.publicDashboard,
-        component: SharePublicDashboard,
-      });
+    // BMC code - next line
+    if (canDownloadReport) {
+      tabs.push(...downloadTab);
     }
   }
+
+  if (isPublicDashboardsEnabled()) {
+    tabs.push({
+      label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
+      value: shareDashboardType.publicDashboard,
+      component: SharePublicDashboard,
+    });
+  }  
 
   const at = tabs.find((t) => t.value === activeTab);
 
@@ -83,7 +130,8 @@ interface Props extends Themeable2 {
   dashboard: DashboardModel;
   panel?: PanelModel;
   activeTab?: string;
-  onDismiss(): void;
+  // BMC code - inline change
+  onDismiss?(): void;
 }
 
 interface State {

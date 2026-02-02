@@ -9,9 +9,11 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -43,6 +45,10 @@ func (hs *HTTPServer) GetCurrentOrg(c *contextmodel.ReqContext) response.Respons
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgByID(c *contextmodel.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	// BMC change next block: To support IMS tenant 0
+	if orgId == setting.IMS_Tenant0 {
+		orgId = setting.GF_Tenant0
+	}
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
@@ -129,9 +135,15 @@ func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Re
 func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.CreateOrgCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while creating organization", err)
 	}
 
+	// BMC change next block: To support IMS tenant 0
+	if cmd.ID == setting.IMS_Tenant0 {
+		cmd.ID = setting.GF_Tenant0
+	}
+	
 	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "Only users can create organizations", nil)
 	}
@@ -155,6 +167,8 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"orgId":   result.ID,
 		"message": "Organization created",
+		// BMC code change
+		"bhdCode": bhdcodes.OrgCreated,
 	})
 }
 
@@ -171,7 +185,8 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 func (hs *HTTPServer) UpdateCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating current organization", err)
 	}
 	return hs.updateOrgHelper(c.Req.Context(), form, c.SignedInUser.GetOrgID())
 }
@@ -192,7 +207,8 @@ func (hs *HTTPServer) UpdateCurrentOrg(c *contextmodel.ReqContext) response.Resp
 func (hs *HTTPServer) UpdateOrg(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating organization", err)
 	}
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
@@ -205,7 +221,7 @@ func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgFo
 	cmd := org.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := hs.orgService.UpdateOrg(ctx, &cmd); err != nil {
 		if errors.Is(err, org.ErrOrgNameTaken) {
-			return response.Error(http.StatusBadRequest, "Organization name taken", err)
+			return response.Error(http.StatusConflict, "Organization name taken", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update organization", err)
 	}
@@ -226,7 +242,8 @@ func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgFo
 func (hs *HTTPServer) UpdateCurrentOrgAddress(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating current Organization's address", err)
 	}
 	return hs.updateOrgAddressHelper(c.Req.Context(), form, c.SignedInUser.GetOrgID())
 }
@@ -244,7 +261,8 @@ func (hs *HTTPServer) UpdateCurrentOrgAddress(c *contextmodel.ReqContext) respon
 func (hs *HTTPServer) UpdateOrgAddress(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data wile updating organization's address", err)
 	}
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
@@ -289,6 +307,10 @@ func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.Upda
 // 500: internalServerError
 func (hs *HTTPServer) DeleteOrgByID(c *contextmodel.ReqContext) response.Response {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	// BMC change next block: To support IMS tenant 0
+	if orgID == setting.IMS_Tenant0 {
+		orgID = setting.GF_Tenant0
+	}
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}

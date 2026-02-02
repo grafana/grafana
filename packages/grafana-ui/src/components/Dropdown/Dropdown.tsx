@@ -10,7 +10,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
@@ -34,6 +34,8 @@ export interface Props {
 export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
+  //BMC Accessibility Change : track dropdown open/close state
+  const dropDownRef = useRef(false);
 
   const handleOpenChange = useCallback(
     (newState: boolean) => {
@@ -42,6 +44,16 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
     },
     [onVisibleChange]
   );
+
+  //BMC Accessibility Change Start : When the dropdown closes, restore focus to the trigger
+  useEffect(() => {
+    if (dropDownRef.current && !show) {
+      const trigger = refs.reference?.current as HTMLElement | null | undefined;
+      trigger?.focus({ preventScroll: true });
+    }
+    dropDownRef.current = show;
+  }, [show]);
+  //BMC Accessibility Change End
 
   // the order of middleware is important!
   const middleware = [

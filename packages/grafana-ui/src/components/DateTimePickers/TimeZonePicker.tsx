@@ -42,7 +42,8 @@ export const TimeZonePicker = (props: Props) => {
     disabled = false,
     inputId,
     menuShouldPortal = true,
-    openMenuOnFocus = true,
+    //BMC Accessibility change : setting openMenuOnFocus = false.
+    openMenuOnFocus = false,
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);

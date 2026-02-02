@@ -2,10 +2,11 @@ import { cloneDeep } from 'lodash';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -54,7 +55,7 @@ export const useDashboardSave = (isCopy = false) => {
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
-        notifyApp.success('Dashboard saved');
+        notifyApp.success(t('bmc.notifications.dashboard.dashboard-save-text', 'Dashboard saved'));
 
         //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(result.uid);
@@ -71,12 +72,15 @@ export const useDashboardSave = (isCopy = false) => {
           });
         }
 
-        const currentPath = locationService.getLocation().pathname;
+        // BMC Change: Moved location change logic to broweDashboardAPI
+        // As to maintain the correct state update cycle.
+        // const currentPath = locationService.getLocation().pathname;
         const newUrl = locationUtil.stripBaseFromUrl(result.url);
 
-        if (newUrl !== currentPath && result.url) {
-          setTimeout(() => locationService.replace(newUrl));
-        }
+        // if (newUrl !== currentPath && result.url) {
+        //   setTimeout(() => locationService.replace(newUrl));
+        // }
+        // BMC Change: Ends
         if (dashboard.meta.isStarred) {
           dispatch(
             updateDashboardName({
@@ -89,7 +93,7 @@ export const useDashboardSave = (isCopy = false) => {
         return result;
       } catch (error) {
         if (error instanceof Error) {
-          notifyApp.error(error.message ?? 'Error saving dashboard');
+          notifyApp.error(error.message ?? t('bmcgrafana.dashboards.save-dashboard.error', 'Error saving dashboard'), '', 'bhd-00612');
         }
         throw error;
       }

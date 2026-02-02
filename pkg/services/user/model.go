@@ -52,6 +52,10 @@ type User struct {
 }
 
 type CreateUserCommand struct {
+	// BMC code
+	// Abhishek_06292020, Extended Create User API to additionally accept userid as optional input parameter
+	Id int64
+	// End
 	UID              string
 	Email            string
 	Login            string
@@ -119,7 +123,21 @@ type SearchUsersQuery struct {
 
 	IsDisabled    *bool
 	IsProvisioned *bool
+	// Bmc code - start
+	IDs []int64 `json:"ids"`
+	// Bmc code - end
 }
+
+// Bmc code - start
+type SearchUsersByIdListQuery struct {
+	IDs []int64 `json:"ids"`
+}
+
+type GetUsersByIDList struct {
+	IDs []int64
+}
+
+// Bmc code - end
 
 type SearchUserQueryResult struct {
 	TotalCount int64               `json:"totalCount"`
@@ -271,6 +289,8 @@ type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	UID     string `json:"uid"`
 	Message string `json:"message"`
+	//BMC code change
+	BHDCode string `json:"bhdCode"`
 }
 
 type ChangeUserPasswordCommand struct {

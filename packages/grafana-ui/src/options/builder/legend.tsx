@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
 import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
@@ -12,45 +14,59 @@ export function addLegendOptions<T extends OptionsWithLegend>(
   builder
     .addBooleanSwitch({
       path: 'legend.showLegend',
-      name: 'Visibility',
-      category: ['Legend'],
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.legend.visibility', 'Visibility'),
+      category: [t('bmcgrafana.dashboards.edit-panel.legend.text', 'Legend')],
+      // BMC Change ends
       description: '',
       defaultValue: showLegend,
     })
     .addRadio({
       path: 'legend.displayMode',
-      name: 'Mode',
-      category: ['Legend'],
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.legend.mode', 'Mode'),
+      category: [t('bmcgrafana.dashboards.edit-panel.legend.text', 'Legend')],
+      // BMC Change ends
       description: '',
       defaultValue: LegendDisplayMode.List,
       settings: {
         options: [
-          { value: LegendDisplayMode.List, label: 'List' },
-          { value: LegendDisplayMode.Table, label: 'Table' },
+          // BMC Change: To enable localization for below text
+          { value: LegendDisplayMode.List, label: t('bmcgrafana.dashboards.edit-panel.legend.mode-list', 'List') },
+          { value: LegendDisplayMode.Table, label: t('bmcgrafana.dashboards.edit-panel.legend.mode-table', 'Table') },
+          // BMC Change ends
         ],
       },
       showIf: (c) => c.legend.showLegend,
     })
     .addRadio({
       path: 'legend.placement',
-      name: 'Placement',
-      category: ['Legend'],
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.legend.placement', 'Placement'),
+      category: [t('bmcgrafana.dashboards.edit-panel.legend.text', 'Legend')],
+      // BMC change ends
       description: '',
       defaultValue: 'bottom',
       settings: {
         options: [
-          { value: 'bottom', label: 'Bottom' },
-          { value: 'right', label: 'Right' },
+          // BMC Change: To enable localization for below text
+          { value: 'bottom', label: t('bmcgrafana.dashboards.edit-panel.legend.placement-bottom-text', 'Bottom') },
+          { value: 'right', label: t('bmcgrafana.dashboards.edit-panel.overrides.button.right', 'Right') },
+          // BMC Change ends
         ],
       },
       showIf: (c) => c.legend.showLegend,
     })
     .addNumberInput({
       path: 'legend.width',
-      name: 'Width',
-      category: ['Legend'],
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.legend.width', 'Width'),
+      category: [t('bmcgrafana.dashboards.edit-panel.legend.text', 'Legend')],
+      // BMC Change ends
       settings: {
-        placeholder: 'Auto',
+        // BMC Change: To enable localization for below text
+        placeholder: t('bmcgrafana.dashboards.edit-panel.axis.grid-lines.auto-text', 'Auto'),
+        // BMC change ends
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
     });
@@ -59,9 +75,14 @@ export function addLegendOptions<T extends OptionsWithLegend>(
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'legend.calcs',
       path: 'legend.calcs',
-      name: 'Values',
-      category: ['Legend'],
-      description: 'Select values or calculations to show in legend',
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.legend.values-text', 'Values'),
+      category: [t('bmcgrafana.dashboards.edit-panel.legend.text', 'Legend')],
+      description: t(
+        'bmcgrafana.dashboards.edit-panel.legend.values-description',
+        'Select values or calculations to show in legend'
+      ),
+      // BMC change ends
       editor: standardEditorsRegistry.get('stats-picker').editor,
       defaultValue: [],
       settings: {

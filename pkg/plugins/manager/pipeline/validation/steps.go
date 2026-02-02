@@ -99,7 +99,6 @@ func newAngularDetector(cfg *config.PluginManagementCfg, angularInspector angula
 func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error {
 	if p.IsExternalPlugin() {
 		var err error
-
 		cctx, canc := context.WithTimeout(ctx, time.Second*10)
 		p.Angular.Detected, err = a.angularInspector.Inspect(cctx, p)
 		canc()
@@ -117,6 +116,12 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 			}).WithMessage("angular plugins are not supported")
 		}
 	}
+	// BMC Change starts
+	// Added hardcoded check because grafana skips ootb plugins and only checks for external plugins
+	if p.ID == "graph" || p.ID == "table-old" {
+		p.Angular.Detected = true
+	}
+	// BMC Change ends
 	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)
 	return nil
 }

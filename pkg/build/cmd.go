@@ -165,10 +165,12 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	}
 	binary := fmt.Sprintf("./bin/%s", binaryName)
 
+	// BMC code changes, commented out the if condition to keep dev builds also in ./bin/windows-amd64 on Windows
 	//don't include os/arch/libc in output path in dev environment
-	if !opts.isDev {
-		binary = fmt.Sprintf("./bin/%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
-	}
+	// if !opts.isDev {
+	binary = fmt.Sprintf("./bin/%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
+	// }
+	// BMC code changes end
 
 	if opts.goos == GoOSWindows {
 		binary += ".exe"
@@ -193,6 +195,14 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	if len(opts.buildTags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.buildTags, ","))
 	}
+
+	// BMC code
+	// Pass -dev (go run build.go -dev build) to disable optimizations,  enables debugging
+	if opts.isDev {
+		fmt.Println("Building in dev mode")
+		args = append(args, "-gcflags=all=-N -l")
+	}
+	// BMC code ends
 
 	if opts.race {
 		args = append(args, "-race")

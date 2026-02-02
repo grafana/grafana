@@ -27,18 +27,27 @@ type Team struct {
 	OrgID int64  `json:"orgId" xorm:"org_id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
-
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	// BMC code - added IsMspTeam
+	IsMspTeam bool      `json:"isMspTeam" xorm:"is_msp_team"`
+	Type      int       `json:"type" xorm:"type"`
+	Created   time.Time `json:"created"`
+	Updated   time.Time `json:"updated"`
 }
 
 // ---------------------
 // COMMANDS
 
 type CreateTeamCommand struct {
+	// BMC code
+	// Added Abhishek_06182020, Extended Create Team API to additionally accept Teamid as optional input parameter
+	Id int64 `json:"id"`
+	// End
 	Name  string `json:"name" binding:"Required"`
 	Email string `json:"email"`
 	OrgID int64  `json:"-"`
+	// BMC code - added IsMspTeam
+	IsMspTeam bool `json:"isMspTeam,omitempty"`
+	Type      int  `json:"type,omitempty"`
 }
 
 type UpdateTeamCommand struct {
@@ -86,6 +95,10 @@ type SearchTeamsQuery struct {
 	TeamIds      []int64
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
+
+	// BMC Code: Next line
+	UserIDFilter *int64
+	IsMSPTeams   bool
 }
 
 type TeamDTO struct {
@@ -98,6 +111,9 @@ type TeamDTO struct {
 	MemberCount   int64           `json:"memberCount"`
 	Permission    PermissionType  `json:"permission"`
 	AccessControl map[string]bool `json:"accessControl"`
+	// BMC code - added IsMspTeam
+	IsMspTeam     bool            `json:"isMspTeam" xorm:"is_msp_team"`
+	Type          int64           `json:"type" xorm:"type"`
 }
 
 type PermissionType int

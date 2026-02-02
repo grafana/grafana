@@ -72,6 +72,8 @@ type QueryHistorySearchResponse struct {
 type QueryHistoryDeleteQueryResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
+	//BMC code change
+	BHDCode string `json:"bhdCode"`
 }
 
 // CreateQueryInQueryHistoryCommand is the command for adding query history

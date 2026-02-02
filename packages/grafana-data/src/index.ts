@@ -373,6 +373,7 @@ export {
   getWeekdayIndex,
   getWeekdayIndexByEnglishName,
   setWeekStart,
+  days,
 } from './datetime/moment_wrapper';
 export {
   InternalTimeZones,
@@ -518,6 +519,10 @@ export {
   type SystemVariable,
   type BaseVariableModel,
   type SnapshotVariableModel,
+  // BMC Change: Starts
+  type DatePickerVariableModel,
+  type OptimizeVariableModel,
+  // BMC Change: Ends
 } from './types/templateVars';
 export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
 export {

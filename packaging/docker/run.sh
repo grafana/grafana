@@ -86,4 +86,8 @@ exec grafana server                                         \
   cfg:default.paths.data="$GF_PATHS_DATA"                   \
   cfg:default.paths.logs="$GF_PATHS_LOGS"                   \
   cfg:default.paths.plugins="$GF_PATHS_PLUGINS"             \
-  cfg:default.paths.provisioning="$GF_PATHS_PROVISIONING"
+  cfg:default.paths.provisioning="$GF_PATHS_PROVISIONING" &
+cd /opt/bmc/kafka/
+$JAVA_HOME/bin/java -cp /opt/bmc/kafka/lib/*:/opt/bmc/kafka/* com.bmc.ade.reporting.kafka.consumer.ReportingKafkaConsumer &
+cd /opt/bmc/kafka/
+$JAVA_HOME/bin/java -cp /opt/bmc/kafka/lib/*:/opt/bmc/kafka/* com.bmc.com.ade.reporting.cli.KafkaFailedEventScheduler "0 0 1 ? * * *"

@@ -4,6 +4,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Organization } from 'app/types';
@@ -34,9 +35,12 @@ export default function AdminListOrgsPages() {
     <Page
       navId="global-orgs"
       actions={
-        <LinkButton icon="plus" href="org/new" disabled={!canCreateOrg}>
-          <Trans i18nKey="admin.orgs.new-org-button">New org</Trans>
-        </LinkButton>
+        // BMC Change: To enable only for development
+        config.buildInfo.env === 'development' && (
+          <LinkButton icon="plus" href="org/new" disabled={!canCreateOrg}>
+            <Trans i18nKey="admin.orgs.new-org-button">New org</Trans>
+          </LinkButton>
+        )
       }
     >
       <Page.Contents>

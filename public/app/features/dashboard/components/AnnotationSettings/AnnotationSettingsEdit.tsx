@@ -28,7 +28,7 @@ import {
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -40,7 +40,9 @@ type Props = {
   dashboard: DashboardModel;
 };
 
-export const newAnnotationName = 'New annotation';
+/*BMC Change: To enable localization for below text*/
+export const newAnnotationName = () =>
+  t('bmcgrafana.dashboards.settings.annotation.edit-form.new-annotation', 'New annotation');
 
 export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const styles = useStyles2(getStyles);
@@ -52,6 +54,9 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     }
     return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
   }, [annotation.filter]);
+
+  /*BMC Change: To enable localization for below text*/
+  const panelFilterMemo = useMemo(panelFilters, []);
 
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
@@ -148,7 +153,8 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     goBackToList();
   };
 
-  const isNewAnnotation = annotation.name === newAnnotationName;
+  /*BMC Change: To enable localization for below text*/
+  const isNewAnnotation = annotation.name === newAnnotationName();
 
   const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
     if (a.label && b.label) {
@@ -178,7 +184,8 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   return (
     <div>
       <FieldSet className={styles.settingsForm}>
-        <Field label="Name">
+        {/*BMC Change: To enable localization for below text*/}
+        <Field label={t('bmcgrafana.dashboards.settings.annotation.edit-form.name-label', 'Name')}>
           <Input
             data-testid={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
             name="name"
@@ -188,7 +195,11 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             onChange={onNameChange}
           />
         </Field>
-        <Field label="Data source" htmlFor="data-source-picker">
+        {/*BMC Change: To enable localization for below text*/}
+        <Field
+          label={t('bmcgrafana.dashboards.settings.annotation.edit-form.data-source-label', 'Data source')}
+          htmlFor="data-source-picker"
+        >
           <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
         {!ds?.meta.annotations && (
@@ -198,24 +209,46 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             </Trans>
           </Alert>
         )}
-        <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
+        {/*BMC Change: To enable localization for below text*/}
+        <Field
+          label={t('bmcgrafana.dashboards.settings.annotation.edit-form.enabled-label', 'Enabled')}
+          description={t(
+            'bmcgrafana.dashboards.settings.annotation.edit-form.enabled-desc',
+            'When enabled the annotation query is issued every dashboard refresh'
+          )}
+        >
           <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
         </Field>
+        {/*BMC Change: To enable localization for below text*/}
         <Field
-          label="Hidden"
-          description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
+          label={t('bmcgrafana.dashboards.settings.annotation.edit-form.hidden-label', 'Hidden')}
+          description={t(
+            'bmcgrafana.dashboards.settings.annotation.edit-form.hidden-desc',
+            'Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.'
+          )}
         >
           <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
         </Field>
-        <Field label="Color" description="Color to use for the annotation event markers">
+        {/*BMC Change: To enable localization for below text*/}
+        <Field
+          label={t('bmcgrafana.dashboards.settings.annotation.edit-form.color-label', 'Color')}
+          description={t(
+            'bmcgrafana.dashboards.settings.annotation.edit-form.color-desc',
+            'Color to use for the annotation event markers'
+          )}
+        >
           <HorizontalGroup>
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
         </Field>
-        <Field label="Show in" data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
+        {/*BMC Change: To enable localization for below text*/}
+        <Field
+          label={t('bmcgrafana.dashboards.settings.annotation.edit-form.showin-label', 'Show in')}
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}
+        >
           <>
             <Select
-              options={panelFilters}
+              options={panelFilterMemo}
               value={panelFilter}
               onChange={onFilterTypeChange}
               data-testid={selectors.components.Annotations.annotationsTypeInput}
@@ -226,7 +259,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
                 value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
                 onChange={onAddFilterPanelID}
                 isClearable={true}
-                placeholder="Choose panels"
+                placeholder={t(
+                  'bmcgrafana.dashboards.settings.annotation.edit-form.choose-panels-placeholder',
+                  'Choose panels'
+                )}
                 width={100}
                 closeMenuOnSelect={false}
                 className={styles.select}
@@ -237,7 +273,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         </Field>
       </FieldSet>
       <FieldSet>
-        <h3 className="page-heading">Query</h3>
+        {/*BMC Change: To enable localization for below text*/}
+        <h3 className="page-heading">
+          <Trans i18nKey={'bmcgrafana.dashboards.settings.annotation.edit-form.query-heading'}>Query</Trans>
+        </h3>
         {ds?.annotations && dsi && (
           <StandardAnnotationQueryEditor
             datasource={ds}
@@ -251,7 +290,8 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
       <Stack>
         {!annotation.builtIn && (
           <Button variant="destructive" onClick={onDelete}>
-            Delete
+            {/*BMC Change: To enable localization for below text*/}
+            <Trans i18nKey={'bmcgrafana.dashboards.settings.annotation.edit-form.delete-btn'}>Delete</Trans>
           </Button>
         )}
         <Button
@@ -259,10 +299,14 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           onClick={onPreview}
           data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard}
         >
-          Preview in dashboard
+          {/*BMC Change: To enable localization for below text*/}
+          <Trans i18nKey={'bmcgrafana.dashboards.settings.annotation.edit-form.preview-btn'}>
+            Preview in dashboard
+          </Trans>
         </Button>
         <Button variant="primary" onClick={onApply}>
-          Apply
+          {/*BMC Change: To enable localization for below text*/}
+          <Trans i18nKey={'bmcgrafana.dashboards.settings.annotation.edit-form.apply-btn'}>Apply</Trans>
         </Button>
       </Stack>
     </div>
@@ -292,20 +336,31 @@ enum PanelFilterType {
   ExcludePanels,
 }
 
-const panelFilters = [
-  {
-    label: 'All panels',
-    value: PanelFilterType.AllPanels,
-    description: 'Send the annotation data to all panels that support annotations',
-  },
-  {
-    label: 'Selected panels',
-    value: PanelFilterType.IncludePanels,
-    description: 'Send the annotations to the explicitly listed panels',
-  },
-  {
-    label: 'All panels except',
-    value: PanelFilterType.ExcludePanels,
-    description: 'Do not send annotation data to the following panels',
-  },
-];
+const panelFilters = () => {
+  return [
+    {
+      label: t('bmcgrafana.dashboards.settings.annotation.edit-form.all-panels-label', 'All panels'),
+      value: PanelFilterType.AllPanels,
+      description: t(
+        'bmcgrafana.dashboards.settings.annotation.edit-form.all-panels-desc',
+        'Send the annotation data to all panels that support annotations'
+      ),
+    },
+    {
+      label: t('bmcgrafana.dashboards.settings.annotation.edit-form.selected-panels-label', 'Selected panels'),
+      value: PanelFilterType.IncludePanels,
+      description: t(
+        'bmcgrafana.dashboards.settings.annotation.edit-form.selected-panels-desc',
+        'Send the annotations to the explicitly listed panels'
+      ),
+    },
+    {
+      label: t('bmcgrafana.dashboards.settings.annotation.edit-form.all-panels-except-label', 'All panels except'),
+      value: PanelFilterType.ExcludePanels,
+      description: t(
+        'bmcgrafana.dashboards.settings.annotation.edit-form.all-panels-except-desc',
+        'Do not send annotation data to the following panels'
+      ),
+    },
+  ];
+};

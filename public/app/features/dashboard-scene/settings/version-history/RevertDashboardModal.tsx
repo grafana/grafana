@@ -1,5 +1,6 @@
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
@@ -15,12 +16,13 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
 
   const onRestoreDashboard = async () => {
     const success = await onRestore(version);
+    const restoredversion  = version.version
 
     if (success) {
-      notifyApp.success('Dashboard restored', `Restored from version ${version.version}`);
+      notifyApp.success(t('bmc.notifications.dashboard.restored','Dashboard restored'),t('bmc.notifications.dashboard.restored-version','Restored from version {{version}}', {version}));
       DashboardInteractions.versionRestoreClicked({ version: version.version, confirm: true });
     } else {
-      notifyApp.error('Dashboard restore failed', `Failed to restore from version ${version.version}`);
+      notifyApp.error(t('bmc.notifications.dashboard.restored-failed','Dashboard restore failed'), t('bmc.notifications.dashboard.restored-version-failed','Failed to restore from version {{restoredversion}}',{ restoredversion }), 'bhd-00611');
     }
 
     hideModal();

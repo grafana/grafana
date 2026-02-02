@@ -259,6 +259,19 @@ export const availableIconsIndex = {
   wrench: true,
   rss: true,
   x: true,
+  // BMC code
+  'bmc-file_text_clock': true,
+  'bmc-gear': true,
+  'bmc-home': true,
+  'bmc-lock_shield': true,
+  'bmc-plus_adapt': true,
+  'bmc-common_anomaly': true,
+  'bmc-helix-dashboard': true,
+  'bmc-save-filter': true,
+  'bmc-reports': true,
+  'bmc-insight-finder': true,
+  'bmc-report-owner': true,
+  // End
   'add-user': true,
   attach: true,
 };

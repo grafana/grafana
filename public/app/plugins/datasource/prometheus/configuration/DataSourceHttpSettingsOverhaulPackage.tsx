@@ -3,6 +3,8 @@ import * as React from 'react';
 
 import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/plugin-ui';
 import { docsTip, overhaulStyles } from '@grafana/prometheus';
+// bmc code change
+import { config } from '@grafana/runtime';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
 import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
@@ -52,7 +54,12 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
   const [sigV4Selected, setSigV4Selected] = useState<boolean>(options.jsonData.sigV4Auth || false);
 
   const sigV4Id = 'custom-sigV4Id';
-
+  // bmc code: starts
+  const isGrafanaAdmin = config.bootData.user.isGrafanaAdmin;
+  if (!isGrafanaAdmin) {
+    options.url = '********';
+  }
+  // bmc code: end
   const sigV4Option: CustomMethod = {
     id: sigV4Id,
     label: 'SigV4 auth',
@@ -129,7 +136,8 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
     <>
       <ConnectionSettings
         urlPlaceholder="http://localhost:9090"
-        config={options}
+        // bmc code change
+        config={{ ...options, readOnly: !isGrafanaAdmin }}
         onChange={onOptionsChange}
         urlLabel="Prometheus server URL"
         urlTooltip={urlTooltip}

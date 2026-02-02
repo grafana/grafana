@@ -94,6 +94,13 @@ export const LibraryPanelsView = ({
 
   return (
     <Stack direction="column" wrap="nowrap">
+      {/* BMC Accessibility Change: Aria-live region for screen readers - always present in DOM */}
+      <div aria-live="polite" aria-atomic="true" role="status" className="sr-only">
+        {loadingState === LoadingState.Done && libraryPanels.length < 1
+          ? t('library-panels.empty-state.message', 'No library panels found')
+          : ''}
+      </div>
+      {/*BMC Accessibility Change End*/}
       {loadingState === LoadingState.Loading ? (
         <>
           <LibraryPanelCard.Skeleton showSecondaryActions={showSecondaryActions} />

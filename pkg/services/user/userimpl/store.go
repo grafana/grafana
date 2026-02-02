@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/lib/pq"
 )
 
 type store interface {
@@ -147,21 +148,26 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		var has bool
 		var err error
 
-		// Since username can be an email address, attempt login with email address
-		// first if the login field has the "@" symbol.
-		if strings.Contains(query.LoginOrEmail, "@") {
-			where = "email=?"
-			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
-			if err != nil {
-				return err
-			}
-		}
-
+		// Bmc Code Start -  Reversed the order to get user, first by Login and then by email
 		// Look for the login field instead of email
 		if !has {
 			where = "login=?"
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
 		}
+
+		// Since username can be an email address, attempt login with email address
+		// first if the login field has the "@" symbol.
+		if !has {
+			if strings.Contains(query.LoginOrEmail, "@") {
+				where = "email=?"
+				has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// Bmc code end
 
 		if err != nil {
 			return err
@@ -209,12 +215,14 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
 	// enforcement of lowercase due to forcement of caseinsensitive login
 	login = strings.ToLower(login)
-	email = strings.ToLower(email)
+	// BMC Change: Remove email conflict: Starts
+	// email = strings.ToLower(email)
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		where := "email=? OR login=?"
+		where := "login=?"
 
-		exists, err := sess.Where(where, email, login).Get(&user.User{})
+		exists, err := sess.Where(where, login).Get(&user.User{})
+		// BMC Change: Remove email conflict: Ends
 		if err != nil {
 			return err
 		}
@@ -504,6 +512,13 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			whereConditions = append(whereConditions, `auth_module=?`)
 			whereParams = append(whereParams, query.AuthModule)
 		}
+
+		// Bmc code - start
+		if query.IDs != nil {
+			whereConditions = append(whereConditions, `u.id=any(?)`)
+			whereParams = append(whereParams, pq.Array(query.IDs))
+		}
+		// Bmc code - end
 
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)

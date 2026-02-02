@@ -144,6 +144,8 @@ type CreateCorrelationResponseBody struct {
 	Result Correlation `json:"result"`
 	// example: Correlation created
 	Message string `json:"message"`
+	//BMC code change
+	BHDCode string `json:"bhdCode"`
 }
 
 // CreateCorrelationCommand is the command for creating a correlation
@@ -187,6 +189,8 @@ func (c CreateCorrelationCommand) Validate() error {
 type DeleteCorrelationResponseBody struct {
 	// example: Correlation deleted
 	Message string `json:"message"`
+	//BMC code change
+	BHDCode string `json:"bhdCode"`
 }
 
 // DeleteCorrelationCommand is the command for deleting a correlation
@@ -202,6 +206,8 @@ type UpdateCorrelationResponseBody struct {
 	Result Correlation `json:"result"`
 	// example: Correlation updated
 	Message string `json:"message"`
+	//BMC code change
+	BHDCode string `json:"bhdCode"`
 }
 
 // swagger:model

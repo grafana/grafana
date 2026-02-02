@@ -10,7 +10,8 @@ import (
 )
 
 type Service interface {
-	CreateTeam(ctx context.Context, name, email string, orgID int64) (Team, error)
+	// BMC code - inline change for Id and IsMspTeams
+	CreateTeam(ctx context.Context, name, email string, orgID int64, Id int64, teamType int, IsMspTeams ...bool) (Team, error)
 	UpdateTeam(ctx context.Context, cmd *UpdateTeamCommand) error
 	DeleteTeam(ctx context.Context, cmd *DeleteTeamCommand) error
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
@@ -22,6 +23,8 @@ type Service interface {
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
 	RegisterDelete(query string)
+	// BMC code - next line
+	GetTeamsByIds(ctx context.Context, orgID int64, teamIDs []int64) ([]*TeamDTO, error)
 }
 
 func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {

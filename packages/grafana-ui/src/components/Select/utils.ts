@@ -14,6 +14,14 @@ export const cleanValue = (
     return filtered?.length ? filtered : undefined;
   }
   if (typeof value === 'object') {
+    // BMC Change: Check for All
+    if (value && (value as SelectableValue)?.label === 'All') {
+      const selectedValue = findSelectedValue((value as SelectableValue).value ?? '', options);
+      if (selectedValue) {
+        return [selectedValue];
+      }
+    }
+    // BMC Change: Ends
     // we want to allow null through into here, so the Select value can be unset
     return [value];
   }

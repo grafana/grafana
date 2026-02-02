@@ -1,4 +1,5 @@
-import { ReactNode, useCallback } from 'react';
+// BMC Code : Accessibility Change ( Next 1 line )
+import { ReactNode, useCallback, useState } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
 import { Button, EmptyState } from '@grafana/ui';
@@ -55,6 +56,8 @@ export function SearchView({
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
   const hasSelection = useHasSelection();
+  // BMC Code : Accessibility Change ( Next 1 line )
+  const [ariaMessage, setAriaMessage] = useState('');
 
   const { keyboardEvents } = useKeyNavigationListener();
 
@@ -94,12 +97,19 @@ export function SearchView({
     },
     [selectionChecker, dispatch]
   );
+  // BMC Code : Accessibility Change starts here
+  const handleClearSearchFilter = () => {
+    stateManager.onClearSearchAndFilters();
+    setAriaMessage('Search and filters cleared');
+  };
+  // BMC Code : Accessibility Change ends here
 
   if (value.totalRows === 0) {
     const emptyState = emptyStateProp ?? (
       <EmptyState
         button={
-          <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
+          // BMC Code : Accessibility Change ( Next 1 line )
+          <Button variant="secondary" onClick={handleClearSearchFilter}>
             <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
           </Button>
         }
@@ -109,7 +119,20 @@ export function SearchView({
       />
     );
 
-    return <div style={{ width }}>{emptyState}</div>;
+    return (
+      <div style={{ width }}>
+        {
+          // BMC Code : Accessibility Change starts here
+        }
+        <div aria-live="polite" aria-atomic="true" role="status" className="sr-only">
+          {ariaMessage}
+        </div>
+        {
+          // BMC Code : Accessibility Change ends here
+        }
+        {emptyState}
+      </div>
+    );
   }
 
   const props: SearchResultsProps = {
@@ -123,9 +146,27 @@ export function SearchView({
     keyboardEvents,
     onDatasourceChange: searchState.datasource ? stateManager.onDatasourceChange : undefined,
     onClickItem: stateManager.onSearchItemClicked,
+    // BMC Code : Accessibility Change starts here
+    onResultsChange: (resultsCount: number) => {
+      setAriaMessage(resultsCount === 0 ? 'No search results found' : `${resultsCount} Search results found`);
+    },
+    // BMC Code : Accessibility Change ends here
   };
 
-  return <SearchResultsTable {...props} />;
+  return (
+    <>
+      {
+        // BMC Code : Accessibility Change starts here
+      }
+      <div aria-live="polite" aria-atomic="true" role="status" className="sr-only">
+        {ariaMessage}
+      </div>
+      {
+        // BMC Code : Accessibility Change ends here
+      }
+      <SearchResultsTable {...props} />;
+    </>
+  );
 }
 
 function assertDashboardViewItemKind(kind: string): DashboardViewItemKind {

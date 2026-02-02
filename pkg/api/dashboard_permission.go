@@ -129,7 +129,8 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating dashboard permissions", err)
 	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, err.Error(), err)

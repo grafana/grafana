@@ -87,9 +87,11 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
                 />
                 <Icon
+                  //BMC Accessibility Change.
                   title={t('playlist-edit.form.table-drag', 'Drag and drop to reorder')}
                   name="draggabledots"
                   size="md"
+                  tabIndex={0}
                 />
               </div>
             </div>

@@ -9,8 +9,9 @@ import { SettingsPageProps } from './types';
 
 export function AnnotationsSettings({ dashboard, editIndex, sectionNav }: SettingsPageProps) {
   const onNew = () => {
+    /*BMC Change: To enable localization for below text*/
     const newAnnotation: AnnotationQuery = {
-      name: newAnnotationName,
+      name: newAnnotationName(),
       enable: true,
       datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
       iconColor: 'red',

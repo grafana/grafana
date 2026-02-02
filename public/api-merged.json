@@ -11896,6 +11896,12 @@
             "schema": {
               "$ref": "#/definitions/PublicError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },

@@ -19,14 +19,24 @@ func addOrgMigrations(mg *Migrator) {
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
-		Indices: []*Index{
-			{Cols: []string{"name"}, Type: UniqueIndex},
-		},
+		// BMC code
+		// Start kavraham, remove unique index to allow different tenant (org) with the same name (https://jira.bmc.com/browse/DRJ71-730)
+		//   Indices: []*Index{
+		// 	   {Cols: []string{"name"}, Type: UniqueIndex},
+		//     },
+		// End
 	}
 
 	// add org v1
 	mg.AddMigration("create org table v1", NewAddTableMigration(orgV1))
-	addTableIndicesMigrations(mg, "v1", orgV1)
+	// BMC code
+	// addTableIndicesMigrations(mg, "v1", orgV1)
+	// Abhishek, 07122020, alter id column to bigint
+	mg.AddMigration("alter org.id to bigint", NewRawSQLMigration("").
+		Postgres("ALTER TABLE public.org ALTER COLUMN id TYPE int8;"))
+	// kavraham, remove unique index from `name` coloumn in `org` table.
+	mg.AddMigration("drop 'UQE_org_name' index ", NewDropIndexMigration(orgV1, &Index{Cols: []string{"name"}, Type: UniqueIndex}))
+	// End
 
 	orgUserV1 := Table{
 		Name: "org_user",

@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { cloneDeep, debounce } from 'lodash';
 import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
@@ -34,7 +34,9 @@ import {
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { profiler } from 'app/core/profiler';
+import { dashboardLoadTime } from 'app/core/services/dashboardLoadTime_srv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
@@ -46,6 +48,7 @@ import { RenderEvent } from 'app/types/events';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { replaceValueForLocale, replaceValuesRecursive } from '../utils/dashboard';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
@@ -56,6 +59,7 @@ import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 import { PanelOptionsLogger } from './panelOptionsLogger';
+import { FEATURE_CONST, getFeatureStatus } from '../services/featureFlagSrv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -210,6 +214,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel, dashboard } = this.props;
 
+    // BMC code changes start
+    // Time Context: Send the dashboard is in view count and dashboard name
+    dashboardLoadTime.setDashboardInfo(dashboard);
+    dashboardLoadTime.recordDashboardHit();
+    // BMC code changes end
+
     // Subscribe to panel events
     this.subs.add(panel.events.subscribe(RefreshEvent, this.onRefresh));
     this.subs.add(panel.events.subscribe(RenderEvent, this.onRender));
@@ -297,6 +307,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   onDataUpdate(data: PanelData) {
     const { dashboard, panel, plugin } = this.props;
 
+    // BMC Code
+    // Time Context: Send the dashboard state so can record the time
+    dashboardLoadTime.setDashboardPanelRendered(data.state);
+
     // Ignore this data update if we are now a non data panel
     if (plugin.meta.skipDataQuery) {
       this.setState({ data: this.getInitialPanelDataState() });
@@ -337,6 +351,18 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           isFirstLoad = false;
         }
         break;
+      // BMC code starts - DRJ71 - DRJ71-14546
+      case LoadingState.RefreshToLoad:
+        // first load must tbe set to false, basically same as done
+        // If we are doing a snapshot save data in panel model
+        if (dashboard.snapshot) {
+          panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
+        }
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        }
+        break;
+      // BMC code ends
     }
 
     this.setState({ isFirstLoad, errorMessage, data, liveTime: undefined });
@@ -364,6 +390,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         dashboardTimezone: dashboard.getTimezone(),
         timeData,
         width,
+        // BMC code starts
+        isfirstload: this.state.isFirstLoad,
+        openEmptyPanel: this.props.dashboard.getOpenEmptyPanels(),
+        // BMC code ends
       });
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
@@ -506,6 +536,34 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       return null;
     }
 
+    // BMC code changes start
+    if (data?.state === LoadingState.RefreshToLoad) {
+      return (
+        <div className="panel-empty">
+          <p>
+            <Trans i18nKey="bmc.load-blank-dashoard.refresh-label">Refresh dashboard to fetch data</Trans>
+          </p>
+        </div>
+      );
+    } else if (
+      data?.state === LoadingState.Loading &&
+      data?.series.length === 0 &&
+      getFeatureStatus(FEATURE_CONST.BHD_GF_OPEN_EMPTY_PANELS)
+    ) {
+      // Coming here can mean 2 things.
+      // 1. Load blank dashboard is on and first series was set to [].
+      // 2. Load blank dashboard is off and previous panel query gave error/returned no data, and now user clicked refresh again
+      // To not affect people with LBD off, having feature flag check here
+      return (
+        <div className="panel-empty">
+          <p>
+            <Trans i18nKey="bmc.load-blank-dashoard.loading-label">Loading...</Trans>
+          </p>
+        </div>
+      );
+    }
+    // BMC code changes end
+
     // This is only done to increase a counter that is used by backend
     // image rendering to know when to capture image
     if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
@@ -514,7 +572,19 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     const PanelComponent = plugin.panel!;
     const timeRange = this.state.liveTime ?? data.timeRange ?? this.timeSrv.timeRange();
-    const panelOptions = panel.getOptions();
+    // BMC Change for content localization
+    let panelOptions = panel.getOptions();
+    let fieldConfig = panel.fieldConfig;
+    let panelTitle = panel.title;
+    if (!panel.isEditing) {
+      panelOptions = replaceValuesRecursive(cloneDeep(panelOptions), dashboard.getCurrentLocales());
+      fieldConfig = replaceValuesRecursive(
+        cloneDeep(fieldConfig),
+        dashboard.getCurrentLocales()
+      ) as FieldConfigSource<any>;
+      panelTitle = replaceValueForLocale(panelTitle, dashboard.getCurrentLocales());
+    }
+    // BMC Change: Ends
 
     // Update the event filter (dashboard settings may have changed)
     // Yes this is called ever render for a function that is triggered on every mouse move
@@ -526,7 +596,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           <PanelComponent
             id={panel.id}
             data={data}
-            title={panel.title}
+            title={panelTitle}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
@@ -570,15 +640,29 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       </div>
     );
 
+    // BMC Change: Starts
+    let panelTitle = panelChromeProps.title;
+    let panelDesc = panelChromeProps.description;
+    let panelDescWrapper = panelDesc;
+    if (!panel.isEditing) {
+      panelTitle = replaceValueForLocale(panelTitle, dashboard.getCurrentLocales());
+      if (panelDesc !== undefined) {
+        panelDescWrapper = () => {
+          const desc = panelDesc!();
+          return replaceValueForLocale(desc, dashboard.getCurrentLocales());
+        };
+      }
+    }
+    // BMC Change: Ends
     return (
       <PanelChrome
         width={width}
         height={height}
-        title={panelChromeProps.title}
+        title={panelTitle}
         loadingState={data.state}
         statusMessage={errorMessage}
         statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
-        description={panelChromeProps.description}
+        description={panel.isEditing ? panelDesc : panelDescWrapper}
         titleItems={panelChromeProps.titleItems}
         menu={this.props.hideMenu ? undefined : menu}
         dragClass={panelChromeProps.dragClass}

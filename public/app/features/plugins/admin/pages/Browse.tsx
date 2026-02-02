@@ -79,7 +79,8 @@ export default function Browse() {
 
   const subTitle = (
     <div>
-      Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
+      {/* BMC Code: Next Inline */}
+      Extend the BMC Helix Dashboards experience with panel plugins and apps. To find more data sources go to{' '}
       <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
         Connections
       </a>

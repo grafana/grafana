@@ -98,7 +98,8 @@ export function OldFolderPicker(props: Props) {
     async (query: string) => {
       const searchHits = await searchFolders(query, permissionLevel, searchQueryType);
       const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
-      const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
+      // BMC code - const to let
+      let options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
 
       reportInteraction('grafana_folder_picker_results_loaded', {
         results: options.length,
@@ -122,6 +123,17 @@ export function OldFolderPicker(props: Props) {
       ) {
         options.unshift({ label: initialTitle, value: initialFolderUid });
       }
+
+      // BMC code
+      // to be ignored for extraction
+      if (query === '') {
+        options = options.map((option) => {
+          option.label = t(`bmc-dynamic.${option.value}.name`, option.label!);
+          return option;
+        });
+      }
+      // BMC code - end
+
       if (enableCreateNew && Boolean(customAdd)) {
         return [...options, { value: VALUE_FOR_ADD, label: ADD_NEW_FOLER_OPTION, title: query }];
       } else {

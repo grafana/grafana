@@ -42,7 +42,8 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
     ),
 };
 
-function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
+// BMC Change: Export this function
+export function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
   return data.map((frame) => {
     const s = attachFieldIndex(frame, sort, ctx);
     if (s.length && s[0].index != null) {

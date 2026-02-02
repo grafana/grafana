@@ -3,16 +3,17 @@ import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { Alert, Button, Divider, Field, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Divider, Field, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { t, Trans } from 'app/core/internationalization';
 
 import { getExpireOptions } from '../../ShareSnapshotTab';
 
-const DASHBOARD_SNAPSHOT_URL =
-  'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#share-a-snapshot';
+// BMC code: comment below variables
+// const DASHBOARD_SNAPSHOT_URL =
+//   'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#share-a-snapshot';
 
-const PANEL_SNAPSHOT_URL = 'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#panel-snapshot';
+// const PANEL_SNAPSHOT_URL = 'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#panel-snapshot';
 
 interface Props {
   name: string;
@@ -39,25 +40,28 @@ export function UpsertSnapshot({
         <Stack justifyContent="space-between" gap={2} alignItems="center">
           <Text>
             {panelRef ? (
+              // BMC code: remove "Grafana" from the text
               <Trans i18nKey="snapshot.share-panel.info-alert">
-                A Grafana panel snapshot publicly shares a panel while removing sensitive data such as queries and panel
+                A panel snapshot publicly shares a panel while removing sensitive data such as queries and panel
                 links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
               </Trans>
             ) : (
+              // BMC code: remove "Grafana" from the text
               <Trans i18nKey="snapshot.share.info-alert">
-                A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries
+                A dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries
                 and panel links, leaving only visible metrics and series names. Anyone with the link can access the
                 snapshot.
               </Trans>
             )}
           </Text>
-          <Button
+          {/* BMC code: comment learn more button which takes to Grafana docs */}
+          {/* <Button
             variant="secondary"
             onClick={() => window.open(panelRef ? PANEL_SNAPSHOT_URL : DASHBOARD_SNAPSHOT_URL, '_blank')}
             type="button"
           >
             <Trans i18nKey="snapshot.share.learn-more-button">Learn more</Trans>
-          </Button>
+          </Button> */}
         </Stack>
       </Alert>
       <fieldset disabled={disableInputs}>

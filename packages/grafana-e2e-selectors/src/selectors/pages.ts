@@ -206,6 +206,11 @@ export const versionedPages = {
           shareSnapshot: {
             '11.2.0': 'data-testid new share button share snapshot',
           },
+          //BMC Change: Starts
+          downloadDashboard: {
+            '11.2.0': 'data-testid new share button download dashboard',
+          },
+          //BMC Change: Ends
         },
       },
       NewExportButton: {

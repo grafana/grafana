@@ -5,9 +5,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/grafana/grafana/pkg/api/bmc/external"
+	"html/template"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/api/bmc"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
@@ -18,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	navT "github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
@@ -73,9 +78,31 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
+
 	if err != nil {
 		return nil, err
 	}
+
+	// BMC Code starts
+	adminNode := navTree.FindById(navT.NavIDCfg)
+	if adminNode != nil {
+		isVQBEnabled := bmc.Contains(prefs.JSONData.EnabledQueryTypes.EnabledTypes, "VQB")
+		if !isVQBEnabled && prefs.JSONData.EnabledQueryTypes.ApplyForAdmin {
+			var configNodes []*navT.NavLink
+			for _, child := range adminNode.Children {
+				if child.Id != "rms-config" {
+					configNodes = append(configNodes, child)
+				}
+			}
+			adminNode.Children = configNodes
+		}
+	}
+
+	if !external.FeatureFlagBHDLocalization.Enabled(c.Req, c.SignedInUser) {
+		navTree.RemoveSectionByID("global-locales")
+	}
+
+	// BMC Code ends
 
 	weekStart := ""
 	if prefs.WeekStart != nil {
@@ -91,6 +118,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
+	// BMC Code: Starts
+	var bmcLogo template.URL
+	bmcLogo = "public/img/bmc_helix_light.svg"
+	if theme.Type == "Dark" {
+		bmcLogo = "public/img/bmc_helix_dark.svg"
+	}
+	// BMC Code: Ends
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         userID,
@@ -114,7 +148,14 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
-			AuthenticatedBy:            c.GetAuthenticatedBy(),
+			// BMC code
+			HasExternalOrg:     c.SignedInUser.HasExternalOrg,
+			MspOrgs:            c.SignedInUser.MspOrgs,
+			IsUnrestrictedUser: c.SignedInUser.IsUnrestrictedUser,
+			IsLanguageSet:      prefs.IsLanguageSet,
+			BHDRoles:           c.SignedInUser.BHDRoles,
+			// BMC code end
+			AuthenticatedBy: c.GetAuthenticatedBy(),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
@@ -133,12 +174,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppNameBodyClass:                    "app-grafana",
 		FavIcon:                             "public/img/fav32.png",
 		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
-		AppTitle:                            "Grafana",
+		AppTitle:                            "BMC Helix Dashboards",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         "public/img/grafana_icon.svg",
-		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
-		Assets:                              assets,
+		// BMC Change: Next line, referring BMC image
+		LoadingLogo:      bmcLogo,
+		IsDevelopmentEnv: hs.Cfg.Env == setting.Dev,
+		Assets:           assets,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -160,10 +202,26 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.User.Name = data.User.Login
 	}
 
+	// BMC Code: Starts
+	if prefs.JSONData.TimeFormat != "" {
+		if prefs.JSONData.TimeFormat == "browser" {
+			data.Settings.DateFormats.UseBrowserLocale = true
+		} else {
+			data.Settings.DateFormats.UseBrowserLocale = false
+			data.Settings.DateFormats.FullDate = prefs.JSONData.TimeFormat
+		}
+	}
+
+	data.Settings.EnabledQueryTypes.EnabledTypes = prefs.JSONData.EnabledQueryTypes.EnabledTypes
+	data.Settings.EnabledQueryTypes.ApplyForAdmin = prefs.JSONData.EnabledQueryTypes.ApplyForAdmin
+	// BMC Code: Ends
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	data.NavTree.ApplyCostManagementIA()
-	data.NavTree.ApplyHelpVersion(data.Settings.BuildInfo.VersionString) // RunIndexDataHooks can modify the version string
+	// BMC code - show Helix Dashboard version instead of Grafana version
+	helpVersion := fmt.Sprintf(`%s %s`, "v. ", os.Getenv("RELEASE_VERSION"))
+	data.NavTree.ApplyHelpVersion(helpVersion) // RunIndexDataHooks can modify the version string
+	// end
 	data.NavTree.Sort()
 
 	return &data, nil

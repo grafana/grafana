@@ -15,9 +15,12 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
   const styles = useStyles2(getStyles);
 
   useEffectOnce(() => {
-    setTimeout(() => {
-      onClearNotification(appNotification.id);
-    }, timeoutMap[appNotification.severity]);
+    // BMC code - next line
+    if (timeoutMap[appNotification.severity]) {
+      setTimeout(() => {
+        onClearNotification(appNotification.id);
+      }, timeoutMap[appNotification.severity]);
+    }
   });
 
   const hasBody = appNotification.component || appNotification.text || appNotification.traceId;

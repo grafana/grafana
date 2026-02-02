@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -104,6 +104,14 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
   if (!panel || !dashboard) {
     return <div>Loading & initializing dashboard</div>;
   }
+
+  // BMC code - fix for incorrect relative time range in timeseries panel
+  if (panel.timeFrom) {
+    const { from, to } = rangeUtil.describeTextRange(panel.timeFrom);
+    dashboard.time.from = from;
+    dashboard.time.to = to;
+  }
+  // BMC code - ends
 
   return (
     <div className={styles.container}>

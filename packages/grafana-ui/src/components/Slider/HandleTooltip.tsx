@@ -51,6 +51,8 @@ const HandleTooltip = (props: {
       ref={tooltipRef}
       visible={visible}
       {...restProps}
+      // BMC Change: To destroy the tooltip on hide
+      destroyTooltipOnHide={true}
     >
       {children}
     </Tooltip>

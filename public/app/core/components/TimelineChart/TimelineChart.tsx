@@ -52,7 +52,6 @@ export class TimelineChart extends Component<TimelineProps> {
       // When there is only one row, use the full space
       rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
       getValueColor: this.getValueColor,
-
       hoverMulti: this.props.tooltip?.mode === TooltipDisplayMode.Multi,
     });
   };

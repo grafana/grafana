@@ -8,6 +8,12 @@ export const GERMAN_GERMANY = 'de-DE';
 export const BRAZILIAN_PORTUGUESE = 'pt-BR';
 export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo';
+// BMC code - BMC owned locales
+export const FRENCH_CANADA = 'fr-CA';
+export const ENGLISH_CANADA = 'en-CA';
+export const ITALIAN_ITALY = 'it-IT';
+export const ARABIC_ARABIC = 'ar-AR';
+// BMC code - end
 
 export const DEFAULT_LANGUAGE = ENGLISH_US;
 
@@ -57,21 +63,51 @@ export const LANGUAGES: LanguageDefinition[] = [
     },
   },
 
+  // BMC code - Canadian French
   {
-    code: CHINESE_SIMPLIFIED,
-    name: '中文（简体）',
+    code: FRENCH_CANADA,
+    name: 'Français (Canada)',
+    loader: { grafana: () => import('../../../locales/fr-CA/grafana.json') },
+  },
+
+  // BMC code - Canadian English
+  {
+    code: ENGLISH_CANADA,
+    name: 'English (Canada)',
+    loader: { grafana: () => import('../../../locales/en-CA/grafana.json') },
+  },
+
+  // BMC code - Italian
+  {
+    code: ITALIAN_ITALY,
+    name: 'Italiano',
+    loader: { grafana: () => import('../../../locales/it-IT/grafana.json') },
+  },
+
+  // BMC code - Arabic
+  {
+    code: ARABIC_ARABIC,
+    name: 'العربية',
     loader: {
-      grafana: () => import('../../../locales/zh-Hans/grafana.json'),
+      grafana: () => import('../../../locales/ar-AR/grafana.json'),
     },
   },
 
-  {
-    code: BRAZILIAN_PORTUGUESE,
-    name: 'Português Brasileiro',
-    loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
-    },
-  },
+  // {
+  //   code: CHINESE_SIMPLIFIED,
+  //   name: '中文（简体）',
+  //   loader: {
+  //     grafana: () => import('../../../locales/zh-Hans/grafana.json'),
+  //   },
+  // },
+
+  // {
+  //   code: BRAZILIAN_PORTUGUESE,
+  //   name: 'Português Brasileiro',
+  //   loader: {
+  //     grafana: () => import('../../../locales/pt-BR/grafana.json'),
+  //   },
+  // },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
 
 if (process.env.NODE_ENV === 'development') {
@@ -108,3 +144,6 @@ if (process.env.NODE_ENV !== 'test') {
 export const VALID_LANGUAGES = LANGUAGES.map((v) => v.code);
 
 export const NAMESPACES = uniq(LANGUAGES.flatMap((v) => Object.keys(v.loader)));
+
+// BMC change - Locale constants
+export const DashFolderLinkRegexp = /\/[df]\/([a-zA-Z0-9\_\-]+)(?!.*editview=)/;

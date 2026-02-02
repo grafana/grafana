@@ -274,6 +274,10 @@ func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 		return 0, org.ErrOrgNotFound.Errorf("empty org ID")
 	}
 
+	// BMC change next block: To support IMS tenant 0
+	if orgID == setting.IMS_Tenant0 {
+		return setting.GF_Tenant0, nil
+	}
 	return orgID, nil
 }
 

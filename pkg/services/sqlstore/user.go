@@ -39,6 +39,7 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserComm
 // existing Org with id=args.OrgID. If AutoAssignOrg is disabled then
 // args.OrgName will be used to create a new Org with name=args.OrgName. If an
 // org already exists with that name, it will error.
+
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
 	var usr user.User
 	orgID, err := ss.getOrgIDForNewUser(sess, args)
@@ -49,12 +50,13 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	if args.Email == "" {
 		args.Email = args.Login
 	}
+	//BMC Code changes:Email conflicts are removed to support DRJ71-7637
 
-	where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+	where := "LOWER(login)=LOWER(?)"
 	args.Login = strings.ToLower(args.Login)
 	args.Email = strings.ToLower(args.Email)
 
-	exists, err := sess.Where(where, args.Email, args.Login).Get(&user.User{})
+	exists, err := sess.Where(where, args.Login).Get(&user.User{})
 	if err != nil {
 		return usr, err
 	}
@@ -64,6 +66,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 
 	// create user
 	usr = user.User{
+		// BMC Code  Create user with same id as IMS UserId
+		ID: args.Id,
+		// End - Create user with same id as IMS UserId
 		UID:        util.GenerateShortUID(),
 		Email:      args.Email,
 		Login:      args.Login,
@@ -84,7 +89,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		return usr, err
 	}
 	usr.Rands = rands
-
+	//BMC Code changes End :Email conflicts are removed to support DRJ71-7637
 	if len(args.Password) > 0 {
 		encodedPassword, err := util.EncodePassword(string(args.Password), usr.Salt)
 		if err != nil {

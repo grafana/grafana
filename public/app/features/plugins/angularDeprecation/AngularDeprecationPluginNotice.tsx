@@ -2,7 +2,6 @@ import { useState } from 'react';
 import * as React from 'react';
 
 import { PluginType } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 type Props = {
@@ -15,40 +14,41 @@ type Props = {
   children?: React.ReactNode;
 };
 
-function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean): string {
-  let pluginTypeString: string;
-  switch (pluginType) {
-    case PluginType.app:
-      pluginTypeString = 'app plugin';
-      break;
-    case PluginType.panel:
-      pluginTypeString = 'panel plugin';
-      break;
-    case PluginType.datasource:
-      pluginTypeString = 'data source plugin';
-      break;
-    default:
-      pluginTypeString = 'plugin';
-  }
-  let msg = `This ${pluginTypeString} uses a deprecated, legacy platform based on AngularJS and `;
-  if (angularSupportEnabled === undefined) {
-    return msg + ' may be incompatible depending on your Grafana configuration.';
-  }
-  if (angularSupportEnabled) {
-    return msg + ' will stop working in future releases of Grafana.';
-  }
-  return msg + ' is incompatible with your current Grafana configuration.';
-}
+// BMC Change: Comment below function
+// function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean): string {
+//   let pluginTypeString: string;
+//   switch (pluginType) {
+//     case PluginType.app:
+//       pluginTypeString = 'app plugin';
+//       break;
+//     case PluginType.panel:
+//       pluginTypeString = 'panel plugin';
+//       break;
+//     case PluginType.datasource:
+//       pluginTypeString = 'data source plugin';
+//       break;
+//     default:
+//       pluginTypeString = 'plugin';
+//   }
+//   let msg = `This ${pluginTypeString} uses a deprecated, legacy platform based on AngularJS and `;
+//   if (angularSupportEnabled === undefined) {
+//     return msg + ' may be incompatible depending on your Grafana configuration.';
+//   }
+//   if (angularSupportEnabled) {
+//     return msg + ' will stop working in future releases of Grafana.';
+//   }
+//   return msg + ' is incompatible with your current Grafana configuration.';
+// }
 
 // An Alert showing information about Angular deprecation notice.
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
 export function AngularDeprecationPluginNotice(props: Props): React.ReactElement | null {
   const {
     className,
-    angularSupportEnabled,
+    // angularSupportEnabled,
     pluginId,
-    pluginType,
-    showPluginDetailsLink,
+    // pluginType,
+    // showPluginDetailsLink,
     interactionElementId,
     children,
   } = props;
@@ -63,10 +63,17 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
   }
 
   return dismissed ? null : (
-    <Alert severity="warning" title="Angular plugin" className={className} onRemove={() => setDismissed(true)}>
-      <p>{deprecationMessage(pluginType, angularSupportEnabled)}</p>
+    // BMC Change: Next line inline
+    <Alert severity="warning" title="Deprecated plugin" className={className} onRemove={() => setDismissed(true)}>
+      {/* BMC Change: Next block */}
+      <p>
+        {/* {deprecationMessage(pluginType, angularSupportEnabled)} */}
+        This plugin is deprecated and will stop working in an upcoming release.
+      </p>
       <div className="markdown-html">
-        <ul>
+        {/* BMC Change Starts */}
+        For more information, see the Deprecated and discontinued features topic in product documentation.
+        {/* <ul>
           <li>
             <a
               href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
@@ -92,7 +99,8 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
               </a>
             </li>
           ) : null}
-        </ul>
+        </ul> */}
+        {/* BMC Change Ends */}
       </div>
       {children && (
         <>

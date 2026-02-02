@@ -60,6 +60,8 @@ type Service interface {
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
 	// GetStaicRoles returns a map where key organization role and value is a static rbac role.
 	GetStaticRoles(ctx context.Context) map[string]*RoleDTO
+	// BMC Change: Next line
+	HasRequiredPermissions(ctx context.Context, orgID, userID int64, requiredRole string, requiredPermissions []string) (bool, error)
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
@@ -73,6 +75,11 @@ type Store interface {
 	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+
+	// BMC Code - Next line
+	GetBHDPermissionsByRoles(ctx context.Context, bhdRoles []int64) ([]Permission, error)
+	GetBHDRoleIdByUserId(ctx context.Context, orgID, userID int64) ([]int64, error)
+	ValidateUserId(ctx context.Context, orgID, userID int64) error
 }
 
 type RoleRegistry interface {
@@ -158,6 +165,12 @@ type PermissionsService interface {
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
 	MapActions(permission ResourcePermission) string
+	//BMC Change start
+	//Get the list of all the permissions
+	GetPermissionsList() []string
+	//Get the list of actions assigned to a role
+	GetPermissionsToActions() map[string][]string
+	//BMC Change end
 	// DeleteResourcePermissions removes all permissions for a resource
 	DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error
 }

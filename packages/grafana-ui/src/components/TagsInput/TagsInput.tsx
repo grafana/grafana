@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
@@ -27,8 +28,10 @@ export interface Props {
   invalid?: boolean;
 }
 
+/*BMC Change using t or Trans : To enable localization for below text*/
+
 export const TagsInput = ({
-  placeholder = 'New tag (enter key to add)',
+  placeholder = `${t('bmcgrafana.dashboards.settings.links.tags-input.placeholder-new-tag', 'New tag (enter key to add)')}`,
   tags = [],
   onChange,
   width,

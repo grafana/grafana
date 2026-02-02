@@ -112,6 +112,11 @@ export interface FieldConfig<TOptions = any> {
 
   // Calculate min max per field
   fieldMinMax?: boolean;
+
+  // BMC Change: starts
+  // Convert number to european format
+  europeanFormat?: boolean;
+  // BMC Change: ends
 }
 
 export interface FieldTypeConfig {

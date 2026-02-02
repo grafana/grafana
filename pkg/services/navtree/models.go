@@ -18,6 +18,8 @@ const (
 	WeightExplore
 	WeightDrilldown
 	WeightAlerting
+	// BMC code - next line
+	WeightReport
 	WeightAlertsAndIncidents
 	WeightTestingAndSynthetics
 	WeightMonitoring

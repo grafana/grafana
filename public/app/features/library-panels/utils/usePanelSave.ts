@@ -17,10 +17,13 @@ export const usePanelSave = () => {
     } catch (err) {
       if (isFetchError(err)) {
         err.isHandled = true;
+        //BMC change
         notifyApp.error(
           t('library-panels.save.error', 'Error saving library panel: "{{errorMsg}}"', {
             errorMsg: err.message ?? err.data.message,
-          })
+          }),
+          '',
+          'bhd-00613'
         );
       }
       throw err;

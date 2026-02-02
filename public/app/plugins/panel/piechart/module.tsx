@@ -12,7 +12,9 @@ import { PieChartSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
   .useFieldConfig({
-    disableStandardOptions: [FieldConfigProperty.Thresholds],
+    // BMC Change: Disabled european format for Pie chart: DRJ71-18004
+    disableStandardOptions: [FieldConfigProperty.Thresholds, "europeanFormat" as FieldConfigProperty],
+    // BMC Change: Stop
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {

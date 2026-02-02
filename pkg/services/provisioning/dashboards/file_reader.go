@@ -210,13 +210,16 @@ func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provision
 	if fr.Cfg.DisableDeletion {
 		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
 		// so afterwards the dashboard is considered unprovisioned.
-		for _, dashboardID := range dashboardsToDelete {
+		// BMC code
+		// Start Abhishek, 09022020, Dont unprovision already provisioned dashboards
+		/*for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
 			err := fr.dashboardProvisioningService.UnprovisionDashboard(ctx, dashboardID)
 			if err != nil {
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}
-		}
+		}*/
+		// End
 	} else {
 		// delete dashboards missing JSON file
 		for _, dashboardID := range dashboardsToDelete {

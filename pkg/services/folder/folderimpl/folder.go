@@ -1558,6 +1558,10 @@ func toFolderError(err error) error {
 		return dashboards.ErrFolderNotFound
 	}
 
+	// BMC Change: Next block
+	if errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) {
+		return dashboards.ErrFolderSameNameExists
+	}
 	return err
 }
 

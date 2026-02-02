@@ -6,6 +6,7 @@ import { IconName } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
+import { t } from '../../utils/i18n';
 
 import { ConfirmContent } from './ConfirmContent';
 
@@ -56,7 +57,8 @@ export const ConfirmModal = ({
   confirmText,
   confirmVariant = 'destructive',
   confirmationText,
-  dismissText = 'Cancel',
+  // BMC Change: Next line
+  dismissText = t('bmc.common.cancel', 'Cancel'),
   dismissVariant = 'secondary',
   alternativeText,
   modalClass,

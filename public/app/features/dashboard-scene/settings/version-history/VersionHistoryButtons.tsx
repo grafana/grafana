@@ -1,5 +1,6 @@
 import { Tooltip, Button, Stack } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { Trans } from 'app/core/internationalization';
 
 type VersionsButtonsType = {
   hasMore: boolean;
@@ -26,12 +27,14 @@ export const VersionsHistoryButtons = ({
         variant="secondary"
         disabled={isLastPage}
       >
-        Show more versions
+        {/* BMC Change: Next line */}
+        <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.buttons.more-versions'}>Show more versions</Trans>
       </Button>
     )}
     <Tooltip content="Select two versions to start comparing" placement="bottom">
       <Button type="button" disabled={!canCompare} onClick={getDiff} icon="code-branch">
-        Compare versions
+        {/* BMC Change: Next line */}
+        <Trans i18nKey={'bmcgrafana.dashboards.settings.versions.buttons.compare-versions'}>Compare versions</Trans>
       </Button>
     </Tooltip>
   </Stack>

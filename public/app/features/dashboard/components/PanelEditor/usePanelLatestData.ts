@@ -31,7 +31,8 @@ export const usePanelLatestData = (
     querySubscription.current = panel
       .getQueryRunner()
       // We apply field config later
-      .getData({ withTransforms: options.withTransforms, withFieldConfig: false })
+      // BMC Change: Inline
+      .getData({ withTransforms: options.withTransforms, withFieldConfig: options.withFieldConfig ?? false })
       .subscribe({
         next: (data) => {
           if (checkSchema) {
@@ -58,8 +59,9 @@ export const usePanelLatestData = (
      * Adding separate options to dependencies array to avoid additional hook for comparing previous options with current.
      * Otherwise, passing different references to the same object might cause troubles.
      */
+    // BMC Change: Next to Next Inline
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options.withTransforms]);
+  }, [panel, options.withTransforms, options.withFieldConfig]);
 
   return {
     data: latestData,

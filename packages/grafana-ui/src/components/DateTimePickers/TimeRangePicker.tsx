@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, createRef, useState, useEffect } from 'react';
+import { memo, createRef, useState, useEffect, useMemo } from 'react';
 
 import {
   rangeUtil,
@@ -25,8 +25,9 @@ import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+// BMC Code : Accessibility Change ( Next 2 lines )
 import { WeekStart } from './WeekStartPicker';
-import { quickOptions } from './options';
+import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
@@ -91,6 +92,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     weekStart,
     initialIsSynced,
   } = props;
+  // BMC Change: Next hook
+  const quickOptions = useMemo(() => {
+    return getQuickOptions();
+  }, []);
 
   const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
     initialIsSynced,
@@ -134,6 +139,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     overlayRef
   );
   const { dialogProps } = useDialog({}, overlayRef);
+  //BMC Accessibility Change: Omit role from dialogProps
+  const { role, ...dialogWithoutRole } = dialogProps;
+  //BMC Accessibility Change End
 
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
@@ -180,30 +188,39 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           <TimePickerButtonLabel {...props} />
         </ToolbarButton>
       </Tooltip>
-      {isOpen && (
-        <div data-testid={selectors.components.TimePicker.overlayContent}>
-          <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <FocusScope contain autoFocus restoreFocus>
-            <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
-              <TimePickerContent
-                timeZone={timeZone}
-                fiscalYearStartMonth={fiscalYearStartMonth}
-                value={value}
-                onChange={onChange}
-                quickOptions={quickRanges || quickOptions}
-                history={history}
-                showHistory
-                widthOverride={widthOverride}
-                onChangeTimeZone={onChangeTimeZone}
-                onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-                hideQuickRanges={hideQuickRanges}
-                onError={onError}
-                weekStart={weekStart}
-              />
-            </section>
-          </FocusScope>
-        </div>
-      )}
+      {
+        // BMC Code : Accessibility Change starts here.
+      }
+      <div id="TimePickerContent">
+        {isOpen && (
+          <div data-testid={selectors.components.TimePicker.overlayContent}>
+            <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
+            <FocusScope contain autoFocus restoreFocus>
+              {/* BMC Accessibility Change: Removed role from section */}
+              <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogWithoutRole}>
+                <TimePickerContent
+                  timeZone={timeZone}
+                  fiscalYearStartMonth={fiscalYearStartMonth}
+                  value={value}
+                  onChange={onChange}
+                  quickOptions={quickOptions}
+                  history={history}
+                  showHistory
+                  widthOverride={widthOverride}
+                  onChangeTimeZone={onChangeTimeZone}
+                  onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+                  hideQuickRanges={hideQuickRanges}
+                  onError={onError}
+                  weekStart={weekStart}
+                />
+              </section>
+            </FocusScope>
+          </div>
+        )}
+      </div>
+      {
+        // BMC Code : Accessibility Change ends here.
+      }
 
       {timeSyncButton}
 

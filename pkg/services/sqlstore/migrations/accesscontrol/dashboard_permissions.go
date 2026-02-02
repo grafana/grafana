@@ -356,7 +356,7 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 	}
 
 	var permissions []ac.Permission
-	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(SELECT id FROM role WHERE name LIKE 'managed:%') AND scope LIKE 'folders:%'").Find(&permissions); err != nil {
 		return err
 	}
 
@@ -468,7 +468,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 	}
 
 	var permissions []ac.Permission
-	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(SELECT id FROM role WHERE name LIKE 'managed:%') AND scope LIKE 'folders:%'").Find(&permissions); err != nil {
 		return err
 	}
 
@@ -582,7 +582,7 @@ func (m *managedFolderLibraryPanelActionsMigrator) Exec(sess *xorm.Session, mg *
 	}
 
 	var permissions []ac.Permission
-	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(SELECT id FROM role WHERE name LIKE 'managed:%') AND scope LIKE 'folders:%'").Find(&permissions); err != nil {
 		return err
 	}
 
@@ -857,22 +857,28 @@ func (m *managedFolderAlertingSilencesActionsMigrator) SQL(_ migrator.Dialect) s
 	return CodeMigrationSQL
 }
 
+// BMC Code: Function is changed to fix postgresql limitation
+// ref: https://github.com/grafana/grafana/issues/97760
 func (m *managedFolderAlertingSilencesActionsMigrator) Exec(sess *xorm.Session, _ *migrator.Migrator) error {
-	var ids []any
-	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+	var permissions []ac.Permission
+
+	// Simplified query to fetch permissions directly
+	if err := sess.SQL(`
+		SELECT role_id, action, scope
+		FROM permission
+		WHERE role_id IN (
+			SELECT id FROM role WHERE name LIKE 'managed:%'
+		)
+		AND (scope LIKE 'folders:%' OR scope LIKE 'dashboards:%')
+	`).Find(&permissions); err != nil {
 		return err
 	}
 
-	if len(ids) == 0 {
+	if len(permissions) == 0 {
 		return nil
 	}
 
-	var permissions []ac.Permission
-	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
-		return err
-	}
-
-	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	mapped := make(map[int64]map[string][]ac.Permission)
 	for _, p := range permissions {
 		if mapped[p.RoleID] == nil {
 			mapped[p.RoleID] = make(map[string][]ac.Permission)
@@ -885,7 +891,6 @@ func (m *managedFolderAlertingSilencesActionsMigrator) Exec(sess *xorm.Session, 
 
 	for id, a := range mapped {
 		for scope, p := range a {
-			// Create a temporary permission to split the scope into kind, attribute and identifier
 			kind, attribute, identifier := ac.Permission{Scope: scope}.SplitScope()
 
 			if hasFolderView(p) {
@@ -936,6 +941,8 @@ func (m *managedFolderAlertingSilencesActionsMigrator) Exec(sess *xorm.Session, 
 		return nil
 	}
 
+	// Batch insert
+	const batchSize = 1000
 	err := batch(len(toAdd), batchSize, func(start, end int) error {
 		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
 			return err

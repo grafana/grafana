@@ -36,6 +36,9 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	t.Add("/api/plugins/:id/resources/*", nil)
 
 	return func(c *web.Context) {
+		// BMC code
+		addSecurityHeadersTemp(c, cfg)
+		// End
 		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
 				return
@@ -68,7 +71,38 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	}
 }
 
+// BMC code
+// Adding temporary function to add needed security headers.
+// ToDo: Check how plain grafana is already handling that and make the necessary to make it work that way.
+// BMC code - removed deprecated header X-XSS-Protection
+func addSecurityHeadersTemp(c *web.Context, cfg *setting.Cfg) {
+	if cfg.ContentTypeProtectionHeader {
+		c.Resp.Header().Add("X-Content-Type-Options", "nosniff")
+	}
+
+	if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+		c.Resp.Header().Add("Cache-Control", "no-cache")
+		c.Resp.Header().Add("Pragma", "no-cache")
+		c.Resp.Header().Add("Expires", "-1")
+	}
+
+	if !cfg.AllowEmbedding {
+		c.Resp.Header().Add("X-Frame-Options", "deny")
+	}
+}
+
+// End
+
+func AddAllowEmbeddingHeader() web.Handler {
+	return func(c *web.Context) {
+		c.Resp.Before(func(w web.ResponseWriter) {
+			w.Header().Set("X-Allow-Embedding", "allow")
+		})
+	}
+}
+
 // addSecurityHeaders adds HTTP(S) response headers that enable various security protections in the client's browser.
+// BMC code - removed deprecated header X-XSS-Protection
 func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 	if cfg.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", cfg.StrictTransportSecurityMaxAge)}
@@ -85,9 +119,9 @@ func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 	}
 
-	if cfg.XSSProtectionHeader {
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
-	}
+	w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+	w.Header().Set("Referrer-Policy", "origin")
+	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 }
 
 func addNoCacheHeaders(w web.ResponseWriter) {

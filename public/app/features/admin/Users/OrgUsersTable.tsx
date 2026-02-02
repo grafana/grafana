@@ -24,7 +24,7 @@ import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicke
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
@@ -86,6 +86,7 @@ export const OrgUsersTable = ({
   }, [orgId]);
 
   const columns: Array<Column<OrgUser>> = useMemo(
+    // BMC Code: To split the array and push the respective columns on check
     () => [
       {
         id: 'avatarUrl',
@@ -94,25 +95,29 @@ export const OrgUsersTable = ({
       },
       {
         id: 'login',
-        header: 'Login',
+        // BMC Change: Next line inline
+        header: t('bmcgrafana.users-and-access.headers.login-text', 'Login'),
         cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
         sortType: 'string',
       },
       {
         id: 'email',
-        header: 'Email',
+        // BMC Change: Next line inline
+        header: t('bmcgrafana.users-and-access.headers.email-text', 'Email'),
         cell: ({ cell: { value } }: Cell<'email'>) => value,
         sortType: 'string',
       },
       {
         id: 'name',
-        header: 'Name',
+        // BMC Change: Next line inline
+        header: t('bmcgrafana.users-and-access.headers.name-text', 'Name'),
         cell: ({ cell: { value } }: Cell<'name'>) => value,
         sortType: 'string',
       },
       {
         id: 'lastSeenAtAge',
-        header: 'Last active',
+        // BMC Change: Next line inline
+        header: t('bmcgrafana.users-and-access.headers.last-active-text', 'Last active'),
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
           return (
             <>
@@ -172,6 +177,7 @@ export const OrgUsersTable = ({
             />
           );
         },
+        visible: () => config.buildInfo.env === 'development',
       },
       {
         id: 'info',
@@ -215,6 +221,7 @@ export const OrgUsersTable = ({
         cell: ({ cell: { value } }: Cell<'authLabels'>) => (
           <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
         ),
+        visible: () => config.buildInfo.env === 'development',
       },
       {
         id: 'isDisabled',
@@ -239,6 +246,8 @@ export const OrgUsersTable = ({
             )
           );
         },
+        // BMC Code: Next line
+        visible: () => config.buildInfo.env === 'development',
       },
     ],
     [rolesLoading, orgId, roleOptions, onUserRolesChange, onRoleChange]

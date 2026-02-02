@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -19,6 +20,8 @@ const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
 };
 
 export function SortPicker({ onChange, value, placeholder, filter, getSortOptions, isClearable }: Props) {
+  //BMC Code : Accessibility Change : Next line
+  const selectRef = useRef<any>(null);
   // Using sync Select and manual options fetching here since we need to find the selected option by value
   const options = useAsync<() => Promise<SelectableValue[]>>(async () => {
     const vals = await (getSortOptions ?? defaultSortOptionsGetter)();
@@ -31,13 +34,27 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
   if (options.loading) {
     return null;
   }
+  //BMC Code : Accessibility Change Starts Here
+  const handleChange = (sortValue: SelectableValue) => {
+    onChange(sortValue);
+    // Retain focus on the select after selection
+    requestAnimationFrame(() => {
+      if (selectRef.current?.focus) {
+        selectRef.current.focus();
+      }
+    });
+  };
+  //BMC Code : Accessibility Change End
 
   const isDesc = Boolean(value?.includes('desc') || value?.startsWith('-')); // bluge syntax starts with "-"
   return (
     <Select
+      //BMC Code : Accessibility Change : Next line
+      ref={selectRef}
       key={value}
       width={28}
-      onChange={onChange}
+      //BMC Code : Accessibility Change : Next line
+      onChange={handleChange}
       value={options.value?.find((opt) => opt.value === value) ?? null}
       options={options.value}
       aria-label="Sort"

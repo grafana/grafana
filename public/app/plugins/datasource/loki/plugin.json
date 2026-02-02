@@ -35,5 +35,7 @@
         "url": "https://github.com/grafana/loki"
       }
     ]
-  }
+  },
+
+  "state": "alpha"
 }

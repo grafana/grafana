@@ -20,6 +20,7 @@ export function StoredNotifications() {
   const dispatch = useDispatch();
   const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
+  const [liveMessage, setLiveMessage] = useState<string>('');
   const allNotificationsSelected = notifications.every((notification) =>
     selectedNotificationIds.includes(notification.id)
   );
@@ -31,6 +32,9 @@ export function StoredNotifications() {
   });
 
   const clearSelectedNotifications = () => {
+    //BMC Accessibility change Next 1 line
+    const dismissedCount = selectedNotificationIds.length;
+
     if (allNotificationsSelected) {
       dispatch(clearAllNotifications());
     } else {
@@ -39,6 +43,18 @@ export function StoredNotifications() {
       });
     }
     setSelectedNotificationIds([]);
+    //BMC Accessibility change Start :  Added aria-live region to announce number of dismissed notifications
+    if (dismissedCount > 0) {
+      const msg =
+        dismissedCount === 1
+          ? t('bmcgrafana.notifications.live.dismissed.single', 'Dismissed 1 notification')
+          : t('bmcgrafana.notifications.live.dismissed.multiple', 'Dismissed {{count}} notifications', {
+              count: dismissedCount,
+            });
+      setLiveMessage('');
+      setTimeout(() => setLiveMessage(msg), 100);
+    }
+    //BMC Accessibility change End
   };
 
   const handleAllCheckboxToggle = (isChecked: boolean) => {
@@ -57,20 +73,33 @@ export function StoredNotifications() {
 
   if (notifications.length === 0) {
     return (
-      <EmptyState variant="completed" message={t('notifications.empty-state.title', "You're all caught up!")}>
-        <Trans i18nKey="notifications.empty-state.description">Notifications you have received will appear here</Trans>
+      <EmptyState
+        variant="completed"
+        message={t('bmcgrafana.notifications.empty-state.title', "You're all caught up!")}
+      >
+        <Trans i18nKey="bmcgrafana.notifications.empty-state.description">
+          Notifications you have received will appear here
+        </Trans>
       </EmptyState>
     );
   }
 
   return (
     <div className={styles.wrapper}>
+      {/* BMC Accessibility Change Start: Added aria-live region to announce dismissed notifications */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {liveMessage}
+      </div>
+      {/* BMC Accessibility Change End */}
       <Alert
         severity="info"
         title="This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
       />
       <div className={styles.topRow}>
         <Checkbox
+          //BMC Accessibility Change next 1 line : Added the aria-label
+          aria-label={t('bmcgrafana.notifications.stored-notifications.select-all', 'Select all Notifications')}
+          //BMC Accessibility Change End
           value={allNotificationsSelected}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />

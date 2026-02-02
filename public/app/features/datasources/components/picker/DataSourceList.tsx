@@ -78,6 +78,8 @@ export function DataSourceList(props: DataSourceListProps) {
       ref={containerRef}
       className={cx(className, styles.container)}
       data-testid={selectors.components.DataSourcePicker.dataSourceList}
+      // BMC Code : Accessibility Change ( Next line )
+      id='data-source-suggestion-box'
     >
       {filteredDataSources.length === 0 && (
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />

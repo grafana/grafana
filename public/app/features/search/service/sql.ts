@@ -146,7 +146,11 @@ export class SQLSearcher implements GrafanaSearcher {
   }
 
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
-    const rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
+    // BMC Change: Next block inline to include lang in the query
+    const rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', {
+      ...query,
+      lang: config.bootData.user.language ?? '',
+    });
 
     // Field values (columnar)
     const kind: string[] = [];

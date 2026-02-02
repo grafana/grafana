@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { config } from '@grafana/runtime/src/config';
 import { Button, Select, Stack } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
@@ -36,16 +37,21 @@ export const AddPermission = ({
     if (assignments.users) {
       options.push({ value: PermissionTarget.User, label: t('access-control.add-permission.user-label', 'User') });
     }
-    if (assignments.serviceAccounts) {
-      options.push({
-        value: PermissionTarget.ServiceAccount,
-        label: t('access-control.add-permission.serviceaccount-label', 'Service Account'),
-      });
-    }
+    // BMC Change: Starts | Commented below block, no service accounts permission allowed
+    // if (assignments.serviceAccounts) {
+    //   options.push({
+    //     value: PermissionTarget.ServiceAccount,
+    //     label: t('access-control.add-permission.serviceaccount-label', 'Service Account'),
+    //   });
+    // }
+    // BMC Change: Ends
     if (assignments.teams) {
       options.push({ value: PermissionTarget.Team, label: t('access-control.add-permission.team-label', 'Team') });
     }
-    if (assignments.builtInRoles) {
+    // BMC code - changes related to MSP
+    const user = config.bootData.user as any;
+    if (assignments.builtInRoles && !user.hasExternalOrg && !user.isUnrestrictedUser) {
+      // BMC code - end
       options.push({
         value: PermissionTarget.BuiltInRole,
         label: t('access-control.add-permission.role-label', 'Role'),

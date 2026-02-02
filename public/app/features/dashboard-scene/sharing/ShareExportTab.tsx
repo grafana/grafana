@@ -2,6 +2,7 @@ import saveAs from 'file-saver';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { TypedVariableModel } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -10,7 +11,6 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -57,14 +57,28 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
   public getExportableDashboardJson = async () => {
     const { isSharingExternally } = this.state;
-    const saveModel = transformSceneToSaveModel(getDashboardSceneFor(this));
+    // BMC Change: for localization-aware export
+    const dashboard = getDashboardSceneFor(this);
+    const dashboardClone = dashboard.clone();
+    const nonLocalizedState = dashboard.getNonLocalizedState?.();
+    if (nonLocalizedState) {
+      dashboardClone.setnonLocalizedState(nonLocalizedState);
+    }
+    dashboardClone.unapplyLocalization();
+    const saveModel = transformSceneToSaveModel(dashboardClone);
+    // BMC Change: Ends
 
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(
           new DashboardModel(saveModel, undefined, {
-            getVariablesFromState: () => {
-              return getVariablesCompatibility(window.__grafanaSceneContext);
-            },
+            // BMC Change: for localization-aware export of variables
+            // getVariablesFromState: () => {
+            //   return getVariablesCompatibility(window.__grafanaSceneContext);
+            // },
+            // For Scenes exports, use the variables from the save model itself so we
+            // preserve things like {{variableKey}} labels and avoid re-localizing via Redux/Scenes.
+            getVariablesFromState: () => (saveModel.templating?.list as TypedVariableModel[]) ?? [],
+            // BMC Change: Ends
           })
         )
       : saveModel;

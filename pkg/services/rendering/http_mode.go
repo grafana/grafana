@@ -50,7 +50,8 @@ func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderType Render
 		return nil, err
 	}
 
-	return &RenderResult{FilePath: result.FilePath}, nil
+	//BMC Change: Conditional Broadcasting for report generation
+	return &RenderResult{FilePath: result.FilePath, GenerationReport: result.GenerationReport}, nil
 }
 
 // renderViaHTTP renders CSV via HTTP
@@ -115,7 +116,7 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(timeoutOpts))
 	defer cancel()
 
-	resp, err := rs.doRequest(reqContext, rendererURL, headers)
+	resp, err := rs.doRequest(reqContext, rendererURL, headers, "GET", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +133,10 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 		return nil, fmt.Errorf("remote rendering request failed, status code: %d, status: %s", resp.StatusCode,
 			resp.Status)
 	}
+	
+	//Conditional Broadcasting custom header for report generation
+	fileStatusStr := resp.Header.Get("Generation-Status")
+	fileStatus := fileStatusStr == "true"
 
 	// save response to file
 	err = rs.writeResponseToFile(reqContext, resp, filePath)
@@ -148,13 +153,12 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 		downloadFileName = params["filename"]
 	}
 
-	return &Result{FilePath: filePath, FileName: downloadFileName}, nil
+	return &Result{FilePath: filePath, FileName: downloadFileName, GenerationReport: fileStatus}, nil
 }
 
-func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string) (*http.Response, error) {
+func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string, method string, body io.Reader) (*http.Response, error) {
 	logger := rs.log.FromContext(ctx)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +252,7 @@ func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 	}
 
 	headers := make(map[string][]string)
-	resp, err := rs.doRequest(context.Background(), rendererURL, headers)
+	resp, err := rs.doRequest(context.Background(), rendererURL, headers, "GET", nil)
 	if err != nil {
 		return "", err
 	}

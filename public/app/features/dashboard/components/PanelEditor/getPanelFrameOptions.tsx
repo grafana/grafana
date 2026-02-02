@@ -1,6 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
@@ -14,7 +15,9 @@ import { OptionPaneRenderProps } from './types';
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { dashboard, panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
-    title: 'Panel options',
+    // BMC Change: To enable localization for below text
+    title: t('dashboard-settings.general.panel-options-label', 'Panel options'),
+    // BMC Change ends
     id: 'Panel options',
     isOpenDefault: true,
   });
@@ -38,7 +41,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Title',
+        // BMC Change: To enable localization for below text
+        title: t('bmcgrafana.dashboards.save-dashboard.title-text', 'Title'),
+        // BMC Change ends
         value: panel.title,
         popularRank: 1,
         render: function renderTitle() {
@@ -62,7 +67,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Description',
+        // BMC Change: To enable localization for below text
+        title: t('bmcgrafana.dashboards.save-dashboard.description-text', 'Description'),
+        // BMC Change ends
         description: panel.description,
         value: panel.description,
         render: function renderDescription() {
@@ -82,7 +89,12 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Transparent background',
+        // BMC Change: To enable localization for below text
+        title: t(
+          'bmcgrafana.dashboards.edit-panel.panel-options.transparent-background-text',
+          'Transparent background'
+        ),
+        // BMC Change ends
         render: function renderTransparent() {
           return (
             <Switch
@@ -97,13 +109,17 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addCategory(
       new OptionsPaneCategoryDescriptor({
-        title: 'Panel links',
+        // BMC Change: To enable localization for below text
+        title: t('bmcgrafana.dashboards.edit-panel.panel-options.panel-links', 'Panel links'),
+        // BMC Change ends
         id: 'Panel links',
         isOpenDefault: false,
         itemsCount: panel.links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Panel links',
+          // BMC Change: To enable localization for below text
+          title: t('bmcgrafana.dashboards.edit-panel.panel-options.panel-links', 'Panel links'),
+          // BMC Change ends
           render: function renderLinks() {
             return (
               <DataLinksInlineEditor
@@ -119,15 +135,21 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addCategory(
       new OptionsPaneCategoryDescriptor({
-        title: 'Repeat options',
+        // BMC Change: To enable localization for below text
+        title: t('bmcgrafana.dashboards.edit-panel.panel-options.repeat-options-title', 'Repeat options'),
+        // BMC Change ends
         id: 'Repeat options',
         isOpenDefault: false,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Repeat by variable',
-            description:
-              'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
+            // BMC Change: To enable localization for below text
+            title: t('bmcgrafana.dashboards.edit-panel.panel-options.repeat-by-variabe', 'Repeat by variable'),
+            description: t(
+              'bmcgrafana.dashboards.edit-panel.panel-options.repeat-by-variable-description',
+              'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
+            ),
+            // BMC Change ends
             render: function renderRepeatOptions() {
               return (
                 <RepeatRowSelect

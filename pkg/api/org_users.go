@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -36,7 +37,8 @@ import (
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while adding new user to the current organization", err)
 	}
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	return hs.addOrgUserHelper(c, cmd)
@@ -59,7 +61,8 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *contextmodel.ReqContext) respons
 func (hs *HTTPServer) AddOrgUser(c *contextmodel.ReqContext) response.Response {
 	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code changes
+		return response.Error(http.StatusBadRequest, "bad request data while adding a new user to current organization", err)
 	}
 
 	var err error
@@ -91,6 +94,8 @@ func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOr
 			return response.JSON(http.StatusConflict, util.DynMap{
 				"message": "User is already member of this organization",
 				"userId":  cmd.UserID,
+				// BMC code change
+				"bhdCode": bhdcodes.OrgUserAlreadyMember,
 			})
 		}
 		return response.Error(http.StatusInternalServerError, "Could not add user to organization", err)
@@ -99,6 +104,8 @@ func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOr
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User added to organization",
 		"userId":  cmd.UserID,
+		// BMC code change
+		"bhdCode": bhdcodes.OrgUserAdded,
 	})
 }
 
@@ -366,7 +373,8 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating given user", err)
 	}
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	var err error
@@ -394,7 +402,8 @@ func (hs *HTTPServer) UpdateOrgUser(c *contextmodel.ReqContext) response.Respons
 	cmd := org.UpdateOrgUserCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating users in organization", err)
 	}
 	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {

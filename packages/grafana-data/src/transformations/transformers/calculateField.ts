@@ -217,7 +217,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 });
 
                 if (options.replaceFields && !didAddNewFields) {
-                  return undefined;
+                  // BMC change: Next line to not omit frame
+                  return frame;
                 }
 
                 return { ...frame, fields: newFields };
@@ -260,10 +261,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           // delegate field creation to the specific function
           const values = creator!(frame);
           if (!values) {
+            // BMC change: Comment out below block to not omit frame
             // if nothing was done to frame, omit it when replacing fields
-            if (options.replaceFields) {
-              return undefined;
-            }
+            // if (options.replaceFields) {
+            //   return undefined;
+            // }
             return frame;
           }
 

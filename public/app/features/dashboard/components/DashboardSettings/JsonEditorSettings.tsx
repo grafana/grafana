@@ -20,7 +20,7 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
     await getDashboardSrv().saveJSONDashboard(dashboardJson);
     dashboardWatcher.reloadPage();
   };
-
+ 
   const styles = useStyles2(getStyles);
 
   return (

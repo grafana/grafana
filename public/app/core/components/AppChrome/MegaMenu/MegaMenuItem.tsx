@@ -114,7 +114,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
         <div className={styles.collapseButtonWrapper}>
           {showExpandButton && (
             <IconButton
-              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+              // BMC Accessibility Change: Updated aria-label to show only section name and  aria-expanded.
+              aria-label={`${link.text} section`}
+              aria-expanded={sectionExpanded ? 'true' : 'false'}
+              // BMC Accessibility Change End
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={getIconName(Boolean(sectionExpanded))}

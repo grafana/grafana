@@ -34,6 +34,11 @@ type SQLFilter struct {
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
 // Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
 func Filter(user identity.Requester, sqlID, prefix string, actions ...string) (SQLFilter, error) {
+	// BMC Code change - Added to disable accesscontrol filter for teams in case user is org0
+	if user.GetIsUnrestrictedUser() {
+		return allowAllQuery, nil
+	}
+	// BMC Code change - End
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}

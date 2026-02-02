@@ -28,6 +28,14 @@ export const InspectStatsTable = ({ timeZone, name, stats }: InspectStatsTablePr
     <div className={styles.wrapper}>
       <div className={styles.heading}>{name}</div>
       <table className="filter-table width-30">
+        {/* BMC change : To add headers to the table */}
+        <thead>
+          <tr>
+            <th>Statistics</th>
+            <th style={{ textAlign: 'right' }}>Value</th>
+          </tr>
+        </thead>
+        {/* BMC change ends here */}
         <tbody>
           {stats.map((stat, index) => {
             return (

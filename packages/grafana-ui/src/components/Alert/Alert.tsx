@@ -72,7 +72,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         >
           <Box paddingTop={1} paddingRight={2}>
             <div className={styles.icon}>
-              <Icon size="xl" name={getIconFromSeverity(severity)} />
+              {/* //BMC Change next Line : Added arai-label */}
+              <Icon size="xl" name={getIconFromSeverity(severity)} aria-label={getIconFromSeverity(severity)} />
             </div>
           </Box>
 

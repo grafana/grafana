@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"regexp"
 	"strings"
 	"time"
@@ -155,6 +156,61 @@ func ToCamelCase(str string) string {
 	return strings.Join(finalParts, "")
 }
 
+// BMC code
+func JoinItoa64(values []int64) string {
+	if values == nil {
+		return ""
+	}
+	sa := make([]string, 0, len(values))
+	for _, a := range values {
+		i := strconv.FormatInt(a, 10)
+		sa = append(sa, i)
+	}
+	return strings.Join(sa, ",")
+}
+
+func SliceAtoi(value string) []int {
+	if value == "" {
+		return []int{}
+	}
+	sa := strings.Split(value, ",")
+	si := make([]int, 0, len(sa))
+	for _, a := range sa {
+		if i, err := strconv.Atoi(a); err == nil {
+			si = append(si, i)
+		}
+	}
+	return si
+}
+
+func JoinItoa(values []int) string {
+	if values == nil {
+		return ""
+	}
+	sa := make([]string, 0, len(values))
+	for _, a := range values {
+		i := strconv.Itoa(a)
+		sa = append(sa, i)
+	}
+	return strings.Join(sa, ",")
+}
+
+func SplitStr(value string) []string {
+	return strings.Split(value, ";")
+}
+func JoinStr(value []string) string {
+	return strings.Join(value, ";")
+}
+
+func GetTime(datetime *time.Time) string {
+	if datetime == nil {
+		return ""
+	}
+	hour := string(datetime.Hour())
+	min := string(datetime.Minute())
+	return hour + ":" + min
+}
+// End
 func Capitalize(s string) string {
 	if len(s) == 0 {
 		return s
@@ -177,3 +233,14 @@ func ByteCountSI(b int64) string {
 	return fmt.Sprintf("%.1f %cB",
 		float64(b)/float64(div), "kMGTPE"[exp])
 }
+
+// BMC code
+func IsIn(s string, arr []string) bool {
+	for _, v := range arr {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+// End

@@ -30,7 +30,7 @@ export interface PanelPluginMeta extends PluginMeta {
 }
 
 export interface PanelData {
-  /** State of the data (loading, done, error, streaming) */
+  /** State of the data (loading, done, error, streaming, refresh to load (BMC-code)) */
   state: LoadingState;
 
   /** Contains data frames with field overrides applied */
@@ -69,6 +69,10 @@ export interface PanelData {
 
   /** traceIds collected during the processing of the requests */
   traceIds?: string[];
+
+  // // BMC code starts
+  // needsRefresh?: boolean;
+  // // BMC code ends
 }
 
 export interface PanelProps<T = any> {

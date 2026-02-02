@@ -15,8 +15,8 @@ export interface Props {
 
 export const GrotCTA = ({ width = 'auto', height }: Props) => {
   const styles = useStyles2(getStyles);
-
-  return <SVG src={grotCTASvg} className={styles.svg} height={height} width={width} />;
+  // BMC Change: Next line inline
+  return <SVG src={grotCTASvg} className={styles.svg} height={0} width={0} />;
 };
 
 GrotCTA.displayName = 'GrotCTA';

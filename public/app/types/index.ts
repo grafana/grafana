@@ -18,6 +18,11 @@ export * from './appEvent';
 export * from './query';
 export * from './accessControl';
 export * from './supportBundles';
+// BMC code - RBAC
+export * from './rbac-roles';
+export * from './rbac-teams';
+export * from './rbac-users';
+// End
 export * from './settings';
 
 import * as CoreEvents from './events';

@@ -38,6 +38,12 @@ const (
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
 	CustomHeaderValue = "httpHeaderValue"
+	// BMC code
+	DS_BMC_HELIX = "bmchelix-ade-datasource"
+	DS_BMC_JSON  = "json-datasource"
+	DS_BMC_CSV   = "bmc-csv-datasource"
+	BMC_HELIX_DS = "BMC Helix"
+	// End
 )
 
 type DsAccess string
@@ -247,6 +253,10 @@ type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
 	User            *user.SignedInUser
+	//BMC Code
+	MSPTenant bool
+	Names     []string
+	Type      string
 }
 
 type GetAllDataSourcesQuery struct{}

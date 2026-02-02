@@ -3,7 +3,7 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import { ReactElement } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
+import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES, DashFolderLinkRegexp } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
@@ -37,6 +37,9 @@ export async function initializeI18n(language: string): Promise<{ language: stri
   } else {
     options.lng = VALID_LANGUAGES.includes(language) ? language : undefined;
   }
+
+  // BMC Change: Next line
+  localStorage.removeItem('globalLocales');
 
   const loadPromise = i18nInstance
     .use(loadTranslations)
@@ -111,3 +114,5 @@ export function getI18next() {
 
   return i18nInstance || i18n;
 }
+
+export { DashFolderLinkRegexp };

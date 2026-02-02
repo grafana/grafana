@@ -270,7 +270,10 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
-	ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
+	// BMC code
+	// Start - this cleanup causes our OOB dashboards to be disappeared.	
+	// ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
+	// End
 
 	err = ps.dashboardProvisioner.Provision(ctx)
 	if err != nil {

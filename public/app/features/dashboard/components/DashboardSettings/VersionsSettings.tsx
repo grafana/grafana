@@ -4,6 +4,7 @@ import * as React from 'react';
 import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 import {
   historySrv,
   RevisionsModel,
@@ -168,7 +169,10 @@ export class VersionsSettings extends PureComponent<Props, State> {
             isNewLatest={isNewLatest}
           />
           {isLoading ? (
-            <VersionsHistorySpinner msg="Fetching changes&hellip;" />
+            <VersionsHistorySpinner
+              // BMC Change: Next line
+              msg={t('bmcgrafana.dashboards.settings.versions.loading-msgs.changes', 'Fetching changes&hellip;')}
+            />
           ) : (
             <VersionHistoryComparison
               newInfo={newInfo!}
@@ -184,11 +188,25 @@ export class VersionsSettings extends PureComponent<Props, State> {
     return (
       <Page navModel={this.props.sectionNav} pageNav={pageNav}>
         {isLoading ? (
-          <VersionsHistorySpinner msg="Fetching history list&hellip;" />
+          <VersionsHistorySpinner
+            // BMC Change: Next line
+            msg={t(
+              'bmcgrafana.dashboards.settings.versions.loading-msgs.history-list',
+              'Fetching history list&hellip;'
+            )}
+          />
         ) : (
           <VersionHistoryTable versions={versions} onCheck={this.onCheck} canCompare={canCompare} />
         )}
-        {this.state.isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
+        {this.state.isAppending && (
+          <VersionsHistorySpinner
+            // BMC Change: Next line
+            msg={t(
+              'bmcgrafana.dashboards.settings.versions.loading-msgs.more-entries',
+              'Fetching more entries&hellip;'
+            )}
+          />
+        )}
         {showButtons && (
           <VersionsHistoryButtons
             hasMore={hasMore}

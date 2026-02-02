@@ -2,18 +2,25 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/api/bmc/external"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
@@ -31,9 +38,23 @@ import (
 )
 
 var (
-	logger = glog.New("data-proxy-log")
-	client = newHTTPClient()
+	logger        = glog.New("data-proxy-log")
+	client        = newHTTPClient()
+	imsServiceURL = os.Getenv("IMS_SERVICE_URL") // BMC code
 )
+
+// BMC code starts
+
+const (
+	BhdDashboardUIDHeader     = "x-bhd-dashboard-uid"
+	BhdVariableNameHeader     = "x-bhd-variable-name"
+	BhdVariableChangedFlag    = "x-bhd-variable-changed"
+	BhdEnableCachingHeader    = "x-bhd-enable-caching"
+	BhdCacheSourceHeader      = "x-bhd-response-source"
+	BhdParentValuesHashHeader = "x-bhd-parent-values-hash"
+)
+
+// BMC code ends
 
 type DataSourceProxy struct {
 	ds                 *datasources.DataSource
@@ -50,6 +71,48 @@ type DataSourceProxy struct {
 	features           featuremgmt.FeatureToggles
 }
 
+// BMC Code : Start
+type JsonWebToken struct {
+	JsonWebToken string `json:"json_web_token"`
+}
+
+type Filter struct {
+	Field     string   `json:"field"`
+	Values    []string `json:"values"`
+	FieldType string   `json:"fieldType"`
+}
+
+type Filters struct {
+	Filters []Filter `json:"filters"`
+}
+
+type Record struct {
+	OrgID       string `json:"org_id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	LeafNode    bool   `json:"leaf_node"`
+	OrgNamePath string `json:"org_name_path"`
+	Source      string `json:"source"`
+	Type        string `json:"type"`
+	DefaultOrg  bool   `json:"default_org"`
+	Status      string `json:"status"`
+	SubTenantID string `json:"sub_tenant_id,omitempty"`
+}
+
+type Metadata struct {
+	Page           int `json:"page"`
+	RecordsPerPage int `json:"records_per_page"`
+	PageCount      int `json:"page_count"`
+	TotalCount     int `json:"total_count"`
+}
+
+type Response struct {
+	Records  []Record `json:"records"`
+	Metadata Metadata `json:"_metadata"`
+}
+
+//BMC Code : End
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -58,8 +121,7 @@ type httpClient interface {
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
-) (*DataSourceProxy, error) {
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
@@ -87,6 +149,25 @@ func newHTTPClient() httpClient {
 	}
 }
 
+func isPlatformQuery(proxy *DataSourceProxy) bool {
+	return strings.Contains(proxy.proxyPath, "api/arsys") || strings.Contains(proxy.proxyPath, "rx/application/chat/helixgpt") || strings.Contains(proxy.proxyPath, "api/rx/application/datapage")
+}
+
+func isPlatformComaroundQuery(proxy *DataSourceProxy) bool {
+	return strings.Contains(proxy.proxyPath, "comaround/api")
+}
+
+type countingWriter struct {
+	w     http.ResponseWriter
+	count int64
+}
+
+func (cw *countingWriter) Write(p []byte) (int, error) {
+	n, err := cw.w.Write(p)
+	cw.count += int64(n)
+	return n, err
+}
+
 func (proxy *DataSourceProxy) HandleRequest() {
 	if err := proxy.validateRequest(); err != nil {
 		proxy.ctx.JsonApiErr(403, err.Error(), nil)
@@ -101,6 +182,34 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
 	)
+
+	// BMC Code : Start
+	// Redis Caching Logic
+	enableCachingFeatureFlag := external.BHD_ENABLE_VAR_CACHING.Enabled(proxy.ctx.Req, proxy.ctx.SignedInUser)
+	queryCacheKey := ""
+	if enableCachingFeatureFlag {
+		dashboardUID := proxy.ctx.Req.Header.Get(BhdDashboardUIDHeader)
+		variableName := proxy.ctx.Req.Header.Get(BhdVariableNameHeader)
+		enableCachingValueFromReq := strings.ToLower(proxy.ctx.Req.Header.Get(BhdEnableCachingHeader)) == "true"
+		parentValuesHash := proxy.ctx.Req.Header.Get(BhdParentValuesHashHeader)  // Hash of parent variable values for cascading variables
+		if remoteVariableCacheSettings.Enabled && enableCachingValueFromReq && dashboardUID != "" && variableName != "" {
+			// there is more logic that depends on cache query key not being null. Be careful when changing order of if conditions.
+			// We assume enableCaching header = true, dashboardUID, variablename != null if it is queryCacheKey != ""
+			queryCacheKey = GenerateQueryKey(proxy.ctx.OrgID, dashboardUID, variableName, proxy.ctx.UserID, parentValuesHash)
+
+			if queryCacheKey != "" {
+				ctx := context.Background()
+				if cachedVal, found := GetFromCache(ctx, queryCacheKey); found {
+					proxy.ctx.Resp.Header().Set("Content-Type", "application/json")
+					proxy.ctx.Resp.Header().Set(BhdCacheSourceHeader, "redis")
+					proxy.ctx.Resp.WriteHeader(http.StatusOK)
+					proxy.ctx.Resp.Write([]byte(cachedVal))
+					return
+				}
+			}
+		}
+	}
+	// BMC Code : End
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
 	if err != nil {
@@ -129,6 +238,63 @@ func (proxy *DataSourceProxy) HandleRequest() {
 				Header:        http.Header{},
 				Request:       resp.Request,
 			}
+		} else {
+			// BMC code starts
+			// BMC Variable caching code starts
+			// Code to set the response back to redis cache
+			// No need to check other conditions like dashboardUID, enableCaching Header since it is queryCacheKey by cacheQueryKey != ""
+			if remoteVariableCacheSettings.Enabled && enableCachingFeatureFlag && queryCacheKey != "" {
+				proxy.ctx.Resp.Header().Set(BhdCacheSourceHeader, "datasource")
+				if resp.StatusCode == http.StatusOK {
+					respBody, err := io.ReadAll(resp.Body)
+					if err == nil {
+						SetToCache(context.Background(), queryCacheKey, respBody, proxy.cfg.RemoteVariableCacheSettings.TTL)
+					} else {
+						redisVarCacheLogger.Error("could not read response body", "err", err, "org", proxy.ctx.OrgID, "user", proxy.ctx.UserID, "queryCacheKey", queryCacheKey)
+					}
+					// Reset the response body so it can be read again by downstream handlers
+					_ = resp.Body.Close()
+					resp.Body = io.NopCloser(bytes.NewReader(respBody))
+				} else {
+					redisVarCacheLogger.Error("not caching response even since status code not ok", "statuscode", resp.StatusCode, "org", proxy.ctx.OrgID, "user", proxy.ctx.UserID, "queryCacheKey", queryCacheKey)
+				}
+			}
+			// Variable caching code ends
+			// BMC usage data metrics			
+			if setting.EnableDsMetering {
+				dashboardUID := proxy.ctx.Req.Header.Get("X-Dashboard-Uid")
+				if dashboardUID == "" {
+					dashboardUID = "0"
+				}
+				metric := metrics.MDataSourceProxyResDataSize.WithLabelValues(
+					strconv.FormatInt(proxy.ctx.OrgID, 10),
+					strconv.FormatInt(proxy.ds.ID, 10),
+					strconv.FormatInt(proxy.ctx.UserID, 10),
+					dashboardUID,
+				)
+				if resp.ContentLength == -1 {
+					cw := &countingWriter{w: proxy.ctx.Resp}
+
+					// Copy headers
+					for k, v := range resp.Header {
+						for _, vv := range v {
+							proxy.ctx.Resp.Header().Add(k, vv)
+						}
+					}
+
+					proxy.ctx.Resp.WriteHeader(resp.StatusCode)
+
+					// Stream the body + count bytes
+					_, _ = io.Copy(cw, resp.Body)
+					resp.Body.Close()
+
+					metric.Add(float64(cw.count))
+
+				} else {
+					metric.Add(float64(resp.ContentLength))
+				}
+			}
+			// BMC code ends
 		}
 		return nil
 	}
@@ -152,7 +318,6 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		attribute.String("user", proxy.ctx.SignedInUser.Login),
 		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
 	)
-
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
@@ -173,10 +338,56 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.URL.Scheme = proxy.targetUrl.Scheme
 	req.URL.Host = proxy.targetUrl.Host
 	req.Host = proxy.targetUrl.Host
-
-	reqQueryVals := req.URL.Query()
-
 	ctxLogger := logger.FromContext(req.Context())
+	// BMC code
+	// change for multiple url configuration in source plugin
+	// Obtain JWT Token value in local variable - Fix for DRJ71_4295
+	HelixJwtToken := req.Header.Get("X-Jwt-Token")
+	_, err := proxy.searchTenantByName(proxy.ds.Name, proxy.ctx.OrgID)
+	if (isPlatformQuery(proxy)) && proxy.ds.JsonData != nil {
+		s, err := proxy.ds.JsonData.Map()
+		if s != nil && len(s) > 0 && err == nil {
+			pUrl := s["platformURL"].(string)
+			if pUrl != "" {
+				parsedUrl, _ := url.Parse(pUrl)
+				req.URL.Scheme = parsedUrl.Scheme
+				req.URL.Host = parsedUrl.Host
+				req.Host = parsedUrl.Host
+				proxy.targetUrl = parsedUrl
+			}
+		} else {
+			logger.Error("Datasource url for converged platfrom is not configured correctly.")
+			return
+		}
+	} else if proxy.isITOMApi(proxy.proxyPath) && proxy.ctx.SubTenantId != "" {
+		ctxLogger.Debug("ITOM MSP subtenant", "SubTenantId", proxy.ctx.SubTenantId)
+		//If msearch call and if itom msp?
+		token, err := external.ExchangeIMSToken(proxy.ctx.SubTenantId, HelixJwtToken)
+		if err != nil {
+			ctxLogger.Error("Error while exchanging token for ITOM MSP subtenant", "error", err)
+			return
+		}
+		HelixJwtToken = token
+		ctxLogger.Debug("Token exchange done for ITOM MSP subtenant", "SubTenantId", proxy.ctx.SubTenantId)
+
+	} else if proxy.isITOMApi(proxy.proxyPath) && proxy.ctx.MspOrgs != nil && proxy.ds.Name != "BMC Helix" && proxy.ds.Type == "bmchelix-ade-datasource" {
+		subTenantId, err := proxy.searchTenantByName(proxy.ds.Name, proxy.ctx.OrgID)
+		if err != nil {
+			ctxLogger.Error("Error while fetching subtenant info using datasource name", "proxy.ds.Name", proxy.ds.Name, "error", err)
+		}
+		if subTenantId != "" {
+			ctxLogger.Debug("Found subtenant id for datasource", "proxy.ds.Name", proxy.ds.Name, "subTenantId", subTenantId)
+			token, err := external.ExchangeIMSToken(subTenantId, HelixJwtToken)
+			if err != nil {
+				ctxLogger.Error("Error while exchanging token for ITOM MSP subtenant", "error", err)
+				return
+			}
+			HelixJwtToken = token
+			ctxLogger.Debug("Token exchange done for ITOM MSP subtenant", "SubTenantId", subTenantId)
+		}
+	}
+	// End
+	reqQueryVals := req.URL.Query()
 
 	switch proxy.ds.Type {
 	case datasources.DS_INFLUXDB_08:
@@ -225,10 +436,86 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
 			password))
 	}
+	//BMC Code (ateli) - start
+	//Fix for DRJ71_4295 - Removing X-Jwt-Token from headers if request comes for third party domain
 
+	parts := strings.Split(proxy.targetUrl.Host, ".")
+	domain := parts[len(parts)-2] + "." + parts[len(parts)-1]
+	if domain != "bmc.com" || domain != "onbmc.com" {
+		req.Header.Set("X-Jwt-Token", "")
+	}
+	if proxy.proxyPath == "api/usagedata" && proxy.ds.Type == datasources.DS_BMC_JSON {
+		// vishaln - DRJ71-13468 - Auth check for individual params
+		authenticated := false
+
+		APIValuesAndRequiredPermissions := map[string]identity.RoleType{
+			// Viewer role needed for these
+			"plugininfo": identity.RoleViewer,
+
+			// Admin role needed for these
+			"usercount":                  identity.RoleAdmin,
+			"dashboard":                  identity.RoleAdmin,
+			"orgdashboardsstats":         identity.RoleAdmin,
+			"individualdashboardstats":   identity.RoleAdmin,
+			"schedule":                   identity.RoleAdmin,
+			"dashboardhitcount":          identity.RoleAdmin,
+			"dashboardloadtime":          identity.RoleAdmin,
+			"dashboarduserhitcount":      identity.RoleAdmin,
+			"activedashboardscount":      identity.RoleAdmin,
+			"schedulerstaging":           identity.RoleAdmin,
+			"nextschedules":              identity.RoleAdmin,
+			"rolesandpermissions":        identity.RoleAdmin,
+			"datavolume":                 identity.RoleAdmin,
+			"valuerealization":           identity.RoleViewer,
+			"ifdashboardcount":           identity.RoleViewer,
+		}
+
+		predefinedQuery := req.URL.Query()["predefinedQuery"]
+
+		if len(predefinedQuery) > 0 {
+			reqdRole, ok := APIValuesAndRequiredPermissions[predefinedQuery[0]]
+			if ok && proxy.ctx.HasRole(reqdRole) {
+				authenticated = true
+			}
+		}
+
+		if !authenticated {
+			ctxLogger.Error(fmt.Sprintf("not authorized to call %v", predefinedQuery), req.URL.RawPath, "error")
+			return
+		}
+
+		// DRJ71-13174 - ymulthan, vishaln
+		username := proxy.cfg.AdminUser
+		password := proxy.cfg.AdminPassword
+
+		if username != "" && password != "" {
+
+			// Combine username and password in the format "username:password"
+			auth := username + ":" + password
+
+			// Encode the auth string to base64
+			encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+			req.URL.Scheme = "http"
+			req.URL.Host = "127.0.0.1" + ":" + proxy.cfg.HTTPPort
+			req.Header.Set("X-DS-Authorization", "")
+			req.Header.Set("Authorization", "Basic "+encodedAuth)
+			req.Header.Set("X-Jwt-Token", "")
+		}
+	}
+	//BMC Code (ateli) - end
 	dsAuth := req.Header.Get("X-DS-Authorization")
 	if len(dsAuth) > 0 {
 		req.Header.Del("X-DS-Authorization")
+		// BMC code
+		// Send the rsso auth proxy token to external API - starts
+		if HelixJwtToken != "" {
+			if isPlatformQuery(proxy) || isPlatformComaroundQuery(proxy) {
+				dsAuth = "IMS-JWT " + HelixJwtToken
+			} else {
+				dsAuth = "Bearer " + HelixJwtToken
+			}
+		}
+		// End
 		req.Header.Set("Authorization", dsAuth)
 	}
 
@@ -400,3 +687,74 @@ func (proxy *DataSourceProxy) checkWhiteList() bool {
 
 	return true
 }
+
+// BMC Code : Start
+func (proxy *DataSourceProxy) isITOMApi(proxyPath string) bool {
+	itomUrl := []string{}
+	itomUrl = append(itomUrl, "api/v1/catalogproxy")
+	itomUrl = append(itomUrl, "api/v1/datamartservice")
+	itomUrl = append(itomUrl, "audit-api/api")
+	itomUrl = append(itomUrl, "cloudsecurity/api")
+	itomUrl = append(itomUrl, "events-service/api")
+	itomUrl = append(itomUrl, "logs-service/api")
+	itomUrl = append(itomUrl, "metrics-query-service/api")
+	itomUrl = append(itomUrl, "managed-object-service/api")
+	itomUrl = append(itomUrl, "smart-graph-api/api")
+	for _, url := range itomUrl {
+		if strings.Contains(proxyPath, url) {
+			return true
+		}
+	}
+	return false
+}
+
+func (proxy *DataSourceProxy) searchTenantByName(dsName string, tenantId int64) (string, error) {
+	serviceAccountToken, err := external.GetServiceAccountToken(tenantId)
+	if err != nil {
+		return "", errors.New("Failed to get service account token")
+	}
+
+	if serviceAccountToken == "" {
+		return "", errors.New("JWT token is not set")
+	}
+	if dsName == "" {
+		return "", errors.New("Tenant Name is missing")
+	}
+	url := imsServiceURL + "/ims/api/v1/organizations/search"
+	method := "POST"
+
+	filters := Filters{Filters: []Filter{{Field: "name", Values: []string{dsName}, FieldType: "string"}}}
+	payload, err := json.Marshal(filters)
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+serviceAccountToken)
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		logger.Info("org search api call failed", "dsName", dsName, "res.StatusCode", res.StatusCode)
+		return "", fmt.Errorf("unauthorized")
+	}
+
+	response := Response{}
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return "", err
+	}
+	for _, record := range response.Records {
+		if record.Name == dsName && record.SubTenantID != "" {
+			return record.SubTenantID, nil
+		}
+	}
+	return "", nil
+}
+
+//BMC Code : End

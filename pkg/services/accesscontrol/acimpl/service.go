@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
+	bhdperm "github.com/grafana/grafana/pkg/api/bmc/bhd_rbac/bhd_permissions"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -163,6 +164,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		TeamIDs:      user.GetTeams(),
 		RolePrefixes: OSSRolesPrefixes,
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +172,46 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	}
 
+	// BMC code start - RBAC changes
+	// doing this after append so if there are any duplicates, the rbac permissions will take precedence
+	bhdPermissions := s.loadBHDPermissions(ctx, user)
+	permissions = append(permissions, bhdPermissions...)
+
+	// for action, enabled := range user.Rbac {
+	// 	if !enabled {
+	// 		// Search and remove from permissions list the disabled ones
+	// 		for i, p := range dbPermissions {
+	// 			if p.Action == action {
+	// 				dbPermissions = append(dbPermissions[:i], dbPermissions[i+1:]...)
+	// 				break
+	// 			}
+	// 		}
+	// 		continue
+	// 	}
+
+	// 	perm := accesscontrol.Permission{
+	// 		Action:  action,
+	// 		Scope:   fmt.Sprintf("%s:*", action),
+	// 		Created: time.Now(),
+	// 		Updated: time.Now(),
+	// 	}
+	// 	permissions = append(permissions, perm)
+
+	// 	//User with "dashboards:create" permission should be able to build a dashboard in the general folder, so this permission is added again with the scope "folders:uid:general".
+	// 	if action == "dashboards:create" {
+	// 		perm := accesscontrol.Permission{
+	// 			Action:  action,
+	// 			Scope:   "folders:uid:general",
+	// 			Created: time.Now(),
+	// 			Updated: time.Now(),
+	// 		}
+	// 		permissions = append(permissions, perm)
+	// 	}
+
+	// }
+
 	return append(permissions, dbPermissions...), nil
+	// BMC code end
 }
 
 func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgID int64) ([]accesscontrol.Permission, error) {
@@ -243,6 +284,11 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
+
+	// BMC Code: Starts Custom RBAC
+	bhdPermissions := s.loadBHDPermissions(ctx, user)
+	permissions = append(permissions, bhdPermissions...)
+	// BMC Code: Ends
 
 	return permissions, nil
 }
@@ -395,6 +441,108 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	}
 
 	return permissions, nil
+}
+
+// BMC Code: Next function
+func (s *Service) loadBHDPermissions(ctx context.Context, user identity.Requester) []accesscontrol.Permission {
+	list := []string{}
+	permissions := []accesscontrol.Permission{}
+	bhdPermissions, err := s.store.GetBHDPermissionsByRoles(ctx, user.GetBHDRoles())
+	if err != nil {
+		s.log.Error("Failed to load bhd permissions")
+		return permissions
+	}
+	for _, bhdPermission := range bhdPermissions {
+		relatedBHDPermissions := bhdperm.GetRelatedPermissions(bhdPermission.Action)
+		for _, relatedBHDPermission := range relatedBHDPermissions {
+			if !contains(list, relatedBHDPermission) {
+				list = append(list, relatedBHDPermission)
+				permissions = append(permissions, accesscontrol.Permission{
+					Action: relatedBHDPermission,
+					Scope:  fmt.Sprintf("%s:*", relatedBHDPermission),
+				})
+
+				//User with "dashboards:create" permission should be able to build a dashboard in the general folder, so this permission is added again with the scope "folders:uid:general".
+				if relatedBHDPermission == "dashboards:create" || relatedBHDPermission == "folders:create" {
+					perm := accesscontrol.Permission{
+						Action: relatedBHDPermission,
+						Scope:  "folders:uid:general",
+					}
+					permissions = append(permissions, perm)
+				}
+			}
+		}
+	}
+	return permissions
+}
+
+func (s *Service) HasRequiredPermissions(ctx context.Context, orgID, userID int64, requiredRole string, requiredPermissions []string) (bool, error) {
+	var validUser bool = false
+	user := &user.SignedInUser{
+		UserID: userID,
+		OrgID:  orgID,
+	}
+	err := s.store.ValidateUserId(ctx, orgID, userID)
+	if err != nil {
+		return validUser, fmt.Errorf("Invalid User Id", err)
+	}
+
+	var roles = make([]int64, 0)
+	roles, err = s.store.GetBHDRoleIdByUserId(ctx, orgID, userID)
+	if err != nil {
+		return false, err
+	} else {
+		user.BHDRoles = roles
+		if containsInt(roles, 1) {
+			user.OrgRole = identity.RoleAdmin
+		} else if containsInt(roles, 2) {
+			user.OrgRole = identity.RoleEditor
+		} else {
+			user.OrgRole = identity.RoleViewer
+		}
+	}
+
+	if requiredPermissions != nil && len(requiredPermissions) > 0 {
+		permissions := make([]accesscontrol.Permission, 0)
+		permissions, err = s.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: false})
+		for _, permission := range requiredPermissions {
+			for _, userPermission := range permissions {
+				if userPermission.Action == permission {
+					validUser = true
+					break
+				}
+			}
+		}
+	}
+	if !validUser {
+		if requiredRole == "Viewer" {
+			validUser = true
+		} else if requiredRole == "Editor" {
+			validUser = (user.OrgRole == identity.RoleEditor) || (user.OrgRole == identity.RoleAdmin)
+		} else if requiredRole == "Admin" {
+			validUser = (user.OrgRole == identity.RoleAdmin)
+		}
+	}
+	return validUser, nil
+}
+
+func containsInt(s []int64, item int64) bool {
+	for _, v := range s {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+// BMC Code: Next function
+func contains(slice []string, element string) bool {
+	for _, item := range slice {
+		if item == element {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {

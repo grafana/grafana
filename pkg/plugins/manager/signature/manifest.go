@@ -109,6 +109,36 @@ func (s *Signature) readPluginManifest(ctx context.Context, body []byte) (*Plugi
 
 var ErrSignatureTypeUnsigned = errors.New("plugin is unsigned")
 
+// BMC code
+func isBMCPlugin(pluginID string) bool {
+	bmcPlugins := []string{
+		"bmchelix-ade-datasource",
+		"bmc-ade-bar",
+		"bmc-ade-cross-tab",
+		"agenty-flowcharting-panel",
+		"grafana-piechart-panel",
+		"bmc-ade-combination-chart",
+		"snuids-trafficlights-panel",
+		"bmc-record-details",
+		"bmc-csv-datasource",
+		"panel-connected-maps",
+		"bmc-panel-map-box",
+		"bmc-ade-risk-mitigation-panel",
+		"bmc-ade-forecast-plugin",
+		"json-datasource",
+		"reports",
+		"bmc-table-panel",
+		"bmc-insightfinder-app",
+	}
+	for _, id := range bmcPlugins {
+		if id == pluginID {
+			return true
+		}
+	}
+	return false
+}
+// End
+
 // ReadPluginManifestFromFS reads the plugin manifest from the provided plugins.FS.
 // If the manifest is not found, it will return an error wrapping ErrSignatureTypeUnsigned.
 func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS) (*PluginManifest, error) {
@@ -141,6 +171,15 @@ func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS
 }
 
 func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	// BMC code
+	// workaround to mark BMC plugins as 'Signed'.
+	if isBMCPlugin(plugin.JSONData.ID) {
+		return plugins.Signature{
+			Status: plugins.SignatureStatusValid,
+		}, nil
+	}
+	// End
+
 	if defaultSignature, exists := src.DefaultSignature(ctx, plugin.JSONData.ID); exists {
 		return defaultSignature, nil
 	}

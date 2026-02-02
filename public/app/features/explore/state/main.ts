@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
+import { EventBusSrv, locationUtil, SplitOpenOptions, TimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -151,7 +151,16 @@ export const navigateToExplore = (
       return;
     }
 
-    locationService.push(path!);
+    // BMC code - start
+    // getExploreUrl now returns with base url, handling for legacy code
+    if (path) {
+      const pathWithoutBase = locationUtil.stripBaseFromUrl(path);
+      if (pathWithoutBase) {
+        locationService.push(pathWithoutBase);
+      }
+    }
+    // locationService.push(path!);
+    // BMC code - end
   };
 };
 

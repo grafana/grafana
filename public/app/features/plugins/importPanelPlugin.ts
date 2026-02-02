@@ -4,6 +4,7 @@ import { PanelPlugin, PanelPluginMeta, PanelProps, PluginLoadingStrategy } from 
 import config from 'app/core/config';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
+import { checkMapBoxPluginFeatureStatus } from '../panel/state/util';
 
 import { importPluginModule } from './plugin_loader';
 
@@ -21,6 +22,12 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   if (!meta) {
     throw new Error(`Plugin ${id} not found`);
   }
+
+  //BMC Code - Start
+  if (!checkMapBoxPluginFeatureStatus(id)) {
+    throw new Error(`Plugin ${id} not available`);
+  }
+  //BMC Code -End
 
   promiseCache[id] = getPanelPlugin(meta);
   if (id !== meta.type) {

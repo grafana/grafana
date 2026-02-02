@@ -4,6 +4,7 @@ import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
 import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { t, Trans } from 'app/core/internationalization';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -198,19 +199,21 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     const realMd = data.request?.maxDataPoints;
     const value = options.maxDataPoints ?? '';
     const isAuto = value === '';
-
     return (
       <>
         <InlineLabel
           htmlFor="max-data-points-input"
           tooltip={
+            // BMC Change: To enable localization for below text
             <>
-              The maximum data points per series. Used directly by some data sources and used in calculation of auto
-              interval. With streaming data this value is used for the rolling buffer.
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.max-data-points-tooltip">
+                The maximum data points per series. Used directly by some data sources and used in calculation of auto
+                interval. With streaming data this value is used for the rolling buffer.
+              </Trans>
             </>
           }
         >
-          Max data points
+          <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.max-data-points">Max data points</Trans>
         </InlineLabel>
         <Input
           id="max-data-points-input"
@@ -223,7 +226,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         {isAuto && (
           <>
             <span className={cx(styles.noSquish, styles.operator)}>=</span>
-            <span className={cx(styles.noSquish, styles.left)}>Width of panel</span>
+            {/* BMC Change: To enable localization for below text */}
+            <span className={cx(styles.noSquish, styles.left)}>
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.width-of-panel">
+                Width of panel
+              </Trans>
+            </span>
           </>
         )}
       </>
@@ -232,21 +240,29 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
   const renderIntervalOption = () => {
     const realInterval = data.request?.interval;
-    const minIntervalOnDs = dataSource.interval ?? 'No limit';
+    // BMC Change: To enable localization for below text
+    const minIntervalOnDs =
+      dataSource.interval ??
+      t('bmcgrafana.dashboards.edit-panel.query.query-options.min-interval-placeholder', 'No limit');
+    // BMC Change ends
 
     return (
       <>
         <InlineLabel
           className={styles.firstColumn}
           tooltip={
+            // BMC Change: To enable localization for below text
             <>
-              A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if
-              your data is written every minute. Default value can be set in data source settings for most data sources.
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.min-interval-tooltip">
+                A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if
+                your data is written every minute. Default value can be set in data source settings for most data
+                sources.
+              </Trans>
             </>
           }
           htmlFor="min-interval-input"
         >
-          Min interval
+          <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.min-interval">Min interval</Trans>
         </InlineLabel>
         <Input
           id="min-interval-input"
@@ -259,18 +275,25 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           className={styles.firstColumn}
           tooltip={
+            // BMC Change: To enable localization for below text
             <>
-              The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
-              <code>$__interval_ms</code>. This value is not exactly equal to <code>Time range / max data points</code>,
-              it will approximate a series of magic number.
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.interval-tooltip">
+                The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
+                <code>$__interval_ms</code>. This value is not exactly equal to{' '}
+                <code>Time range / max data points</code>, it will approximate a series of magic number.
+              </Trans>
             </>
           }
         >
-          Interval
+          <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.interval">Interval</Trans>
         </InlineLabel>
         <span className={styles.noSquish}>{realInterval}</span>
         <span className={cx(styles.noSquish, styles.operator)}>=</span>
-        <span className={cx(styles.noSquish, styles.left)}>Time range / max data points</span>
+        <span className={cx(styles.noSquish, styles.left)}>
+          <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.time-range-max-points">
+            Time range / max data points
+          </Trans>
+        </span>
       </>
     );
   };
@@ -299,7 +322,9 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     <QueryOperationRow
       id="Query options"
       index={0}
-      title="Query options"
+      // BMC Change: To enable localization for below text
+      title={t('bmcgrafana.dashboards.edit-panel.query.query-options.query-options-title', 'Query options')}
+      // BMC Change ends
       headerElement={renderCollapsedText()}
       isOpen={isOpen}
       onOpen={onOpenOptions}
@@ -314,20 +339,25 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           htmlFor="relative-time-input"
           tooltip={
+            // BMC Change: To enable localization for below text
             <>
-              Overrides the relative time range for individual panels, which causes them to be different than what is
-              selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
-              the Last 5 minutes the Relative time should be <code>now-5m</code> and <code>5m</code>, or variables like{' '}
-              <code>$_relativeTime</code>.
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.relative-time-tooltip">
+                Overrides the relative time range for individual panels, which causes them to be different than what is
+                selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
+                the Last 5 minutes the Relative time should be <code>now-5m</code> and <code>5m</code>, or variables
+                like <code>$_relativeTime</code>.
+              </Trans>
             </>
           }
         >
-          Relative time
+          <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.relative-time">Relative time</Trans>
         </InlineLabel>
         <Input
           id="relative-time-input"
           type="text"
-          placeholder="1h"
+          // BMC Change: To enable localization for below text
+          placeholder={t('bmcgrafana.dashboards.edit-panel.query.query-options.relative-time-placeholder', '1h')}
+          // BMC Chenge ends
           onChange={onRelativeTimeChange}
           onBlur={onOverrideTime}
           invalid={!relativeTimeIsValid}
@@ -337,19 +367,24 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           htmlFor="time-shift-input"
           className={styles.firstColumn}
           tooltip={
+            // BMC Change: To enable localization for below text
             <>
-              Overrides the time range for individual panels by shifting its start and end relative to the time picker.
-              For example to configure the Last 1h the Time shift should be <code>now-1h</code> and <code>1h</code>, or
-              variables like <code>$_timeShift</code>.
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.time-shift-tooltip">
+                Overrides the time range for individual panels by shifting its start and end relative to the time
+                picker. For example to configure the Last 1h the Time shift should be <code>now-1h</code> and{' '}
+                <code>1h</code>, or variables like <code>$_timeShift</code>.
+              </Trans>
             </>
           }
         >
-          Time shift
+          <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.time-shift">Time shift</Trans>
         </InlineLabel>
         <Input
           id="time-shift-input"
           type="text"
-          placeholder="1h"
+          // BMC Change: To enable localization for below text
+          placeholder={t('bmcgrafana.dashboards.edit-panel.query.query-options.time-shift-placeholder', '1h')}
+          // BMC Change ends
           onChange={onTimeShiftChange}
           onBlur={onTimeShift}
           invalid={!timeShiftIsValid}
@@ -357,8 +392,11 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         />
         {(timeRangeShift || timeRangeFrom) && (
           <>
+            {/* BMC Change: To enable localization for below text */}
             <InlineLabel htmlFor="hide-time-info-switch" className={styles.firstColumn}>
-              Hide time info
+              <Trans i18nKey="bmcgrafana.dashboards.edit-panel.query.query-options.hide-time-info">
+                Hide time info
+              </Trans>
             </InlineLabel>
             <InlineSwitch
               id="hide-time-info-switch"

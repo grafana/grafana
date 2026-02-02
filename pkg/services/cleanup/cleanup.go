@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -76,6 +77,11 @@ func (j cleanUpJob) String() string {
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
 	srv.cleanUpTmpFiles(ctx)
+	// BMC code
+	srv.cleanUpPDFTmpFiles(ctx)
+	srv.cleanUpCSVTmpFiles(ctx)
+	srv.cleanUpXLSTmpFiles(ctx)
+	// End
 
 	ticker := time.NewTicker(time.Minute * 10)
 	for {
@@ -98,6 +104,11 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 
 	cleanupJobs := []cleanUpJob{
 		{"clean up temporary files", srv.cleanUpTmpFiles},
+		// BMC code
+		{"clean up temporary pdf files", srv.cleanUpPDFTmpFiles},
+		{"clean up temporary csv files", srv.cleanUpCSVTmpFiles},
+		{"clean up temporary xls files", srv.cleanUpXLSTmpFiles},
+		// End
 		{"delete expired snapshots", srv.deleteExpiredSnapshots},
 		{"delete expired dashboard versions", srv.deleteExpiredDashboardVersions},
 		{"delete expired images", srv.deleteExpiredImages},
@@ -190,6 +201,98 @@ func (srv *CleanUpService) cleanUpTmpFolder(ctx context.Context, folder string) 
 
 	logger.Debug("Found old rendered file to delete", "folder", folder, "deleted", len(toDelete), "kept", len(files))
 }
+
+// BMC code
+func (srv *CleanUpService) cleanUpPDFTmpFiles(ctx context.Context) {
+	if _, err := os.Stat(srv.Cfg.PDFsDir); os.IsNotExist(err) {
+		return
+	}
+
+	files, err := ioutil.ReadDir(srv.Cfg.PDFsDir)
+	if err != nil {
+		srv.log.Error("Problem reading pdf dir", "error", err)
+		return
+	}
+
+	var toDelete []os.FileInfo
+	var now = time.Now()
+
+	for _, file := range files {
+		if srv.shouldCleanupTempFile(file.ModTime(), now) {
+			toDelete = append(toDelete, file)
+		}
+	}
+
+	for _, file := range toDelete {
+		fullPath := path.Join(srv.Cfg.PDFsDir, file.Name())
+		err := os.Remove(fullPath)
+		if err != nil {
+			srv.log.Error("Failed to delete temp file", "file", file.Name(), "error", err)
+		}
+	}
+
+	srv.log.Debug("Found old rendered pdf to delete", "deleted", len(toDelete), "kept", len(files))
+}
+
+func (srv *CleanUpService) cleanUpCSVTmpFiles(ctx context.Context) {
+	if _, err := os.Stat(srv.Cfg.CSVsDir); os.IsNotExist(err) {
+		return
+	}
+
+	files, err := ioutil.ReadDir(srv.Cfg.CSVsDir)
+	if err != nil {
+		srv.log.Error("Problem reading csv dir", "error", err)
+		return
+	}
+
+	var toDelete []os.FileInfo
+	var now = time.Now()
+
+	for _, file := range files {
+		if srv.shouldCleanupTempFile(file.ModTime(), now) {
+			toDelete = append(toDelete, file)
+		}
+	}
+
+	for _, file := range toDelete {
+		fullPath := path.Join(srv.Cfg.CSVsDir, file.Name())
+		err := os.Remove(fullPath)
+		if err != nil {
+			srv.log.Error("Failed to delete temp file", "file", file.Name(), "error", err)
+		}
+	}
+}
+
+func (srv *CleanUpService) cleanUpXLSTmpFiles(ctx context.Context) {
+	if _, err := os.Stat(srv.Cfg.XLSsDir); os.IsNotExist(err) {
+		return
+	}
+
+	files, err := ioutil.ReadDir(srv.Cfg.XLSsDir)
+	if err != nil {
+		srv.log.Error("Problem reading xls dir", "error", err)
+		return
+	}
+
+	var toDelete []os.FileInfo
+	var now = time.Now()
+
+	for _, file := range files {
+		if srv.shouldCleanupTempFile(file.ModTime(), now) {
+			toDelete = append(toDelete, file)
+		}
+	}
+
+	for _, file := range toDelete {
+		fullPath := path.Join(srv.Cfg.XLSsDir, file.Name())
+		err := os.Remove(fullPath)
+		if err != nil {
+			srv.log.Error("Failed to delete temp file", "file", file.Name(), "error", err)
+		}
+	}
+}
+
+// End
 
 func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.Time) bool {
 	if srv.Cfg.TempDataLifetime == 0 {

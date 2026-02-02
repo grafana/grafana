@@ -13,11 +13,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bhdcodes"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/api")
@@ -103,11 +105,19 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 
 	// Validate inputs
 	if searchOptions.ActionPrefix != "" && searchOptions.Action != "" {
-		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
+		//BMC code change
+		return response.JSON(http.StatusBadRequest, util.DynMap{
+			"message": "'action' and 'actionPrefix' are mutually exclusive",
+			"bhdCode": bhdcodes.PermissionActionConflict,
+		})
 	}
 
 	if searchOptions.UserID <= 0 && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
-		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
+		//BMC code change
+		return response.JSON(http.StatusBadRequest, util.DynMap{
+			"message": "at least one search option must be provided",
+			"bhdCode": bhdcodes.PermissionSearchOptionMissing,
+		})
 	}
 
 	// Compute metadata

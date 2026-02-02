@@ -56,13 +56,23 @@ export const Permissions = ({
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
+  // BMC code: next line
+  const [isLoading, setIsLoading] = useState(false);
 
+  // BMC Change - Below function inline
   const fetchItems = useCallback(async () => {
+    setIsLoading(true);
     let items = await getPermissions(resource, resourceId);
     if (getWarnings) {
       items = getWarnings(items);
     }
-    setItems(items);
+    if (resource === 'teams' && items.length > 1000) {
+      const trimmedList = items.slice(0, 1000);
+      setItems(trimmedList);
+    } else {
+      setItems(items);
+    }
+    setIsLoading(false);
   }, [resource, resourceId, getWarnings]);
 
   useEffect(() => {
@@ -173,7 +183,17 @@ export const Permissions = ({
             <Space v={2} />
           </>
         )}
-        {items.length === 0 && (
+        {/* BMC code - start */}
+        {isLoading ? (
+          <Box>
+            <Text>
+              <Trans i18nKey="bmc.common.loading">Loading...</Trans>
+            </Text>
+          </Box>
+        ) : null}
+        {/* BMC code - end */}
+        {/* BMC code: inline change */}
+        {!isLoading && items.length === 0 && (
           <Box>
             <Text>{emptyLabel}</Text>
           </Box>

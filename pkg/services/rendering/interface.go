@@ -21,6 +21,8 @@ const (
 	RenderCSV RenderType = "csv"
 	RenderPNG RenderType = "png"
 	RenderPDF RenderType = "pdf"
+	// BMC Code: Next line
+	RenderXLS RenderType = "xls"
 )
 
 type TimeoutOpts struct {
@@ -83,12 +85,24 @@ type SanitizeSVGResponse struct {
 }
 
 type Result struct {
-	FilePath string
-	FileName string
+	FilePath         string
+	FileName         string
+	GenerationReport bool
 }
 
 type RenderResult struct {
-	FilePath string
+	FilePath         string
+	StatusCodeCheck  int
+	GenerationReport bool
+	// BMC Code: Next line
+	RepeatedPanelIds []PanelInfo
+}
+
+// BMC Code: Start
+type PanelInfo struct {
+	ID    string
+	Type  string
+	Title string
 }
 
 type RenderCSVResult struct {
@@ -132,4 +146,10 @@ type Service interface {
 	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
+	// BMC code
+	CustomRenderPDF(ctx context.Context, opts CustomPDFOpts, session Session) (*RenderResult, error)
+	CustomRenderCSV(ctx context.Context, opts CustomCSVOpts, session Session) (*RenderResult, error)
+	CustomRenderXLS(ctx context.Context, opts CustomXLSOpts, session Session) (*RenderResult, error)
+	CustomGetPanelId(ctx context.Context, opts CustomGetRepeatedPanelsOpts, session Session) (*RenderResult, error)
+	// End
 }

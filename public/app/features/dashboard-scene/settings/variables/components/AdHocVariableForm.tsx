@@ -4,6 +4,7 @@ import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -43,8 +44,15 @@ export function AdHocVariableForm({
 
   return (
     <>
-      <VariableLegend>Ad-hoc options</VariableLegend>
-      <Field label="Data source" htmlFor="data-source-picker">
+      <VariableLegend>
+        {/* BMC Change: To enable localization for below text */}
+        <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.types.ad-hoc.title">Ad-hoc options</Trans>
+      </VariableLegend>
+      <Field
+        // BMC Change: To enable localization for below text
+        label={t('bmcgrafana.dashboards.settings.variables.editor.types.ad-hoc.data-source-text', 'Data source')}
+        htmlFor="data-source-picker"
+      >
         <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
       </Field>
 
@@ -88,7 +96,8 @@ export function AdHocVariableForm({
 
       {onAllowCustomValueChange && (
         <VariableCheckboxField
-          value={allowCustomValue ?? true}
+          // BMC code: allowCustomValue defaults to false
+          value={allowCustomValue ?? false}
           name="Allow custom values"
           description="Enables users to add custom values to the list"
           onChange={onAllowCustomValueChange}

@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { AdHocVariableModel } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
@@ -11,14 +12,19 @@ import { setFiltersFromUrl } from './actions';
 import { AdHocPicker } from './picker/AdHocPicker';
 import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
 import * as urlParser from './urlParser';
-
 const noop = async () => {};
-
+// BMC Change: To enable localization for below text
 export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel> => {
   return {
     id: 'adhoc',
-    description: 'Add key/value filters on the fly.',
-    name: 'Ad hoc filters',
+    description: t(
+      'bmcgrafana.dashboards.settings.variables.editor.select-variable-type.ad-hoc-filters.description',
+      'Add key/value filters on the fly.'
+    ),
+    name: t(
+      'bmcgrafana.dashboards.settings.variables.editor.select-variable-type.ad-hoc-filters.name',
+      'Ad hoc filters'
+    ),
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
     picker: AdHocPicker,

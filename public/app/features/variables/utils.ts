@@ -2,13 +2,13 @@ import { isArray, isEqual } from 'lodash';
 
 import {
   LegacyMetricFindQueryOptions,
+  QueryVariableModel,
   ScopedVars,
   UrlQueryMap,
   UrlQueryValue,
-  VariableType,
   VariableRefresh,
+  VariableType,
   VariableWithOptions,
-  QueryVariableModel,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -263,6 +263,17 @@ export function ensureStringValues(value: unknown | unknown[]): string | string[
   return '';
 }
 
+// BMC code
+export function dateRangeExtract(str: string) {
+  const parts = str.split(/From: | - To: /);
+  if (parts.length === 3) {
+    // Create an array with the "from" and "to" values
+    return [parts[1], parts[2]];
+  }
+  // Return null if the input format is unexpected
+  return [];
+}
+// End
 export function hasOngoingTransaction(key: string, state: StoreState = getState()): boolean {
   return getVariablesState(key, state).transaction.status !== TransactionStatus.NotStarted;
 }
@@ -306,3 +317,15 @@ export function getVariablesFromUrl() {
       return obj;
     }, {});
 }
+
+// BMC Change: Starts
+export function extractLoginFromUser(login: string) {
+  const atIndex = login.indexOf('@');
+  if (atIndex === -1) {
+    return login;
+  }
+
+  const secondAtIndex = login.indexOf('@', atIndex - 1);
+  return login.substring(0, secondAtIndex === -1 ? atIndex : secondAtIndex);
+}
+// BMC Change: Ends

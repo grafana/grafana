@@ -70,11 +70,17 @@ const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" *
 const xychartPanel = async () => await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
 const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
-const tableOldPanel = async () =>
-  await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
 
 const nodeGraph = async () =>
   await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
+
+// BMC Change: Commented next line
+// const tableOldPanel = async () =>
+//   await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
+
+// BMC Change: Added new imports for BMC Video and Welcome Banner
+const bmcVideoPanel = async () => await import(/* webpackChunkName: "bmcvideo" */ 'app/plugins/panel/bmcvideo/module');
+const bmcwelcomeBanner = async () => await import(/* webpackChunkName: "bmcwelcome" */ 'app/plugins/panel/bmcwelcome/module');
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
@@ -105,7 +111,8 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/annolist': annoListPanel,
   'core:plugin/heatmap': heatmapPanel,
   'core:plugin/table': tablePanel,
-  'core:plugin/table-old': tableOldPanel,
+  // BMC Change: Commented next line
+  // 'core:plugin/table-old': tableOldPanel,
   'core:plugin/news': newsPanel,
   'core:plugin/live': livePanel,
   'core:plugin/stat': statPanel,
@@ -123,6 +130,10 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
+  // BMC code
+  'core:plugin/bmcwelcome': bmcwelcomeBanner,
+  'core:plugin/bmcvideo': bmcVideoPanel,
+  // End
 };
 
 export default builtInPlugins;

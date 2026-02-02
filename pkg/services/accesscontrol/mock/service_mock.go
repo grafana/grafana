@@ -53,3 +53,16 @@ func (m *MockPermissionsService) MapActions(permission accesscontrol.ResourcePer
 	mockedArgs := m.Called(permission)
 	return mockedArgs.Get(0).(string)
 }
+
+// BMC Change start
+func (m *MockPermissionsService) GetPermissionsToActions() map[string][]string {
+	mockedArgs := m.Called()
+	return mockedArgs.Get(0).(map[string][]string)
+}
+
+func (m *MockPermissionsService) GetPermissionsList() []string {
+	mockedArgs := m.Called()
+	return mockedArgs.Get(0).([]string)
+}
+
+//BMC Change end

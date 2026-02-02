@@ -17,6 +17,9 @@ export enum LoadingState {
   Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
+  // BMC changes start
+  RefreshToLoad = 'Refresh to load',
+  // BMC changes end
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go

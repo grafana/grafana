@@ -1,0 +1,49 @@
+# Owned by grafana-delivery-squad
+# Intended to be dropped into the base repo Ex: grafana/grafana
+name: Dispatch check for patch conflicts
+run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - "main"
+      - "v*.*.*"
+      - "release-*"
+
+# Since this is run on a pull request, we want to apply the patches intended for the
+# target branch onto the source branch, to verify compatibility before merging.
+jobs:
+  dispatch-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: "Dispatch job"
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                workflow_id: 'test-patches-event.yml',
+                ref: 'main',
+                inputs: {
+                  src_repo: "${{ github.repository }}",
+                  src_ref: "${{ github.head_ref }}",
+                  src_merge_sha: "${{ github.sha }}",
+                  src_pr_commit_sha: "${{ github.event.pull_request.head.sha }}",
+                  patch_repo: "${{ github.repository }}-security-patches",
+                  patch_ref: "${{ github.base_ref }}",
+                  triggering_github_handle: "${{ github.event.sender.login }}"
+                }
+            })

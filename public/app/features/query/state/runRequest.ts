@@ -136,6 +136,14 @@ export function runRequest(
     packets: {},
   };
 
+  // BMC code changes
+  if (request.isFirstLoad === true && request.openEmptyPanel === true) {
+    // state.panelData.state = LoadingState.Done;
+    state.panelData.state = LoadingState.RefreshToLoad;
+    return of(state.panelData);
+  }
+  // BMC code changes end
+
   // Return early if there are no queries to run
   if (!request.targets.length) {
     request.endTime = Date.now();

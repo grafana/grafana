@@ -1,0 +1,141 @@
+diff --git a/dist/esm/variables/components/VariableValueSelect.js b/dist/esm/variables/components/VariableValueSelect.js
+index 3e089cddf7a931db716d825d94243314a525d9ea..7ffaff99894d160b78e624df5b953bbcda0b8bbc 100644
+--- a/dist/esm/variables/components/VariableValueSelect.js
++++ b/dist/esm/variables/components/VariableValueSelect.js
+@@ -24,12 +24,12 @@ function toSelectableValue(value, label) {
+   };
+ }
+ function VariableValueSelect({ model, state }) {
+-  const { value, text, key, options, includeAll, isReadOnly, allowCustomValue = true } = state;
++  const { value, text, key, options, includeAll, isReadOnly, allowCustomValue = true, discardForAll } = state;
+   const [inputValue, setInputValue] = useState("");
+   const [hasCustomValue, setHasCustomValue] = useState(false);
+   const selectValue = toSelectableValue(value, String(text));
+   const queryController = sceneGraph.getQueryController(model);
+-  const optionSearcher = useMemo(() => getOptionSearcher(options, includeAll), [options, includeAll]);
++  const optionSearcher = useMemo(() => getOptionSearcher(options, includeAll, discardForAll), [options, includeAll, discardForAll]);
+   const onInputChange = (value2, { action }) => {
+     if (action === "input-change") {
+       setInputValue(value2);
+@@ -90,13 +90,14 @@ function VariableValueSelectMulti({
+     noValueOnClear,
+     includeAll,
+     isReadOnly,
+-    allowCustomValue = true
++    allowCustomValue = true,
++    discardForAll
+   } = state;
+   const arrayValue = useMemo(() => isArray(value) ? value : [value], [value]);
+   const [uncommittedValue, setUncommittedValue] = useState(arrayValue);
+   const [inputValue, setInputValue] = useState("");
+   const queryController = sceneGraph.getQueryController(model);
+-  const optionSearcher = useMemo(() => getOptionSearcher(options, includeAll), [options, includeAll]);
++  const optionSearcher = useMemo(() => getOptionSearcher(options, includeAll, discardForAll), [options, includeAll, discardForAll]);
+   useEffect(() => {
+     setUncommittedValue(arrayValue);
+   }, [arrayValue]);
+diff --git a/dist/esm/variables/components/getOptionSearcher.js b/dist/esm/variables/components/getOptionSearcher.js
+index d65b9cd4c83fcead82f9b06b803a88c94bb7a6e3..d2e99a7f2c14a898404d2336cc80610ba5056aaf 100644
+--- a/dist/esm/variables/components/getOptionSearcher.js
++++ b/dist/esm/variables/components/getOptionSearcher.js
+@@ -1,10 +1,10 @@
+ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants.js';
+ import { fuzzyFind } from '../filter.js';
+ 
+-function getOptionSearcher(options, includeAll = false) {
++function getOptionSearcher(options, includeAll = false, discardForAll = false) {
+   let allOptions = options;
+   if (includeAll) {
+-    allOptions = [{ value: ALL_VARIABLE_VALUE, label: ALL_VARIABLE_TEXT }, ...allOptions];
++    allOptions = [{ value: ALL_VARIABLE_VALUE, label: discardForAll && localStorage.getItem('enabledFeatures')?.includes('bhd-ar-all-values-v2') ? 'Omit' : ALL_VARIABLE_TEXT }, ...allOptions];
+   }
+   const haystack = allOptions.map((o) => o.label);
+   return (search) => fuzzyFind(allOptions, haystack, search);
+diff --git a/dist/esm/variables/filter.js b/dist/esm/variables/filter.js
+index b311aa50df8f74208fde8717c2a392999274ee3e..1afcd67e35a59f0c270c1656262ff389138317d8 100644
+--- a/dist/esm/variables/filter.js
++++ b/dist/esm/variables/filter.js
+@@ -11,27 +11,34 @@ function fuzzyFind(options, haystack, needle) {
+   let matches = [];
+   if (needle === "") {
+     matches = options;
+-  } else if (
+-    // contains non-ascii
+-    REGEXP_NON_ASCII.test(needle) || // is only ascii symbols (operators)
+-    REGEXP_ONLY_SYMBOLS.test(needle) || // too long (often copy-paste from somewhere)
+-    needle.length > maxNeedleLength || uf.split(needle).length > maxFuzzyTerms
+-  ) {
+-    for (let i = 0; i < haystack.length; i++) {
+-      let item = haystack[i];
+-      if (item.includes(needle)) {
+-        matches.push(options[i]);
+-      }
+-    }
+   } else {
+-    const [idxs, info, order] = uf.search(haystack, needle, outOfOrderLimit, rankThreshold);
+-    if (idxs == null ? void 0 : idxs.length) {
+-      if (info && order) {
+-        matches = order.map((idx) => options[info.idx[idx]]);
++    const indexSet = new Set();
++    let modifiedNeedle = needle.split(',').map(term => term.trim()).filter(term => term.length > 0);
++    modifiedNeedle.forEach((modNeedle, _) => {
++      if (
++        // contains non-ascii
++        REGEXP_NON_ASCII.test(modNeedle) || // is only ascii symbols (operators)
++        REGEXP_ONLY_SYMBOLS.test(modNeedle) || // too long (often copy-paste from somewhere)
++        modNeedle.length > maxNeedleLength || uf.split(modNeedle).length > maxFuzzyTerms
++      ) {
++        for (let i = 0; i < haystack.length; i++) {
++          let item = haystack[i];
++          if (item.includes(modNeedle)) {
++            indexSet.add(i);
++          }
++        }
+       } else {
+-        matches = idxs.map((idx) => options[idx]);
++        const [idxs, info, order] = uf.search(haystack, modNeedle, outOfOrderLimit, rankThreshold);
++        if (idxs == null ? void 0 : idxs.length) {
++          if (info && order) {
++            order.map((idx) => indexSet.add(info.idx[idx]));
++          } else {
++            idxs.map((idx) => indexSet.add(idx));
++          }
++        }
+       }
+-    }
++    });
++    matches = Array.from(indexSet).map((idx) => options[idx]);
+   }
+   return matches;
+ }
+diff --git a/dist/esm/variables/macros/contextMacros.js b/dist/esm/variables/macros/contextMacros.js
+index 1418107ed711c55de247e3eba156d17aaa575945..f6b3bf14d3bf023d8951d30bdf2f2cc8baeb9f21 100644
+--- a/dist/esm/variables/macros/contextMacros.js
++++ b/dist/esm/variables/macros/contextMacros.js
+@@ -1,5 +1,17 @@
+ import { config } from '@grafana/runtime';
+ 
++// BMC Change: Starts
++export function extractLoginFromUser(login) {
++  const atIndex = login.indexOf('@');
++  if (atIndex === -1) {
++    return login;
++  }
++
++  const secondAtIndex = login.indexOf('@', atIndex - 1);
++  return login.substring(0, secondAtIndex === -1 ? atIndex : secondAtIndex);
++}
++// BMC Change: Ends
++
+ class UserMacro {
+   constructor(name, _) {
+     this.state = { name, type: "user_macro" };
+@@ -11,6 +23,8 @@ class UserMacro {
+         return user.login;
+       case "email":
+         return user.email;
++      case "loginId":
++        return extractLoginFromUser(user.login); // BMC Change
+       case "id":
+       default:
+         return String(user.id);

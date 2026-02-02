@@ -358,6 +358,14 @@ export function SelectBase<T, Rest = {}>({
                   e.stopPropagation();
                   clearValue();
                 }}
+                // BMC Accessibility Change : Next 7 Lines
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    clearValue();
+                  }
+                }}
               />
             );
           },

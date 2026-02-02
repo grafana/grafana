@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -22,12 +23,20 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
+  // BMC Change: To show localized value
+  let localizedText = navItem.text;
+  const match = navItem.url?.match(/\/[df]\/([a-zA-Z0-9\_\-]+)/);
+  if (match) {
+    // to be ignored for extraction
+    localizedText = t(`bmc-dynamic.${match[1]}.name`, navItem.text);
+  }
+  // BMC Change Ends
   const titleElement = onEditTitle ? (
-    <EditableTitle value={navItem.text} onEdit={onEditTitle} />
+    <EditableTitle value={navItem.text} localizedVal={localizedText} onEdit={onEditTitle} />
   ) : (
     <div className={styles.title}>
       {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-      {renderTitle ? renderTitle(navItem.text) : <h1>{navItem.text}</h1>}
+      {renderTitle ? renderTitle(localizedText) : <h1>{localizedText}</h1>}
     </div>
   );
 

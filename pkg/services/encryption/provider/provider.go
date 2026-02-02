@@ -12,7 +12,8 @@ func ProvideEncryptionProvider() Provider {
 
 func (p Provider) ProvideCiphers() map[string]encryption.Cipher {
 	return map[string]encryption.Cipher{
-		encryption.AesCfb: aesCfbCipher{},
+		encryption.AesCfb: aesCipher{algorithm: encryption.AesCfb},
+		encryption.AesGcm: aesCipher{algorithm: encryption.AesGcm},
 	}
 }
 

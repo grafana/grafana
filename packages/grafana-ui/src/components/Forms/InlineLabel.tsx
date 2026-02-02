@@ -41,7 +41,14 @@ export const InlineLabel = ({
       {children}
       {tooltip && (
         <Tooltip interactive={interactive} placement="top" content={tooltip} theme="info">
-          <Icon tabIndex={0} name="info-circle" size="sm" className={styles.icon} />
+          <Icon
+            tabIndex={0}
+            name="info-circle"
+            size="sm"
+            className={styles.icon}
+            // BMC Code : Accessibility Change ( Next line )
+            aria-label="info-circle"
+          />
         </Tooltip>
       )}
     </Component>

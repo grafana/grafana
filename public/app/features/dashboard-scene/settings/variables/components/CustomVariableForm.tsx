@@ -1,6 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from 'app/core/internationalization';
 
 import { VariableLegend } from '../components/VariableLegend';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
@@ -36,10 +37,12 @@ export function CustomVariableForm({
 }: CustomVariableFormProps) {
   return (
     <>
-      <VariableLegend>Custom options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.types.custom.title">Custom options</Trans>
+      </VariableLegend>
 
       <VariableTextAreaField
-        name="Values separated by comma"
+        name={t('bmcgrafana.dashboards.settings.variables.editor.types.custom.desc', 'Values separated by comma')}
         defaultValue={query}
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onBlur={onQueryChange}
@@ -47,7 +50,9 @@ export function CustomVariableForm({
         width={52}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
       />
-      <VariableLegend>Selection options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.selection-options">Selection options</Trans>
+      </VariableLegend>
       <SelectionOptionsForm
         multi={multi}
         includeAll={includeAll}

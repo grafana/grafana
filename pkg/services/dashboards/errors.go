@@ -32,6 +32,11 @@ var (
 		Reason:     "A dashboard with the same uid already exists",
 		StatusCode: 400,
 	}
+	ErrDashboardWithSameNameInFolderExists = DashboardErr{
+		Reason:     "A dashboard with the same name in the folder already exists",
+		StatusCode: 412,
+		Status:     "name-exists",
+	}
 	ErrDashboardVersionMismatch = DashboardErr{
 		Reason:     "The dashboard has been changed by someone else",
 		StatusCode: 412,
@@ -117,6 +122,19 @@ var (
 		StatusCode: 400,
 		Status:     "bad-request",
 	}
+
+	// BMC Change: Starts
+	ErrDashboardWithSameNameAsFolder = DashboardErr{
+		Reason:     "Dashboard name cannot be the same as folder",
+		StatusCode: 400,
+		Status:     "name-match",
+	}
+	ErrDashboardFolderWithSameNameAsDashboard = DashboardErr{
+		Reason:     "Folder name cannot be the same as one of its dashboards",
+		StatusCode: 400,
+	}
+	ErrFolderSameNameExists = errors.New("a folder with the same name already exists in the current location")
+	// BMC Change: Ends
 
 	ErrFolderNotFound             = errors.New("folder not found")
 	ErrFolderVersionMismatch      = errors.New("the folder has been changed by someone else")

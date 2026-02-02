@@ -16,7 +16,8 @@ export const TagOption = ({ data, className, label, isFocused, innerProps }: Opt
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(styles.option, isFocused && styles.optionFocused)} aria-label="Tag option" {...innerProps}>
+    //BMC Accessibility Change: Removed aria-label
+    <div className={cx(styles.option, isFocused && styles.optionFocused)} {...innerProps}>
       <div className={cx(styles.optionInner, className)}>
         {typeof label === 'string' ? <TagBadge label={label} removeIcon={false} count={data.count ?? 0} /> : label}
       </div>

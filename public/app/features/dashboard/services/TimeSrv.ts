@@ -284,6 +284,11 @@ export class TimeSrv {
     this.refreshMS = undefined;
   }
 
+  // BMC Change: Clear the timeModel to avoid memory leaks
+  clearTimeModel() {
+    this.timeModel = undefined;
+  }
+
   // resume auto-refresh based on old dashboard refresh property
   resumeAutoRefresh() {
     if (this.timeModel?.refresh) {

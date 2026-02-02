@@ -12,16 +12,19 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"math/big"
 	"net"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/usagedata"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -72,6 +75,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
+
+	// BMC Change: Next line for metadata story
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -92,6 +97,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/rmsmetadata"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -221,8 +227,13 @@ type HTTPServer struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
-	userVerifier         user.Verifier
-	tlsCerts             TLSCerts
+	// BMC Change: Start
+	rmsMetadataService rmsmetadata.Service
+	usagedataService   usagedata.Service
+	sqlStore           *sqlstore.SQLStore
+	// BMC Change: End
+	userVerifier user.Verifier
+	tlsCerts     TLSCerts
 }
 
 type TLSCerts struct {
@@ -238,7 +249,7 @@ type ServerOptions struct {
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
-	cacheService *localcache.CacheService, sqlStore db.DB,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	dataSourceRequestValidator validations.DataSourceRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
@@ -272,6 +283,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	// BMC Change: Next line for metadata story
+	rmsMetadataService rmsmetadata.Service,
+	usagedataService usagedata.Service,	
 	userVerifier user.Verifier, pluginPreinstall plugininstaller.Preinstall,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -377,13 +391,25 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		clientConfigProvider:         clientConfigProvider,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
-		userVerifier:                 userVerifier,
+		// BMC Change: Start
+		rmsMetadataService: rmsMetadataService,
+		usagedataService:   usagedataService,
+		sqlStore:           sqlStore,
+		// BMC Change: End
+		userVerifier: userVerifier,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}
 	hs.registerRoutes()
 
+	// BMC code
+	hs.log.Info("Registering Report Scheduler Api's")
+	hs.registerSchedulerRoutes()
+	hs.registerReportSchedulerPlugin()
+	hs.registerRMSMetadataRoutes()
+	hs.registerUsagedataRoutes()
+	// End
 	// Register access control scope resolver for annotations
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, features, dashboardService, folderService))
 
@@ -405,6 +431,8 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
+	//Bmc code inline
+	hs.cacheOrgs(ctx)
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
@@ -700,6 +728,8 @@ type healthResponse struct {
 	Version          string `json:"version,omitempty"`
 	Commit           string `json:"commit,omitempty"`
 	EnterpriseCommit string `json:"enterpriseCommit,omitempty"`
+	// BMC Change
+	AdeVersion string `json:"adeVersion,omitempty"`
 }
 
 // swagger:route GET /health health getHealth
@@ -723,6 +753,11 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if !hs.Cfg.Anonymous.HideVersion {
 		data.Version = hs.Cfg.BuildVersion
 		data.Commit = hs.Cfg.BuildCommit
+		// BMC code
+		// author(kmejdi) - Add ade version from env variables
+		version := os.Getenv("RELEASE_VERSION")
+		data.AdeVersion = version
+		// End
 		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {
 			data.EnterpriseCommit = hs.Cfg.EnterpriseBuildCommit
 		}
@@ -750,17 +785,32 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 
 func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string, exclude ...string) {
 	headers := func(c *web.Context) {
+		// BMC code - Applies custom response headers from the configuration file
+		for key, value := range hs.Cfg.CustomResponseHeaders {
+			c.Resp.Header().Set(key, value)
+		}
+		// BMC code - end
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if prefix == "public/build" {
 		headers = func(c *web.Context) {
+			// BMC code - Applies custom response headers from the configuration file
+			for key, value := range hs.Cfg.CustomResponseHeaders {
+				c.Resp.Header().Set(key, value)
+			}
+			// BMC code - end
 			c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
 		}
 	}
 
 	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *web.Context) {
+			// BMC code - Applies custom response headers from the configuration file
+			for key, value := range hs.Cfg.CustomResponseHeaders {
+				c.Resp.Header().Set(key, value)
+			}
+			// BMC code - end
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}
 	}
@@ -816,6 +866,28 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 	}
 	return nil
 }
+
+// Bmc code starts
+func (hs *HTTPServer) cacheOrgs(ctx context.Context) {
+	hs.log.Info("Caching all tenant metadata on startup.")
+	cache := contexthandler.GetInstance()
+	result := make([]*org.OrgDTO, 0)
+	err := hs.SQLStore.WithDbSession(ctx, func(dbSess *db.Session) error {
+		sess := dbSess.Table("org")
+		err := sess.Find(&result)
+		return err
+	})
+	if err != nil {
+		hs.log.Error("Error occured while caching orgs", "err", err)
+		return
+	}
+	for _, item := range result {
+		cache.Set(strconv.FormatInt(item.ID, 10), item.Name)
+	}
+	hs.log.Info("Tenant cache updated. Count-", len(result))
+}
+
+// Bmc code ends
 
 func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 	if hs.Cfg.CertFile == "" {

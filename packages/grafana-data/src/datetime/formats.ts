@@ -35,6 +35,14 @@ export class SystemDateFormatsState {
     if (settings.useBrowserLocale) {
       this.useBrowserLocale();
     }
+    // BMC Change: Below else block
+    // We have `useBrowserLocale` enabled for all stacks by default
+    // And if this flag is not enabled,
+    // that means custom date format is set thru preferences.
+    // In that case fullDateMS should be same as fullDate
+    else {
+      this.fullDateMS = settings.fullDate;
+    }
   }
 
   useBrowserLocale() {
@@ -122,7 +130,18 @@ export function localTimeFormat(
     timeZoneName: 'Z',
   };
 
-  return parts.map((part) => mapping[part.type] || part.value).join('');
+  // BMC Change: Next line inline
+  return parts
+    .map((part) => {
+      if (part.type === 'literal') {
+        const safeLiteral = part.value === '\u202F' ? ' ' : part.value; // Replace U+202F with space
+        // Escape any literal that contains moment formatting letters
+        const needsEscaping = /[a-zA-Z]/.test(safeLiteral);
+        return needsEscaping ? `[${safeLiteral}]` : safeLiteral;
+      }
+      return mapping[part.type] || part.value;
+    })
+    .join('');
 }
 
 export const systemDateFormats = new SystemDateFormatsState();

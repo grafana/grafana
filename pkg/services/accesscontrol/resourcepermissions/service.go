@@ -339,6 +339,28 @@ func (s *Service) SetPermissions(
 	})
 }
 
+// BMC change for getRolesAndPermissions API: start
+// GetPermissionsToActions returns a copy of the PermissionsToActions map
+func (s *Service) GetPermissionsToActions() map[string][]string {
+	// Create a deep copy to prevent modification of the original
+	result := make(map[string][]string, len(s.options.PermissionsToActions))
+	for k, v := range s.options.PermissionsToActions {
+		actionsCopy := make([]string, len(v))
+		copy(actionsCopy, v)
+		result[k] = actionsCopy
+	}
+	return result
+}
+
+// GetPermissionsList returns a copy of the permissions list in priority order
+func (s *Service) GetPermissionsList() []string {
+	result := make([]string, len(s.permissions))
+	copy(result, s.permissions)
+	return result
+}
+
+// BMC change for getRolesAndPermissions API: end
+
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {

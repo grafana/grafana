@@ -5,6 +5,9 @@ import { LinkButton, CallToActionCard, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
+import { FEATURE_CONST, getFeatureStatus } from '../dashboard/services/featureFlagSrv';
+import { isGrafanaAdmin } from '../plugins/admin/permissions';
+
 function getCardStyles(theme: GrafanaTheme2) {
   return css({
     maxWidth: `${theme.breakpoints.values.lg}px`,
@@ -17,8 +20,10 @@ export const NoDataSourceCallToAction = () => {
   const cardStyles = useStyles2(getCardStyles);
 
   const canCreateDataSource =
-    contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
-    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+    (contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
+      contextSrv.hasPermission(AccessControlAction.DataSourcesWrite) &&
+      getFeatureStatus(FEATURE_CONST.DASHBOARDS_SSRF_FEATURE_NAME)) ||
+    isGrafanaAdmin();
 
   const message =
     'Explore requires at least one data source. Once you have added a data source, you can query it here.';

@@ -15,6 +15,8 @@ describe('SearchResultsTable', () => {
   const mockSelectionToggle = jest.fn();
   const mockSelection = jest.fn();
   const mockKeyboardEvents = new Subject<React.KeyboardEvent>();
+  // BMC Code : Accessibility Change ( Next 1 line )
+  const mockOnResultsChange = jest.fn();
 
   describe('when there is data', () => {
     const searchData = toDataFrame({
@@ -64,6 +66,8 @@ describe('SearchResultsTable', () => {
           clearSelection={mockClearSelection}
           height={1000}
           width={1000}
+          // BMC Code : Accessibility Change ( Next 1 line )
+          onResultsChange={mockOnResultsChange}
         />
       );
       const table = await screen.findByRole('table', { name: 'Search results table' });
@@ -81,6 +85,8 @@ describe('SearchResultsTable', () => {
           clearSelection={mockClearSelection}
           height={1000}
           width={1000}
+          // BMC Code : Accessibility Change ( Next 1 line )
+          onResultsChange={mockOnResultsChange}
         />
       );
       await screen.findByRole('table');
@@ -100,6 +106,8 @@ describe('SearchResultsTable', () => {
           clearSelection={mockClearSelection}
           height={1000}
           width={1000}
+          // BMC Code : Accessibility Change ( Next 1 line )
+          onResultsChange={mockOnResultsChange}
         />
       );
       await screen.findByRole('table');
@@ -148,6 +156,8 @@ describe('SearchResultsTable', () => {
           clearSelection={mockClearSelection}
           height={1000}
           width={1000}
+          // BMC Code : Accessibility Change ( Next line )
+          onResultsChange={mockOnResultsChange}
         />
       );
       const noData = await screen.findByText('No data');

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { changeToLibraryPanel } from 'app/features/panel/state/actions';
@@ -48,7 +49,11 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
       {!panel.libraryPanel && (
         <VerticalGroup align="center">
           <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
-            Create new library panel
+            {/*BMC Change: To enable localization for below text*/}
+            <Trans i18nKey="bmcgrafana.dashboards.edit-panel.create-new-library-panel-button">
+              Create new library panel
+            </Trans>
+            {/* BMC change ends */}
           </Button>
         </VerticalGroup>
       )}

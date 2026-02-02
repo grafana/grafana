@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import * as React from 'react';
 
 import { useTheme2 } from '../../themes';
@@ -27,5 +28,17 @@ export type MultiValueRemoveProps = {
 export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
-  return <IconButton {...innerProps} name="times" size="sm" className={styles.multiValueRemove} tooltip="Remove" />;
+  {
+    /*BMC Change: To enable localization for below text*/
+  }
+  return (
+    <IconButton
+      {...innerProps}
+      name="times"
+      size="sm"
+      className={styles.multiValueRemove}
+      tooltip={t('bmcgrafana.dashboards.edit-panel.remove-text', 'Remove')}
+    />
+  );
+  // BMC Change ends
 };

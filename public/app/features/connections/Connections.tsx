@@ -2,6 +2,9 @@ import { Navigate, Routes, Route, useLocation } from 'react-router-dom-v5-compat
 
 import { StoreState, useSelector } from 'app/types';
 
+import { FEATURE_CONST, getFeatureStatus } from '../dashboard/services/featureFlagSrv';
+import { isGrafanaAdmin } from '../plugins/admin/permissions';
+
 import { ROUTES } from './constants';
 import {
   AddNewConnectionPage,
@@ -18,7 +21,8 @@ function RedirectToAddNewConnection() {
     <Navigate
       replace
       to={{
-        pathname: ROUTES.AddNewConnection,
+        // BMC Change Inline: Redirect to your connection page for non super admin
+        pathname: isGrafanaAdmin() ? ROUTES.AddNewConnection : ROUTES.DataSources,
         search,
       }}
     />
@@ -32,10 +36,14 @@ export default function Connections() {
   return (
     <Routes>
       {/* Redirect to "Add new connection" by default */}
-      <Route caseSensitive path={'/'} element={<Navigate replace to={ROUTES.AddNewConnection} />} />
+      {/* BMC Change Inline: Redirect to your connection page for non super admin */}
+      <Route caseSensitive path={'/'} element={<Navigate replace to={isGrafanaAdmin() ? ROUTES.AddNewConnection : ROUTES.DataSources} />} />
       {/* The route paths need to be relative to the parent path (ROUTES.Base), so we need to remove that part */}
       <Route caseSensitive path={ROUTES.DataSources.replace(ROUTES.Base, '')} element={<DataSourcesListPage />} />
-      <Route caseSensitive path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')} element={<NewDataSourcePage />} />
+      {/* BMC Code change: Below condition */}
+      {getFeatureStatus(FEATURE_CONST.DASHBOARDS_SSRF_FEATURE_NAME) || isGrafanaAdmin() ? (
+        <Route caseSensitive path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')} element={<NewDataSourcePage />} />
+      ) : null}
       <Route
         caseSensitive
         path={ROUTES.DataSourcesDetails.replace(ROUTES.Base, '')}

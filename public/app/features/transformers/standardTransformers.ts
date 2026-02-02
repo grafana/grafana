@@ -4,9 +4,11 @@ import { config } from '@grafana/runtime';
 import { filterByValueTransformRegistryItem } from './FilterByValueTransformer/FilterByValueTransformerEditor';
 import { heatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
 import { configFromQueryTransformRegistryItem } from './configFromQuery/ConfigFromQueryTransformerEditor';
+import { advanceFunctionsTransformRegistryItem } from './editors/AdvanceFunctionsTransformerEditor';
 import { calculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor';
 import { concatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
+import { dynamicFieldsFormatterTransformRegistryItem } from './editors/DynamicFieldsFormatterTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
 import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
@@ -22,6 +24,7 @@ import { mergeTransformerRegistryItem } from './editors/MergeTransformerEditor';
 import { organizeFieldsTransformRegistryItem } from './editors/OrganizeFieldsTransformerEditor';
 import { reduceTransformRegistryItem } from './editors/ReduceTransformerEditor';
 import { renameByRegexTransformRegistryItem } from './editors/RenameByRegexTransformer';
+import { sanitizeFieldTransformRegistryItem } from './editors/SanitizeTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { transposeTransformerRegistryItem } from './editors/TransposeTransformerEditor';
@@ -70,5 +73,10 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     formatTimeTransformerRegistryItem,
     timeSeriesTableTransformRegistryItem,
     transposeTransformerRegistryItem,
+    // BMC code - start
+    advanceFunctionsTransformRegistryItem,
+    dynamicFieldsFormatterTransformRegistryItem,
+    sanitizeFieldTransformRegistryItem,
+    // BMC code - end
   ];
 };

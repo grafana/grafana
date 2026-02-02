@@ -30,24 +30,28 @@ export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: 
           return null;
         }
         return (
-          <div>
+          <div id="angular-deprecation-notice">
             <Alert
               severity="warning"
-              title="This dashboard depends on Angular, which is deprecated and will stop working in future releases of Grafana."
+              // BMC Change: Next line inline
+              title="This dashboard uses deprecated plug-ins that will be discontinued in an upcoming release. You must replace them with supported plug-ins to avoid any impact to this dashboard."
               onRemove={() => {
                 reportInteraction('angular_deprecation_notice_dismissed');
                 onDismiss(true);
               }}
             >
               <div className="markdown-html">
-                <a
+                {/* BMC Change Starts */}
+                For more information, see the Deprecated and discontinued features topic in product documentation.
+                {/* <a
                   href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
                   className="external-link"
                   target="_blank"
                   rel="noreferrer"
                 >
                   Read our deprecation notice and migration advice.
-                </a>
+                </a> */}
+                {/* BMC Change Ends */}
                 <br />
 
                 {showAutoMigrateLink && (

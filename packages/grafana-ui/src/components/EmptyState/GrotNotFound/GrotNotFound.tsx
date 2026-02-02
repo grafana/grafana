@@ -51,8 +51,8 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
-
-  return <SVG innerRef={svgRef} src={notFoundSvg} className={styles.svg} height={height} width={width} />;
+  // BMC Change: Next line inline
+  return <SVG innerRef={svgRef} src={notFoundSvg} className={styles.svg} height={0} width={0} />;
 };
 
 GrotNotFound.displayName = 'GrotNotFound';

@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { DataFrame, PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
@@ -16,28 +18,47 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   setProximity = false,
   defaultOptions?: Partial<OptionsWithTooltip>
 ) {
-  const category = ['Tooltip'];
+  // BMC Change: To enable localization for below text
+  const category = [t('bmcgrafana.dashboards.edit-panel.tooltip.text', 'Tooltip')];
   const modeOptions = singleOnly
     ? [
-        { value: TooltipDisplayMode.Single, label: 'Single' },
-        { value: TooltipDisplayMode.None, label: 'Hidden' },
+        {
+          value: TooltipDisplayMode.Single,
+          label: t('bmcgrafana.dashboards.edit-panel.tooltip.mode-single', 'Single'),
+        },
+        { value: TooltipDisplayMode.None, label: t('bmcgrafana.dashboards.edit-panel.tooltip.mode-hidden', 'Hidden') },
       ]
     : [
-        { value: TooltipDisplayMode.Single, label: 'Single' },
-        { value: TooltipDisplayMode.Multi, label: 'All' },
-        { value: TooltipDisplayMode.None, label: 'Hidden' },
+        {
+          value: TooltipDisplayMode.Single,
+          label: t('bmcgrafana.dashboards.edit-panel.tooltip.mode-single', 'Single'),
+        },
+        { value: TooltipDisplayMode.Multi, label: t('bmcgrafana.dashboards.edit-panel.tooltip.mode-all', 'All') },
+        { value: TooltipDisplayMode.None, label: t('bmcgrafana.dashboards.edit-panel.tooltip.mode-hidden', 'Hidden') },
       ];
-
-  const sortOptions = [
-    { value: SortOrder.None, label: 'None' },
-    { value: SortOrder.Ascending, label: 'Ascending' },
-    { value: SortOrder.Descending, label: 'Descending' },
-  ];
+  // BMC Change ends
+  // BMC Change: Used function to localize below text
+  function getSortOptions() {
+    return [
+      { value: SortOrder.None, label: t('bmcgrafana.dashboards.edit-panel.overrides.button.none', 'None') },
+      {
+        value: SortOrder.Ascending,
+        label: t('bmcgrafana.dashboards.edit-panel.tooltip.values-sort-order-ascending', 'Ascending'),
+      },
+      {
+        value: SortOrder.Descending,
+        label: t('bmcgrafana.dashboards.edit-panel.tooltip.values-sort-order-descending', 'Descending'),
+      },
+    ];
+  }
+  // BMC Change ends
 
   builder
     .addRadio({
       path: 'tooltip.mode',
-      name: 'Tooltip mode',
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.tooltip.tooltip-mode', 'Tooltip mode'),
+      // BMC Change ends
       category,
       defaultValue: defaultOptions?.tooltip?.mode ?? TooltipDisplayMode.Single,
       settings: {
@@ -46,12 +67,16 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     })
     .addRadio({
       path: 'tooltip.sort',
-      name: 'Values sort order',
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.tooltip.values-sort-order', 'Values sort order'),
+      // BMC Change ends
       category,
       defaultValue: defaultOptions?.tooltip?.sort ?? SortOrder.None,
       showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
       settings: {
-        options: sortOptions,
+        // BMC Change: Function call for localized text
+        options: getSortOptions(),
+        // BMC Change ends
       },
     })
     .addBooleanSwitch({
@@ -66,8 +91,13 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   if (setProximity) {
     builder.addNumberInput({
       path: 'tooltip.hoverProximity',
-      name: 'Hover proximity',
-      description: 'How close the cursor must be to a point to trigger the tooltip, in pixels',
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.tooltip.hover-proximity', 'Hover proximity'),
+      description: t(
+        'bmcgrafana.dashboards.edit-panel.tooltip.hover-proximity-description',
+        'How close the cursor must be to a point to trigger the tooltip, in pixels'
+      ),
+      // BMC Change ends
       category,
       settings: {
         integer: true,
@@ -79,7 +109,9 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder
     .addNumberInput({
       path: 'tooltip.maxWidth',
-      name: 'Max width',
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.tooltip.max-width', 'Max width'),
+      // BMC Change ends
       category,
       settings: {
         integer: true,
@@ -88,7 +120,9 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     })
     .addNumberInput({
       path: 'tooltip.maxHeight',
-      name: 'Max height',
+      // BMC Change: To enable localization for below text
+      name: t('bmcgrafana.dashboards.edit-panel.tooltip.max-height', 'Max height'),
+      // BMC Change ends
       category,
       defaultValue: undefined,
       settings: {

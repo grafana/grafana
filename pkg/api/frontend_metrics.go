@@ -21,5 +21,5 @@ func (hs *HTTPServer) PostFrontendMetrics(c *contextmodel.ReqContext) response.R
 			c.Logger.Debug("Received unknown frontend metric", "metric", event.Name)
 		}
 	}
-	return response.Empty(200)
+	return response.Empty(200).SetHeader("content-type", "application/json")
 }

@@ -855,6 +855,10 @@ export type TimeZoneBrowser = 'browser';
  * See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
  */
 export enum VariableFormatID {
+  // BMC Code: New formatter
+  Base64 = 'base64',
+  BMCSingleQuote = 'bmcsinglequote',
+  // BMC Code End
   CSV = 'csv',
   Date = 'date',
   Distributed = 'distributed',

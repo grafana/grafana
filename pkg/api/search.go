@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/bmc/external"
+	"github.com/grafana/grafana/pkg/api/bmc/localization"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -36,6 +38,9 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
+	// BMC Change: Next line Introduction for lang
+	lang := c.Query("lang")
+	
 	if deleted == "true" && c.SignedInUser.GetOrgRole() != org.RoleAdmin {
 		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 	}
@@ -96,6 +101,11 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
+	}
+
+	// BMC Change: Next if block
+	if localization.IsSupportedLocale(localization.Locale(lang)) && external.FeatureFlagBHDLocalization.Enabled(c.Req, c.SignedInUser) && searchQuery.Title != "" {
+		searchQuery.Lang = lang
 	}
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)

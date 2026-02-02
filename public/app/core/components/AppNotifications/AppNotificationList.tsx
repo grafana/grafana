@@ -35,7 +35,8 @@ export function AppNotificationList() {
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="column">
+      {/* BMC Code : Accessibility Change (Added aria-live attribute) */}
+      <Stack aria-live="polite" direction="column">
         {appNotifications.map((appNotification, index) => {
           return (
             <AppNotificationItem

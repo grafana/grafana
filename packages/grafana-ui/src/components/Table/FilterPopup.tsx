@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -21,6 +21,7 @@ interface Props {
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
   setOperator: (item: SelectableValue<string>) => void;
+  triggerRef?: React.RefObject<HTMLButtonElement>; // BMC Accessibility change: Added trigger ref to return focus on close
 }
 
 export const FilterPopup = ({
@@ -31,6 +32,7 @@ export const FilterPopup = ({
   setSearchFilter,
   operator,
   setOperator,
+  triggerRef,
 }: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
@@ -38,27 +40,42 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const filterInputRef = useRef<HTMLInputElement>(null); // BMC Accessibility change: Ref for focus management
 
-  const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
+  // BMC Accessibility change Start: Move focus to filter input when dialog opens for screen reader and keyboard users
+  useLayoutEffect(() => {
+    const frameId = requestAnimationFrame(() => {
+      filterInputRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  const returnFocusAndClose = useCallback(() => {
+    onClose();
+    requestAnimationFrame(() => {
+      triggerRef?.current?.focus();
+    });
+  }, [onClose, triggerRef]);
+
+  const onCancel = useCallback(() => returnFocusAndClose(), [returnFocusAndClose]);
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
       const filtered = values.length ? values : undefined;
-
       setFilter(filtered);
-      onClose();
+      returnFocusAndClose();
     },
-    [setFilter, values, onClose]
+    [setFilter, values, returnFocusAndClose]
   );
 
   const onClearFilter = useCallback(
     (event: React.MouseEvent) => {
       setFilter(undefined);
-      onClose();
+      returnFocusAndClose();
     },
-    [setFilter, onClose]
+    [setFilter, returnFocusAndClose]
   );
-
+  //BMC Accessibility Changes end
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
   const styles = useStyles2(getStyles);
 
@@ -83,6 +100,7 @@ export const FilterPopup = ({
               />
             </Stack>
             <div className={cx(styles.listDivider)} />
+            {/* BMC Accessibility change: Pass ref for focus management */}
             <FilterList
               onChange={setValues}
               values={values}
@@ -93,6 +111,7 @@ export const FilterPopup = ({
               setSearchFilter={setSearchFilter}
               operator={operator}
               setOperator={setOperator}
+              filterInputRef={filterInputRef}
             />
           </Stack>
           <Stack gap={3}>

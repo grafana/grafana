@@ -20,6 +20,9 @@ export interface RichHistorySettingsProps {
   toggleStarredTabAsFirstTab: () => void;
   toggleActiveDatasourcesOnly: () => void;
   deleteRichHistory: () => void;
+  // BMC Code : Accessibility Change ( Next 2 lines )
+  tabId?: string;
+  tabPanelId?: string;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -58,6 +61,9 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
     toggleStarredTabAsFirstTab,
     toggleActiveDatasourcesOnly,
     deleteRichHistory,
+    // BMC Code : Accessibility Change ( Next 2 lines )
+    tabId,
+    tabPanelId
   } = props;
   const styles = useStyles2(getStyles);
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
@@ -87,7 +93,8 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   };
 
   return (
-    <div className={styles.container}>
+    // BMC Code : Accessibility Change ( Next 1 line )
+    <div className={styles.container} role="tabpanel" aria-labelledby={tabId} id={tabPanelId}>
       {supportedFeatures().changeRetention ? (
         <Field
           label={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}

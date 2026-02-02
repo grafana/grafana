@@ -1,6 +1,8 @@
 import { cloneDeep } from 'lodash';
 
 import { QueryVariableModel, VariableRefresh } from '@grafana/data';
+import { t } from 'app/core/internationalization';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
@@ -15,9 +17,13 @@ import { initialQueryVariableModelState, queryVariableReducer } from './reducer'
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
+    // BMC Change: To enable localization for below text
     id: 'query',
-    description: 'Variable values are fetched from a datasource query',
-    name: 'Query',
+    description: t(
+      'bmcgrafana.dashboards.settings.variables.editor.select-variable-type.query.description',
+      'Variable values are fetched from a datasource query'
+    ),
+    name: t('bmcgrafana.dashboards.settings.variables.editor.select-variable-type.query.name', 'Query'),
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
     picker: optionPickerFactory<QueryVariableModel>(),
@@ -45,7 +51,8 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     },
     getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
-        return ALL_VARIABLE_TEXT;
+        // BMC Change: Next line inline
+        return getFeatureStatus('bhd-ar-all-values-v2') && variable.discardForAll ? 'Omit' : ALL_VARIABLE_TEXT;
       }
       return variable.current.value;
     },

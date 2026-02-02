@@ -24,6 +24,7 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { appEvents } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
@@ -49,7 +50,7 @@ import { VisualizationButton } from './VisualizationButton';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
 import { PanelEditorUIState, toggleTableView } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
-import { DisplayMode, displayModes, PanelEditorTab } from './types';
+import { DisplayMode, getDisplayModes, PanelEditorTab } from './types';
 import { calculatePanelSize } from './utils';
 
 interface OwnProps {
@@ -257,7 +258,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         maxSize={-200}
         paneSize={uiState.topPaneSize}
         primary="first"
-        secondaryPaneStyle={{ minHeight: 0 }}
+        // BMC Code inline
+        secondaryPaneStyle={{ minHeight: 0, zIndex: 1 }}
         onDragFinished={(size) => {
           if (size) {
             updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
@@ -305,14 +307,18 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.renderTemplateVariables(styles)}
           <Stack gap={1}>
             <InlineSwitch
-              label="Table view"
+              // BMC Change: To enable localization for below text
+              label={t('bmcgrafana.dashboards.edit-panel.table-view-switch', 'Table view')}
+              // BMC Change ends
               showLabel={true}
               id="table-view"
               value={tableViewEnabled}
               onClick={this.onToggleTableView}
               data-testid={selectors.components.PanelEditor.toggleTableView}
             />
-            <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
+            {/* BMC Change: Function call for localized text */}
+            <RadioButtonGroup value={uiState.mode} options={getDisplayModes()} onChange={this.onDisplayModeChange} />
+            {/* BMC Change ends */}
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
           </Stack>
@@ -326,13 +332,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     let editorActions = [
       <Button
         onClick={this.onDiscard}
-        title="Undo all changes"
+        // BMC Change: To enable localization for below text
+        title={t('bmcgrafana.dashboards.edit-panel.discard-tooltip', 'Undo all changes')}
+        // BMC Change ends
         key="discard"
         size={size}
         variant="destructive"
         fill="outline"
       >
-        Discard
+        {/* BMC Change: To enable localization for below text */}
+        <Trans i18nKey="bmcgrafana.dashboards.edit-panel.discard">Discard</Trans>
+        {/* BMC Change ends */}
       </Button>,
       this.props.dashboard.meta.canSave &&
         (this.props.panel.libraryPanel ? (
@@ -348,23 +358,29 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         ) : (
           <Button
             onClick={this.onSaveDashboard}
-            title="Apply changes and save dashboard"
+            // BMC Change: To enable localization for below text
+            title={t('bmcgrafana.dashboards.edit-panel.save-tooltip', 'Apply changes and save dashboard')}
             key="save"
             size={size}
             variant="secondary"
           >
-            Save
+            {/* BMC Change: Next line */}
+            <Trans i18nKey="bmc.calc-fields.save">Save</Trans>
           </Button>
         )),
       <Button
         onClick={this.onBack}
         variant="primary"
-        title="Apply changes and go back to dashboard"
+        // BMC Change: To enable localization for below text
+        title={t('bmcgrafana.dashboards.edit-panel.apply-tooltip', 'Apply changes and go back to dashboard')}
+        // BMC Change ends
         data-testid={selectors.components.PanelEditor.applyButton}
         key="apply"
         size={size}
       >
-        Apply
+        {/* BMC Change: To enable localization for below text */}
+        <Trans i18nKey="bmcgrafana.dashboards.edit-panel.apply">Apply</Trans>
+        {/* BMC Change ends */}
       </Button>,
     ];
 

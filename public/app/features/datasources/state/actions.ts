@@ -18,7 +18,8 @@ import {
 } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { appEvents, contextSrv } from 'app/core/core';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { t } from 'app/core/internationalization';
+import { getBackendSrv, translatedErrorMessage } from 'app/core/services/backend_srv';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -79,7 +80,15 @@ const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse 
     message = errorResponse.error.message;
     details = errorResponse.error.details;
   } else if (isFetchError(errorResponse)) {
-    message = errorResponse.data.message ?? `HTTP error ${errorResponse.statusText}`;
+    //BMC code starts
+    let msg = errorResponse.statusText
+    message = errorResponse.data.message ?? t('bmc.notifications.error.http-error', 'HTTP error {{msg}}', { msg });
+    if (errorResponse.data.bhdCode) {
+      message = errorResponse.data.message
+      message = translatedErrorMessage(errorResponse.data.bhdCode, message ?? '');
+      console.error(`[BHDCode: ${errorResponse.data.bhdCode}] - ${errorResponse.data.message}`);
+    }
+    //ends
   } else if (errorResponse instanceof Error) {
     message = errorResponse.message;
   }

@@ -162,7 +162,8 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 
 					if ctx != nil && ctx.IsApiRequest() {
 						resp := make(map[string]any)
-						resp["message"] = fmt.Sprintf("Internal Server Error - %s", cfg.UserFacingDefaultError)
+						// BMC code - inline change
+						resp["message"] = "Internal Server Error - Check the BMC Helix Dashboards server logs for the detailed error message."
 
 						if data.ErrorMsg != "" {
 							resp["error"] = fmt.Sprintf("%v - %v", data.Title, data.ErrorMsg)

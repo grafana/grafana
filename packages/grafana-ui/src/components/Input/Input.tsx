@@ -25,6 +25,8 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   addonBefore?: ReactNode;
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
+  /** BMC Accessibility Change : Add aria-describedby attribute to the input  */
+  'aria-describedby'?: string;
 }
 
 interface StyleDeps {
@@ -43,8 +45,12 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
     invalid,
     loading,
     width = 0,
+    //BMC Code : Accessibility Change (Added aria-describedby prop)
+    'aria-describedby': describedBy,
     ...restProps
   } = props;
+  //BMC Code : Accessibility Change (Next Line)
+  const errorId = props.id ? `${props.id}-error` : '';
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -88,6 +94,8 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
         <input
           ref={ref}
           className={styles.input}
+          //BMC Code : Accessibility Change (Added aria-describedby attribute)
+          aria-describedby={describedBy || errorId}
           {...restProps}
           style={{
             paddingLeft: prefix ? prefixRect.width + 12 : undefined,

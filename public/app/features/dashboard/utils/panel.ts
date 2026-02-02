@@ -5,6 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -23,11 +24,11 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
 
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Remove panel',
-        text: 'Are you sure you want to remove this panel?',
+        title: t('bmcgrafana.dashboard.remove-panel.title', 'Remove panel'),
+        text: t('bmcgrafana.dashboard.remove-panel.confirmation-text', 'Are you sure you want to remove this panel?'),
         icon: 'trash-alt',
         confirmText: confirmText,
-        yesText: 'Remove',
+        yesText: t('bmcgrafana.dashboard.remove-panel.confirm-button-text', 'Remove'),
         onConfirm: () => removePanel(dashboard, panel, false),
       })
     );
@@ -49,7 +50,9 @@ export const copyPanel = (panel: IPanelModel) => {
   }
 
   store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
-  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
+  appEvents.emit(AppEvents.alertSuccess, [
+    t('bmcgrafana.dashboard.panel-copied', 'Panel copied. Click **Add panel** icon to paste.'),
+  ]);
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {

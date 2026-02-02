@@ -13,6 +13,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
+import { replaceValueForLocale } from '../../utils/dashboard';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
 
 export interface DashboardRowProps extends Themeable2 {
@@ -94,7 +95,12 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
   };
 
   render() {
-    const title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
+    // BMC Change: Start
+    let title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
+    if (this.props.dashboard.locales) {
+      title = replaceValueForLocale(title, this.props.dashboard.getCurrentLocales());
+    }
+    // BMC Change: End
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
     const canEdit = this.props.dashboard.meta.canEdit === true;
@@ -103,9 +109,14 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
 
     return (
       <div
-        className={cx(styles.dashboardRow, {
-          [styles.dashboardRowCollapsed]: collapsed,
-        })}
+        className={cx(
+          styles.dashboardRow,
+          {
+            [styles.dashboardRowCollapsed]: collapsed,
+          },
+          // BMC Change: Next line to add class name of dashboard row
+          'dashboard-row'
+        )}
         data-testid="dashboard-row-container"
       >
         <button

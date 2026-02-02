@@ -51,6 +51,8 @@ var gzipIgnoredPaths = []matcher{
 	prefix("/api/live/ws"),   // WebSocket does not support gzip compression.
 	prefix("/api/live/push"), // WebSocket does not support gzip compression.
 	substr("/resources"),
+	// BMC Code: Next line
+	prefix("/api/rmsmetadata/studio/download"),
 }
 
 func Gziper() func(http.Handler) http.Handler {

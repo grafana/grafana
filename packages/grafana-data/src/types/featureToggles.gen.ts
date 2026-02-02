@@ -258,4 +258,6 @@ export interface FeatureToggles {
   alertRuleRestore?: boolean;
   grafanaManagedRecordingRulesDatasources?: boolean;
   inviteUserExperimental?: boolean;
+  // bmc code change
+  meterInternalDatasources?: boolean;
 }

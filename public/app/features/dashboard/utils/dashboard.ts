@@ -9,6 +9,8 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
+import { getFeatureStatus } from '../services/featureFlagSrv';
+
 export const NEW_PANEL_TITLE = 'Panel Title';
 
 export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {
@@ -168,4 +170,56 @@ export function setLastUsedDatasourceKeyForDashboard(dashUid: string, dsUid: str
 // Function that updates local storage with new dashboard uid and datasource uid
 function updatePropsLastUsedDatasourceKey(dashboardUid: string | undefined, datasourceUid: string) {
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: datasourceUid });
+}
+
+// BMC Code: Utility function to localize content
+// This function replaces all instances of {{key}} in the content with the corresponding value from the locales object
+// If the key is not found in the locales object, it is left as-is
+// The function is recursive, so it can handle nested objects and arrays
+export function replaceValuesRecursive(content: any, locales: { [key: string]: any }): { [key: string]: any } {
+  if (!getFeatureStatus('bhd-localization')) {
+    return content;
+  }
+  // If content is an array, process each element recursively
+  if (Array.isArray(content)) {
+    for (let i = 0; i < content.length; i++) {
+      content[i] = replaceValuesRecursive(content[i], locales);
+    }
+    return content;
+  }
+  // If content is an object, process its properties
+  else if (typeof content === 'object' && content !== null) {
+    for (const key in content) {
+      if (Object.hasOwn(content, key)) {
+        const value = content[key];
+
+        // If the value is a string, check if it exists as a key in locales
+        if (typeof value === 'string') {
+          content[key] = replaceValueForLocale(value, locales);
+        }
+        // If the value is an object or an array, recurse into it
+        else if (typeof value === 'object') {
+          content[key] = replaceValuesRecursive(value, locales);
+        }
+      }
+    }
+    return content;
+  }
+
+  // If content is neither an object nor an array, return it as-is
+  return content;
+}
+
+const localeKeyRegExp = /{{(\w+)}}/g;
+export function replaceValueForLocale(str: string, locales: { [key: string]: any }): string {
+  if (!getFeatureStatus('bhd-localization')) {
+    return str;
+  }
+  return str.replace(localeKeyRegExp, (match, varName) => {
+    const v = `${varName}`;
+    if (locales.hasOwnProperty(v)) {
+      return locales[v];
+    }
+    return match;
+  });
 }

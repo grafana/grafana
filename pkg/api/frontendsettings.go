@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/grafana/grafana/pkg/api/bmc/external"
 	"hash"
 	"net/http"
 	"slices"
@@ -182,6 +183,13 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	// we should remove this once we can be sure that no external plugins rely on this
 	featureToggles["topnav"] = true
 
+	// BMC Change: To set feature toggle for scenes
+	if external.FeatureFlagBHDScenes.Enabled(c.Req, c.SignedInUser) {
+		featureToggles["dashboardScene"] = true
+		featureToggles["dashboardSceneForViewers"] = true
+		featureToggles["dashboardSceneSolo"] = true
+	}
+
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
@@ -333,6 +341,18 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
 			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
+		// BMC code
+		EnvType:                      setting.EnvType,
+		BulkLimit:                    setting.BulkLimit,
+		MapBoxAccessToken:            setting.MapBoxAccessToken,
+		BulkExportLimit:              setting.BulkExportLimit,
+		BhdVersion:                   setting.BHD_Version,
+		EmailAttachmentSizeLimit:     setting.EmailAttachmentSizeLimit,
+		CSVDelimiter:                 setting.CSVDelimiter,
+		RepeatVariablesLimit:         setting.RepeatVariablesLimit,
+		ARRowLimitForCachedVariables: hs.Cfg.RemoteVariableCacheSettings.ARRowLimitForCachedVariables,
+		EnableDsMetering:             setting.EnableDsMetering,
+		// End
 	}
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
@@ -430,13 +450,41 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	c, span := hs.injectSpan(c, "api.getFSDataSources")
 	defer span.End()
 
+	defaultDatasource := datasources.BMC_HELIX_DS
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.SignedInUser.GetOrgID() != 0 {
 		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
+
+		//BMC Code : Start => MSP Tenant Check
+		//len(strings.TrimSpace(c.SignedInUser.SubTenantId)) != 0) => checks if its ITOM MSP subtenant
+		//((len(c.SignedInUser.MspOrgs) > 0) && !c.SignedInUser.IsUnrestrictedUser) => check if its MSP Parent tenant. It could be ITSM parent tenant as well
+		// So after fetching teams check team type as well. All this check can be avoided if jwt can differentiate between ITOM and ITSM MSP
+		if c.SignedInUser.OrgRole != "Admin" && ((len(strings.TrimSpace(c.SignedInUser.SubTenantId)) != 0) || ((len(c.SignedInUser.MspOrgs) > 0) && !c.SignedInUser.IsUnrestrictedUser)) {
+			query = hs.buildMSPDSQuery(c)
+		}
+		//BMC Code : End
 		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
 		}
+
+		//BMC Code : Start => DRJ71-14432
+		//ITOM MSP : Set Default Datasource to sub tenant datasource if BMC Helix does not exists
+		if !slices.Contains(query.Names, datasources.BMC_HELIX_DS) {
+			sort.Strings(query.Names)
+		search:
+			for _, name := range query.Names {
+				for _, datasource := range dataSources {
+					if name == datasource.Name {
+						c.Logger.Info("MSP : Set IsDefault to true", "User Id", c.SignedInUser.UserID, "Datasource Name", datasource.Name)
+						datasource.IsDefault = true
+						defaultDatasource = datasource.Name
+						break search
+					}
+				}
+			}
+		}
+		//BMC Code : End
 
 		if c.IsPublicDashboardView() {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
@@ -555,7 +603,15 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			ds.JsonData.Set("directUrl", ds.URL)
 		}
 
-		dataSources[ds.Name] = dsDTO
+		//BMC Code : Start => DRJ71-14425
+		//ITOM MSP : Set Datasource key to BMC Helix for subtenant datasource
+		//so that subtenant user can access OOB dashboard using subtenant datasources
+		if defaultDatasource != datasources.BMC_HELIX_DS && defaultDatasource == dsDTO.Name {
+			c.Logger.Info("MSP : Switched BMC Helix DS", "User Id", c.SignedInUser.UserID, "Datasource Name", dsDTO.Name)
+			dataSources[datasources.BMC_HELIX_DS] = dsDTO
+		} else {
+			dataSources[ds.Name] = dsDTO
+		}
 	}
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in

@@ -257,6 +257,8 @@ const legacyRunner = [
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external
+  // BMC Code: Next line, to disable to mapping UI
+  'bmchelix-ade-datasource',
 ];
 
 /**

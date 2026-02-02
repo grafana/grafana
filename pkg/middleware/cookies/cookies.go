@@ -52,3 +52,26 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 	}
 	http.SetCookie(w, &cookie)
 }
+
+//#### BMC Check
+// BMC code
+// Need separate method to store tenant_id without httponly flag
+func WriteCookieCustom(w http.ResponseWriter, name string, value string, maxAge int, getCookieOptions getCookieOptionsFunc) {
+	if getCookieOptions == nil {
+		getCookieOptions = NewCookieOptions
+	}
+	options := getCookieOptions()
+	cookie := http.Cookie{
+		Name:     name,
+		MaxAge:   maxAge,
+		Value:    value,
+		HttpOnly: false,
+		Path:     options.Path,
+		Secure:   options.Secure,
+	}
+	if !options.SameSiteDisabled {
+		cookie.SameSite = options.SameSiteMode
+	}
+	http.SetCookie(w, &cookie)
+}
+// End

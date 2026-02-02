@@ -1,20 +1,23 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { config } from '@grafana/runtime';
+import { locationUtil } from '@grafana/data';
 import { ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 
 export async function getSnapshots() {
+  // BMC code: next line
+  // const appUrl = window.location.origin;
   return getDashboardSnapshotSrv()
     .getSnapshots()
     .then((result: Snapshot[]) => {
       return result.map((snapshot) => ({
         ...snapshot,
-        url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
+        // BMC code: wrap the url in assureBaseUrl to fix subPath issue
+        url: locationUtil.assureBaseUrl(`/dashboard/snapshot/${snapshot.key}`),
       }));
     });
 }
@@ -103,9 +106,9 @@ export const SnapshotListTable = () => {
       <ConfirmModal
         isOpen={!!removeSnapshot}
         icon="trash-alt"
-        title="Delete"
-        body={`Are you sure you want to delete '${removeSnapshot?.name}'?`}
-        confirmText="Delete"
+        title={t('bmcgrafana.snapshots.delete-modal.delete', 'Delete')}
+        body={`${t('bmcgrafana.snapshots.delete-modal.confirmation-text', "Are you sure you want to delete '{{snapshotName}}'?", { snapshotName: removeSnapshot?.name })}`}
+        confirmText={t('bmcgrafana.snapshots.delete-modal.delete', 'Delete')}
         onDismiss={() => setRemoveSnapshot(undefined)}
         onConfirm={() => {
           doRemoveSnapshot(removeSnapshot!);

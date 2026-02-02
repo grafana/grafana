@@ -238,6 +238,9 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
       };
     } catch (e) {
       console.error(e);
+      if (isFetchError(e)) {
+        return thunkApi.rejectWithValue(e.data);
+      }
 
       return thunkApi.rejectWithValue('Unknown error.');
     }

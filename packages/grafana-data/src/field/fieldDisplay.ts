@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { isEmpty } from 'lodash';
 
 import { DataFrameView } from '../dataframe/DataFrameView';
@@ -350,7 +351,7 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 }
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
-  const displayName = 'No data';
+  const displayName = t('bmc.load-blank-dashoard.no-data','No data');
   const { fieldConfig, timeZone } = options;
   const { defaults } = fieldConfig;
 

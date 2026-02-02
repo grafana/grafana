@@ -8,12 +8,14 @@ import { locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import LocaleSettings from 'app/features/bmc-content-localization/LocaleSettings';
 import { AccessControlAction } from 'app/types';
 import { DashboardMetaChangedEvent } from 'app/types/events';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
+import { getFeatureStatus } from '../../services/featureFlagSrv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
@@ -65,7 +67,8 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
       size={size}
       onClick={onClose}
     >
-      Close
+      {/* BMC Change: Next line */}
+      <Trans i18nKey={'bmcgrafana.dashboards.save-dashboard.close-text'}>Close</Trans>
     </Button>,
     canSaveAs && (
       <SaveDashboardAsButton
@@ -162,6 +165,16 @@ function getSettingsPages(dashboard: DashboardModel) {
     icon: 'arrow',
     component: JsonEditorSettings,
   });
+  //BMC Change: Starts.
+  if (dashboard.uid && getFeatureStatus('bhd-localization') && (contextSrv.isEditor || contextSrv.hasRole('Admin'))) {
+    pages.push({
+      title: t('bmc.manage-locales.localization-title', 'Localization'),
+      id: 'localization',
+      icon: 'globe', // For the time , we will decide another icon later.
+      component: LocaleSettings,
+    });
+  }
+  //BMC Change: Ends.
 
   return pages;
 }

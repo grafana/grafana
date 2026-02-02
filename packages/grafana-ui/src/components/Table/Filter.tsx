@@ -50,6 +50,7 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
               setSearchFilter={setSearchFilter}
               operator={operator}
               setOperator={setOperator}
+              triggerRef={ref} // BMC Accessibility change: Pass trigger ref to enable focus return on dialog close
             />
           }
           placement="bottom-start"

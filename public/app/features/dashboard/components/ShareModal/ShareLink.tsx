@@ -85,7 +85,8 @@ export class ShareLink extends PureComponent<Props, State> {
   render() {
     const { panel, dashboard } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
-    const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
+    // BMC code - inline change
+    const { useCurrentTimeRange, selectedTheme, shareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.id);
 
@@ -96,7 +97,12 @@ export class ShareLink extends PureComponent<Props, State> {
       `Transforms the current relative time range to an absolute time range`
     );
 
-    const shortenURLTranslation = t('share-modal.link.shorten-url', `Shorten URL`);
+    // BMC code
+    // const shortenURLTranslation = t({
+    //   id: 'share-modal.link.shorten-url',
+    //   message: `Shorten URL`,
+    // });
+    // End
 
     const linkURLTranslation = t('share-modal.link.link-url', `Link URL`);
 
@@ -116,9 +122,13 @@ export class ShareLink extends PureComponent<Props, State> {
             />
           </Field>
           <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
+          {/* BMC code */}
+          {/*
+          // Hide this field
           <Field label={shortenURLTranslation}>
             <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
-          </Field>
+          </Field> */}
+          {/* End */}
 
           <Field label={linkURLTranslation}>
             <Input

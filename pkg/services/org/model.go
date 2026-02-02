@@ -21,7 +21,8 @@ var (
 )
 
 type Org struct {
-	ID      int64 `xorm:"pk autoincr 'id'"`
+	// BMC code change: Next line, to accomodate tenant / org 0
+	ID      int64 `xorm:"pk 'id'"`
 	Version int
 	Name    string
 
@@ -54,6 +55,10 @@ const (
 )
 
 type CreateOrgCommand struct {
+	// BMC code
+	// Added Abhishek_06082020, Extended Create Org API to additionally accept Orgid as optional input parameter
+	ID int64 `json:"id"`
+	// End
 	Name string `json:"name" binding:"Required"`
 
 	// initial admin user for account

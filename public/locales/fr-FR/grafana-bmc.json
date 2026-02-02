@@ -1,0 +1,2428 @@
+{
+  "_comment": "Ne modifiez pas manuellement ce fichier ou ne mettez pas à jour ces phrases sources dans Crowdin. La source de vérité des chaînes anglaises se trouve dans le code source",
+  "bmc": {
+    "bulk-operations": {
+      "datsource-not-found": "Aucune source de données de type {{pluginName}} n’a été trouvée",
+      "import": {
+        "import-all-failed": "Impossible d’importer tous les tableaux de bord",
+        "no-import": "Aucun tableau de bord importé"
+      },
+      "import-all": "Tout importer",
+      "import-failed": "Impossible d’importer les tableaux de bord suivants",
+      "import-success": "Tous les tableaux de bord ont été importés avec succès",
+      "select-datasource": "Sélectionner une source de données {{pluginName}}",
+      "set-parameters": "définir les paramètres obligatoires pour les tableaux de bord sélectionnés",
+      "specify-constant": "Spécifiez une constante de chaîne"
+    },
+    "calc-fields": {
+      "a-z": "A-Z",
+      "aggregated": "Agrégées",
+      "all": "Tout",
+      "clone": "Cloner",
+      "confirm-delete": "Voulez-vous supprimer les champs calculés sélectionnés ?",
+      "connection-error": "La connectivité à BMC Helix ITSM n’est pas configurée.",
+      "custom": "Personnalisé",
+      "delete": "Supprimer",
+      "details": "Détails du champ calculé",
+      "edit": "Modifier",
+      "edit-field": "Modifier le champ calculé",
+      "eg": "par ex.",
+      "failed": "Impossible de récupérer les champs calculés",
+      "failure": "Échec",
+      "filter-by-type": "Filtrer par type (par défaut Tous)",
+      "form-name": "Nom du formulaire",
+      "is-aggregate": "Agréger",
+      "is-aggregate-description": "Activez cette option si votre requête inclut des fonctions d’agrégation.",
+      "module": "Module",
+      "module-name": "Nom du module",
+      "name": "Nom",
+      "name-placeholder": "Entrer le nom du champ calculé",
+      "new-field": "Nouveau champ calculé",
+      "no-calc-fields": "Vous n’avez pas encore créé de champs calculés.",
+      "not-found": "Aucun champ calculé correspondant à votre requête n’a été trouvé.",
+      "ootb": "Clés en main",
+      "query-info": "La requête doit être une requête à colonne unique",
+      "query-not-validated": "Requête non validée",
+      "save": "Enregistrer",
+      "search-by-name": "Rechercher les champs calculés par nom",
+      "select-form": "Sélectionner un formulaire",
+      "select-module": "Sélectionner un module",
+      "sort-asc": "Alphabétique (A-Z)",
+      "sort-asc-descripton": "Trier les résultats par ordre alphabétique croissant",
+      "sort-dsc": "Alphabétique (Z-A)",
+      "sort-dsc-descripton": "Trier les résultats par ordre alphabétique décroissant",
+      "sort-placeholder": "Trier (par défaut {{label}})",
+      "sql-query": "Requête SQL",
+      "subtitle": "Créer et gérer des champs calculés pour le service ITSM",
+      "title": "Champs calculés",
+      "unknown-failure": "Erreur inconnue",
+      "update": "Mettre à jour",
+      "validate": "Valider",
+      "validation-success": "Requête validée avec succès"
+    },
+    "common": {
+      "cancel": "Annuler",
+      "dashboards": "Tableaux de bord",
+      "delete": "Supprimer",
+      "download": "Télécharger",
+      "edit": "Modifier",
+      "loading": "Chargement...",
+      "name": "Nom",
+      "save": "Enregistrer",
+      "type": "Type"
+    },
+    "content-localization": "Code de langue non valide : {{langCode}}",
+    "dashboard": {
+      "toolbar": {
+        "manage-reports": "Gérer les rapports planifiés",
+        "reset-filters": "Réinitialiser les filtres",
+        "reset-filters-failure": "Impossible de réinitialiser les valeurs du filtre.",
+        "save-filters": "Enregistrer les filtres",
+        "save-filters-failure": "Impossible d’enregistrer les valeurs du filtre.",
+        "save-filters-success": "Les valeurs du filtre ont été enregistrées avec succès."
+      }
+    },
+    "dashboard-import": {
+      "import-text": "Importer",
+      "options": "Options",
+      "overwrite": "Remplacer",
+      "panel-import": "Importation de volet",
+      "panel-import-alert": "L’importation comporte un volet {{vqb}}. Veuillez le réexporter depuis l’environnement souhaité, sinon une intervention manuelle sera requise pour sélectionner la vue.",
+      "sub-title": "Importer le tableau de bord depuis un fichier ou via le fichier json du tableau de bord",
+      "title": "Importer le tableau de bord"
+    },
+    "dashboard-settings": {
+      "general": {
+        "multilingual-pdf": "PDF multilingue",
+        "multilingual-pdf-description": "Activer la génération de PDF multilingues pour des rapports PDF à mise en page simple"
+      }
+    },
+    "date-picker": {
+      "description": "Définissez une variable de plage de dates qui permette aux utilisateurs de sélectionner n’importe quelle plage de dates",
+      "name": "Plage de dates"
+    },
+    "explore": {
+      "total-result-count-aria-live": "{{ count }} requêtes chargées"
+    },
+    "export": {
+      "csvdelimiter": "Délimiteur",
+      "fail": "Échec de l’exportation :",
+      "field-enclosure": "Boîtier du champ",
+      "generation-failed": "Impossible de générer le rapport. Réessayez plus tard",
+      "grid": "Grille",
+      "hide-header": "Masquer l'en-tête",
+      "landscape": "Paysage",
+      "layout": "Disposition",
+      "newline": "Nouveau format de ligne",
+      "orientation": "Orientation",
+      "portrait": "Portrait",
+      "reduce-selection": "Réduisez les valeurs des variables sélectionnées pour {{variableQuery}} et réessayez plus tard",
+      "save-as": "Enregistrer {{target}} comme {{type}}",
+      "simple": "Simple",
+      "success": "Rapport généré avec succès",
+      "successful": "Exportation réussie :",
+      "tableScaling": "Mise à l’échelle du tableau",
+      "type": "Type",
+      "view": "Affichage"
+    },
+    "features-list": {
+      "date-function-resolution-for-service-management": "Résolution des fonctions de date pour Gestion des services",
+      "enable-ootb-views-for-visual-query-builder": "Activer les vues clés en main OOTB pour Visual Query Builder",
+      "export-complete-table-in-pdf": "Exporter le tableau complet au format PDF",
+      "skip-ootb-dashboards-during-upgrade": "Ignorer les tableaux de bord clés en main OOTB pendant la mise à niveau",
+      "skip-ootb-dashboards-during-upgrade-confirm-dialog": {
+        "confirm-button": "Activer",
+        "desc": "Supprimer les dossiers des tableaux de bord clés en main non nécessaires avant d’activer cette fonction",
+        "title": "Activer/désactiver la fonction"
+      },
+      "snapshot": "Instantané"
+    },
+    "load-blank-dashoard": {
+      "loading-label": "Chargement...",
+      "no-data": "Aucune donnée",
+      "refresh-label": "Actualiser le tableau de bord pour récupérer les données"
+    },
+    "manage-dashboards": {
+      "drop-click": "Glissez-déposez ici ou cliquez pour parcourir",
+      "import-failed": "Échec de l’importation",
+      "serialization-failed": "JSON -> Échec de la sérialisation JS",
+      "upload-json": "Télécharger les fichiers JSON du tableau de bord"
+    },
+    "manage-locales": {
+      "cancel": "Annuler",
+      "dashboards": {
+        "add": "Ajouter",
+        "add-key": "Ajouter une nouvelle clé",
+        "dashboard-name": "Nom du tableau de bord",
+        "enter-key": "Saisir une clé",
+        "enter-value": "Saisir une valeur",
+        "key-text": "Clé",
+        "key-validation": "Seuls les caractères alphanumériques sont autorisés",
+        "no-empty-key": "La clé ne peut pas être vide",
+        "validation": {
+          "default-value-required": "La valeur par défaut est requise",
+          "key-required": "La clé est requise"
+        },
+        "value-text": "Valeur"
+      },
+      "export": "Exporter",
+      "folders": {
+        "folder-title": "Titre du dossier"
+      },
+      "global": {
+        "subtitle": "Créer et gérer des clés globales pour la localisation",
+        "title": "Gestion de la localisation"
+      },
+      "global-keys-text": "Clés globales",
+      "import": "Importer",
+      "local-keys-text": "Clés locales",
+      "localization-title": "Localisation",
+      "new-key": "Nouvelle clé",
+      "save": "Enregistrer",
+      "search-keys": "Recherche de clés…",
+      "title": "Gérer les paramètres régionaux"
+    },
+    "nav": {
+      "apps": {
+        "insight-finder": {
+          "configure-views": "Configurer les vues",
+          "home": "Insight Finder",
+          "settings": "Paramètres"
+        },
+        "reports": {
+          "history": "Historique",
+          "manage-ownership": "Gérer l’appartenance",
+          "settings": "Paramètres"
+        }
+      },
+      "reports-scheduler": "Planification de rapports",
+      "rms": {
+        "subtitle": "Application permettant de créer et de modifier des vues pour Visual Query Builder",
+        "title": "Reporting Metadata Studio"
+      },
+      "roles": {
+        "subtitle": "Gérer les rôles dans une organisation",
+        "title": "Rôles"
+      }
+    },
+    "notification": {
+      "error": {
+        "bhd-00004": "Impossible de récupérer les champs calculés",
+        "bhd-00005": "Impossible de créer le champ calculé",
+        "bhd-00006": "Impossible de supprimer le champ calculé",
+        "bhd-00007": "Impossible de modifier le champ calculé",
+        "bhd-00008": "Impossible de mettre à jour les tableaux de bord",
+        "bhd-00009": "Impossible de supprimer le champ du ou des tableaux de bord",
+        "bhd-00010": "Données utiles de la demande incorrectes lors de la création d’un champ calculé",
+        "bhd-00011": "Données utiles de la demande incorrectes lors de la suppression du champ calculé",
+        "bhd-00012": "Données utiles de la demande incorrectes lors de la modification du champ calculé",
+        "bhd-00013": "Le nom du champ calculé est déjà pris. Veuillez renseigner un autre nom.",
+        "bhd-00102": "Données de la demande erronées lors de la définition des informations utilisateur IMS",
+        "bhd-00103": "Données de la demande erronées lors de la mise à jour des préférences de l’utilisateur",
+        "bhd-00104": "Données de la demande erronées lors de mise à jour des préférences de l’entreprise",
+        "bhd-00105": "Échec de l’analyse du corps",
+        "bhd-00106": "Thème non valide lors de la mise à jour des préférences",
+        "bhd-00107": "Tableau de bord introuvable",
+        "bhd-00108": "Erreur interne du serveur",
+        "bhd-00109": "Impossible d’obtenir les préférences",
+        "bhd-00110": "Impossible d’enregistrer les préférences",
+        "bhd-00111": "Impossible de mettre à jour les préférences de l’utilisateur",
+        "bhd-00201": "L’identifiant n’est pas valide",
+        "bhd-00202": "Données de la demande erronées lors de la création du dossier",
+        "bhd-00203": "Données de la demande erronées lors de la mise à jour du dossier",
+        "bhd-00204": "Données de la demande erronées lors du déplacement du dossier",
+        "bhd-00205": "Données de la demande erronées lors de la mise à jour des autorisations du dossier",
+        "bhd-00206": "Les autorisations d’équipe et d’utilisateur ne peuvent pas avoir de rôle associé",
+        "bhd-00207": "Les autorisations ne peuvent pas avoir à la fois un utilisateur et une équipe",
+        "bhd-00208": "Le titre du dossier ne peut pas être vide",
+        "bhd-00209": "Le tableau de bord ne peut pas être transformé en dossier",
+        "bhd-00210": "L’UID contient des caractères interdits",
+        "bhd-00211": "L’UID est trop long : 40 caractères maximum",
+        "bhd-00212": "Le dossier n’a pas pu être supprimé, car il contient des éléments de bibliothèque en cours d’utilisation",
+        "bhd-00213": "Accès refusé",
+        "bhd-00214": "Pour utiliser ce service, vous devez activer la fonctionnalité de dossier imbriqué.",
+        "bhd-00215": "Dossier introuvable",
+        "bhd-00216": "Un dossier du même nom existe déjà à l’emplacement actuel",
+        "bhd-00217": "Un dossier/tableau de bord avec le même UID existe déjà",
+        "bhd-00218": "Le dossier a été modifié par quelqu’un d’autre",
+        "bhd-00219": "Impossible de déplacer le dossier",
+        "bhd-00220": "Une erreur est survenue avec l’API du dossier",
+        "bhd-00221": "Impossible d’obtenir les autorisations du dossier",
+        "bhd-00222": "Impossible de vérifier les autorisations du dossier",
+        "bhd-00223": "Impossible de créer les autorisations",
+        "bhd-00301": "Utilisez le point de terminaison des dossiers pour supprimer des dossiers.",
+        "bhd-00302": "L’élément dashboardId n’est pas valide",
+        "bhd-00303": "Données de la demande erronées lors de la restauration de la version du tableau de bord",
+        "bhd-00304": "Données de la demande erronées lors de la restauration du tableau de bord supprimé",
+        "bhd-00305": "Données de la demande erronées lors du calcul de la différence du tableau de bord",
+        "bhd-00306": "Données de la demande erronées lors de la création ou de la mise à jour du tableau de bord",
+        "bhd-00307": "Utilisez le point de terminaison des dossiers pour enregistrer les dossiers.",
+        "bhd-00308": "Le tableau de bord provisionné ne peut pas être supprimé",
+        "bhd-00309": "Quota atteint",
+        "bhd-00310": "Accès refusé à ce tableau de bord",
+        "bhd-00311": "Tableau de bord introuvable",
+        "bhd-00312": "Dossier introuvable",
+        "bhd-00313": "Version du tableau de bord introuvable",
+        "bhd-00314": "Erreur lors de la récupération des tableaux de bord publics",
+        "bhd-00315": "Erreur lors du chargement du tableau de bord : les données du tableau de bord ne sont pas valides",
+        "bhd-00316": "Erreur lors de la vérification si le tableau de bord a été marqué d’une étoile par l’utilisateur",
+        "bhd-00317": "Impossible de lire le dossier du tableau de bord",
+        "bhd-00318": "Erreur lors de la vérification si le tableau de bord est provisionné",
+        "bhd-00319": "Impossible de supprimer le tableau de bord",
+        "bhd-00320": "Impossible d’obtenir le quota",
+        "bhd-00321": "Impossible de calculer la différence",
+        "bhd-00322": "Erreur lors de la connexion aux volets de la bibliothèque",
+        "bhd-00323": "Impossible de mettre à jour les autorisations",
+        "bhd-00324": "Erreur lors de la vérification des autorisations du tableau de bord",
+        "bhd-00325": "Impossible d’obtenir les autorisations du tableau de bord",
+        "bhd-00326": "Impossible d’obtenir les préférences",
+        "bhd-00327": "Impossible de charger la page d’accueil du tableau de bord",
+        "bhd-00328": "Impossible de restaurer le tableau de bord",
+        "bhd-00331": "Données de la demande erronées lors de la mise à jour des autorisations du tableau de bord",
+        "bhd-00401": "Données de la demande erronées lors de la création d’un nouvel élément de bibliothèque",
+        "bhd-00402": "Données de la demande erronées lors de la mise à jour d’un élément de bibliothèque existant",
+        "bhd-00403": "Autorisations insuffisantes pour accéder au volet de la bibliothèque",
+        "bhd-00404": "Impossible d’obtenir le dossier",
+        "bhd-00405": "Impossible de créer l’élément de bibliothèque",
+        "bhd-00406": "Impossible de supprimer l’élément de bibliothèque",
+        "bhd-00407": "Impossible d’évaluer les autorisations",
+        "bhd-00408": "Impossible d’obtenir les éléments de bibliothèque",
+        "bhd-00409": "Impossible d’obtenir l’élément de bibliothèque",
+        "bhd-00410": "Impossible d’évaluer les autorisations du volet de la bibliothèque",
+        "bhd-00411": "Impossible d’obtenir les connexions",
+        "bhd-00412": "Impossible de mettre à jour l’élément de bibliothèque",
+        "bhd-00414": "L’élément de bibliothèque portant ce nom ou cet UID existe déjà",
+        "bhd-00415": "L’élément de bibliothèque n’a pas pu être trouvé",
+        "bhd-00416": "La connexion à l’élément de bibliothèque n’a pas pu être trouvée",
+        "bhd-00417": "Dossier introuvable",
+        "bhd-00418": "L’élément de bibliothèque a été modifié par quelqu’un d’autre",
+        "bhd-00419": "Accès refusé au dossier",
+        "bhd-00420": "L’élément de bibliothèque a des connexions",
+        "bhd-00421": "L’UID contient des caractères interdits",
+        "bhd-00422": "L’UID est trop long : 40 caractères maximum",
+        "bhd-00501": "L’élément OrgID ne correspond pas",
+        "bhd-00502": "Accès refusé à cet instantané",
+        "bhd-00503": "La clé de l’instantané est vide",
+        "bhd-00504": "Instantané du tableau de bord introuvable",
+        "bhd-00505": "Instantané introuvable",
+        "bhd-00506": "Impossible d’obtenir l’instantané du tableau de bord",
+        "bhd-00507": "Impossible de supprimer l’instantané du tableau de bord",
+        "bhd-00508": "Impossible de supprimer le tableau de bord externe",
+        "bhd-00509": "Erreur lors de la vérification des autorisations pour l’instantané",
+        "bhd-00510": "La recherche a échoué",
+        "bhd-00601": "Introuvable",
+        "bhd-00602": "Erreur interne du serveur",
+        "bhd-00604": "Non autorisé – l’ancien jeton est vide",
+        "bhd-00605": "Échec de l’authentification",
+        "bhd-00606": "Non autorisé",
+        "bhd-00701": "userId n’est pas valide",
+        "bhd-00702": "Nom de l’organisation pris",
+        "bhd-00703": "données de demande incorrectes",
+        "bhd-00704": "données de demande incorrectes lors de la mise à jour de l’organisation actuelle",
+        "bhd-00705": "données de demande incorrectes lors de la mise à jour de l’adresse de l’organisation actuelle",
+        "bhd-00706": "données de demande incorrectes lors de l’ajout d’un nouvel utilisateur à l’organisation actuelle",
+        "bhd-00707": "données de demande incorrectes lors de la mise à jour des utilisateurs de l’organisation",
+        "bhd-00708": "données de demande incorrectes lors de la mise à jour de l’organisation",
+        "bhd-00709": "données de demande incorrectes lors de la mise à jour de l’adresse de l’organisation",
+        "bhd-00710": "données de demande incorrectes lors de la création de l’organisation",
+        "bhd-00711": "données de demande incorrectes lors de la mise à jour d’un utilisateur donné",
+        "bhd-00712": "données de demande incorrectes lors de l’ajout d’une invitation à l’organisation",
+        "bhd-00713": "données de demande incorrectes lors de l’ajout d’une configuration personnalisée",
+        "bhd-00714": "Rôle non valide spécifié",
+        "bhd-00715": "orgId est non valide",
+        "bhd-00716": "Impossible de modifier le rôle afin qu’il ne reste plus aucun administrateur de l’organisation",
+        "bhd-00717": "Impossible de retirer le dernier administrateur de l’organisation",
+        "bhd-00718": "Impossible de supprimer l’organisation pour l’utilisateur actuel",
+        "bhd-00719": "Impossible d’inviter un utilisateur externe lorsque la connexion est désactivée.",
+        "bhd-00720": "URL non valide",
+        "bhd-00721": "Impossible d’attribuer un rôle plus élevé que le rôle de l’utilisateur",
+        "bhd-00722": "Seuls les utilisateurs peuvent créer des organisations",
+        "bhd-00723": "Autorisation refusée : vous n’êtes pas autorisé à ajouter un utilisateur existant à cette organisation",
+        "bhd-00724": "Organisation introuvable",
+        "bhd-00725": "Utilisateur introuvable",
+        "bhd-00726": "Échec de la suppression de l’organisation. ID introuvable",
+        "bhd-00727": "L’utilisateur est déjà un membre de cette organisation",
+        "bhd-00728": "Échec de la récupération de l’organisation",
+        "bhd-00729": "échec de la récupération du quota",
+        "bhd-00730": "Échec de la mise à jour de l’organisation",
+        "bhd-00731": "Échec de la mise à jour de l’adresse de l’organisation",
+        "bhd-00732": "Échec de la récupération des utilisateurs pour l’organisation actuelle",
+        "bhd-00733": "Impossible d’ajouter l’utilisateur à l’organisation",
+        "bhd-00734": "Échec de la récupération des utilisateurs pour l’organisation",
+        "bhd-00735": "Échec de la récupération des informations d’authentification de l’utilisateur",
+        "bhd-00736": "Échec de la mise à jour de l’utilisateur de l’organisation",
+        "bhd-00737": "Échec de la suppression de l’utilisateur de l’organisation",
+        "bhd-00738": "Échec de la mise à jour des quotas de l’organisation",
+        "bhd-00739": "Échec de la recherche des organisations",
+        "bhd-00740": "Échec de l’analyse de l’ID utilisateur",
+        "bhd-00741": "Échec de la récupération des invitations depuis la base de données",
+        "bhd-00742": "Échec de la consultation de la base de données pour vérifier l’existence d’un utilisateur",
+        "bhd-00743": "Impossible d’évaluer les autorisations",
+        "bhd-00744": "Impossible de générer une chaîne aléatoire",
+        "bhd-00745": "Échec de l’enregistrement de l’invitation dans la base de données",
+        "bhd-00746": "Échec de l’envoi d’une invitation par e-mail",
+        "bhd-00747": "Échec de la mise à jour de l’invitation avec les informations envoyées par e-mail",
+        "bhd-00748": "Échec de la mise à jour du statut de l’invitation",
+        "bhd-00761": "Erreur lors de la création de l’utilisateur de l’organisation",
+        "bhd-00762": "Échec de l’envoi d’un e-mail invited_to_org",
+        "bhd-00763": "SMTP non configuré, vérifiez la section [smtp] de votre fichier de configuration grafana.ini.",
+        "bhd-00764": "Échec de la création de l’organisation",
+        "bhd-00765": "données de demande incorrectes lors de l’ajout d’un nouvel utilisateur à l’organisation actuelle",
+        "bhd-00801": "« action » et « actionPrefix » sont des options mutuellement exclusives",
+        "bhd-00802": "au moins une option doit être fournie",
+        "bhd-00803": "namespacedId non valide",
+        "bhd-00804": "impossible de récupérer les autorisations de l’utilisateur de l’organisation",
+        "bhd-00805": "Échec de la récupération des autorisations",
+        "bhd-00806": "données de demande incorrectes : ",
+        "bhd-00807": "données de demande incorrectes lors de la configuration des autorisations de ressources pour un utilisateur",
+        "bhd-00808": "données de demande incorrectes lors de la configuration des autorisations de ressources pour une équipe",
+        "bhd-00809": "données de demande incorrectes lors de la configuration des autorisations de ressources pour un rôle intégré",
+        "bhd-00901": "données de demande incorrectes lors de la création d’une source de données",
+        "bhd-00902": "données de demande incorrectes lors de la mise à jour d’une source de données existante par son ID séquentiel",
+        "bhd-00903": "données de demande incorrectes lors de la mise à jour d’une source de données existante",
+        "bhd-00904": "Échec de l’ajout d’une source de données",
+        "bhd-00905": "L’identifiant n’est pas valide",
+        "bhd-00906": "ID de source de données valide manquant",
+        "bhd-00907": "Erreur de validation, URL non valide",
+        "bhd-00908": "L’UID n’est pas valide",
+        "bhd-00909": "UID de la source de données manquant",
+        "bhd-00910": "Nom de la source de données valide manquant",
+        "bhd-00911": "ID de la source de données manquant",
+        "bhd-00912": "Source de données introuvable",
+        "bhd-00913": "Vous ne disposez pas des autorisations nécessaires pour mettre à jour la source de données",
+        "bhd-00914": "Vous aurez besoin d’autorisations supplémentaires pour effectuer cette action. Autorisations nécessaires : datasources.permissions:write",
+        "bhd-00915": "Impossible de mettre à jour la source de données en lecture seule",
+        "bhd-00916": "Impossible de supprimer la source de données en lecture seule",
+        "bhd-00917": "Vous ne disposez pas des autorisations nécessaires pour supprimer la source de données",
+        "bhd-00918": "Accès à la source de données refusé",
+        "bhd-00919": "Accès refusé",
+        "bhd-00920": "La source de données a déjà été mise à jour par quelqu’un d’autre. Veuillez actualiser et réessayer",
+        "bhd-00921": "Échec de la consultation des sources de données",
+        "bhd-00922": "Échec de la consultation de la source de données",
+        "bhd-00923": "Échec de l’ajout d’une source de données : ",
+        "bhd-00924": "Échec de la suppression de la source de données : ",
+        "bhd-00925": "Échec de l’ajout d’une source de données",
+        "bhd-00926": "Échec de la mise à jour de la source de données",
+        "bhd-00927": "Échec de la mise à jour de la source de données : ",
+        "bhd-00928": "Échec de la suppression de la source de données :",
+        "bhd-00929": "Impossible de charger les métadonnées de la source de données",
+        "bhd-00930": "Impossible de récupérer le contexte du plug-in",
+        "bhd-00931": "Échec de la demande du plug-in",
+        "bhd-00932": "Échec de la désérialisation de la réponse détaillée du plug-in dorsal",
+        "bhd-00936": "données de demande incorrectes lors de l’ajout de la corrélation",
+        "bhd-00937": "Au moins un intitulé, une description ou une configuration est obligatoire",
+        "bhd-00938": "données de demande incorrectes lors de la mise à jour d’une corrélation",
+        "bhd-00939": "La corrélation ne peut être uniquement modifiée via l’approvisionnement",
+        "bhd-00940": "Aucune corrélation trouvée",
+        "bhd-00941": "Source de la source de données introuvable",
+        "bhd-00942": "Corrélation introuvable",
+        "bhd-00943": "Échec de la récupération des corrélations",
+        "bhd-00944": "Échec de l’ajout d’une corrélation",
+        "bhd-00945": "Échec de la récupération de la corrélation",
+        "bhd-00946": "Échec de la suppression de la corrélation",
+        "bhd-00947": "Échec de la mise à jour de la corrélation",
+        "bhd-01001": "données de demande incorrectes lors de l’ajout d’une nouvelle requête à l’historique des requêtes",
+        "bhd-01002": "données de demande incorrectes lors de la mise à jour des commentaires pour la requête dans l’historique des requêtes",
+        "bhd-01003": "Requête dans l’historique des requêtes introuvable",
+        "bhd-01004": "Échec de la création d’un historique des requêtes",
+        "bhd-01005": "Échec de la récupération de l’historique des requêtes",
+        "bhd-01006": "Échec de la suppression de la requête de l’historique des requêtes",
+        "bhd-01007": "Échec de l’ajout d’une requête aux favoris dans l’historique des requêtes",
+        "bhd-01008": "Échec de la suppression des favoris d’une requête dans l’historique des requêtes",
+        "bhd-01009": "Échec de la mise à jour du commentaire de la requête dans l’historique des requêtes",
+        "bhd-01011": "Échec de la suppression de l’historique des requêtes",
+        "bhd-01012": "Échec de l’ajout de l’historique des requêtes aux favoris",
+        "bhd-01013": "Échec de la suppression des favoris de l’historique des requêtes",
+        "bhd-01014": "Échec de la mise à jour du commentaire de la requête dans l’historique des requêtes",
+        "bhd-01101": "données de demande incorrectes lors de l’installation du plug-in",
+        "bhd-01102": "données de demande incorrectes lors de la mise à jour de la configuration du plug-in",
+        "bhd-01103": "Accès refusé",
+        "bhd-01104": "Impossible d’installer ou de changer un plug-in principal",
+        "bhd-01105": "Impossible de désinstaller un plug-in principal",
+        "bhd-01106": "Plug-in introuvable, aucun Plug-in installé avec cet ID",
+        "bhd-01107": "Plug-in non installé",
+        "bhd-01108": "le fichier n’existe pas",
+        "bhd-01109": "Plug-in déjà installé",
+        "bhd-01110": "Échec de la récupération de la liste des plug-ins",
+        "bhd-01111": "Impossible d’obtenir le fichier de démarquage",
+        "bhd-01112": "Échec de la récupération des paramètres du plug-in",
+        "bhd-01113": "Échec de la désérialisation de la réponse détaillée du plug-in dorsal",
+        "bhd-01114": "Échec de l’installation du plug-in",
+        "bhd-01115": "Échec de la désinstallation du plug-in",
+        "bhd-01116": "Échec de la récupération des tableaux de bord du plug-in",
+        "bhd-01117": "Échec de la mise à jour des paramètres du plug-in",
+        "bhd-01201": "données de demande incorrectes lors de la suppression de plusieurs annotations",
+        "bhd-01202": "données de demande incorrectes lors de la création d’une annotation",
+        "bhd-01203": "données de demande incorrectes lors de la mise à jour d’une annotation",
+        "bhd-01204": "données de demande incorrectes lors de la création d’une annotation au format Graphite",
+        "bhd-01205": "annotationId n’est pas valide",
+        "bhd-01206": "Échec de l’enregistrement de l’annotation Graphite",
+        "bhd-01207": "UID du tableau de bord non valide dans la demande d’annotation",
+        "bhd-01208": "Accès refusé pour supprimer en masse les annotations",
+        "bhd-01209": "Accès refusé pour enregistrer l’annotation",
+        "bhd-01210": "Annotation introuvable",
+        "bhd-01211": "Erreur lors de la vérification des autorisations d’annotation",
+        "bhd-01212": "Échec de la suppression des annotations",
+        "bhd-01213": "Échec de la suppression de l’annotation",
+        "bhd-01214": "Échec de l’enregistrement de l’annotation",
+        "bhd-01215": "Échec de la mise à jour de l’annotation",
+        "bhd-01216": "Impossible de trouver les balises d’annotation",
+        "bhd-01217": "Impossible de trouver l’annotation",
+        "bhd-01218": "Échec de récupération des annotations",
+        "bhd-01219": "Annotations supprimées",
+        "bhd-01301": "données de demande incorrectes",
+        "bhd-01302": "opération non valide",
+        "bhd-01303": "valeur et son type non valides",
+        "bhd-01304": "Corps de demande non valide",
+        "bhd-01305": "Format JSON non valide",
+        "bhd-01306": "ID utilisateur non valide",
+        "bhd-01307": "Nom du rôle manquant",
+        "bhd-01308": "Vous ne pouvez pas mettre à jour le rôle du système.",
+        "bhd-01309": "Vous ne pouvez pas supprimer le rôle du système.",
+        "bhd-01310": "Ce rôle est associé à des utilisateurs. Avant de supprimer ce rôle, supprimez toutes les associations.",
+        "bhd-01311": "Ce rôle est associé à des équipes. Avant de supprimer ce rôle, supprimez toutes les associations.",
+        "bhd-01312": "ID du rôle non valide",
+        "bhd-01313": "Échec de la validation de l’ID du rôle",
+        "bhd-01314": "ID du rôle non valide",
+        "bhd-01315": "Données utiles non valides",
+        "bhd-01316": "userId n’est pas valide",
+        "bhd-01317": "ID utilisateur non valide",
+        "bhd-01318": "teamId non valide",
+        "bhd-01319": "L’équipe n’existe pas.",
+        "bhd-01320": "L’utilisateur n’a pas assez d’autorisations.",
+        "bhd-01321": "IMS_JWT non valide",
+        "bhd-01322": "En-tête d’autorisation manquant ou vide",
+        "bhd-01323": "IMS_JWT non valide ou incorrect",
+        "bhd-01324": "Aucun rôle attribué à l’utilisateur.",
+        "bhd-01325": "Ce rôle n’a pas l’autorisation de récupérer les tableaux de bord.",
+        "bhd-01326": "Accès non autorisé »",
+        "bhd-01327": "Rôle introuvable",
+        "bhd-01328": "Le nom du rôle créé existe déjà.",
+        "bhd-01329": "Échec de la récupération des tableaux de bord",
+        "bhd-01330": "Échec de la récupération de la liste de vues",
+        "bhd-01331": "Échec de la récupération des données personnalisées",
+        "bhd-01332": "Échec de la suppression des données personnalisées",
+        "bhd-01334": "Erreur lors de la vérification des autorisations",
+        "bhd-01335": "Échec de la récupération des rôles.",
+        "bhd-01336": "Erreur lors de création d’une requête de tableau de bord pour l’administrateur",
+        "bhd-01337": "Erreur lors de création d’une requête de tableau de bord",
+        "bhd-01338": "Erreur interne du serveur",
+        "bhd-01339": "Échec de la récupération du rôle",
+        "bhd-01340": "Échec de la mise à jour du rôle",
+        "bhd-01341": "Échec de la suppression du rôle",
+        "bhd-01342": "Échec de la recherche des rôles",
+        "bhd-01343": "Échec de la mise à jour du rôle des utilisateurs",
+        "bhd-01344": "Échec de la mise à jour du rôle des équipes",
+        "bhd-01345": "Échec de la récupération de la liste des autorisations",
+        "bhd-01346": "Échec de la mise à jour de la liste des autorisations",
+        "bhd-01347": "Échec de la recherche des utilisateurs",
+        "bhd-01348": "Échec de l’ajout du mappage d’un rôle d’utilisateur.",
+        "bhd-01349": "Échec de la suppression du mappage d’un rôle d’utilisateur.",
+        "bhd-01350": "Échec de l’ajout d’un rôle d’une équipe",
+        "bhd-01351": "Échec de la suppression d’un rôle d’une équipe",
+        "bhd-01352": "erreur inattendue",
+        "bhd-01364": "Enregistrement introuvable",
+        "bhd-01365": "Échec de la création du rôle",
+        "bhd-01366": "Échec de la recherche des équipes",
+        "bhd-01367": "ID de l’équipe non valide",
+        "bhd-01401": "données de demande incorrectes lors de la mise à jour de la liste de lecture",
+        "bhd-01402": "données de demande incorrectes lors de la création de la liste de lecture",
+        "bhd-01403": "La recherche a échoué",
+        "bhd-01404": "Liste de lecture introuvable",
+        "bhd-01405": "Échec de la suppression de la liste de lecture",
+        "bhd-01406": "Échec de l’enregistrement de la liste de lecture",
+        "bhd-01407": "Échec du chargement de la liste de lecture",
+        "bhd-01408": "Échec de la création de la liste de lecture",
+        "bhd-01501": "ID non valide",
+        "bhd-01502": "données de demande incorrectes",
+        "bhd-01503": "ID de tâche non valide",
+        "bhd-01504": "données de demande incorrectes lors de la création d’un rapport",
+        "bhd-01505": "Des destinataires sont obligatoires",
+        "bhd-01506": "Échec de la restriction du domaine",
+        "bhd-01507": "Expression cron non valide",
+        "bhd-01508": "données de demande incorrectes lors de la mise à jour du rapport",
+        "bhd-01509": "ID du rapport non valide",
+        "bhd-01510": "La restriction aux domaines internes a échoué",
+        "bhd-01511": "Aucun rapport à supprimer",
+        "bhd-01512": "données utiles de la demande incorrectes lors de la configuration des paramètres FTP",
+        "bhd-01513": "données utiles de la demande incorrectes lors de la modification des configurations FTP",
+        "bhd-01514": "données utiles de la demande incorrectes lors de la configuration des paramètres FTP par défaut",
+        "bhd-01515": "données de demande incorrectes lors de l’envoi de l’e-mail",
+        "bhd-01516": "données de demande incorrectes lors de l’exécution d’un rapport",
+        "bhd-01517": "L’ID n’est pas spécifié",
+        "bhd-01518": "données de demande incorrectes lors de la désactivation du planificateur de rapports",
+        "bhd-01519": "la liste du planificateur de rapports est vide",
+        "bhd-01520": "un planificateur de rapports du même nom existe déjà",
+        "bhd-01521": "veuillez remplir les données obligatoires",
+        "bhd-01522": "impossible de modifier le tableau de bord pour le planificateur de rapports existant",
+        "bhd-01523": "détails du locataire du rapport introuvable",
+        "bhd-01524": "données de demande incorrectes lors de la configuration des paramètres du rapport de la charte graphique",
+        "bhd-01525": "Image de logo non valide. Uniquement les extensions suivantes sont autorisées : .png, .jpg, .jpeg",
+        "bhd-01526": "URL de l’image non valide. Uniquement les extensions suivantes sont autorisées : .png, .jpg, .jpeg",
+        "bhd-01527": "URL du logo non valide",
+        "bhd-01528": "URL de pied de page non valide",
+        "bhd-01529": "données de demande incorrectes lors de la mise à jour ou de la création des détails du locataire",
+        "bhd-01530": "Le rapport n’est pas dans le stockage",
+        "bhd-01531": "Le fichier n’est pas disponible dans le stockage",
+        "bhd-01532": "Certains destinataires ne sont pas des utilisateurs internes",
+        "bhd-01533": "le planificateur de rapports n’existe pas",
+        "bhd-01534": "la limite du planificateur de rapports est dépassée",
+        "bhd-01535": "Échec de la récupération de la configuration FTP précédente",
+        "bhd-01537": "données de demande incorrectes lors de la suppression du planificateur de rapports",
+        "bhd-01538": "données de demande incorrectes lors de l’activation du planificateur de rapports",
+        "bhd-01539": "Certains destinataires BCC ne sont pas des utilisateurs internes",
+        "bhd-01540": "Certains destinataires ne sont pas dans la liste blanche",
+        "bhd-01541": "Certains destinataires BCC ne sont pas dans la liste blanche",
+        "bhd-01542": "Échec de la récupération des rapports",
+        "bhd-01543": "La configuration FTP existe déjà",
+        "bhd-01544": "Échec de l’ajout de la configuration FTP",
+        "bhd-01545": "Échec de la mise à jour de la configuration FTP",
+        "bhd-01546": "données de demande incorrectes lors de l’obtention de l’aperçu",
+        "bhd-01547": "La suppression de la configuration FTP par défaut n’est pas autorisée !",
+        "bhd-01548": "FTP est utilisé dans le planificateur de rapports",
+        "bhd-01549": "Échec de la suppression de la configuration FTP",
+        "bhd-01550": "Échec de la suppression des planificateurs de rapports pour l’organisation",
+        "bhd-01551": "Échec de la désactivation des planificateurs de rapports pour l’organisation",
+        "bhd-01552": "Échec de la connexion au serveur FTP",
+        "bhd-01601": "données de demande incorrectes lors de la mise à jour d’un utilisateur connecté",
+        "bhd-01602": "Il n’est pas possible de modifier l’e-mail lorsque le proxy d’authentification utilise la propriété du courriel",
+        "bhd-01603": "Il n’est pas possible de modifier le nom d’utilisateur lorsque le proxy d’authentification utilise la propriété du nom d’utilisateur",
+        "bhd-01604": "L’adresse e-mail n’est pas valide",
+        "bhd-01605": "L’identifiant n’est pas valide",
+        "bhd-01606": "Seuls les utilisateurs et les comptes de service peuvent mettre les tableaux de bord en favoris",
+        "bhd-01607": "UID du tableau de bord non valide",
+        "bhd-01608": "orgId est non valide",
+        "bhd-01609": "Seuls les utilisateurs et les comptes de service peuvent récupérer les tableaux de bord mis en favoris",
+        "bhd-01610": "données de demande incorrectes lors de la modification du mot de passe pour l’utilisateur",
+        "bhd-01611": "données de demande incorrectes lors de la révocation du jeton d’authentification",
+        "bhd-01612": "données de demande incorrectes lors de la mise à jour de l’utilisateur",
+        "bhd-01613": "Organisation non valide",
+        "bhd-01614": "entité non autorisée à révoquer les jetons",
+        "bhd-01615": "entité non autorisée à récupérer les jetons",
+        "bhd-01616": "Point de terminaison uniquement disponible pour les utilisateurs",
+        "bhd-01617": "La mise à jour entraînerait un conflit de connexion utilisateur",
+        "bhd-01618": "Échec de l’obtention des utilisateurs",
+        "bhd-01620": "Échec de l’obtention des organisations de l’utilisateur",
+        "bhd-01621": "Échec de l’obtention des favoris de l’utilisateur",
+        "bhd-01622": "Échec de la récupération des tableaux de bord",
+        "bhd-01623": "Échec de la mise en favoris du tableau de bord",
+        "bhd-01624": "Échec de la suppression des favoris du tableau de bord",
+        "bhd-01625": "Échec du changement de mot de passe de l’utilisateur",
+        "bhd-01626": "Échec de l’obtention des quotas de l’organisation",
+        "bhd-01627": "Échec de la mise à jour de l’identifiant d’aide",
+        "bhd-01628": "Échec de la génération de la vérification par e-mail",
+        "bhd-01629": "échec de l’analyse de l’ID utilisateur",
+        "bhd-01630": "Échec de l’obtention des équipes de l’utilisateur",
+        "bhd-01631": "Échec de la mise à jour de l’utilisateur",
+        "bhd-01632": "Échec de l’analyse de l’ID utilisateur",
+        "bhd-01640": "utilisateur introuvable",
+        "bhd-01641": "Jeton d’authentification de l’utilisateur introuvable",
+        "bhd-01642": "Échec de la modification de l’organisation active",
+        "bhd-01643": "Échec de la révocation du jeton d’authentification de l’utilisateur",
+        "bhd-01644": "Échec de l’obtention du jeton d’authentification de l’utilisateur",
+        "bhd-01645": "Impossible de révoquer le jeton d’authentification de l’utilisateur actif",
+        "bhd-01701": "données de demande incorrectes lors de la création d’un nouvel utilisateur",
+        "bhd-01702": "données de demande incorrectes lors de la révocation du jeton d’authentification pour l’utilisateur",
+        "bhd-01703": "données de demande incorrectes lors de la configuration des autorisations pour l’utilisateur",
+        "bhd-01704": "données de demande incorrectes lors de la configuration du mot de passe pour l’utilisateur",
+        "bhd-01705": "Le mot de passe est manquant ou trop court",
+        "bhd-01706": "L’identifiant n’est pas valide",
+        "bhd-01707": "Vous ne pouvez pas vous déconnecter vous-même",
+        "bhd-01708": "impossible de supprimer le dernier administrateur grafana",
+        "bhd-01709": "Utilisateur introuvable",
+        "bhd-01710": "Impossible de réinitialiser le mot de passe lorsque le formulaire de connexion est désactivé",
+        "bhd-01711": "Impossible de changer le rôle de l’administrateur Grafana pour un utilisateur synchronisé en externe",
+        "bhd-01712": "Échec de l’autorisation des paramètres",
+        "bhd-01713": "L’utilisateur a un identifiant ou une adresse e-mail qui entre en conflit avec ceux d’un autre utilisateur Veuillez contacter l’administrateur serveur",
+        "bhd-01714": "Échec de l’obtention des statistiques de l’administrateur depuis la base de données",
+        "bhd-01715": "Échec de l’obtention des statistiques anonymes depuis la base de données",
+        "bhd-01716": "Échec du rechiffrement des clés de données",
+        "bhd-01717": "Échec de la rotation des clés de données",
+        "bhd-01718": "échec de la création d’un utilisateur",
+        "bhd-01719": "Impossible de lire l’utilisateur depuis la base de données",
+        "bhd-01720": "Échec de la mise à jour du mot de passe de l’utilisateur",
+        "bhd-01721": "Échec de la mise à jour des autorisations de l’utilisateur",
+        "bhd-01722": "Échec de la suppression de l’utilisateur",
+        "bhd-01723": "Impossible de désactiver l’utilisateur externe",
+        "bhd-01724": "Échec de la désactivation de l’utilisateur",
+        "bhd-01725": "Impossible d’activer l’utilisateur externe",
+        "bhd-01726": "Échec de l’activation de l’utilisateur",
+        "bhd-01727": "Échec de l’obtention des utilisateurs",
+        "bhd-01728": "Échec de l’obtention des jetons d’authentification de l’utilisateur",
+        "bhd-01729": "Échec de la déconnexion de l’utilisateur",
+        "bhd-01730": "Mot de passe de l’utilisateur mis à jour, mais impossible de révoquer les sessions de l’utilisateur",
+        "bhd-01740": "Échec de rechiffrement des secrets",
+        "bhd-01741": "Échec de la mise à jour des quotas de l’organisation",
+        "bhd-01742": "Échec de la restauration des secrets",
+        "bhd-01746": "Échec du rechargement de la configuration des plug-ins"
+      },
+      "success": {
+        "bhd-00001": "Les champs ont été modifiés",
+        "bhd-00002": "Le ou les champs ont été supprimés",
+        "bhd-00003": "Le champ a été créé",
+        "bhd-00101": "Les préférences ont été mises à jour",
+        "bhd-00224": "Le dossier a été supprimé",
+        "bhd-00225": "Les autorisations du dossier ont été mises à jour",
+        "bhd-00329": "Les autorisations du tableau de bord ont été mises à jour",
+        "bhd-00330": "Les modifications ont été diffusées à l’élément d’écoute GitOps",
+        "bhd-00413": "L’élément de bibliothèque a été supprimé",
+        "bhd-00511": "L’instantané a été supprimé La suppression des caches CDN peut prendre jusqu’à une heure.",
+        "bhd-00607": "Connecté",
+        "bhd-00749": "Organisation mise à jour",
+        "bhd-00750": "Adresse mise à jour",
+        "bhd-00751": "Utilisateur ajouté à l’organisation",
+        "bhd-00752": "Utilisateur de l’organisation mis à jour",
+        "bhd-00753": "Quota de l’organisation mis à jour",
+        "bhd-00754": "Utilisateur supprimé",
+        "bhd-00755": "Organisation supprimée",
+        "bhd-00756": "Organisation créée",
+        "bhd-00757": "Invitation révoquée",
+        "bhd-00758": "Configuration mise à jour",
+        "bhd-00759": "La configuration est définie sur les paramètres par défaut",
+        "bhd-00760": "Utilisateur supprimé de l’organisation",
+        "bhd-00810": "Autorisations mises à jour",
+        "bhd-00811": "Autorisation mise à jour",
+        "bhd-00812": "Autorisation supprimée",
+        "bhd-00933": "Source de données ajoutée",
+        "bhd-00934": "Source de données mise à jour",
+        "bhd-00935": "Source de donnée supprimée",
+        "bhd-00948": "Corrélation créée",
+        "bhd-00949": "Corrélation supprimée",
+        "bhd-00950": "Corrélation mise à jour",
+        "bhd-01010": "Requête supprimée",
+        "bhd-01118": "Paramètres du plug-in mis à jour",
+        "bhd-01220": "Annotation ajoutée",
+        "bhd-01221": "Annotation mise à jour",
+        "bhd-01222": "Annotation corrigée",
+        "bhd-01223": "Annotation Graphite ajoutée",
+        "bhd-01224": "Annotation supprimée",
+        "bhd-01353": "Pas encore implémenté",
+        "bhd-01354": "Données personnalisées supprimées",
+        "bhd-01355": "OK",
+        "bhd-01356": "Accès autorisé »",
+        "bhd-01357": "Autorisations mises à jour",
+        "bhd-01358": "Mappage du rôle d’utilisateur ajouté.",
+        "bhd-01359": "Mappage du rôle d’utilisateur supprimé pour tous les rôles.",
+        "bhd-01361": "Rôle d’équipe ajouté.",
+        "bhd-01362": "Rôle d’équipe supprimé.",
+        "bhd-01363": "Paramètre régional mis à jour avec succès",
+        "bhd-01553": "Rapport créé avec succès",
+        "bhd-01554": "Rapport mis à jour avec succès",
+        "bhd-01555": "Rapport supprimé avec succès",
+        "bhd-01556": "Rapports supprimés avec succès",
+        "bhd-01557": "Utilisateur supprimé avec succès des rapports.",
+        "bhd-01558": "Configuration FTP enregistrée avec succès",
+        "bhd-01559": "Configuration FTP mise à jour avec succès",
+        "bhd-01560": "FTP configuré par défaut",
+        "bhd-01561": "Configuration FTP supprimée avec succès",
+        "bhd-01562": "Planificateurs de rapports supprimés/désactivés avec succès.",
+        "bhd-01563": "Rapport activé avec succès",
+        "bhd-01564": "Rapports activés avec succès",
+        "bhd-01565": "Rapport désactivé avec succès",
+        "bhd-01566": "Rapports désactivés avec succès",
+        "bhd-01567": "La stratégie de marque du rapport est mise à jour avec succès.",
+        "bhd-01568": "La stratégie de marque du rapport est définie par défaut.",
+        "bhd-01569": "Mis à jour.",
+        "bhd-01570": "Supprimé.",
+        "bhd-01571": "Exécuté avec succès",
+        "bhd-01633": "Organisation active modifiée",
+        "bhd-01634": "Tableau de bord mis en favoris !",
+        "bhd-01635": "Tableau de bord supprimé des favoris",
+        "bhd-01636": "Mot de passe de l’utilisateur modifié",
+        "bhd-01637": "Identifiant d’aide défini",
+        "bhd-01638": "Utilisateur mis à jour",
+        "bhd-01639": "E-mail envoyé pour vérification",
+        "bhd-01646": "Jeton d’authentification de l’utilisateur révoqué",
+        "bhd-01731": "Mot de passe de l’utilisateur mis à jour",
+        "bhd-01732": "Autorisations de l’utilisateur mises à jour",
+        "bhd-01733": "Utilisateur supprimé",
+        "bhd-01734": "Utilisateur désactivé",
+        "bhd-01735": "Utilisateur activé",
+        "bhd-01736": "Utilisateur déconnecté",
+        "bhd-01737": "Utilisateur créé",
+        "bhd-01748": "Quota de l’organisation mis à jour",
+        "bhd-01753": "Configuration des tableaux de bord rechargée",
+        "bhd-01754": "Configuration des plug-ins rechargée",
+        "bhd-01755": "Configuration des sources de données rechargée",
+        "bhd-01756": "Configuration d’alerte rechargée"
+      }
+    },
+    "notifications": {
+      "dashboard": {
+        "dashboard-save-text": "Tableau de bord enregistré",
+        "dashboard-saved": "Tableau de bord enregistré",
+        "imported": "Tableau de bord importé",
+        "panel-not-found": "Volet introuvable",
+        "restored": "Tableau de bord restauré",
+        "restored-failed": "Échec de la restauration du tableau de bord",
+        "restored-version": "Restauré depuis la version {{version}}",
+        "restored-version-failed": "Échec de la restauration depuis la version {{restoredversion}}"
+      },
+      "error": {
+        "error-text": "Erreur",
+        "failed-validation": "Échec de la validation",
+        "generate-link": "Erreur lors de la génération du lien raccourci",
+        "http-error": "Erreur HTTP {{msg}}",
+        "unknown-error": "Erreur inconnue"
+      },
+      "folder": {
+        "created": "Dossier créé",
+        "failed-creation": "Échec de la création du dossier"
+      },
+      "playlists": {
+        "playlist-deleted": "Liste de lecture supprimée",
+        "playlist-not-saved": "Impossible d’enregistrer la liste de lecture",
+        "playlist-saved": "Liste de lecture enregistrée"
+      },
+      "settings": {
+        "saved": "Paramètres enregistrés",
+        "saved-failed": "Échec de l’enregistrement des paramètres"
+      },
+      "success": {
+        "copied-link": "Lien raccourci copié dans le presse-papiers",
+        "success-text": "Réussite"
+      }
+    },
+    "notiifcations": {
+      "success": {
+        "bookmark-created": "Signet créé"
+      }
+    },
+    "org-custom-config": {
+      "community": "Communauté",
+      "documentation": "Documentation",
+      "errors": {
+        "query-type-mandatory": "Au moins un type de requête doit être activé"
+      },
+      "support": "Support",
+      "video": "Vidéo"
+    },
+    "panel": {
+      "bmc-video": {
+        "enter-video": "Saisir la vidéo incorporée",
+        "invalid-url": "URL non valide",
+        "url": "URL de la vidéo"
+      },
+      "bmc-welcome": {
+        "communities": "Communautés",
+        "community-description": "Description de la communauté",
+        "default-community-description": "Connexion. Partage. Découverte. Participez à des discussions avec vos pairs et des experts en produits et solutions BMC.",
+        "default-documentation-description": "Parcourez la documentation produit pour comprendre toutes les fonctionnalités de Reporting et comment les utiliser.",
+        "default-video-description": "Consultez des vidéos pratiques, des présentations et des démos des produits et solutions BMC sur le canal YouTube de BMC.",
+        "documentation": "Documentation",
+        "documentation-description": "Description de la documentation",
+        "video-description": "Description de la vidéo",
+        "videos": "Vidéos"
+      }
+    },
+    "rbac": {
+      "common": {
+        "all": "Tout",
+        "assigned": "Attribué",
+        "menu": "Menu",
+        "name": "Nom"
+      },
+      "permissions": {
+        "admin": {
+          "datasource-manage": "Gérer les sources de données",
+          "datasource-manage-desc": "peut gérer les sources de données",
+          "reports-manage": "Gérer le planificateur de rapports",
+          "reports-manage-desc": "peut gérer tous les rapports",
+          "title": "Administration"
+        },
+        "calc-fields": {
+          "create-desc": "peut créer ou mettre à jour des champs calculés",
+          "view-desc": "peut afficher des champs calculés"
+        },
+        "common": {
+          "create": "Créer",
+          "view": "Affichage"
+        },
+        "dashboards": {
+          "create-desc": "peut créer des tableaux de bord",
+          "download-desc": "peut télécharger un tableau de bord au format pdf/xlsx/csv",
+          "view-desc": "peut afficher les tableaux de bord autorisés"
+        },
+        "datasource": {
+          "explore": "Explorer",
+          "explore-desc": "peut utiliser le mode Explorer pour les sources de données"
+        },
+        "datasources": {
+          "title": "Sources de données"
+        },
+        "folders": {
+          "create-desc": "peut créer des dossiers",
+          "title": "Dossiers",
+          "view-desc": "peut afficher les dossiers autorisés"
+        },
+        "insightfinder": {
+          "access": "Accès",
+          "access-desc-tooltip": "peut accéder à Insight Finder",
+          "dashboards-create": "Créer des tableaux de bord",
+          "dashboards-create-desc": "peut créer des tableaux de bord via Insight Finder",
+          "title": "Insight Finder"
+        },
+        "list": "Liste des autorisations",
+        "reports": {
+          "access": "Accès",
+          "access-desc": "peut afficher et créer des rapports",
+          "history-read": "Afficher l’historique",
+          "history-read-desc": "peut afficher une section d’historique des rapports",
+          "recipients-dash-access": "Destinataires dynamiques",
+          "recipients-dash-access-desc": "Possibilité d’ajouter dynamiquement des destinataires à partir du tableau de bord dans le calendrier",
+          "settings-read": "Afficher les paramètres",
+          "settings-read-desc": "peut afficher les paramètres des rapports",
+          "title": "Rapports"
+        },
+        "servicemanagement-querytypes": {
+          "sql": "SQL",
+          "sql-desc": "peut modifier la requête SQL",
+          "title": "Types de requête Gestion des services"
+        },
+        "title": "Autorisations"
+      },
+      "roles": {
+        "actions": "Actions",
+        "create": "Créer",
+        "custom": "Personnalisé",
+        "delete": "Supprimer le rôle",
+        "delete-confirmation": "Voulez-vous vraiment supprimer ce rôle ?",
+        "delete-role": "Supprimer le rôle",
+        "description": "Description",
+        "edit": "Modifier le rôle",
+        "manage-permissions": "Gérer les autorisations",
+        "manage-teams": "Gérer les équipes",
+        "manage-users": "Gérer les utilisateurs",
+        "name-required": "Le nom du rôle est obligatoire",
+        "new": "Nouveau rôle",
+        "search": "Rechercher des rôles",
+        "system": "Système",
+        "update": "Mettre à jour"
+      },
+      "teams": {
+        "none-assigned": "Aucune équipe attribuée",
+        "none-found": "Aucune équipe trouvée",
+        "search": "Rechercher le nom de l’équipe",
+        "team": "équipe",
+        "title": "Équipes"
+      },
+      "users": {
+        "email": "E-mail",
+        "login": "Connexion",
+        "none-assigned": "Aucun utilisateur attribué",
+        "none-found": "Aucun utilisateur trouvé",
+        "team": "utilisateur",
+        "title": "Utilisateurs"
+      }
+    },
+    "rms": {
+      "description": "Reporting Metadata Studio est une application Windows basée sur Pentaho Metadata Editor. Elle permet de créer des vues personnalisées ou de modifier une copie d’une vue clés en main. Pour plus d’informations, consultez la documentation en ligne.",
+      "download": {
+        "error": "Échec du téléchargement"
+      },
+      "headers": {
+        "env-details": "Détails de l’environnement"
+      }
+    },
+    "search": {
+      "comfirm-export": "Voulez-vous exporter les {{dashCount}} tableaux de bord sélectionnés ?",
+      "export": "Exporter",
+      "export-status": "Statut de l’exportation"
+    },
+    "share-modal": {
+      "loading": "Chargement en cours",
+      "theme-picker": {
+        "current-theme": "Thème actuel",
+        "dark-theme": "Thème sombre",
+        "light-theme": "Thème clair"
+      }
+    },
+    "shared-preferences": {
+      "datetime-format": {
+        "description": "Cette opération modifiera le format temporel par défaut utilisé dans les tableaux de bord, les volets et les rapports.",
+        "label": "Format de date/heure"
+      },
+      "fields": {
+        "apply-admins": "Appliquer aux administrateurs",
+        "enabled-query-types": "Gérer les types de requête Gestion des services",
+        "query-type-label": "Type de requête",
+        "query-type-placeholder": "Choisir un type de requête"
+      }
+    },
+    "toggle-feature": {
+      "manage-features": "Gérer les fonctionnalités du tableau de bord"
+    },
+    "tooltip": {
+      "enable-kiosk-mode": "Activer le mode kiosque"
+    },
+    "variables": {
+      "query-editor": {
+        "continue": "Continuer",
+        "enable-editor": "Activer l’éditeur de requêtes",
+        "enable-variable-caching": "Activer la mise en cache des variables",
+        "modal-close-confirmation": "La requête actuelle sera perdue. Voulez-vous continuer ?",
+        "modal-close-title": "Modifications non enregistrées",
+        "query-text": "Requête",
+        "service-management-note": "Remarque : applicable uniquement au type de requête Gestion des services.",
+        "variable-caching": {
+          "dependant-error": "La mise en cache pour les variables dépendantes de la plage horaire n’est pas autorisée",
+          "modal-close-title": "Mise en cache des variables",
+          "modal-disable-confirmation": "Voulez-vous désactiver la mise en cache pour la variable ?",
+          "modal-enable-additional-text-1": "La mise en cache de la variable sera effacée pour tous les utilisateurs si vous modifiez la requête.",
+          "modal-enable-confirmation": "Voulez-vous activer la mise en cache pour la variable ?",
+          "service-management-error": "La mise en cache n’est prise en charge que pour les requêtes de gestion des services",
+          "time-dependant-warning": " La mise en cache n’est pas autorisée pour les variables qui dépendent du temps."
+        }
+      },
+      "variable-caching": {
+        "cache-delete-success": "Cache supprimé avec succès pour la variable {{variableName}}"
+      }
+    }
+  },
+  "bmcgrafana": {
+    "command-palette": {
+      "search-box": {
+        "aria-label": "Rechercher ou aller à…"
+      }
+    },
+    "connections": {
+      "redirect-notice": "<0>Les sources de données ont une nouvelle page d’accueil ! Vous pouvez découvrir les nouvelles sources de données ou gérer les sources existantes dans la page Connexions, qui est accessible depuis le menu principal.</0><1>Accéder à Connexions</1>"
+    },
+    "dashboard": {
+      "inspect-data": {
+        "loading": "Chargement en cours",
+        "no-data": "Aucune donnée"
+      },
+      "panel-copied": "Volet copié. Cliquez sur l’icône **Ajouter un volet** pour coller.",
+      "remove-panel": {
+        "confirm-button-text": "Supprimer",
+        "confirmation-text": "Voulez-vous vraiment supprimer ce volet ?",
+        "title": "Supprimer le volet"
+      }
+    },
+    "dashboard-import": {
+      "change-uid": "Modifier l’UID",
+      "datasource-validation": "Une source de données est obligatoire",
+      "existing-library-panels": "Volets de bibliothèque existants",
+      "existing-library-panels-desc": "Liste des volets de bibliothèque existants. Ces volets ne sont pas affectés par l’importation.",
+      "folder": "Dossier",
+      "name-validation-text": "Un nom est obligatoire",
+      "needs-value": "nécessite une valeur",
+      "new-library-panels": "Nouveaux volets de bibliothèque",
+      "new-library-panels-desc": "Liste des nouveaux volets de bibliothèque qui seront importés.",
+      "select-view": "Sélectionner une vue",
+      "uid": "Identifiant unique (UID)",
+      "uid-desc": "L’identifiant unique (UID) d’un tableau de bord peut être utilisé pour identifier de manière unique un tableau de bord entre plusieurs installations Grafana. L’UID permet d’avoir des URL cohérentes pour l’accès aux tableaux de bord. Ainsi, les liens mis en favoris sur ce tableau de bord ne seront pas rompus si le titre de ce tableau de bord change.",
+      "view-selection-tooltip": "Ne pas modifier la vue présélectionnée",
+      "view-selection-validation": "Vous devez sélectionner une vue"
+    },
+    "dashboards": {
+      "edit-panel": {
+        "actual": "Réelle",
+        "actual-description": "Appliquer la même taille que sur le tableau de bord",
+        "apply": "Appliquer",
+        "apply-tooltip": "Appliquer les changements et revenir au tableau de bord",
+        "axis": {
+          "centered-zero-text": "Centrage zéro",
+          "color": {
+            "series-text": "Séries",
+            "text-text": "Texte"
+          },
+          "color-text": "Couleur",
+          "grid-lines": {
+            "auto-text": "Auto",
+            "off-text": "Désactivé",
+            "on-text": "Activé"
+          },
+          "grid-lines-text": "Afficher la grille",
+          "label-placeholder": "Texte facultatif",
+          "label-text": "Intitulé",
+          "placement-text": "Positionnement",
+          "scale": {
+            "linear-text": "Linéaire",
+            "logarithmic": {
+              "log-base-text": "Log. de base"
+            },
+            "Logarithmic-text": "Logarithmique",
+            "symlog": {
+              "linear-threshold-placeholder": "1",
+              "linear-threshold-text": "Seuil linéaire"
+            },
+            "Symlog-text": "Symlog"
+          },
+          "scale-text": "Échelle",
+          "show-border-text": "Afficher la bordure",
+          "soft-max-description": "Visibilité : Options Standard > Max",
+          "soft-max-text": "Maximum flexible",
+          "soft-min-placeholder": "Visibilité : Options Standard > Min",
+          "soft-min-text": "Minimum flexible",
+          "text": "Axe",
+          "width-placeholder": "Auto",
+          "width-text": "Largeur"
+        },
+        "based-on-current-data": "Basé sur les données actuelles",
+        "click-to-change-visualization": "Cliquez pour modifier la visualisation",
+        "close-options-pane": "Fermer le volet des options",
+        "close-text": "Fermer",
+        "create-library-panel-text": "Créer un volet de bibliothèque",
+        "create-new-library-panel-button": "Créer un nouveau volet de bibliothèque",
+        "discard": "Ignorer",
+        "discard-tooltip": "Annuler toutes les modifications",
+        "fill": "Remplir",
+        "fill-description": "Utiliser tout l’espace disponible",
+        "legend": {
+          "mode": "Mode",
+          "mode-list": "Liste",
+          "mode-table": "Tableau",
+          "placement": "Positionnement",
+          "placement-bottom-text": "Bas",
+          "text": "Légende",
+          "values-description": "Sélectionner des valeurs ou des calculs à afficher dans la légende",
+          "values-text": "Valeurs",
+          "visibility": "Visibilité",
+          "width": "Largeur"
+        },
+        "library-panels-description": "Volets réutilisables que vous pouvez partager sur plusieurs tableaux de bord.",
+        "library-panels-text": "Volets de bibliothèque",
+        "overrides": {
+          "button": {
+            "none": "Aucun",
+            "right": "Droite"
+          }
+        },
+        "panel-options": {
+          "link-editor": {
+            "url-placeholder": "http://your-grafana.com/d/000000010/annotations"
+          },
+          "panel-links": "Liens vers les volets",
+          "repeat-by-variabe": "Répéter par variable",
+          "repeat-by-variable-description": "Répétez ce volet pour chaque valeur dans la variable sélectionnée. Non visible en mode de modification. Vous devez revenir au tableau de bord, puis mettre à jour la variable ou charger à nouveau le tableau de bord.",
+          "repeat-options": {
+            "disable-repeating": "Désactiver la répétition",
+            "no-template-variables-found": "Aucune variable de modèle trouvée"
+          },
+          "repeat-options-title": "Options de répétition",
+          "transparent-background-text": "Arrière-plan transparent"
+        },
+        "query": {
+          "add-query-button": "Ajouter une requête",
+          "data-source-help-title": "Aide pour la source de données",
+          "data-source-text": "Source de données",
+          "empty-query-edit-warning": "Un nom de requête vide n’est pas autorisé",
+          "expression-button": "Expression ",
+          "query-already-exist-warning": "Le nom de la requête existe déjà",
+          "query-inspector-button": "Inspecteur de requêtes",
+          "query-options": {
+            "hide-time-info": "Masquer les informations temporelles",
+            "interval": "Intervalle",
+            "interval-tooltip": "L’intervalle évalué envoyé à la source de données et utilisé dans <1>$__interval</1> et <4>$__interval_ms</4>. Cette valeur n’est pas exactement égale à <7>Intervalle temporel / Points donn. max</7>, elle s’approche d’une série de nombres magiques.",
+            "max-data-points": "Points donn. max",
+            "max-data-points-tooltip": "Le nombre maximum de points de données par série. Utilisé directement par certaines sources de données et utilisé dans un calcul d’intervalle automatique. Avec des données en diffusion, cette valeur est utilisée pour le tampon continu.",
+            "min-interval": "Interv. min",
+            "min-interval-placeholder": "0 limite",
+            "min-interval-tooltip": "Une limite inférieure pour l’intervalle. Configuration recommandée pour la fréquence d’écriture, par exemple <1>1m</1> si vos données sont écrites chaque minute. La valeur par défaut peut être définie dans les paramètres de source de données pour la plupart des sources de données.",
+            "query-options-title": "Options requête",
+            "relative-time": "Hre relative",
+            "relative-time-placeholder": "1h",
+            "relative-time-tooltip": "Remplace l’intervalle temporel relatif pour les volets individuels, ce qui fait qu’ils seront différents de ce qui est sélectionné dans le sélecteur d’heure du tableau de bord, dans le coin supérieur droit du tableau de bord. Par exemple, pour configurer les 5 dernières minutes, l’heure relative doit être <1>now-5m</1> et <3>5m</3>, ou des variables telles que <5>$_relativeTime</5>.",
+            "time-range-max-points": "Intervalle temporel / Points donn. max",
+            "time-shift": "Décalage temp",
+            "time-shift-placeholder": "1h",
+            "time-shift-tooltip": "Remplace l’intervalle temporel relatif pour les volets individuels en décalant l’heure relative de début et de fin sur le sélecteur d’heure. Par exemple, pour configurer la dernière heure, le décalage temporel doit être <1>now-1h</1> et <4>1h</4>, ou des variables telles que <6>$_timeShift</6>.",
+            "width-of-panel": "Largeur du volet"
+          },
+          "question-circle-description": "Ouvrir l’aide de la source de données"
+        },
+        "remove-text": "Supprimer",
+        "save-tooltip": "Appliquer les modifications et enregistrer le tableau de bord",
+        "search-for-text": "Rechercher...",
+        "search-options": "Options de recherche",
+        "show-options-pane": "Afficher le volet des options",
+        "suggestions-text": "Suggestions",
+        "table-view-switch": "Vue Tableau",
+        "tooltip": {
+          "hover-proximity": "Proximité de survol",
+          "hover-proximity-description": "Indique à quelle distance le curseur doit se trouver d’un point pour déclencher l’info-bulle, en pixels",
+          "max-height": "Hauteur max.",
+          "max-width": "Largeur max.",
+          "mode-all": "Tout",
+          "mode-hidden": "Masqué",
+          "mode-single": "Unique",
+          "text": "Info-bulle",
+          "tooltip-mode": "Mode Info-bulle",
+          "values-sort-order": "Ordre de tri des valeurs",
+          "values-sort-order-ascending": "Ordre croissant",
+          "values-sort-order-descending": "Ordre décroissant"
+        },
+        "visualizations-text": "Visualisations"
+      },
+      "save-dashboard": {
+        "cant-save-provisioned": "Impossible d’enregistrer ce tableau de bord depuis les tableaux de bord BMC Helix car il a été provisionné depuis une autre source. Copiez le fichier JSON ou enregistrez-le dans un fichier ci-dessous. Vous pourrez alors mettre à jour votre tableau de bord dans la source de provisionnement.",
+        "change-details": "Détails",
+        "changes-text": "Modifications",
+        "close-text": "Fermer",
+        "copy-json": "Copier le fichier JSON dans le presse-papier",
+        "copy-tags-text": "Copier les balises",
+        "curr-time-as-default": "Enregistrer l’intervalle temporel actuel comme valeur par défaut pour le tableau de bord",
+        "curr-var-as-default": "Enregistrer les valeurs variables actuelles comme valeurs par défaut pour le tableau de bord",
+        "description-placeholder-text": "Ajoutez une remarque pour décrire les modifications que vous avez apportées.",
+        "description-text": "Description",
+        "error": "Erreur lors de l’enregistrement du tableau de bord",
+        "errors": {
+          "dash-folder-same-name": "Le nom du tableau de bord ne peut pas être identique à celui du dossier",
+          "dash-name-invalid": "Le nom du tableau de bord n’est pas valide"
+        },
+        "full-json-diff": "JSON Diff intégral",
+        "no-changes": "Aucune modification à enregistrer",
+        "no-changes-dash": "Aucune modification dans ce tableau de bord",
+        "provisioned-text": "Tableau de bord provisionné",
+        "save-as-text": "Enregistrer sous",
+        "save-copy": "Enregistrer une copie du tableau de bord",
+        "save-json": "Enregistrer le JSON dans un fichier",
+        "save-text": "Enregistrer le tableau de bord",
+        "saving-text": "Enregistrement...",
+        "title-text": "Titre"
+      },
+      "settings": {
+        "annotation": {
+          "anno-name-builtin": "(Intégré)",
+          "anno-name-disabled": "(Désactivé)",
+          "data-source": "Source de données",
+          "edit-form": {
+            "all-panels-desc": "Envoyer les données d’annotation à tous les volets prenant en charge les annotations",
+            "all-panels-except-desc": "Ne pas envoyer de données d’annotation aux volets suivants",
+            "all-panels-except-label": "Tous les volets sauf",
+            "all-panels-label": "Tous les volets",
+            "apply-btn": "Appliquer",
+            "choose-panels-placeholder": "Choisir les volets",
+            "color-desc": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
+            "color-label": "Couleur",
+            "data-source-label": "Source de données",
+            "delete-btn": "Supprimer",
+            "enabled-desc": "Si activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
+            "enabled-label": "Activé",
+            "hidden-desc": "Vous pouvez activer/désactiver les requêtes d’annotation en haut du tableau de bord. Si vous sélectionnez cette option, le bouton-bascule sera masqué.",
+            "hidden-label": "Masqué",
+            "name-label": "Nom",
+            "new-annotation": "Nouvelle annotation",
+            "preview-btn": "Aperçu dans le tableau de bord",
+            "query-editor": {
+              "filter-by": {
+                "dashboard-desc": "Interrogez les événements créés sur ce tableau de bord et affichez-les dans les volets où ils ont été créés",
+                "dashboard-label": "Tableau de bord",
+                "tags-desc": "Cette opération récupère tous les événements d’annotation correspondant au filtre de balises",
+                "tags-label": "Balises"
+              },
+              "filter-by-label": "Filtrer par",
+              "match-any-desc": "L’activation de cette option renvoie les annotations correspondant aux balises spécifiées ci-dessous",
+              "match-any-label": "Correspondant à tout(e)",
+              "max-limit-label": "Limite max.",
+              "query-type": {
+                "annotation-desc": "Afficher les annotations ou les alertes gérées par Grafana",
+                "annotation-label": "Annotations et alertes",
+                "time-region-desc": "Configurer un fuseau horaire récurrent",
+                "time-region-label": "Fuseaux horaires"
+              },
+              "query-type-label": "Type de requête",
+              "tag-field-desc": "<0>Spécifiez une liste de balises pour rechercher une correspondance. Pour spécifier une clé et une balise de valeur, utilisez la syntaxe 'key:value'.</0>"
+            },
+            "query-heading": "Requête",
+            "selected-panels-desc": "Envoyer les annotations aux volets explicitement répertoriés",
+            "selected-panels-label": "Volets sélectionnés",
+            "showin-label": "Afficher dans"
+          },
+          "move-down": "Déplacer vers le bas",
+          "move-up": "Déplacer vers le haut",
+          "new-query-button": "Nouvelle requête",
+          "query-name": "Nom de la requête"
+        },
+        "general": {
+          "default-label": "Par défaut",
+          "editable-label": "Modifiable",
+          "read-only-label": "En lecture seule",
+          "share-tooltip-label": "Info-bulle partagée",
+          "shared-crosshair-label": "Pointeur partagé"
+        },
+        "links": {
+          "dashboard-link-form": {
+            "button": {
+              "go-back": "Retour à la liste"
+            },
+            "field": {
+              "label-icon": "Icône",
+              "label-include-current-template-variable-values": "Inclure les valeurs de variables du modèle actuel",
+              "label-include-current-time-range": "Inclure la plage temporelle actuelle",
+              "label-open-link-in-new-tab": "Ouvrir le lien dans un nouvel onglet",
+              "label-options": "Options",
+              "label-show-dropdown": "Afficher sous forme de liste déroulante",
+              "label-title": "Titre",
+              "label-tooltip": "Info-bulle",
+              "label-type": "Type",
+              "label-url": "URL",
+              "label-withtags": "Avec balises",
+              "link-type-link": "Lien",
+              "link-type-options": "Tableaux de bord"
+            }
+          },
+          "dashboard-link-list": {
+            "new-link": "Nouveau lien",
+            "table": {
+              "info": " <1>Infos</1> ",
+              "type": "<0>Type</0> "
+            }
+          },
+          "dashboard-linked-list": {
+            "tooltip": {
+              "arrow-down": "Déplacer le lien vers le bas",
+              "arrow-up": "Déplacer le lien vers le haut",
+              "copy-link": "Copier le lien"
+            }
+          },
+          "description-edit-link": "Modifier un lien spécifique de votre tableau de bord",
+          "tags-input": {
+            "placeholder-new-tag": "Nouvelle balise (touche Entrée pour l’ajouter)"
+          },
+          "title-edit-link": "Modifier le lien",
+          "title-new-link": "Nouveau lien"
+        },
+        "variables": {
+          "editor": {
+            "button": {
+              "apply": "Appliquer",
+              "delete": "Supprimer",
+              "run-query": "Exécuter la requête"
+            },
+            "custom-all": "Personnaliser toutes les valeurs",
+            "custom-all-placeholder": "vide = auto",
+            "exlude-variable": "Exclure la variable",
+            "exlude-variable-desc": "Sélectionnez cette option pour exclure la variable de la requête",
+            "include-all": "Option Tout inclure",
+            "include-all-desc": "Active une option permettant d’inclure toutes les valeurs de variables",
+            "multi-value": "Multi-valeur",
+            "multi-value-desc": "Permet de sélectionner plusieurs variables en même temps",
+            "select-variable-type": {
+              "ad-hoc-filters": {
+                "description": "Ajoutez des filtres de clé/valeur à la volée.",
+                "name": "Filtres Ad-hoc"
+              },
+              "constant": {
+                "description": "Définissez une variable constante masquée, utile pour les préfixes de métrique dans les tableaux de bord que vous souhaitez partager.",
+                "name": "Constante"
+              },
+              "custom": {
+                "description": "Définir les valeurs de variables manuellement",
+                "name": "Personnalisé"
+              },
+              "data-source": {
+                "description": "Permet de changer la source de données de manière dynamique pour plusieurs volets.",
+                "name": "Source de données"
+              },
+              "interval": {
+                "description": "Définir un intervalle temporel",
+                "name": "Intervalle"
+              },
+              "query": {
+                "description": "Les valeurs de variables sont récupérées à partir d’une requête de source de données",
+                "name": "Requête"
+              },
+              "textbox": {
+                "description": "Définir une variable de zone de texte où les utilisateurs peuvent entrer toute chaîne arbitraire",
+                "name": "Zone de texte"
+              }
+            },
+            "select-variable-type-text": "Sélectionner un type de variable",
+            "selection-options": "Options de sélection",
+            "types": {
+              "ad-hoc": {
+                "data-source-placeholder": "Sélectionner une source de données",
+                "data-source-text": "Source de données",
+                "title": "Options Ad-hoc"
+              },
+              "constant": {
+                "placeholder": "préfixe de votre métrique",
+                "title": "Options de constante",
+                "value": "Valeur"
+              },
+              "custom": {
+                "desc": "Valeurs séparées par une virgule",
+                "title": "Options personnalisées"
+              },
+              "data-source": {
+                "name-filter": "Filtre de nom d’instance",
+                "name-filter-desc1": "Filtre Regex pour les instances de source de données à choisir dans la liste des valeurs de variables. Laissez vide pour toutes les valeurs.",
+                "name-filter-desc2": "Exemple : ",
+                "title": "Options de source de données",
+                "type": "Type"
+              },
+              "date-range": {
+                "title": "Sélectionner l’intervalle temporel"
+              },
+              "internal": {
+                "auto-option-description": "Calcule l’intervalle de manière dynamique en divisant l’intervalle temporel par le nombre spécifié",
+                "auto-option-name": "Option Auto",
+                "min-interval-description": "La valeur calculée ne descendra pas en-dessous de ce seuil",
+                "min-interval-name": "Interv. min",
+                "preview-values": "Aperçu des valeurs",
+                "step-count-description": "Nombre de fois selon lequel l’intervalle temporelle actuel devrait être divisé pour calculer la valeur",
+                "step-count-name": "Nombre d’incréments",
+                "title": "Options d’intervalle",
+                "values": "Valeurs"
+              },
+              "query": {
+                "data-source": "Source de données",
+                "editor-placeholder": "Nom de la métrique ou requête de balises",
+                "query-options": "Options de requête",
+                "query-text": "Requête",
+                "refresh": "Actualiser",
+                "refresh-desc": "Quand mettre à jour les valeurs de cette variable",
+                "refresh-options": {
+                  "on-dash-load": "Lors du chargement du tableau de bord",
+                  "on-time-change": "Lors du changement d’intervalle temporel"
+                },
+                "regex-editor-text": "<0>Facultatif, si vous souhaitez extraire une partie du nom d’une série ou un segment de nœud de métrique.<1></1>Les groupes de capture nommés peuvent être utilisés pour séparer le texte d’affichage et la valeur (<3>voir les exemples</3>).</0>",
+                "sort": "Tri",
+                "sort-desc": "Comment trier les valeurs de cette variable",
+                "sort-options": {
+                  "alpha-asc": "Alphabétique (croissant)",
+                  "alpha-case-insensitive-asc": "Alphabétique (non sensible à la casse, croissant)",
+                  "alpha-case-insensitive-dsc": "Alphabétique (non sensible à la casse, décroissant)",
+                  "alpha-dsc": "Alphabétique (décroissant)",
+                  "disabled": "Désactivé",
+                  "natural-asc": "Naturel (croissant)",
+                  "natural-dsc": "Naturel (décroissant)",
+                  "number-asc": "Numérique (croissant)",
+                  "number-dsc": "Numérique (décroissant)"
+                }
+              },
+              "text-box": {
+                "default-value": "Valeur par défaut",
+                "placeholder": "valeur par défaut, le cas échéant",
+                "title": "Options de texte"
+              }
+            },
+            "variable-hide-select": {
+              "label": "Afficher sur le tableau de bord",
+              "label-value": "Intitulé et valeur",
+              "nothing": "Rien",
+              "value": "Valeur"
+            },
+            "variable-legend": "Général",
+            "variable-text-field": {
+              "description": {
+                "name": "Description",
+                "placeholder": "Texte descriptif"
+              },
+              "label": {
+                "description": "Nom d’affichage facultatif",
+                "placeholder": "Nom de l’intitulé",
+                "text": "Intitulé"
+              },
+              "name": {
+                "description": "Le nom de la variable du modèle. (50 caractères max.)",
+                "placeholder": "Nom de la variable",
+                "text": "Nom"
+              }
+            }
+          },
+          "variables-tab": {
+            "delete": {
+              "body": "Voulez-vous vraiment supprimer la variable \"{{varName}}\" ?",
+              "delete-confirm-text": "Supprimer",
+              "delete-variable-title": "Supprimer la variable"
+            },
+            "variable-editor-list": {
+              "button-text": "Nouvelle variable",
+              "definition": "Définition",
+              "variable": "Variable"
+            },
+            "variable-editor-list-row": {
+              "copy-title": "Dupliquer une variable",
+              "exclamation-triangle-title": "Cette variable n’est référencée par aucune variable ni aucun tableau de bord.",
+              "show-usage": "Afficher l’utilisation",
+              "show-usage-modal-title": "Affichage de l’utilisation de : ${{id}}",
+              "trash-alt-title": "Supprimer la variable"
+            },
+            "variables-unknown-table": {
+              "decription": "Aucune variable renommée ou manquante n’a été trouvée.",
+              "info-circle-description": "Cliquez pour développer une liste de toutes les références de variables qui ont été renommées ou sont manquantes dans le tableau de bord.",
+              "title": "Variables renommées ou manquantes"
+            }
+          }
+        },
+        "versions": {
+          "buttons": {
+            "compare-versions": "Comparer les versions",
+            "more-versions": "Afficher plus de versions"
+          },
+          "comparision": {
+            "comparing-text": "Comparaison",
+            "latest-text": "La plus récente",
+            "restore-base-version": "Restaurer à la version {{baseVersion}}",
+            "version-from-details": "<bold>Version {{baseVersion}}</bold> mise à jour par {{baseCreatedBy}} {{baseAgeString}} {{baseMsg}}",
+            "version-to-details": "<bold>Version {{newVersion}}</bold> mise à jour par {{newCreatedBy}} {{newAgeString}} {{newMsg}}",
+            "view-json-diff": "Afficher JSON Diff"
+          },
+          "loading-msgs": {
+            "changes": "Récupération des changements&hellip;",
+            "history-list": "Récupération de la liste d’historique&hellip;",
+            "more-entries": "Récupération d’entrées supplémentaires&hellip;"
+          },
+          "tags": {
+            "latest": "La plus récente",
+            "restore": "Restaurer"
+          },
+          "version-list": {
+            "headers": {
+              "date-text": "Date",
+              "notes-text": "Notes",
+              "updated-by-text": "Mis à jour par",
+              "version-text": "Version"
+            }
+          }
+        }
+      },
+      "unsaved-modal": {
+        "confirmation-text": "Voulez-vous enregistrer vos modifications ?",
+        "discard": "Ignorer",
+        "title": "Modifications non enregistrées"
+      }
+    },
+    "datesource": {
+      "configuration": {
+        "build-dashboard": "Créer un tableau de bord",
+        "sort-asc": "Trier par A–Z",
+        "sort-desc": "Trier par Z–A"
+      }
+    },
+    "explore": {
+      "no-data": "Aucune donnée",
+      "outline": "Plan",
+      "query-added-announcement": "Nouvelle ligne de requête ajoutée. {queryCount}",
+      "to-dashboard": {
+        "choose-dashboard-text": "Sélectionnez le tableau de bord dans lequel le volet sera créé.",
+        "choose-dashboard-type-text": "Choisissez où ajouter le volet.",
+        "dashboard-text": "Tableau de bord",
+        "errors": {
+          "add-panel-err": "Erreur lors de l’ajout du volet",
+          "field-mandatory": "Ce champ est obligatoire.",
+          "navigation-to-dashboard": "Impossible d’accéder au tableau de bord sélectionné. Veuillez réessayer.",
+          "panel-to-dashboard-err": "Impossible d’ajouter un volet au tableau de bord. Veuillez réessayer."
+        },
+        "existing-dashboard-text": "Tableau de bord existant",
+        "new-dashboard-text": "Nouveau tableau de bord",
+        "open-dash-text": "Ouvrir le tableau de bord",
+        "open-new-tab-text": "Ouvrir dans un nouvel onglet",
+        "panel-to-dashboard": "Ajouter un volet au tableau de bord",
+        "target-dashboard-text": "Tableau de bord cible",
+        "to-existing-dashboard-title": "Ajouter un volet au tableau de bord existant",
+        "to-new-dashboard-title": "Ajouter un volet au nouveau tableau de bord"
+      }
+    },
+    "file-drop-zone": {
+      "accepted-file-types-prefix": "Types de fichiers acceptés",
+      "file-invalid-type-prefix": "Le type de fichier doit être l’un des suivants",
+      "max-file-size": "Taille maximale du fichier",
+      "upload-failed": "Échec du chargement"
+    },
+    "folder": {
+      "validation-text": "Il s’agit d’un nom réservé qui ne peut pas être utilisé pour un dossier."
+    },
+    "grafana-data": {
+      "timezone": {
+        "browser-time": "Heure du navigateur",
+        "coord-universal-time": "Heure UTC",
+        "local-browser-time": "Heure du navigateur local"
+      }
+    },
+    "grafana-ui": {
+      "date-time": {
+        "month": {
+          "apr": "Avril",
+          "aug": "Août",
+          "dec": "Décembre",
+          "feb": "Février",
+          "jan": "Janvier",
+          "jul": "Juillet",
+          "jun": "Juin",
+          "mar": "Mars",
+          "may": "Mai",
+          "nov": "Novembre",
+          "oct": "Octobre",
+          "sep": "Septembre"
+        },
+        "quick-ranges": {
+          "day-before-yesterday": "Jour avant hier",
+          "hidden": {
+            "next-12-hour": "12 prochaines heures",
+            "next-15-min": "15 prochaines minutes",
+            "next-2-day": "2 prochains jours",
+            "next-2-year": "2 prochaines années",
+            "next-24-hour": "24 prochaines heures",
+            "next-3-hour": "3 prochaines heures",
+            "next-30-day": "30 prochains jours",
+            "next-30-min": "30 prochaines minutes",
+            "next-5-min": "5 prochaines minutes",
+            "next-5-year": "5 prochaines années",
+            "next-6-hour": "6 prochaines heures",
+            "next-6-month": "6 prochains mois",
+            "next-7-day": "7 prochains jours",
+            "next-90-day": "90 prochains jours",
+            "next-hour": "Heure suivante",
+            "next-min": "Minute suivante",
+            "next-year": "Année suivante"
+          },
+          "last-1-hour": "Dernière heure",
+          "last-1-year": "Dernière année",
+          "last-12-hour": "12 dernières heures",
+          "last-15-min": "15 dernières minutes",
+          "last-2-day": "2 derniers jours",
+          "last-2-year": "2 dernières années",
+          "last-24-hour": "24 dernières heures",
+          "last-3-hour": "3 dernières heures",
+          "last-30-day": "30 derniers jours",
+          "last-30-min": "30 dernières minutes",
+          "last-5-min": "5 dernières minutes",
+          "last-5-year": "5 dernières années",
+          "last-6-hour": "6 dernières heures",
+          "last-6-month": "6 derniers mois",
+          "last-7-day": "7 derniers jours",
+          "last-90-day": "90 derniers jours",
+          "prev-fiscal-quarter": "Trimestre fiscal précédent",
+          "prev-fiscal-year": "Exercice fiscal précédent",
+          "prev-month": "Mois précédent",
+          "prev-week": "Semaine précédente",
+          "prev-year": "Année précédente",
+          "this-day-last-week": "Ce jour la semaine dernière",
+          "this-fiscal-quarter": "Ce trimestre fiscal",
+          "this-fiscal-quarter-so-far": "Ce trimestre fiscal jusqu’à ce jour",
+          "this-fiscal-year": "Cet exercice fiscal",
+          "this-fiscal-year-so-far": "Cet exercice fiscal jusqu’à ce jour",
+          "this-month": "Ce mois",
+          "this-month-so-far": "Ce mois jusqu’à ce jour",
+          "this-week": "Cette semaine",
+          "this-week-so-far": "Cette semaine jusqu’à ce jour",
+          "this-year": "Cette année",
+          "this-year-so-far": "Cette année jusqu’à ce jour",
+          "today": "Aujourd’hui",
+          "today-so-far": "Aujourd’hui jusqu’à maintenant",
+          "yesterday": "Hier"
+        }
+      },
+      "date-time-pickers": {
+        "time-range-input-text": "Sélectionner l’intervalle temporel"
+      },
+      "delete-button": {
+        "confirm-text": "Supprimer"
+      },
+      "file-dropzone": {
+        "bulk-limit-error": "Sélectionnez jusqu'à {{maxFiles}} tableaux de bord uniquement"
+      },
+      "weekdays": {
+        "friday": "Vendredi",
+        "monday": "Lundi",
+        "saturday": "Samedi",
+        "sunday": "Dimanche",
+        "thursday": "Jeudi",
+        "tuesday": "Mardi",
+        "wednesday": "Mercredi"
+      }
+    },
+    "library-panels": {
+      "delete": {
+        "cannot-delete-text": "Impossible de supprimer ce volet de bibliothèque parce qu’il est connecté à {{message}} tableau(x) de bord. Supprimez le volet de bibliothèque des tableaux de bord répertoriés ci-dessous et réessayez.",
+        "confirmation-text": "Voulez-vous supprimer ce volet ?",
+        "dashboard-name-title": "Nom du tableau de bord",
+        "delete-text": "Supprimer",
+        "loading-text": "Chargement du volet de bibliothèque...",
+        "title": "Supprimer le volet de bibliothèque"
+      },
+      "modal": {
+        "select-aria-label": "Commencez à taper pour rechercher le tableau de bord"
+      },
+      "panel-types-not-found": "Aucun type de volet trouvé",
+      "unlink": {
+        "body": "Si vous dissociez ce volet, vous ne pourrez pas le modifier sans affecter les autres tableaux de bord. Par contre, une fois que vous aurez apporté une modification, vous ne pourrez plus revenir au volet original réutilisable.",
+        "confirmation-text": "Oui, dissocier",
+        "title": "Voulez-vous vraiment dissocier ce volet ?"
+      }
+    },
+    "manage-dashboards": {
+      "specify-constant": "Spécifiez une constante de chaîne"
+    },
+    "notifications": {
+      "empty-state": {
+        "description": "Les notifications que vous avez reçues apparaîtront ici",
+        "title": "Vous êtes à jour!"
+      },
+      "live": {
+        "dismissed": {
+          "multiple_one": "{{count}} notifications ignorées",
+          "multiple_other": "{{count}} notifications ignorées",
+          "single": "1 notification ignorée"
+        }
+      },
+      "stored-notifications": {
+        "select-all": "Sélectionner toutes les notifications"
+      }
+    },
+    "page-loader": {
+      "text": "Chargement en cours"
+    },
+    "panel-message": {
+      "no-data": "Aucune donnée",
+      "no-data-visualization": "Impossible de visualiser les données",
+      "number-field-missing": "Il manque un champ numérique dans les données",
+      "refresh-dashboard": "Actualiser le tableau de bord pour récupérer les données",
+      "string-field-missing": "Il manque un champ de chaîne dans les données.",
+      "time-field-missing": "Il manque un champ temporel dans les données."
+    },
+    "plugins": {
+      "dashboard-list": {
+        "mark-fav": "Marquer \"{{dashTitle}}\" comme favori",
+        "recent-viewed-header": "Tableaux de bord récemment consultés",
+        "search": "Rechercher",
+        "starred-dash-header": "Tableaux de bord évalués",
+        "unmark-fav": "Supprimer \"{{dashTitle}}\" des favoris"
+      }
+    },
+    "save-dashboard": {
+      "dashboard-already-exists": "Un tableau de bord ou un dossier avec le même nom existe déjà",
+      "dashboard-already-exists-folder": "Un dossier ou un tableau de bord portant le même nom existe déjà dans le dossier général"
+    },
+    "search-inputs": {
+      "filter-folder": "Filtrer par dossier",
+      "filter-type": "Filtrer par type",
+      "folder-not-found": "Filtrer par dossier",
+      "name-description": "Rechercher par nom ou description",
+      "name-description-aria-label": "Rechercher par nom ou description",
+      "name-type": "Rechercher par nom ou type"
+    },
+    "shared-preferences": {
+      "confirm-modal": {
+        "body": "Cette opération mettra à jour les préférences pour toute l’organisation. Voulez-vous vraiment mettre à jour les préférences ?",
+        "title": "Confirmer la mise à jour des préférences"
+      },
+      "org": {
+        "org-name-text": "Nom de l’organisation",
+        "title": "Profil de l’organisation"
+      },
+      "profile": {
+        "team": {
+          "loading-text": "Chargement des équipes..."
+        }
+      }
+    },
+    "snapshots": {
+      "delete-modal": {
+        "confirmation-text": "Voulez-vous vraiment supprimer '{{snapshotName}}' ?",
+        "delete": "Supprimer"
+      }
+    },
+    "team-permissions": {
+      "add-member": "Ajouter un membre",
+      "no-members-message": "Cette équipe ne comporte aucun membre ou vous ne disposez pas des autorisations nécessaires pour répertorier les membres actuels."
+    },
+    "time-region-editor": {
+      "change-timezone-btn": "Modifier le fuseau horaire",
+      "dashboard-timezone": "Fuseau horaire du tableau de bord",
+      "everyday-placeholder": "Tous les jours",
+      "from-label": "De",
+      "timezone-label": "Fuseau horaire",
+      "to-label": "À"
+    },
+    "user-picker": {
+      "placeholder": "Commencez à taper pour rechercher un utilisateur"
+    },
+    "users-and-access": {
+      "headers": {
+        "edit-team-text": "Modifier l’équipe",
+        "email-text": "E-mail",
+        "last-active-text": "Dernière session active",
+        "login-text": "Connexion",
+        "members-text": "Membres",
+        "name-text": "Nom",
+        "settings-text": "Paramètres"
+      },
+      "search-teams-placeholder-text": "Rechercher des équipes",
+      "search-user-placeholder-text": "Rechercher un utilisateur par connexion, e-mail ou nom",
+      "team": {
+        "details": {
+          "email-description-text": "Cette opération est facultative et sert principalement à définir l’avatar du profil de l’équipe (via le service gravatar).",
+          "title": "Détails de l’équipe"
+        }
+      },
+      "teams": {
+        "page-description": "Gérer les membres et les paramètres",
+        "title": "Équipes"
+      }
+    }
+  },
+  "plugins": {
+    "reports": {
+      "history": {
+        "back-button": "Retour",
+        "bcc-recipient": "Destinataires Cci :",
+        "bccrecipeints-title": " - Destinataires Cci",
+        "created-by": "Créé par",
+        "dashboard": "Tableau de bord",
+        "delete": "Supprimer",
+        "delete-report": "Supprimer le rapport",
+        "delete-report-error": "Vous ne disposez pas des autorisations nécessaires pour supprimer ce rapport",
+        "disable": "Désactiver",
+        "download": "Télécharger",
+        "dynamic-recipient": "Destinataires dynamiques :",
+        "dynamicrecipients-title": " - Destinataires dynamiques",
+        "edit": "Modifier",
+        "edit-report": "Modifier le rapport",
+        "edit-report-error": "Vous ne disposez pas des autorisations nécessaires pour modifier ce rapport",
+        "enable": "Activer",
+        "extra-info": {
+          "created-at": "Créé à",
+          "last-run": "Dernière exécution à",
+          "next-run": "Prochaine exécution à",
+          "updated-at": "Mis à jour à"
+        },
+        "failure-reason": "Motif du dernier échec",
+        "fetch-history-error": "Impossible de récupérer l’historique des rapports",
+        "filter": "Filtre",
+        "filter-type": "Filtrer le rapport par type",
+        "go-to-dashboard": "Aller au tableau de bord",
+        "go-to-folder": "Aller au dossier",
+        "last-run": "Dernière exécution",
+        "learn-more": "En savoir plus",
+        "no-bccrecipients-found": "Aucun destinataire Cci trouvé",
+        "no-dynamicrecipients-found": "Aucun destinataire dynamique trouvé",
+        "no-recipients-found": "Aucun destinataire trouvé",
+        "no-records": "Aucun enregistrement n’a encore été consigné pour les rapports exécutés",
+        "no-report-more-info": "Conseil de pro : vous pouvez consulter plus d’informations sur les planifications de rapports. ",
+        "no-report-splash": "Planifiez ou exécutez un rapport pour afficher les données historiques.",
+        "re-run-now": "Réexécuter maintenant",
+        "recipeints-title": " - Destinataires",
+        "recipient": "Destinataires :",
+        "report-id": "ID de rapport",
+        "report-text": "rapport",
+        "run-now": "Exécuter le rapport maintenant",
+        "run-now-error": "Vous ne disposez pas des autorisations nécessaires pour exécuter ce rapport",
+        "search": "Rechercher",
+        "search-placeholder": "Rechercher par nom de rapport",
+        "show-last-10": "Afficher les 10 dernières planifications",
+        "sort": {
+          "asc": "Alphabétique (A-Z)",
+          "default": "Par défaut A-Z",
+          "desc": "Alphabétique (Z-A)",
+          "title": "Tri"
+        },
+        "state": {
+          "failure": "Échec",
+          "filter-by": "Filtrer le rapport par état",
+          "pending": "En attente",
+          "success": "Réussite",
+          "title": "État"
+        },
+        "status": {
+          "broadcasting_report_via_mail": "Diffusion de rapport via e-mail",
+          "fail": "Échec",
+          "failed": "Échoué",
+          "failed_to_broadcast_report": "Échec de la diffusion du rapport",
+          "failed_to_generate_report": "Échec de la génération du rapport",
+          "failed_to_prepare_and_run_job": "Échec de la préparation et de l’exécution de la tâche",
+          "mail_skipped_due_to_no_data_in_report": "E-mail ignoré en raison de l’absence de données dans le rapport",
+          "none": "Aucun",
+          "reporting_service_started": "Service de rapport démarré",
+          "requesting_impersonation_token_from_ims": "Demande de jeton d’identification à IMS",
+          "requesting_renderer_to_generate_report": "Demande d’un moteur de rendu pour générer un rapport",
+          "skipped": "Ignoré",
+          "success": "Réussite",
+          "successfully_broadcasted_report": "Rapport diffusé avec succès",
+          "successfully_generated_report": "Rapport généré avec succès",
+          "successfully_prepared_job": "Tâche préparée avec succès"
+        },
+        "toggle-permission-error": "Vous ne disposez pas des autorisations nécessaires pour {{action}} ce rapport",
+        "total-failures": "Nbre total d’échecs",
+        "total-runs": "Nbre total d’exécutions",
+        "view-bccrecipients": "Afficher les destinataires Cci",
+        "view-bccrecipients-error": "Vous n’avez pas le droit d’afficher les destinataires Cci",
+        "view-dynamicrecipients": "Afficher les destinataires dynamiques",
+        "view-dynamicrecipients-error": "Vous ne disposez pas des autorisations nécessaires pour afficher les destinataires dynamiques",
+        "view-recipients": "Afficher les destinataires",
+        "view-recipients-error": "Vous ne disposez pas des autorisations nécessaires pour afficher les destinataires"
+      },
+      "manage-ownership": {
+        "current-owner": "Propriétaire actuel :",
+        "default-current-owner": "Non attribué",
+        "last-execution": "Dernière exécution",
+        "new-onwer-placeholder": "Sélectionner un utilisateur",
+        "new-owner": "Nouveau propriétaire :",
+        "new-owner-loading-text": "Chargement...",
+        "next-execution": "Prochaine exécution",
+        "schedule-name": "Nom du calendrier",
+        "search-placeholder": "Rechercher par nom de rapport",
+        "status": "État"
+      },
+      "manage-reports": {
+        "basic-settings": {
+          "colon": "Deux-points",
+          "comma": "Virgule",
+          "dashboard-required": "Le tableau de bord est obligatoire.",
+          "dashboard-text": "Tableau de bord",
+          "delimiter": "Délimiteur",
+          "description": "Description",
+          "field-enclosure": "Boîtier du champ",
+          "field-enclosure-default": "Par défaut",
+          "field-enclosure-double": "Guillemet double",
+          "ftp-directory": "Répertoire de serveur FTP",
+          "ftp-directory-required": "Le répertoire de serveur est obligatoire.",
+          "ftp-server-required": "Vous devez sélectionner un serveur FTP",
+          "ftp-servers": "Serveurs FTP",
+          "hide-header": "Masquer l'en-tête",
+          "newline": "Nouveau format de ligne",
+          "no-ftp-connections": "Aucune connexion FTP trouvée",
+          "optional": "Facultatif",
+          "pipe": "Canal",
+          "recipient-dashboard-text": "Tableau de bord des destinataires",
+          "report-desc-length": "La description est trop longue.",
+          "report-name": "Nom",
+          "report-name-length": "Le nom du rapport est trop long.",
+          "report-name-required": "Le nom du rapport est obligatoire.",
+          "report-type": "Type de rapport",
+          "schedule-type": "Type de planification",
+          "schedule-type-desc": "Choisissez où envoyer/enregistrer le rapport",
+          "schedule-type-email-desc": "Le rapport sera envoyé par e-mail.",
+          "schedule-type-xls-desc": "Choisissez où envoyer/enregistrer le rapport. Si des panneaux/lignes répétés sont utilisés, assurez-vous que le nombre de panneaux est inférieur à {{repeatVariablesLimit}}",
+          "select-dashboard": "Commencez avec / pour rechercher des tableaux de bord",
+          "semicolon": "Point-virgule",
+          "title": "Paramètres de base",
+          "view-dashboard": "(Afficher le tableau de bord)"
+        },
+        "cancel": "Annuler",
+        "dashboards-text": "Tableaux de bord",
+        "date-time": {
+          "month": {
+            "apr": "Avril",
+            "aug": "Août",
+            "dec": "Décembre",
+            "feb": "Février",
+            "jan": "Janvier",
+            "jul": "Juillet",
+            "jun": "Juin",
+            "mar": "Mars",
+            "may": "Mai",
+            "nov": "Novembre",
+            "oct": "Octobre",
+            "sep": "Septembre"
+          },
+          "quick-ranges": {
+            "day-before-yesterday": "Jour avant hier",
+            "default": "Par défaut",
+            "last-1-hour": "Dernière heure",
+            "last-1-year": "Dernière année",
+            "last-12-hour": "12 dernières heures",
+            "last-15-min": "15 dernières minutes",
+            "last-2-day": "2 derniers jours",
+            "last-2-year": "2 dernières années",
+            "last-24-hour": "24 dernières heures",
+            "last-3-hour": "3 dernières heures",
+            "last-30-day": "30 derniers jours",
+            "last-30-min": "30 dernières minutes",
+            "last-5-min": "5 dernières minutes",
+            "last-5-year": "5 dernières années",
+            "last-6-hour": "6 dernières heures",
+            "last-6-month": "6 derniers mois",
+            "last-7-day": "7 derniers jours",
+            "last-90-day": "90 derniers jours",
+            "prev-fiscal-quarter": "Trimestre fiscal précédent",
+            "prev-fiscal-year": "Exercice fiscal précédent",
+            "prev-month": "Mois précédent",
+            "prev-week": "Semaine précédente",
+            "prev-year": "Année précédente",
+            "this-day-last-week": "Ce jour la semaine dernière",
+            "this-fiscal-quarter": "Ce trimestre fiscal",
+            "this-fiscal-quarter-so-far": "Ce trimestre fiscal jusqu’à ce jour",
+            "this-fiscal-year": "Cet exercice fiscal",
+            "this-fiscal-year-so-far": "Cet exercice fiscal jusqu’à ce jour",
+            "this-month": "Ce mois",
+            "this-month-so-far": "Ce mois jusqu’à ce jour",
+            "this-week": "Cette semaine",
+            "this-week-so-far": "Cette semaine jusqu’à ce jour",
+            "this-year": "Cette année",
+            "this-year-so-far": "Cette année jusqu’à ce jour",
+            "today": "Aujourd’hui",
+            "today-so-far": "Aujourd’hui jusqu’à maintenant",
+            "yesterday": "Hier"
+          },
+          "weekdays": {
+            "friday": "Vendredi",
+            "monday": "Lundi",
+            "saturday": "Samedi",
+            "sunday": "Dimanche",
+            "thursday": "Jeudi",
+            "tuesday": "Mardi",
+            "wednesday": "Mercredi"
+          }
+        },
+        "filter-settings": {
+          "dashboard-variables": "Variables de tableau de bord",
+          "dashboard-variables-description": "Générez un rapport avec les variables de tableau de bord spécifiées dans le formulaire. Si le filtre est défini sur Par défaut, le rapport utilisera les variables de tableau de bord enregistrées. S’il est défini sur Personnalisé, il utilisera les variables de tableau de bord de la session en cours.",
+          "time-range": "Intervalle temporel",
+          "time-range-description": "Générez un rapport avec l’intervalle temporel spécifié dans le formulaire. Si l’intervalle temporel personnalisé est défini sur Par défaut, l’application utilise l’intervalle temporel des tableaux de bord du rapport.",
+          "title": "Paramètres de filtre",
+          "use-current-variable": "Utiliser les variables actuelles",
+          "use-current-variable-description": "Les variables récentes sélectionnées du tableau de bord",
+          "use-default-variable": "Utiliser les variables par défaut",
+          "use-default-variable-description": "Les variables par défaut du tableau de bord",
+          "use-saved-variable": "Utiliser les variables enregistrées",
+          "use-saved-variable-description": "Les variables déjà enregistrées dans le rapport"
+        },
+        "frequency": {
+          "daily": "Quotidienne",
+          "hourly": "Horaire",
+          "hourly-disabled-title": "La fréquence horaire n’est pas prise en charge avec l’explosion dynamique",
+          "monthly": "Mensuelle",
+          "weekly": "Hebdomadaire",
+          "yearly": "Annuelle"
+        },
+        "layout": {
+          "grid": "Grille",
+          "sample": "Simple"
+        },
+        "mail-settings": {
+          "add-bccRecipeint": "Ajouter un nouveau destinataire Cci",
+          "add-recipeint": "Ajouter un nouveau destinataire",
+          "clear-recipient-msg": "Supprimez les destinataires statiques pour permettre la sélection dans le tableau de bord.",
+          "custom-message": "Message personnalisé",
+          "custom-message-optional": "(Facultatif)",
+          "dynamic-bcc": "Envoyer en tant que Cci",
+          "dynamic-bcc-disabled-title": "L’option Envoyer en Cci ne peut pas être utilisée avec l’explosion dynamique",
+          "dynamic-bursting": "Explosion dynamique",
+          "dynamic-recipient": "Destinataires dynamiques",
+          "email-compress-attachment": "Choisissez comment les fichiers CSV ou XLSX seront livrés à vos destinataires. Assurez-vous que la taille de la pièce jointe ne dépasse pas {{emailAttachmentSizeLimit}} Mo.",
+          "ftp-compress-attachment": "Souhaitez-vous compresser les fichiers lors du chargement vers le serveur FTP ?",
+          "recipient-bcc-dashboard-required": "Au moins un destinataire, un destinataire Cci ou un destinataire dynamique doit être spécifié.",
+          "recipient-dashboard-required": "Le tableau de bord ne peut comporter qu’une seule table ou qu’un seul panneau de table BMC.",
+          "recipient-mode": "Liste des destinataires",
+          "recipient-search": "Saisissez des caractères pour rechercher ou ajouter un autre destinataire",
+          "recipients": "Destinataires",
+          "Recipients": "Destinataires Cci",
+          "remove-dashbaord-msg": "Supprimez le tableau de bord des destinataires pour ajouter manuellement des destinataires et des destinataires Cci",
+          "remove-recipient-msg": "Supprimez le tableau de bord des destinataires pour ajouter manuellement des destinataires et des destinataires Cci",
+          "static-recipient": "Destinataires statiques",
+          "subject": "Objet",
+          "subject-options": {
+            "current-date": "Date actuelle",
+            "description ": "Description ",
+            "report-name": "Nom du rapport",
+            "startdate": "Date de début"
+          },
+          "subject-options-end-date": "Date de fin",
+          "title": "Paramètres de messagerie",
+          "type-message-placeholder": "Saisissez votre message ici..."
+        },
+        "orientations": {
+          "landscape": "Paysage",
+          "portrait": "Portrait"
+        },
+        "preview": "Aperçu",
+        "save": "Enregistrer",
+        "schedule-settings": {
+          "append-date": "Ajouter la date au nom de fichier",
+          "append-file": "Ajouter l’heure au nom de fichier",
+          "at-hours": "Aux heures (par exemple : 1,5,20-23)",
+          "at-minutes": "Aux minutes (les valeurs valides vont de 0 à 59)",
+          "every-hour": "Toutes les heures",
+          "frequency": "Fréquence",
+          "hours-invalid": "Format d’heure non valide",
+          "hours-range-not-allowed": "Seules les valeurs entières sont autorisées pour les heures lorsque l’explosion dynamique est activée",
+          "hours-required": "Les heures sont obligatoires avec cette fréquence",
+          "month-days": "Jours du mois (exemple : 1,3,5,20-27)",
+          "month-days-everyday": "Tous les jours du mois",
+          "month-days-invalid": "Format des jours du mois non valide",
+          "month-days-required": "Les jours du mois sont obligatoires avec cette fréquence",
+          "months": "Mois",
+          "months-placeholder": "Tous les mois de l’année",
+          "months-required": "Les mois sont obligatoires avec cette fréquence",
+          "no-empty-reports": "N’envoyez pas de rapports vides",
+          "time-invalid": "Le format de l’heure n’est pas valide. Le format requis est mm et les valeurs valides sont 0-59",
+          "timezone": "Fuseau horaire",
+          "title": "Planification",
+          "week-days": "Jours de la semaine",
+          "week-days-required": "Les jours de la semaine sont obligatoires avec cette fréquence",
+          "weekdays-placeholder": "Tous les jours de la semaine"
+        },
+        "send-test-email": "Envoyer un e-mail de test",
+        "send-test-email-disabled": "L’envoi d’un e-mail test n’est pas autorisé lorsque l’explosion dynamique est activée",
+        "style-settings": {
+          "layout": "Disposition",
+          "orientation": "Orientation",
+          "pdf-styling": "Style PDF",
+          "table-scaling": "Mise à l’échelle du tableau",
+          "table-scaling-description": "Sélectionnez une option pour ajuster la largeur des colonnes du tableau."
+        },
+        "table-scaling": {
+          "dynamic": "Dynamique",
+          "fixed": "Fixe"
+        }
+      },
+      "nav": {
+        "subtitle": "Créez et gérez des rapports distribués par e-mail ou FTP",
+        "title": "Rapports planifiés"
+      },
+      "reassign": {
+        "reassign-button": "Réattribuer"
+      },
+      "report-list": {
+        "alphabetically-a-z": "Alphabétique (A-Z)",
+        "alphabetically-z-a": "Alphabétique (Z-A)",
+        "back-button": "Retour",
+        "clone-button": "Cloner",
+        "delete-modal": {
+          "delete": "Supprimer",
+          "delete-reports-body": "Cette action supprimera le contenu suivant :",
+          "delete-reports-description": "Rapports planifiés : ",
+          "delete-scheduled-reports": "Supprimer les rapports planifiés",
+          "delete-text": "Supprimer",
+          "deleting-text": "Suppression en cours…"
+        },
+        "disable-modal": {
+          "disable": "Désactiver",
+          "disable-reports": "Désactiver les rapports",
+          "disable-reports-description": "Voulez-vous désactiver les rapports planifiés ?"
+        },
+        "enable-modal": {
+          "enable": "Activer",
+          "enable-reports": "Activer les rapports",
+          "enable-reports-description": "Voulez-vous activer les rapports planifiés ?"
+        },
+        "every-na": "Chaque - SO",
+        "filter-report-tooltip": "Filtrer le rapport par type de planification",
+        "go-to-folder": "Aller au dossier",
+        "history-page": "Historique",
+        "last-run-tooltip": "Dernière exécution à {{lastRun}}",
+        "last-sent": "Dernier envoi :",
+        "manageonwership-page": "Gérer l’appartenance",
+        "more-info-modal": {
+          "advanced-info": "Informations avancées sur le rapport",
+          "created-at": "Créé à",
+          "created-by": "Créé par",
+          "last-execution": "Dernière exécution à",
+          "next-execution": "Prochaine exécution à",
+          "updated-at": "Mis à jour à"
+        },
+        "no-report-found": "Aucun rapport trouvé",
+        "reassign-modal": {
+          "reassign": "Réattribuer",
+          "reassign-description": "Après la réattribution, les nouveaux horaires seront basés sur les autorisations d’accès aux données du nouveau propriétaire.",
+          "update-ownership": "Mettre à jour l’appartenance"
+        },
+        "report-history-modal": {
+          "download": "Télécharger",
+          "Elapsed-time": "Temps écoulé",
+          "Info": "Infos",
+          "started-at": "Démarré à",
+          "status": "État"
+        },
+        "report-page": "Rapports",
+        "run-now-modal": {
+          "email-type-description": "Cette option envoie l’e-mail à tous les destinataires configurés dans le rapport planifié.",
+          "ftp-type-description": "Le rapport sera chargé sur le serveur FTP configuré.",
+          "run-now": "Exécuter maintenant",
+          "success-generation": "Le rapport est généré avec succès",
+          "title": "Confirmez-vous l’opération ?"
+        },
+        "schedule-type-placeholder": "Type de planification",
+        "scheduled-report-button": "Nouveau rapport planifié",
+        "scheduled-type": {
+          "email": "E-mail",
+          "ftp": "FTP"
+        },
+        "search-placeholder": "Rechercher par nom de rapport",
+        "settings-page": "Paramètres",
+        "status-active": "Actif",
+        "status-inactive": "Inactif",
+        "update-modal": {
+          "update": "Mettre à jour",
+          "update-description": "Cette action mettra à jour votre rapport"
+        },
+        "view-last-scheduled-reports": "Afficher les 10 derniers rapports planifiés",
+        "view-more-info": "Afficher plus d’informations"
+      },
+      "settings": {
+        "acceptable-file-types": "Types de fichiers acceptés : image/png, image/jpg, image/jpeg",
+        "custom-input": {
+          "add-button": "Ajouter"
+        },
+        "email-security": {
+          "allow-external-internal-users-tooltip": "Autoriser les utilisateurs internes et externes",
+          "allow-internal-users-tooltip": "Autoriser les utilisateurs internes uniquement",
+          "domain-already-in-list": "{{value}} figure déjà dans la liste.",
+          "domains-for-external-users": "Domaines autorisés pour les utilisateurs externes",
+          "domains-for-external-users-placeholder": "domaine.xyz",
+          "domains-for-external-users-tooltip": "Si vous laissez la liste vide, tous les domaines seront activés par défaut.",
+          "not-valid-domain": "{{value}} n’est pas un domaine valide.",
+          "only-internal-users": "Utilisateurs internes uniquement",
+          "title": "Sécurité de la messagerie"
+        },
+        "ftp": {
+          "actions": "Actions",
+          "cancel-button": "Annuler",
+          "connections": {
+            "delete": "Supprimer",
+            "edit": "Modifier",
+            "set-as-default": "Définir comme valeur par défaut"
+          },
+          "connections-text": "Connexions FTP",
+          "delete-ftp": "Supprimer FTP",
+          "delete-ftp-body": "Confirmez-vous la suppression de la configuration FTP ?",
+          "delete-ftp-server": "Supprimer le serveur FTP",
+          "edit-connections": "Modifier la connexion FTP",
+          "ftp": "FTP",
+          "new-connection-text": "Nouvelle connexion FTP",
+          "password": "Mot de passe",
+          "password-placeholder": "mot de passe",
+          "port": "Port",
+          "port-placeholder": "port",
+          "protocol": "Protocole",
+          "server": "Serveur",
+          "server-placeholder": "votre.adresse.ftp",
+          "sftp": "SFTP",
+          "submit-button": "Envoyer",
+          "user": "Utilisateur",
+          "user-placeholder": "utilisateur",
+          "username": "Nom d'utilisateur"
+        },
+        "report-branding": {
+          "date-time-format": {
+            "custom": "Personnalisé",
+            "description": "Format de date actuel : ",
+            "placeholder": "par ex. JJ/MM/AAAA, HH:mm:ss Z z",
+            "title": "Format de date/heure"
+          },
+          "drop-file-here": "Déposer le fichier ici",
+          "file-invalid-type-prefix": "Le type de fichier doit être l’un des suivants",
+          "file-too-large": "Le fichier dépasse 128 Ko",
+          "footer-text": "Texte du pied de page",
+          "footer-text-error": "Texte du pied de page non valide",
+          "footer-text-url": "URL du texte du pied de page",
+          "footer-text-url-error": "URL du texte de pied de page non valide",
+          "footer-text-url-placeholder": "https://votre.siteweb",
+          "logo-url": "URL du logo de l’entreprise",
+          "logo-url-description": "Le logo affiché dans l’en-tête et le pied de page du document.",
+          "logo-url-error": "L’URL du logo n’est pas valide",
+          "logo-url-placeholder": "https://votre.siteweb/logo.png",
+          "title": "Charte graphique du rapport"
+        },
+        "reset-button": "Réinitialiser",
+        "schedule-settings": {
+          "date-format": "Format de la date",
+          "date-format-description": "Format de la date pour le nom de fichier : "
+        },
+        "submit-button": "Envoyer"
+      }
+    },
+    "insight-finder": {
+      "actions-drawer": {
+        "action-drawer": "Tiroir d'action",
+        "action-subtitle": "Sous-titre de l'action",
+        "new-dashboard": "Nouveau tableau de bord",
+        "save-dashboard": {
+          "dashboard-already-exists": "Un tableau de bord ou un dossier avec le même nom existe déjà",
+          "description": "Description",
+          "folder": "Dossier",
+          "save": "Enregistrer",
+          "title": "Titre"
+        },
+        "save-dashboard-text": "Enregistrer le tableau de bord"
+      },
+      "actions-panel": {
+        "save-as-dashboard": "Enregistrer en tant que tableau de bord"
+      },
+      "chat": {
+        "configuration-error": {
+          "review-missing-prerequisites": "Veuillez vérifier les prérequis manquants :"
+        },
+        "constants": {
+          "helix-ds-needs-config": "La source de données BMC Helix doit être configurée sous les sources de données.",
+          "skill-id-needs-config": "L’ID Insight Finder Skill doit être configuré dans les paramètres Insight Finder."
+        },
+        "copied": "Copié !",
+        "copy-button": "Copier",
+        "disclaimer": {
+          "inaccurate-info": "BMC HelixGPT peut afficher des informations inexactes ou choquantes."
+        },
+        "handle-prompt": {
+          "other-recommended-visualizations": "Autres visualisations recommandées :",
+          "please-select-option": "Veuillez sélectionner une option.",
+          "response-generation-stopped": "La génération de réponses a été interrompue comme demandé.",
+          "unable-to-process-please-refine": "Impossible de traiter votre demande. Veuillez affiner votre requête.",
+          "viz-added": "Une visualisation a été ajoutée.",
+          "viz-updated": "La visualisation a été mise à jour."
+        },
+        "message-input": {
+          "ask-a-question": "Poser une question",
+          "continue-update-last-visualisation": "Continuer à mettre à jour la dernière visualisation…"
+        },
+        "message-input-addon": {
+          "clear-input": "Effacer l'entrée",
+          "send-message": "Envoyer le message",
+          "stop-action": "Arrêter l'action"
+        },
+        "new-topic": {
+          "new-topic": "Nouveau sujet"
+        },
+        "panel-item": {
+          "export-as-pdf": "Exporter en tant que PDF",
+          "navigate-to-new-dashboard": "Vous êtes sur le point de quitter cette page et de créer un nouveau tableau de bord. Voulez-vous continuer ?",
+          "save-panel": "Ajouter au tableau de bord",
+          "view-query": "Vue de la requête"
+        },
+        "pre-configured-prompts": {
+          "show-more": "Afficher plus"
+        },
+        "prompt-message": {
+          "copied": "Copié !"
+        },
+        "send-message": {
+          "cant-process-request": "Je ne peux pas traiter votre demande pour le moment. Veuillez réessayer plus tard.",
+          "unknown-error-for-ds": "Erreur inconnue pour la source de données",
+          "unknown-error-for-ds-uid": "Erreur inconnue pour la source de données {{dataSourceUid}}"
+        },
+        "start-new-topic": "Démarrer un nouveau sujet",
+        "start-over": {
+          "start-over": "Recommencer depuis le début"
+        },
+        "welcome": {
+          "hello": "Bonjour {{ usernameNameHelloString }}",
+          "how-can-i-help-you": "Comment puis-je vous aider aujourd'hui ?"
+        }
+      },
+      "dashboard": {
+        "blankDashboard": {
+          "message": "Insight Finder aide à générer des visualisations."
+        },
+        "cancel": "Annuler",
+        "continue": "Continuer",
+        "discard": "Ignorer",
+        "have-unsaved-changes": {
+          "discard": "Vous avez peut-être des modifications non enregistrées dans le panneau. Voulez-vous vraiment les ignorer et quitter cette page ?"
+        },
+        "prompt-currently-running": "Une invite est en cours d’exécution. Voulez-vous vraiment l’ignorer et quitter cette page ?",
+        "query-drawer": {
+          "copy-to-clipboard": "Copier le fichier dans le presse-papier",
+          "datasource": "Source de données",
+          "query": "Requête",
+          "query-type": "Type de requête"
+        },
+        "saved": "Tableau de bord enregistré",
+        "start-over": {
+          "discard-confirmation-text": "Cette action supprimera les visualisations actuelles et l'historique du chat. Voulez-vous continuer ?"
+        },
+        "streaming": {
+          "analysing-prompt": "Analyse de l'invite",
+          "generating-query": "Génération de la requête",
+          "generating-visualization": "Génération de la visualisation",
+          "identifying-source": "Identification de la source",
+          "mapping-prompt-to-view": "Mappage de l'invite aux vues",
+          "parsing-query": "Analyse de la requête",
+          "refining-prompt": "Ajustement de l'invite",
+          "validating-prompt": "Validation de l'invite",
+          "validating-scope-of-views": "Validation de la portée des vues",
+          "working-on-the-request": "Travail sur la demande"
+        },
+        "unsaved-changes": "Modifications non enregistrées",
+        "utils": {
+          "discovery": "Détection",
+          "events": "Événements",
+          "failed-to-add-panel": "Échec de l’ajout/de la mise à jour du panneau, aucune source de données pertinente trouvée pour la requête.",
+          "failed-to-delete-panel": "Échec de la suppression du panneau : disposition introuvable.",
+          "no-query-found": "Aucune requête trouvée pour ce panneau",
+          "panel-deleted": "Panneau supprimé avec succès.",
+          "panel-not-found": "Panneau introuvable.",
+          "remove": "Supprimer",
+          "service-management": "Gestion des services",
+          "service-now": "ServiceNow",
+          "vulnerability": "Vulnérabilité"
+        }
+      },
+      "disclaimer": {
+        "inaccurate-info": "BMC HelixGPT peut afficher des informations inexactes ou choquantes."
+      },
+      "feedback": {
+        "thumbs-down": "Pas utile",
+        "thumbs-up": "Utile",
+        "toggletip": {
+          "cancel": "Annuler",
+          "placeholder": "Dites-nous en plus…",
+          "submit": "Envoyer",
+          "submitting": "En cours d’envoi…",
+          "title": "Pourquoi avoir mis cette note ?"
+        }
+      },
+      "generate-view": {
+        "generate-view": "Générer la vue",
+        "heading": "Enrichir la vue",
+        "intro-text": "Générez des vues enrichies à partir des vues clés en main prises en charge.",
+        "select-view": "Sélectionner une vue",
+        "skill-id-not-set": "L’ID de compétence pour View Enricher n’est pas configuré.",
+        "title": "Générer une vue enrichie"
+      },
+      "main-settings": {
+        "heading": "Paramètres",
+        "view-manage-config": "Afficher et gérer votre configuration"
+      },
+      "settings": {
+        "enable-streaming": "Activer le streaming",
+        "heading": "Paramètres Insight Finder",
+        "save": "Enregistrer",
+        "skill-id": "ID de la compétence",
+        "skill-identifier": "Identifiant de la compétence",
+        "skill-needs-config": "L’ID de la compétence doit être configuré avec HelixGPT Agent Studio version {{version}} ou supérieure.",
+        "streaming": {
+          "follow-up": "Activer les recommandations de suivi",
+          "follow-up-label": "Activer les recommandations de suivi après la génération de la visualisation"
+        },
+        "streaming-label": "Insight Finder avec la fonctionnalité de streaming activée fonctionne uniquement avec HelixGPT Agent Studio 25.3.00 ou une version supérieure.",
+        "tab-generate-enriched-view-label": "View Enricher",
+        "tab-insight-finder-label": "Insight Finder",
+        "view-manage-config": "Afficher et gérer votre configuration Insight Finder"
+      },
+      "streaming": {
+        "working-on-the-request": "Travail sur la demande"
+      },
+      "view-enricher-settings": {
+        "heading": "Paramètres de View Enricher",
+        "view-manage-config": "Afficher et gérer votre configuration de View Enricher"
+      },
+      "views-selector": {
+        "agent-generated-view": "Agent généré",
+        "couldnt-save-submission": "Impossible d'enregistrer les vues sélectionnées.",
+        "couldnt-validate-submission": "Impossible de valider les vues sélectionnées avant l'envoi",
+        "custom-view": "Personnalisé",
+        "error-generating-view": "Erreur : {{errorMessage}}",
+        "error-generating-view-failed": "Échec de la génération de la vue enrichie",
+        "error-processing-request": "Erreur : impossible de traiter la demande. Veuillez réessayer.",
+        "following-views-not-supported": "Les vues suivantes ne sont pas encore prises en charge dans Insight Finder : {{ invalidSelectedViewNames }}. Veuillez les désélectionner :",
+        "heading": "Configurer les vues",
+        "ootb-and-child-both-views-are-selected": "Les vues du même domaine ne peuvent pas être sélectionnées ensemble {{parentView}} et {{childView}}",
+        "ootb-view": "OOTB",
+        "succesfully-saved": "Vues enregistrées avec succès",
+        "supported": {
+          "following-views-available": "Les vues suivantes sont disponibles dans Insight Finder",
+          "loading": "Chargement...",
+          "no-description": "Aucune description",
+          "no-views-available": "Aucune vue n'est disponible pour utilisation dans Insight Finder",
+          "select-view": "Sélectionner une vue",
+          "submit": "Envoyer"
+        },
+        "supported-views": "Vues prises en charge",
+        "unsupported": {
+          "following-views-unavailable": "Les vues suivantes ne sont pas disponibles dans Insight Finder",
+          "name": "Nom",
+          "no-views-available": "Vous n'avez aucune vue non prise en charge.",
+          "type": "Type"
+        },
+        "unsupported-views": "Vues non prises en charge",
+        "untitled": "Sans titre",
+        "view-generated-successfully": "Vue générée avec succès sous le nom : {{viewName}}"
+      }
+    }
+  }
+}

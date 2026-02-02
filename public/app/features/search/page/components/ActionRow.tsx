@@ -119,6 +119,9 @@ export const ActionRow = ({
             disabledOptions={disabledOptions}
             onChange={onLayoutChange}
             value={layout}
+            //BMC Accessibility Change: Added Aria Label for Layout
+            aria-label={t('search.actions.view-layout', 'View layout')}
+            //BMC Accessibility Change End
           />
         )}
         <SortPicker

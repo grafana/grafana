@@ -1,6 +1,7 @@
 import { PureComponent } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { Team } from 'app/types';
 
 export interface Props {
@@ -13,7 +14,10 @@ export class UserTeams extends PureComponent<Props> {
     const { isLoading, teams } = this.props;
 
     if (isLoading) {
-      return <LoadingPlaceholder text="Loading teams..." />;
+      return (
+        // BMC Change: Next line
+        <LoadingPlaceholder text={t('bmcgrafana.shared-preferences.profile.team.loading-text', 'Loading teams...')} />
+      );
     }
 
     if (teams.length === 0) {
@@ -22,14 +26,25 @@ export class UserTeams extends PureComponent<Props> {
 
     return (
       <div>
-        <h3 className="page-sub-heading">Teams</h3>
+        <h3 className="page-sub-heading">
+          <Trans i18nKey={'bmcgrafana.users-and-access.teams.title'}>Teams</Trans>
+        </h3>
         <table className="filter-table form-inline" aria-label="User teams table">
           <thead>
             <tr>
               <th />
-              <th>Name</th>
-              <th>Email</th>
-              <th>Members</th>
+              <th>
+                {/* BMC Change: Next line */}
+                <Trans i18nKey={'bmcgrafana.users-and-access.headers.name-text'}>Name</Trans>
+              </th>
+              <th>
+                {/* BMC Change: Next line */}
+                <Trans i18nKey={'bmcgrafana.users-and-access.headers.email-text'}>Email</Trans>
+              </th>
+              <th>
+                {/* BMC Change: Next line */}
+                <Trans i18nKey={'bmcgrafana.users-and-access.headers.members-text'}>Members</Trans>
+              </th>
             </tr>
           </thead>
           <tbody>

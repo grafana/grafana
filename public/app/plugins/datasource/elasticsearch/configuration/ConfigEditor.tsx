@@ -25,7 +25,12 @@ export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-
+  // bmc code : starts
+  const isGrafanaAdmin = config.bootData.user.isGrafanaAdmin;
+  if (!isGrafanaAdmin) {
+    options.url = '********';
+  }
+  // bmc code : ends
   useEffect(() => {
     if (!isValidOptions(options)) {
       onOptionsChange(coerceOptions(options));
@@ -61,7 +66,12 @@ export const ConfigEditor = (props: Props) => {
         hasRequiredFields={false}
       />
       <Divider spacing={4} />
-      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:9200" />
+      {/* bmc code change */}
+      <ConnectionSettings
+        config={{ ...options, readOnly: !isGrafanaAdmin }}
+        onChange={onOptionsChange}
+        urlPlaceholder="http://localhost:9200"
+      />
       <Divider spacing={4} />
       <Auth
         {...authProps}

@@ -6,6 +6,7 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
+import { t } from 'app/core/internationalization';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -57,17 +58,29 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   if (!plugin) {
     return null;
   }
-
-  const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
-    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
-    {
-      label: 'Library panels',
-      value: VisualizationSelectPaneTab.LibraryPanels,
-      description: 'Reusable panels you can share between multiple dashboards.',
-    },
-  ];
-
+  // BMC Change: Function to localize below text
+  function radioOptions(): Array<SelectableValue<VisualizationSelectPaneTab>> {
+    return [
+      {
+        label: t('bmcgrafana.dashboards.edit-panel.visualizations-text', 'Visualizations'),
+        value: VisualizationSelectPaneTab.Visualizations,
+      },
+      {
+        label: t('bmcgrafana.dashboards.edit-panel.suggestions-text', 'Suggestions'),
+        value: VisualizationSelectPaneTab.Suggestions,
+      },
+      {
+        label: t('bmcgrafana.dashboards.edit-panel.library-panels-text', 'Library panels'),
+        value: VisualizationSelectPaneTab.LibraryPanels,
+        description: t(
+          'bmcgrafana.dashboards.edit-panel.library-panels-description',
+          'Reusable panels you can share between multiple dashboards.'
+        ),
+      },
+    ];
+  }
+  // BMC Change ends
+    
   return (
     <div className={styles.openWrapper}>
       <div className={styles.formBox}>
@@ -77,10 +90,14 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
             onChange={setSearchQuery}
             ref={searchRef}
             autoFocus={true}
-            placeholder="Search for..."
+            // BMC Change: To enable localization for below text
+            placeholder={t('bmcgrafana.dashboards.edit-panel.search-for-text', 'Search for...')}
+            // BMC Change ends
           />
           <Button
-            title="Close"
+            // BMC Change: To enable localization for below text
+            title={t('bmcgrafana.dashboards.edit-panel.close-text', 'Close')}
+            // BMC Change ends
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}
@@ -89,7 +106,8 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
           />
         </div>
         <Field className={styles.customFieldMargin}>
-          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+          {/* BMC Change Inline: Call the function to get options */}
+          <RadioButtonGroup options={radioOptions()} value={listMode} onChange={setListMode} fullWidth />
         </Field>
       </div>
       <div className={styles.scrollWrapper}>

@@ -13,6 +13,7 @@ import (
 
 // ExporterName is used as namespace for exposing prometheus metrics
 const ExporterName = "grafana"
+const HelixExporterName = "bmc_hdb"
 
 var (
 	// MInstanceStart is a metric counter for started instances
@@ -137,6 +138,9 @@ var (
 
 	// MAccessEvaluationsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessEvaluationsSummary prometheus.Histogram
+
+	// MDataSourceProxyResDataSize is a metric summary for data proxy data consumption
+	MDataSourceProxyResDataSize *prometheus.GaugeVec
 )
 
 // StatTotals
@@ -445,6 +449,12 @@ func init() {
 		Namespace:  ExporterName,
 	})
 
+	MDataSourceProxyResDataSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "api_dataproxy_response_data_size",
+		Help:      "summary for dataproxy data consumption",
+		Namespace: HelixExporterName,
+	}, []string{"tenant_id", "data_source_id", "user_id", "dashboard_uid"})
+
 	MAlertingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "alerting_execution_time_milliseconds",
 		Help:       "summary of alert execution duration",
@@ -735,6 +745,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MApiDashboardGet,
 		MApiDashboardSearch,
 		MDataSourceProxyReqTimer,
+		MDataSourceProxyResDataSize,
 		MAlertingExecutionTime,
 		MApiAdminUserCreate,
 		MApiLoginPost,

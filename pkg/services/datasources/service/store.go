@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/lib/pq"
 )
 
 // Store is the interface for the datasource Service's storage.
@@ -90,12 +91,16 @@ func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 		dataSources []*datasources.DataSource
 	)
 	return dataSources, ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		if query.DataSourceLimit <= 0 {
-			sess = dbSess.Where("org_id=?", query.OrgID).Asc("name")
-		} else {
+		//BMC Code
+		if query.DataSourceLimit <= 0 && query.MSPTenant {
+			sess = dbSess.Where("org_id=? and ((type=? and name=any(?) OR type!=?)", query.OrgID, query.Type, pq.Array(query.Names), query.Type)
+		} else if query.DataSourceLimit > 0 && query.MSPTenant {
+			sess = dbSess.Where("org_id=? and ((type=? and name=any(?)) OR type!=?)", query.OrgID, query.Type, pq.Array(query.Names), query.Type)
+		} else if query.DataSourceLimit > 0 && !query.MSPTenant {
 			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgID).Asc("name")
+		} else {
+			sess = dbSess.Where("org_id=?", query.OrgID).Asc("name")
 		}
-
 		return sess.Find(&dataSources)
 	})
 }

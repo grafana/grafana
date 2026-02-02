@@ -2,6 +2,7 @@ import { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from 'app/core/internationalization';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';
@@ -45,9 +46,13 @@ export function DataSourceVariableForm({
 
   return (
     <>
-      <VariableLegend>Data source options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.types.data-source.title">
+          Data source options
+        </Trans>
+      </VariableLegend>
       <VariableSelectField
-        name="Type"
+        name={t('bmcgrafana.dashboards.settings.variables.editor.types.data-source.type', 'Type')}
         value={typeValue}
         options={optionTypes}
         onChange={onChange}
@@ -56,20 +61,29 @@ export function DataSourceVariableForm({
 
       <VariableTextField
         defaultValue={regex}
-        name="Instance name filter"
+        name={t(
+          'bmcgrafana.dashboards.settings.variables.editor.types.data-source.name-filter',
+          'Instance name filter'
+        )}
         placeholder="/.*-(.*)-.*/"
         onBlur={onRegExBlur}
         description={
           <div>
-            Regex filter for which data source instances to choose from in the variable value list. Leave empty for all.
+            <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.types.data-source.name-filter-desc1">
+              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
+              all.
+            </Trans>
             <br />
             <br />
-            Example: <code>/^prod/</code>
+            <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.types.data-source.name-filter-desc2">
+              Example:{' '}
+            </Trans>
+            <code>/^prod/</code>
           </div>
         }
       />
 
-      <VariableLegend>Selection options</VariableLegend>
+      <Trans i18nKey="bmcgrafana.dashboards.settings.variables.editor.selection-options">Selection options</Trans>
       <SelectionOptionsForm
         multi={multi}
         includeAll={includeAll}

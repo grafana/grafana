@@ -169,9 +169,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
-    height: theme.spacing(4),
-    display: 'flex',
-    alignItems: 'center',
+    // BMC Change: Throw away sol till next upgrade
+    // height: theme.spacing(6.25),
+    // display: 'flex',
+    // alignItems: 'center',
   }),
   header: css({
     display: 'flex',

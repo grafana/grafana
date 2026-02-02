@@ -81,7 +81,15 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
   }
 
   return (
-    <div className={tableStyles.headerCell} key={key} {...headerProps} role="columnheader">
+    <div
+      className={tableStyles.headerCell}
+      key={key}
+      {...headerProps}
+      role="columnheader"
+      //BMC Accessibility Change next 1 line:  added aria-sort
+      aria-sort={!column.isSorted ? 'none' : column.isSortedDesc ? 'descending' : 'ascending'}
+      //BMC Accessibility Change end
+    >
       {column.canSort && sortHeaderContent}
       {!column.canSort && headerContent}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}

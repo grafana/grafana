@@ -45,9 +45,15 @@ func (f OrgFilter) Where() (string, []any) {
 type TitleFilter struct {
 	Dialect migrator.Dialect
 	Title   string
+	// BMC Change: Next line
+	Localized bool
 }
 
 func (f TitleFilter) Where() (string, []any) {
+	// BMC Change: Updated below block to add check on Localized
+	if f.Localized {
+		return fmt.Sprintf("CASE WHEN locale.name IS NOT NULL THEN locale.name ELSE dashboard.title END %s ?", f.Dialect.LikeStr()), []any{"%" + f.Title + "%"}
+	}
 	return fmt.Sprintf("dashboard.title %s ?", f.Dialect.LikeStr()), []any{"%" + f.Title + "%"}
 }
 
@@ -167,14 +173,25 @@ func (f TagsFilter) Where() (string, []any) {
 
 type TitleSorter struct {
 	Descending bool
+	// BMC Change: Next line
+	Localized bool
 }
 
 func (s TitleSorter) OrderBy() string {
-	if s.Descending {
-		return "dashboard.title DESC"
-	}
+	// BMC Change: Updated below block to add check on Localized
+	if s.Localized {
+		if s.Descending {
+			return "title DESC"
+		}
 
-	return "dashboard.title ASC"
+		return "title ASC"
+	} else {
+		if s.Descending {
+			return "dashboard.title DESC"
+		}
+
+		return "dashboard.title ASC"
+	}
 }
 
 func sqlIDin(column string, ids []int64) (string, []any) {

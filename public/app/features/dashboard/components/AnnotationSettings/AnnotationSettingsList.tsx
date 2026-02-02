@@ -32,11 +32,18 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
 
   const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
 
+  /*BMC Change: To enable localization for below text*/
+  const annoNameBuilt = t('bmcgrafana.dashboards.settings.annotation.anno-name-builtin', '(Built-in)');
+  const annoNameDisabled = t('bmcgrafana.dashboards.settings.annotation.anno-name-disabled', '(Disabled)');
+
   const getAnnotationName = (anno: AnnotationQuery) => {
     if (anno.enable === false) {
       return (
         <>
-          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
+          {/*BMC Change: To enable localization for below text*/}
+          <em className="muted">
+            {annoNameDisabled} &nbsp; {anno.name}
+          </em>
         </>
       );
     }
@@ -44,7 +51,10 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.builtIn) {
       return (
         <>
-          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
+          {/*BMC Change: To enable localization for below text*/}
+          <em className="muted">
+            {anno.name} &nbsp; {annoNameBuilt}
+          </em>
         </>
       );
     }
@@ -60,8 +70,9 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
           <table role="grid" className="filter-table filter-table--hover">
             <thead>
               <tr>
-                <th>Query name</th>
-                <th>Data source</th>
+                {/*BMC Change: To enable localization for below text*/}
+                <th>{t('bmcgrafana.dashboards.settings.annotation.query-name', 'Query name')}</th>
+                <th>{t('bmcgrafana.dashboards.settings.annotation.data-source', 'Data source')}</th>
                 <th colSpan={3}></th>
               </tr>
             </thead>
@@ -85,11 +96,23 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
                     {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
-                    {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
+                    {/*BMC Change: To enable localization for below text*/}
+                    {idx !== 0 && (
+                      <IconButton
+                        name="arrow-up"
+                        onClick={() => onMove(idx, -1)}
+                        tooltip={t('bmcgrafana.dashboards.settings.annotation.move-up', 'Move up')}
+                      />
+                    )}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
+                    {/*BMC Change: To enable localization for below text*/}
                     {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
-                      <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
+                      <IconButton
+                        name="arrow-down"
+                        onClick={() => onMove(idx, 1)}
+                        tooltip={t('bmcgrafana.dashboards.settings.annotation.move-down', 'Move down')}
+                      />
                     ) : null}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
@@ -107,6 +130,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
           </table>
         </div>
       )}
+      {/*BMC Change: To enable localization for below text*/}
       {showEmptyListCTA && (
         <Stack direction="column">
           <EmptyState
@@ -146,7 +170,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
           data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
           onClick={onNew}
         >
-          New query
+          <Trans i18nKey={'bmcgrafana.dashboards.settings.annotation.new-query-button'}>New query</Trans>
         </ListNewButton>
       )}
     </Stack>

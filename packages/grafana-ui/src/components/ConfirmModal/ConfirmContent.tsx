@@ -102,7 +102,8 @@ export const ConfirmContent = ({
         {confirmPromptText ? (
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
-              <Field disabled={disabled}>
+              {/* BMC Change: Next line to take full width */}
+              <Field disabled={disabled} style={{ flexGrow: 1 }}>
                 <Input placeholder={placeholder} onChange={onConfirmationTextChange} />
               </Field>
             </Stack>

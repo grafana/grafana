@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef, useState } from 'react';
 import * as React from 'react';
+import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef, useState } from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -9,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
+import { Trans } from '../../utils/i18n';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -373,7 +374,18 @@ export function PanelChrome({
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
         >
-          {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
+          {/* BMC Change: Add loading state message for refresh to load */}
+          {loadingState === LoadingState.RefreshToLoad ? (
+            <div className="panel-empty">
+              <p>
+                <Trans i18nKey="bmc.load-blank-dashoard.refresh-label">Refresh dashboard to fetch data</Trans>
+              </p>
+            </div>
+          ) : typeof children === 'function' ? (
+            children(innerWidth, innerHeight)
+          ) : (
+            children
+          )}
         </div>
       )}
     </section>

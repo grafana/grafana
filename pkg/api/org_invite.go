@@ -62,7 +62,8 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response {
 	inviteDto := dtos.AddInviteForm{}
 	if err := web.Bind(c.Req, &inviteDto); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data when adding organization invite", err)
 	}
 	if !inviteDto.Role.IsValid() {
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)

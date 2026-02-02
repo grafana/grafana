@@ -13,7 +13,7 @@ import { getEditorVariables, getVariablesState } from '../state/selectors';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
-
+import { deleteVariableCache } from 'app/features/dashboard-scene/settings/variables/utils';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { VariableEditorList } from './VariableEditorList';
@@ -102,6 +102,20 @@ class VariableEditorContainerUnconnected extends PureComponent<Props, State> {
   onRemoveVariable = () => {
     this.props.removeVariable(this.state.variableId!);
     this.onModalClose();
+
+    // BMC code starts
+    const dashboardUID = this.props?.dashboard?.uid;
+    const variable_name = this.state.variableId?.id;
+    const variables = this.props.variables;
+    const selectedObject = variables.find((variable) => variable.name === variable_name);
+    if (selectedObject) {
+      if (!deleteVariableCache(selectedObject, dashboardUID, true)) {
+        console.error(`Couldn't delete variable cache for ${variable_name}`);
+      }
+    } else {
+      console.error(`No element found with name : ${variable_name}`);
+    }
+    // BMC code ends
   };
 
   render() {

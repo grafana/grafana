@@ -67,6 +67,9 @@ export const TimeRangeContent = (props: Props) => {
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
+  //BMC Accessibility Change Start : Restore focus to calendar button on close
+  const lastCalendarButton = React.useRef<HTMLElement | null>(null);
+  //BMC Accessibility Change End
 
   const fromFieldId = useId();
   const toFieldId = useId();
@@ -81,6 +84,9 @@ export const TimeRangeContent = (props: Props) => {
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
       event.preventDefault();
+      //BMC Accessibility Change: Store the currently focused element
+      lastCalendarButton.current = document.activeElement as HTMLElement;
+      //BMC Accessibility Change End
       setOpen(true);
     },
     [setOpen]
@@ -96,6 +102,15 @@ export const TimeRangeContent = (props: Props) => {
 
     onApplyFromProps(timeRange);
   }, [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]);
+
+  //BMC Accessibility Change: Restore focus to the calendar button that opened the dialog
+  const handleCalendarClose = useCallback(() => {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      lastCalendarButton.current?.focus();
+    });
+  }, []);
+  //BMC Accessibility Change End
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -158,6 +173,9 @@ export const TimeRangeContent = (props: Props) => {
       variant="secondary"
       type="button"
       onClick={onOpen}
+      //BMC Accessibility change: added aria-current
+      aria-current={isOpen ? 'true' : 'false'}
+      //BMC Accessibility Change End
     />
   );
 
@@ -203,6 +221,9 @@ export const TimeRangeContent = (props: Props) => {
           tooltip={t('time-picker.copy-paste.tooltip-copy', 'Copy time range to clipboard')}
           type="button"
           onClick={onCopy}
+          //BMC Accessibility Change: Added aria-label
+          aria-label={t('time-picker.copy-paste.aria-label-copy', 'Copy time range to clipboard')}
+          //BMC Accessibility Change End
         />
         <Button
           data-testid={selectors.components.TimePicker.pasteTimeRange}
@@ -211,6 +232,9 @@ export const TimeRangeContent = (props: Props) => {
           tooltip={t('time-picker.copy-paste.tooltip-paste', 'Paste time range')}
           type="button"
           onClick={onPaste}
+          //BMC Accessibility Change: Added aria-label
+          aria-label={t('time-picker.copy-paste.aria-label-paste', 'Paste time range')}
+          //BMC Accessibility Change End
         />
         <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
           <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
@@ -223,7 +247,9 @@ export const TimeRangeContent = (props: Props) => {
         from={dateTimeParse(from.value, { timeZone })}
         to={dateTimeParse(to.value, { timeZone })}
         onApply={onApply}
-        onClose={() => setOpen(false)}
+        //BMC Accessibility Change next 1 line: added handleCalendarClose function
+        onClose={handleCalendarClose}
+        //BMC Accessibility Change End
         onChange={onChange}
         timeZone={timeZone}
         isReversed={isReversed}

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
 import { UsagesToNetwork } from './utils';
@@ -26,7 +27,13 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   });
 
   return (
-    <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
+    <NetworkGraphModal
+      show={false}
+      // BMC Change: Next line
+      title={`${t('bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list-row.show-usage-modal-title', 'Showing usages for: ${{id}}')}`}
+      nodes={nodes}
+      edges={network.edges}
+    >
       {({ showModal }) => {
         return (
           <IconButton
@@ -35,7 +42,11 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
               showModal();
             }}
             name="code-branch"
-            tooltip="Show usages"
+            // BMC Change: Next line
+            tooltip={t(
+              'bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list-row.show-usage',
+              'Show usages'
+            )}
           />
         );
       }}

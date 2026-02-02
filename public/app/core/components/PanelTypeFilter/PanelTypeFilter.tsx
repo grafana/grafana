@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
@@ -35,8 +35,9 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
     defaultOptions: true,
     getOptionLabel: (i: SelectableValue<PanelPluginMeta>) => i.label,
     getOptionValue: (i: SelectableValue<PanelPluginMeta>) => i.value,
-    noOptionsMessage: 'No Panel types found',
-    placeholder: 'Filter by type',
+    // BMC Change: Next couple lines
+    noOptionsMessage: t('bmcgrafana.library-panels.panel-types-not-found', 'No Panel types found'),
+    placeholder: t('bmcgrafana.search-inputs.filter-type', 'Filter by type'),
     maxMenuHeight,
     options,
     value,
@@ -57,7 +58,13 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
           <Trans i18nKey="panel-type-filter.clear-button">Clear types</Trans>
         </Button>
       )}
-      <MultiSelect<PanelPluginMeta> {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      {/* BMC Accessibility Change: Updated the aria-label */}
+      <MultiSelect<PanelPluginMeta>
+        {...selectOptions}
+        prefix={<Icon name="filter" />}
+        aria-label={`Panel Type filter, ${value.length} selected`}
+      />
+      {/* BMC Accessibility Change end */}
     </div>
   );
 };

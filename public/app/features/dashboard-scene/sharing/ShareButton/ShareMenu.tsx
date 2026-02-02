@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
 import * as React from 'react';
+import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
+import { FEATURE_CONST, getGrafanaFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -52,7 +53,8 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareInternally,
       icon: 'building',
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
-      renderCondition: true,
+      // BMC Change: Next line, default renderCondition to false
+      renderCondition: false,
       onClick: () => onMenuItemClick(shareDashboardType.link),
     });
 
@@ -75,12 +77,25 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       renderCondition:
         contextSrv.isSignedIn &&
         config.snapshotEnabled &&
-        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate),
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate) &&
+        // BMC Change: Added getGrafanaFeatureStatus
+        getGrafanaFeatureStatus(FEATURE_CONST.snapshot),
       onClick: () => {
         onMenuItemClick(shareDashboardType.snapshot);
       },
     });
-
+    //BMC Change: Starts
+    menuItems.push({
+      shareId: shareDashboardType.download,
+      testId: newShareButtonSelector.downloadDashboard,
+      icon: 'save',
+      label: t('bmc.common.download', 'Download'),
+      renderCondition: contextSrv.hasPermission(AccessControlAction.DashboardsRead),
+      onClick: () => {
+        onMenuItemClick(shareDashboardType.download);
+      },
+    });
+    //BMC Change: Ends
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
     return menuItems.filter((item) => item.renderCondition);

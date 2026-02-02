@@ -1,6 +1,6 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useLayoutEffect } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
@@ -74,6 +74,14 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   useEffect(() => {
     loadAppPlugin(pluginId, dispatch);
   }, [pluginId]);
+
+  // BMC Change: Update the navModel, so that App plugin not using Page can be refreshed with new navModel
+  // This might get called twice, once when Reporting plugin is loaded and then page component is loaded
+  useLayoutEffect(() => {
+    if (navModel) {
+      grafanaContext.chrome.update({ sectionNav: navModel, pageNav: navModel.node });
+    }
+  }, [navModel, grafanaContext.chrome]);
 
   const onNavChanged = useCallback(
     (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),

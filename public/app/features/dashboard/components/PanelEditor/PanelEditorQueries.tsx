@@ -7,9 +7,9 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
-import { getDashboardSrv } from '../../services/DashboardSrv';
+// import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state/PanelModel';
-import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
+// import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
 
 interface Props {
   /** Current panel */
@@ -63,13 +63,17 @@ export class PanelEditorQueries extends PureComponent<Props> {
       let ds;
       // check if we have last used datasource from local storage
       // get dashboard uid
-      const dashboardUid = getDashboardSrv().getCurrent()?.uid ?? '';
-      const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid!);
-      // do we have a last used datasource for this dashboard
-      if (lastUsedDatasource?.datasourceUid !== null) {
-        // get datasource from uid
-        ds = getDatasourceSrv().getInstanceSettings(lastUsedDatasource?.datasourceUid);
-      }
+
+      // BMC Change Start: Comment below line to disable DS Modal
+      // const dashboardUid = getDashboardSrv().getCurrent()?.uid ?? '';
+      // const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid!);
+      // // do we have a last used datasource for this dashboard
+      // if (lastUsedDatasource?.datasourceUid !== null) {
+      //   // get datasource from uid
+      //   ds = getDatasourceSrv().getInstanceSettings(lastUsedDatasource?.datasourceUid);
+      // }
+      // BMC Change End
+
       // else load default datasource
       if (!ds) {
         ds = getDatasourceSrv().getInstanceSettings(null);

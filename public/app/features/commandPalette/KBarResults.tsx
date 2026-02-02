@@ -3,6 +3,8 @@ import { usePointerMovedSinceMount } from 'kbar/lib/utils';
 import * as React from 'react';
 import { useVirtual } from 'react-virtual';
 
+import { t } from 'app/core/internationalization';
+
 import { URLCallback } from './types';
 
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
@@ -189,6 +191,18 @@ export const KBarResults = (props: KBarResultsProps) => {
             } as const,
             ...handlers,
           };
+
+          // BMC code
+          // to be ignored for extraction
+          if (typeof item !== 'string' && !search) {
+            const actionUrl = item.url;
+            const match = typeof actionUrl === 'string' ? actionUrl.match(/\/[df]\/([a-zA-Z0-9\_\-]+)/) : null;
+            if (match) {
+              item.name = t(`bmc-dynamic.${match[1]}.name`, item.name);
+            }
+          }
+
+          // BMC code - end
 
           const renderedItem = React.cloneElement(
             props.onRender({

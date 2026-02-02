@@ -96,6 +96,24 @@ export class DashboardSrv {
       return newIsStarred;
     });
   }
+
+  // BMC code - start
+  savePersonalizedFilters(dashboardModel: { uid: string; time: any; list: any[] }) {
+    const data = dashboardModel.list.reduce((result, filter) => {
+      result[`var-${filter.name}`] = { ...filter.current, selected: false };
+      return result;
+    }, {});
+
+    // We will append time to personalization only if user has changed the time variable.
+    if (this.dashboard?.hasTimeChanged) {
+      data.time = dashboardModel.time;
+    }
+    return getBackendSrv().post(`/api/bmc/dashboard/${dashboardModel.uid}/personalization`, { data });
+  }
+
+  resetPersonalizedFilters(dashUid: string) {
+    return getBackendSrv().delete(`/api/bmc/dashboard/${dashUid}/personalization`);
+  }
 }
 
 //

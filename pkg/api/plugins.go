@@ -18,7 +18,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	// bmc code : starts
+	"github.com/grafana/grafana/pkg/api/bmc/external"
+	"github.com/grafana/grafana/pkg/api/externalds"
 
+	// bmc code : ends
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -116,6 +120,12 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			if enabledFilter == "1" && !pluginSetting.Enabled {
 				continue
 			}
+		}
+
+		// bmc code change
+		// filter out external plugins if feature flag not enabled
+		if externalds.IsExternalDs(pluginDef.ID) && !(external.FeatureFlagExternalDatasource.Enabled(c.Req, c.SignedInUser)) {
+			continue
 		}
 
 		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
@@ -251,7 +261,8 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.Response {
 	cmd := pluginsettings.UpdatePluginSettingCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// BMC code change
+		return response.Error(http.StatusBadRequest, "bad request data while updating plugin setting", err)
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
@@ -460,7 +471,8 @@ func (hs *HTTPServer) GetPluginErrorsList(c *contextmodel.ReqContext) response.R
 func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Response {
 	dto := dtos.InstallPluginCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		//BMC code changes
+		return response.Error(http.StatusBadRequest, "bad request data while installing plugin", err)
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 

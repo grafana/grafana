@@ -6,6 +6,9 @@ import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
+import rolesReducers from 'app/features/bmc-rbac/roles/state/reducers';
+import rbacTeamsReducer from 'app/features/bmc-rbac/teams/state/reducers';
+import rbacUsersReducer from 'app/features/bmc-rbac/users/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
@@ -37,6 +40,11 @@ const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
+  // BMC code - RBAC
+  ...rolesReducers,
+  ...rbacTeamsReducer,
+  ...rbacUsersReducer,
+  // End
   ...apiKeysReducers,
   ...foldersReducers,
   ...dashboardReducers,

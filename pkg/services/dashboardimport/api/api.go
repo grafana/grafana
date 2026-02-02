@@ -1,8 +1,11 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/api/bmc/external"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -77,7 +80,13 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 	}
 
 	req.User = c.SignedInUser
-	resp, err := api.dashboardImportService.ImportDashboard(c.Req.Context(), &req)
+	// BMC Change: Starts
+	ctx := c.Req.Context()
+	if external.FeatureFlagBHDLocalization.Enabled(c.Req, c.SignedInUser) {
+		ctx = context.WithValue(c.Req.Context(), "bhd-localization", true)
+	}
+	// BMC Change: Ends
+	resp, err := api.dashboardImportService.ImportDashboard(ctx, &req)
 	if err != nil {
 		if errors.Is(err, utils.ErrDashboardInputMissing) {
 			return response.Error(http.StatusBadRequest, err.Error(), err)

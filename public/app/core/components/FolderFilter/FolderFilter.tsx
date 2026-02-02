@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { FolderInfo, PermissionLevelString } from 'app/types';
@@ -51,10 +51,13 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
         isLoading={loading}
         loadOptions={debouncedLoadOptions}
         maxMenuHeight={maxMenuHeight}
-        placeholder="Filter by folder"
-        noOptionsMessage="No folders found"
+        // BMC Change: Next couple lines
+        placeholder={t('bmcgrafana.search-inputs.filter-folder', 'Filter by folder')}
+        noOptionsMessage={t('bmcgrafana.search-inputs.folder-not-found', 'Filter by folder')}
         prefix={<Icon name="filter" />}
-        aria-label="Folder filter"
+        //BMC Accessibility Change next 1 line : Updated the aria-label
+        aria-label={`Filter by folder, ${value.length} selected`}
+        //BMC Accessibility Change end
         defaultOptions
       />
     </div>

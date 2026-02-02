@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { HTMLProps } from 'react';
 import * as React from 'react';
-
+// BMC Code : Accessibility Change Next line
+import { useEffect, useRef } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -30,6 +31,25 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
+    // BMC Code : Accessibility Change starts here.
+    const focusRef = useRef<HTMLAnchorElement>(null);
+    const focusButtonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      if (active) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (focusRef.current) {
+              focusRef.current?.focus();
+            }
+            if (focusButtonRef.current) {
+              focusButtonRef.current?.focus();
+            }
+          });
+        });
+      }
+    }, [active, focusRef, focusButtonRef]);
+    // BMC Code : Accessibility Change ends here.
 
     const content = () => (
       <>
@@ -59,7 +79,8 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
             href={href}
             // don't think we can avoid the type assertion here :(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            ref={ref as React.ForwardedRef<HTMLAnchorElement>}
+            // BMC Code : Accessibility Change (Next line)
+            ref={focusRef}
           >
             {content()}
           </a>
@@ -74,7 +95,8 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           type="button"
           // don't think we can avoid the type assertion here :(
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          // BMC Code : Accessibility Change Next line
+          ref={focusButtonRef}
         >
           {content()}
         </button>

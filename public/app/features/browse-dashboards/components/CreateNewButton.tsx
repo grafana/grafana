@@ -5,6 +5,7 @@ import { locationUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import {
   getImportPhrase,
   getNewDashboardPhrase,
@@ -43,10 +44,11 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
         folder_depth: depth,
       });
 
+      //BMC change
       if (!folder.error) {
-        notifyApp.success('Folder created');
+        notifyApp.success(t('bmc.notifications.folder.created', 'Folder created'));
       } else {
-        notifyApp.error('Failed to create folder');
+        notifyApp.error(t('bmc.notifications.folder.failed-creation', 'Failed to create folder'), '', 'bhd-00610');
       }
 
       if (folder.data) {
@@ -90,7 +92,10 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   return (
     <>
       <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
-        <Button>
+        {
+          // BMC Code : Accessibility Change ( next 1 line)
+        }
+        <Button aria-expanded={isOpen} aria-haspopup="true">
           {getNewPhrase()}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>

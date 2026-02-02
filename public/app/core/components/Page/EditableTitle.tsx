@@ -9,9 +9,12 @@ import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 export interface Props {
   value: string;
   onEdit: (newValue: string) => Promise<void>;
+  // BMC Change: Next line
+  localizedVal?: string;
 }
 
-export const EditableTitle = ({ value, onEdit }: Props) => {
+// BMC Change: Next line, new Prop localizedVal
+export const EditableTitle = ({ value, onEdit, localizedVal }: Props) => {
   const styles = useStyles2(getStyles);
   const [localValue, setLocalValue] = useState(value);
   const [isEditing, setIsEditing] = useState(false);
@@ -62,7 +65,8 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           caused by the delay between the save completing and the new value being refetched
         */}
         <Text element="h1" truncate>
-          {localValue}
+          {/* BMC Change: Next line */}
+          {localizedVal ? localizedVal : localValue}
         </Text>
         <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
       </div>

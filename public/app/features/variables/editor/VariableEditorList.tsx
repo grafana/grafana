@@ -58,10 +58,19 @@ export function VariableEditorList({
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
                 role="grid"
               >
+                {/* BMC Change: To enable localization for below text */}
                 <thead>
                   <tr>
-                    <th>Variable</th>
-                    <th>Definition</th>
+                    <th>
+                      <Trans i18nKey="bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list.variable">
+                        Variable
+                      </Trans>
+                    </th>
+                    <th>
+                      <Trans i18nKey="bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list.definition">
+                        Definition
+                      </Trans>
+                    </th>
                     <th colSpan={5} />
                   </tr>
                 </thead>
@@ -95,7 +104,9 @@ export function VariableEditorList({
                 onClick={onAdd}
                 icon="plus"
               >
-                New variable
+                <Trans i18nKey="bmcgrafana.dashboards.settings.variables.variables-tab.variable-editor-list.button-text">
+                  New variable
+                </Trans>
               </Button>
             </Stack>
           </Stack>

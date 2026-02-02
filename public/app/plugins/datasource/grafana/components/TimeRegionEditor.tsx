@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import moment, { Moment } from 'moment/moment';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState, useMemo } from 'react';
 
 import { dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, isDateTime, SelectableValue } from '@grafana/data';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { TimeRegionConfig, TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -26,18 +26,34 @@ interface Props {
   onChange: (value?: TimeRegionConfig) => void;
 }
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((v, idx) => {
-  return {
-    label: v,
-    value: idx + 1,
-  };
-});
-
+/*BMC Change: To enable localization for below text*/
+const daysNameTranslated = () => {
+  return [
+    t('bmcgrafana.grafana-ui.weekdays.monday', 'Monday'),
+    t('bmcgrafana.grafana-ui.weekdays.tuesday', 'Tuesday'),
+    t('bmcgrafana.grafana-ui.weekdays.wednesday', 'Wednesday'),
+    t('bmcgrafana.grafana-ui.weekdays.thursday', 'Thursday'),
+    t('bmcgrafana.grafana-ui.weekdays.friday', 'Friday'),
+    t('bmcgrafana.grafana-ui.weekdays.saturday', 'Saturday'),
+    t('bmcgrafana.grafana-ui.weekdays.sunday', 'Sunday'),
+  ];
+};
+const days = () => {
+  return daysNameTranslated().map((v, idx) => {
+    return {
+      label: v,
+      value: idx + 1,
+    };
+  });
+};
 export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
   const timestamp = Date.now();
   const timezoneInfo = getTimeZoneInfo(value.timezone ?? 'utc', timestamp);
   const isDashboardTimezone = getDashboardSrv().getCurrent()?.getTimezone() === value.timezone;
+
+  /*BMC Change: To enable localization for below text*/
+  const daysList = useMemo(days, []);
 
   const [isEditing, setEditing] = useState(false);
 
@@ -64,7 +80,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const getToPlaceholder = () => {
     let placeholder = 'Everyday';
     if (value.fromDayOfWeek && !value.toDayOfWeek) {
-      placeholder = days[value.fromDayOfWeek - 1].label;
+      placeholder = daysList[value.fromDayOfWeek - 1].label;
     }
 
     return placeholder;
@@ -77,9 +93,13 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
         <TimeZoneOffset timeZone={value.timezone} timestamp={timestamp} />
       </>
     );
-
+    /*BMC Change: To enable localization for below text*/
     if (isDashboardTimezone) {
-      return <>Dashboard timezone ({timezone})</>;
+      return (
+        <>
+          <Trans i18nKey={'bmcgrafana.time-region-editor.dashboard-timezone'}>Dashboard timezone</Trans> ({timezone})
+        </>
+      );
     }
 
     return timezone;
@@ -137,9 +157,10 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
 
     return (
       <div className={styles.timezoneContainer}>
+        {/*BMC Change: To enable localization for below text*/}
         <div className={styles.timezone}>{renderTimezonePicker()}</div>
         <Button variant="secondary" onClick={onToggleChangeTimezone} size="sm">
-          Change timezone
+          <Trans i18nKey={'bmcgrafana.time-region-editor.change-timezone-btn'}>Change timezone</Trans>
         </Button>
       </div>
     );
@@ -174,12 +195,14 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
 
       {value.mode == null && (
         <>
-          <Field label="From">
+          {/* BMC Change: Next line inline for localized label */}
+          <Field label={t('bmcgrafana.time-region-editor.from-label', 'From')}>
             <Stack gap={0.5}>
               <Select
-                options={days}
+                options={days()}
                 isClearable
-                placeholder="Everyday"
+                // BMC Change: Next line inline for localized label
+                placeholder={t('bmcgrafana.time-region-editor.everyday-placeholder', 'Everyday')}
                 value={value.fromDayOfWeek ?? null}
                 onChange={(v) => onFromDayOfWeekChange(v)}
                 width={20}
@@ -193,11 +216,12 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               />
             </Stack>
           </Field>
-          <Field label="To">
+          {/* BMC Change: Next line inline for localized label */}
+          <Field label={t('bmcgrafana.time-region-editor.to-label', 'To')}>
             <Stack gap={0.5}>
               {(value.fromDayOfWeek || value.toDayOfWeek) && (
                 <Select
-                  options={days}
+                  options={days()}
                   isClearable
                   placeholder={getToPlaceholder()}
                   value={value.toDayOfWeek ?? null}
@@ -236,7 +260,8 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
           </Field>
         </>
       )}
-      <Field label="Timezone">{renderTimezone()}</Field>
+      {/* BMC Change: Next line inline for localized label */}
+      <Field label={t('bmcgrafana.time-region-editor.timezone-label', 'Timezone')}>{renderTimezone()}</Field>
     </FieldSet>
   );
 };

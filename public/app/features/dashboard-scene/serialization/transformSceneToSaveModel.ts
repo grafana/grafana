@@ -27,6 +27,7 @@ import {
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
@@ -144,6 +145,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     refresh: refreshPicker?.state.refresh,
     // @ts-expect-error not in dashboard schema because it's experimental
     scopeMeta: state.scopeMeta,
+
+    // BMC Change Start
+    locales: getFeatureStatus('bhd-localization') ? state.locales : undefined,
+    multilingualPdf: state.multilingualPdf,
+    // BMC Change Ends
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);

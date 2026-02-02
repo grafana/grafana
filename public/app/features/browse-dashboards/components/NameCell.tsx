@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
+import { Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { t } from 'app/core/internationalization';
 import { getIconForItem } from 'app/features/search/service/utils';
@@ -27,6 +27,10 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const childrenByParentUID = useChildrenByParentUIDState();
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
+
+  // BMC code - localized dashboard/folder names
+  // to be ignored for extraction
+  const localizedTitle = t(`bmc-dynamic.${item.uid}.name`, (item as any).title);
 
   if (item.kind === 'ui') {
     return (
@@ -66,19 +70,29 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
         <IconButton
           size={CHEVRON_SIZE}
           className={styles.chevron}
-          onClick={() => {
+          onClick={(event) => {
+            // BMC code: fix for regression caused by accessibility changes
+            // this was causing the click event to bubble up to the row
+            // and trigger the row click event
+            // on row click, we are toggling the selection state of the item.
+            event.preventDefault();
+            event.stopPropagation();
+            // BMC code: end
             onFolderClick(item.uid, !isOpen);
           }}
           name={isOpen ? 'angle-down' : 'angle-right'}
           aria-label={
             isOpen
               ? t('browse-dashboards.dashboards-tree.collapse-folder-button', 'Collapse folder {{title}}', {
-                  title: item.title,
+                  title: localizedTitle,
                 })
               : t('browse-dashboards.dashboards-tree.expand-folder-button', 'Expand folder {{title}}', {
-                  title: item.title,
+                  title: localizedTitle,
                 })
           }
+          // BMC Accessibility Change: Added aria-expanded
+          aria-expanded={isOpen ? 'true' : 'false'}
+          // BMC Accessibility Change End
         />
       ) : (
         <span className={styles.folderButtonSpacer} />
@@ -96,10 +110,10 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
               href={item.url}
               className={styles.link}
             >
-              {item.title}
+              {localizedTitle}
             </Link>
           ) : (
-            item.title
+            localizedTitle
           )}
         </Text>
       </div>

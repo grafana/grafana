@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString } from 'lodash';
 
 import { containsSearchFilter, VariableOption, VariableWithOptions } from '@grafana/data';
+import { getFeatureStatus } from 'app/features/dashboard/services/featureFlagSrv';
 
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { ALL_VARIABLE_VALUE } from '../../constants';
@@ -24,6 +25,9 @@ export interface OptionsPickerState {
   highlightIndex: number;
   options: VariableOption[];
   multi: boolean;
+  //BMC code- start
+  isCSVSearch: boolean;
+  //BMC code- end
 }
 
 export const initialOptionPickerState: OptionsPickerState = {
@@ -33,6 +37,9 @@ export const initialOptionPickerState: OptionsPickerState = {
   selectedValues: [],
   options: [],
   multi: false,
+  //BMC code- start
+  isCSVSearch: false,
+  //BMC code- end
 };
 
 export const OPTIONS_LIMIT = 1000;
@@ -105,7 +112,9 @@ const updateDefaultSelection = (state: OptionsPickerState): OptionsPickerState =
     return state;
   }
 
-  state.selectedValues = [{ ...options[0], selected: true }];
+  if (!getFeatureStatus('bhd_disable_default_variable_selection')) {
+    state.selectedValues = [{ ...options[0], selected: true }];
+  }
   return state;
 };
 
@@ -213,14 +222,19 @@ const optionsPickerSlice = createSlice({
       const allOptionConfigured = state.options.find((option) => option.value === ALL_VARIABLE_VALUE);
 
       // If 'All' option is not selected from the dropdown, but some options are, clear all options and select 'All'
+
       if (state.selectedValues.length > 0 && !!allOptionConfigured && !isAllSelected) {
         state.selectedValues = [];
 
-        state.selectedValues.push({
-          text: allOptionConfigured.text ?? 'All',
-          value: allOptionConfigured.value,
-          selected: true,
-        });
+        // BMC code start
+        if (!getFeatureStatus('bhd_disable_default_variable_selection')) {
+          state.selectedValues.push({
+            text: allOptionConfigured.text ?? 'All',
+            value: allOptionConfigured.value,
+            selected: true,
+          });
+        }
+        // BMC code End
 
         return applyStateChanges(state, updateOptions);
       }
@@ -247,57 +261,76 @@ const optionsPickerSlice = createSlice({
       state.queryValue = action.payload;
       return state;
     },
-    updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      const needle = state.queryValue.trim();
-
-      let opts: VariableOption[] = [];
-
-      if (needle === '') {
-        opts = action.payload;
-      } else if (REGEXP_NON_ASCII.test(needle)) {
-        opts = action.payload.filter((o) => o.text.includes(needle));
+    //BMC code- start
+    updateOptionsAndFilter: (
+      state,
+      action: PayloadAction<VariableOption[] | { options: VariableOption[]; isCSVSearch?: boolean }>
+    ): OptionsPickerState => {
+      let options: VariableOption[];
+      let isCSVSearch: boolean;
+      if (Array.isArray(action.payload)) {
+        options = action.payload;
+        isCSVSearch = false; // Default for old function calls
       } else {
-        // with current API, not seeing a way to cache this on state using action.payload's uniqueness
-        // since it's recreated and includes selected state on each item :(
-        const haystack = action.payload.map(({ text }) => (Array.isArray(text) ? text.toString() : text));
-
-        const [idxs, info, order] = ufuzzy.search(haystack, needle, 5);
-
-        if (idxs?.length) {
-          if (info && order) {
-            opts = order.map((idx) => action.payload[info.idx[idx]]);
-          } else {
-            opts = idxs!.map((idx) => action.payload[idx]);
-          }
-
-          // always sort $__all to the top, even if exact match exists?
-          opts.sort((a, b) => (a.value === ALL_VARIABLE_VALUE ? -1 : 0) - (b.value === ALL_VARIABLE_VALUE ? -1 : 0));
-        }
+        options = action.payload.options;
+        isCSVSearch = action.payload.isCSVSearch ?? false; // Respect the passed value if provided
       }
-
+      const needle = state.queryValue.trim();
+      let opts: VariableOption[] = [];
+      if (needle === '') {
+        opts = options;
+      } else {
+        const haystack = options.map(({ text }) => (Array.isArray(text) ? text.toString() : text));
+        let matches = new Set<number>(); // Use Set to avoid duplicate matches
+        // Split `needle` if CSV search is enabled, else use as a single term
+        let searchTerms = isCSVSearch
+          ? needle
+              .split(',')
+              .map((term) => term.trim())
+              .filter(Boolean)
+          : [needle];
+        searchTerms.forEach((term) => {
+          if (REGEXP_NON_ASCII.test(term)) {
+            options.forEach((o, idx) => {
+              if (o.text.includes(term)) {
+                matches.add(idx);
+              }
+            });
+          } else {
+            // uFuzzy returns-> 1.idxs: List of matching indices.  2.info: Extra details.  3.order: Ranked order of best matches.
+            const [idxs, info, order] = ufuzzy.search(haystack, term, 5);
+            if (idxs?.length) {
+              if (info && order) {
+                order.forEach((idx) => matches.add(info.idx[idx]));
+              } else {
+                idxs.forEach((idx) => matches.add(idx));
+              }
+            }
+          }
+        });
+        opts = [...matches].map((idx) => options[idx]);
+        // Sort `$__all` to the top
+        opts.sort((a, b) => (a.value === ALL_VARIABLE_VALUE ? -1 : 0) - (b.value === ALL_VARIABLE_VALUE ? -1 : 0));
+      }
       state.highlightIndex = 0;
-
       if (needle !== '') {
-        // top ranked match index
         let firstMatchIdx = opts.findIndex((o) => o.value !== ALL_VARIABLE_VALUE);
-
-        // if there's no match or no exact match, prepend as-typed option
-        if (firstMatchIdx === -1 || opts[firstMatchIdx].value !== needle) {
+        // Check if an exact match exists
+        const exactMatchExists = opts.some((o) => o.value === needle);
+        // Add '> needle' if there's no exact match
+        if (!exactMatchExists) {
           opts.unshift({
             selected: false,
             text: '> ' + needle,
             value: needle,
           });
-
-          // if no match at all, select as-typed, else select best match
           state.highlightIndex = firstMatchIdx === -1 ? 0 : firstMatchIdx + 1;
         }
       }
-
       state.options = opts;
-
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
+    //BMC code- end
     updateOptionsFromSearch: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
       state.options = action.payload;
       state.highlightIndex = 0;

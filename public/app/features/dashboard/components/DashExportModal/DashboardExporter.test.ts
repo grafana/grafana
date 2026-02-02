@@ -33,6 +33,23 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: getStubInstanceSettings,
     };
   },
+  // BMC Code
+  getBackendSrv: () => {
+    return {
+      get: (url: string) => {
+        return Promise.resolve([
+          {
+            name: 'Incident Management',
+            id: '1',
+          },
+          {
+            name: 'Product Management',
+            id: '2',
+          },
+        ]);
+      },
+    };
+  },
   config: {
     buildInfo: {},
     panels: {},
@@ -517,6 +534,184 @@ describe('given dashboard with repeated panels', () => {
       },
     });
   });
+
+  // BMC code: start
+  // VQB Export test case START
+  it('should add VQB panels in inputs block of external export', async () => {
+    const dashboard: any = {
+      datasource: {
+        type: 'bmchelix-ade-datasource',
+        uid: '${DS_BMC_HELIX}',
+      },
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'thresholds',
+          },
+          custom: {
+            align: 'auto',
+            cellOptions: {
+              type: 'auto',
+            },
+            inspect: false,
+          },
+          mappings: [],
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 8,
+        w: 12,
+        x: 12,
+        y: 0,
+      },
+      id: 15,
+      pluginVersion: '9.5.3',
+      targets: [
+        {
+          datasource: {
+            type: 'bmchelix-ade-datasource',
+            uid: '${DS_BMC_HELIX}',
+          },
+          refId: 'A',
+          sourceQuery: {
+            dstType: 'SERVER',
+            formatAs: 'Table',
+            guid: 'bc601d0c-8867-a7f6-cc1f-adf08163af8a',
+            header: {
+              headerList: [
+                {
+                  arKey: 'date_format',
+                  arType: 'body',
+                  collapseHeader: false,
+                  dataType: 'string',
+                  text: 'Date Format',
+                  value: 'DD/MM/YYYY',
+                },
+              ],
+              hideHeader: true,
+            },
+            queryType: 'Views',
+            rawQuery:
+              'SELECT DISTINCT \r\n          HPD_HELP_DESK_ASSIGNMENT_LOG.`Submit Date` AS `Assignment Submit Date`\r\n         ,HPD_HELP_DESK_ASSIGNMENT_LOG.`Last Modified By` AS `Last Modified By`\r\n         ,HPD_HELP_DESK.`Incident Number` AS `Incident Number`\r\n         ,HPD_HELP_DESK.Urgency AS `Urgency`\r\n         ,HPD_HELP_DESK.Submitter AS `Submitter`\r\n\r\nFROM `AR System Schema`.`HPD:Help Desk` HPD_HELP_DESK LEFT OUTER JOIN `AR System Schema`.`HPD:Help Desk Assignment Log` HPD_HELP_DESK_ASSIGNMENT_LOG\r\n     ON ( HPD_HELP_DESK.`Incident Number` = HPD_HELP_DESK_ASSIGNMENT_LOG.`Incident Number` )\r\n\r\n',
+            view: {
+              selectedFields: [
+                {
+                  aggregation: 'NONE',
+                  columnId: 'HPD_ASSIGNMENT_LOG_SUBMIT_DATE',
+                  datatype: 'DATE',
+                  target_column: 'Assignment Submit Date',
+                  target_column_type: 'COLUMN_NAME',
+                },
+              ],
+              selectedView: {
+                viewName: 'Incident Management',
+                viewID: '1',
+              },
+            },
+          },
+          sourceType: 'remedy',
+        },
+      ],
+      title: 'Outer JOin1',
+      type: 'table',
+    };
+    const dashboardModel = new DashboardModel(dashboard, undefined, {
+      getVariablesFromState: () => dashboard.templating.list,
+    });
+    const exporter = new DashboardExporter();
+    const exported: any = await exporter.makeExportable(dashboardModel);
+    expect(exported.__inputs.some((inputRow: Record<string, string>) => inputRow.type === 'view')).toBeTruthy();
+    expect(
+      exported.__inputs.some((inputRow: Record<string, string>) => inputRow.label === 'Incident Management')
+    ).toBeTruthy();
+  });
+
+  it('should add old or existing VQB panels in inputs block of external export', async () => {
+    const dashboard: any = {
+      datasource: {
+        type: 'bmchelix-ade-datasource',
+        uid: '${DS_BMC_HELIX}',
+      },
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'thresholds',
+          },
+          custom: {
+            align: 'auto',
+            cellOptions: {
+              type: 'auto',
+            },
+            inspect: false,
+          },
+          mappings: [],
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 8,
+        w: 12,
+        x: 12,
+        y: 0,
+      },
+      id: 15,
+      pluginVersion: '9.5.3',
+      targets: [
+        {
+          datasource: {
+            type: 'bmchelix-ade-datasource',
+            uid: '${DS_BMC_HELIX}',
+          },
+          refId: 'A',
+          sourceQuery: {
+            dstType: 'SERVER',
+            formatAs: 'Table',
+            guid: 'bc601d0c-8867-a7f6-cc1f-adf08163af8a',
+            header: {
+              headerList: [
+                {
+                  arKey: 'date_format',
+                  arType: 'body',
+                  collapseHeader: false,
+                  dataType: 'string',
+                  text: 'Date Format',
+                  value: 'DD/MM/YYYY',
+                },
+              ],
+              hideHeader: true,
+            },
+            queryType: 'Views',
+            rawQuery:
+              'SELECT DISTINCT \r\n          HPD_HELP_DESK_ASSIGNMENT_LOG.`Submit Date` AS `Assignment Submit Date`\r\n         ,HPD_HELP_DESK_ASSIGNMENT_LOG.`Last Modified By` AS `Last Modified By`\r\n         ,HPD_HELP_DESK.`Incident Number` AS `Incident Number`\r\n         ,HPD_HELP_DESK.Urgency AS `Urgency`\r\n         ,HPD_HELP_DESK.Submitter AS `Submitter`\r\n\r\nFROM `AR System Schema`.`HPD:Help Desk` HPD_HELP_DESK LEFT OUTER JOIN `AR System Schema`.`HPD:Help Desk Assignment Log` HPD_HELP_DESK_ASSIGNMENT_LOG\r\n     ON ( HPD_HELP_DESK.`Incident Number` = HPD_HELP_DESK_ASSIGNMENT_LOG.`Incident Number` )\r\n\r\n',
+            view: {
+              selectedFields: [
+                {
+                  aggregation: 'NONE',
+                  columnId: 'HPD_ASSIGNMENT_LOG_SUBMIT_DATE',
+                  datatype: 'DATE',
+                  target_column: 'Assignment Submit Date',
+                  target_column_type: 'COLUMN_NAME',
+                },
+              ],
+              selectedView: '1',
+            },
+          },
+          sourceType: 'remedy',
+        },
+      ],
+      title: 'Outer JOin1',
+      type: 'table',
+    };
+    const dashboardModel = new DashboardModel(dashboard, undefined, {
+      getVariablesFromState: () => dashboard.templating.list,
+    });
+    const exporter = new DashboardExporter();
+    const exported: any = await exporter.makeExportable(dashboardModel);
+    expect(exported.__inputs.some((inputRow: Record<string, string>) => inputRow.type === 'view')).toBeTruthy();
+  });
+  // VQB Test END
+  // BMC code: end
 });
 
 function getStubInstanceSettings(v: string | DataSourceRef): DataSourceInstanceSettings {

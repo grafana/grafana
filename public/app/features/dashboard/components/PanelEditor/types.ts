@@ -1,4 +1,5 @@
 import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
@@ -28,11 +29,22 @@ export enum PanelEditTableToggle {
   Table = 1,
 }
 
-export const displayModes = [
-  { value: DisplayMode.Fill, label: 'Fill', description: 'Use all available space' },
-  { value: DisplayMode.Exact, label: 'Actual', description: 'Make same size as on the dashboard' },
-];
-
+// BMC Change: Function to enable localization for below text
+export const getDisplayModes = () => {
+  return [
+    {
+      value: DisplayMode.Fill,
+      label: t('bmcgrafana.dashboards.edit-panel.fill', 'Fill'),
+      description: t('bmcgrafana.dashboards.edit-panel.fill-description', 'Use all available space'),
+    },
+    {
+      value: DisplayMode.Exact,
+      label: t('bmcgrafana.dashboards.edit-panel.actual', 'Actual'),
+      description: t('bmcgrafana.dashboards.edit-panel.actual-description', 'Make same size as on the dashboard'),
+    },
+  ];
+};
+// BMC Change ends
 export const panelEditTableModes = [
   {
     value: PanelEditTableToggle.Off,

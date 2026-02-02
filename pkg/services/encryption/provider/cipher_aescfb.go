@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -11,9 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type aesCfbCipher struct{}
+func cFBEncrypter(payload []byte, secret string) ([]byte, error) {
 
-func (c aesCfbCipher) Encrypt(_ context.Context, payload []byte, secret string) ([]byte, error) {
 	salt, err := util.GetRandomString(encryption.SaltLength)
 	if err != nil {
 		return nil, err

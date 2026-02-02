@@ -27,6 +27,14 @@ const defaultErrorNotification = {
   icon: 'exclamation-triangle',
 };
 
+// BMC code
+// const defaultInfoNotification = {
+//   title: '',
+//   text: '',
+//   severity: AppNotificationSeverity.Info,
+//   icon: 'exclamation-triangle',
+// };
+// Ends
 export const createSuccessNotification = (title: string, text = '', traceId?: string): AppNotification => ({
   ...defaultSuccessNotification,
   title,
@@ -64,7 +72,13 @@ export const createWarningNotification = (title: string, text = '', traceId?: st
   showing: true,
 });
 
-export const createInfoNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+// BMC Code: Change, added parameter component
+export const createInfoNotification = (
+  title: string,
+  text = '',
+  traceId?: string,
+  component?: ReactElement
+): AppNotification => ({
   severity: AppNotificationSeverity.Info,
   icon: 'info-circle',
   title,
@@ -72,6 +86,8 @@ export const createInfoNotification = (title: string, text = '', traceId?: strin
   id: uuidv4(),
   timestamp: Date.now(),
   showing: true,
+  traceId,
+  component,
 });
 
 /** Hook for showing toast notifications with varying severity (success, warning, error, info).
@@ -92,9 +108,14 @@ export function useAppNotification() {
       warning: (title: string, text = '', traceId?: string) => {
         dispatch(notifyApp(createWarningNotification(title, text, traceId)));
       },
-      error: (title: string, text = '', traceId?: string) => {
+      //BMC change start
+      error: (title: string, text = '', bhdcode?: string, traceId?: string) => {
         dispatch(notifyApp(createErrorNotification(title, text, traceId)));
+        if (bhdcode) {
+          console.error(`[BHDCode: ${bhdcode}] - ${title}. ${text}`);
+        }
       },
+      //end
       info: (title: string, text = '') => {
         dispatch(notifyApp(createInfoNotification(title, text)));
       },

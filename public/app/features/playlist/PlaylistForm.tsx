@@ -43,8 +43,10 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
               label={t('playlist-edit.form.name-label', 'Name')}
               invalid={!!errors.name}
               error={errors?.name?.message}
+              htmlFor="playlist-name"
             >
               <Input
+                id="playlist-name"
                 type="text"
                 {...register('name', { required: t('playlist-edit.form.name-required', 'Name is required') })}
                 placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
@@ -56,8 +58,10 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
               label={t('playlist-edit.form.interval-label', 'Interval')}
               invalid={!!errors.interval}
               error={errors?.interval?.message}
+              htmlFor="playlist-interval"
             >
               <Input
+                id="playlist-interval"
                 type="text"
                 {...register('interval', {
                   required: t('playlist-edit.form.interval-required', 'Interval is required'),
@@ -68,24 +72,27 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
               />
             </Field>
 
-            <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
-
             <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>
-              <Field label={t('playlist-edit.form.add-title-label', 'Add by title')}>
-                <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
+              <Field label={t('playlist-edit.form.add-title-label', 'Add by title')} htmlFor="dashboard-picker">
+                <DashboardPicker inputId="dashboard-picker" onChange={addByUID} key={items.length} />
               </Field>
 
-              <Field label={t('playlist-edit.form.add-tag-label', 'Add by tag')}>
+              <Field label={t('playlist-edit.form.add-tag-label', 'Add by tag')} htmlFor="tag-filter">
                 <TagFilter
+                  inputId="tag-filter"
                   isClearable
                   tags={[]}
                   hideValues
                   tagOptions={tagOptions}
                   onChange={addByTag}
                   placeholder={t('playlist-edit.form.add-tag-placeholder', 'Select a tag')}
+                  // BMC Code : Accessibility Change Next line
+                  disableArialabel={true}
                 />
               </Field>
             </FieldSet>
+
+            <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
 
             <Stack>
               <Button type="submit" variant="primary" disabled={isDisabled} icon={saving ? 'spinner' : undefined}>
