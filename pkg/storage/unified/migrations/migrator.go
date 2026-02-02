@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"google.golang.org/grpc/metadata"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -20,12 +20,14 @@ import (
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
+	RebuildIndexes(ctx context.Context, namespace string, res []schema.GroupResource) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
 	legacy.MigrationDashboardAccessor
 	streamProvider streamProvider
+	client         resource.SearchClient
 	log            log.Logger
 }
 
@@ -74,6 +76,7 @@ func ProvideUnifiedMigrator(
 	return newUnifiedMigrator(
 		dashboardAccess,
 		&resourceClientStreamProvider{client: client},
+		client,
 		log.New("storage.unified.migrator"),
 	)
 }
@@ -85,6 +88,7 @@ func ProvideUnifiedMigratorParquet(
 	return newUnifiedMigrator(
 		dashboardAccess,
 		&bulkStoreClientStreamProvider{client: client},
+		nil,
 		log.New("storage.unified.migrator.parquet"),
 	)
 }
@@ -92,11 +96,13 @@ func ProvideUnifiedMigratorParquet(
 func newUnifiedMigrator(
 	dashboardAccess legacy.MigrationDashboardAccessor,
 	streamProvider streamProvider,
+	client resource.SearchClient,
 	log log.Logger,
 ) UnifiedMigrator {
 	return &unifiedMigration{
 		MigrationDashboardAccessor: dashboardAccess,
 		streamProvider:             streamProvider,
+		client:                     client,
 		log:                        log,
 	}
 }
@@ -143,4 +149,32 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
+}
+
+func (m *unifiedMigration) RebuildIndexes(ctx context.Context, namespace string, resources []schema.GroupResource) error {
+	m.log.Info("start rebuilding index for resources", "namespace", namespace, "resources", resources)
+	defer m.log.Info("finished rebuilding index for resources", "namespace", namespace, "resources", resources)
+
+	keys := []*resourcepb.ResourceKey{}
+	for _, res := range resources {
+		key := buildResourceKey(res, namespace)
+		if key != nil {
+			keys = append(keys, key)
+		}
+	}
+	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
+		Namespace: namespace,
+		Keys:      keys,
+	})
+	if err != nil {
+		m.log.Error("error rebuilding index for resource", "error", err, "namespace", namespace, "resources", resources)
+		return err
+	}
+
+	if response.Error != nil {
+		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", namespace, "resources", resources)
+		return fmt.Errorf("error rebuilding index: %s", response.Error.Message)
+	}
+
+	return nil
 }
