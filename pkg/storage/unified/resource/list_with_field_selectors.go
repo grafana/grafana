@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -61,22 +62,26 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 		}
-		if len(val.Value) > 0 {
-			pageBytes += len(val.Value)
-			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-				Value:           val.Value,
-				ResourceVersion: val.ResourceVersion,
-			})
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-				token, err := NewSearchContinueToken(row.GetSortFields(), listRv)
-				if err != nil {
-					return &resourcepb.ListResponse{
-						Error: NewBadRequestError("invalid continue token"),
-					}, nil
-				}
-				rsp.NextPageToken = token
-				return rsp, nil
+		if val.Error != nil {
+			if val.Error.Code == http.StatusForbidden {
+				continue
 			}
+			return &resourcepb.ListResponse{Error: val.Error}, nil
+		}
+		pageBytes += len(val.Value)
+		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+			Value:           val.Value,
+			ResourceVersion: val.ResourceVersion,
+		})
+		if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+			token, err := NewSearchContinueToken(row.GetSortFields(), listRv)
+			if err != nil {
+				return &resourcepb.ListResponse{
+					Error: NewBadRequestError("invalid continue token"),
+				}, nil
+			}
+			rsp.NextPageToken = token
+			return rsp, nil
 		}
 	}
 

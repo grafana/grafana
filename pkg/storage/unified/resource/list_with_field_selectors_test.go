@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"iter"
+	"net/http"
 	"testing"
 	"time"
 
@@ -177,6 +178,50 @@ func TestListWithFieldSelectors(t *testing.T) {
 		require.Empty(t, resp.NextPageToken)
 	})
 
+	t.Run("skips results when Read returns forbidden", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{
+			resp: &resourcepb.ResourceSearchResponse{
+				ResourceVersion: searchServerRv,
+				Results: &resourcepb.ResourceTable{
+					Rows: []*resourcepb.ResourceTableRow{
+						{
+							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "a"},
+							ResourceVersion: 1,
+							SortFields:      []string{"s1"},
+						},
+						{
+							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "b"},
+							ResourceVersion: 2,
+							SortFields:      []string{"s2"},
+						},
+					},
+				},
+			},
+		}
+		s := &server{
+			searchClient:     searchClient,
+			backend:          &fakeBackend{forbidden: map[string]struct{}{"a": {}}},
+			access:           claims.FixedAccessClient(true),
+			queue:            scheduler.NewNoopQueue(),
+			queueConfig:      QueueConfig{Timeout: time.Second, MinBackoff: time.Millisecond, MaxBackoff: time.Millisecond, MaxRetries: 1},
+			maxPageSizeBytes: 1024,
+		}
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithFieldSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Len(t, resp.Items, 1)
+		require.Equal(t, searchServerRv, resp.ResourceVersion)
+	})
+
 	t.Run("first page of paginated result will have next page token set and correct number of results", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchClient := &stubSearchClient{
@@ -322,7 +367,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
 	return &server{
 		searchClient:     searchClient,
-		backend:          fakeBackend{},
+		backend:          &fakeBackend{},
 		access:           claims.FixedAccessClient(true),
 		queue:            scheduler.NewNoopQueue(),
 		queueConfig:      QueueConfig{Timeout: time.Second, MinBackoff: time.Millisecond, MaxBackoff: time.Millisecond, MaxRetries: 1},
@@ -349,31 +394,41 @@ func (*stubSearchClient) RebuildIndexes(_ context.Context, _ *resourcepb.Rebuild
 	return nil, nil
 }
 
-type fakeBackend struct{}
+type fakeBackend struct {
+	forbidden map[string]struct{}
+}
 
-func (fakeBackend) WriteEvent(context.Context, WriteEvent) (int64, error) { return 0, nil }
-func (fakeBackend) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (*fakeBackend) WriteEvent(context.Context, WriteEvent) (int64, error) { return 0, nil }
+func (b *fakeBackend) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+	if b != nil && b.forbidden != nil {
+		if _, ok := b.forbidden[req.Key.Name]; ok {
+			return &BackendReadResponse{
+				Key:   req.Key,
+				Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+			}
+		}
+	}
 	return &BackendReadResponse{
 		Key:             req.Key,
 		ResourceVersion: req.ResourceVersion,
 		Value:           []byte("value"),
 	}
 }
-func (fakeBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+func (*fakeBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, nil
 }
-func (fakeBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+func (*fakeBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, nil
 }
-func (fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (*fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(func(*ModifiedResource, error) bool) {}
 }
-func (fakeBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
+func (*fakeBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
 	return nil, nil
 }
-func (fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
+func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
 	return nil, nil
 }
-func (fakeBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
+func (*fakeBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(func(ResourceLastImportTime, error) bool) {}
 }
