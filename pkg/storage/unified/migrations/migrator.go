@@ -178,9 +178,9 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, info authlib.Name
 		return err
 	}
 
-	if response.Error != nil {
-		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
-		return fmt.Errorf("error rebuilding index: %s", response.Error.Message)
+	if response.RebuildCount < 1 {
+		m.log.Error("error rebuilding index: no indexes were rebuilt", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
+		return fmt.Errorf("no indexes were rebuilt")
 	}
 
 	return nil
