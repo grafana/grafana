@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/openfga/openfga/pkg/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -41,6 +42,7 @@ type Server struct {
 
 	openFGAServer OpenFGAServer
 	openFGAClient openfgav1.OpenFGAServiceClient
+	store         storage.OpenFGADatastore
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]storeInfo
@@ -68,7 +70,7 @@ func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tra
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, logger, tracer, reg)
+	return newServer(cfg, openfga, store, logger, tracer, reg)
 }
 
 func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
@@ -82,10 +84,10 @@ func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, logger, tracer, reg)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -95,6 +97,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, logger log.Logger, trace
 	s := &Server{
 		openFGAServer: openfga,
 		openFGAClient: openFGAClient,
+		store:         store,
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           zanzanaCfg,
@@ -116,6 +119,10 @@ func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
 		PageSize: wrapperspb.Int32(1),
 	})
 	return err == nil, nil
+}
+
+func (s *Server) Close() {
+	s.store.Close()
 }
 
 func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
