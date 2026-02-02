@@ -84,13 +84,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:        "showDashboardValidationWarnings",
-			Description: "Show warnings when dashboards do not validate against the schema",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,

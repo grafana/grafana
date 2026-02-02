@@ -64,11 +64,6 @@ export interface FeatureToggles {
   */
   cloudWatchCrossAccountQuerying?: boolean;
   /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */

@@ -35,10 +35,6 @@ const (
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
-	// FlagShowDashboardValidationWarnings
-	// Show warnings when dashboards do not validate against the schema
-	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
