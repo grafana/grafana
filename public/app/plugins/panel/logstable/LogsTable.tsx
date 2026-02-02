@@ -63,7 +63,6 @@ export const LogsTable = ({
   // Callbacks
   const handleTableOptionsChange = useCallback(
     (options: TableOptions) => {
-      console.log('handleTableOptionsChange', options);
       onLogsTableOptionsChange?.(options);
     },
     [onLogsTableOptionsChange]
@@ -78,7 +77,7 @@ export const LogsTable = ({
 
   const handleLogsTableOptionChange = useCallback(
     (prop: LogsTableOptions) => {
-      handleLogsTableOptionsChange({ ...options, [Object.keys(prop)[0]]: Object.values(prop)[0] });
+      handleLogsTableOptionsChange({ ...options, ...prop });
     },
     [handleLogsTableOptionsChange, options]
   );
@@ -179,16 +178,6 @@ export const LogsTable = ({
 
 const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {
   return {
-    tableWrapper: css({
-      paddingLeft: sidebarWidth,
-      height,
-      width,
-    }),
-    sidebarWrapper: css({
-      position: 'absolute',
-      height: height,
-      width: sidebarWidth,
-    }),
     wrapper: css({
       height,
       width,

@@ -35,7 +35,7 @@ export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
   return labels.map((label) => ({
     name: label,
     stats: {
-      percentOfLinesWithLabel: Math.ceil((100 * (cardinality.get(label) ?? 0)) / totalLines),
+      percentOfLinesWithLabel: totalLines > 0 ? Math.ceil((100 * (cardinality.get(label) ?? 0)) / totalLines) : 0,
     },
   }));
 }
