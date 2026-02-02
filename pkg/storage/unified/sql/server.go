@@ -6,12 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -218,12 +219,13 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	}
 
 	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:            sqlkv,
-		Tracer:             opts.Tracer,
-		Reg:                opts.Reg,
-		UseChannelNotifier: !isHA,
-		Log:                log.New("storage-backend"),
-		DBKeepAlive:        eDB,
+		KvStore:              sqlkv,
+		Tracer:               opts.Tracer,
+		Reg:                  opts.Reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
 	}
 
 	if opts.Cfg.EnableSQLKVCompatibilityMode {

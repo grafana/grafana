@@ -104,6 +104,9 @@ type KVBackendOptions struct {
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	// needed for sqlkv
 	DBKeepAlive any
+
+	// If not zero, the backend will regularly remove times from "last import times" older than this.
+	LastImportTimeMaxAge time.Duration
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -136,7 +139,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
-		lastImportStore:              newLastImportStore(kv),
+		lastImportStore:              newLastImportStore(kv, opts.LastImportTimeMaxAge, logger),
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
 		log:                          logger,
@@ -1305,24 +1308,13 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 }
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	// Collect all and keep only the latest import time per resource.
-	result := map[NamespacedResource]ResourceLastImportTime{}
-
-	// TODO: delete old import times.
-
-	for key, err := range k.lastImportStore.ListLastImportTimes(ctx) {
-		if err != nil {
-			return func(yield func(ResourceLastImportTime, error) bool) { yield(ResourceLastImportTime{}, err) }
-		}
-
-		lit := key.ToResourceLastImportTime()
-		if lit.LastImportTime.After(result[lit.NamespacedResource].LastImportTime) {
-			result[lit.NamespacedResource] = lit
-		}
-	}
-
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		for _, v := range result {
+		keys, err := k.lastImportStore.ListLastImportTimes(ctx)
+		if err != nil {
+			yield(ResourceLastImportTime{}, err)
+			return
+		}
+		for _, v := range keys {
 			if !yield(v, nil) {
 				return
 			}

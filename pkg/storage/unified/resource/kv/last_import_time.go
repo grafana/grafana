@@ -9,8 +9,12 @@ import (
 	"time"
 )
 
+const (
+	resourceLastImportTimeTable = "resource_last_import_time"
+)
+
 func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) (io.WriteCloser, error) {
-	ns, group, resource, lastImportTime, err := parseLastImportTimeKey(key)
+	ns, group, resource, lastImportTime, err := ParseLastImportTimeKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -19,8 +23,6 @@ func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) (io.WriteClo
 	var args []any
 
 	lastImportTime = lastImportTime.UTC()
-
-	fmt.Println(ns, group, resource, lastImportTime)
 
 	switch k.dialect.Name() {
 	case "mysql":
@@ -109,7 +111,7 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 			return
 		}
 
-		if !yield(lastImportTimeKey(ns, group, resource, lastImportTime), nil) {
+		if !yield(LastImportTimeKey(ns, group, resource, lastImportTime), nil) {
 			return
 		}
 	}
@@ -119,11 +121,32 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 	}
 }
 
-func lastImportTimeKey(ns, group, resource string, ts time.Time) string {
+func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
+	ns, group, resource, lastImportTime, err := ParseLastImportTimeKey(key)
+	if err != nil {
+		return err
+	}
+
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+		k.dialect.QuoteIdent(resourceLastImportTimeTable),
+		k.dialect.QuoteIdent("group"),
+		k.dialect.QuoteIdent("resource"),
+		k.dialect.QuoteIdent("namespace"),
+		k.dialect.QuoteIdent("last_import_time"),
+	)
+	args := []any{group, resource, ns, lastImportTime}
+	_, err = k.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete last import time: %w", err)
+	}
+	return nil
+}
+
+func LastImportTimeKey(ns, group, resource string, ts time.Time) string {
 	return fmt.Sprintf("%s~%s~%s~%d", ns, group, resource, ts.UnixMilli())
 }
 
-func parseLastImportTimeKey(key string) (ns, group, resource string, ts time.Time, _ error) {
+func ParseLastImportTimeKey(key string) (ns, group, resource string, ts time.Time, _ error) {
 	parts := strings.Split(key, "~")
 	if len(parts) != 4 {
 		return "", "", "", time.Time{}, fmt.Errorf("invalid key format: expected 4 parts, got %d", len(parts))
@@ -134,5 +157,5 @@ func parseLastImportTimeKey(key string) (ns, group, resource string, ts time.Tim
 		return "", "", "", time.Time{}, fmt.Errorf("invalid timestamp: %w", err)
 	}
 
-	return parts[0], parts[1], parts[2], time.UnixMilli(int64(t)), nil
+	return parts[0], parts[1], parts[2], time.UnixMilli(int64(t)).UTC(), nil
 }

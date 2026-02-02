@@ -1550,6 +1550,9 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
+		// Sleep a bit to make sure that the last import time generated for dashboards in ns1 is different from before.
+		time.Sleep(100 * time.Millisecond)
+
 		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
 		// and new ns2-folders. ns1-folders is unchanged.
 		ns2 := nsPrefix + "-import2"

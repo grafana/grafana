@@ -17,11 +17,7 @@ import (
 const (
 	DataSection           = "unified/data"
 	EventsSection         = "unified/events"
-	LastImportTimeSection = "unified/last_import"
-)
-
-const (
-	resourceLastImportTimeTable = "resource_last_import_time"
+	LastImportTimeSection = "unified/lastimport"
 )
 
 var _ KV = &SqlKV{}
@@ -340,6 +336,10 @@ func (w *sqlWriteCloser) Close() error {
 func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	if key == "" {
 		return fmt.Errorf("key is required")
+	}
+
+	if section == LastImportTimeSection {
+		return k.deleteLastImportTime(ctx, key)
 	}
 
 	qb, err := k.getQueryBuilder(section)
