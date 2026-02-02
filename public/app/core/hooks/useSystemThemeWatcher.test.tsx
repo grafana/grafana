@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, cleanup } from '@testing-library/react';
 
 import { createTheme } from '@grafana/data';
 import { config, ThemeChangedEvent } from '@grafana/runtime';
@@ -7,7 +7,7 @@ import { appEvents } from '../app_events';
 import { contextSrv } from '../services/context_srv';
 import { changeTheme } from '../services/theme';
 
-import { SystemThemeWatcher } from './SystemThemeWatcher';
+import { useSystemThemeWatcher } from './useSystemThemeWatcher';
 
 jest.mock('../services/theme', () => ({
   changeTheme: jest.fn(),
@@ -21,7 +21,12 @@ jest.mock('../services/context_srv', () => ({
   },
 }));
 
-describe('SystemThemeWatcher', () => {
+const TestComponent = () => {
+  useSystemThemeWatcher();
+  return null;
+};
+
+describe('useSystemThemeWatcher', () => {
   let matchMediaMock: jest.Mock;
   let listeners: Record<string, Function> = {};
 
@@ -45,8 +50,12 @@ describe('SystemThemeWatcher', () => {
     contextSrv.user.theme = 'system';
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should call changeTheme when system theme changes', () => {
-    const { unmount } = render(<SystemThemeWatcher />);
+    render(<TestComponent />);
 
     expect(matchMediaMock).toHaveBeenCalledWith('(prefers-color-scheme: dark)');
 
@@ -57,21 +66,19 @@ describe('SystemThemeWatcher', () => {
     handler({ matches: true });
 
     expect(changeTheme).toHaveBeenCalledWith('dark', true);
-    unmount();
   });
 
   it('should NOT call changeTheme if user has overridden theme', () => {
     contextSrv.user.theme = 'light';
-    const { unmount } = render(<SystemThemeWatcher />);
+    render(<TestComponent />);
 
     expect(matchMediaMock).not.toHaveBeenCalled();
-    unmount();
   });
 
   it('should re-attach listener if theme changes back to system', () => {
     // 1. Start with override
     contextSrv.user.theme = 'light';
-    const { unmount } = render(<SystemThemeWatcher />);
+    render(<TestComponent />);
     expect(matchMediaMock).not.toHaveBeenCalled();
 
     // 2. Change preference to system
@@ -82,6 +89,5 @@ describe('SystemThemeWatcher', () => {
 
     // 4. Now listener should be attached
     expect(matchMediaMock).toHaveBeenCalledWith('(prefers-color-scheme: dark)');
-    unmount();
   });
 });
