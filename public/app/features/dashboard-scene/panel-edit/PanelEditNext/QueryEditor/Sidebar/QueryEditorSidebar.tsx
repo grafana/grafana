@@ -1,18 +1,17 @@
 import { css } from '@emotion/css';
-import { memo, useState } from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { CollapsableSection, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { useQueryRunnerContext } from '../QueryEditorContext';
+import { SidebarSize } from '../../constants';
+import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
-import { SidebarCard } from './SidebarCard';
+import { QueryCard } from './QueryCard';
+import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
+import { TransformationCard } from './TransformationCard';
 
-export enum SidebarSize {
-  Mini = 'mini',
-  Full = 'full',
-}
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
   setSidebarSize: (size: SidebarSize) => void;
@@ -25,7 +24,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
-  const [queriesIsOpen, setQueriesIsOpen] = useState(true);
+  const { transformations } = usePanelContext();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
@@ -45,22 +44,20 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           {t('query-editor-next.sidebar.query-stack', 'Query Stack')}
         </Text>
       </Stack>
-      <CollapsableSection
-        label={
-          <Text color="secondary" variant="body">
-            {t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-          </Text>
-        }
-        isOpen={queriesIsOpen}
-        onToggle={setQueriesIsOpen}
-        contentClassName={styles.collapsableSectionContent}
+      <QuerySidebarCollapsableHeader
+        label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
       >
-        <Stack direction="column" gap={1}>
-          {queries.map((query) => (
-            <SidebarCard key={query.refId} query={query} />
+        {queries.map((query) => (
+          <QueryCard key={query.refId} query={query} />
+        ))}
+      </QuerySidebarCollapsableHeader>
+      {transformations.length > 0 && (
+        <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
+          {transformations.map((transformation) => (
+            <TransformationCard key={transformation.transformId} transformation={transformation} />
           ))}
-        </Stack>
-      </CollapsableSection>
+        </QuerySidebarCollapsableHeader>
+      )}
     </div>
   );
 });
@@ -74,9 +71,6 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
-    }),
-    collapsableSectionContent: css({
-      padding: 0,
     }),
   };
 }

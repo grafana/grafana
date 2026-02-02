@@ -3839,11 +3839,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.52.11":
-  version: 6.52.11
-  resolution: "@grafana/scenes-react@npm:6.52.11"
+"@grafana/scenes-react@npm:6.52.12":
+  version: 6.52.12
+  resolution: "@grafana/scenes-react@npm:6.52.12"
   dependencies:
-    "@grafana/scenes": "npm:6.52.11"
+    "@grafana/scenes": "npm:6.52.12"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3855,7 +3855,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/44897f0db4c0f7ed80117a1d33aa635181afdb519f6dc4c75988037657631244247712e5ad59807bdc7363adcdc74d1471f27e37be150048acaa9124ffb02d6b
+  checksum: 10/91ebcaa3a638025bb045bb9b699d9be74277ce961910e22325530c5d76fd76ad67333b81bd14db9bdb9f8fc500f532c5fdb38cde3fa2a2f2ec97c0bdff912469
   languageName: node
   linkType: hard
 
@@ -3885,9 +3885,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.52.11":
-  version: 6.52.11
-  resolution: "@grafana/scenes@npm:6.52.11"
+"@grafana/scenes@npm:6.52.12":
+  version: 6.52.12
+  resolution: "@grafana/scenes@npm:6.52.12"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3907,7 +3907,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/d53791b1f453fc5ae71e7f7bed9ad1538f8b520e5abb0b628d723d09a076776b0e8ecdc6bf5aa66b37e8f55fd5832fac5770220ba63f0f5690dc81c6d1fef02d
+  checksum: 10/f663465fe1e2e1ed1b0932cf5fe99eb8b73c0a2da5e37f0400eee6bd7fb6fed9f301f0f65b9ee02d21f95d0aabbc105361ca91d9417970e76dac17e085ac9fe1
   languageName: node
   linkType: hard
 
@@ -19946,8 +19946,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.52.11"
-    "@grafana/scenes-react": "npm:6.52.11"
+    "@grafana/scenes": "npm:6.52.12"
+    "@grafana/scenes-react": "npm:6.52.12"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
