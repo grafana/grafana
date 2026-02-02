@@ -504,6 +504,15 @@
     "alert-rule": {
       "term": "Alert rule"
     },
+    "alert-rule-drawer": {
+      "error-title": "Failed to create alert rule",
+      "error-unexpected": "Received an unexpected response. Please try again.",
+      "error-unknown": "An unexpected error occurred.",
+      "success-message": "Your alert rule has been created successfully.",
+      "success-title": "Alert rule created",
+      "validation-error-message": "Please correct the errors in the form and try again.",
+      "validation-error-title": "Validation error"
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
