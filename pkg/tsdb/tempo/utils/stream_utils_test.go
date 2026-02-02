@@ -2,6 +2,7 @@ package stream_utils
 
 import (
 	"context"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -27,9 +28,30 @@ func TestAppendHeadersToOutgoingContext_AppendsHeadersAndUserAgent(t *testing.T)
 	out := AppendHeadersToOutgoingContext(ctx, req)
 	outgoingMD, ok := metadata.FromOutgoingContext(out)
 	require.True(t, ok)
-	assert.Equal(t, []string{"value"}, outgoingMD.Get("x-test"))
+	assert.Equal(t, []string{url.PathEscape("value")}, outgoingMD.Get("x-test"))
 	assert.Equal(t, []string{ua.String()}, outgoingMD.Get("user-agent"))
-	assert.Equal(t, []string{"one"}, outgoingMD.Get("existing"))
+	assert.Empty(t, outgoingMD.Get("existing"))
+}
+
+func TestAppendHeadersToOutgoingContext_EscapesLabelPolicyValue(t *testing.T) {
+	ctx := context.TODO()
+	ua, err := useragent.New("10.0.0", "linux", "amd64")
+	require.NoError(t, err)
+	ctx = backend.WithUserAgent(ctx, ua)
+
+	rawValue := `1:{ resource.service.name="tempo-query-frontend", resource.service.name="api-server" }`
+	req := &backend.RunStreamRequest{
+		Headers: map[string]string{
+			"X-Prom-Label-Policy": rawValue,
+		},
+	}
+
+	out := AppendHeadersToOutgoingContext(ctx, req)
+	outgoingMD, ok := metadata.FromOutgoingContext(out)
+	require.True(t, ok)
+
+	assert.Equal(t, []string{url.PathEscape(rawValue)}, outgoingMD.Get("x-prom-label-policy"))
+	assert.NotContains(t, outgoingMD.Get("x-prom-label-policy"), rawValue)
 }
 
 func TestSetHeadersFromIncomingContext_MergesTeamAndClientHeaders(t *testing.T) {

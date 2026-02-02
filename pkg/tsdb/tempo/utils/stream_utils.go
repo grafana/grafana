@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
@@ -11,14 +12,16 @@ import (
 
 // Appends incoming request headers to the outgoing context to make sure none are lost when we make the request to tempo.
 func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamRequest) context.Context {
-	// append all incoming headers
+	// Build fresh outgoing metadata to avoid duplicate values.
+	md := metadata.MD{}
 	for key, value := range req.Headers {
-		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+		md.Set(key, url.PathEscape(value))
 	}
 	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
 	// changes or updates, so we have to get it from context.
 	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
-	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
+	md.Set("User-Agent", backend.UserAgentFromContext(ctx).String())
+	ctx = metadata.NewOutgoingContext(ctx, md)
 	return ctx
 }
 
