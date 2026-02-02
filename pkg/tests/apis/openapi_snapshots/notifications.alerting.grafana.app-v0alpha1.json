@@ -3182,8 +3182,204 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaResource"
             }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasField": {
+        "type": "object",
+        "required": [
+          "element",
+          "inputType",
+          "label",
+          "description",
+          "placeholder",
+          "propertyName",
+          "showWhen",
+          "required",
+          "validationRule",
+          "secure",
+          "dependsOn"
+        ],
+        "properties": {
+          "dependsOn": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "element": {
+            "type": "string"
+          },
+          "inputType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "propertyName": {
+            "type": "string"
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "secure": {
+            "type": "boolean"
+          },
+          "selectOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasSelectOption"
+            }
+          },
+          "showWhen": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasShowWhen"
+          },
+          "subformOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasField"
+            }
+          },
+          "validationRule": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchema": {
+        "description": "IntegrationTypeSchema - receiver integration schema format",
+        "type": "object",
+        "required": [
+          "type",
+          "currentVersion",
+          "name",
+          "versions"
+        ],
+        "properties": {
+          "currentVersion": {
+            "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "info": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaVersion"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaResource": {
+        "description": "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "required": [
+              "name",
+              "namespace"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              }
+            }
+          },
+          "spec": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchema"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaVersion": {
+        "type": "object",
+        "required": [
+          "version",
+          "canCreate",
+          "options"
+        ],
+        "properties": {
+          "canCreate": {
+            "type": "boolean"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "info": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasField"
+            }
+          },
+          "typeAlias": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasSelectOption": {
+        "type": "object",
+        "required": [
+          "label",
+          "value",
+          "description"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {}
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasShowWhen": {
+        "type": "object",
+        "required": [
+          "field",
+          "is"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "is": {
+            "type": "string"
           }
         }
       },
