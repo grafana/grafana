@@ -23,6 +23,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
       metadata: {
         annotations: {
           [K8sAnnotations.Provenance]: KnownProvenance.None,
+          [K8sAnnotations.CanUse]: 'true',
         },
         name: base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH),
         uid: TIME_INTERVAL_UID_HAPPY_PATH,
@@ -35,6 +36,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
       metadata: {
         annotations: {
           [K8sAnnotations.Provenance]: 'file',
+          [K8sAnnotations.CanUse]: 'true',
         },
         name: base64UrlEncode(TIME_INTERVAL_NAME_FILE_PROVISIONED),
         uid: TIME_INTERVAL_UID_FILE_PROVISIONED,

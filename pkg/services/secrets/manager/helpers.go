@@ -20,10 +20,6 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 	return setupTestService(tb, store, featuremgmt.WithFeatures())
 }
 
-func SetupDisabledTestService(tb testing.TB, store secrets.Store) *SecretsService {
-	return setupTestService(tb, store, featuremgmt.WithFeatures(featuremgmt.FlagDisableEnvelopeEncryption))
-}
-
 func setupTestService(tb testing.TB, store secrets.Store, features featuremgmt.FeatureToggles) *SecretsService {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"

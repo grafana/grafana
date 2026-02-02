@@ -310,11 +310,7 @@ export class GrafanaApp {
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);
-      root.render(
-        createElement(AppWrapper, {
-          app: this,
-        })
-      );
+      root.render(createElement(AppWrapper, { context: this.context }));
 
       await postInitTasks();
     } catch (error) {

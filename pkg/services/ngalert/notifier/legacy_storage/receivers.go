@@ -73,14 +73,29 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 }
 
 // ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.
-func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string) bool {
-	return isReceiverInUse(name, []*definitions.Route{rev.Config.AlertmanagerConfig.Route})
+func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string, includeManagedRoutes bool) bool {
+	if isReceiverInUse(name, []*definitions.Route{rev.Config.AlertmanagerConfig.Route}) {
+		return true
+	}
+	if includeManagedRoutes {
+		for _, r := range rev.Config.ManagedRoutes {
+			if isReceiverInUse(name, []*definitions.Route{r}) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // ReceiverUseByName returns a map of receiver names to the number of times they are used in routes.
-func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
+func (rev *ConfigRevision) ReceiverUseByName(includeManagedRoutes bool) map[string]int {
 	m := make(map[string]int)
 	receiverUseCounts([]*definitions.Route{rev.Config.AlertmanagerConfig.Route}, m)
+	if includeManagedRoutes {
+		for _, r := range rev.Config.ManagedRoutes {
+			receiverUseCounts([]*definitions.Route{r}, m)
+		}
+	}
 	return m
 }
 
@@ -127,11 +142,6 @@ func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
 	return result
 }
 
-// RenameReceiverInRoutes renames all references to a receiver in routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) int {
-	return renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
-}
-
 // validateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
 // We only check the receiver being modified to prevent existing issues from other receivers being reported.
 func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) error {
@@ -159,21 +169,6 @@ func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) 
 		}
 	}
 	return nil
-}
-
-func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) int {
-	if len(routes) == 0 {
-		return 0
-	}
-	updated := 0
-	for _, route := range routes {
-		if route.Receiver == oldName {
-			route.Receiver = newName
-			updated++
-		}
-		updated += renameReceiverInRoute(oldName, newName, route.Routes...)
-	}
-	return updated
 }
 
 // isReceiverInUse checks if a receiver is used in a route or any of its sub-routes.

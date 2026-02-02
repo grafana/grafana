@@ -79,12 +79,18 @@ export function useWizardButtons({
     if (activeStep === 'authType') {
       return false;
     }
-    if (activeStep !== 'connection' && hasStepError) {
+    // Don't block on hasStepError for connection/githubApp steps - users can fix their input and retry
+    if (!['connection', 'githubApp'].includes(activeStep) && hasStepError) {
       return true;
     }
     // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
       return !(isStepSuccess || hasStepWarning);
+    }
+    // Finish step should not be blocked by isCreatingSkipJob since we only
+    // reach finish after the skip job was successfully created
+    if (activeStep === 'finish') {
+      return isSubmitting || isCancelling;
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   }, [
@@ -97,7 +103,6 @@ export function useWizardButtons({
     isStepRunning,
     isCreatingSkipJob,
   ]);
-
   const isPreviousDisabled = isSubmitting || isCancelling || isStepRunning || showCancelConfirmation;
 
   return {

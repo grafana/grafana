@@ -136,11 +136,19 @@ type Setting struct {
 	Key string `json:"key"`
 	// Setting value
 	Value string `json:"value"`
+	// Labels resource labels
+	Labels map[string]string `json:"-"`
+}
+
+// settingResourceMetadata contains the metadata fields we care about from the K8s resource.
+type settingResourceMetadata struct {
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // settingResource represents a single Setting resource from the K8s API.
 type settingResource struct {
-	Spec Setting `json:"spec"`
+	Metadata settingResourceMetadata `json:"metadata"`
+	Spec     Setting                 `json:"spec"`
 }
 
 // settingListMetadata contains pagination info from the K8s list response.
@@ -344,6 +352,7 @@ func parseItems(decoder *json.Decoder) ([]*Setting, error) {
 			Section: item.Spec.Section,
 			Key:     item.Spec.Key,
 			Value:   item.Spec.Value,
+			Labels:  item.Metadata.Labels,
 		})
 	}
 

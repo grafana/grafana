@@ -46,6 +46,24 @@ describe('DashboardEditPane', () => {
 
     expect(editPane.state.redoStack).toHaveLength(0);
   });
+
+  it('clone should not include undo/redo history', () => {
+    const scene = buildTestScene();
+    const editPane = scene.state.editPane;
+
+    scene.onCreateNewPanel();
+    scene.onCreateNewPanel();
+
+    editPane.undoAction();
+
+    expect(editPane.state.redoStack).toHaveLength(1);
+    expect(editPane.state.undoStack).toHaveLength(1);
+
+    const cloned = editPane.clone({});
+
+    expect(cloned.state.redoStack).toHaveLength(0);
+    expect(cloned.state.undoStack).toHaveLength(0);
+  });
 });
 
 function buildTestScene() {
