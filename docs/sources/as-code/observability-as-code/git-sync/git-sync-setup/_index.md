@@ -66,15 +66,15 @@ Git Sync in Grafana Cloud is activated according to a rollout schedule TBC
 
 To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature toggle to `true`:
 
-  1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
-  1. Add this value:
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
+1. Add this value:
 
-     ```ini
-     [feature_toggles]
-     provisioning = true
-     ```
+   ```ini
+   [feature_toggles]
+   provisioning = true
+   ```
 
-  1. Save the changes to the file and restart Grafana.
+1. Save the changes to the file and restart Grafana.
 
 For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
@@ -255,7 +255,7 @@ Optionally, you can extend Git Sync by enabling pull request notifications and i
 
 ### Set up webhooks for real-time notification and pull request integration
 
-Real-time notifications (or automatic pulling) is enabled and configured by defaut in Grafana Cloud.
+Real-time notifications (or automatic pulling) is enabled and configured by defauft in Grafana Cloud.
 
 In Grafana OSS/Enterprise, Git Sync uses webhooks to enable real-time updates from GitHub public repositories, or to enable pull request integrations. Without webhooks the polling interval is set during configuration, and is 60 seconds by default. You can set up webhooks with whichever service or tooling you prefer: Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
