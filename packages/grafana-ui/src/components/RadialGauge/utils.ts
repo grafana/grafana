@@ -1,4 +1,4 @@
-import { FieldDisplay, getDisplayProcessor } from '@grafana/data';
+import { FieldDisplay, getDisplayProcessor, Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialGaugeDimensions } from './types';
 
@@ -252,4 +252,16 @@ export function getOptimalSegmentCount(
   const maxSegments = Math.floor(circumference / (angleBetweenSegments + 3));
 
   return Math.min(maxSegments, segmentCount);
+}
+
+export function getThresholdPercentageValue(
+  threshold: Threshold,
+  thresholdsMode: ThresholdsMode,
+  fieldDisplay: FieldDisplay
+): number {
+  if (thresholdsMode === ThresholdsMode.Percentage) {
+    return threshold.value! / 100;
+  }
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return (threshold.value - min) / (max - min);
 }

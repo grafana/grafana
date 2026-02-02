@@ -15,6 +15,7 @@ import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { buildGradientColors } from './colors';
+import { ARC_END, ARC_START } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
@@ -110,8 +111,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
   }
 
-  const startAngle = shape === 'gauge' ? 250 : 0;
-  const endAngle = shape === 'gauge' ? 110 : 360;
+  const startAngle = shape === 'gauge' ? ARC_START : 0;
+  const endAngle = shape === 'gauge' ? ARC_END : 360;
 
   const defs: ReactNode[] = [];
   const graphics: ReactNode[] = [];
@@ -248,6 +249,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             <ThresholdsBar
               key="thresholds-bar"
               thresholds={thresholds}
+              thresholdsMode={displayValue.field.thresholds?.mode!}
               dimensions={dimensions}
               fieldDisplay={displayValue}
               startAngle={startAngle}
