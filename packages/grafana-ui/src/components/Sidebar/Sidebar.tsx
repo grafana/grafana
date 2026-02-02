@@ -17,10 +17,10 @@ import { useCustomClickAway } from './useSidebarClickAway';
 export interface Props {
   children?: ReactNode;
   contextValue: SidebarContextValue;
-  className?: string;
+  hidden?: boolean;
 }
 
-export function SidebarComp({ children, contextValue, className: classNameProp = '' }: Props) {
+export function SidebarComp({ children, contextValue, hidden }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin } = contextValue;
@@ -30,7 +30,7 @@ export function SidebarComp({ children, contextValue, className: classNameProp =
     [styles.undockedPaneOpen]: hasOpenPane && !isDocked,
     [styles.containerLeft]: position === 'left',
     [styles.containerTabsMode]: tabsMode,
-    [classNameProp]: !!classNameProp,
+    [styles.containerHidden]: !!hidden,
   });
 
   const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
@@ -54,6 +54,7 @@ export function SidebarComp({ children, contextValue, className: classNameProp =
         style={style}
         id="sidebar-container"
         data-testid={selectors.components.Sidebar.container}
+        aria-hidden={hidden}
       >
         {!tabsMode && <SidebarResizer />}
         {children}
@@ -131,6 +132,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       bottom: 0,
       top: 0,
       right: 0,
+      width: 'calc-size(auto, size)',
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('width', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+    containerHidden: css({
+      width: 0,
+      border: 0,
+      overflow: 'hidden',
     }),
     containerTabsMode: css({
       position: 'relative',

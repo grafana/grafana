@@ -58,7 +58,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-  const isUserActive = useUserActivity(10000);
+  const isUserActive = useUserActivity(1000);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -137,7 +137,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext} className={cx(styles.sidebar, !isUserActive && styles.sidebarHidden)}>
+        <Sidebar contextValue={sidebarContext} hidden={!isUserActive}>
           <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
         </Sidebar>
       </div>
@@ -283,20 +283,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         background: theme.colors.background.canvas,
         top: headerHeight,
       },
-    }),
-    sidebar: css({
-      width: 'calc-size(auto, size)',
-
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: theme.transitions.create('width', {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
-    }),
-    sidebarHidden: css({
-      width: 0,
-      border: 0,
-      overflow: 'hidden',
     }),
   };
 }
