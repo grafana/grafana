@@ -58,8 +58,7 @@ import {
   useUpdateFolderMutation,
   Folder,
   CreateFolderApiArg,
-  useReplaceFolderMutation,
-  ReplaceFolderApiArg,
+  UpdateFolderApiArg,
   useGetAffectedItemsQuery,
   FolderInfo,
   ObjectMeta,
@@ -437,7 +436,7 @@ export function useCreateFolder() {
 }
 
 export function useUpdateFolder() {
-  const [updateFolder, result] = useReplaceFolderMutation();
+  const [updateFolder, result] = useUpdateFolderMutation();
   const legacyHook = useLegacySaveFolderMutation();
   const refresh = useRefreshFolders();
 
@@ -446,9 +445,9 @@ export function useUpdateFolder() {
   }
 
   const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
-    const payload: ReplaceFolderApiArg = {
+    const payload: UpdateFolderApiArg = {
       name: folder.uid,
-      folder: {
+      patch: {
         spec: { title: folder.title },
         metadata: {
           name: folder.uid,
