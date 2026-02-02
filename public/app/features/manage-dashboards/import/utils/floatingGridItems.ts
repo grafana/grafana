@@ -5,107 +5,63 @@ import {
   TabsLayoutKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-export function isFloat(value: number): boolean {
-  return Number.isFinite(value) && !Number.isInteger(value);
-}
-
 type Layout = GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 
-export function searchForFloatGridItems(layout: Layout): boolean {
+export function truncateFloatGridItems(layout: Layout): { layout: Layout; modified: boolean } {
   switch (layout.kind) {
-    case 'AutoGridLayout':
-      return false;
+    case 'GridLayout': {
+      let modified = false;
+      const items = layout.spec.items.map((item) => {
+        if (item.kind !== 'GridLayoutItem') {
+          return item;
+        }
+        const { x, y, width, height } = item.spec;
+        const tx = Math.trunc(x),
+          ty = Math.trunc(y),
+          tw = Math.trunc(width),
+          th = Math.trunc(height);
+        if (tx !== x || ty !== y || tw !== width || th !== height) {
+          modified = true;
+          return { ...item, spec: { ...item.spec, x: tx, y: ty, width: tw, height: th } };
+        }
+        return item;
+      });
+      return { layout: modified ? { ...layout, spec: { ...layout.spec, items } } : layout, modified };
+    }
 
-    case 'GridLayout':
-      return layout.spec.items.some(
-        (gridItem) =>
-          gridItem.kind === 'GridLayoutItem' &&
-          (isFloat(gridItem.spec.height) ||
-            isFloat(gridItem.spec.width) ||
-            isFloat(gridItem.spec.x) ||
-            isFloat(gridItem.spec.y))
-      );
+    case 'RowsLayout': {
+      let modified = false;
+      const rows = layout.spec.rows.map((row) => {
+        if (row.kind !== 'RowsLayoutRow') {
+          return row;
+        }
+        const result = truncateFloatGridItems(row.spec.layout);
+        if (result.modified) {
+          modified = true;
+          return { ...row, spec: { ...row.spec, layout: result.layout } };
+        }
+        return row;
+      });
+      return { layout: modified ? { ...layout, spec: { ...layout.spec, rows } } : layout, modified };
+    }
 
-    case 'RowsLayout':
-      return layout.spec.rows.some((row) => row.kind === 'RowsLayoutRow' && searchForFloatGridItems(row.spec.layout));
-
-    case 'TabsLayout':
-      return layout.spec.tabs.some((tab) => tab.kind === 'TabsLayoutTab' && searchForFloatGridItems(tab.spec.layout));
+    case 'TabsLayout': {
+      let modified = false;
+      const tabs = layout.spec.tabs.map((tab) => {
+        if (tab.kind !== 'TabsLayoutTab') {
+          return tab;
+        }
+        const result = truncateFloatGridItems(tab.spec.layout);
+        if (result.modified) {
+          modified = true;
+          return { ...tab, spec: { ...tab.spec, layout: result.layout } };
+        }
+        return tab;
+      });
+      return { layout: modified ? { ...layout, spec: { ...layout.spec, tabs } } : layout, modified };
+    }
 
     default:
-      return false;
-  }
-}
-
-export function truncateFloatGridItems(layout: Layout): typeof layout {
-  switch (layout.kind) {
-    case 'GridLayout':
-      return {
-        ...layout,
-        spec: {
-          ...layout.spec,
-          items: layout.spec.items.map((item) => {
-            if (item.kind !== 'GridLayoutItem') {
-              return item;
-            }
-
-            return {
-              ...item,
-              spec: {
-                ...item.spec,
-                height: Math.trunc(item.spec.height),
-                width: Math.trunc(item.spec.width),
-                x: Math.trunc(item.spec.x),
-                y: Math.trunc(item.spec.y),
-              },
-            };
-          }),
-        },
-      };
-
-    case 'RowsLayout':
-      return {
-        ...layout,
-        spec: {
-          ...layout.spec,
-          rows: layout.spec.rows.map((row) => {
-            if (row.kind !== 'RowsLayoutRow') {
-              return row;
-            }
-
-            return {
-              ...row,
-              spec: {
-                ...row.spec,
-                layout: truncateFloatGridItems(row.spec.layout),
-              },
-            };
-          }),
-        },
-      };
-
-    case 'TabsLayout':
-      return {
-        ...layout,
-        spec: {
-          ...layout.spec,
-          tabs: layout.spec.tabs.map((tab) => {
-            if (tab.kind !== 'TabsLayoutTab') {
-              return tab;
-            }
-
-            return {
-              ...tab,
-              spec: {
-                ...tab.spec,
-                layout: truncateFloatGridItems(tab.spec.layout),
-              },
-            };
-          }),
-        },
-      };
-
-    default:
-      return layout;
+      return { layout, modified: false };
   }
 }

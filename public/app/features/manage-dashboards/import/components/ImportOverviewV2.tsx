@@ -8,7 +8,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardInputs, DashboardSource, ImportFormDataV2 } from '../../types';
-import { searchForFloatGridItems, truncateFloatGridItems } from '../utils/floatingGridItems';
+import { truncateFloatGridItems } from '../utils/floatingGridItems';
 import { applyV2Inputs } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
@@ -26,18 +26,21 @@ type Props = {
 };
 
 export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
-  const hasFloatGridItems = useMemo(() => searchForFloatGridItems(dashboard.layout), [dashboard.layout]);
+  const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
+    () => truncateFloatGridItems(dashboard.layout),
+    [dashboard.layout]
+  );
 
   async function onSubmit(form: ImportFormDataV2) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
     try {
-      const dashboardWithoutFloats: DashboardV2Spec = hasFloatGridItems
-        ? { ...dashboard, layout: truncateFloatGridItems(dashboard.layout) }
+      const dashboardToSave: DashboardV2Spec = hasFloatGridItems
+        ? { ...dashboard, layout: normalizedLayout }
         : dashboard;
 
       const dashboardWithDataSources = {
-        ...applyV2Inputs(dashboardWithoutFloats, form),
+        ...applyV2Inputs(dashboardToSave, form),
         title: form.dashboard.title,
       };
 
