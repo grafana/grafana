@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import uPlot, { TypedArray, Scale } from 'uplot';
+import { useLayoutEffect, useState } from 'react';
+import { TypedArray, Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -11,22 +11,17 @@ interface ThresholdControlsPluginProps {
 }
 
 export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const plotInstance = useRef<uPlot | undefined>(undefined);
   const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
 
   useLayoutEffect(() => {
-    config.addHook('init', (u) => {
-      plotInstance.current = u;
-    });
-
     config.addHook('setScale', (u) => {
       setTimeValues(u.data?.[0] ?? []);
       setTimeRange(u.scales['x'] ?? undefined);
     });
   }, [config]);
 
-  if (timevalues.length < 2 || !onChangeTimeRange) {
+  if (timevalues.length < 1 || !onChangeTimeRange) {
     return null;
   }
 
@@ -46,8 +41,8 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
     j--;
   }
 
-  const first = timevalues[i];
-  const last = timevalues[j];
+  let first = timevalues[i];
+  let last = timevalues[j];
   const fromX = timeRange.min;
   const toX = timeRange.max;
 
@@ -58,6 +53,14 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= toX && last >= fromX) {
     return null;
+  }
+
+  // if only one point is outside the range, we will use a timerange which
+  // is of the same width as the current timerange around the point.
+  if (first === last) {
+    const width = toX - fromX;
+    first = first - width / 2;
+    last = last + width / 2;
   }
 
   return (
