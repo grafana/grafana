@@ -1551,7 +1551,8 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
 		// Sleep a bit to make sure that the last import time generated for dashboards in ns1 is different from before.
-		time.Sleep(100 * time.Millisecond)
+		// Since we use DATETIME type in SQL, we need to wait at least one second.
+		time.Sleep(1 * time.Second)
 
 		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
 		// and new ns2-folders. ns1-folders is unchanged.
@@ -1613,10 +1614,7 @@ func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
 
 func (s *sliceBulkRequestIterator) Next() bool {
 	s.ix++
-	if s.ix < len(s.items) {
-		return true
-	}
-	return false
+	return s.ix < len(s.items)
 }
 
 func (s *sliceBulkRequestIterator) Request() *resourcepb.BulkRequest {
