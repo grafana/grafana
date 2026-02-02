@@ -3832,6 +3832,13 @@
           "value"
         ],
         "properties": {
+          "properties": {
+            "description": "Additional properties for multi-props variables",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "selected": {
             "description": "Whether the option is selected or not",
             "type": "boolean"
