@@ -4,9 +4,23 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Box,
+  Field,
+  FileUpload,
+  Icon,
+  Input,
+  RadioButtonList,
+  Select,
+  Spinner,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
+import { DryRunValidationResult } from '../DryRunValidationModal';
 import { ImportFormValues } from '../ImportToGMA';
 
 interface Step1ContentProps {
@@ -14,6 +28,12 @@ interface Step1ContentProps {
   canImport: boolean;
   /** Callback to report validation state changes */
   onValidationChange?: (isValid: boolean) => void;
+  /** Dry-run validation state */
+  dryRunState?: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  /** Dry-run validation result */
+  dryRunResult?: DryRunValidationResult;
+  /** Callback to trigger dry-run validation */
+  onTriggerDryRun?: () => void;
 }
 
 /**
@@ -21,7 +41,13 @@ interface Step1ContentProps {
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step1Content({ canImport, onValidationChange }: Step1ContentProps) {
+export function Step1Content({
+  canImport,
+  onValidationChange,
+  dryRunState,
+  dryRunResult,
+  onTriggerDryRun,
+}: Step1ContentProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -36,6 +62,34 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
     'policyTreeName',
     'notificationsDatasourceUID',
     'notificationsYamlFile',
+  ]);
+
+  // Trigger dry-run when source selection changes and all required fields are filled
+  const canRunDryRun = useMemo(() => {
+    if (!policyTreeName) {
+      return false;
+    }
+    if (notificationsSource === 'yaml' && !notificationsYamlFile) {
+      return false;
+    }
+    if (notificationsSource === 'datasource' && !notificationsDatasourceUID) {
+      return false;
+    }
+    return true;
+  }, [policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
+
+  // Auto-trigger dry-run when conditions are met
+  useEffect(() => {
+    if (canRunDryRun && onTriggerDryRun) {
+      onTriggerDryRun();
+    }
+  }, [
+    canRunDryRun,
+    onTriggerDryRun,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+    policyTreeName,
   ]);
 
   const sourceOptions = [
@@ -176,13 +230,107 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
               </Field>
             )}
 
-            {notificationsSource === 'datasource' && <AlertmanagerDataSourceSelect />}
+            {notificationsSource === 'datasource' && (
+              <AlertmanagerDataSourceSelect onSelectionChange={onTriggerDryRun} />
+            )}
           </Box>
         </div>
       </div>
+
+      {/* Validation Status */}
+      {canRunDryRun && dryRunState && dryRunState !== 'idle' && (
+        <ValidationStatus state={dryRunState} result={dryRunResult} />
+      )}
     </Stack>
   );
 }
+
+// Validation Status Component
+interface ValidationStatusProps {
+  state: 'loading' | 'success' | 'warning' | 'error';
+  result?: DryRunValidationResult;
+}
+
+function ValidationStatus({ state, result }: ValidationStatusProps) {
+  const styles = useStyles2(getValidationStyles);
+
+  if (state === 'loading') {
+    return (
+      <div className={styles.statusContainer}>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Spinner size="sm" />
+          <Text color="secondary">{t('alerting.import-to-gma.step1.validating', 'Validating configuration...')}</Text>
+        </Stack>
+      </div>
+    );
+  }
+
+  if (state === 'success') {
+    return (
+      <Alert severity="success" title={t('alerting.import-to-gma.step1.validation-success', 'Validation successful')}>
+        <Trans i18nKey="alerting.import-to-gma.step1.validation-success-desc">
+          No conflicts found. The configuration is ready to import.
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (state === 'warning' && result) {
+    const hasRenamedReceivers = result.renamedReceivers.length > 0;
+    const hasRenamedTimeIntervals = result.renamedTimeIntervals.length > 0;
+
+    return (
+      <Alert
+        severity="warning"
+        title={t('alerting.import-to-gma.step1.validation-warning', 'Some resources will be renamed')}
+      >
+        <Stack direction="column" gap={1}>
+          <Text>
+            <Trans i18nKey="alerting.import-to-gma.step1.validation-warning-desc">
+              Some resources will be renamed to avoid conflicts with existing resources.
+            </Trans>
+          </Text>
+          {hasRenamedReceivers && (
+            <Text variant="bodySmall" color="secondary">
+              {t('alerting.import-to-gma.step1.renamed-receivers', '{{count}} contact points will be renamed', {
+                count: result.renamedReceivers.length,
+              })}
+            </Text>
+          )}
+          {hasRenamedTimeIntervals && (
+            <Text variant="bodySmall" color="secondary">
+              {t('alerting.import-to-gma.step1.renamed-intervals', '{{count}} time intervals will be renamed', {
+                count: result.renamedTimeIntervals.length,
+              })}
+            </Text>
+          )}
+        </Stack>
+      </Alert>
+    );
+  }
+
+  if (state === 'error' && result) {
+    return (
+      <Alert severity="error" title={t('alerting.import-to-gma.step1.validation-error', 'Validation failed')}>
+        <Text>
+          {result.error ||
+            t('alerting.import-to-gma.step1.validation-error-desc', 'Failed to validate the configuration.')}
+        </Text>
+      </Alert>
+    );
+  }
+
+  return null;
+}
+
+const getValidationStyles = (theme: GrafanaTheme2) => ({
+  statusContainer: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+  }),
+});
 
 /**
  * Hook to check if Step 1 form is valid
@@ -216,7 +364,7 @@ export function useStep1Validation(canImport: boolean): boolean {
 /**
  * Component to select an Alertmanager data source (excludes Grafana built-in)
  */
-function AlertmanagerDataSourceSelect() {
+function AlertmanagerDataSourceSelect({ onSelectionChange }: { onSelectionChange?: () => void }) {
   const {
     control,
     setValue,

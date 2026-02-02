@@ -860,6 +860,7 @@
     "common": {
       "cancel": "Cancel",
       "clear-filters": "Clear filters",
+      "close": "Close",
       "delete": "Delete",
       "edit": "Edit",
       "export": "Export",
@@ -1582,6 +1583,12 @@
       "confirm": {
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
+        "error-body": "Failed to import resources. Please check the error details and try again.",
+        "error-title": "Import Failed",
+        "importing-body": "Importing resources to Grafana Alerting. Please wait...",
+        "importing-title": "Importing...",
+        "success-body": "Resources imported successfully. Redirecting...",
+        "success-title": "Import Successful",
         "title": "Confirm Import"
       },
       "confirm-modal": {
@@ -1651,13 +1658,18 @@
       "pause-recording": {
         "label": "Pause imported recording rules"
       },
+      "preview": {
+        "error": "Failed to load content: {{error}}",
+        "loading": "Loading content...",
+        "notifications-title": "Notifications Config Preview",
+        "rules-title": "Alert Rules Preview"
+      },
       "recording-rules": "Recording rules",
       "review": {
         "back": "Alert rules",
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
-        "importing": "Importing...",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
         "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
@@ -1686,7 +1698,10 @@
         "validation-error": "Validation failed.",
         "validation-ok": "No conflicts found. Ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts.",
-        "will-import": "Will import"
+        "will-import-config": "Will import this configuration",
+        "will-import-rules": "Will import rules",
+        "will-import-rules-count_one": "Will import {{count}} rules",
+        "will-import-rules-count_other": "Will import {{count}} rules"
       },
       "source": {
         "datasource": "Existing data source-managed rules",
@@ -1704,6 +1719,10 @@
         "policy-tree-name": "Policy tree name",
         "policy-tree-placeholder": "prometheus-prod",
         "policy-tree-title": "Policy Tree Name",
+        "renamed-intervals_one": "{{count}} time intervals will be renamed",
+        "renamed-intervals_other": "{{count}} time intervals will be renamed",
+        "renamed-receivers_one": "{{count}} contact points will be renamed",
+        "renamed-receivers_other": "{{count}} contact points will be renamed",
         "select-datasource": "Select data source",
         "skip": "Skip this step",
         "source": {
@@ -1715,6 +1734,13 @@
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
         "upload": "Upload YAML file",
+        "validating": "Validating configuration...",
+        "validation-error": "Validation failed",
+        "validation-error-desc": "Failed to validate the configuration.",
+        "validation-success": "Validation successful",
+        "validation-success-desc": "No conflicts found. The configuration is ready to import.",
+        "validation-warning": "Some resources will be renamed",
+        "validation-warning-desc": "Some resources will be renamed to avoid conflicts with existing resources.",
         "yaml-file": "Alertmanager config YAML"
       },
       "step2": {

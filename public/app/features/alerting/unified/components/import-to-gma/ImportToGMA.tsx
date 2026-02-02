@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Box, Button, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, CodeEditor, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -20,7 +21,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
-import { DryRunValidationModal, DryRunValidationResult } from './DryRunValidationModal';
+import { DryRunValidationResult } from './DryRunValidationModal';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -94,12 +95,11 @@ function ImportWizardContent() {
     useStepperState();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showDryRunModal, setShowDryRunModal] = useState(false);
-  const [dryRunState, setDryRunState] = useState<'loading' | 'success' | 'warning' | 'error'>('loading');
+  const [dryRunState, setDryRunState] = useState<'idle' | 'loading' | 'success' | 'warning' | 'error'>('idle');
   const [dryRunResult, setDryRunResult] = useState<DryRunValidationResult | undefined>();
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
 
-  const { runDryRun, reset: resetDryRun } = useDryRunNotifications();
+  const { runDryRun } = useDryRunNotifications();
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
   const notifyApp = useAppNotification();
@@ -142,13 +142,22 @@ function ImportWizardContent() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  // Step 1 handlers
-  const handleStep1Next = useCallback(async (): Promise<boolean> => {
+  // Trigger dry-run validation (called automatically by Step1 when source changes)
+  const handleTriggerDryRun = useCallback(async () => {
     const formValues = getValues();
     const mergeMatchers = `${MERGE_MATCHERS_LABEL_NAME}=${formValues.policyTreeName}`;
 
-    // Show the dry-run modal and start validation
-    setShowDryRunModal(true);
+    // Check if we have the required data to run dry-run
+    if (!formValues.policyTreeName) {
+      return;
+    }
+    if (formValues.notificationsSource === 'yaml' && !formValues.notificationsYamlFile) {
+      return;
+    }
+    if (formValues.notificationsSource === 'datasource' && !formValues.notificationsDatasourceName) {
+      return;
+    }
+
     setDryRunState('loading');
     setDryRunResult(undefined);
 
@@ -168,11 +177,9 @@ function ImportWizardContent() {
 
       if (!result.valid) {
         setDryRunState('error');
-        // Mark step as having errors
         setStepErrors(StepKey.Notifications, true);
       } else if (result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0) {
         setDryRunState('warning');
-        // Warnings are not errors, step can still be completed
         setStepErrors(StepKey.Notifications, false);
       } else {
         setDryRunState('success');
@@ -188,26 +195,22 @@ function ImportWizardContent() {
       });
       setStepErrors(StepKey.Notifications, true);
     }
-
-    // Don't auto-proceed, wait for dry-run modal confirmation
-    return false;
   }, [getValues, runDryRun, setStepErrors]);
 
-  const handleDryRunConfirm = useCallback(() => {
+  // Step 1 handlers - now just proceeds if validation passed
+  const handleStep1Next = useCallback((): boolean => {
+    // Check if dry-run validation passed (not error state)
+    if (dryRunState === 'error') {
+      return false;
+    }
+
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
     setStepCompleted(StepKey.Notifications, true);
     setStepSkipped(StepKey.Notifications, false);
     setVisitedStep(StepKey.Notifications);
-    setShowDryRunModal(false);
-    resetDryRun();
-    setActiveStep(StepKey.Rules);
-  }, [setValue, setStepCompleted, setStepSkipped, setVisitedStep, setActiveStep, resetDryRun]);
-
-  const handleDryRunDismiss = useCallback(() => {
-    setShowDryRunModal(false);
-    resetDryRun();
-  }, [resetDryRun]);
+    return true;
+  }, [dryRunState, setValue, setStepCompleted, setStepSkipped, setVisitedStep]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
@@ -349,7 +352,14 @@ function ImportWizardContent() {
         <WizardLayout>
           {/* Step 1: Notification Resources */}
           {activeStep === StepKey.Notifications && (
-            <Step1Wrapper canImport={canImportNotifications} onNext={handleStep1Next} onSkip={handleStep1Skip} />
+            <Step1Wrapper
+              canImport={canImportNotifications}
+              onNext={handleStep1Next}
+              onSkip={handleStep1Skip}
+              dryRunState={dryRunState}
+              dryRunResult={dryRunResult}
+              onTriggerDryRun={handleTriggerDryRun}
+            />
           )}
 
           {/* Step 2: Alert Rules */}
@@ -365,7 +375,12 @@ function ImportWizardContent() {
 
           {/* Step 3: Review */}
           {activeStep === StepKey.Review && (
-            <ReviewStep formData={getValues()} onStartImport={handleStartImport} dryRunResult={dryRunResult} />
+            <ReviewStep
+              formData={getValues()}
+              onStartImport={handleStartImport}
+              dryRunResult={dryRunResult}
+              rulesFromDatasource={rulesFromDatasource}
+            />
           )}
         </WizardLayout>
       </FormProvider>
@@ -377,15 +392,6 @@ function ImportWizardContent() {
         onConfirm={handleConfirmImport}
         onDismiss={handleCancelConfirm}
       />
-
-      {/* Dry-run Validation Modal */}
-      <DryRunValidationModal
-        isOpen={showDryRunModal}
-        onDismiss={handleDryRunDismiss}
-        onConfirm={handleDryRunConfirm}
-        state={dryRunState}
-        result={dryRunResult}
-      />
     </>
   );
 }
@@ -395,12 +401,17 @@ function ImportWizardContent() {
  */
 interface Step1WrapperProps {
   canImport: boolean;
-  onNext: () => Promise<boolean>;
+  onNext: () => boolean;
   onSkip: () => void;
+  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunResult?: DryRunValidationResult;
+  onTriggerDryRun: () => void;
 }
 
-function Step1Wrapper({ canImport, onNext, onSkip }: Step1WrapperProps) {
+function Step1Wrapper({ canImport, onNext, onSkip, dryRunState, dryRunResult, onTriggerDryRun }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
+  // Can proceed if form is valid and dry-run passed (not loading or error)
+  const canProceed = isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error';
 
   return (
     <WizardStep
@@ -415,9 +426,14 @@ function Step1Wrapper({ canImport, onNext, onSkip }: Step1WrapperProps) {
       onSkip={onSkip}
       canSkip
       skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip this step')}
-      disableNext={!isStep1Valid}
+      disableNext={!canProceed}
     >
-      <Step1Content canImport={canImport} />
+      <Step1Content
+        canImport={canImport}
+        dryRunState={dryRunState}
+        dryRunResult={dryRunResult}
+        onTriggerDryRun={onTriggerDryRun}
+      />
     </WizardStep>
   );
 }
@@ -538,11 +554,19 @@ interface ReviewStepProps {
   formData: ImportFormValues;
   onStartImport: () => void;
   dryRunResult?: DryRunValidationResult;
+  rulesFromDatasource?: RulerRulesConfigDTO;
 }
 
-function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) {
+function ReviewStep({ formData, onStartImport, dryRunResult, rulesFromDatasource }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
+
+  const [showNotificationsPreview, setShowNotificationsPreview] = useState(false);
+  const [showRulesPreview, setShowRulesPreview] = useState(false);
+  const [notificationsPreviewContent, setNotificationsPreviewContent] = useState<string>('');
+  const [rulesPreviewContent, setRulesPreviewContent] = useState<string>('');
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [isLoadingRules, setIsLoadingRules] = useState(false);
 
   const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
   const willImportRules = formData.step2Completed && !formData.step2Skipped;
@@ -551,6 +575,72 @@ function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) 
   const handleBack = () => {
     setActiveStep(StepKey.Rules);
   };
+
+  // Load notifications preview content
+  const handlePreviewNotifications = useCallback(async () => {
+    setIsLoadingNotifications(true);
+    setShowNotificationsPreview(true);
+
+    try {
+      let content = '';
+      if (formData.notificationsSource === 'yaml' && formData.notificationsYamlFile) {
+        content = await formData.notificationsYamlFile.text();
+      } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
+        const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
+        content = JSON.stringify(config.alertmanager_config, null, 2);
+      }
+      setNotificationsPreviewContent(content);
+    } catch (err) {
+      setNotificationsPreviewContent(
+        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  }, [formData.notificationsSource, formData.notificationsYamlFile, formData.notificationsDatasourceName]);
+
+  // Load rules preview content
+  const handlePreviewRules = useCallback(async () => {
+    setIsLoadingRules(true);
+    setShowRulesPreview(true);
+
+    try {
+      let content = '';
+      if (formData.rulesSource === 'yaml' && formData.rulesYamlFile) {
+        content = await formData.rulesYamlFile.text();
+      } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
+        // Apply filters if set
+        const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
+        content = JSON.stringify(filteredConfig, null, 2);
+      }
+      setRulesPreviewContent(content);
+    } catch (err) {
+      setRulesPreviewContent(
+        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
+    } finally {
+      setIsLoadingRules(false);
+    }
+  }, [formData.rulesSource, formData.rulesYamlFile, formData.namespace, formData.ruleGroup, rulesFromDatasource]);
+
+  // Calculate rules count
+  const rulesCount = useMemo(() => {
+    if (!willImportRules || !rulesFromDatasource) {
+      return 0;
+    }
+    const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
+    let count = 0;
+    Object.values(filteredConfig).forEach((groups) => {
+      groups.forEach((group) => {
+        count += group.rules.length;
+      });
+    });
+    return count;
+  }, [willImportRules, rulesFromDatasource, formData.namespace, formData.ruleGroup]);
 
   return (
     <Stack direction="column" gap={3}>
@@ -580,7 +670,10 @@ function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) 
                 {t('alerting.import-to-gma.review.notifications-title', 'Notification Resources')}
               </Text>
               {willImportNotifications && (
-                <span className={styles.badge}>{t('alerting.import-to-gma.review.will-import', 'Will import')}</span>
+                <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewNotifications}>
+                  {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
+                  <Icon name="eye" size="sm" />
+                </button>
               )}
               {formData.step1Skipped && (
                 <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
@@ -626,7 +719,14 @@ function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) 
                 {t('alerting.import-to-gma.review.rules-title', 'Alert Rules')}
               </Text>
               {willImportRules && (
-                <span className={styles.badge}>{t('alerting.import-to-gma.review.will-import', 'Will import')}</span>
+                <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewRules}>
+                  {rulesCount > 0
+                    ? t('alerting.import-to-gma.review.will-import-rules-count', 'Will import {{count}} rules', {
+                        count: rulesCount,
+                      })
+                    : t('alerting.import-to-gma.review.will-import-rules', 'Will import rules')}
+                  <Icon name="eye" size="sm" />
+                </button>
               )}
               {formData.step2Skipped && (
                 <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
@@ -679,7 +779,10 @@ function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) 
                   )}
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.pause', 'Pause rules')}</Text>
-                    <Text>{getPauseRulesLabel(formData.pauseAlertingRules, formData.pauseRecordingRules)}</Text>
+                    <Stack direction="row" gap={0.5} alignItems="center">
+                      {(formData.pauseAlertingRules || formData.pauseRecordingRules) && <Icon name="pause" size="sm" />}
+                      <Text>{getPauseRulesLabel(formData.pauseAlertingRules, formData.pauseRecordingRules)}</Text>
+                    </Stack>
                   </div>
                 </Stack>
               ) : (
@@ -704,9 +807,87 @@ function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) 
         </Stack>
         <CancelButton />
       </Stack>
+
+      {/* Notifications Preview Modal */}
+      <PreviewContentModal
+        isOpen={showNotificationsPreview}
+        title={t('alerting.import-to-gma.preview.notifications-title', 'Notifications Config Preview')}
+        content={notificationsPreviewContent}
+        isLoading={isLoadingNotifications}
+        language={formData.notificationsSource === 'yaml' ? 'yaml' : 'json'}
+        onDismiss={() => setShowNotificationsPreview(false)}
+      />
+
+      {/* Rules Preview Modal */}
+      <PreviewContentModal
+        isOpen={showRulesPreview}
+        title={t('alerting.import-to-gma.preview.rules-title', 'Alert Rules Preview')}
+        content={rulesPreviewContent}
+        isLoading={isLoadingRules}
+        language={formData.rulesSource === 'yaml' ? 'yaml' : 'json'}
+        onDismiss={() => setShowRulesPreview(false)}
+      />
     </Stack>
   );
 }
+
+// Preview Content Modal Component
+interface PreviewContentModalProps {
+  isOpen: boolean;
+  title: string;
+  content: string;
+  isLoading: boolean;
+  language: 'yaml' | 'json';
+  onDismiss: () => void;
+}
+
+function PreviewContentModal({ isOpen, title, content, isLoading, language, onDismiss }: PreviewContentModalProps) {
+  const styles = useStyles2(getPreviewModalStyles);
+
+  return (
+    <Modal isOpen={isOpen} title={title} onDismiss={onDismiss} className={styles.modal}>
+      {isLoading ? (
+        <Stack direction="row" gap={2} alignItems="center" justifyContent="center">
+          <Spinner />
+          <Text>{t('alerting.import-to-gma.preview.loading', 'Loading content...')}</Text>
+        </Stack>
+      ) : (
+        <div className={styles.editorContainer}>
+          <CodeEditor
+            width="100%"
+            height={500}
+            language={language}
+            value={content}
+            monacoOptions={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              lineNumbers: 'on',
+              readOnly: true,
+              wordWrap: 'on',
+            }}
+          />
+        </div>
+      )}
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss}>
+          {t('alerting.common.close', 'Close')}
+        </Button>
+      </Modal.ButtonRow>
+    </Modal>
+  );
+}
+
+const getPreviewModalStyles = (theme: GrafanaTheme2) => ({
+  modal: css({
+    width: '900px',
+    maxWidth: '90vw',
+  }),
+  editorContainer: css({
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    overflow: 'hidden',
+  }),
+});
 
 // Confirm Import Modal Component
 interface ConfirmImportModalProps {
@@ -837,6 +1018,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.warning.text,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
+  }),
+  badgeWithIcon: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.success.transparent,
+    color: theme.colors.success.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    border: 'none',
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: theme.colors.success.shade,
+    },
   }),
   successIcon: css({
     color: theme.colors.success.main,
