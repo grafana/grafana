@@ -78,7 +78,7 @@ function getFolderUrl(uid: string, title: string): string {
  *
  * (owner references will only be populated with app platform API + team folders functionality)
  */
-type CombinedFolder = FolderDTO & {
+export type CombinedFolder = FolderDTO & {
   ownerReferences?: OwnerReference[];
 };
 
