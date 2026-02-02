@@ -4,11 +4,11 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
-import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useBranchOptions } from '../hooks/useBranchOptions';
-import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
+import { RepositoriesList } from './components/RepositoriesList';
+import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
@@ -23,14 +23,12 @@ export const ConnectStep = memo(function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType] = watch([
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = ''] = watch([
     'repository.url',
     'repository.token',
     'repository.tokenUser',
-    'githubAuthType',
   ]);
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
 
   const {
     options: branchOptions,
@@ -45,11 +43,15 @@ export const ConnectStep = memo(function ConnectStep() {
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
-  const hasTokenInstructions = getHasTokenInstructions(type);
 
   return (
     <Stack direction="column" gap={2}>
-      {hasTokenInstructions && !isGitHubAppAuth && <TokenPermissionsInfo type={type} />}
+      {isGitBased && type !== 'github' && (
+        <>
+          <RepositoryTokenInput />
+          <RepositoriesList />
+        </>
+      )}
 
       {gitFields && (
         <>

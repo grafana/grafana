@@ -82,11 +82,18 @@ async function navigateToConnectionStep(user: UserEvent, type: 'github' | 'gitla
 async function fillConnectionForm(
   user: UserEvent,
   type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
-  data: { token?: string; tokenUser?: string; url?: string; branch?: string; path?: string }
+  data: {
+    token?: string;
+    tokenUser?: string;
+    url?: string;
+    branch?: string;
+    path?: string;
+  }
 ) {
+  // First navigate to the connection step (handles AuthType step for GitHub)
   await navigateToConnectionStep(user, type);
 
-  // Only non-GitHub types use token input here now
+  // Token inputs only exist in this step for non-GitHub providers
   if (type !== 'local' && type !== 'github' && data.token) {
     const tokenPlaceholders = {
       gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
@@ -102,7 +109,12 @@ async function fillConnectionForm(
 
   // Repo URL for GitHub is already entered on auth step
   if (type !== 'local' && type !== 'github' && data.url) {
-    await user.type(screen.getByPlaceholderText('https://github.com/owner/repository'), data.url);
+    const urlPlaceholders = {
+      gitlab: 'https://gitlab.com/owner/repository',
+      bitbucket: 'https://bitbucket.org/owner/repository',
+      git: 'https://git.example.com/owner/repository.git',
+    };
+    await user.type(screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
   }
 
   if (type !== 'local' && data.branch) {
@@ -406,13 +418,20 @@ describe('ProvisioningWizard', () => {
 
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
 
-      // GitLab now only shows branch/path on this step
+      // Fill required GitLab fields so submit proceeds
+      await user.type(screen.getByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx'), 'glpat-test');
+      await user.type(
+        screen.getByPlaceholderText('https://gitlab.com/owner/repository'),
+        'https://gitlab.com/test/repo'
+      );
       await user.type(screen.getByRole('combobox'), 'main');
       await user.type(screen.getByRole('textbox', { name: /Path/i }), '/');
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      // Now the submit should fail with statusError
+      const alert = await screen.findByRole('alert', { name: /Repository connection failed/i });
+      expect(alert).toBeInTheDocument();
       expect(screen.getByText('Repository connection failed')).toBeInTheDocument();
 
       expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
@@ -511,29 +530,26 @@ describe('ProvisioningWizard', () => {
       ]);
 
       // Delay submission to keep button in "Submitting..." state
-      mockSubmitData.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+      mockSubmitData.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ data: { metadata: { name: 'test-conn' } } }), 100))
+      );
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
-      // Fill required authType fields before proceeding
       await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
 
       const repoUrlInput = screen.getByPlaceholderText('https://github.com/owner/repository');
       await user.clear(repoUrlInput);
       await user.type(repoUrlInput, 'https://github.com/test/repo');
 
-      // Move to Configure repository step
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
       expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
-      // Fill remaining connection fields
       await user.type(screen.getByRole('combobox'), 'main');
       await user.type(screen.getByRole('textbox', { name: /Path/i }), '/');
 
-      // Click to submit connection step
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      // Button should be disabled while submitting
       expect(await screen.findByRole('button', { name: /Submitting.../i })).toBeDisabled();
     });
   });
@@ -542,20 +558,26 @@ describe('ProvisioningWizard', () => {
     it('should validate required fields on connection step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
-      // Navigate to connection step first
-      await user.click(screen.getByRole('button', { name: /Connect$/i }));
+      await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
+      await user.type(
+        screen.getByPlaceholderText('https://github.com/owner/repository'),
+        'https://github.com/test/repo'
+      );
 
-      expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+      expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
-      // Try to submit without filling required fields
+      const clearButton = screen.getByTitle(/Clear value/i);
+      await user.click(clearButton);
+
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
       // Should still be on connection step due to validation
-      expect(screen.getByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
+      expect(screen.getByText(/Branch is required/i)).toBeInTheDocument();
     });
 
     it('should show button text changes based on current step', async () => {
-      // Mock files to ensure sync step is not skipped for folder sync
       mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: {
           items: [{ name: 'test.json', path: 'test.json' }],
@@ -567,8 +589,7 @@ describe('ProvisioningWizard', () => {
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
-      // First step shows "Connect" button
-      expect(screen.getByRole('button', { name: /Connect$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
 
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
@@ -577,7 +598,6 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      // Connection step shows "Choose what to synchronize" button
       expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
