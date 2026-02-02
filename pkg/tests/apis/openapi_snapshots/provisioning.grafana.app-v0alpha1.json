@@ -4284,6 +4284,7 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSpec": {
         "type": "object",
         "required": [
+          "title",
           "type"
         ],
         "properties": {
@@ -4294,6 +4295,10 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
               }
             ]
+          },
+          "description": {
+            "description": "The connection description",
+            "type": "string"
           },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
@@ -4310,6 +4315,11 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
               }
             ]
+          },
+          "title": {
+            "description": "The connection display name (shown in the UI)",
+            "type": "string",
+            "default": ""
           },
           "type": {
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
@@ -4332,7 +4342,6 @@
         "type": "object",
         "required": [
           "observedGeneration",
-          "state",
           "health"
         ],
         "properties": {
@@ -4381,15 +4390,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0
-          },
-          "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
           }
         }
       },

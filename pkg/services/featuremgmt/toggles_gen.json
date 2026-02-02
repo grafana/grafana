@@ -396,6 +396,20 @@
     },
     {
       "metadata": {
+        "name": "alertingMultiplePolicies",
+        "resourceVersion": "1769532687968",
+        "creationTimestamp": "2026-01-27T16:51:27Z"
+      },
+      "spec": {
+        "description": "Enables the ability to create multiple alerting policies",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNavigationV2",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2026-01-14T10:58:11Z",
@@ -739,7 +753,8 @@
       "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-10-31T13:30:13Z"
+        "creationTimestamp": "2023-10-31T13:30:13Z",
+        "deletionTimestamp": "2026-01-31T00:02:02Z"
       },
       "spec": {
         "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
@@ -1418,7 +1433,8 @@
       "metadata": {
         "name": "disableEnvelopeEncryption",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2022-05-24T08:34:47Z"
+        "creationTimestamp": "2022-05-24T08:34:47Z",
+        "deletionTimestamp": "2026-01-29T15:12:34Z"
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
@@ -1603,17 +1619,17 @@
     {
       "metadata": {
         "name": "enableSCIM",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769542829648",
         "creationTimestamp": "2024-11-07T14:38:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 19:40:29.648759061 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables SCIM support for user and group management",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3171,18 +3187,18 @@
     {
       "metadata": {
         "name": "newTimeRangeZoomShortcuts",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769547504177",
         "creationTimestamp": "2025-11-20T21:14:27Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 20:58:24.177524 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables new keyboard shortcuts for time range zoom operations",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4418,18 +4434,18 @@
     {
       "metadata": {
         "name": "timeRangePan",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769547328567",
         "creationTimestamp": "2025-11-05T01:39:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 20:55:28.567609 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables time range panning functionality",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

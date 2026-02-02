@@ -322,7 +322,7 @@ If you continue to experience issues after following this troubleshooting guide:
 1. Review the [Grafana GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
 1. Enable debug logging in Grafana to capture detailed error information.
 1. Check SQL Server logs for additional error details.
-1. Contact Grafana Support if you're an Enterprise or Cloud customer.
+1. Contact [Grafana Support](https://grafana.com/contact/) if you're an Enterprise or Cloud customer.
 
 When reporting issues, include:
 

@@ -899,6 +899,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 				informerFactoryResyncInterval,
+				b.minSyncInterval,
 				quotaGetter,
 			)
 			if err != nil {
@@ -910,7 +911,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
-			connHealthChecker := controller.NewConnectionHealthChecker(&connTester, healthMetricsRecorder)
+			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,

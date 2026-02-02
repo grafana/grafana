@@ -1124,7 +1124,8 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
@@ -1180,7 +1181,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
-		require.NoError(collectT, err, "can list values")
+		require.NoError(collectT, err, "can get repository")
 		r := unstructuredToRepository(t, repo)
 		require.NotEqual(collectT, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
@@ -1198,6 +1199,67 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NotNil(collectT, val)
 		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
+
+	repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+	require.NoError(t, err, "can get repository")
+	firstReconciledRepo := unstructuredToRepository(t, repoUnstructured)
+	// Setting up main triggering conditions to verify token is re-generated when
+	// needed, even if all other conditions are not triggered
+	now := time.Now()
+	firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
+	firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
+		State:     provisioning.JobStateSuccess,
+		JobID:     firstReconciledRepo.Status.Sync.JobID,
+		Started:   now.UnixMilli(),
+		Finished:  now.UnixMilli(),
+		Scheduled: now.UnixMilli(),
+		LastRef:   firstReconciledRepo.Status.Sync.LastRef,
+	}
+	firstReconciledRepo.Status.Health = provisioning.HealthStatus{
+		Healthy: true,
+		Checked: now.UnixMilli(),
+	}
+	firstReconciledRepo.Status.Token = provisioning.TokenStatus{
+		LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
+		Expiration:  now.Add(-time.Minute).UnixMilli(),
+	}
+	firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
+	firstReconciledRepo.Status.Conditions = []metav1.Condition{
+		{
+			Type:               provisioning.ConditionTypeReady,
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: firstReconciledRepo.Generation,
+			LastTransitionTime: metav1.Time{Time: now},
+			Reason:             provisioning.ReasonAvailable,
+		},
+	}
+	updatedRepo := repositoryToUnstructured(t, firstReconciledRepo)
+	// This should also trigger a reconciliation loop
+	_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
+	require.NoError(t, err, "failed to update status")
+
+	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
+		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		require.NoError(collectT, err, "can get repository")
+		r := unstructuredToRepository(t, repo)
+		// Token should be there
+		require.False(collectT, r.Secure.Token.IsZero())
+		// and different from the previous one
+		require.NotEqual(collectT,
+			firstReconciledRepo.Secure.Token.Name,
+			r.Secure.Token.Name,
+			"token should be updated",
+		)
+
+		// Just checking the token is what is going to be returned by the mock GH API
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		require.NoError(collectT, err, "decryption error")
+		require.Len(collectT, decrypted, 1)
+
+		val := decrypted[r.Secure.Token.Name].Value()
+		require.NotNil(collectT, val)
+		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
+	}, time.Second*10, time.Second, "Expected repo token to be regenerated")
 }
 
 func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *testing.T) {
@@ -1223,7 +1285,8 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			"namespace": namespace,
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
@@ -1303,7 +1366,6 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 
 		tokenError := repo.Status.FieldErrors[0]
 
-		// Verify all fields explicitly - authorization check fails first before branch check
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
 		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")

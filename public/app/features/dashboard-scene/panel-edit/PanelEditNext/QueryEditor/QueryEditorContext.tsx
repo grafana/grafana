@@ -1,8 +1,10 @@
 import { createContext, ReactNode, useContext } from 'react';
 
 import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
-import { CustomTransformerDefinition, VizPanel } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { VizPanel } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
+
+import { Transformation } from './types';
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -18,21 +20,24 @@ export interface QueryRunnerState {
 
 export interface PanelState {
   panel: VizPanel;
-  transformations: Array<DataTransformerConfig | CustomTransformerDefinition>;
+  transformations: Transformation[];
 }
 
 export interface QueryEditorUIState {
-  selectedCard: DataQuery | null;
-  setSelectedCard: (query: DataQuery | null) => void;
+  selectedQuery: DataQuery | null;
+  selectedTransformation: Transformation | null;
+  setSelectedQuery: (query: DataQuery | null) => void;
+  setSelectedTransformation: (transformation: Transformation | null) => void;
 }
 
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
+  updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>) => void;
   deleteQuery: (index: number) => void;
   duplicateQuery: (index: number) => void;
   runQueries: () => void;
-  changeDataSource: (settings: DataSourceInstanceSettings) => void;
+  changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

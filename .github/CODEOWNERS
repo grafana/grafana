@@ -379,8 +379,10 @@
 /pkg/tsdb/influxdb/ @grafana/partner-datasources
 /pkg/tsdb/graphite/ @grafana/partner-datasources
 
-# Database migrations
+# Grafana search and storage
 /pkg/services/sqlstore/migrations/ @grafana/grafana-search-and-storage
+/pkg/services/grpcserver/ @grafana/grafana-search-and-storage
+/apps/dashboard/pkg/apis/dashboard/v0alpha1/search.go @grafana/grafana-search-and-storage
 *_mig.go @grafana/grafana-search-and-storage
 
 # Grafana app platform
@@ -388,7 +390,6 @@
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
-/pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
@@ -669,6 +670,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/migrationHandler* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /packages/grafana-runtime/src/utils/plugin.ts @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/utils/publicDashboardQueryHandler.ts @grafana/grafana-operator-experience-squad
+/packages/grafana-runtime/src/utils/qscheck* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/queryResponse* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/rbac.ts @grafana/identity-access-team
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-search-navigate-organise
@@ -822,7 +824,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/NavLandingPage/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/NestedFolderPicker/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
-/public/app/core/components/OwnerReferences/OwnerReferenceSelector.tsx @grafana/grafana-search-navigate-organise
+/public/app/core/components/OwnerReferences/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Page/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageActionBar/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageInfo/ @grafana/grafana-search-navigate-organise
@@ -913,6 +915,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/fetch* @grafana/grafana-frontend-platform
 /public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isShallowEqual.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/isRecord.ts @grafana/dashboards-squad
 /public/app/core/utils/kbn* @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
@@ -1193,6 +1196,8 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
+/pkg/registry/apis/dashboard/search.go @grafana/grafana-search-and-storage
+/pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
 /pkg/registry/apps/advisor @grafana/plugins-platform-backend
 /pkg/registry/apps/alerting @grafana/alerting-backend
 /pkg/registry/apps/plugins @grafana/plugins-platform-backend
@@ -1265,7 +1270,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
-/.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-app-platform-squad
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-kinds-next.yml @grafana/grafana-app-platform-squad
