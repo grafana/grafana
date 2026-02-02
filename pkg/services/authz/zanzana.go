@@ -37,7 +37,7 @@ import (
 
 // ProvideZanzanaClient used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Server, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Server, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zClient.NewNoopClient(), nil
@@ -179,11 +179,24 @@ var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
 func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (*Zanzana, error) {
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
+	}
+
+	tracingCfg.ServiceName = "zanzana"
+
+	tracer, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
+	}
+
 	s := &Zanzana{
 		cfg:      cfg,
 		features: features,
 		logger:   log.New("zanzana.server"),
 		reg:      reg,
+		tracer:   tracer,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -204,19 +217,7 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
-	if err != nil {
-		return err
-	}
-
-	tracingCfg.ServiceName = "zanzana"
-
-	tracer, err := tracing.ProvideService(tracingCfg)
-	if err != nil {
-		return err
-	}
-
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, z.logger, tracer, z.reg)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, z.logger, z.tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -238,7 +239,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		authenticatorInterceptor = interceptors.AuthenticatorFunc(
 			grpcutils.NewAuthenticatorInterceptor(
 				authenticator,
-				tracer,
+				z.tracer,
 			),
 		)
 	}
@@ -247,7 +248,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		z.cfg,
 		z.features,
 		authenticatorInterceptor,
-		tracer,
+		z.tracer,
 		prometheus.DefaultRegisterer,
 	)
 	if err != nil {
