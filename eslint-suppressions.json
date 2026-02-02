@@ -260,7 +260,7 @@
   },
   "packages/grafana-data/src/types/templateVars.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
+      "count": 3
     }
   },
   "packages/grafana-data/src/types/trace.ts": {
@@ -1861,11 +1861,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -3400,9 +3395,6 @@
   "public/app/features/variables/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 5
-    },
-    "no-barrel-files/no-barrel-files": {
-      "count": 2
     }
   },
   "public/app/features/variables/utils.ts": {

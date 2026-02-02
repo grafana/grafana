@@ -4911,7 +4911,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable",
+          "modal-title": "Custom options",
           "values": "Values separated by comma"
         },
         "datasource-options": {
@@ -6318,6 +6318,11 @@
         "remove-panel": "Remove panel"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "Remove option",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
+      "tooltip-remove-option": "Remove option"
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -6685,6 +6690,9 @@
         }
       },
       "label": "Hide"
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": "Static options"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"
@@ -11930,7 +11938,6 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----...",
       "placeholder-title": "My GitHub App"
     },
     "connection-options": {
@@ -12682,13 +12689,17 @@
     }
   },
   "query-editor-next": {
-    "sidebar": {
-      "card-click": "Select query {{refId}}",
+    "labels": {
       "expression": "Expression",
-      "queries-expressions": "Queries & Expressions",
       "query": "Query",
+      "transformation": "Transformation"
+    },
+    "sidebar": {
+      "card-click": "Select card {{id}}",
+      "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",
-      "toggle-size": "Toggle sidebar size"
+      "toggle-size": "Toggle sidebar size",
+      "transformations": "Transformations"
     }
   },
   "query-library": {
