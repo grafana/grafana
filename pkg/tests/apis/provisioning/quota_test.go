@@ -336,6 +336,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 	})
 }
 
+//nolint:gocyclo
 func TestIntegrationProvisioning_RepositoryCountQuota(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
