@@ -17,7 +17,7 @@ import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
 import { Transformation } from './types';
-import { isDataTransformerConfig } from './utils';
+import { getEditorType, isDataTransformerConfig } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -121,7 +121,7 @@ export function QueryEditorContextWrapper({
     return null;
   }, [transformations, selectedTransformationId]);
 
-  const { value: selectedCardDsData, loading: selectedCardDsLoading } = useAsync(async () => {
+  const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
     if (!selectedQuery?.datasource) {
       return undefined;
     }
@@ -131,7 +131,7 @@ export function QueryEditorContextWrapper({
       const datasource = await getDataSourceSrv().get(selectedQuery.datasource);
       return { datasource, dsSettings };
     } catch (err) {
-      console.error('Failed to load datasource for selected card:', err);
+      console.error('Failed to load datasource for selected query:', err);
       return undefined;
     }
   }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type]);
@@ -150,12 +150,13 @@ export function QueryEditorContextWrapper({
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },
-      selectedCardDsData: selectedCardDsData ?? null,
-      selectedCardDsLoading,
+      selectedQueryDsData: selectedQueryDsData ?? null,
+      selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
+      cardType: getEditorType(selectedQuery || selectedTransformation),
     }),
-    [selectedQuery, selectedTransformation, selectedCardDsData, selectedCardDsLoading, showingDatasourceHelp]
+    [selectedQuery, selectedTransformation, selectedQueryDsData, selectedQueryDsLoading, showingDatasourceHelp]
   );
 
   const actions = useMemo(

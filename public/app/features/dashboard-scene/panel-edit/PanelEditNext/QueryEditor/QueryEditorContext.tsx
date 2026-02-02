@@ -4,6 +4,8 @@ import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } 
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
+import { QueryEditorType } from '../constants';
+
 import { Transformation } from './types';
 
 export interface DatasourceState {
@@ -29,13 +31,14 @@ export interface QueryEditorUIState {
   selectedTransformation: Transformation | null;
   setSelectedQuery: (query: DataQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
-  selectedCardDsData: {
+  selectedQueryDsData: {
     datasource?: DataSourceApi;
     dsSettings?: DataSourceInstanceSettings;
   } | null;
-  selectedCardDsLoading: boolean;
+  selectedQueryDsLoading: boolean;
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
+  cardType: QueryEditorType;
 }
 
 export interface QueryEditorActions {

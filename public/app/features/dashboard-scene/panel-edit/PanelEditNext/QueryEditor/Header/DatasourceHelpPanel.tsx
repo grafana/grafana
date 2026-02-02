@@ -8,27 +8,27 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function DatasourceHelpPanel() {
-  const { selectedCard, selectedCardDsData, selectedCardDsLoading, toggleDatasourceHelp } = useQueryEditorUIContext();
+  const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading, toggleDatasourceHelp } =
+    useQueryEditorUIContext();
   const { updateSelectedQuery } = useActionsContext();
-  const datasource = selectedCardDsData?.datasource;
+  const datasource = selectedQueryDsData?.datasource;
 
   const styles = useStyles2(getStyles);
 
-  if (selectedCardDsLoading || !datasource?.components?.QueryEditorHelp || !selectedCard) {
+  if (selectedQueryDsLoading || !datasource?.components?.QueryEditorHelp || !selectedQuery) {
     return null;
   }
 
   const DatasourceCheatsheet = datasource.components.QueryEditorHelp;
 
-  // TODO: Confirm this works as expected once we get the query content work completed
   const onClickExample = (exampleQuery: DataQuery) => {
     // Preserve refId and datasource from current query
     const updatedQuery = {
       ...exampleQuery,
-      refId: selectedCard.refId,
-      datasource: exampleQuery.datasource ?? selectedCard.datasource,
+      refId: selectedQuery.refId,
+      datasource: exampleQuery.datasource ?? selectedQuery.datasource,
     };
-    updateSelectedQuery(updatedQuery, selectedCard.refId);
+    updateSelectedQuery(updatedQuery, selectedQuery.refId);
     toggleDatasourceHelp();
   };
 
@@ -42,7 +42,7 @@ export function DatasourceHelpPanel() {
         className={styles.closeButton}
         aria-label={t('query-editor.help.close-aria', 'Close help panel')}
       />
-      <DatasourceCheatsheet query={selectedCard} datasource={datasource} onClickExample={onClickExample} />
+      <DatasourceCheatsheet query={selectedQuery} datasource={datasource} onClickExample={onClickExample} />
     </div>
   );
 }

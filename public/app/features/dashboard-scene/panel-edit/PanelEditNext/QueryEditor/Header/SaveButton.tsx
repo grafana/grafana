@@ -8,16 +8,15 @@ import { QueryEditorType } from '../../constants';
 import { useActionsContext, useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface SaveButtonProps {
-  cardType: QueryEditorType;
   // Ref to the parent container for positioning/formatting the saved queries dropdown
   parentRef?: RefObject<HTMLDivElement>;
 }
 
 // TODO: Confirm this works as expected once we get the query content work completed
-export function SaveButton({ cardType, parentRef }: SaveButtonProps) {
+export function SaveButton({ parentRef }: SaveButtonProps) {
   const { datasource } = useDatasourceContext();
   const { queryLibraryEnabled, renderSavedQueryButtons, isEditingQuery, setIsEditingQuery } = useQueryLibraryContext();
-  const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
+  const { selectedQuery, setSelectedQuery, cardType } = useQueryEditorUIContext();
   const { updateSelectedQuery, runQueries } = useActionsContext();
 
   const onUpdateSuccess = useCallback(() => {
@@ -28,12 +27,12 @@ export function SaveButton({ cardType, parentRef }: SaveButtonProps) {
   // Callback when user selects a query from the library
   const onSelectQuery = useCallback(
     (query: DataQuery) => {
-      if (!selectedCard) {
+      if (!selectedQuery) {
         return;
       }
 
       // Replace the current query with the library query, preserving refId
-      const originalRefId = selectedCard.refId;
+      const originalRefId = selectedQuery.refId;
       updateSelectedQuery(
         {
           ...query,
@@ -42,13 +41,13 @@ export function SaveButton({ cardType, parentRef }: SaveButtonProps) {
         originalRefId
       );
 
-      // Update selected card to the new query
-      setSelectedCard({ ...query, refId: originalRefId });
+      // Update selected query to the new query
+      setSelectedQuery({ ...query, refId: originalRefId });
 
       // Run queries with the new query from library
       runQueries();
     },
-    [selectedCard, updateSelectedQuery, setSelectedCard, runQueries]
+    [selectedQuery, updateSelectedQuery, setSelectedQuery, runQueries]
   );
 
   // Only queries can be saved to library (expressions/transformations can't)
@@ -56,8 +55,8 @@ export function SaveButton({ cardType, parentRef }: SaveButtonProps) {
     return null;
   }
 
-  // Don't show if query library feature is disabled or no selected card
-  if (!queryLibraryEnabled || !selectedCard) {
+  // Don't show if query library feature is disabled or no selected query
+  if (!queryLibraryEnabled || !selectedQuery) {
     return null;
   }
 
@@ -70,8 +69,8 @@ export function SaveButton({ cardType, parentRef }: SaveButtonProps) {
     <>
       {renderSavedQueryButtons(
         {
-          ...selectedCard,
-          datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedCard.datasource,
+          ...selectedQuery,
+          datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
         },
         CoreApp.PanelEditor,
         onUpdateSuccess,

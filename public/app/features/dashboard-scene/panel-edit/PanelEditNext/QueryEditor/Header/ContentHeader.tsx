@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef } from 'react';
+import { RefObject, useRef } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -8,12 +8,28 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { getEditorType } from '../utils';
+import { Transformation } from '../types';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
 
-interface ContentHeaderProps {
+/**
+ * Props for the standalone ContentHeader component.
+ * This interface defines everything needed to render the header without Scene coupling.
+ */
+export interface ContentHeaderProps {
+  /** The currently selected query (null if transformation is selected) */
+  selectedQuery: DataQuery | null;
+  /** The currently selected transformation (null if query is selected) */
+  selectedTransformation: Transformation | null;
+  /** All queries in the query runner */
+  queries: DataQuery[];
+  /** The type of card currently selected (Query, Expression, or Transformation) */
+  cardType: QueryEditorType;
+  /** Callback when datasource is changed */
+  onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
+  /** Callback when query is updated (e.g., refId change) */
+  onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   /**
    * Optional callback to render additional elements in the header's left section.
    *
@@ -22,26 +38,41 @@ interface ContentHeaderProps {
    * - Query options (max data points, min interval)
    * - Alert condition indicators
    * - Alerting-specific tooltips
-   *
-   * Currently not wired up in the v2 dashboard query editor flow.
-   * Will be needed when/if Alerting or other contexts adopt the v2 experience.
    */
   renderHeaderExtras?: () => React.ReactNode;
+  /**
+   * Optional ref to the container div.
+   * Used downstream for saved queries positioning.
+   */
+  containerRef?: RefObject<HTMLDivElement>;
 }
 
-export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
-  const { selectedQuery, selectedTransformation } = useQueryEditorUIContext();
-  const { queries } = useQueryRunnerContext();
-  const { changeDataSource, updateSelectedQuery } = useActionsContext();
+/**
+ * Standalone, prop-based query editor header component.
+ * Can be used in both Scene-based and non-Scene contexts (e.g., Alerting, Explore).
+ *
+ * @remarks
+ * This component is fully decoupled from React Context and Scenes state.
+ * All data and callbacks are passed via props, making it reusable across
+ * different architectural patterns.
+ */
+export function ContentHeader({
+  selectedQuery,
+  selectedTransformation,
+  queries,
+  cardType,
+  onChangeDataSource,
+  onUpdateQuery,
+  renderHeaderExtras,
+  containerRef: externalContainerRef,
+}: ContentHeaderProps) {
+  // Fallback ref if none provided (for saved queries positioning)
+  const internalContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = externalContainerRef || internalContainerRef;
 
-  // This ref is used downstream for the saved queries experience. It's used specifically within
-  // renderSavedQueryButtons to determine the width of the container for positioning the saved queries dropdown.
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const cardType = getEditorType(selectedQuery);
   const styles = useStyles2(getStyles, { cardType });
 
-  // We have to do defensive null checks since queries might be an empty array :(
+  // Early return if nothing selected
   if (!selectedQuery && !selectedTransformation) {
     return null;
   }
@@ -52,13 +83,13 @@ export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
         {cardType === QueryEditorType.Query && selectedQuery && (
           <DatasourceSection
-            selectedCard={selectedQuery}
-            onChange={(ds) => changeDataSource(ds, selectedQuery.refId)}
+            selectedQuery={selectedQuery}
+            onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
           />
         )}
         {selectedQuery && (
           <>
-            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
+            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}
@@ -68,25 +99,53 @@ export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
           </Text>
         )}
       </div>
-      {selectedQuery && (
-        <HeaderActions cardType={cardType} query={selectedQuery} queries={queries} containerRef={containerRef} />
-      )}
+      <HeaderActions queries={queries} containerRef={containerRef} />
     </div>
   );
 }
 
+/**
+ * Scene-aware wrapper for ContentHeader.
+ * Reads state from Scene contexts and passes as props to the standalone component.
+ *
+ * @remarks
+ * Use this component in Scene-based contexts (e.g., Dashboard panel editing).
+ * For non-Scene contexts, use ContentHeader directly with props.
+ */
+export function ContentHeaderSceneWrapper({
+  renderHeaderExtras,
+}: {
+  renderHeaderExtras?: () => React.ReactNode;
+} = {}) {
+  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { queries } = useQueryRunnerContext();
+  const { changeDataSource, updateSelectedQuery } = useActionsContext();
+
+  return (
+    <ContentHeader
+      selectedQuery={selectedQuery}
+      selectedTransformation={selectedTransformation}
+      queries={queries}
+      cardType={cardType}
+      onChangeDataSource={changeDataSource}
+      onUpdateQuery={updateSelectedQuery}
+      renderHeaderExtras={renderHeaderExtras}
+    />
+  );
+}
+
 interface DatasourceSectionProps {
-  selectedCard: DataQuery;
+  selectedQuery: DataQuery;
   onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
-function DatasourceSection({ selectedCard, onChange }: DatasourceSectionProps) {
+function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
 
   return (
     <>
       <div className={styles.dataSourcePickerWrapper}>
-        <DataSourcePicker dashboard={true} variables={true} current={selectedCard.datasource} onChange={onChange} />
+        <DataSourcePicker dashboard={true} variables={true} current={selectedQuery.datasource} onChange={onChange} />
       </div>
       <Text variant="h4" color="secondary">
         /

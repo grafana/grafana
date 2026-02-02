@@ -5,7 +5,7 @@ import { Trans } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
-import { ContentHeader } from './Header/ContentHeader';
+import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
 import { DatasourceHelpPanel } from './Header/DatasourceHelpPanel';
 import { useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
@@ -16,7 +16,7 @@ export function QueryEditorContent() {
 
   return (
     <div className={styles.container}>
-      <ContentHeader />
+      <ContentHeaderSceneWrapper />
       {showingDatasourceHelp && <DatasourceHelpPanel />}
       <div className={styles.contentBody}>
         {/* TODO: This is a placeholder for the content body. */}

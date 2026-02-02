@@ -48,11 +48,10 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
   );
 }
 
-export function WarningBadges({ cardType }: { cardType: QueryEditorType }) {
+export function WarningBadges() {
   const { data } = useQueryRunnerContext();
-  const { selectedCard } = useQueryEditorUIContext();
-
-  const queryRefId = selectedCard?.refId;
+  const { selectedQuery, cardType } = useQueryEditorUIContext();
+  const queryRefId = selectedQuery?.refId;
 
   const severityGroups = useMemo<SeverityGroup[]>(() => {
     if (!data || !queryRefId) {
@@ -85,7 +84,6 @@ export function WarningBadges({ cardType }: { cardType: QueryEditorType }) {
     return groups;
   }, [data, queryRefId]);
 
-  // Transformations don't show warnings
   if (cardType === QueryEditorType.Transformation) {
     return null;
   }
