@@ -415,7 +415,7 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.getByTestId('compatibility-badge-success')).toBeInTheDocument();
-      expect(screen.getByText('85%')).toBeInTheDocument();
+      expect(screen.getByText('85% compatible')).toBeInTheDocument();
     });
 
     it('should show loading state when compatibilityState has loading status', () => {

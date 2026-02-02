@@ -349,7 +349,7 @@ describe('CommunityDashboardSection', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('compatibility-badge-success')).toBeInTheDocument();
-        expect(screen.getByText('85%')).toBeInTheDocument();
+        expect(screen.getByText('85% compatible')).toBeInTheDocument();
       });
     });
 
