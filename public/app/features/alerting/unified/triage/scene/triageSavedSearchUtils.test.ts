@@ -2,14 +2,9 @@ import { locationService } from '@grafana/runtime';
 
 import {
   applySavedSearch,
-  extractFilters,
-  extractGroupBy,
-  extractTimeRange,
+  extractFilterObjects,
   generateTriageUrl,
-  isValidTriageQuery,
-  parseFilterString,
   serializeCurrentState,
-  serializeTriageSceneState,
 } from './triageSavedSearchUtils';
 
 // Mock locationService
@@ -42,131 +37,37 @@ describe('triageSavedSearchUtils', () => {
     });
   });
 
-  describe('parseFilterString', () => {
-    it('should parse a simple filter string', () => {
-      const result = parseFilterString('alertname|=|test');
-      expect(result).toEqual({ key: 'alertname', operator: '=', value: 'test' });
+  describe('extractFilterObjects', () => {
+    it('should extract and parse filter objects from query', () => {
+      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=severity%7C!%3D%7Cwarning';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([
+        { key: 'alertname', operator: '=', value: 'test', values: ['test'] },
+        { key: 'severity', operator: '!=', value: 'warning', values: ['warning'] },
+      ]);
     });
 
-    it('should parse filter with regex operator', () => {
-      const result = parseFilterString('alertname|=~|foo.*');
-      expect(result).toEqual({ key: 'alertname', operator: '=~', value: 'foo.*' });
+    it('should return empty array if no filters', () => {
+      const query = 'var-groupBy=severity&from=now-1h&to=now';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([]);
     });
 
-    it('should parse filter with not-equal operator', () => {
-      const result = parseFilterString('severity|!=|warning');
-      expect(result).toEqual({ key: 'severity', operator: '!=', value: 'warning' });
+    it('should handle filters with pipes in values (__gfp__ escaped)', () => {
+      const query = 'var-filters=alertname%7C%3D~%7Ccritical__gfp__warning';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([
+        { key: 'alertname', operator: '=~', value: 'critical|warning', values: ['critical|warning'] },
+      ]);
     });
 
-    it('should handle pipes in the value', () => {
-      const result = parseFilterString('alertname|=~|critical|warning');
-      expect(result).toEqual({ key: 'alertname', operator: '=~', value: 'critical|warning' });
-    });
-
-    it('should handle empty value', () => {
-      const result = parseFilterString('alertname|=|');
-      expect(result).toEqual({ key: 'alertname', operator: '=', value: '' });
-    });
-
-    it('should return null for invalid format - no pipes', () => {
-      const result = parseFilterString('invalid');
-      expect(result).toBeNull();
-    });
-
-    it('should return null for invalid format - only one pipe', () => {
-      const result = parseFilterString('alertname|test');
-      expect(result).toBeNull();
-    });
-
-    it('should return null for empty key', () => {
-      const result = parseFilterString('|=|test');
-      expect(result).toBeNull();
-    });
-
-    it('should return null for empty operator', () => {
-      const result = parseFilterString('alertname||test');
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('isValidTriageQuery', () => {
-    it('should return true for empty query', () => {
-      expect(isValidTriageQuery('')).toBe(true);
-    });
-
-    it('should return true for valid query string', () => {
-      expect(isValidTriageQuery('var-filters=test&var-groupBy=severity')).toBe(true);
-    });
-
-    it('should return true for encoded query string', () => {
-      expect(isValidTriageQuery('var-filters=alertname%7C%3D%7Ctest')).toBe(true);
-    });
-
-    it('should return true for complex query with multiple params', () => {
-      expect(isValidTriageQuery('var-filters=a&var-filters=b&var-groupBy=c&from=now-1h&to=now')).toBe(true);
-    });
-  });
-
-  describe('extractTimeRange', () => {
-    it('should extract time range from query', () => {
-      const query = 'from=now-1h&to=now';
-      expect(extractTimeRange(query)).toEqual({ from: 'now-1h', to: 'now' });
-    });
-
-    it('should return defaults when time range not present', () => {
-      const query = 'var-filters=test';
-      expect(extractTimeRange(query)).toEqual({ from: 'now-4h', to: 'now' });
-    });
-
-    it('should return defaults for empty query', () => {
-      expect(extractTimeRange('')).toEqual({ from: 'now-4h', to: 'now' });
-    });
-
-    it('should handle partial time range - only from', () => {
-      const query = 'from=now-2h';
-      expect(extractTimeRange(query)).toEqual({ from: 'now-2h', to: 'now' });
-    });
-
-    it('should handle partial time range - only to', () => {
-      const query = 'to=now-30m';
-      expect(extractTimeRange(query)).toEqual({ from: 'now-4h', to: 'now-30m' });
-    });
-  });
-
-  describe('extractGroupBy', () => {
-    it('should extract groupBy value', () => {
-      const query = 'var-groupBy=severity';
-      expect(extractGroupBy(query)).toBe('severity');
-    });
-
-    it('should return null when groupBy not present', () => {
-      const query = 'var-filters=test';
-      expect(extractGroupBy(query)).toBeNull();
-    });
-
-    it('should return null for empty query', () => {
-      expect(extractGroupBy('')).toBeNull();
-    });
-  });
-
-  describe('extractFilters', () => {
-    it('should extract single filter', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest';
-      expect(extractFilters(query)).toEqual(['alertname|=|test']);
-    });
-
-    it('should extract multiple filters', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=severity%7C%3D%7Ccritical';
-      expect(extractFilters(query)).toEqual(['alertname|=|test', 'severity|=|critical']);
-    });
-
-    it('should return empty array when no filters', () => {
-      const query = 'var-groupBy=severity';
-      expect(extractFilters(query)).toEqual([]);
-    });
-
-    it('should return empty array for empty query', () => {
-      expect(extractFilters('')).toEqual([]);
+    it('should filter out invalid filter strings', () => {
+      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=invalid&var-filters=severity%7C%3D%7Ccritical';
+      const result = extractFilterObjects(query);
+      expect(result).toEqual([
+        { key: 'alertname', operator: '=', value: 'test', values: ['test'] },
+        { key: 'severity', operator: '=', value: 'critical', values: ['critical'] },
+      ]);
     });
   });
 
@@ -266,97 +167,6 @@ describe('triageSavedSearchUtils', () => {
       applySavedSearch(query);
 
       expect(locationService.push).toHaveBeenCalledWith(`/alerting/alerts?${query}`);
-    });
-  });
-
-  describe('serializeTriageSceneState', () => {
-    it('should serialize state with filters, groupBy, and time range', () => {
-      const result = serializeTriageSceneState({
-        timeRange: { from: 'now-1h', to: 'now' },
-        filters: ['alertname|=|test'],
-        groupBy: ['severity'],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.get('from')).toBe('now-1h');
-      expect(params.get('to')).toBe('now');
-      expect(params.getAll('var-filters')).toEqual(['alertname|=|test']);
-      expect(params.getAll('var-groupBy')).toEqual(['severity']);
-    });
-
-    it('should serialize state with empty filters and groupBy', () => {
-      const result = serializeTriageSceneState({
-        timeRange: { from: 'now-4h', to: 'now' },
-        filters: [],
-        groupBy: [],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.get('from')).toBe('now-4h');
-      expect(params.get('to')).toBe('now');
-      expect(params.getAll('var-filters')).toEqual([]);
-      expect(params.getAll('var-groupBy')).toEqual([]);
-    });
-
-    it('should serialize state with multiple filters', () => {
-      const result = serializeTriageSceneState({
-        timeRange: { from: 'now-1h', to: 'now' },
-        filters: ['alertname|=|test', 'severity|=|critical'],
-        groupBy: [],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.getAll('var-filters')).toEqual(['alertname|=|test', 'severity|=|critical']);
-    });
-
-    it('should serialize state with multiple groupBy values', () => {
-      const result = serializeTriageSceneState({
-        timeRange: { from: 'now-1h', to: 'now' },
-        filters: [],
-        groupBy: ['severity', 'alertname'],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.getAll('var-groupBy')).toEqual(['severity', 'alertname']);
-    });
-
-    it('should handle Date objects in time range', () => {
-      const fromDate = new Date('2024-01-01T00:00:00Z');
-      const toDate = new Date('2024-01-01T01:00:00Z');
-
-      const result = serializeTriageSceneState({
-        timeRange: { from: fromDate, to: toDate },
-        filters: [],
-        groupBy: [],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.get('from')).toBe(fromDate.toISOString());
-      expect(params.get('to')).toBe(toDate.toISOString());
-    });
-
-    it('should filter out empty/falsy filter values', () => {
-      const result = serializeTriageSceneState({
-        timeRange: { from: 'now-1h', to: 'now' },
-        filters: ['alertname|=|test', '', 'severity|=|critical'],
-        groupBy: ['severity', ''],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.getAll('var-filters')).toEqual(['alertname|=|test', 'severity|=|critical']);
-      expect(params.getAll('var-groupBy')).toEqual(['severity']);
-    });
-
-    it('should handle different relative time range formats', () => {
-      const result = serializeTriageSceneState({
-        timeRange: { from: 'now-7d', to: 'now-1d' },
-        filters: [],
-        groupBy: [],
-      });
-
-      const params = new URLSearchParams(result);
-      expect(params.get('from')).toBe('now-7d');
-      expect(params.get('to')).toBe('now-1d');
     });
   });
 });

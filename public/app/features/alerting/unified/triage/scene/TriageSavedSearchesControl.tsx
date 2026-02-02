@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
-import { AdHocVariableFilter, dateMath, makeTimeRange } from '@grafana/data';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
@@ -17,7 +15,7 @@ import { shouldUseTriageSavedSearches } from '../../featureToggles';
 import { VARIABLES } from '../constants';
 import { trackTriageSavedSearchApplied, useTriageSavedSearches } from '../hooks/useTriageSavedSearches';
 
-import { generateTriageUrl, parseFilterString, serializeTriageSceneState } from './triageSavedSearchUtils';
+import { applyTriageSavedSearchState, generateTriageUrl, serializeTriageState } from './triageSavedSearchUtils';
 
 /**
  * State interface for TriageSavedSearchesControl.
@@ -69,69 +67,18 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
 
   // Serialize Scene state to a query string (reactive to changes)
   const currentSearchQuery = useMemo(() => {
-    // Convert filter objects to "key|operator|value" strings for storage
-    const filterStrings = (filters ?? []).map((f) => `${f.key}|${f.operator}|${f.value}`);
-
-    // Normalize groupBy to array
-    const groupByArray = Array.isArray(groupBy) ? groupBy : [groupBy].filter(Boolean);
-
-    return serializeTriageSceneState({
-      timeRange: timeRange.raw,
-      filters: filterStrings,
-      groupBy: groupByArray,
-    });
+    return serializeTriageState(filters ?? [], groupBy, timeRange.raw);
   }, [timeRange, filters, groupBy]);
 
   /**
    * Apply a saved search by programmatically updating Scene variables.
-   *
-   * We update the Scene variables directly instead of using locationService.push()
-   * because the Scene's URL sync has a limitation: updateFromUrl() only receives
-   * values that are DIFFERENT from current state. When var-groupBy is absent from
-   * the URL, it doesn't trigger an update to clear the value.
-   *
-   * By updating variables directly, the UrlSyncContextProvider automatically
-   * syncs the new Scene state to the URL.
    */
   const handleApplySearch = useCallback(
     (search: SavedSearch) => {
-      // Parse the saved query
-      const params = new URLSearchParams(search.query);
-
-      // Get Scene variables
-      const groupByVar = sceneGraph.lookupVariable(VARIABLES.groupBy, model);
-      const sceneTimeRange = sceneGraph.getTimeRange(model);
-
-      // Update filters (parse strings back to filter objects)
-      if (filtersVar instanceof AdHocFiltersVariable) {
-        const filterStrings = params.getAll('var-filters').filter(Boolean);
-        const filters = filterStrings.map(parseFilterString).filter((f): f is AdHocVariableFilter => f !== null);
-        filtersVar.updateFilters(filters);
-      }
-
-      // Update groupBy (clear if not in saved search)
-      if (groupByVar instanceof GroupByVariable) {
-        const groupByValues = params.getAll('var-groupBy').filter(Boolean);
-        groupByVar.changeValueTo(groupByValues.length > 0 ? groupByValues : []);
-      }
-
-      // Update time range
-      const from = params.get('from') ?? 'now-4h';
-      const to = params.get('to') ?? 'now';
-      const fromDateTime = dateMath.parse(from, false);
-      const toDateTime = dateMath.parse(to, true); // roundUp=true for "to" value
-
-      if (fromDateTime && toDateTime) {
-        sceneTimeRange.onTimeRangeChange(makeTimeRange(fromDateTime, toDateTime));
-      }
-
-      // Track analytics
+      applyTriageSavedSearchState(model, search.query);
       trackTriageSavedSearchApplied(search);
-
-      // NOTE: Do NOT call locationService.push() - the UrlSyncContextProvider
-      // will automatically sync the new Scene state to the URL
     },
-    [model, filtersVar]
+    [model]
   );
 
   /**

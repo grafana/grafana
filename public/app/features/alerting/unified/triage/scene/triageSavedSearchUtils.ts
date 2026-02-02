@@ -5,8 +5,12 @@
  * query strings, preserving filters, groupBy selections, and time range.
  */
 
-import { RawTimeRange } from '@grafana/data';
+import { AdHocVariableFilter, RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { AdHocFiltersVariable, GroupByVariable, SceneObject, sceneGraph } from '@grafana/scenes';
+
+import { toFilters, toUrl } from '../../../../variables/adhoc/urlParser';
+import { VARIABLES } from '../constants';
 
 /**
  * URL parameter keys relevant to triage saved searches.
@@ -15,67 +19,6 @@ import { locationService } from '@grafana/runtime';
  * - from/to: Time range
  */
 const TRIAGE_URL_PARAMS = ['var-filters', 'var-groupBy', 'from', 'to'] as const;
-
-/**
- * State structure for serializing Scene state.
- */
-export interface TriageSceneState {
-  /** Raw time range with from/to as strings (e.g., "now-1h", "now") or Date objects */
-  timeRange: RawTimeRange;
-  /** Array of filter strings in "key|operator|value" format */
-  filters: string[];
-  /** Array of groupBy keys */
-  groupBy: string[];
-}
-
-/**
- * Serializes Scene state (time range, filters, groupBy) to a query string.
- *
- * This function takes the current Scene state values and serializes them
- * to a URL query string format suitable for storage as a saved search.
- *
- * Use this function inside Scene components where you need reactive updates
- * when Scene state changes. For detecting initial URL parameters on page load
- * (before the Scene renders), use `serializeCurrentState()` instead.
- *
- * @param state - The Scene state containing timeRange, filters, and groupBy
- * @returns Serialized query string
- *
- * @example
- * serializeTriageSceneState({
- *   timeRange: { from: 'now-1h', to: 'now' },
- *   filters: ['alertname|=|test'],
- *   groupBy: ['severity']
- * })
- * // Returns: "var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now"
- */
-export function serializeTriageSceneState(state: TriageSceneState): string {
-  const params = new URLSearchParams();
-
-  // Add filters (can have multiple values)
-  state.filters.forEach((filter) => {
-    if (filter) {
-      params.append('var-filters', filter);
-    }
-  });
-
-  // Add groupBy (can have multiple values)
-  state.groupBy.forEach((key) => {
-    if (key) {
-      params.append('var-groupBy', key);
-    }
-  });
-
-  // Add time range - convert to string if needed
-  const fromValue =
-    typeof state.timeRange.from === 'string' ? state.timeRange.from : state.timeRange.from.toISOString();
-  const toValue = typeof state.timeRange.to === 'string' ? state.timeRange.to : state.timeRange.to.toISOString();
-
-  params.set('from', fromValue);
-  params.set('to', toValue);
-
-  return params.toString();
-}
 
 /**
  * Serializes the current triage page state from the URL to a query string.
@@ -104,105 +47,101 @@ export function serializeCurrentState(): string {
 }
 
 /**
- * Parses a var-filters URL value into a filter object.
+ * Serializes triage state (filters, groupBy, time range) into a query string.
+ * This is used by the component to serialize the current Scene state for saved searches.
  *
- * The var-filters format in Grafana Scenes is: "key|operator|value"
- * where the pipe character separates the three parts.
- *
- * @param filterStr - The URL-decoded filter string (e.g., "alertname|=|test")
- * @returns Parsed filter object or null if the format is invalid
- *
- * @example
- * parseFilterString("alertname|=|test")
- * // Returns: { key: "alertname", operator: "=", value: "test" }
- *
- * parseFilterString("severity|=~|critical|warning")
- * // Returns: { key: "severity", operator: "=~", value: "critical|warning" }
- * // Note: value can contain pipes for regex patterns
+ * @param filters - Array of AdHocVariableFilter objects
+ * @param groupBy - Array of groupBy keys (or single string)
+ * @param timeRange - Raw time range with from/to as strings, Date, or DateTime objects
+ * @returns Serialized query string
  */
-export function parseFilterString(filterStr: string): { key: string; operator: string; value: string } | null {
-  // Split only on the first two pipes to handle values containing pipes
-  const firstPipe = filterStr.indexOf('|');
-  if (firstPipe === -1) {
-    return null;
-  }
+export function serializeTriageState(
+  filters: AdHocVariableFilter[],
+  groupBy: string | string[],
+  timeRange: RawTimeRange
+): string {
+  const params = new URLSearchParams();
 
-  const key = filterStr.substring(0, firstPipe);
-  const rest = filterStr.substring(firstPipe + 1);
+  // Add filters using toUrl (properly escapes pipes in values with __gfp__)
+  toUrl(filters).forEach((filterStr) => {
+    params.append('var-filters', filterStr);
+  });
 
-  const secondPipe = rest.indexOf('|');
-  if (secondPipe === -1) {
-    return null;
-  }
+  // Add groupBy
+  const groupByArray = Array.isArray(groupBy) ? groupBy : [groupBy].filter(Boolean);
+  groupByArray.forEach((key) => {
+    if (key) {
+      params.append('var-groupBy', key);
+    }
+  });
 
-  const operator = rest.substring(0, secondPipe);
-  const value = rest.substring(secondPipe + 1);
+  // Add time range
+  const fromValue = typeof timeRange.from === 'string' ? timeRange.from : timeRange.from.toISOString();
+  const toValue = typeof timeRange.to === 'string' ? timeRange.to : timeRange.to.toISOString();
 
-  if (!key || !operator) {
-    return null;
-  }
+  params.set('from', fromValue);
+  params.set('to', toValue);
 
-  return { key, operator, value };
+  return params.toString();
 }
 
 /**
- * Validates that a saved search query string has valid structure.
+ * Applies a saved search query to Scene variables.
+ * Updates filters, groupBy, and time range by directly calling variable methods.
  *
- * This is a lightweight check to ensure the query string can be parsed
- * and applied without errors.
+ * This uses direct state updates instead of URL navigation because Scenes' URL sync
+ * has a limitation: updateFromUrl() only receives CHANGED values. When a parameter
+ * is absent from the saved search (e.g., to clear groupBy), it won't trigger an update.
  *
+ * @param scene - The scene object containing the variables
  * @param query - The saved search query string
- * @returns True if the query is valid, false otherwise
  */
-export function isValidTriageQuery(query: string): boolean {
-  if (!query) {
-    // Empty query is valid (represents default state)
-    return true;
-  }
-
-  try {
-    // eslint-disable-next-line no-new
-    new URLSearchParams(query);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Extracts time range from a saved search query.
- *
- * @param query - The saved search query string
- * @returns Object with from and to values, or defaults if not present
- */
-export function extractTimeRange(query: string): { from: string; to: string } {
+export function applyTriageSavedSearchState(scene: SceneObject, query: string): void {
   const params = new URLSearchParams(query);
-  return {
-    from: params.get('from') ?? 'now-4h',
-    to: params.get('to') ?? 'now',
-  };
+
+  // Update filters
+  const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, scene);
+  if (filtersVar instanceof AdHocFiltersVariable) {
+    filtersVar.updateFilters(extractFilterObjects(query));
+  }
+
+  // Update groupBy (explicitly set to empty array if absent)
+  const groupByVar = sceneGraph.lookupVariable(VARIABLES.groupBy, scene);
+  if (groupByVar instanceof GroupByVariable) {
+    groupByVar.changeValueTo(params.getAll('var-groupBy').filter(Boolean));
+  }
+
+  // Update time range
+  const sceneTimeRange = sceneGraph.getTimeRange(scene);
+  const from = params.get('from') ?? 'now-4h';
+  const to = params.get('to') ?? 'now';
+  const fromDateTime = dateMath.parse(from, false);
+  const toDateTime = dateMath.parse(to, true);
+
+  if (fromDateTime && toDateTime) {
+    sceneTimeRange.onTimeRangeChange(makeTimeRange(fromDateTime, toDateTime));
+  }
 }
 
 /**
- * Extracts groupBy value from a saved search query.
+ * Extracts and parses filter values from a saved search query into filter objects.
+ * Uses the standard toFilters utility which properly handles __gfp__ escaped pipes.
+ * Converts to AdHocVariableFilter format with values array for Scenes compatibility.
  *
  * @param query - The saved search query string
- * @returns The groupBy value or null if not present
+ * @returns Array of filter objects compatible with AdHocFiltersVariable
  */
-export function extractGroupBy(query: string): string | null {
+export function extractFilterObjects(query: string): AdHocVariableFilter[] {
   const params = new URLSearchParams(query);
-  return params.get('var-groupBy');
-}
+  const filterValues = params.getAll('var-filters');
+  const filters = toFilters(filterValues);
 
-/**
- * Extracts all filter values from a saved search query.
- *
- * @param query - The saved search query string
- * @returns Array of filter strings in "key|operator|value" format
- */
-export function extractFilters(query: string): string[] {
-  const params = new URLSearchParams(query);
-  return params.getAll('var-filters');
+  // Add values array for Scenes URL sync compatibility
+  // Scenes expects both value (for single operators) and values (for multi-value operators)
+  return filters.map((filter) => ({
+    ...filter,
+    values: [filter.value],
+  }));
 }
 
 /**
