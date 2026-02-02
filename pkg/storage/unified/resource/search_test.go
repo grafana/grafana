@@ -36,6 +36,7 @@ type MockResourceIndex struct {
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
+	// Fall back to buildInfo field if not mocked
 	return m.buildInfo, nil
 }
 
@@ -88,8 +89,9 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
-	resourceStats   []ResourceStats
-	lastImportTimes []ResourceLastImportTime
+	resourceStats        []ResourceStats
+	lastImportTimes      []ResourceLastImportTime
+	lastImportTimesError error
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -131,6 +133,10 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 
 func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
+		if m.lastImportTimesError != nil {
+			yield(ResourceLastImportTime{}, m.lastImportTimesError)
+			return
+		}
 		for _, ti := range m.lastImportTimes {
 			if !yield(ti, nil) {
 				return
@@ -731,6 +737,96 @@ func TestRebuildIndexes(t *testing.T) {
 		// Verify that builders cache was emptied.
 		_, ok = support.builders.ns.Get(dashKey)
 		require.False(t, ok)
+	})
+
+	t.Run("BuildTimes collection from open indexes", func(t *testing.T) {
+		key1 := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource1"}
+		key2 := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource2"}
+		key3 := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource3"}
+
+		buildTime1 := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
+		buildTime2 := time.Date(2026, 1, 16, 11, 0, 0, 0, time.UTC)
+
+		storage := &mockStorageBackend{
+			resourceStats: []ResourceStats{
+				{NamespacedResource: key1, Count: 50, ResourceVersion: 11111111},
+				{NamespacedResource: key2, Count: 50, ResourceVersion: 11111112},
+				{NamespacedResource: key3, Count: 50, ResourceVersion: 11111113},
+			},
+			// No recent import times - so no rebuilds will be triggered
+			lastImportTimes: []ResourceLastImportTime{},
+		}
+
+		search := &mockSearchBackend{
+			cache: make(map[NamespacedResource]ResourceIndex),
+		}
+
+		supplier := &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		}
+
+		opts := SearchOptions{
+			Backend:      search,
+			Resources:    supplier,
+			InitMinCount: 1,
+		}
+
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, support)
+
+		err = support.init(context.Background())
+		require.NoError(t, err)
+		defer support.stop()
+
+		// Set up indexes with build times in cache after init() completes
+		idx1 := &MockResourceIndex{
+			buildInfo: IndexBuildInfo{BuildTime: buildTime1, BuildVersion: semver.MustParse("6.0.0")},
+		}
+		idx2 := &MockResourceIndex{
+			buildInfo: IndexBuildInfo{BuildTime: buildTime2, BuildVersion: semver.MustParse("6.0.0")},
+		}
+		idx3 := &MockResourceIndex{
+			buildInfo: IndexBuildInfo{BuildTime: time.Time{}, BuildVersion: semver.MustParse("6.0.0")},
+		}
+
+		search.mu.Lock()
+		search.cache[key1] = idx1
+		search.cache[key2] = idx2
+		search.cache[key3] = idx3
+		search.openIndexes = []NamespacedResource{key1, key2, key3}
+		search.mu.Unlock()
+
+		rebuildReq := &resourcepb.RebuildIndexesRequest{
+			Namespace: "ns",
+			// Empty keys means check all open indexes, but since there are no rebuild conditions, nothing will be rebuilt
+			Keys: []*resourcepb.ResourceKey{},
+		}
+
+		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+
+		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
+		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")
+
+		// Find the build times in the response
+		var found1, found2 bool
+		for _, bt := range rsp.BuildTimes {
+			if bt.Group == key1.Group && bt.Resource == key1.Resource {
+				require.Equal(t, buildTime1.Unix(), bt.BuildTimeUnix)
+				found1 = true
+			}
+			if bt.Group == key2.Group && bt.Resource == key2.Resource {
+				require.Equal(t, buildTime2.Unix(), bt.BuildTimeUnix)
+				found2 = true
+			}
+		}
+		require.True(t, found1, "should have build time for key1")
+		require.True(t, found2, "should have build time for key2")
 	})
 }
 

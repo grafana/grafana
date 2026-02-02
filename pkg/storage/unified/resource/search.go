@@ -536,7 +536,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	ctx, span := tracer.Start(ctx, "resource.searchServer.RebuildIndexes")
 	defer span.End()
 
-	filterKeys := make([]NamespacedResource, len(req.Keys))
+	filterKeys := make([]NamespacedResource, 0, len(req.Keys))
 	for _, key := range req.Keys {
 		if req.Namespace != key.Namespace {
 			return &resourcepb.RebuildIndexesResponse{
