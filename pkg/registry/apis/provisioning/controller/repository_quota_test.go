@@ -28,7 +28,6 @@ func (m *MockQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
 type MockRepositoryNamespaceLister struct {
 	mock.Mock
-	repos []*provisioning.Repository
 }
 
 func (m *MockRepositoryNamespaceLister) List(selector labels.Selector) ([]*provisioning.Repository, error) {
@@ -197,11 +196,11 @@ func TestNamespaceOverQuota_ExcludesDeletingRepos(t *testing.T) {
 	namespace := "test-ns"
 
 	tests := []struct {
-		name               string
-		maxRepos           int64
-		activeRepos        int
-		deletingRepos      int
-		expectedOverQuota  bool
+		name              string
+		maxRepos          int64
+		activeRepos       int
+		deletingRepos     int
+		expectedOverQuota bool
 	}{
 		{
 			name:              "deleting repos excluded from count - under quota",
