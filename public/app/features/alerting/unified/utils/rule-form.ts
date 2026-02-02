@@ -259,6 +259,44 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   return routingSettings;
 }
 
+/**
+ * Normalizes contact point fields to ensure all properties have defined values.
+ * This is needed when passing RuleFormValues to the rule editor page, as the form
+ * expects all ContactPoint fields to be defined. The submit flow doesn't need this
+ * because getNotificationSettingsForDTO handles partial/missing fields when building
+ * the DTO for the backend.
+ */
+export function normalizeContactPoints(
+  contactPoints: AlertManagerManualRouting | undefined
+): AlertManagerManualRouting | undefined {
+  if (!contactPoints) {
+    return contactPoints;
+  }
+
+  const normalized: AlertManagerManualRouting = {};
+
+  for (const [alertManager, contactPoint] of Object.entries(contactPoints)) {
+    if (contactPoint.selectedContactPoint) {
+      const defaultContactPoint: ContactPoint = {
+        selectedContactPoint: contactPoint.selectedContactPoint,
+        overrideGrouping: contactPoint.overrideGrouping ?? false,
+        groupBy: contactPoint.groupBy ?? [],
+        overrideTimings: contactPoint.overrideTimings ?? false,
+        groupWaitValue: contactPoint.groupWaitValue ?? '',
+        groupIntervalValue: contactPoint.groupIntervalValue ?? '',
+        repeatIntervalValue: contactPoint.repeatIntervalValue ?? '',
+        muteTimeIntervals: contactPoint.muteTimeIntervals ?? [],
+        activeTimeIntervals: contactPoint.activeTimeIntervals ?? [],
+      };
+      normalized[alertManager] = defaultContactPoint;
+    } else {
+      normalized[alertManager] = contactPoint;
+    }
+  }
+
+  return normalized;
+}
+
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
   if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
@@ -681,7 +719,7 @@ const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<Exp
   ];
 };
 
-const dataQueriesToGrafanaQueries = async (
+export const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},

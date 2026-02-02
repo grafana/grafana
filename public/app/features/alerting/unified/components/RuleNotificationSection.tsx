@@ -23,11 +23,12 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsStep';
 
-// Centralized form path for selected contact point
-const CONTACT_POINT_PATH = 'contactPoints.grafana.selectedContactPoint' as const;
+// Form path for selected contact point, using the Grafana alert manager name
+const CONTACT_POINT_PATH = `contactPoints.${GRAFANA_RULES_SOURCE_NAME}.selectedContactPoint` as const;
 
 /**
  * Validates a URL string and returns an error message if invalid.

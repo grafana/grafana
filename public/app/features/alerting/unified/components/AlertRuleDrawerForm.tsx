@@ -12,50 +12,12 @@ import { RuleDefinitionSection } from 'app/features/alerting/unified/components/
 import { isCloudGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
-import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
-import { formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
+import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { formValuesToRulerGrafanaRuleDTO, normalizeContactPoints } from '../utils/rule-form';
 import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 
 import { RuleConditionSection } from './RuleConditionSection';
 import { RuleNotificationSection } from './RuleNotificationSection';
-
-/**
- * Normalizes contact point fields to ensure all properties have defined values.
- * This is only needed for the "Continue in Alerting" flow, which passes RuleFormValues
- * directly to the rule editor page. The submit flow doesn't need this because
- * getNotificationSettingsForDTO (called by formValuesToRulerGrafanaRuleDTO) already
- * handles partial/missing fields when building the DTO for the backend.
- */
-function normalizeContactPoints(
-  contactPoints: AlertManagerManualRouting | undefined
-): AlertManagerManualRouting | undefined {
-  if (!contactPoints) {
-    return contactPoints;
-  }
-
-  const normalized: AlertManagerManualRouting = {};
-
-  for (const [alertManager, contactPoint] of Object.entries(contactPoints)) {
-    if (contactPoint.selectedContactPoint) {
-      const defaultContactPoint: ContactPoint = {
-        selectedContactPoint: contactPoint.selectedContactPoint,
-        overrideGrouping: contactPoint.overrideGrouping ?? false,
-        groupBy: contactPoint.groupBy ?? [],
-        overrideTimings: contactPoint.overrideTimings ?? false,
-        groupWaitValue: contactPoint.groupWaitValue ?? '',
-        groupIntervalValue: contactPoint.groupIntervalValue ?? '',
-        repeatIntervalValue: contactPoint.repeatIntervalValue ?? '',
-        muteTimeIntervals: contactPoint.muteTimeIntervals ?? [],
-        activeTimeIntervals: contactPoint.activeTimeIntervals ?? [],
-      };
-      normalized[alertManager] = defaultContactPoint;
-    } else {
-      normalized[alertManager] = contactPoint;
-    }
-  }
-
-  return normalized;
-}
 
 export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
@@ -103,25 +65,39 @@ export function AlertRuleDrawerForm({
       const result = await addRuleToRuleGroup.execute(groupIdentifier, dto, effectiveValues.evaluateEvery);
 
       if (isGrafanaGroupUpdatedResponse(result)) {
+        notifyApp.success(
+          t('alerting.alert-rule-drawer.success-title', 'Alert rule created'),
+          t('alerting.alert-rule-drawer.success-message', 'Your alert rule has been created successfully.')
+        );
         onClose();
         return;
       }
 
-      // Handle cloud rules error response
+      // This drawer only supports Grafana-managed rules, so cloud responses indicate an error
       if (isCloudGroupUpdatedResponse(result)) {
-        notifyApp.error('Failed to create rule', result.error);
+        notifyApp.error(
+          t('alerting.alert-rule-drawer.error-title', 'Failed to create alert rule'),
+          result.error || t('alerting.alert-rule-drawer.error-unknown', 'An unexpected error occurred.')
+        );
       } else {
-        // This should not happen with the current discriminated union types
-        notifyApp.error('Failed to create rule', 'Please review the form and try again.');
+        // Unexpected response type - log for debugging
+        console.error('Unexpected response type from addRuleToRuleGroup:', result);
+        notifyApp.error(
+          t('alerting.alert-rule-drawer.error-title', 'Failed to create alert rule'),
+          t('alerting.alert-rule-drawer.error-unexpected', 'Received an unexpected response. Please try again.')
+        );
       }
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      notifyApp.error('Failed to create rule', errorMessage);
+      notifyApp.error(t('alerting.alert-rule-drawer.error-title', 'Failed to create alert rule'), errorMessage);
     }
   };
 
   const onInvalid = () => {
-    notifyApp.error('There are errors in the form. Please correct them and try again!');
+    notifyApp.error(
+      t('alerting.alert-rule-drawer.validation-error-title', 'Validation error'),
+      t('alerting.alert-rule-drawer.validation-error-message', 'Please correct the errors in the form and try again.')
+    );
   };
 
   return (
