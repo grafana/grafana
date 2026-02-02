@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen } from 'test/test-utils';
@@ -234,6 +235,72 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(onResult).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('AlertmanagerDataSourceSelect auto-population', () => {
+    it('should auto-populate policyTreeName when datasource is selected and field is empty', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
+          <Step1Content canImport={true} />
+        </TestWrapper>
+      );
+
+      // Open the datasource select and choose the alertmanager
+      const select = screen.getByRole('combobox');
+      await user.click(select);
+      await user.click(screen.getByText('Alertmanager'));
+
+      // Verify the policy tree name field is populated with sanitized datasource name
+      const policyTreeInput = screen.getByPlaceholderText(/prometheus-prod/i);
+      expect(policyTreeInput).toHaveValue('alertmanager');
+    });
+
+    it('should NOT overwrite policyTreeName when datasource is selected and field has a value', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: 'my-custom-name' }}>
+          <Step1Content canImport={true} />
+        </TestWrapper>
+      );
+
+      const select = screen.getByRole('combobox');
+      await user.click(select);
+      await user.click(screen.getByText('Alertmanager'));
+
+      // Verify the policy tree name field is NOT changed
+      const policyTreeInput = screen.getByPlaceholderText(/prometheus-prod/i);
+      expect(policyTreeInput).toHaveValue('my-custom-name');
+    });
+
+    it('should convert datasource name with special characters to kebab-case', async () => {
+      // Setup a datasource with special characters in name
+      setupDataSources(
+        mockDataSource<AlertManagerDataSourceJsonData>({
+          name: 'My Alertmanager (Production)',
+          uid: 'am-prod-uid',
+          type: 'alertmanager' as SupportedRulesSourceType,
+          jsonData: {
+            implementation: AlertManagerImplementation.prometheus,
+            handleGrafanaManagedAlerts: true,
+          },
+        })
+      );
+
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
+          <Step1Content canImport={true} />
+        </TestWrapper>
+      );
+
+      const select = screen.getByRole('combobox');
+      await user.click(select);
+      await user.click(screen.getByText('My Alertmanager (Production)'));
+
+      const policyTreeInput = screen.getByPlaceholderText(/prometheus-prod/i);
+      expect(policyTreeInput).toHaveValue('my-alertmanager-production');
     });
   });
 });

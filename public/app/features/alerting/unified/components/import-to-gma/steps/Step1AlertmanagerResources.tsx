@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { kebabCase } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -367,6 +368,7 @@ function AlertmanagerDataSourceSelect({ onSelectionChange }: { onSelectionChange
   const {
     control,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
@@ -396,9 +398,14 @@ function AlertmanagerDataSourceSelect({ onSelectionChange }: { onSelectionChange
             onChange={(selected) => {
               if (selected?.value) {
                 onChange(selected.value);
-                // Also set the name for API calls
                 const ds = getAlertManagerDataSources().find((d) => d.uid === selected.value);
                 setValue('notificationsDatasourceName', ds?.name ?? null);
+
+                // Auto-populate policy tree name with sanitized datasource name if empty
+                const currentPolicyTreeName = getValues('policyTreeName');
+                if (!currentPolicyTreeName && ds?.name) {
+                  setValue('policyTreeName', kebabCase(ds.name));
+                }
               }
             }}
             placeholder={t('alerting.import-to-gma.step1.select-datasource', 'Select data source')}
