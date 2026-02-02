@@ -4916,6 +4916,7 @@
       },
       "annotations": {
         "add-annotation": "Add annotation",
+        "reorder": "Drag to reorder",
         "select-annotation": "Select"
       },
       "elements": {
@@ -5969,6 +5970,13 @@
       "description-add-event-data-to-graphs": "Add event data to graphs",
       "label-annotation-query": "Annotation query",
       "tooltip-add-new-annotation-query": "Add new annotation query"
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": "Reorder annotations list"
+        }
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",

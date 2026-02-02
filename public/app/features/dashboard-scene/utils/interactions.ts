@@ -87,6 +87,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
+  // dashboards_annotations_reordered
+  // when a user drags and drops an annotation in the content outline
+  annotationsReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('annotations_reordered', properties);
+  },
+
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,

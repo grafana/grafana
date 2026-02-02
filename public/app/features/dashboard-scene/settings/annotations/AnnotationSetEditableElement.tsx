@@ -1,21 +1,39 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
 import { AnnotationQuery, getDataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataLayerProvider, SceneObject } from '@grafana/scenes';
-import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { newAnnotationName } from './AnnotationSettingsEdit';
+
+function partitionAnnotationLayers(layers: SceneDataLayerProvider[]) {
+  const standardLayers: SceneDataLayerProvider[] = [];
+  const controlsMenuLayers: SceneDataLayerProvider[] = [];
+
+  layers.forEach((layer) => {
+    if (layer.state.placement === 'inControlsMenu') {
+      controlsMenuLayers.push(layer);
+    } else {
+      standardLayers.push(layer);
+    }
+  });
+
+  return { standardLayers, controlsMenuLayers };
+}
 
 function useEditPaneOptions(
   this: AnnotationSetEditableElement,
@@ -52,7 +70,8 @@ export class AnnotationSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren(): SceneObject[] {
-    return this.dataLayerSet.state.annotationLayers;
+    const { standardLayers, controlsMenuLayers } = partitionAnnotationLayers(this.dataLayerSet.state.annotationLayers);
+    return [...standardLayers, ...controlsMenuLayers];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dataLayerSet);
@@ -96,21 +115,117 @@ function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet 
     editPane.selectObject(newAnnotation, newAnnotation.state.key!);
   }, [dataLayerSet]);
 
+  const { standardLayers, controlsMenuLayers } = useMemo(
+    () => partitionAnnotationLayers(annotationLayers),
+    [annotationLayers]
+  );
+
+  const createDragEndHandler = useCallback(
+    (
+      sourceList: SceneDataLayerProvider[],
+      mergeLists: (updatedList: SceneDataLayerProvider[]) => SceneDataLayerProvider[]
+    ) => {
+      return (result: DropResult) => {
+        const currentList = dataLayerSet.state.annotationLayers;
+
+        dashboardEditActions.edit({
+          source: dataLayerSet,
+          description: t(
+            'dashboard-scene.annotation-list.create-drag-end-handler.description.reorder-annotations-list',
+            'Reorder annotations list'
+          ),
+          perform: () => {
+            if (!result.destination || result.destination.index === result.source.index) {
+              return;
+            }
+
+            const updatedList = [...sourceList];
+            const [movedLayer] = updatedList.splice(result.source.index, 1);
+            updatedList.splice(result.destination.index, 0, movedLayer);
+
+            dataLayerSet.setState({ annotationLayers: mergeLists(updatedList) });
+            DashboardInteractions.annotationsReordered({ source: 'edit_pane' });
+          },
+          undo: () => {
+            dataLayerSet.setState({ annotationLayers: currentList });
+          },
+        });
+      };
+    },
+    [dataLayerSet]
+  );
+
+  const onStandardDragEnd = useMemo(
+    () => createDragEndHandler(standardLayers, (updatedList) => [...updatedList, ...controlsMenuLayers]),
+    [controlsMenuLayers, createDragEndHandler, standardLayers]
+  );
+
+  const onControlsDragEnd = useMemo(
+    () => createDragEndHandler(controlsMenuLayers, (updatedList) => [...standardLayers, ...updatedList]),
+    [controlsMenuLayers, createDragEndHandler, standardLayers]
+  );
+
+  const onPointerDown = useCallback((event: React.PointerEvent) => {
+    event.stopPropagation();
+  }, []);
+
+  const renderList = (list: SceneDataLayerProvider[], droppableId: string) => (
+    <Droppable droppableId={droppableId} direction="vertical">
+      {(provided) => (
+        <Stack ref={provided.innerRef} {...provided.droppableProps} direction="column" gap={0}>
+          {list.map((layer, index) => (
+            <Draggable key={layer.state.key} draggableId={`${layer.state.key}`} index={index}>
+              {(draggableProvided) => (
+                // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
+                <div
+                  className={styles.annotationItem}
+                  key={layer.state.key}
+                  onClick={() => onSelectAnnotation(layer)}
+                  ref={draggableProvided.innerRef}
+                  {...draggableProvided.draggableProps}
+                >
+                  <div className={styles.annotationContent}>
+                    <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
+                      <Tooltip
+                        content={t('dashboard.edit-pane.annotations.reorder', 'Drag to reorder')}
+                        placement="top"
+                      >
+                        <Icon name="draggabledots" size="md" className={styles.dragHandle} />
+                      </Tooltip>
+                    </div>
+                    <Text truncate>{layer.state.name}</Text>
+                    {layer.state.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
+                    {layer.state.placement === 'inControlsMenu' && (
+                      <Icon name="sliders-v-alt" size="sm" className={styles.hiddenIcon} />
+                    )}
+                  </div>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <Button variant="primary" size="sm" fill="outline">
+                      <Trans i18nKey="dashboard.edit-pane.annotations.select-annotation">Select</Trans>
+                    </Button>
+                  </Stack>
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </Stack>
+      )}
+    </Droppable>
+  );
+
   return (
     <Stack direction="column" gap={0}>
-      {annotationLayers.map((layer) => (
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
-        <div className={styles.annotationItem} key={layer.state.key} onClick={() => onSelectAnnotation(layer)}>
-          <Text truncate>{layer.state.name}</Text>
-          <Stack direction="row" gap={1} alignItems="center">
-            <Button variant="primary" size="sm" fill="outline">
-              <Trans i18nKey="dashboard.edit-pane.annotations.select-annotation">Select</Trans>
-            </Button>
-          </Stack>
-        </div>
-      ))}
+      <DragDropContext onDragEnd={onStandardDragEnd}>
+        {renderList(standardLayers, 'annotations-outline-standard')}
+      </DragDropContext>
+      {controlsMenuLayers.length > 0 && (
+        <DragDropContext onDragEnd={onControlsDragEnd}>
+          {renderList(controlsMenuLayers, 'annotations-outline-controls')}
+        </DragDropContext>
+      )}
       {canAdd && (
-        <Box paddingBottom={1} display={'flex'}>
+        <Box paddingBottom={1} paddingTop={1} display={'flex'}>
           <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddAnnotation}>
             <Trans i18nKey="dashboard.edit-pane.annotations.add-annotation">Add annotation</Trans>
           </Button>
@@ -147,6 +262,24 @@ function getStyles(theme: GrafanaTheme2) {
           visibility: 'visible',
         },
       },
+    }),
+    annotationContent: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    dragHandle: css({
+      display: 'flex',
+      alignItems: 'center',
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      '&:active': {
+        cursor: 'grabbing',
+      },
+    }),
+    hiddenIcon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(1),
     }),
   };
 }
