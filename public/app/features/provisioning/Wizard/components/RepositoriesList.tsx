@@ -9,9 +9,12 @@ import {
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
+import { ExternalRepository } from '../../types';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { WizardFormData } from '../types';
+
+type RepositoryWithRequiredFields = ExternalRepository & Required<Pick<ExternalRepository, 'name' | 'url'>>;
 
 export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConnectionReady?: boolean }) {
   const {
@@ -95,6 +98,9 @@ function buildRepositoryOptions(
   repositories: GetConnectionRepositoriesApiResponse['items'] | undefined
 ): Array<{ label: string; value: string }> {
   return (repositories ?? [])
-    .filter((repo): repo is { name: string; url: string } => !!repo?.name && !!repo?.url)
-    .map((repo) => ({ label: repo.name, value: repo.url }));
+    .filter((repo): repo is RepositoryWithRequiredFields => !!repo?.name && !!repo?.url)
+    .map((repo) => {
+      const label = repo.owner ? `${repo.owner}/${repo.name}` : repo.name;
+      return { label, value: repo.url };
+    });
 }

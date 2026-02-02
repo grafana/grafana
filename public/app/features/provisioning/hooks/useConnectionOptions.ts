@@ -5,15 +5,10 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { ExternalRepository } from '../types';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
-
-interface ExternalRepository {
-  name?: string;
-  owner?: string;
-  url?: string;
-}
 
 export function useConnectionOptions(enabled: boolean) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
