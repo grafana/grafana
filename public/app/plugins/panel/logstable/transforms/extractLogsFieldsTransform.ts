@@ -1,7 +1,7 @@
 import { DataFrame, DataFrameType, Field, FieldType } from '@grafana/data';
 
 export function extractLogsFieldsTransform(dataFrame: DataFrame) {
-  return dataFrame.fields
+  return dataFrame?.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels =
         field.typeInfo?.frame === 'json.RawMessage' &&

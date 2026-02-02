@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { CoreApp, FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
+import { CoreApp, DataFrame, FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import {
   LOGS_DATAPLANE_BODY_NAME,
@@ -47,8 +47,11 @@ export const LogsTable = ({
   const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
-  const rawTableFrame = data.series[frameIndex];
-  const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(rawTableFrame), [rawTableFrame]);
+  const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
+  const logsFrame: LogsFrame | null = useMemo(
+    () => (rawTableFrame ? parseLogsFrame(rawTableFrame) : null),
+    [rawTableFrame]
+  );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = getLogsTablePanelState()?.logs?.id ?? undefined;
@@ -129,11 +132,7 @@ export const LogsTable = ({
     return null;
   }, [organizedFrame, data, frameIndex]);
 
-  if (extractedFrame === null || organizedFrame === null || logsFrame === null || !timeFieldName || !bodyFieldName) {
-    return null;
-  }
-
-  if (!panelData || !organizedFrame.length) {
+  if (!extractedFrame || !organizedFrame || !logsFrame || !timeFieldName || !bodyFieldName || !panelData) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 

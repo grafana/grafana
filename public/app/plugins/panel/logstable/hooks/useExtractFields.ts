@@ -16,7 +16,7 @@ import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtil
 import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
 
 interface Props {
-  rawTableFrame: DataFrame;
+  rawTableFrame: DataFrame | null;
   fieldConfig?: FieldConfigSource;
   timeZone: TimeZone;
 }
@@ -33,6 +33,9 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
     }
 
     const extractFields = async () => {
+      if (!rawTableFrame) {
+        return Promise.resolve([]);
+      }
       return await lastValueFrom(transformDataFrame(extractLogsFieldsTransform(rawTableFrame), [rawTableFrame]));
     };
 
@@ -49,7 +52,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
     });
     // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency, so we check for changes in the timestamps instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame.fields[1]?.values, theme, timeZone]);
+  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame?.fields[1]?.values, theme, timeZone]);
 
   return { extractedFrame };
 }
