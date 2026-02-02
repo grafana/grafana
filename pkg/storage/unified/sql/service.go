@@ -91,11 +91,10 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
-	grpcHandler grpcserver.Provider,
-	grpcServerService services.Service,
+	grpcService *grpcserver.DSKitService,
 	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil, grpcHandler, grpcServerService)
+	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil, grpcService)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
@@ -122,12 +121,11 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
-	grpcHandler grpcserver.Provider,
-	grpcServerService services.Service,
+	grpcService *grpcserver.DSKitService,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient, grpcHandler, grpcServerService)
+	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient, grpcService)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -178,8 +176,7 @@ func newService(
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
-	grpcHandler grpcserver.Provider,
-	grpcServerService services.Service,
+	grpcService *grpcserver.DSKitService,
 ) *service {
 	svc := &service{
 		backend:            backend,
@@ -194,12 +191,12 @@ func newService(
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
 		searchClient:       searchClient,
-		handler:            grpcHandler,
+		handler:            grpcService,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
 
-	if grpcServerService != nil {
-		svc.subservices = append(svc.subservices, grpcServerService)
+	if grpcService != nil {
+		svc.subservices = append(svc.subservices, grpcService)
 	}
 
 	return svc
@@ -305,7 +302,7 @@ func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 
 func (s *service) starting(ctx context.Context) error {
 	if s.handler == nil {
-		return fmt.Errorf("grpc handler is required")
+		return fmt.Errorf("grpc Provider is required")
 	}
 
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)

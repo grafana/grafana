@@ -208,7 +208,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		grpcHandler, grpcService, err := sql.ProvideUnifiedStorageGrpcServer(s.cfg, s.features, s.registerer)
+		grpcService, err := sql.ProvideUnifiedStorageGRPCService(s.cfg, s.features, s.registerer)
 		if err != nil {
 			return nil, err
 		}
@@ -218,9 +218,9 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcHandler, grpcService, s.storageBackend, s.searchClient)
+			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcService, s.storageBackend, s.searchClient)
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcHandler, grpcService, s.storageBackend, s.searchClient)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcService, s.storageBackend, s.searchClient)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -228,11 +228,11 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		grpcHandler, grpcService, err := sql.ProvideUnifiedStorageGrpcServer(s.cfg, s.features, s.registerer)
+		grpcService, err := sql.ProvideUnifiedStorageGRPCService(s.cfg, s.features, s.registerer)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcHandler, grpcService, s.storageBackend)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcService, s.storageBackend)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

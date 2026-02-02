@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
+	"github.com/grafana/dskit/services"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -197,4 +198,17 @@ func (s *gPRCServerService) GetServer() *grpc.Server {
 func (s *gPRCServerService) GetAddress() string {
 	<-s.startedChan
 	return s.address
+}
+
+// DSKitService is a wrapper around a dskit BasicService and a Provider.
+type DSKitService struct {
+	*services.BasicService
+	Provider
+}
+
+// ProvideDSKitService wraps a Provider into a dskit BasicService.
+func ProvideDSKitService(handler Provider, serviceName string) *DSKitService {
+	svc := &DSKitService{Provider: handler}
+	svc.BasicService = services.NewBasicService(nil, handler.Run, nil).WithName(serviceName)
+	return svc
 }
