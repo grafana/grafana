@@ -6,11 +6,11 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   ScopedVars,
-  TestDataSourceResponse,
 } from '@grafana/data';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { CustomFormatterVariable } from '@grafana/scenes';
