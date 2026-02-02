@@ -7,7 +7,7 @@ import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { useBranchOptions } from '../hooks/useBranchOptions';
 import { isGitProvider } from '../utils/repositoryTypes';
 
-import { RepositoriesList } from './components/RepositoriesList';
+import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
@@ -49,7 +49,7 @@ export const ConnectStep = memo(function ConnectStep() {
       {isGitBased && type !== 'github' && (
         <>
           <RepositoryTokenInput />
-          <RepositoriesList />
+          <RepositoryField />
         </>
       )}
 

@@ -16,7 +16,12 @@ import { WizardFormData } from '../types';
 
 type RepositoryWithRequiredFields = ExternalRepository & Required<Pick<ExternalRepository, 'name' | 'url'>>;
 
-export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConnectionReady?: boolean }) {
+/**
+ * @description Field component for selecting or entering a repository URL during onboarding flow
+ * For GitHub App authentication, it fetches repositories associated with the selected connection
+ * For PAT, it provides a text input
+ */
+export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConnectionReady?: boolean }) {
   const {
     control,
     formState: { errors },

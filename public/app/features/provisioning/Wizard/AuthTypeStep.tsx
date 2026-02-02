@@ -9,7 +9,7 @@ import { useConnectionList } from '../hooks/useConnectionList';
 import { isConnectionReady } from '../utils/connectionStatus';
 
 import { GitHubAppFields } from './GitHubAppFields';
-import { RepositoriesList } from './components/RepositoriesList';
+import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { ConnectionCreationResult, GitHubAuthType, WizardFormData } from './types';
 
@@ -96,7 +96,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         <RepositoryTokenInput />
       )}
 
-      {shouldShowRepositories && <RepositoriesList isSelectedConnectionReady={isSelectedConnectionReady} />}
+      {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
     </Stack>
   );
 }
