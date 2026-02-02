@@ -1,22 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
-import { LoadingState, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { ControlsLabel, SceneDataLayerProvider } from '@grafana/scenes';
-import { Icon, InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
+import { InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
 
 export type Props = {
   layer: SceneDataLayerProvider;
-  // Set to true if the control is rendered inside a drop-down menu
   inMenu?: boolean;
-  // Set to true when editing with new layouts enabled - shows hidden controls with strikethrough
   isEditingNewLayouts?: boolean;
-  // Drag handle props from react-beautiful-dnd/hello-pangea for drag and drop reordering
-  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 };
 
 // Renders the controls for a single data layer
-export function DataLayerControl({ layer, inMenu, isEditingNewLayouts, dragHandleProps }: Props) {
+export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) {
   const elementId = `data-layer-${layer.state.key}`;
   const { data, isHidden, isEnabled } = layer.useState();
   const { isSelected, onSelect, isSelectable } = useElementSelection(layer.state.key);
@@ -98,11 +93,6 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts, dragHandl
       )}
       onPointerDown={onPointerDown}
     >
-      {dragHandleProps && (
-        <div {...dragHandleProps} className={styles.dragHandle}>
-          <Icon name="draggabledots" />
-        </div>
-      )}
       <ControlsLabel
         htmlFor={isSelectable ? undefined : elementId}
         isLoading={showLoading}
