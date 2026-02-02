@@ -10,20 +10,30 @@ import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2
 
 export interface Props {
   options: VariableValueOption[];
-  hasMultiProps?: boolean;
 }
 
-export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
+// the option at index 0 can be "All" so we first try to grab the properties from the option at index 1
+export const getPropertiesFromOptions = (options: VariableValueOption[]) => {
+  const keys = Object.keys(options[1]?.properties ?? options[0]?.properties ?? {}).filter(
+    (p) => !['text', 'value'].includes(p)
+  );
+  return ['text', 'value', ...keys];
+};
+
+export const VariableValuesPreview = ({ options }: Props) => {
   const styles = useStyles2(getStyles);
   const hasOptions = options.length > 0;
-  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasMultiProps;
+  const displayMultiPropsPreview =
+    config.featureToggles.multiPropsVariables && hasOptions && getPropertiesFromOptions(options).length > 0;
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
-      <Text variant="bodySmall" weight="medium">
+      <Text variant="h4">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
           Preview of values ({'{{count}}'})
         </Trans>
+      </Text>
+      <Text variant="bodySmall" weight="medium">
         {hasOptions && displayMultiPropsPreview && <VariableValuesWithPropsPreview options={options} />}
         {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
       </Text>
@@ -36,14 +46,15 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
 
   const { data, columns } = useMemo(() => {
     const data = options.map(({ label, value, properties }) => ({
-      label: String(label),
-      value: String(value),
+      text: label,
+      value,
       ...flattenProperties(properties),
     }));
 
     return {
       data,
-      columns: Object.keys(data[0] ?? {}).map((id) => ({
+      // the data at index 0 can be "All" so we first try to grab the column names from the data at index 1
+      columns: Object.keys(data[1] ?? data[0] ?? {}).map((id) => ({
         id,
         // see https://github.com/TanStack/table/issues/1671
         header: unsanitizeKey(id),
@@ -62,7 +73,6 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
     />
   );
 }
-
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
@@ -76,7 +86,7 @@ function flattenProperties(properties?: VariableValueOptionProperties, path = ''
   for (const [key, value] of Object.entries(properties)) {
     const newPath = path ? `${path}.${key}` : key;
 
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       Object.assign(result, flattenProperties(value, newPath));
     } else {
       // see https://github.com/TanStack/table/issues/1671

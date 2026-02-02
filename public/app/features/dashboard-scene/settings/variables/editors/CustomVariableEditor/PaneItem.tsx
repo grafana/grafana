@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable } from '@grafana/scenes';
-import { Box, Button } from '@grafana/ui';
+import { Box, Button, Drawer } from '@grafana/ui';
 
-import { ModalEditor } from './ModalEditor';
+import { Editor } from './Editor';
 
 interface PaneItemProps {
   variable: CustomVariable;
@@ -31,7 +31,17 @@ export function PaneItem({ variable }: PaneItemProps) {
           <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
       </Box>
-      {isOpen && <ModalEditor variable={variable} onClose={() => setIsOpen(false)} />}
+      {isOpen && (
+        <Drawer
+          title={t('dashboard-scene.pane-item.title-custom-variable-editor', 'Custom variable editor')}
+          subtitle={variable.state.name}
+          size="lg"
+          onClose={() => setIsOpen(false)}
+          closeOnMaskClick={false}
+        >
+          <Editor variable={variable} onClose={() => setIsOpen(false)} />
+        </Drawer>
+      )}
     </>
   );
 }

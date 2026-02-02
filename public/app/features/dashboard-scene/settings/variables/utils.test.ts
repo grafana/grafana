@@ -21,7 +21,7 @@ import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVaria
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { QueryVariableEditor } from './editors/QueryVariableEditor';
+import { QueryVariableEditor } from './editors/QueryVariable/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
