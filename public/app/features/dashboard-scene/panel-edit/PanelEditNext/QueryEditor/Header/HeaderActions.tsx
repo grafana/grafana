@@ -1,5 +1,6 @@
 import { RefObject } from 'react';
 
+import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 
@@ -32,7 +33,7 @@ export function HeaderActions({ containerRef, queries }: HeaderActionsProps) {
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <InspectorButton />
-      <ActionsMenu />
+      <ActionsMenu app={CoreApp.PanelEditor} />
     </Stack>
   );
 }
