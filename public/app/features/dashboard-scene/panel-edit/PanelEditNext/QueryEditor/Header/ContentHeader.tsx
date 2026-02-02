@@ -4,9 +4,8 @@ import { useCallback } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, Icon, Button, Text } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
@@ -18,17 +17,17 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
+import { getEditorType } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 
 export function ContentHeader() {
   const { panel } = usePanelContext();
-  const { selectedCard } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
-  // TODO: Add transformation support
-  const cardType = isExpressionQuery(selectedCard ?? undefined) ? QueryEditorType.Expression : QueryEditorType.Query;
+  const cardType = getEditorType(selectedTransformation || selectedQuery);
 
   const styles = useStyles2(getStyles, { cardType });
 
@@ -38,7 +37,7 @@ export function ContentHeader() {
   }, [panel]);
 
   // We have to do defensive null checks since queries might be an empty array :(
-  if (!selectedCard) {
+  if (!selectedQuery && !selectedTransformation) {
     return null;
   }
 
@@ -46,10 +45,20 @@ export function ContentHeader() {
     <div className={styles.container}>
       <div className={styles.queryHeaderWrapper}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
-        {cardType === QueryEditorType.Query && (
-          <DatasourceSection selectedCard={selectedCard} onChange={(ds) => changeDataSource(ds, selectedCard.refId)} />
+        {cardType === QueryEditorType.Query && selectedQuery && (
+          <DatasourceSection
+            selectedCard={selectedQuery}
+            onChange={(ds) => changeDataSource(ds, selectedQuery.refId)}
+          />
         )}
-        <EditableQueryName query={selectedCard} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        {selectedQuery && (
+          <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        )}
+        {selectedTransformation && (
+          <Text weight="light" variant="body" color="primary">
+            {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
+          </Text>
+        )}
       </div>
 
       {/* TODO: Will fix up buttons in header actions ticket */}

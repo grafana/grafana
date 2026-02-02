@@ -240,6 +240,9 @@ COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
+RUN set -o pipefail && grafana server -v | sed -e 's/Version //' > /.grafana-version && \
+  chmod 644 /.grafana-version
+
 EXPOSE 3000
 
 ARG RUN_SH=./packaging/docker/run.sh

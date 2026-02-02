@@ -1,4 +1,4 @@
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { BaseVariableModel, DataLinkBuiltInVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
@@ -9,12 +9,11 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { PanelModel } from '../../dashboard/state/PanelModel';
 import { variableAdapters } from '../adapters';
 import { isAdHoc } from '../guard';
-import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 
 import { GraphEdge, GraphNode, UsagesToNetwork, VariableUsages, VariableUsageTree } from './types';
 
-export const createDependencyNodes = (variables: VariableModel[]): GraphNode[] => {
+export const createDependencyNodes = (variables: BaseVariableModel[]): GraphNode[] => {
   const nodes: GraphNode[] = [];
 
   for (const variable of variables) {
@@ -28,7 +27,7 @@ export const filterNodesWithDependencies = (nodes: GraphNode[], edges: GraphEdge
   return nodes.filter((node) => edges.some((edge) => edge.from === node.id || edge.to === node.id));
 };
 
-export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] => {
+export const createDependencyEdges = (variables: BaseVariableModel[]): GraphEdge[] => {
   const edges: GraphEdge[] = [];
 
   for (const variable of variables) {
@@ -63,7 +62,7 @@ export function getVariableName(expression: string) {
   return variableName;
 }
 
-export const getUnknownVariableStrings = (variables: VariableModel[], model: DashboardModel) => {
+export const getUnknownVariableStrings = (variables: BaseVariableModel[], model: DashboardModel) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
@@ -176,12 +175,15 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
   return result;
 };
 
-export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
+export const createUsagesNetwork = (
+  variables: BaseVariableModel[],
+  dashboard: DashboardModel | null
+): VariableUsages => {
   if (!dashboard) {
     return { unUsed: [], usages: [] };
   }
 
-  const unUsed: VariableModel[] = [];
+  const unUsed: BaseVariableModel[] = [];
   let usages: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelCloneOld();
 
@@ -201,7 +203,7 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
 };
 
 export async function getUnknownsNetwork(
-  variables: VariableModel[],
+  variables: BaseVariableModel[],
   dashboard: DashboardModel | null
 ): Promise<UsagesToNetwork[]> {
   return new Promise((resolve, reject) => {
@@ -217,7 +219,7 @@ export async function getUnknownsNetwork(
   });
 }
 
-function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
+function createUnknownsNetwork(variables: BaseVariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
   if (!dashboard) {
     return [];
   }
@@ -229,7 +231,7 @@ function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardM
   for (const unknownVariable of unknownVariables) {
     const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
     if (Object.keys(props).length) {
-      const variable = { id: unknownVariable, name: unknownVariable } as unknown as VariableModel;
+      const variable = { id: unknownVariable, name: unknownVariable } as unknown as BaseVariableModel;
       unknown.push({ variable, tree: props });
     }
   }
