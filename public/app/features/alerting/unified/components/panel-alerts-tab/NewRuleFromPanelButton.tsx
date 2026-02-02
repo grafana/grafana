@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
+import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types/store';
@@ -58,14 +59,14 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     );
   }
 
-  const { onContinueInAlertingFromDrawer, onButtonClick: onContinueInAlertingButton } = createPanelAlertRuleNavigation(
-    () => panelToRuleFormValues(panel, dashboard),
-    location
-  );
-
   const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
 
   if (shouldUseDrawer) {
+    const { onContinueInAlertingFromDrawer } = createPanelAlertRuleNavigation(
+      () => panelToRuleFormValues(panel, dashboard),
+      location
+    );
+
     return (
       <>
         <Button
@@ -89,14 +90,20 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     );
   }
 
+  const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
+    defaults: JSON.stringify(formValues),
+    returnTo: location.pathname + location.search,
+  });
+
   return (
-    <Button
+    <LinkButton
       icon="bell"
-      onClick={onContinueInAlertingButton}
+      onClick={() => logInfo(LogMessages.alertRuleFromPanel)}
+      href={ruleFormUrl}
       className={className}
       data-testid="create-alert-rule-button"
     >
       <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-    </Button>
+    </LinkButton>
   );
 };
