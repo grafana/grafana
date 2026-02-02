@@ -218,7 +218,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -274,7 +274,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -323,7 +323,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -601,7 +601,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		MinBuildVersion:      semver.MustParse("5.5.5"),
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -675,7 +675,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -734,7 +734,7 @@ func TestRebuildIndexes(t *testing.T) {
 	})
 }
 
-func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest, indexExists, expectedRebuild bool) {
+func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, indexExists, expectedRebuild bool) {
 	ctx := context.Background()
 
 	idxBefore := support.search.GetIndex(req.NamespacedResource)
@@ -786,7 +786,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -849,7 +849,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchSupport(opts, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 

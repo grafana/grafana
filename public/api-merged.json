@@ -382,11 +382,6 @@
             "required": true
           },
           {
-            "type": "boolean",
-            "name": "includeHidden",
-            "in": "query"
-          },
-          {
             "type": "integer",
             "format": "int64",
             "name": "targetOrgId",

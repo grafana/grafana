@@ -39,10 +39,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -489,6 +491,13 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
 
+	mustMarshal := func(v any) []byte {
+		t.Helper()
+		b, err := json.Marshal(v)
+		require.NoError(t, err)
+		return b
+	}
+
 	tests := []struct {
 		name                  string
 		config                string
@@ -543,6 +552,32 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			autogenFn: NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
+			},
+		},
+		{
+			name:                  "no error, with managed routes",
+			config:                string(mustMarshal(policy_exports.Config())),
+			enabledMultipleRoutes: true,
+			autogenFn:             NoopAutogenFn,
+			expCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
+						c := policy_exports.Config()
+						c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
+						return c.AlertmanagerConfig
+					}(),
+				},
+			},
+		},
+		{
+			name:                  "no error, with managed routes but flag disabled",
+			config:                string(mustMarshal(policy_exports.Config())),
+			enabledMultipleRoutes: false,
+			autogenFn:             NoopAutogenFn,
+			expCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: policy_exports.Config().AlertmanagerConfig,
+				},
 			},
 		},
 	}

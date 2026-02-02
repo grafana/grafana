@@ -119,7 +119,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/access-control/teams/${queryArg.teamId}/roles`,
           params: {
-            includeHidden: queryArg.includeHidden,
             targetOrgId: queryArg.targetOrgId,
           },
         }),
@@ -2131,7 +2130,6 @@ export type ListTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type ListTeamRolesApiArg = {
   teamId: number;
-  includeHidden?: boolean;
   targetOrgId?: number;
 };
 export type AddTeamRoleApiResponse =

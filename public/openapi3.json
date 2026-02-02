@@ -14340,13 +14340,6 @@
           },
           {
             "in": "query",
-            "name": "includeHidden",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "in": "query",
             "name": "targetOrgId",
             "schema": {
               "format": "int64",
