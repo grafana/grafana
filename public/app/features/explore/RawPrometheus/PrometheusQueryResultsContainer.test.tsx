@@ -108,4 +108,44 @@ describe('PrometheusQueryResultsContainer', () => {
       expect(screen.getByText('0 series returned')).toBeInTheDocument();
     });
   });
+
+  it('should handle undefined tableResult gracefully', async () => {
+    render(<PrometheusQueryResultsContainer {...defaultProps} tableResult={undefined} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('0 series returned')).toBeInTheDocument();
+    });
+  });
+
+  it('should handle DataFrame with no rows', async () => {
+    const emptyFrame = toDataFrame({
+      name: 'Empty',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [] },
+        { name: 'value', type: FieldType.number, values: [] },
+      ],
+    });
+
+    render(<PrometheusQueryResultsContainer {...defaultProps} tableResult={[emptyFrame]} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('0 series returned')).toBeInTheDocument();
+    });
+  });
+
+  it('should use default width and timeZone when not provided', async () => {
+    render(<PrometheusQueryResultsContainer tableResult={defaultProps.tableResult} />);
+
+    await waitFor(() => {
+      expect(screen.queryAllByRole('table').length).toBe(1);
+    });
+  });
+
+  it('should show loading state', async () => {
+    render(<PrometheusQueryResultsContainer {...defaultProps} loading={LoadingState.Loading} />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
+    });
+  });
 });

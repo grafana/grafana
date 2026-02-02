@@ -18,7 +18,7 @@ export type PrometheusQueryResultsV1Props = {
   loading?: LoadingState;
   /** Aria label for accessibility */
   ariaLabel?: string;
-  /** Start in Raw view instead of Table view. When true, shows toggle. */
+  /** When true, shows Table/Raw toggle and starts in Raw view. When false/undefined, shows table only without toggle. */
   showRawPrometheus?: boolean;
   /** Callback when user adds a cell filter */
   onCellFilterAdded?: (filter: { key: string; value: string; operator: '=' | '!=' }) => void;
