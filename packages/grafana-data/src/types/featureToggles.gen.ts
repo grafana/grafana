@@ -19,11 +19,6 @@
  */
 export interface FeatureToggles {
   /**
-  * Disable envelope encryption (emergency only)
-  * @default false
-  */
-  disableEnvelopeEncryption?: boolean;
-  /**
   * Search for dashboards using panel title
   * @default false
   */
@@ -368,11 +363,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemotePrimary?: boolean;
-  /**
-  * Change the way annotation permissions work by scoping them to folders and dashboards.
-  * @default true
-  */
-  annotationPermissionUpdate?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true

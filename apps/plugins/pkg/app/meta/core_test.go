@@ -317,6 +317,92 @@ func TestJsonDataToMeta(t *testing.T) {
 		assert.Nil(t, meta.Info.Author)
 		assert.Empty(t, meta.Info.Keywords)
 	})
+
+	t.Run("maps optional boolean fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypePanel,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Suggestions: true,
+			Alerting:    true,
+			Annotations: true,
+			Backend:     true,
+			BuiltIn:     true,
+			Logs:        true,
+			Metrics:     true,
+			Tracing:     true,
+			Streaming:   true,
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.True(t, *meta.Suggestions)
+		assert.True(t, *meta.Alerting)
+		assert.True(t, *meta.Annotations)
+		assert.True(t, *meta.Backend)
+		assert.True(t, *meta.BuiltIn)
+		assert.True(t, *meta.Logs)
+		assert.True(t, *meta.Metrics)
+		assert.True(t, *meta.Tracing)
+		assert.True(t, *meta.Streaming)
+	})
+
+	t.Run("maps optional string fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypeDataSource,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Executable: "plugin-executable",
+			BuildMode:  "production",
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.Equal(t, "plugin-executable", *meta.Executable)
+		assert.Equal(t, "production", *meta.BuildMode)
+	})
+
+	t.Run("does not map false optional boolean fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypePanel,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Suggestions: false,
+			Alerting:    false,
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.Nil(t, meta.Suggestions)
+		assert.Nil(t, meta.Alerting)
+	})
+
+	t.Run("does not map empty optional string fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypeDataSource,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Executable: "",
+			BuildMode:  "",
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.Nil(t, meta.Executable)
+		assert.Nil(t, meta.BuildMode)
+	})
 }
 
 func pluginsPathFunc(path string) func() (string, error) {
