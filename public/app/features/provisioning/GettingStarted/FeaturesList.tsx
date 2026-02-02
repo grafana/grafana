@@ -22,7 +22,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
         <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
           Get started with Git Sync
         </Trans>{' '}
-        {!isOnPrem() && <FeatureBadge featureState={FeatureState.privatePreview} />}
+        {!isOnPrem() && <FeatureBadge featureState={FeatureState.preview} />}
       </Text>
       <ul className={styles.featuresList}>
         <li>

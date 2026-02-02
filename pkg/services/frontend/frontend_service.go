@@ -49,7 +49,8 @@ type frontendService struct {
 	tracer       trace.Tracer
 	license      licensing.Licensing
 
-	index *IndexProvider
+	index             *IndexProvider
+	baseRequestConfig FSRequestConfig
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
@@ -63,15 +64,20 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		return nil, err
 	}
 
+	// Create base request config from global settings
+	// This is the default configuration that will be used for all requests
+	baseRequestConfig := NewFSRequestConfig(cfg, license)
+
 	s := &frontendService{
-		cfg:          cfg,
-		features:     features,
-		log:          log.New("frontend-server"),
-		promGatherer: promGatherer,
-		promRegister: promRegister,
-		tracer:       tracer,
-		license:      license,
-		index:        index,
+		cfg:               cfg,
+		features:          features,
+		log:               log.New("frontend-server"),
+		promGatherer:      promGatherer,
+		promRegister:      promRegister,
+		tracer:            tracer,
+		license:           license,
+		index:             index,
+		baseRequestConfig: baseRequestConfig,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -140,7 +146,10 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	m.UseMiddleware(s.contextMiddleware())
 	m.UseMiddleware(loggermiddleware.Middleware())
 
-	m.UseMiddleware(CSPMiddleware(s.cfg))
+	// Must run before CSP middleware since CSP reads config from context
+	m.UseMiddleware(RequestConfigMiddleware(s.baseRequestConfig))
+
+	m.UseMiddleware(CSPMiddleware())
 
 	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
 }

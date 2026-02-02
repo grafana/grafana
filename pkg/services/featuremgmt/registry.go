@@ -553,14 +553,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "annotationPermissionUpdate",
-			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Expression:      "true", // enabled by default
-			Owner:           identityAccessTeam,
-		},
-		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
 			Stage:        FeatureStageGeneralAvailability,
