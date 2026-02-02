@@ -180,7 +180,7 @@ describe('PanelDataTransformationsTab', () => {
 
       // Should show SQL transformation card in empty state
       expect(screen.getByText('Transform with SQL')).toBeInTheDocument();
-      expect(screen.getByTestId('go-to-queries-button')).toBeInTheDocument();
+      expect(screen.getByTestId('transform-with-sql-card')).toBeInTheDocument();
     } finally {
       config.featureToggles.transformationsEmptyPlaceholder = originalTransformationsToggle;
       config.featureToggles.sqlExpressions = originalSqlToggle;
@@ -200,7 +200,7 @@ describe('PanelDataTransformationsTab', () => {
 
       // Should not show SQL transformation card
       expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('go-to-queries-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
     } finally {
       config.featureToggles.transformationsEmptyPlaceholder = originalTransformationsToggle;
       config.featureToggles.sqlExpressions = originalSqlToggle;
