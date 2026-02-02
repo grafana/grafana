@@ -6,13 +6,19 @@ import (
 	"os"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -374,4 +380,121 @@ func verifyKeyPathPopulated(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Logf("Verified %d rows in resource_history have populated key_path", populatedKeyPathCount)
 	require.Greater(t, populatedKeyPathCount, 0, "expected at least one row in resource_history with populated key_path")
+}
+func TestUnifiedMigration_RebuildIndexes_ErrorHandling(t *testing.T) {
+	tests := []struct {
+		name         string
+		response     *resourcepb.RebuildIndexesResponse
+		responseErr  error
+		expectErr    bool
+		expectErrMsg string
+	}{
+		{
+			name: "error with zero rebuild count returns error",
+			response: &resourcepb.RebuildIndexesResponse{
+				RebuildCount: 0,
+				Error: &resourcepb.ErrorResult{
+					Message: "failed to rebuild index",
+					Reason:  "IndexError",
+				},
+			},
+			responseErr:  nil,
+			expectErr:    true,
+			expectErrMsg: "no indexes were rebuilt",
+		},
+		{
+			name: "error with positive rebuild count does not return error",
+			response: &resourcepb.RebuildIndexesResponse{
+				RebuildCount: 5,
+				Error: &resourcepb.ErrorResult{
+					Message: "partial failure in rebuilding",
+					Reason:  "PartialError",
+				},
+			},
+			responseErr: nil,
+			expectErr:   false,
+		},
+		{
+			name: "no error succeeds",
+			response: &resourcepb.RebuildIndexesResponse{
+				RebuildCount: 10,
+				Error:        nil,
+			},
+			responseErr: nil,
+			expectErr:   false,
+		},
+		{
+			name: "error with rebuild count of 1 does not return error",
+			response: &resourcepb.RebuildIndexesResponse{
+				RebuildCount: 1,
+				Error: &resourcepb.ErrorResult{
+					Message: "minor error occurred",
+					Reason:  "MinorError",
+				},
+			},
+			responseErr: nil,
+			expectErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock SearchClient
+			mockClient := resource.NewMockResourceClient(t)
+
+			// Setup expectation for RebuildIndexes call
+			mockClient.EXPECT().
+				RebuildIndexes(mock.Anything, mock.Anything, mock.Anything).
+				Return(tt.response, tt.responseErr).
+				Once()
+
+			// Create migrator with mock client
+			migrator := migrations.ProvideUnifiedMigrator(
+				&legacy.MockMigrationDashboardAccessor{},
+				mockClient,
+			)
+
+			// Create test data
+			info := authlib.NamespaceInfo{
+				OrgID: 1,
+				Value: "stack-123",
+			}
+			resources := []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			}
+
+			// Execute the method
+			err := migrator.RebuildIndexes(context.Background(), info, resources)
+
+			// Verify results
+			if tt.expectErr {
+				require.Error(t, err)
+				if tt.expectErrMsg != "" {
+					require.Contains(t, err.Error(), tt.expectErrMsg)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUnifiedMigration_RebuildIndexes_NilClient(t *testing.T) {
+	// Test that when client is nil, the method skips rebuilding and returns nil
+	migrator := migrations.ProvideUnifiedMigrator(
+		&legacy.MockMigrationDashboardAccessor{},
+		nil,
+	)
+
+	info := authlib.NamespaceInfo{
+		OrgID: 1,
+		Value: "stack-123",
+	}
+	resources := []schema.GroupResource{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+	}
+
+	// Should return nil without attempting to call client
+	err := migrator.RebuildIndexes(context.Background(), info, resources)
+	require.NoError(t, err)
 }
