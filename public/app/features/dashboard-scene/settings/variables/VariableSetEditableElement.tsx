@@ -4,8 +4,7 @@ import { useCallback, useId, useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { t, Trans } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -132,7 +131,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
               return;
             }
 
-            reportInteraction('Variable drag and drop');
+            DashboardInteractions.variablesReordered({ source: 'edit_pane' });
 
             const updatedList = [...sourceList];
             const [movedVariable] = updatedList.splice(result.source.index, 1);
