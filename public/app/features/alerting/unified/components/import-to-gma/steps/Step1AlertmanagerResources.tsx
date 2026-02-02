@@ -9,7 +9,6 @@ import {
   Box,
   Field,
   FileUpload,
-  Icon,
   Input,
   RadioButtonList,
   Select,
