@@ -822,13 +822,65 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return dashboardSceneGraph.getVizPanels(this);
   }
 
-  public getExpressionAndTransformationCounts(
-    saveModel?: Dashboard | DashboardV2Spec
-  ): Record<string, number> | undefined {
+  public getTransformationCounts(saveModel?: Dashboard | DashboardV2Spec): Record<string, number> | undefined {
+    const model = saveModel ?? this.getSaveModel();
+
+    const transformationCounts = new Map<string, number>();
+
+    // Handle V1 dashboards
+    if ('panels' in model && model.panels) {
+      for (const panel of model.panels) {
+        // Count transformations
+        if ('transformations' in panel && Array.isArray(panel.transformations)) {
+          for (const transformation of panel.transformations) {
+            const transformId = transformation?.id;
+            if (typeof transformId === 'string' && transformId) {
+              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle V2 dashboards
+    if ('elements' in model && model.elements) {
+      for (const element of Object.values(model.elements)) {
+        // Check if element is a Panel (not LibraryPanel)
+        if (element.kind !== 'Panel') {
+          continue;
+        }
+
+        const dataSpec = element.spec.data?.spec;
+        if (!dataSpec || typeof dataSpec !== 'object') {
+          continue;
+        }
+
+        // Count transformations
+        const transformations = dataSpec.transformations;
+        if (Array.isArray(transformations)) {
+          for (const transformation of transformations) {
+            // V2 transformations have a 'kind' field which is the transformation id
+            const transformId = transformation?.kind || transformation?.spec?.id;
+            if (typeof transformId === 'string' && transformId) {
+              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+
+    if (transformationCounts.size === 0) {
+      return undefined;
+    }
+
+    // Convert map to object
+    return Object.fromEntries(transformationCounts);
+  }
+
+  public getExpressionCounts(saveModel?: Dashboard | DashboardV2Spec): Record<string, number> | undefined {
     const model = saveModel ?? this.getSaveModel();
 
     const expressionCounts = new Map<string, number>();
-    const transformationCounts = new Map<string, number>();
 
     // Handle V1 dashboards
     if ('panels' in model && model.panels) {
@@ -845,16 +897,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             const targetType = target?.type;
             if (datasourceUid === '__expr__' && typeof targetType === 'string' && targetType) {
               expressionCounts.set(targetType, (expressionCounts.get(targetType) || 0) + 1);
-            }
-          }
-        }
-
-        // Count transformations
-        if ('transformations' in panel && Array.isArray(panel.transformations)) {
-          for (const transformation of panel.transformations) {
-            const transformId = transformation?.id;
-            if (typeof transformId === 'string' && transformId) {
-              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
             }
           }
         }
@@ -895,38 +937,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             }
           }
         }
-
-        // Count transformations
-        const transformations = dataSpec.transformations;
-        if (Array.isArray(transformations)) {
-          for (const transformation of transformations) {
-            // V2 transformations have a 'kind' field which is the transformation id
-            const transformId = transformation?.kind || transformation?.spec?.id;
-            if (typeof transformId === 'string' && transformId) {
-              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
-            }
-          }
-        }
       }
     }
 
-    // Combine all counts by merging the maps and adding counts for duplicate keys
-    const allCounts = new Map<string, number>();
-
-    for (const [type, count] of expressionCounts) {
-      allCounts.set(type, count);
-    }
-
-    for (const [type, count] of transformationCounts) {
-      allCounts.set(type, (allCounts.get(type) || 0) + count);
-    }
-
-    if (allCounts.size === 0) {
+    if (expressionCounts.size === 0) {
       return undefined;
     }
 
     // Convert map to object
-    return Object.fromEntries(allCounts);
+    return Object.fromEntries(expressionCounts);
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
