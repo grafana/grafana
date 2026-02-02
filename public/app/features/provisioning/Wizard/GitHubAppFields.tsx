@@ -2,7 +2,7 @@ import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-fo
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, IconButton, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
+import { Alert, Combobox, Field, IconButton, RadioButtonGroup, Stack } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -144,9 +144,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
 
       {githubAppMode === 'existing' && (
         <Stack direction="column" gap={2}>
-          {isLoading ? (
-            <Spinner />
-          ) : connectionListError ? (
+          {connectionListError ? (
             <Alert
               severity="error"
               title={t('provisioning.wizard.github-app-error-loading', 'Failed to load connections')}
@@ -181,6 +179,8 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
                     onChange={(option) => onChange(option?.value ?? '')}
                     value={value}
                     invalid={Boolean(errors?.githubApp?.connectionName?.message)}
+                    loading={isLoading}
+                    disabled={isLoading}
                     placeholder={t(
                       'provisioning.wizard.github-app-select-connection',
                       'Select a GitHub App connection'
