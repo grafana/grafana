@@ -2,12 +2,11 @@ name: "PR Frontend/Backend Separation Check"
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [ main, test/frontend-backend-separation-action ]
 
 permissions:
   contents: read
-  statuses: write
 
 jobs:
   check-separation:
@@ -16,17 +15,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0  # Fetch all history for proper diff
           persist-credentials: false
 
       - name: Get changed files
         id: changed-files
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          # Get the list of changed files in the PR
-          CHANGED_FILES=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")
+          # Get the list of changed files via GitHub API (no git history needed)
+          CHANGED_FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only)
 
           # Save to output using grouped redirects
           {
@@ -123,33 +120,6 @@ jobs:
               echo "mixed_changes=false"
             fi
           } >> "$GITHUB_OUTPUT"
-
-      - name: Set status check
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const mixed = '${{ steps.check.outputs.mixed_changes }}' === 'true';
-            const hasException = context.payload.pull_request.labels.some(
-              label => label.name === 'frontend-backend-coupled'
-            );
-
-            const state = mixed && !hasException ? 'failure' : 'success';
-            const description = mixed
-              ? hasException
-                ? 'Mixed changes allowed (exception label present)'
-                : 'Frontend and backend must be in separate PRs (or add exception label)'
-              : 'PR changes are properly separated';
-
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.payload.pull_request.head.sha,
-              state: state,
-              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              description: description,
-              context: 'Frontend/Backend Separation'
-            });
 
       - name: Fail if mixed changes without exception
         run: |
