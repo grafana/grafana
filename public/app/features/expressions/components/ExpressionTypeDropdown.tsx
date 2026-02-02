@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ReactElement, useCallback, useMemo, memo } from 'react';
+import { memo, ReactElement, useCallback, useMemo } from 'react';
 
 import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
@@ -17,29 +17,42 @@ const EXPRESSION_ICON_MAP = {
 interface ExpressionTypeDropdownProps {
   children: ReactElement<Record<string, unknown>>;
   handleOnSelect: (value: ExpressionQueryType) => void;
+  disableSqlExpression?: boolean;
 }
 
 interface ExpressionMenuItemProps {
   item: SelectableValue<ExpressionQueryType>;
   onSelect: (value: ExpressionQueryType) => void;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
-const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) => {
+const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disabled, disabledReason }) => {
   const { value, label, description } = item;
   const styles = useStyles2(getStyles);
 
-  const handleClick = useCallback(() => onSelect(value!), [value, onSelect]);
+  const handleClick = useCallback(() => {
+    if (!disabled) {
+      onSelect(value!);
+    }
+  }, [value, onSelect, disabled]);
+
+  const tooltipContent = disabled ? disabledReason : description;
 
   return (
     <Menu.Item
       component={() => (
-        <div className={styles.expressionTypeItem} role="menuitem">
-          <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
+        <div className={styles.expressionTypeItem} role="menuitem" aria-disabled={disabled}>
+          <div
+            className={styles.expressionTypeItemContent}
+            data-testid={`expression-type-${value}`}
+            style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+          >
             <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
             {label}
             {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>
-          <Tooltip placement="right" content={description!}>
+          <Tooltip placement="right" content={tooltipContent || ''}>
             <Icon className={styles.infoIcon} name="info-circle" />
           </Tooltip>
         </div>
@@ -47,26 +60,45 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
       key={value}
       label=""
       onClick={handleClick}
+      disabled={disabled}
     />
   );
 });
 
 ExpressionMenuItem.displayName = 'ExpressionMenuItem';
 
-export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(({ handleOnSelect, children }) => {
-  const menuItems = useMemo(
-    () => expressionTypes.map((item) => <ExpressionMenuItem key={item.value} item={item} onSelect={handleOnSelect} />),
-    [handleOnSelect]
-  );
+export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(
+  ({ handleOnSelect, children, disableSqlExpression = false }) => {
+    const menuItems = useMemo(
+      () =>
+        expressionTypes.map((item) => {
+          const isDisabled = item.value === ExpressionQueryType.sql && disableSqlExpression;
+          const disabledReason = isDisabled
+            ? 'SQL expressions require a backend datasource. The current datasource only supports frontend queries.'
+            : undefined;
 
-  const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
+          return (
+            <ExpressionMenuItem
+              key={item.value}
+              item={item}
+              onSelect={handleOnSelect}
+              disabled={isDisabled}
+              disabledReason={disabledReason}
+            />
+          );
+        }),
+      [handleOnSelect, disableSqlExpression]
+    );
 
-  return (
-    <Dropdown placement="bottom-start" overlay={menuOverlay}>
-      {children}
-    </Dropdown>
-  );
-});
+    const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
+
+    return (
+      <Dropdown placement="bottom-start" overlay={menuOverlay}>
+        {children}
+      </Dropdown>
+    );
+  }
+);
 
 ExpressionTypeDropdown.displayName = 'ExpressionTypeDropdown';
 

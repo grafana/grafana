@@ -1,18 +1,18 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
-  SceneObjectBase,
   SceneComponentProps,
-  sceneGraph,
-  SceneQueryRunner,
-  SceneObjectRef,
-  VizPanel,
-  SceneObjectState,
   SceneDataQuery,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
@@ -40,7 +40,8 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
-import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
+import { areAllDatasourcesFrontend } from './utils';
 
 interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
@@ -347,7 +348,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.useState();
-  const { data, queries } = model.queryRunner.useState();
+  const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const handleAddExpression = useCallback(
@@ -361,6 +362,11 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     },
     [model]
   );
+
+  // Determine if SQL expressions should be disabled (for frontend-only datasources)
+  const disableSqlExpression = useMemo(() => {
+    return areAllDatasourcesFrontend(datasourceState?.uid, queries);
+  }, [datasourceState?.uid, queries]);
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -448,7 +454,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <ExpressionTypeDropdown handleOnSelect={handleAddExpression}>
+          <ExpressionTypeDropdown handleOnSelect={handleAddExpression} disableSqlExpression={disableSqlExpression}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>
