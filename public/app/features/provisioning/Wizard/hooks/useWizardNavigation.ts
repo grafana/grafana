@@ -46,8 +46,6 @@ export function useWizardNavigation({
   const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
-  // const visibleSteps = useMemo(() => steps, [steps]);
-
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
   const visibleStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
