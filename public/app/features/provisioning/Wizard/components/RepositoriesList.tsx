@@ -54,7 +54,7 @@ export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConn
       noMargin
       label={gitFields.urlConfig.label}
       description={
-        isSelectedConnectionReady && isGitHubAppAuth
+        !isSelectedConnectionReady && isGitHubAppAuth
           ? t(
               'provisioning.wizard.connection-not-ready',
               'The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.'
