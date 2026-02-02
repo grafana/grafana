@@ -1,18 +1,97 @@
 import { useAsync } from 'react-use';
 
-import { getNextRefId, locationUtil, urlUtil } from '@grafana/data';
+import {
+  IntervalValues,
+  RelativeTimeRange,
+  ScopedVars,
+  TimeRange,
+  getDefaultRelativeTimeRange,
+  getNextRefId,
+  locationUtil,
+  rangeUtil,
+  urlUtil,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormType } from '../types/rule-form';
-import {
-  dataQueriesToGrafanaQueries,
-  getDefaultReduceExpression,
-  getDefaultThresholdExpression,
-} from '../utils/rule-form';
+import { getDefaultExpressions } from '../utils/rule-form';
+
+function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+  if (!resolution) {
+    if (lowLimit && rangeUtil.intervalToMs(lowLimit) > 1000) {
+      return {
+        interval: lowLimit,
+        intervalMs: rangeUtil.intervalToMs(lowLimit),
+      };
+    }
+    return { interval: '1s', intervalMs: 1000 };
+  }
+
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+async function convertDataQueriesToGrafanaQueries(
+  queries: DataQuery[],
+  relativeTimeRange: RelativeTimeRange,
+  scopedVars: ScopedVars | {},
+  panelDataSourceRef?: DataSourceRef,
+  maxDataPoints?: number,
+  minInterval?: string
+): Promise<AlertQuery[]> {
+  const result: AlertQuery[] = [];
+
+  for (const target of queries) {
+    const datasource = await getDataSourceSrv().get(target.datasource?.uid ? target.datasource : panelDataSourceRef);
+    const dsRef = { uid: datasource.uid, type: datasource.type };
+
+    const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
+    const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
+    const queryVariables = {
+      __interval: { text: interval, value: interval },
+      __interval_ms: { text: intervalMs, value: intervalMs },
+      ...scopedVars,
+    };
+
+    const interpolatedTarget = datasource.interpolateVariablesInQueries
+      ? datasource.interpolateVariablesInQueries([target], queryVariables)[0]
+      : target;
+
+    // expressions
+    if (dsRef.uid === ExpressionDatasourceUID) {
+      const newQuery: AlertQuery = {
+        refId: interpolatedTarget.refId,
+        queryType: '',
+        relativeTimeRange,
+        datasourceUid: ExpressionDatasourceUID,
+        model: interpolatedTarget,
+      };
+      result.push(newQuery);
+      // queries
+    } else {
+      const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+      if (datasourceSettings && datasourceSettings.meta.alerting) {
+        const newQuery: AlertQuery = {
+          refId: interpolatedTarget.refId,
+          queryType: interpolatedTarget.queryType ?? '',
+          relativeTimeRange,
+          datasourceUid: datasourceSettings.uid,
+          model: {
+            ...interpolatedTarget,
+            maxDataPoints,
+            intervalMs,
+          },
+        };
+        result.push(newQuery);
+      }
+    }
+  }
+  return result;
+}
 
 /**
  * Props for the CreateAlertFromPanel exposed component.
@@ -95,10 +174,10 @@ export const CreateAlertFromPanelExposedComponent = (props: Partial<CreateAlertF
     }
 
     // Default relative time range of 10 minutes (600 seconds)
-    const relativeTimeRange = { from: 600, to: 0 };
+    const relativeTimeRange = getDefaultRelativeTimeRange();
 
     // Convert panel queries to Grafana alert queries format
-    const grafanaQueries = await dataQueriesToGrafanaQueries(
+    const grafanaQueries = await convertDataQueriesToGrafanaQueries(
       panel.targets,
       relativeTimeRange,
       {}, // scopedVars - consumer should have already interpolated variables
@@ -114,18 +193,16 @@ export const CreateAlertFromPanelExposedComponent = (props: Partial<CreateAlertF
     // This provides a sensible default alert condition for simple queries.
     if (!grafanaQueries.find((q) => q.datasourceUid === ExpressionDatasourceUID)) {
       const lastQuery = grafanaQueries.at(-1)!;
+      const reduceRefId = getNextRefId(grafanaQueries);
+      const queriesWithReduce = [
+        ...grafanaQueries,
+        { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} },
+      ];
+      const thresholdRefId = getNextRefId(queriesWithReduce);
 
-      const reduceExpr = getDefaultReduceExpression({
-        inputRefId: lastQuery.refId,
-        reduceRefId: getNextRefId(grafanaQueries),
-      });
-      grafanaQueries.push(reduceExpr);
-
-      const thresholdExpr = getDefaultThresholdExpression({
-        inputRefId: reduceExpr.refId,
-        thresholdRefId: getNextRefId(grafanaQueries),
-      });
-      grafanaQueries.push(thresholdExpr);
+      // Use getDefaultExpressions to create both reduce and threshold expressions
+      const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastQuery.refId);
+      grafanaQueries.push(...expressions);
     }
 
     return {
