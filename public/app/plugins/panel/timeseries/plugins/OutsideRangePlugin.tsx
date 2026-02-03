@@ -43,7 +43,7 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
   }, [data]);
 
   const timeValues = data[0];
-  if (timeValues?.length < 1 || !onChangeTimeRange) {
+  if (!timeValues || timeValues.length < 1 || !onChangeTimeRange) {
     return null;
   }
 
