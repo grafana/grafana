@@ -75,15 +75,14 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Name:            identifier,
 			Namespace:       apis.DefaultNamespace,
-			ResourceVersion: "60514828ecf72916",
+			ResourceVersion: "624f4696d803bc64",
 		},
 		Spec: v0alpha1.RoutingTreeSpec{
 			Defaults: v0alpha1.RoutingTreeRouteDefaults{
-				GroupBy:        []string{"alertname", "cluster"},
-				GroupWait:      util.Pointer("1s"),
-				GroupInterval:  util.Pointer("5s"),
-				RepeatInterval: util.Pointer("4h"),
-				Receiver:       "noop",
+				GroupBy:       []string{"alertname", "cluster"},
+				GroupWait:     util.Pointer("1s"),
+				GroupInterval: util.Pointer("5s"),
+				Receiver:      "noop",
 			},
 			Routes: []v0alpha1.RoutingTreeRoute{
 				{

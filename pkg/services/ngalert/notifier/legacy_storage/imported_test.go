@@ -5,15 +5,12 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestConfigRevisionImported(t *testing.T) {
@@ -210,12 +207,9 @@ receivers:
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
 		require.Equal(t, &ManagedRoute{
-			Name:           extra.Identifier,
-			Version:        "",
-			Receiver:       "r1",
-			GroupWait:      util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
-			GroupInterval:  util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
-			RepeatInterval: util.Pointer(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
+			Name:     extra.Identifier,
+			Version:  "",
+			Receiver: "r1",
 			Routes: []*definitions.Route{
 				{Receiver: "r2", Routes: []*definitions.Route{{Receiver: "r1", Routes: make([]*definition.Route, 0)}}},
 				{Receiver: "", Routes: []*definitions.Route{{Receiver: "r2", Routes: make([]*definition.Route, 0)}}},
@@ -256,12 +250,9 @@ mute_time_intervals:
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
 		require.Equal(t, &ManagedRoute{
-			Name:           extra.Identifier,
-			Version:        "",
-			Receiver:       "receiver1" + expectedDedupSuffix,
-			GroupWait:      util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
-			GroupInterval:  util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
-			RepeatInterval: util.Pointer(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
+			Name:     extra.Identifier,
+			Version:  "",
+			Receiver: "receiver1" + expectedDedupSuffix,
 			Routes: []*definitions.Route{
 				{Receiver: "dupe-receiver" + expectedDedupSuffix, MuteTimeIntervals: []string{"mute-interval-1" + expectedDedupSuffix}, Routes: make([]*definition.Route, 0)},
 				{Receiver: "r1", ActiveTimeIntervals: []string{"time-interval-1" + expectedDedupSuffix}, Routes: make([]*definition.Route, 0)},
