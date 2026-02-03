@@ -152,7 +152,6 @@ export const FilterPopup = ({
                 title={filterInputPlaceholder}
                 onChange={setSearchFilter}
                 value={searchFilter}
-                autoFocus
                 suffix={
                   <ButtonSelect
                     className={styles.buttonSelectOverrides}
