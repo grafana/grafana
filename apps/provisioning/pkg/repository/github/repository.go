@@ -101,6 +101,18 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
+	// TODO(ferruvich): we should allow empty branches and default to
+	//  the default by getting the repo - this should be done in repo controller probably.
+	if r.config.Spec.GitHub.Branch == "main" {
+		repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
+		if err != nil {
+			return nil, err
+		}
+
+		r.config.Spec.GitHub.Branch = repo.DefaultBranch
+		r.GitRepository.SetBranch(repo.DefaultBranch)
+	}
+
 	return r.GitRepository.Test(ctx)
 }
 
