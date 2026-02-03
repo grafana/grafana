@@ -66,7 +66,7 @@ type ContainerModeOpts struct {
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
-	p := newGrpcPlugin(
+	p, err := newGrpcPlugin(
 		PluginDescriptor{
 			pluginID:         opts.PluginJSON.ID,
 			managed:          true,
@@ -85,6 +85,9 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		opts.Tracer,
 		func() []string { return opts.Env },
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &protoClient{plugin: p, pluginJSON: opts.PluginJSON}, nil
 }

@@ -58,13 +58,13 @@ func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
-func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logger, tracer trace.Tracer) *goplugin.ClientConfig {
+func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logger, tracer trace.Tracer) (*goplugin.ClientConfig, error) {
 	executablePath := descriptor.executablePath
 	skipHostEnvVars := descriptor.skipHostEnvVars
 	versionedPlugins := descriptor.versionedPlugins
 
 	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
-		return containerClientConfig(executablePath, descriptor.containerMode.image, descriptor.containerMode.tag, logger, versionedPlugins, skipHostEnvVars, tracer)
+		return containerClientConfig(executablePath, descriptor.containerMode.image, descriptor.containerMode.tag, logger, versionedPlugins, skipHostEnvVars, tracer), nil
 	}
 	cfg := &goplugin.ClientConfig{
 		HandshakeConfig:  handshake,
@@ -87,8 +87,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		cfg.RunnerFunc = descriptor.runnerFunc
 		td, err := os.MkdirTemp("", "plugin")
 		if err != nil {
-			// TODO: what do we do here?
-			td = "/tmp"
+			return nil, err
 		}
 		cfg.UnixSocketConfig = &goplugin.UnixSocketConfig{TempDir: td}
 		logger.Debug("Using runner mode", "os", runtime.GOOS, "executablePath", executablePath)
@@ -100,7 +99,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		cfg.Cmd.Env = env
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 func containerClientConfig(executablePath, containerImage, containerTag string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
