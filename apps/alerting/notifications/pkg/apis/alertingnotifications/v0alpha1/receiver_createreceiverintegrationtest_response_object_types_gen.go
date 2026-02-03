@@ -34,4 +34,8 @@ func (o *CreateReceiverIntegrationTest) DeepCopyInto(dst *CreateReceiverIntegrat
 	o.CreateReceiverIntegrationTestBody.DeepCopyInto(&dst.CreateReceiverIntegrationTestBody)
 }
 
+func (CreateReceiverIntegrationTest) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTest"
+}
+
 var _ runtime.Object = NewCreateReceiverIntegrationTest()

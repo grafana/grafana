@@ -799,7 +799,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -940,17 +940,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelList"
                 }
               }
             }
@@ -1002,12 +1002,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
               }
             }
           },
@@ -1019,12 +1019,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1034,12 +1034,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1049,12 +1049,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1251,12 +1251,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1308,12 +1308,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
               }
             }
           },
@@ -1325,12 +1325,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1340,12 +1340,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1525,12 +1525,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1540,12 +1540,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -2473,7 +2473,264 @@
           }
         }
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec",
+          "status"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/k8s.io~1apimachinery~1pkg~1apis~1meta~1v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the Dashboard",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Dashboard",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardWithAccessInfo",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus": {
+        "description": "ConversionStatus is the status of the conversion of the dashboard.",
+        "type": "object",
+        "required": [
+          "failed"
+        ],
+        "properties": {
+          "error": {
+            "description": "The error message from the conversion. Empty if the conversion has not failed.",
+            "type": "string"
+          },
+          "failed": {
+            "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
+            "type": "boolean",
+            "default": false
+          },
+          "source": {
+            "description": "The original value map[string]any",
+            "type": "object"
+          },
+          "storedVersion": {
+            "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/k8s.io~1apimachinery~1pkg~1apis~1meta~1v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus": {
+        "type": "object",
+        "properties": {
+          "conversion": {
+            "description": "Optional conversion status.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/k8s.io~1apimachinery~1pkg~1apis~1meta~1v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the Snapshot",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Snapshot",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/k8s.io~1apimachinery~1pkg~1apis~1meta~1v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "SnapshotList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec": {
+        "type": "object",
+        "properties": {
+          "dashboard": {
+            "description": "The raw dashboard (unstructured for now)",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "expires": {
+            "description": "Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds)",
+            "type": "integer",
+            "format": "int64"
+          },
+          "external": {
+            "description": "When set to true, the snapshot exists in a remote server",
+            "type": "boolean"
+          },
+          "externalUrl": {
+            "description": "The external URL where the snapshot can be seen",
+            "type": "string"
+          },
+          "originalUrl": {
+            "description": "The URL that created the dashboard originally",
+            "type": "string"
+          },
+          "timestamp": {
+            "description": "Snapshot creation timestamp",
+            "type": "string"
+          },
+          "title": {
+            "description": "Snapshot title",
+            "type": "string"
+          }
+        }
+      },
+      "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataQuery": {
         "description": "Generic query properties",
         "type": "object",
         "properties": {
@@ -2584,7 +2841,7 @@
         },
         "additionalProperties": true
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
+      "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef": {
         "description": "The datasource",
         "type": "object",
         "required": [
@@ -2606,293 +2863,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions": {
-        "type": "object",
-        "required": [
-          "canAdd",
-          "canEdit",
-          "canDelete"
-        ],
-        "properties": {
-          "canAdd": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission": {
-        "type": "object",
-        "required": [
-          "dashboard",
-          "organization"
-        ],
-        "properties": {
-          "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec",
-          "status"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the Dashboard",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "Dashboard",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess": {
-        "type": "object",
-        "required": [
-          "isPublic",
-          "canSave",
-          "canEdit",
-          "canAdmin",
-          "canStar",
-          "canDelete",
-          "annotationsPermissions"
-        ],
-        "properties": {
-          "annotationsPermissions": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission"
-          },
-          "canAdmin": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          },
-          "canSave": {
-            "description": "The permissions part",
-            "type": "boolean",
-            "default": false
-          },
-          "canStar": {
-            "type": "boolean",
-            "default": false
-          },
-          "isPublic": {
-            "type": "boolean",
-            "default": false
-          },
-          "slug": {
-            "description": "Metadata fields",
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus": {
-        "description": "ConversionStatus is the status of the conversion of the dashboard.",
-        "type": "object",
-        "required": [
-          "failed"
-        ],
-        "properties": {
-          "error": {
-            "description": "The error message from the conversion. Empty if the conversion has not failed.",
-            "type": "string"
-          },
-          "failed": {
-            "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
-            "type": "boolean",
-            "default": false
-          },
-          "source": {
-            "description": "The original value map[string]any",
-            "type": "object"
-          },
-          "storedVersion": {
-            "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "DashboardList",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus": {
-        "type": "object",
-        "properties": {
-          "conversion": {
-            "description": "Optional conversion status.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo": {
-        "description": "This is like the legacy DTO where access and metadata are all returned in a single call",
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec",
-          "status",
-          "access"
-        ],
-        "properties": {
-          "access": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess"
-              }
-            ]
-          },
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the Dashboard",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "DashboardWithAccessInfo",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.GridPos": {
+      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.GridPos": {
         "type": "object",
         "required": [
           "w",
@@ -2923,7 +2894,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel": {
+      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanel": {
         "type": "object",
         "required": [
           "spec"
@@ -2942,7 +2913,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+                "$ref": "#/components/schemas/k8s.io~1apimachinery~1pkg~1apis~1meta~1v1.ObjectMeta"
               }
             ]
           },
@@ -2951,7 +2922,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelSpec"
               }
             ]
           },
@@ -2959,20 +2930,13 @@
             "description": "Status will show errors",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelStatus"
               }
             ]
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "LibraryPanel",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList": {
+      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelList": {
         "type": "object",
         "required": [
           "items"
@@ -2988,7 +2952,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
                 }
               ]
             }
@@ -3001,20 +2965,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+                "$ref": "#/components/schemas/k8s.io~1apimachinery~1pkg~1apis~1meta~1v1.ListMeta"
               }
             ]
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "LibraryPanelList",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec": {
+      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec": {
         "type": "object",
         "required": [
           "type",
@@ -3026,7 +2983,7 @@
             "description": "The default datasource type",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana-plugin-sdk-go~1experimental~1apis~1data~1v0alpha1.DataSourceRef"
               }
             ]
           },
@@ -3038,7 +2995,7 @@
             "description": "The fieldConfig schema depends on the panel type",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
               }
             ]
           },
@@ -3047,7 +3004,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.GridPos"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.GridPos"
               }
             ]
           },
@@ -3055,14 +3012,14 @@
             "description": "The links for the panel",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
             }
           },
           "options": {
             "description": "The options schema depends on the panel type",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
               }
             ]
           },
@@ -3078,7 +3035,7 @@
             "description": "The datasource queries",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery"
+              "$ref": "#/components/schemas/github.com~1grafana~1grafana-plugin-sdk-go~1experimental~1apis~1data~1v0alpha1.DataQuery"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -3097,14 +3054,14 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus": {
+      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus": {
         "type": "object",
         "properties": {
           "missing": {
             "description": "The properties previously stored in SQL that are not included in this model",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
               }
             ]
           },
@@ -3118,128 +3075,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the Snapshot",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "Snapshot",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "SnapshotList",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec": {
-        "type": "object",
-        "properties": {
-          "dashboard": {
-            "description": "The raw dashboard (unstructured for now)",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "expires": {
-            "description": "Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds)",
-            "type": "integer",
-            "format": "int64"
-          },
-          "external": {
-            "description": "When set to true, the snapshot exists in a remote server",
-            "type": "boolean"
-          },
-          "externalUrl": {
-            "description": "The external URL where the snapshot can be seen",
-            "type": "string"
-          },
-          "originalUrl": {
-            "description": "The URL that created the dashboard originally",
-            "type": "string"
-          },
-          "timestamp": {
-            "description": "Snapshot creation timestamp",
-            "type": "string"
-          },
-          "title": {
-            "description": "Snapshot title",
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
+      "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured": {
         "type": "object",
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
@@ -3468,7 +3304,200 @@
           }
         }
       },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference": {
+        "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
+        "type": "object",
+        "required": [
+          "apiVersion",
+          "kind",
+          "name",
+          "uid"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "API version of the referent.",
+            "type": "string",
+            "default": ""
+          },
+          "blockOwnerDeletion": {
+            "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. See https://kubernetes.io/docs/concepts/architecture/garbage-collection/#foreground-deletion for how the garbage collector interacts with this field and enforces the foreground deletion. Defaults to false. To set this field, a user needs \"delete\" permission of the owner, otherwise 422 (Unprocessable Entity) will be returned.",
+            "type": "boolean"
+          },
+          "controller": {
+            "description": "If true, this reference points to the managing controller.",
+            "type": "boolean"
+          },
+          "kind": {
+            "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+            "type": "string",
+            "default": ""
+          },
+          "uid": {
+            "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-map-type": "atomic"
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Patch": {
+        "description": "Patch is provided to give a concrete name and type to the Kubernetes PATCH request body.",
+        "type": "object"
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Preconditions": {
+        "description": "Preconditions must be fulfilled before an operation (update, delete, etc.) is carried out.",
+        "type": "object",
+        "properties": {
+          "resourceVersion": {
+            "description": "Specifies the target ResourceVersion",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Specifies the target UID.",
+            "type": "string"
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+        "description": "Status is a return value for calls that don't return other objects.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "code": {
+            "description": "Suggested HTTP return code for this status, 0 if not set.",
+            "type": "integer",
+            "format": "int32"
+          },
+          "details": {
+            "description": "Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
+              }
+            ]
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "description": "A human-readable description of the status of this operation.",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          },
+          "reason": {
+            "description": "A machine-readable description of why this operation is in the \"Failure\" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status of the operation. One of: \"Success\" or \"Failure\". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
+            "type": "string"
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
+        "description": "StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "description": "The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.\n\nExamples:\n  \"name\" - the field \"name\" on the current resource\n  \"items[0].name\" - the field \"name\" on the first array entry in \"items\"",
+            "type": "string"
+          },
+          "message": {
+            "description": "A human-readable description of the cause of the error.  This field may be presented as-is to a reader.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "A machine-readable description of the cause of the error. If this value is empty there is no information available.",
+            "type": "string"
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+        "description": "StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.",
+        "type": "object",
+        "properties": {
+          "causes": {
+            "description": "The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "group": {
+            "description": "The group attribute of the resource associated with the status StatusReason.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name attribute of the resource associated with the status StatusReason (when there is a single name which can be described).",
+            "type": "string"
+          },
+          "retryAfterSeconds": {
+            "description": "If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action.",
+            "type": "integer",
+            "format": "int32"
+          },
+          "uid": {
+            "description": "UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
+            "type": "string"
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+        "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
+        "type": "string",
+        "format": "date-time"
+      },
+      "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta": {
+        "description": "ListMeta describes metadata that synthetic resources must have, including lists and various status objects. A resource may have only one of {ObjectMeta, ListMeta}.",
+        "type": "object",
+        "properties": {
+          "continue": {
+            "description": "continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message.",
+            "type": "string"
+          },
+          "remainingItemCount": {
+            "description": "remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "resourceVersion": {
+            "description": "String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
+            "type": "string"
+          },
+          "selfLink": {
+            "description": "Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.",
+            "type": "string"
+          }
+        }
+      },
+      "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta": {
         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
         "type": "object",
         "properties": {
@@ -3580,177 +3609,6 @@
             "type": "string"
           }
         }
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference": {
-        "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
-        "type": "object",
-        "required": [
-          "apiVersion",
-          "kind",
-          "name",
-          "uid"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "API version of the referent.",
-            "type": "string",
-            "default": ""
-          },
-          "blockOwnerDeletion": {
-            "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. See https://kubernetes.io/docs/concepts/architecture/garbage-collection/#foreground-deletion for how the garbage collector interacts with this field and enforces the foreground deletion. Defaults to false. To set this field, a user needs \"delete\" permission of the owner, otherwise 422 (Unprocessable Entity) will be returned.",
-            "type": "boolean"
-          },
-          "controller": {
-            "description": "If true, this reference points to the managing controller.",
-            "type": "boolean"
-          },
-          "kind": {
-            "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-            "type": "string",
-            "default": ""
-          },
-          "uid": {
-            "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
-            "type": "string",
-            "default": ""
-          }
-        },
-        "x-kubernetes-map-type": "atomic"
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.Patch": {
-        "description": "Patch is provided to give a concrete name and type to the Kubernetes PATCH request body.",
-        "type": "object"
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.Preconditions": {
-        "description": "Preconditions must be fulfilled before an operation (update, delete, etc.) is carried out.",
-        "type": "object",
-        "properties": {
-          "resourceVersion": {
-            "description": "Specifies the target ResourceVersion",
-            "type": "string"
-          },
-          "uid": {
-            "description": "Specifies the target UID.",
-            "type": "string"
-          }
-        }
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
-        "description": "Status is a return value for calls that don't return other objects.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "code": {
-            "description": "Suggested HTTP return code for this status, 0 if not set.",
-            "type": "integer",
-            "format": "int32"
-          },
-          "details": {
-            "description": "Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
-              }
-            ],
-            "x-kubernetes-list-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "message": {
-            "description": "A human-readable description of the status of this operation.",
-            "type": "string"
-          },
-          "metadata": {
-            "description": "Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          },
-          "reason": {
-            "description": "A machine-readable description of why this operation is in the \"Failure\" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it.",
-            "type": "string"
-          },
-          "status": {
-            "description": "Status of the operation. One of: \"Success\" or \"Failure\". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
-            "type": "string"
-          }
-        }
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
-        "description": "StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.",
-        "type": "object",
-        "properties": {
-          "field": {
-            "description": "The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.\n\nExamples:\n  \"name\" - the field \"name\" on the current resource\n  \"items[0].name\" - the field \"name\" on the first array entry in \"items\"",
-            "type": "string"
-          },
-          "message": {
-            "description": "A human-readable description of the cause of the error.  This field may be presented as-is to a reader.",
-            "type": "string"
-          },
-          "reason": {
-            "description": "A machine-readable description of the cause of the error. If this value is empty there is no information available.",
-            "type": "string"
-          }
-        }
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
-        "description": "StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.",
-        "type": "object",
-        "properties": {
-          "causes": {
-            "description": "The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "group": {
-            "description": "The group attribute of the resource associated with the status StatusReason.",
-            "type": "string"
-          },
-          "kind": {
-            "description": "The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "name": {
-            "description": "The name attribute of the resource associated with the status StatusReason (when there is a single name which can be described).",
-            "type": "string"
-          },
-          "retryAfterSeconds": {
-            "description": "If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action.",
-            "type": "integer",
-            "format": "int32"
-          },
-          "uid": {
-            "description": "UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
-            "type": "string"
-          }
-        }
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
-        "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
-        "type": "string",
-        "format": "date-time"
       }
     }
   }
