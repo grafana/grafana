@@ -10,6 +10,8 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 
 import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
 
+const MOCK_DATA_SOURCE_UID = 'test-ds';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: jest.fn(),
@@ -54,6 +56,19 @@ describe('EmptyTransformationsMessage', () => {
   describe('EmptyTransformationsMessage (new UI)', () => {
     beforeEach(() => {
       config.featureToggles.transformationsEmptyPlaceholder = true;
+
+      const mockGetInstanceSettings = jest.fn().mockReturnValue({
+        uid: MOCK_DATA_SOURCE_UID,
+        type: 'test',
+        name: 'Test DS',
+        meta: {
+          backend: true,
+        },
+      } as DataSourceInstanceSettings);
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
     });
 
     it('should render SQL expression card and transformation cards when sqlExpressions toggle is enabled', () => {
@@ -65,6 +80,8 @@ describe('EmptyTransformationsMessage', () => {
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
           data={[]}
+          datasourceUid={MOCK_DATA_SOURCE_UID}
+          queries={[]}
         />
       );
 
@@ -103,6 +120,8 @@ describe('EmptyTransformationsMessage', () => {
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
           data={[]}
+          datasourceUid={MOCK_DATA_SOURCE_UID}
+          queries={[]}
         />
       );
 
@@ -150,7 +169,7 @@ describe('EmptyTransformationsMessage', () => {
 
     it('should hide SQL expression card for frontend datasources', () => {
       const mockGetInstanceSettings = jest.fn().mockReturnValue({
-        uid: 'test-ds',
+        uid: MOCK_DATA_SOURCE_UID,
         type: 'test',
         name: 'Test DS',
         meta: {
@@ -168,7 +187,7 @@ describe('EmptyTransformationsMessage', () => {
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
           data={[]}
-          datasourceUid="test-ds"
+          datasourceUid={MOCK_DATA_SOURCE_UID}
           queries={[]}
         />
       );
