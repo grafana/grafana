@@ -416,7 +416,7 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		TeamBindingResourceInfo.GroupVersionKind(),
 		func(label, value string) (string, string, error) {
 			switch label {
-			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
+			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name", "spec.external":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)

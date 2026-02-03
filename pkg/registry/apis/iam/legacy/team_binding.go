@@ -19,6 +19,7 @@ type ListTeamBindingsQuery struct {
 	OrgID      int64
 	TeamUID    string
 	UserUID    string
+	External   *bool
 	Pagination common.Pagination
 }
 
