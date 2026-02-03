@@ -11797,6 +11797,7 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
@@ -11810,8 +11811,7 @@
       "suffix-configured-branch": "Configured branch",
       "suffix-last-used": "Last branch",
       "suffix-pr-branch": "Pull request branch",
-      "suffix-read-only-branch": " (read-only)",
-      "tip-create-branch": "Tip: Type a name and press Enter to create a new branch"
+      "suffix-read-only-branch": " (read-only)"
     }
   },
   "provisioned-resource-preview-banner": {
