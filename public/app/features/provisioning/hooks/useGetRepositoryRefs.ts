@@ -1,6 +1,6 @@
 /**
  * A hook to fetch all branches from a given repository using internal /refs endpoint
- * Used to populate the branch dropdown in the repository selection.
+ * Used to populate the branch dropdown in onboarding wizard
  */
 import { skipToken } from '@reduxjs/toolkit/query';
 
