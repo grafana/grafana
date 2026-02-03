@@ -62,7 +62,7 @@
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes-generate": "yarn workspace @grafana/data themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
-    "typecheck": "tsc --noEmit && yarn run packages:typecheck",
+    "typecheck": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit && yarn run packages:typecheck",
     "typecheck:tsgo": "tsgo --noEmit",
     "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
     "watch": "yarn start -d watch,start core:start --watchTheme",

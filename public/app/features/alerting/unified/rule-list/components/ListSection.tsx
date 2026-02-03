@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
           content: "''",
           position: 'absolute',
           height: '100%',
-          left: theme.spacing(-1.5),
+          left: theme.spacing(-0.5), // Align with chevron icon (2 - 2.5 = -0.5)
           marginTop: theme.spacing(-1),
           borderLeft: `solid 1px ${theme.colors.border.weak}`,
         },

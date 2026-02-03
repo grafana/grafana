@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult } from 'app/features/search/service/types';
+import { useDispatch } from 'app/types/store';
 
 interface UseAlertingFoldersParams {
   parentUid?: string;
@@ -36,6 +38,7 @@ export function useAlertingFolders(params?: UseAlertingFoldersParams): UseAlerti
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<Error>();
   const [page, setPage] = useState(0);
+  const dispatch = useDispatch();
 
   const fetchFolders = useCallback(
     async (pageToFetch: number) => {
@@ -59,13 +62,18 @@ export function useAlertingFolders(params?: UseAlertingFoldersParams): UseAlerti
         const newFolders = response.view.toArray();
         setFolders((prev) => (pageToFetch === 0 ? newFolders : [...prev, ...newFolders]));
         setHasMore(newFolders.length === FOLDERS_PAGE_SIZE);
+
+        // Prefetch parent data for all loaded folders
+        newFolders.forEach((folder) => {
+          dispatch(folderAPIv1beta1.util.prefetch('getFolderParents', { name: folder.uid }, { force: false }));
+        });
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch folders'));
       } finally {
         setIsLoading(false);
       }
     },
-    [hasMore, parentUid, namespaceFilter]
+    [hasMore, parentUid, namespaceFilter, dispatch]
   );
 
   const fetchMore = useCallback(() => {

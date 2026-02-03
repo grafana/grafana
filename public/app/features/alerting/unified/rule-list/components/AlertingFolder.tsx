@@ -1,24 +1,24 @@
-import { useMemo, useRef, useState } from 'react';
+import { css } from '@emotion/css';
+import { useMemo, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useGetFolderParentsQuery } from 'app/api/clients/folder/v1beta1';
+import { Breadcrumbs } from 'app/core/components/Breadcrumbs/Breadcrumbs';
+import { Breadcrumb } from 'app/core/components/Breadcrumbs/types';
+import kbn from 'app/core/utils/kbn';
 import { DashboardQueryResult } from 'app/features/search/service/types';
-import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderActionsButton } from '../../components/folder-actions/FolderActionsButton';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { groups } from '../../utils/navigation';
-import { GrafanaGroupLoader } from '../GrafanaGroupLoader';
 import { useAlertingFolders } from '../hooks/useAlertingFolders';
-import { toIndividualGroups, useFolderGroupsGenerator } from '../hooks/useFolderGroups';
-import { useLazyLoadPrometheusGroups } from '../hooks/useLazyLoadPrometheusGroups';
-import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from '../paginationLimits';
+import { useFolderRulesPagination } from '../hooks/useFolderRulesPagination';
 
-import { GroupIntervalIndicator } from './GroupIntervalMetadata';
-import { ListGroup } from './ListGroup';
+import { FolderRuleListItem } from './FolderRuleListItem';
 import { ListSection } from './ListSection';
 import { LoadMoreButton } from './LoadMoreButton';
+import { RuleGroupContainer } from './RuleGroupContainer';
 
 interface AlertingFolderProps {
   folder: DashboardQueryResult;
@@ -27,31 +27,64 @@ interface AlertingFolderProps {
 }
 
 /**
+ * Builds a folder URL from UID and title
+ * Mimics backend logic for folder URL generation
+ */
+function getFolderUrl(uid: string, title: string): string {
+  const slug = kbn.slugifyForUrl(title);
+  return `${config.appSubUrl}/dashboards/f/${uid}/${slug}`;
+}
+
+/**
  * Component that renders a single folder containing alert rules.
  * Supports nested folders - child folders are loaded lazily when the folder is expanded.
- * Groups are also loaded lazily when the folder is expanded.
+ * Rules are displayed in lightweight group containers with folder-level pagination.
  */
 export function AlertingFolder({ folder, groupFilter, namespaceFilter }: AlertingFolderProps) {
   const folderUid = folder.uid;
   const folderName = folder.name;
+  const styles = useStyles2(getStyles);
 
   // Local state for collapse/expand
   const [isOpen, setIsOpen] = useState(false);
 
-  const apiGroupPageSize = getApiGroupPageSize(false);
+  // Fetch parent data (will use prefetched cache from useAlertingFolders)
+  const { data: parentsData, isLoading: parentsLoading } = useGetFolderParentsQuery({ name: folderUid });
 
-  // Generator for fetching groups in this folder
-  const folderGroupsGenerator = useFolderGroupsGenerator(folderUid, 0);
+  // Transform parent data to breadcrumbs
+  const breadcrumbs = useMemo((): Breadcrumb[] => {
+    const items = parentsData?.items ?? [];
 
-  const groupsGenerator = useRef(toIndividualGroups(folderGroupsGenerator(apiGroupPageSize)));
+    // Convert parents to breadcrumbs (excluding current folder)
+    const parentBreadcrumbs = items
+      .filter((parent) => parent.name !== folderUid)
+      .map((parent) => ({
+        text: parent.title,
+        href: getFolderUrl(parent.name, parent.title),
+      }));
 
+    // Add current folder as last item
+    return [
+      ...parentBreadcrumbs,
+      {
+        text: folderName,
+        href: getFolderUrl(folderUid, folderName),
+      },
+    ];
+  }, [parentsData, folderUid, folderName]);
+
+  // Fetch rules with folder-level pagination
   const {
-    isLoading: groupsLoading,
-    groups,
-    hasMoreGroups,
-    fetchMoreGroups,
-    error: groupsError,
-  } = useLazyLoadPrometheusGroups(groupsGenerator.current, FRONTED_GROUPED_PAGE_SIZE);
+    rulesByGroup,
+    hasMore: hasMoreRules,
+    loadMore: loadMoreRules,
+    isLoading: rulesLoading,
+    error: rulesError,
+    visibleRulesCount,
+  } = useFolderRulesPagination({
+    folderUid,
+    pageSize: 40,
+  });
 
   // Fetch child folders
   const {
@@ -66,7 +99,8 @@ export function AlertingFolder({ folder, groupFilter, namespaceFilter }: Alertin
   });
 
   // Check if folder is empty
-  const hasNoContent = isOpen && childFolders.length === 0 && groups.length === 0 && !foldersLoading && !groupsLoading;
+  const hasNoContent =
+    isOpen && childFolders.length === 0 && visibleRulesCount === 0 && !foldersLoading && !rulesLoading;
 
   return (
     <ListSection
@@ -74,25 +108,35 @@ export function AlertingFolder({ folder, groupFilter, namespaceFilter }: Alertin
       title={
         <Stack direction="row" gap={1} alignItems="center">
           <Icon name="folder" />
-          <Text variant="body" element="h3">
-            {folderName}
-          </Text>
+          <Stack direction="column" gap={0.25}>
+            {/* Folder title */}
+            <Text variant="body" element="h3">
+              {folderName}
+            </Text>
+
+            {/* Breadcrumbs below in smaller font - only if folder has parents */}
+            {breadcrumbs.length > 1 && !parentsLoading && (
+              <div className={styles.breadcrumbsWrapper}>
+                <Breadcrumbs breadcrumbs={breadcrumbs} />
+              </div>
+            )}
+          </Stack>
         </Stack>
       }
       actions={<FolderActionsButton folderUID={folderUid} />}
       collapsed={!isOpen}
       onToggle={() => setIsOpen(!isOpen)}
       pagination={
-        hasMoreFolders || hasMoreGroups ? (
+        hasMoreFolders || hasMoreRules ? (
           <Stack direction="column" gap={1}>
             {hasMoreFolders && (
               <div>
                 <LoadMoreButton loading={foldersLoading} onClick={fetchMoreFolders} />
               </div>
             )}
-            {hasMoreGroups && (
+            {hasMoreRules && (
               <div>
-                <LoadMoreButton loading={groupsLoading} onClick={fetchMoreGroups} />
+                <LoadMoreButton loading={rulesLoading} onClick={loadMoreRules} />
               </div>
             )}
           </Stack>
@@ -124,51 +168,28 @@ export function AlertingFolder({ folder, groupFilter, namespaceFilter }: Alertin
         </Text>
       )}
 
-      {/* Render alert groups */}
-      {groupsError && (
+      {/* Show rules loading error */}
+      {rulesError && (
         <Text color="error" variant="body">
-          <Trans i18nKey="alerting.folder.failed-to-load-groups">Failed to load groups:</Trans> {groupsError.message}
+          <Trans i18nKey="alerting.folder.failed-to-load-groups">Failed to load rules:</Trans> {rulesError.message}
         </Text>
       )}
-      {groups.map((group) => (
-        <GrafanaRuleGroupListItem
-          key={`grafana-ns-${folderUid}-${group.name}`}
-          group={group}
-          namespaceName={folderName}
-        />
+
+      {/* Render rules in lightweight group containers */}
+      {Array.from(rulesByGroup.entries()).map(([groupName, rulesInGroup]) => (
+        <RuleGroupContainer key={groupName} groupName={groupName}>
+          {rulesInGroup.map(({ rule, group }) => (
+            <FolderRuleListItem key={rule.uid} rule={rule} group={group} namespaceName={folderName} />
+          ))}
+        </RuleGroupContainer>
       ))}
     </ListSection>
   );
 }
 
-export interface GrafanaRuleGroupListItemProps {
-  group: GrafanaPromRuleGroupDTO;
-  namespaceName: string;
-}
-
-export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
-  const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
-    () => ({
-      groupName: group.name,
-      namespace: {
-        uid: group.folderUid,
-      },
-      groupOrigin: 'grafana',
-    }),
-    [group.name, group.folderUid]
-  );
-
-  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
-
-  return (
-    <ListGroup
-      key={group.name}
-      name={group.name}
-      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
-      href={detailsLink}
-      isOpen={false}
-    >
-      <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
-    </ListGroup>
-  );
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  breadcrumbsWrapper: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+  }),
+});
