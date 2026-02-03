@@ -1253,6 +1253,58 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if validate_id_token is enabled and jwk_set_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"validate_id_token": "true",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if validate_id_token is enabled and jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"validate_id_token": "true",
+					"jwk_set_url":       "https://gitlab.com/oauth/discovery/keys",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"validate_id_token": "false",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false even when jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"validate_id_token": "false",
+					"jwk_set_url":       "https://gitlab.com/oauth/discovery/keys",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {

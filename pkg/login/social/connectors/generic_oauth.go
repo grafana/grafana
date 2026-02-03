@@ -34,8 +34,6 @@ var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
 	idTokenAttributeNameKey: {Type: String},
 	teamIdsKey:              {Type: String},
 	allowedOrganizationsKey: {Type: String},
-	validateIDTokenKey:      {Type: Bool, DefaultValue: false},
-	jwkSetURLKey:            {Type: String},
 }
 
 var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
@@ -106,7 +104,8 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 	err = validation.Validate(info, requester,
 		validation.UrlValidator(info.AuthUrl, "Auth URL"),
 		validation.UrlValidator(info.TokenUrl, "Token URL"),
-		validateTeamsUrlWhenNotEmpty)
+		validateTeamsUrlWhenNotEmpty,
+		validation.ValidateIDTokenValidator)
 
 	if err != nil {
 		return err
@@ -119,10 +118,6 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 
 	if len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
-	}
-
-	if info.ValidateIDToken && info.JwkSetURL == "" {
-		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
 	return nil

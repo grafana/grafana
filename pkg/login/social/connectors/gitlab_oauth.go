@@ -26,11 +26,6 @@ const (
 	accessLevelGuest = "10"
 )
 
-var ExtraGitlabSettingKeys = map[string]ExtraKeyInfo{
-	validateIDTokenKey: {Type: Bool, DefaultValue: false},
-	jwkSetURLKey:       {Type: String},
-}
-
 var _ social.SocialConnector = (*SocialGitlab)(nil)
 var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
@@ -87,13 +82,10 @@ func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 	err = validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
-		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.ValidateIDTokenValidator)
 	if err != nil {
 		return err
-	}
-
-	if info.ValidateIDToken && info.JwkSetURL == "" {
-		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
 	return nil

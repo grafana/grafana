@@ -29,9 +29,7 @@ const (
 )
 
 var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
-	validateHDKey:      {Type: Bool, DefaultValue: true},
-	validateIDTokenKey: {Type: Bool, DefaultValue: false},
-	jwkSetURLKey:       {Type: String},
+	validateHDKey: {Type: Bool, DefaultValue: true},
 }
 
 var _ social.SocialConnector = (*SocialGoogle)(nil)
@@ -85,13 +83,10 @@ func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
-		loginPromptValidator)
+		loginPromptValidator,
+		validation.ValidateIDTokenValidator)
 	if err != nil {
 		return err
-	}
-
-	if info.ValidateIDToken && info.JwkSetURL == "" {
-		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
 	return nil

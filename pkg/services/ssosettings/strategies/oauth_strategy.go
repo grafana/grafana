@@ -18,12 +18,10 @@ type OAuthStrategy struct {
 var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
 	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
 	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
-	social.GitlabProviderName:       connectors.ExtraGitlabSettingKeys,
 	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
 	social.GoogleProviderName:       connectors.ExtraGoogleSettingKeys,
 	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
 	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
-	social.OktaProviderName:         connectors.ExtraOktaSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
@@ -111,6 +109,8 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"org_mapping":                   section.Key("org_mapping").Value(),
 		"org_attribute_path":            section.Key("org_attribute_path").Value(),
 		"login_prompt":                  section.Key("login_prompt").Value(),
+		"validate_id_token":             section.Key("validate_id_token").MustBool(false),
+		"jwk_set_url":                   section.Key("jwk_set_url").Value(),
 	}
 
 	extraKeys := extraKeysByProvider[provider]

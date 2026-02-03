@@ -21,11 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var ExtraOktaSettingKeys = map[string]ExtraKeyInfo{
-	validateIDTokenKey: {Type: Bool, DefaultValue: false},
-	jwkSetURLKey:       {Type: String},
-}
-
 var _ social.SocialConnector = (*SocialOkta)(nil)
 var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
@@ -85,13 +80,10 @@ func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSett
 	err = validation.Validate(info, requester,
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
-		validation.RequiredUrlValidator(info.ApiUrl, "API URL"))
+		validation.RequiredUrlValidator(info.ApiUrl, "API URL"),
+		validation.ValidateIDTokenValidator)
 	if err != nil {
 		return err
-	}
-
-	if info.ValidateIDToken && info.JwkSetURL == "" {
-		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
 	return nil
