@@ -253,7 +253,7 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
     const cannotDeleteNoPermissions = isDefaultPolicy
       ? t(
           'alerting.policies-list.reset-reasons.no-permissions',
-          'You do not have the required permission to reset this contact point'
+          'You do not have the required permission to reset this routing tree'
         )
       : t(
           'alerting.policies-list.delete-reasons.no-permissions',
@@ -261,11 +261,11 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
         );
     const cannotDeleteProvisioned = isDefaultPolicy
       ? t(
-          'alerting.policies-list.reset-reasons.no-permissions',
+          'alerting.policies-list.reset-reasons.provisioned',
           'Routing tree is provisioned and cannot be reset via the UI'
         )
       : t(
-          'alerting.policies-list.delete-reasons.no-permissions',
+          'alerting.policies-list.delete-reasons.provisioned',
           'Routing tree is provisioned and cannot be deleted via the UI'
         );
     const cannotDeleteText = isDefaultPolicy

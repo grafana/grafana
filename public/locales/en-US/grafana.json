@@ -2168,7 +2168,8 @@
         "text": "Create policy"
       },
       "delete-reasons": {
-        "no-permissions": "You do not have the required permission to delete this routing tree"
+        "no-permissions": "You do not have the required permission to delete this routing tree",
+        "provisioned": "Routing tree is provisioned and cannot be deleted via the UI"
       },
       "delete-text": "Routing tree cannot be deleted for the following reasons:",
       "empty-state": {
@@ -2199,7 +2200,8 @@
         }
       },
       "reset-reasons": {
-        "no-permissions": "You do not have the required permission to reset this contact point"
+        "no-permissions": "You do not have the required permission to reset this routing tree",
+        "provisioned": "Routing tree is provisioned and cannot be reset via the UI"
       },
       "reset-text": "Routing tree cannot be reset for the following reasons:",
       "text-loading": "Loading...."
