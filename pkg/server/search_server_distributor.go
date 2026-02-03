@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -13,5 +15,10 @@ func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) 
 	if err := svc.RegisterGRPCServices(ms.grpcServer); err != nil {
 		return nil, err
 	}
-	return services.NewBasicService(nil, nil, nil).WithName(modules.SearchServerDistributor), nil
+	// The service needs a running function to stay alive until shutdown
+	running := func(ctx context.Context) error {
+		<-ctx.Done()
+		return nil
+	}
+	return services.NewBasicService(nil, running, nil).WithName(modules.SearchServerDistributor), nil
 }
