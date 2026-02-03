@@ -204,6 +204,8 @@ func (s *ModuleServer) Run() error {
 			// Distributor forwards to search, no authentication needed
 			return s.initGRPCServer(nil, tracer)
 		case m.IsModuleEnabled(modules.StorageServer), m.IsModuleEnabled(modules.SearchServer):
+			// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+			// grpcutils.NewGrpcAuthenticator should be used instead.
 			authn := interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
 				auth := resourcegrpc.Authenticator{Tracer: tracer}
 				return auth.Authenticate(ctx)

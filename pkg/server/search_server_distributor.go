@@ -11,8 +11,8 @@ import (
 
 func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) {
 	tracer := otel.Tracer("index-server-distributor")
-	svc := resource.ProvideSearchDistributorService(tracer, ms.searchServerRing, ms.searchServerRingClientPool)
-	if err := svc.RegisterGRPCServices(ms.grpcService.GetServer()); err != nil {
+	distributor := resource.ProvideSearchDistributorServer(tracer, ms.searchServerRing, ms.searchServerRingClientPool)
+	if err := distributor.RegisterGRPCServices(ms.grpcService.GetServer()); err != nil {
 		return nil, err
 	}
 	ms.grpcService.StartListening()

@@ -24,13 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// SearchDistributorService is a service that distributes search requests to the appropriate search server.
-type SearchDistributorService interface {
+// SearchDistributorServer is a service that distributes search requests to the appropriate search server.
+type SearchDistributorServer interface {
 	// RegisterGRPCServices registers the gRPC services on the provided server.
 	RegisterGRPCServices(srv *grpc.Server) error
 }
 
-func ProvideSearchDistributorService(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) SearchDistributorService {
+func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) SearchDistributorServer {
 	return &distributorServer{
 		log:        log.New("index-server-distributor"),
 		ring:       ring,

@@ -148,6 +148,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 		require.NoError(t, err)
 		require.NoError(t, storage.RegisterGRPCServices(grpcService.GetServer()))
+		grpcService.StartListening()
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
 		require.NoError(t, err)
