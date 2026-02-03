@@ -1,11 +1,16 @@
+import { css } from '@emotion/css';
+import { useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, sceneUtils } from '@grafana/scenes';
-import { Drawer } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
+import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverviewSearch';
 
 interface DashboardFiltersOverviewDrawerState extends SceneObjectState {}
 
@@ -32,6 +37,8 @@ export class DashboardFiltersOverviewDrawer extends SceneObjectBase<DashboardFil
 }
 
 function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewDrawer>) {
+  const styles = useStyles2(getStyles);
+  const [searchQuery, setSearchQuery] = useState('');
   const dashboard = model.getDashboard();
 
   if (!dashboard) {
@@ -43,8 +50,38 @@ function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<D
   const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
 
   return (
-    <Drawer title={t('dashboard.filters-verview.title', 'Edit filters')} onClose={model.onClose} size="sm">
-      <DashboardFiltersOverview adhocFilters={adHocVar} groupByVariable={groupByVar} onClose={model.onClose} />
+    <Drawer
+      title={
+        <div className={styles.drawerHeader}>
+          <span className={styles.drawerTitle}>{t('dashboard.filters-verview.title', 'Edit filters')}</span>
+          <DashboardFiltersOverviewSearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
+      }
+      onClose={model.onClose}
+      size="sm"
+    >
+      <DashboardFiltersOverview
+        adhocFilters={adHocVar}
+        groupByVariable={groupByVar}
+        onClose={model.onClose}
+        searchQuery={searchQuery}
+      />
     </Drawer>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  drawerHeader: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    width: '100%',
+    overflow: 'hidden',
+    minWidth: 0,
+  }),
+  drawerTitle: css({
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden',
+  }),
+});

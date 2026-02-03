@@ -195,7 +195,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                 <DashboardControlActions dashboard={dashboard} />
               </div>
             )}
-            {config.featureToggles.dashboardFiltersOverview && (
+            {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
               <div className={styles.fixedControls}>
                 <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
               </div>
