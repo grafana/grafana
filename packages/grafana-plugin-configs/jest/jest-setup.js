@@ -1,9 +1,5 @@
 import '@testing-library/jest-dom';
-<<<<<<< HEAD
 import { MessageChannel } from 'node:worker_threads';
-=======
-import { MessageChannel, MessagePort } from 'node:worker_threads';
->>>>>>> main
 import { TextEncoder, TextDecoder } from 'util';
 
 import { matchers } from '@grafana/test-utils/matchers';
