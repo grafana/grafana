@@ -92,12 +92,14 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         ...PERMISSIONS_NOTIFICATION_POLICIES_READ,
         ...PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
       ]),
-      component: importAlertingComponent(
-        () =>
-          import(
-            /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
+      component: config.featureToggles.alertingMultiplePolicies
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
+              )
           )
-      ),
+        : () => <Navigate replace to="/alerting/routes" />,
     },
     {
       path: '/alerting/silences',
