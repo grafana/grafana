@@ -1,4 +1,3 @@
-import { FALSE } from 'ol/functions';
 import { useLayoutEffect, useState, useMemo } from 'react';
 import uPlot from 'uplot';
 
