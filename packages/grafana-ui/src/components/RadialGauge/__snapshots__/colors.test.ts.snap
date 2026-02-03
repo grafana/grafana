@@ -1,21 +1,42 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 1`] = `
+exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (for percentage thresholds) 1`] = `
 [
   {
-    "color": "#444444",
+    "color": "#73BF69",
     "percent": 0,
   },
   {
-    "color": "#FADE2A",
+    "color": "#73BF69",
     "percent": 0.5,
   },
   {
-    "color": "#F2495C",
+    "color": "#FADE2A",
     "percent": 0.8,
   },
   {
-    "color": "#444444",
+    "color": "#F2495C",
+    "percent": 1,
+  },
+]
+`;
+
+exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 1`] = `
+[
+  {
+    "color": "#73BF69",
+    "percent": 0,
+  },
+  {
+    "color": "#73BF69",
+    "percent": 0.5,
+  },
+  {
+    "color": "#FADE2A",
+    "percent": 0.8,
+  },
+  {
+    "color": "#F2495C",
     "percent": 1,
   },
 ]
@@ -24,19 +45,19 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
 exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 2`] = `
 [
   {
-    "color": "#FF0000",
+    "color": "#73BF69",
     "percent": 0,
   },
   {
-    "color": "#FADE2A",
+    "color": "#73BF69",
     "percent": 0.5,
   },
   {
-    "color": "#F2495C",
+    "color": "#FADE2A",
     "percent": 0.8,
   },
   {
-    "color": "#FF0000",
+    "color": "#F2495C",
     "percent": 1,
   },
 ]

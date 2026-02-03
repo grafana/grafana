@@ -473,6 +473,12 @@ func StandardSearchFields() SearchableDocumentFields {
 				Name: SEARCH_FIELD_SOURCE_CHECKSUM,
 				Type: resourcepb.ResourceTableColumnDefinition_STRING,
 			},
+			{
+				Name:        SEARCH_FIELD_OWNER_REFERENCES,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				IsArray:     true,
+				Description: "Owner references in format {Group}/{Kind}/{Name}",
+			},
 		})
 
 		if err != nil {
