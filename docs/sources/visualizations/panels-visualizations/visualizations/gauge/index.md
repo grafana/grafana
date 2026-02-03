@@ -160,7 +160,7 @@ Adjust how the gauge is displayed.
 | Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - Renders both the value and series name.</li><li>**Value** - Renders only the value.</li><li>**Name** - Renders only the series name.</li><li>**None** - Renders the gauge with no labels.</li></ul> |
 | [Neutral value](#neutral-value) | Set the starting value from which every gauge will be filled. |
 | [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |
-| [Show thresholds](#show-threshold-markers) | Controls if a threshold band is shown outside the inner gauge value band. |
+| [Show thresholds](#show-threshold-markers) | Control whether a threshold band is shown outside the inner gauge value band. |
 | Show labels | Control whether threshold, neutral and min/max labels are shown around the outside of the gauge. |
 | Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color  differs by value.</li><li>**Bar glow** - Adds a glowing shadow around the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
 
@@ -168,11 +168,23 @@ Adjust how the gauge is displayed.
 
 #### Neutral value
 
-TBD
+Set the starting value from which every gauge will be filled when it shouldn't be the minimum value.
+This option is especially useful in cases where the range of data values includes negative numbers.
+
+For example, you want to display the storage of several batteries and the power range is from -2.5 kW (discharging) to 2.5 kW.
+When the minimum value is used as the starting point for the gauges, the visualization looks like this:
+
+![Gauge using min as neutral](screenshot-gauge-neutral-min-v12.4.png)
+
+If you enter a neutral value of `0`, the visualization looks like this and is easier to reason about:
+
+![Gauge with zero as neutral](screenshot-gauge-neutral-0-v12.4.png)
 
 #### Show sparkline
 
-TBD
+Toggle on the **Show sparkline** switch to render a sparkline containing the series data for the gauge:
+
+
 
 #### Show thresholds {#show-threshold-markers}
 
