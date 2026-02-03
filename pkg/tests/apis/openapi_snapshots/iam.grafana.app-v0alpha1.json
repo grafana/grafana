@@ -7723,19 +7723,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamRef": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "description": "Name is the unique identifier for a team.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec": {
         "type": "object",
         "required": [
@@ -7983,7 +7970,8 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam": {
         "type": "object",
         "required": [
-          "teamRef",
+          "user",
+          "team",
           "permission",
           "external"
         ],
@@ -7996,8 +7984,13 @@
             "type": "string",
             "default": ""
           },
-          "teamRef": {
-            "default": {}
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
           }
         }
       },
