@@ -19,7 +19,9 @@ import {
   usePanelContext,
   useStyles2,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { NEW_PANEL_TITLE } from '../../dashboard/utils/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
@@ -29,6 +31,12 @@ import { DashboardScene } from './DashboardScene';
 
 export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
+
+function hasSavedQueryReadPermissions(): boolean {
+  return config.featureToggles.savedQueriesRBAC
+    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
+    : contextSrv.isSignedIn;
+}
 
 function UnconfiguredPanelComp(props: PanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -113,7 +121,6 @@ function UnconfiguredPanelComp(props: PanelProps) {
           // Set the query in the panel
           queryRunner.setState({ queries: [enrichedQuery] });
 
-          // TODO: Update this to utilize viz suggestions
           panel.changePluginType('table');
 
           // Update datasource if needed
@@ -157,7 +164,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
         label={t('dashboard.new-panel.menu-open-panel-editor', 'Configure')}
         onClick={onConfigure}
       ></Menu.Item>
-      {queryLibraryEnabled && (
+      {queryLibraryEnabled && hasSavedQueryReadPermissions() && (
         <Menu.Item
           icon="book-open"
           label={t('dashboard.new-panel.menu-use-saved-query', 'Use saved query')}
