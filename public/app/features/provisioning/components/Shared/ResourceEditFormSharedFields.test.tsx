@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import type { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
@@ -169,6 +170,34 @@ describe('ResourceEditFormSharedFields', () => {
       const branchInput = screen.getByLabelText(/branch/i);
       expect(branchInput).toHaveAttribute('readonly');
       expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
+    });
+
+    it('should allow selecting a branch when only non-configured branches are allowed', () => {
+      setup({
+        formDefaultValues: { workflow: 'write' },
+        repository: mockRepo.github,
+        workflow: 'write',
+        canPushToConfiguredBranch: false,
+      });
+
+      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
+      expect(screen.queryByText('This repository is restricted to the configured branch only')).not.toBeInTheDocument();
+    });
+
+    it('should disable the configured branch option when configured branch pushes are not allowed', () => {
+      const { result } = renderHook(() =>
+        useBranchDropdownOptions({
+          repository: { ...mockRepo.github, branch: 'main' },
+          branchData: { items: [] },
+          canPushToConfiguredBranch: false,
+          canPushToNonConfiguredBranch: true,
+        })
+      );
+
+      const configuredOption = result.current[0];
+      expect(configuredOption.value).toBe('main');
+      expect(configuredOption.infoOption).toBe(true);
+      expect(configuredOption.label).toBe('main (read-only)');
     });
   });
 
