@@ -64,9 +64,9 @@ const ui = {
   exportAllButton: byTestId('export-all-policy-button'),
   viewButton: byTestId('view-action'),
   editButton: byTestId('edit-action'),
-  moreActionsButton: byTestId('more-actions'),
-  exportButton: byRole('menuitem', { name: /export/i }),
-  deleteButton: byRole('menuitem', { name: /delete/i }),
+  exportButton: byTestId('export-action'),
+  deleteButton: byTestId('delete-action'),
+  resetButton: byTestId('reset-action'),
 
   /** (deeply) Nested rows of policies under the default/root policy */
   row: byTestId('am-route-container'),
@@ -190,7 +190,7 @@ describe('PoliciesList', () => {
     );
   });
 
-  describe('Action permissions', () => {
+  describe('Table action permissions', () => {
     describe('Create', () => {
       it('enable if user has permission', async () => {
         grantAlertmanagerAbilities([
@@ -211,6 +211,9 @@ describe('PoliciesList', () => {
         expect(ui.createPolicyButton.query()).toBeDisabled();
       });
     });
+  });
+
+  describe('Policy action permissions', () => {
     describe('View/Edit', () => {
       it('shows view if user has no edit permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
@@ -219,7 +222,7 @@ describe('PoliciesList', () => {
         const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
         const btn = await ui.viewButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeEnabled();
+        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       });
       it('shows edit if user has edit permission', async () => {
         grantAlertmanagerAbilities([
@@ -231,7 +234,7 @@ describe('PoliciesList', () => {
         const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
         const btn = await ui.editButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeEnabled();
+        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       });
       it('shows view if policy is provisioned', async () => {
         grantAlertmanagerAbilities([
@@ -243,36 +246,30 @@ describe('PoliciesList', () => {
         const defaultPolicyEl = await getRoute('Managed Policy - Empty Provisioned');
         const btn = await ui.viewButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeEnabled();
+        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       });
     });
-    describe('More > Export', () => {
+    describe('Export', () => {
       it('enable if user has permission', async () => {
         grantAlertmanagerAbilities([
           AlertmanagerAction.ViewNotificationPolicyTree,
           AlertmanagerAction.ExportNotificationPolicies,
         ]);
 
-        const { user } = renderNotificationPolicies();
+        renderNotificationPolicies();
         const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-
-        await user.click(await ui.moreActionsButton.find(defaultPolicyEl));
-
-        const btn = await ui.exportButton.find();
+        const btn = await ui.exportButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeEnabled();
+        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       });
       it('disable if user does not have permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
 
-        const { user } = renderNotificationPolicies();
+        renderNotificationPolicies();
         const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-
-        await user.click(await ui.moreActionsButton.find(defaultPolicyEl));
-
-        const btn = await ui.exportButton.find();
+        const btn = await ui.exportButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeDisabled();
+        expect(btn).toHaveAttribute('aria-disabled', 'true');
       });
     });
 
@@ -283,26 +280,20 @@ describe('PoliciesList', () => {
           AlertmanagerAction.DeleteNotificationPolicy,
         ]);
 
-        const { user } = renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-
-        await user.click(await ui.moreActionsButton.find(defaultPolicyEl));
-
-        const btn = await ui.deleteButton.find();
+        renderNotificationPolicies();
+        const defaultPolicyEl = await getRoute('Managed Policy - Override + Inherit');
+        const btn = await ui.deleteButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeEnabled();
+        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       });
       it('disable if user has no permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
 
-        const { user } = renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-
-        await user.click(await ui.moreActionsButton.find(defaultPolicyEl));
-
-        const btn = await ui.deleteButton.find();
+        renderNotificationPolicies();
+        const defaultPolicyEl = await getRoute('Managed Policy - Override + Inherit');
+        const btn = await ui.deleteButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).toBeDisabled();
+        expect(btn).toHaveAttribute('aria-disabled', 'true');
       });
       it('disable if is provisioned', async () => {
         grantAlertmanagerAbilities([
@@ -310,14 +301,35 @@ describe('PoliciesList', () => {
           AlertmanagerAction.DeleteNotificationPolicy,
         ]);
 
-        const { user } = renderNotificationPolicies();
+        renderNotificationPolicies();
         const defaultPolicyEl = await getRoute('Managed Policy - Empty Provisioned');
+        const btn = await ui.deleteButton.find(defaultPolicyEl);
+        expect(btn).toBeInTheDocument();
+        expect(btn).toHaveAttribute('aria-disabled', 'true');
+      });
+    });
 
-        await user.click(await ui.moreActionsButton.find(defaultPolicyEl));
+    describe('Reset', () => {
+      it('enable on default policy if user has permission', async () => {
+        grantAlertmanagerAbilities([
+          AlertmanagerAction.ViewNotificationPolicyTree,
+          AlertmanagerAction.DeleteNotificationPolicy,
+        ]);
 
-        const viewButton = await ui.deleteButton.find();
-        expect(viewButton).toBeInTheDocument();
-        expect(viewButton).toBeDisabled();
+        renderNotificationPolicies();
+        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
+        const btn = await ui.resetButton.find(defaultPolicyEl);
+        expect(btn).toBeInTheDocument();
+        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+      });
+      it('disable on default policy if user has no permission', async () => {
+        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+
+        renderNotificationPolicies();
+        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
+        const btn = await ui.resetButton.find(defaultPolicyEl);
+        expect(btn).toBeInTheDocument();
+        expect(btn).toHaveAttribute('aria-disabled', 'true');
       });
     });
   });
