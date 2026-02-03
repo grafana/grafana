@@ -429,17 +429,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
           // Avoid switching the visible content on drop unless explicitly requested.
           currentTabSlug: selectMovedTab ? tab.getSlug() : prevDestinationSlug,
         });
-
-        this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
-        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
       },
       undo: () => {
         // Reverse order for the same parenting reason as in perform().
         destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
         tab.clearParent();
         this.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
-        this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
-        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
       },
     });
   }
