@@ -215,7 +215,6 @@ interface FilterRowWithResizeProps {
 const FilterRowWithResize = memo(({ index, style, item, data }: FilterRowWithResizeProps) => {
   const rowRef = useRef<HTMLDivElement | null>(null);
   const lastHeightRef = useRef<number | null>(null);
-  const resizeRafRef = useRef<number | null>(null);
 
   const { keyOption, keyValue } = item;
   const operatorValue = data.operatorsByKey[keyValue] ?? '=';
@@ -235,26 +234,11 @@ const FilterRowWithResize = memo(({ index, style, item, data }: FilterRowWithRes
       }
     };
 
-    const observer = new ResizeObserver(() => {
-      if (resizeRafRef.current !== null) {
-        return;
-      }
-      resizeRafRef.current = requestAnimationFrame(() => {
-        resizeRafRef.current = null;
-        applySize();
-      });
-    });
-
+    const observer = new ResizeObserver(applySize);
     observer.observe(node);
     applySize();
 
-    return () => {
-      observer.disconnect();
-      if (resizeRafRef.current !== null) {
-        cancelAnimationFrame(resizeRafRef.current);
-        resizeRafRef.current = null;
-      }
-    };
+    return () => observer.disconnect();
   }, [data.actions, data.measureKey, index]);
 
   return (
