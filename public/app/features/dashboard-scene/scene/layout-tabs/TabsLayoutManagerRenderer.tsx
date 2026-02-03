@@ -46,18 +46,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       <TabsBar className={styles.tabsBar}>
         <div className={styles.tabsRow}>
           <Droppable droppableId={key!} direction="horizontal" type="TAB">
-            {(dropProvided, dropSnapshot) => (
-              <div
-                className={cx(styles.tabsContainer, dropSnapshot.isUsingPlaceholder && styles.tabsContainerDuringDrag)}
-                ref={dropProvided.innerRef}
-                {...dropProvided.droppableProps}
-              >
+            {(dropProvided) => (
+              <div className={cx(styles.tabsContainer)} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                 {tabs.map((tab) => (
                   <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
                 ))}
 
-                {/* Collapse source list immediately when dragging out to another droppable */}
-                {!(dropSnapshot.draggingFromThisWith && !dropSnapshot.isDraggingOver) && dropProvided.placeholder}
+                {dropProvided.placeholder}
               </div>
             )}
           </Droppable>
@@ -131,15 +126,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
-  }),
-  tabsContainerDuringDrag: css({
-    // During a tab drag, hello-pangea inserts a placeholder which can temporarily
-    // trigger a horizontal scrollbar and create an "overflow box" visual jank.
-    overflowX: 'hidden',
-    scrollbarWidth: 'none',
-    '&::-webkit-scrollbar': {
-      display: 'none',
-    },
   }),
   nestedTabsMargin: css({
     marginLeft: theme.spacing(2),
