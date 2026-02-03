@@ -922,26 +922,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           return await this.loadProvisioningDashboard(slug || '', uid);
         }
         case DashboardRoutes.AssistantPreview: {
-          const v1Response = await this.loadAssistantPreviewDashboard(uid);
-          const scene = transformSaveModelToScene(v1Response, undefined, getSceneCreationOptions());
-          const spec = transformSceneToSaveModelSchemaV2(scene);
-          return {
-            apiVersion: 'v2beta1',
-            kind: 'DashboardWithAccessInfo',
-            metadata: {
-              creationTimestamp: '',
-              name: v1Response.dashboard.uid ?? '',
-              resourceVersion: v1Response.dashboard.version?.toString() || '0',
-            },
-            spec,
-            access: {
-              canSave: v1Response.meta.canSave ?? false,
-              canEdit: v1Response.meta.canEdit ?? false,
-              canDelete: v1Response.meta.canDelete ?? false,
-              canShare: v1Response.meta.canShare ?? false,
-              canStar: v1Response.meta.canStar ?? false,
-            },
-          };
+          const rsp = await this.loadAssistantPreviewDashboard(uid);
+          return ensureV2Response(rsp);
         }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
