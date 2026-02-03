@@ -28,10 +28,6 @@ async function initAppPluginMetas(): Promise<void> {
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
-  if (Date.now() % 2 === 0) {
-    return Promise.reject(new Error('Network Error'));
-  }
-
   if (!initialized()) {
     await initAppPluginMetas();
   }
