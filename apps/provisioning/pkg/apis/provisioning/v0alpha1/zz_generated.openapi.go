@@ -200,7 +200,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -225,7 +225,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -272,7 +272,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -298,7 +298,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -453,7 +453,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
+										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -471,7 +471,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -668,7 +668,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref common.Ref
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -694,7 +694,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -766,7 +766,7 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -792,7 +792,7 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.FileItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.FileItem", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1045,7 +1045,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallb
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1064,7 +1064,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1091,7 +1091,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceC
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1111,7 +1111,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1193,7 +1193,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1219,7 +1219,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoryItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoryItem", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1247,7 +1247,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1266,7 +1266,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1293,7 +1293,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1314,7 +1314,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1844,7 +1844,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RefList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1870,7 +1870,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RefList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefItem", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1898,7 +1898,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1923,7 +1923,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositorySpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SecureValues", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositorySpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SecureValues", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1950,7 +1950,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1976,7 +1976,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Repository", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Repository", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2130,7 +2130,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
+										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -2201,7 +2201,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.QuotaStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.TokenStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.QuotaStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.TokenStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -2483,7 +2483,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2509,7 +2509,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceListItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceListItem", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2737,7 +2737,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"instance": {
@@ -2801,7 +2801,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ManagerStats", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ManagerStats", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2907,7 +2907,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 					"timestamp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The modified time in the remote file system",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
 						},
 					},
 					"resource": {
@@ -2942,7 +2942,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryURLs", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceObjects", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryURLs", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceObjects", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo", "io.k8s.apimachinery.pkg.apis.meta.v1.Time"},
 	}
 }
 

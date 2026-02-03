@@ -18,22 +18,22 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationActions":    schema_pkg_apis_dashboard_v1beta1_AnnotationActions(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission": schema_pkg_apis_dashboard_v1beta1_AnnotationPermission(ref),
 		Dashboard{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v1beta1_Dashboard(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":         schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardClient":         schema_pkg_apis_dashboard_v1beta1_DashboardClient(ref),
-		DashboardConversionStatus{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":      schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref),
-		DashboardList{}.OpenAPIModelName():                                                             schema_pkg_apis_dashboard_v1beta1_DashboardList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMetadata":       schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref),
-		DashboardStatus{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v1beta1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionList":    schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel":            schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelList":        schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v1beta1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v1beta1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v1beta1_VersionsQueryOptions(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":                v0alpha1.Unstructured{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":      schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardClient":      schema_pkg_apis_dashboard_v1beta1_DashboardClient(ref),
+		DashboardConversionStatus{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":   schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref),
+		DashboardList{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v1beta1_DashboardList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMetadata":    schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref),
+		DashboardStatus{}.OpenAPIModelName():                                                        schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo": schema_pkg_apis_dashboard_v1beta1_DashboardVersionInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionList": schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref),
+		DashboardWithAccessInfo{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel":         schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelList":     schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec":     schema_pkg_apis_dashboard_v1beta1_LibraryPanelSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus":   schema_pkg_apis_dashboard_v1beta1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.VersionsQueryOptions": schema_pkg_apis_dashboard_v1beta1_VersionsQueryOptions(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":             v0alpha1.Unstructured{}.OpenAPIDefinition(),
 	}
 }
 
@@ -121,7 +121,7 @@ func schema_pkg_apis_dashboard_v1beta1_Dashboard(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -141,7 +141,7 @@ func schema_pkg_apis_dashboard_v1beta1_Dashboard(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -319,7 +319,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -340,7 +340,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			Dashboard{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Dashboard{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -533,7 +533,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref common.Reference
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -554,7 +554,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -582,7 +582,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref common.Refere
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -608,7 +608,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess", DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess", DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -636,7 +636,7 @@ func schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref common.ReferenceCallback
 						SchemaProps: spec.SchemaProps{
 							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
 							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -657,7 +657,7 @@ func schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -684,7 +684,7 @@ func schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -705,7 +705,7 @@ func schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

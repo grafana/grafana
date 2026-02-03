@@ -97,7 +97,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"title": {
@@ -143,7 +143,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -171,7 +171,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.Reference
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -192,7 +192,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -220,7 +220,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"title": {
@@ -243,7 +243,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -271,7 +271,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref common.Referenc
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -292,7 +292,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnection", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnection", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -510,7 +510,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -523,7 +523,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.QueryTypeDefinitionSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.QueryTypeDefinitionSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -550,7 +550,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref common.Reference
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -571,7 +571,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

@@ -94,7 +94,7 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -109,7 +109,7 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			FolderSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			FolderSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -264,7 +264,7 @@ func schema_pkg_apis_folder_v1beta1_FolderInfoList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -293,7 +293,7 @@ func schema_pkg_apis_folder_v1beta1_FolderInfoList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -331,7 +331,7 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -352,7 +352,7 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			Folder{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Folder{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

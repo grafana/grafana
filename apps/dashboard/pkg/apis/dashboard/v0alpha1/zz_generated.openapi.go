@@ -29,7 +29,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardMetadata":              schema_pkg_apis_dashboard_v0alpha1_DashboardMetadata(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardSnapshotWithDeleteKey": schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref),
 		DashboardStatus{}.OpenAPIModelName():                                                                   schema_pkg_apis_dashboard_v0alpha1_DashboardStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardWithAccessInfo":        schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref),
+		DashboardWithAccessInfo{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.FacetResult":                    schema_pkg_apis_dashboard_v0alpha1_FacetResult(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.GridPos":                        schema_pkg_apis_dashboard_v0alpha1_GridPos(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanel":                   schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref),
@@ -137,7 +137,7 @@ func schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -157,7 +157,7 @@ func schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -563,7 +563,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -584,7 +584,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			Dashboard{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Dashboard{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -708,7 +708,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -730,7 +730,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 			},
 		},
 		Dependencies: []string{
-			SnapshotSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -778,7 +778,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref common.Refer
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -804,7 +804,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardAccess", DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardAccess", DashboardStatus{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -921,7 +921,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref common.ReferenceCallbac
 						SchemaProps: spec.SchemaProps{
 							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
 							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -942,7 +942,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -969,7 +969,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -990,7 +990,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanel", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1285,7 +1285,7 @@ func schema_pkg_apis_dashboard_v0alpha1_Snapshot(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1300,7 +1300,7 @@ func schema_pkg_apis_dashboard_v0alpha1_Snapshot(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			SnapshotSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1358,7 +1358,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1379,7 +1379,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			Snapshot{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Snapshot{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

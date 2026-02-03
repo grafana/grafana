@@ -51,7 +51,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -72,7 +72,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			AlertRuleSpec{}.OpenAPIModelName(), AlertRuleStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			AlertRuleSpec{}.OpenAPIModelName(), AlertRuleStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -166,7 +166,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -187,7 +187,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			AlertRule{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			AlertRule{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -563,7 +563,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -584,7 +584,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			RecordingRuleSpec{}.OpenAPIModelName(), RecordingRuleStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			RecordingRuleSpec{}.OpenAPIModelName(), RecordingRuleStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -678,7 +678,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -699,7 +699,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			RecordingRule{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			RecordingRule{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

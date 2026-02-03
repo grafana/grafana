@@ -89,53 +89,53 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardQueryOptionsSpec(ref),
 		DashboardQueryVariableKind{}.OpenAPIModelName():                                                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableKind(ref),
 		DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind(ref),
-		DashboardQueryVariableSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableSpec(ref),
-		DashboardRangeMap{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2alpha1_DashboardRangeMap(ref),
-		DashboardRegexMap{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2alpha1_DashboardRegexMap(ref),
-		DashboardRepeatOptions{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardRepeatOptions(ref),
-		DashboardRowRepeatOptions{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardRowRepeatOptions(ref),
-		DashboardRowsLayoutKind{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutKind(ref),
-		DashboardRowsLayoutRowKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowKind(ref),
-		DashboardRowsLayoutRowSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowSpec(ref),
-		DashboardRowsLayoutSpec{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutSpec(ref),
-		DashboardSpec{}.OpenAPIModelName():                                                              schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref),
-		DashboardSpecialValueMap{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2alpha1_DashboardSpecialValueMap(ref),
-		DashboardStatus{}.OpenAPIModelName():                                                            schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref),
-		DashboardStringOrArrayOfString{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrArrayOfString(ref),
-		DashboardStringOrFloat64{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrFloat64(ref),
-		DashboardSwitchVariableKind{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardSwitchVariableKind(ref),
-		DashboardSwitchVariableSpec{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardSwitchVariableSpec(ref),
-		DashboardTabRepeatOptions{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardTabRepeatOptions(ref),
-		DashboardTabsLayoutKind{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutKind(ref),
-		DashboardTabsLayoutSpec{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutSpec(ref),
-		DashboardTabsLayoutTabKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabKind(ref),
-		DashboardTabsLayoutTabSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabSpec(ref),
-		DashboardTextVariableKind{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardTextVariableKind(ref),
-		DashboardTextVariableSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardTextVariableSpec(ref),
-		DashboardThreshold{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v2alpha1_DashboardThreshold(ref),
-		DashboardThresholdsConfig{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardThresholdsConfig(ref),
-		DashboardTimeRangeOption{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2alpha1_DashboardTimeRangeOption(ref),
-		DashboardTimeSettingsSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardTimeSettingsSpec(ref),
-		DashboardTransformationKind{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardTransformationKind(ref),
-		DashboardV2alpha1ActionStyle{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1ActionStyle(ref),
-		DashboardV2alpha1FieldConfigSourceOverrides{}.OpenAPIModelName():                                schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1FieldConfigSourceOverrides(ref),
-		DashboardV2alpha1RangeMapOptions{}.OpenAPIModelName():                                           schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1RangeMapOptions(ref),
-		DashboardV2alpha1RegexMapOptions{}.OpenAPIModelName():                                           schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1RegexMapOptions(ref),
-		DashboardV2alpha1SpecialValueMapOptions{}.OpenAPIModelName():                                    schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1SpecialValueMapOptions(ref),
-		DashboardValueMap{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2alpha1_DashboardValueMap(ref),
-		DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap{}.OpenAPIModelName():                     schema_pkg_apis_dashboard_v2alpha1_DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap(ref),
-		DashboardValueMappingResult{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardValueMappingResult(ref),
-		DashboardVariableOption{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardVariableOption(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref),
-		DashboardVizConfigKind{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardVizConfigKind(ref),
-		DashboardVizConfigSpec{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardVizConfigSpec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanel":            schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelList":        schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v2alpha1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v2alpha1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v2alpha1_VersionsQueryOptions(ref),
+		DashboardQueryVariableSpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableSpec(ref),
+		DashboardRangeMap{}.OpenAPIModelName():                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardRangeMap(ref),
+		DashboardRegexMap{}.OpenAPIModelName():                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardRegexMap(ref),
+		DashboardRepeatOptions{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardRepeatOptions(ref),
+		DashboardRowRepeatOptions{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardRowRepeatOptions(ref),
+		DashboardRowsLayoutKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutKind(ref),
+		DashboardRowsLayoutRowKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowKind(ref),
+		DashboardRowsLayoutRowSpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowSpec(ref),
+		DashboardRowsLayoutSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutSpec(ref),
+		DashboardSpec{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref),
+		DashboardSpecialValueMap{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardSpecialValueMap(ref),
+		DashboardStatus{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref),
+		DashboardStringOrArrayOfString{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrArrayOfString(ref),
+		DashboardStringOrFloat64{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrFloat64(ref),
+		DashboardSwitchVariableKind{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2alpha1_DashboardSwitchVariableKind(ref),
+		DashboardSwitchVariableSpec{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2alpha1_DashboardSwitchVariableSpec(ref),
+		DashboardTabRepeatOptions{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardTabRepeatOptions(ref),
+		DashboardTabsLayoutKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutKind(ref),
+		DashboardTabsLayoutSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutSpec(ref),
+		DashboardTabsLayoutTabKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabKind(ref),
+		DashboardTabsLayoutTabSpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabSpec(ref),
+		DashboardTextVariableKind{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardTextVariableKind(ref),
+		DashboardTextVariableSpec{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardTextVariableSpec(ref),
+		DashboardThreshold{}.OpenAPIModelName():                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardThreshold(ref),
+		DashboardThresholdsConfig{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardThresholdsConfig(ref),
+		DashboardTimeRangeOption{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2alpha1_DashboardTimeRangeOption(ref),
+		DashboardTimeSettingsSpec{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2alpha1_DashboardTimeSettingsSpec(ref),
+		DashboardTransformationKind{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2alpha1_DashboardTransformationKind(ref),
+		DashboardV2alpha1ActionStyle{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1ActionStyle(ref),
+		DashboardV2alpha1FieldConfigSourceOverrides{}.OpenAPIModelName():                             schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1FieldConfigSourceOverrides(ref),
+		DashboardV2alpha1RangeMapOptions{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1RangeMapOptions(ref),
+		DashboardV2alpha1RegexMapOptions{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1RegexMapOptions(ref),
+		DashboardV2alpha1SpecialValueMapOptions{}.OpenAPIModelName():                                 schema_pkg_apis_dashboard_v2alpha1_DashboardV2alpha1SpecialValueMapOptions(ref),
+		DashboardValueMap{}.OpenAPIModelName():                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardValueMap(ref),
+		DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap{}.OpenAPIModelName():                  schema_pkg_apis_dashboard_v2alpha1_DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap(ref),
+		DashboardValueMappingResult{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2alpha1_DashboardValueMappingResult(ref),
+		DashboardVariableOption{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardVariableOption(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo": schema_pkg_apis_dashboard_v2alpha1_DashboardVersionInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVersionList": schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref),
+		DashboardVizConfigKind{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardVizConfigKind(ref),
+		DashboardVizConfigSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardVizConfigSpec(ref),
+		DashboardWithAccessInfo{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanel":         schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelList":     schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec":     schema_pkg_apis_dashboard_v2alpha1_LibraryPanelSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus":   schema_pkg_apis_dashboard_v2alpha1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.VersionsQueryOptions": schema_pkg_apis_dashboard_v2alpha1_VersionsQueryOptions(ref),
 	}
 }
 
@@ -223,7 +223,7 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -244,7 +244,7 @@ func schema_pkg_apis_dashboard_v2alpha1_Dashboard(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -3001,7 +3001,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3022,7 +3022,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			Dashboard{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Dashboard{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -5231,7 +5231,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref common.Referenc
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -5252,7 +5252,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVersionInfo", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -5352,7 +5352,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -5379,7 +5379,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardWithAccessInfo(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAccess", DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAccess", DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -5407,7 +5407,7 @@ func schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref common.ReferenceCallbac
 						SchemaProps: spec.SchemaProps{
 							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
 							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -5428,7 +5428,7 @@ func schema_pkg_apis_dashboard_v2alpha1_LibraryPanel(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanelStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -5455,7 +5455,7 @@ func schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -5476,7 +5476,7 @@ func schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.LibraryPanel", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

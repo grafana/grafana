@@ -45,7 +45,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -74,7 +74,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -101,7 +101,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -122,7 +122,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

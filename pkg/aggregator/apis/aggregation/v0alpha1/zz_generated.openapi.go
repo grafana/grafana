@@ -47,7 +47,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneService(ref common.Ref
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -66,7 +66,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneService(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceSpec", "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceSpec", "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -96,7 +96,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceCondition(ref c
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Last time the condition transitioned from one status to another.",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
 						},
 					},
 					"reason": {
@@ -118,7 +118,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceCondition(ref c
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"io.k8s.apimachinery.pkg.apis.meta.v1.Time"},
 	}
 }
 
@@ -145,7 +145,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceList(ref common
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -166,7 +166,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceList(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneService", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneService", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

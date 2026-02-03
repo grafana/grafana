@@ -45,7 +45,7 @@ func schema_pkg_apis_preferences_v1alpha1_Preferences(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -60,7 +60,7 @@ func schema_pkg_apis_preferences_v1alpha1_Preferences(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -87,7 +87,7 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -108,7 +108,7 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

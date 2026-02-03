@@ -9,6 +9,10 @@ type DashboardWithAccessInfo struct {
 	Access DashboardAccess `json:"access"`
 }
 
+func (DashboardWithAccessInfo) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo"
+}
+
 // +k8s:deepcopy-gen=true
 type DashboardAccess struct {
 	// Metadata fields

@@ -32,6 +32,9 @@ grafana::codegen:run() {
     echo "============================================="
     skipped="false"
     include_common_input_dirs=$([[ ${api_pkg} == "common" ]] && echo "true" || echo "false")
+    # Fix ref paths in non-common packages so they use OpenAPI model names (io.k8s....)
+    # and resolve against definitions from pkg/apimachinery/apis/common.
+    fix_common_ref_paths=$([[ ${api_pkg} == "common" ]] && echo "false" || echo "true")
 
     kube::codegen::gen_helpers \
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
@@ -44,7 +47,8 @@ grafana::codegen:run() {
         --report-filename "${OPENAPI_VIOLATION_EXCEPTIONS_FILENAME}" \
         --update-report \
         --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
-        --include-common-input-dirs ${include_common_input_dirs}
+        --include-common-input-dirs ${include_common_input_dirs} \
+        --fix-common-ref-paths ${fix_common_ref_paths}
 
       violations_file="${generate_root}/apis/${api_pkg}/${pkg_version}/${OPENAPI_VIOLATION_EXCEPTIONS_FILENAME}"
       if [ ! -f "${violations_file}" ]; then

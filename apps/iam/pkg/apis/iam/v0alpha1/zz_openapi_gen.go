@@ -114,7 +114,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -129,7 +129,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -156,7 +156,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -177,7 +177,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRole", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRole", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -379,7 +379,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref common.ReferenceCallb
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -394,7 +394,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -421,7 +421,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -442,7 +442,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMapping", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMapping", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -910,7 +910,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRole(ref common.ReferenceCallback) commo
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -925,7 +925,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRole(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -952,7 +952,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -967,7 +967,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -994,7 +994,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1015,7 +1015,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBinding", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1229,7 +1229,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1250,7 +1250,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRole", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRole", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1452,7 +1452,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1467,7 +1467,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1494,7 +1494,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1515,7 +1515,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermission", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermission", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1745,7 +1745,7 @@ func schema_pkg_apis_iam_v0alpha1_Role(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1760,7 +1760,7 @@ func schema_pkg_apis_iam_v0alpha1_Role(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1787,7 +1787,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBinding(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1802,7 +1802,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1829,7 +1829,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1850,7 +1850,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBinding", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2064,7 +2064,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2085,7 +2085,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Role", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Role", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2287,7 +2287,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2302,7 +2302,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2329,7 +2329,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2350,7 +2350,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2513,7 +2513,7 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2528,7 +2528,7 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2555,7 +2555,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2570,7 +2570,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2597,7 +2597,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2618,7 +2618,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBinding", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2824,7 +2824,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2839,7 +2839,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2866,7 +2866,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2887,7 +2887,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRule", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRule", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2966,7 +2966,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2987,7 +2987,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Team", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Team", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3150,7 +3150,7 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -3171,7 +3171,7 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -3274,7 +3274,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3295,7 +3295,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.User", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.User", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
