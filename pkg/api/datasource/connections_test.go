@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
@@ -128,14 +129,14 @@ func TestGetConnectionByUID(t *testing.T) {
 			conn, err := client.GetConnectionByUID(reqCtx, tt.uid)
 
 			if tt.wantErr {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errContains)
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errContains)
 				return
 			}
 
-			require.NoError(t, err)
-			require.NotNil(t, conn)
-			require.Equal(t, tt.wantTitle, conn.Title)
+			assert.NoError(t, err)
+			assert.NotNil(t, conn)
+			assert.Equal(t, tt.wantTitle, conn.Title)
 		})
 	}
 }
@@ -179,9 +180,9 @@ func TestGetConnectionByTypeAndUID(t *testing.T) {
 			reqCtx := createTestReqContext(t, 1)
 			conn, err := client.GetConnectionByTypeAndUID(reqCtx, tt.pluginType, tt.uid)
 
-			require.NoError(t, err)
-			require.NotNil(t, conn)
-			require.Equal(t, tt.expectedPath, capturedPath)
+			assert.NoError(t, err)
+			assert.NotNil(t, conn)
+			assert.Equal(t, tt.expectedPath, capturedPath)
 		})
 	}
 }
