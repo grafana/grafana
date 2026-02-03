@@ -166,8 +166,6 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 				return
 			}
 
-			contactedPods.Add(1)
-
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
