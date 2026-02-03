@@ -11865,6 +11865,8 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "error-quota-exceeded-message": "The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.",
+      "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
