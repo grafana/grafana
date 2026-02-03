@@ -12726,7 +12726,11 @@
     "edit-query-name": "Edit query name",
     "header": {
       "expression": "Expression",
-      "transformation": "Transformation"
+      "transformation": "Transformation",
+      "warning-badges": {
+        "text_one": "{{count}} {{type}}",
+        "text_other": "{{count}} {{type}}"
+      }
     },
     "help": {
       "close": "Close help",
