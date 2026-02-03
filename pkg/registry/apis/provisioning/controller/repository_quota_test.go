@@ -202,8 +202,8 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			activeRepos:        5,
 			deletingRepos:      2,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
-			expectedMessageFmt: "Repository quota exceeded: 5/5 repositories",
+			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedMessageFmt: "Repository quota reached: 5/5 repositories",
 		},
 		{
 			name:               "deleting repos excluded from count - over quota",
@@ -211,8 +211,8 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			activeRepos:        7,
 			deletingRepos:      3,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
-			expectedMessageFmt: "Repository quota reached: 7/5 repositories",
+			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedMessageFmt: "Repository quota exceeded: 7/5 repositories",
 		},
 		{
 			name:               "all repos being deleted - not over quota",
@@ -229,8 +229,8 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			activeRepos:        3,
 			deletingRepos:      2,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
-			expectedMessageFmt: "Repository quota exceeded: 3/3 repositories",
+			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedMessageFmt: "Repository quota reached: 3/3 repositories",
 		},
 	}
 
