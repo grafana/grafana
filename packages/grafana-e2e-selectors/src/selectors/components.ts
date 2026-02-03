@@ -56,8 +56,14 @@ export const versionedComponents = {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
+    bodyContainer: {
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
   },
   Sidebar: {
+    container: {
+      '12.4.0': 'data-testid Sidebar container',
+    },
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
@@ -1287,6 +1293,9 @@ export const versionedComponents = {
     },
     submit: {
       [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-submit',
+    },
+    floatGridItemsWarning: {
+      [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-float-grid-items-warning',
     },
   },
   PanelAlertTabContent: {

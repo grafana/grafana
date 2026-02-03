@@ -256,23 +256,6 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 		if err := iamv0.AddTeamLBACRuleTypes(scheme); err != nil {
 			return err
 		}
-		// Register field label conversion for field selectors
-		if err := scheme.AddFieldLabelConversionFunc(
-			iamv0.TeamLBACRuleInfo.GroupVersionKind(),
-			func(label, value string) (string, string, error) {
-				// Allow spec.datasource_uid field selector
-				if label == "spec.datasource_uid" {
-					return label, value, nil
-				}
-				// Allow standard metadata fields
-				if label == "metadata.name" || label == "metadata.namespace" {
-					return label, value, nil
-				}
-				return "", "", fmt.Errorf("field label not supported for %s: %s", iamv0.TeamLBACRuleInfo.GroupVersionKind(), label)
-			},
-		); err != nil {
-			return err
-		}
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -412,7 +395,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		storage[teamResource.StoragePath()] = dw
 	}
 
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store, b.accessClient)
+	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
+
+	teamBindingSearchClient := resource.NewSearchClient(
+		dualwrite.NewSearchAdapter(b.dual),
+		iamv0.TeamBindingResourceInfo.GroupResource(),
+		b.unified,
+		legacyTeamBindingSearchClient,
+		b.features,
+	)
+
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
+
 	if b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 	}
@@ -490,7 +484,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		b.features,
 	)
 
-	storage[userResource.StoragePath("teams")] = user.NewTeamMemberREST(teamBindingSearchClient, b.tracing, b.features)
+	storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
 
 	return nil
 }

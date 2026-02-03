@@ -20,6 +20,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
+  shallowCompare,
   store,
   TimeRange,
 } from '@grafana/data';
@@ -37,7 +38,7 @@ import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineMenuCustomItem } from './LogLineMenu';
-import { LogList } from './LogList';
+import { LogList, LogListOptions } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -79,11 +80,9 @@ export const LogLineContext = memo(
     getRowContextQuery,
     onClose,
     getRowContext,
-    displayedFields = [],
+    displayedFields: displayedFieldsProp = [],
     logLineMenuCustomItems,
     onPermalinkClick,
-    onClickShowField,
-    onClickHideField,
   }: LogLineContextProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
@@ -101,6 +100,8 @@ export const LogLineContext = memo(
       ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? DEFAULT_TIME_WINDOW.toString())
       : DEFAULT_TIME_WINDOW.toString();
     const [timeWindow, setTimeWindow] = useState(parseInt(defaultTimeWindow, 10));
+    const [displayedFields, setDisplayedFields] = useState<string[]>(displayedFieldsProp);
+    const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
 
     const eventBusRef = useRef(new EventBusSrv());
 
@@ -287,6 +288,33 @@ export const LogLineContext = memo(
       setInitialized(false);
     }, [updateContextQuery]);
 
+    const resetFields = useCallback(() => {
+      setDisplayedFields([]);
+    }, []);
+
+    const showField = useCallback(
+      (key: string) => {
+        const index = displayedFields.indexOf(key);
+
+        if (index === -1) {
+          const updatedDisplayedFields = displayedFields.concat(key);
+          setDisplayedFields(updatedDisplayedFields);
+        }
+      },
+      [displayedFields]
+    );
+
+    const hideField = useCallback(
+      (key: string) => {
+        const index = displayedFields.indexOf(key);
+        if (index > -1) {
+          const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
+          setDisplayedFields(updatedDisplayedFields);
+        }
+      },
+      [displayedFields]
+    );
+
     const wrapLogMessage = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true;
     const syntaxHighlighting = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
@@ -317,6 +345,12 @@ export const LogLineContext = memo(
       }
     }, [log.datasourceUid]);
 
+    const onLogOptionsChange = useCallback((option: LogListOptions, value: string | string[] | boolean) => {
+      if (option === 'defaultDisplayedFields' && Array.isArray(value)) {
+        setDefaultDisplayedFields(value);
+      }
+    }, []);
+
     return (
       <Modal
         isOpen={open}
@@ -337,36 +371,53 @@ export const LogLineContext = memo(
           <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
         <div className={styles.controls}>
-          {datasourceInstance?.supportsAdjustableWindow && (
-            <Stack>
-              <InlineLabel
-                htmlFor="time-window-control"
+          <div className={styles.controlGroup}>
+            {datasourceInstance?.supportsAdjustableWindow && (
+              <Stack>
+                <InlineLabel
+                  htmlFor="time-window-control"
+                  tooltip={t(
+                    'logs.log-line-context.time-window-tooltip',
+                    'Amount of time before and after the referenced log'
+                  )}
+                  width="auto"
+                >
+                  {t('logs.log-line-context.time-window-label', 'Context time window')}
+                </InlineLabel>
+                <Combobox
+                  id="time-window-control"
+                  options={getTimeWindowOptions()}
+                  onChange={handleTimeWindowChange}
+                  value={timeWindow.toString()}
+                  minWidth={5}
+                  width="auto"
+                />
+              </Stack>
+            )}
+            {/** Show button to reset if there are displayed fields and they are different than the defaults */}
+            {displayedFields.length > 0 && shallowCompare(displayedFields, defaultDisplayedFields) === false && (
+              <Button
+                variant="secondary"
+                onClick={resetFields}
                 tooltip={t(
-                  'logs.log-line-context.time-window-tooltip',
-                  'Amount of time before and after the referenced log'
+                  'logs.log-line-context.show-original-log-tooltip',
+                  'Clear displayed fields and show the original log line message'
                 )}
-                width="auto"
               >
-                {t('logs.log-line-context.time-window-label', 'Context time window')}
-              </InlineLabel>
-              <Combobox
-                id="time-window-control"
-                options={getTimeWindowOptions()}
-                onChange={handleTimeWindowChange}
-                value={timeWindow.toString()}
-                minWidth={5}
-                width="auto"
-              />
-            </Stack>
-          )}
-          <Button variant="secondary" onClick={onScrollCenterClick}>
-            <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
-          </Button>
-          {contextQuery?.datasource?.uid && (
-            <Button variant="secondary" onClick={onSplitViewClick}>
-              <Trans i18nKey="logs.log-line-context.open-in-split-view">Open in split view</Trans>
+                <Trans i18nKey="logs.log-line-context.show-original-log">Show original logs</Trans>
+              </Button>
+            )}
+          </div>
+          <div className={styles.controlGroup}>
+            <Button variant="secondary" onClick={onScrollCenterClick}>
+              <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
             </Button>
-          )}
+            {contextQuery?.datasource?.uid && (
+              <Button variant="secondary" onClick={onSplitViewClick}>
+                <Trans i18nKey="logs.log-line-context.open-in-split-view">Open in split view</Trans>
+              </Button>
+            )}
+          </div>
         </div>
         <div className={styles.loadingIndicator}>
           {aboveState === LoadingState.Loading && (
@@ -402,8 +453,10 @@ export const LogLineContext = memo(
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
                 onPermalinkClick={onPermalinkClick}
-                onClickHideField={onClickHideField}
-                onClickShowField={onClickShowField}
+                onLogOptionsChange={onLogOptionsChange}
+                onClickHideField={hideField}
+                onClickShowField={showField}
+                setDisplayedFields={setDisplayedFields}
                 showControls
                 showFieldSelector={false}
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
@@ -487,8 +540,23 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     controls: css({
       display: 'flex',
-      justifyContent: 'flex-end',
+      justifyContent: 'space-between',
       gap: theme.spacing(2),
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+      },
+    }),
+    controlGroup: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      flexDirection: 'row',
+      [theme.breakpoints.down('lg')]: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+      },
+      [theme.breakpoints.down('sm')]: {
+        alignItems: 'center',
+      },
     }),
   };
 };

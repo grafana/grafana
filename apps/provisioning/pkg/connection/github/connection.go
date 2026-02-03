@@ -51,13 +51,12 @@ const (
 
 // Test validates the appID and installationID against the given github token.
 func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
-
-	app, err := ghClient.GetApp(ctx)
-	if err != nil {
-		// Check for specific error types
-		switch {
-		case errors.Is(err, ErrAuthentication):
+	if c.secrets.Token.IsZero() {
+		// In case the token is not generated, we create one on the fly
+		// to testing that the other fields are valid.
+		token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+		if err != nil {
+			// Error generating JWT token means the privateKey is not valid.
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -68,8 +67,80 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "token").String(),
-						Detail: ErrAuthentication.Error(),
+						Field:  field.NewPath("secure", "privateKey").String(),
+						Detail: "invalid private key",
+					},
+				},
+			}, nil
+		}
+		c.obj.Secure.Token.Create = token
+		c.secrets.Token = token
+	} else {
+		// In case the token is there, we verify it's correct.
+		claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
+		if err != nil {
+			// Error parsing JWT token means the given private key is invalid
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "privateKey").String(),
+						Detail: "invalid private key",
+					},
+				},
+			}, nil
+		}
+		if claims.Issuer != c.obj.Spec.GitHub.AppID {
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "github", "appID").String(),
+						Detail: fmt.Sprintf("invalid app ID: %s", c.obj.Spec.GitHub.AppID),
+					},
+				},
+			}, nil
+		}
+	}
+
+	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+
+	app, err := ghClient.GetApp(ctx)
+	if err != nil {
+		// Check for specific error types
+		switch {
+		case errors.Is(err, ErrAuthentication):
+			// ErrAuthentication is returned when the underlying JWT is invalid.
+			// This means that appID and/or privateKey are not correct.
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "github", "appID").String(),
+						Detail: "verify appID is correct",
+					},
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "privateKey").String(),
+						Detail: "verify privateKey is correct",
 					},
 				},
 			}, nil
@@ -83,8 +154,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "appID").String(),
+						Type:   metav1.CauseTypeFieldValueNotFound,
+						Field:  field.NewPath("spec", "github", "appID").String(),
 						Detail: "app not found",
 					},
 				},
@@ -99,8 +170,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "token").String(),
+						Type:   metav1.CauseTypeInternal,
 						Detail: ErrServiceUnavailable.Error(),
 					},
 				},
@@ -117,8 +187,13 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "token").String(),
-						Detail: "invalid token",
+						Field:  field.NewPath("spec", "github", "appID").String(),
+						Detail: "verify appID is correct",
+					},
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "privateKey").String(),
+						Detail: "verify privateKey is correct",
 					},
 				},
 			}, nil
@@ -136,7 +211,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 			Errors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", "appID").String(),
+					Field:  field.NewPath("spec", "github", "appID").String(),
 					Detail: fmt.Sprintf("appID mismatch: expected %s, got %d", c.obj.Spec.GitHub.AppID, app.ID),
 				},
 			},
@@ -158,7 +233,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "installationID").String(),
+						Field:  field.NewPath("spec", "github", "installationID").String(),
 						Detail: ErrAuthentication.Error(),
 					},
 				},
@@ -174,7 +249,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "installationID").String(),
+						Field:  field.NewPath("spec", "github", "installationID").String(),
 						Detail: "installation not found",
 					},
 				},
@@ -190,7 +265,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "installationID").String(),
+						Field:  field.NewPath("spec", "github", "installationID").String(),
 						Detail: ErrServiceUnavailable.Error(),
 					},
 				},
@@ -207,7 +282,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "installationID").String(),
+						Field:  field.NewPath("spec", "github", "installationID").String(),
 						Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
 					},
 				},
@@ -248,6 +323,15 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	// Create an installation access token scoped to this repository
 	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
 	if err != nil {
+		switch {
+		case errors.Is(err, ErrUnprocessableEntity):
+			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrRepositoryAccess)
+		case errors.Is(err, ErrNotFound):
+			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrNotFound)
+		case errors.Is(err, ErrAuthentication):
+			return nil, connection.ErrAuthentication
+		}
+
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
@@ -266,7 +350,14 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	// Create the GitHub client with the JWT token
 	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
 
-	repos, err := ghClient.ListInstallationRepositories(ctx, c.obj.Spec.GitHub.InstallationID)
+	token, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create installation access token: %w", err)
+	}
+
+	installationGhClient := c.ghFactory.New(ctx, common.RawSecureValue(token.Token))
+
+	repos, err := installationGhClient.ListInstallationRepositories(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list installation repositories: %w", err)
 	}
@@ -311,6 +402,18 @@ func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
 	}
 
 	return expiration, nil
+}
+
+// TokenValid returns whether the underlying token is valid.
+func (c *Connection) TokenValid(_ context.Context) bool {
+	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
+	if err != nil {
+		// Error here means the token has not been built with the object privateKey
+		return false
+	}
+
+	// For the token to be valid, the issuer must be equal to the object appID
+	return claims.Issuer == c.obj.Spec.GitHub.AppID
 }
 
 var (

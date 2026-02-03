@@ -19,6 +19,7 @@ import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { isRecord } from 'app/core/utils/isRecord';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
@@ -32,7 +33,6 @@ import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaAp
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import {
   getAppPluginConfigsSync,
-  getAppPluginsToAwaitSync,
   getAppPluginsToPreloadSync,
   getExposedComponentPluginDependenciesSync,
   getExtensionPointPluginDependenciesSync,
@@ -143,8 +143,8 @@ const getModalWrapper = ({
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
     return (
       <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        {/* 
-          We also add an error boundary here (apart from the one in the `wrapWithPluginContext`) 
+        {/*
+          We also add an error boundary here (apart from the one in the `wrapWithPluginContext`)
           so the error appears inside the modal (and not at the bottom of the page.)
         */}
         <ExtensionErrorBoundary
@@ -380,10 +380,6 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
 
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
   return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
-}
-
-function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {
@@ -661,15 +657,6 @@ export async function getExtensionPointPluginMeta(extensionPointId: string): Pro
 export async function getExposedComponentPluginDependencies(exposedComponentId: string): Promise<string[]> {
   const apps = await getAppPluginMetas();
   return getExposedComponentPluginDependenciesSync(exposedComponentId, apps);
-}
-
-/**
- * Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
- * @returns A list of app plugins that has to be loaded before core Grafana could finish the initialization.
- */
-export async function getAppPluginsToAwait(): Promise<AppPluginConfig[]> {
-  const apps = await getAppPluginMetas();
-  return getAppPluginsToAwaitSync(apps);
 }
 
 /**
