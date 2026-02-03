@@ -207,6 +207,7 @@ func TestClientServer(t *testing.T) {
 
 	grpcService, err := provideTestGRPCService(cfg, features, prometheus.NewPedanticRegistry())
 	require.NoError(t, err)
+	err = services.StartAndAwaitRunning(ctx, grpcService)
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 	require.NoError(t, err)
@@ -314,6 +315,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	grpcService, err := provideTestGRPCService(cfg, features, prometheus.NewPedanticRegistry())
 	require.NoError(t, err)
+	err = services.StartAndAwaitRunning(ctx, grpcService)
 
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
