@@ -35,6 +35,14 @@ var (
 		errutil.WithPublic("Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 
+	ErrInhibitionRuleExists   = errutil.BadRequest("alerting.notifications.inhibition-rules.nameExists", errutil.WithPublicMessage("Inhibition rule already exists."))
+	ErrInhibitionRuleInvalid  = errutil.BadRequest("alerting.notifications.inhibition-rules.invalidFormat").MustTemplate("Invalid format of the submitted inhibition rule", errutil.WithPublic("Inhibition rule is in invalid format. Correct the payload and try again."))
+	ErrInhibitionRuleNotFound = errutil.NotFound("alerting.notifications.inhibition-rules.notFound")
+	ErrInhibitionRuleOrigin   = errutil.BadRequest("alerting.notifications.inhibition-rules.originInvalid").MustTemplate(
+		"Inhibition Rule '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Inhibition Rule '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
+
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
 	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
 	contactPointUidExists     = "Receiver configuration with UID '{{ .Public.UID }}' already exists in contact point '{{ .Public.Name }}'. Please use unique identifiers for receivers across all contact points."
@@ -86,6 +94,18 @@ func MakeErrTemplateInvalid(err error) error {
 	return ErrTemplateInvalid.Build(data)
 }
 
+// MakeErrInhibitionRuleInvalid creates an error with the ErrInhibitionRuleInvalid template
+func MakeErrInhibitionRuleInvalid(err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Error": err.Error(),
+		},
+		Error: err,
+	}
+
+	return ErrInhibitionRuleInvalid.Build(data)
+}
+
 func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []models.AlertRuleKey) error {
 	uids := make([]string, 0, len(rules))
 	for _, key := range rules {
@@ -120,5 +140,11 @@ func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) er
 func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {
 	return ErrTimeIntervalOrigin.Build(errutil.TemplateData{
 		Public: map[string]interface{}{"Action": action, "Name": mt.Name},
+	})
+}
+
+func makeErrInhibitionRuleOrigin(ir models.InhibitionRule, action string) error {
+	return ErrInhibitionRuleOrigin.Build(errutil.TemplateData{
+		Public: map[string]interface{}{"Action": action, "Name": ir.UID},
 	})
 }
