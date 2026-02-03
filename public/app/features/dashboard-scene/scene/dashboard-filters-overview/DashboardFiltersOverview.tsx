@@ -1,15 +1,12 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { VariableSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
-import { FiltersOverviewRow, RowData } from './FiltersOverviewRow';
-import { useFiltersOverviewState, useVirtualListSizing } from './useFiltersOverviewState';
+import { FilterRow, GroupHeader } from './FiltersOverviewRow';
+import { useFiltersOverviewState } from './useFiltersOverviewState';
 
 interface DashboardFiltersOverviewProps {
   adhocFilters?: AdHocFiltersVariable;
@@ -26,48 +23,12 @@ export const DashboardFiltersOverview = ({
 }: DashboardFiltersOverviewProps) => {
   const styles = useStyles2(getStyles);
 
-  // State management
   const { state, listItems, operatorConfig, actions, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
     adhocFilters,
     groupByVariable,
     searchQuery,
   });
 
-  // Virtual list sizing
-  const { listWidth, listContainerRef, listRef, setRowHeight, resetSizes, getItemSize } = useVirtualListSizing();
-
-  // Reset sizes when list items or width change
-  useEffect(() => {
-    resetSizes();
-  }, [listItems, listWidth, resetSizes]);
-
-  // Build row data for react-window
-  const rowData = useMemo<RowData>(
-    () => ({
-      items: listItems,
-      groupByVariable,
-      openGroups: state.openGroups,
-      measureKey: listWidth,
-      operatorOptions: operatorConfig.options,
-      operatorsByKey: state.operatorsByKey,
-      multiOperatorValues: operatorConfig.multiValues,
-      singleValuesByKey: state.singleValuesByKey,
-      multiValuesByKey: state.multiValuesByKey,
-      isGrouped: state.isGrouped,
-      isOriginByKey: state.isOriginByKey,
-      actions: { ...actions, setRowHeight },
-    }),
-    [listItems, groupByVariable, state, listWidth, operatorConfig, actions, setRowHeight]
-  );
-
-  // Action handlers
-  const handleApply = () => actions.applyChanges();
-  const handleApplyAndClose = () => {
-    actions.applyChanges();
-    onClose();
-  };
-
-  // Early returns for edge cases
   if (!hasAdhocFilters) {
     return <div>{t('dashboard.filters-overview.missing-adhoc', 'No ad hoc filters available')}</div>;
   }
@@ -78,32 +39,53 @@ export const DashboardFiltersOverview = ({
 
   return (
     <div className={styles.container}>
-      <div className={styles.listContainer} ref={listContainerRef}>
-        <AutoSizer>
-          {({ height, width }) => (
-            <VariableSizeList
-              ref={listRef}
-              height={height}
-              width={width}
-              itemCount={listItems.length}
-              itemSize={(index: number) => getItemSize(index, listItems[index]?.type ?? 'row')}
-              style={{ overflowX: 'hidden' }}
-              itemKey={(index) => {
-                const item = listItems[index];
-                return item.type === 'group'
-                  ? `group-${item.group}`
-                  : `row-${item.keyValue}-${item.keyOption.group ?? 'ungrouped'}`;
-              }}
-              overscanCount={6}
-              itemData={rowData}
-            >
-              {FiltersOverviewRow}
-            </VariableSizeList>
-          )}
-        </AutoSizer>
+      <div className={styles.listContainer}>
+        {listItems.map((item) => {
+          if (item.type === 'group') {
+            return (
+              <GroupHeader
+                key={`group-${item.group}`}
+                group={item.group}
+                isOpen={state.openGroups[item.group] ?? true}
+                onToggle={actions.toggleGroup}
+              />
+            );
+          }
+
+          const { keyOption, keyValue } = item;
+          const operatorValue = state.operatorsByKey[keyValue] ?? '=';
+
+          return (
+            <FilterRow
+              key={`row-${keyValue}-${keyOption.group ?? 'ungrouped'}`}
+              keyOption={keyOption}
+              keyValue={keyValue}
+              operatorValue={operatorValue}
+              isMultiOperator={operatorConfig.multiValues.has(operatorValue)}
+              singleValue={state.singleValuesByKey[keyValue] ?? ''}
+              multiValues={state.multiValuesByKey[keyValue] ?? []}
+              isGroupBy={state.isGrouped[keyValue] ?? false}
+              isOrigin={state.isOriginByKey[keyValue] ?? false}
+              hasGroupByVariable={Boolean(groupByVariable)}
+              operatorOptions={operatorConfig.options}
+              onOperatorChange={actions.setOperator}
+              onSingleValueChange={actions.setSingleValue}
+              onMultiValuesChange={actions.setMultiValues}
+              onGroupByToggle={actions.toggleGroupBy}
+              getValueOptions={actions.getValueOptionsForKey}
+            />
+          );
+        })}
       </div>
 
-      <Footer onApply={handleApply} onApplyAndClose={handleApplyAndClose} onClose={onClose} />
+      <Footer
+        onApply={actions.applyChanges}
+        onApplyAndClose={() => {
+          actions.applyChanges();
+          onClose();
+        }}
+        onClose={onClose}
+      />
     </div>
   );
 };
@@ -135,7 +117,6 @@ const Footer = ({ onApply, onApplyAndClose, onClose }: FooterProps) => {
   );
 };
 
-// Styles
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     width: '100%',
@@ -148,12 +129,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     flex: 1,
     minHeight: 0,
-    overflow: 'hidden',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
   }),
   footer: css({
-    marginTop: '16px',
-    paddingTop: '12px',
-    borderTop: '1px solid var(--border-weak)',
-    overflow: 'hidden',
+    marginTop: theme.spacing(2),
+    paddingTop: theme.spacing(1.5),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
   }),
 });

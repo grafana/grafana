@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { fuzzySearch, SelectableValue } from '@grafana/data';
 import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, OPERATORS } from '@grafana/scenes';
@@ -6,9 +6,7 @@ import { ComboboxOption } from '@grafana/ui';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState } from './utils';
 
-export const ROW_HEIGHT = 40;
-export const GROUP_HEADER_HEIGHT = 50;
-
+// Types
 export type ListItem =
   | { type: 'group'; group: string }
   | { type: 'row'; keyOption: SelectableValue<string>; keyValue: string };
@@ -39,7 +37,7 @@ interface UseFiltersOverviewStateOptions {
   searchQuery: string;
 }
 
-// Helpers
+// Helper: Get groupBy values from variable
 const getGroupByValues = (groupByVariable?: GroupByVariable): string[] => {
   if (!groupByVariable) {
     return [];
@@ -49,21 +47,18 @@ const getGroupByValues = (groupByVariable?: GroupByVariable): string[] => {
   return values.map((entry) => entry.toString());
 };
 
+// Helper: Split keys into grouped and ungrouped
 const splitKeysByGroup = (keys: Array<SelectableValue<string>>) => {
   const groups = new Map<string, Array<SelectableValue<string>>>();
   const ungrouped: Array<SelectableValue<string>> = [];
 
   for (const key of keys) {
-    const group = key.group;
-    if (!group) {
-      ungrouped.push(key);
+    if (key.group) {
+      const groupKeys = groups.get(key.group) ?? [];
+      groupKeys.push(key);
+      groups.set(key.group, groupKeys);
     } else {
-      const groupKeys = groups.get(group);
-      if (groupKeys) {
-        groupKeys.push(key);
-      } else {
-        groups.set(group, [key]);
-      }
+      ungrouped.push(key);
     }
   }
 
@@ -74,6 +69,7 @@ const splitKeysByGroup = (keys: Array<SelectableValue<string>>) => {
   };
 };
 
+// Helper: Filter keys by search term
 const filterKeysBySearch = (
   keys: Array<SelectableValue<string>>,
   groupNames: string[],
@@ -83,35 +79,26 @@ const filterKeysBySearch = (
     return keys;
   }
 
-  const haystack = keys.map((keyOption) => (keyOption.label ?? keyOption.value ?? '').toString());
+  const haystack = keys.map((k) => (k.label ?? k.value ?? '').toString());
   const matchingKeyIndices = fuzzySearch(haystack, searchTerm);
   const matchingKeyValues = new Set(
     matchingKeyIndices
-      .map((index) => keys[index]?.value ?? keys[index]?.label)
-      .filter((value): value is string => Boolean(value))
+      .map((i) => keys[i]?.value ?? keys[i]?.label)
+      .filter((v): v is string => Boolean(v))
   );
   const matchingGroupNames = new Set(
     fuzzySearch(groupNames, searchTerm)
-      .map((index) => groupNames[index])
+      .map((i) => groupNames[i])
       .filter(Boolean)
   );
 
-  return keys.filter((keyOption) => {
-    const keyValue = keyOption.value ?? keyOption.label;
-    if (!keyValue) {
-      return false;
-    }
-    if (matchingKeyValues.has(keyValue)) {
-      return true;
-    }
-    if (keyOption.group && matchingGroupNames.has(keyOption.group)) {
-      return true;
-    }
-    return false;
+  return keys.filter((k) => {
+    const keyValue = k.value ?? k.label;
+    return keyValue && (matchingKeyValues.has(keyValue) || (k.group && matchingGroupNames.has(k.group)));
   });
 };
 
-// Flatten list for faster rendering
+// Helper: Build flat list items from keys
 const buildListItems = (
   ungroupedKeys: Array<SelectableValue<string>>,
   groupNames: string[],
@@ -120,6 +107,7 @@ const buildListItems = (
 ): ListItem[] => {
   const items: ListItem[] = [];
 
+  // Add ungrouped items first
   for (const keyOption of ungroupedKeys) {
     const keyValue = keyOption.value ?? keyOption.label;
     if (keyValue) {
@@ -127,11 +115,11 @@ const buildListItems = (
     }
   }
 
+  // Add grouped items
   for (const group of groupNames) {
     items.push({ type: 'group', group });
     if (openGroups[group] ?? true) {
-      const keys = groupedKeys.get(group) ?? [];
-      for (const keyOption of keys) {
+      for (const keyOption of groupedKeys.get(group) ?? []) {
         const keyValue = keyOption.value ?? keyOption.label;
         if (keyValue) {
           items.push({ type: 'row', keyOption, keyValue });
@@ -144,7 +132,6 @@ const buildListItems = (
 };
 
 export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQuery }: UseFiltersOverviewStateOptions) {
-  // Core state
   const [state, setState] = useState<FiltersOverviewState>({
     keys: [],
     operatorsByKey: {},
@@ -155,39 +142,35 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
     openGroups: {},
   });
 
-  // Value options cache
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
 
-  // Operator configuration (memoized)
-  const operatorConfig = useMemo(() => {
-    const options = OPERATORS.map((op) => ({ label: op.value, value: op.value }));
-    const multiValues = new Set<string>(OPERATORS.filter((op) => op.isMulti).map((op) => op.value));
-    return { options, multiValues };
-  }, []);
+  // Operator config (stable)
+  const operatorConfig = useMemo(() => ({
+    options: OPERATORS.map((op) => ({ label: op.value, value: op.value })),
+    multiValues: new Set<string>(OPERATORS.filter((op) => op.isMulti).map((op) => op.value)),
+  }), []);
 
-  // Initialize state from adhocFilters and groupByVariable
+  // Initialize state from filters
   useEffect(() => {
     if (!adhocFilters) {
       return;
     }
 
-    const initializeState = async () => {
+    const init = async () => {
       const { keys, operatorsByKey, multiValuesByKey, singleValuesByKey, isOriginByKey } = buildOverviewState(
         adhocFilters.state,
         operatorConfig.multiValues
       );
 
-      // Fetch additional keys from datasource
+      // Fetch keys from datasource
       keys.push(...(await adhocFilters._getKeys(null)));
 
-      // Add groupBy values as keys if not already present
+      // Add groupBy values if not present
       if (groupByVariable) {
-        const groupByValues = getGroupByValues(groupByVariable);
-        const existingKeys = new Set(keys.map((key) => key.value ?? key.label).filter(Boolean));
-        for (const keyValue of groupByValues) {
-          if (!existingKeys.has(keyValue)) {
-            keys.push({ label: keyValue, value: keyValue });
-            existingKeys.add(keyValue);
+        const existing = new Set(keys.map((k) => k.value ?? k.label).filter(Boolean));
+        for (const v of getGroupByValues(groupByVariable)) {
+          if (!existing.has(v)) {
+            keys.push({ label: v, value: v });
           }
         }
       }
@@ -195,8 +178,8 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
       // Initialize groupBy state
       const isGrouped: Record<string, boolean> = {};
       if (groupByVariable) {
-        for (const selectedKey of getGroupByValues(groupByVariable)) {
-          isGrouped[selectedKey] = true;
+        for (const v of getGroupByValues(groupByVariable)) {
+          isGrouped[v] = true;
         }
       }
 
@@ -211,10 +194,10 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
       }));
     };
 
-    initializeState();
+    init();
   }, [adhocFilters, groupByVariable, operatorConfig.multiValues]);
 
-  // Compute group names and initialize openGroups
+  // Initialize openGroups when new groups appear
   const { groupNames } = useMemo(() => splitKeysByGroup(state.keys), [state.keys]);
 
   useEffect(() => {
@@ -222,26 +205,25 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
       return;
     }
     setState((prev) => {
-      const nextOpenGroups = { ...prev.openGroups };
+      const next = { ...prev.openGroups };
       let changed = false;
-      for (const group of groupNames) {
-        if (nextOpenGroups[group] === undefined) {
-          nextOpenGroups[group] = true;
+      for (const g of groupNames) {
+        if (next[g] === undefined) {
+          next[g] = true;
           changed = true;
         }
       }
-      return changed ? { ...prev, openGroups: nextOpenGroups } : prev;
+      return changed ? { ...prev, openGroups: next } : prev;
     });
   }, [groupNames]);
 
-  // Filtered keys based on search
+  // Filter and build list items
   const searchTerm = searchQuery.trim();
   const filteredKeys = useMemo(
     () => filterKeysBySearch(state.keys, groupNames, searchTerm),
     [state.keys, groupNames, searchTerm]
   );
 
-  // Build list items for virtualized list
   const listItems = useMemo(() => {
     const { groupNames, groupedKeys, ungroupedKeys } = splitKeysByGroup(filteredKeys);
     return buildListItems(ungroupedKeys, groupNames, groupedKeys, state.openGroups);
@@ -250,27 +232,27 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
   // Actions
   const actions: FiltersOverviewActions = useMemo(
     () => ({
-      toggleGroup: (group: string, isOpen: boolean) => {
+      toggleGroup: (group, isOpen) => {
         setState((prev) => ({ ...prev, openGroups: { ...prev.openGroups, [group]: isOpen } }));
       },
 
-      setOperator: (key: string, operator: string) => {
+      setOperator: (key, operator) => {
         setState((prev) => ({ ...prev, operatorsByKey: { ...prev.operatorsByKey, [key]: operator } }));
       },
 
-      setSingleValue: (key: string, value: string) => {
+      setSingleValue: (key, value) => {
         setState((prev) => ({ ...prev, singleValuesByKey: { ...prev.singleValuesByKey, [key]: value } }));
       },
 
-      setMultiValues: (key: string, values: string[]) => {
+      setMultiValues: (key, values) => {
         setState((prev) => ({ ...prev, multiValuesByKey: { ...prev.multiValuesByKey, [key]: values } }));
       },
 
-      toggleGroupBy: (key: string, nextValue: boolean) => {
+      toggleGroupBy: (key, nextValue) => {
         setState((prev) => ({ ...prev, isGrouped: { ...prev.isGrouped, [key]: nextValue } }));
       },
 
-      getValueOptionsForKey: async (key: string, operator: string, inputValue: string) => {
+      getValueOptionsForKey: async (key, operator, inputValue) => {
         if (!adhocFilters) {
           return [];
         }
@@ -289,9 +271,8 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
         if (!inputValue) {
           return options;
         }
-
         const lowered = inputValue.toLowerCase();
-        return options.filter((opt) => (opt.label ?? opt.value).toLowerCase().includes(lowered));
+        return options.filter((o) => (o.label ?? o.value).toLowerCase().includes(lowered));
       },
 
       applyChanges: () => {
@@ -301,8 +282,6 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
         }
 
         if (adhocFilters) {
-          const existingOriginFilters = adhocFilters.state.originFilters ?? [];
-          const existingFilters = adhocFilters.state.filters ?? [];
           const { nextFilters, nextOriginFilters, nonApplicableOriginFilters, nonApplicableFilters } =
             buildAdHocApplyFilters({
               keys: state.keys,
@@ -310,19 +289,14 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
               operatorsByKey: state.operatorsByKey,
               singleValuesByKey: state.singleValuesByKey,
               multiValuesByKey: state.multiValuesByKey,
-              existingOriginFilters,
-              existingFilters,
+              existingOriginFilters: adhocFilters.state.originFilters ?? [],
+              existingFilters: adhocFilters.state.filters ?? [],
               multiOperatorValues: operatorConfig.multiValues,
             });
 
-          const validatedOriginFilters = adhocFilters.validateOriginFilters([
-            ...nextOriginFilters,
-            ...nonApplicableOriginFilters,
-          ]);
-
           adhocFilters.setState({
             filters: [...nextFilters, ...nonApplicableFilters],
-            originFilters: validatedOriginFilters,
+            originFilters: adhocFilters.validateOriginFilters([...nextOriginFilters, ...nonApplicableOriginFilters]),
           });
         }
       },
@@ -337,59 +311,5 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
     actions,
     hasKeys: state.keys.length > 0,
     hasAdhocFilters: Boolean(adhocFilters),
-  };
-}
-
-// Hook for managing virtualized list sizing
-export function useVirtualListSizing() {
-  const [listWidth, setListWidth] = useState(0);
-  const listContainerRef = useRef<HTMLDivElement | null>(null);
-  const listRef = useRef<any>(null);
-  const sizeMapRef = useRef(new Map<number, number>());
-
-  // Track container width for resize handling
-  useLayoutEffect(() => {
-    const node = listContainerRef.current;
-    if (!node || typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    const observer = new ResizeObserver((entries) => {
-      const nextWidth = Math.round(entries[0]?.contentRect?.width ?? 0);
-      setListWidth((current) => (current === nextWidth ? current : nextWidth));
-    });
-    observer.observe(node);
-
-    return () => observer.disconnect();
-  }, []);
-
-  const setRowHeight = useCallback((index: number, size: number) => {
-    const nextSize = Math.max(size, ROW_HEIGHT);
-    const currentSize = sizeMapRef.current.get(index);
-    if (currentSize !== nextSize) {
-      sizeMapRef.current.set(index, nextSize);
-      listRef.current?.resetAfterIndex(index);
-    }
-  }, []);
-
-  const resetSizes = useCallback(() => {
-    sizeMapRef.current = new Map();
-    listRef.current?.resetAfterIndex(0, true);
-  }, []);
-
-  const getItemSize = useCallback(
-    (index: number, itemType: 'group' | 'row') => {
-      return itemType === 'group' ? GROUP_HEADER_HEIGHT : sizeMapRef.current.get(index) ?? ROW_HEIGHT;
-    },
-    []
-  );
-
-  return {
-    listWidth,
-    listContainerRef,
-    listRef,
-    setRowHeight,
-    resetSizes,
-    getItemSize,
   };
 }

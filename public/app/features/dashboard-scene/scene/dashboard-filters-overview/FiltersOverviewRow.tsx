@@ -1,37 +1,9 @@
 import { css } from '@emotion/css';
-import { memo, useLayoutEffect, useRef } from 'react';
-import { ListChildComponentProps } from 'react-window';
+import { memo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { GroupByVariable } from '@grafana/scenes';
-import {
-  Checkbox,
-  Combobox,
-  ComboboxOption,
-  Icon,
-  MultiCombobox,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
-
-import { FiltersOverviewActions, ListItem } from './useFiltersOverviewState';
-
-// Row data passed through react-window
-export interface RowData {
-  items: ListItem[];
-  groupByVariable?: GroupByVariable;
-  openGroups: Record<string, boolean>;
-  measureKey: number;
-  operatorOptions: Array<ComboboxOption<string>>;
-  operatorsByKey: Record<string, string>;
-  multiOperatorValues: Set<string>;
-  singleValuesByKey: Record<string, string>;
-  multiValuesByKey: Record<string, string[]>;
-  isGrouped: Record<string, boolean>;
-  isOriginByKey: Record<string, boolean>;
-  actions: FiltersOverviewActions & { setRowHeight: (index: number, size: number) => void };
-}
+import { Checkbox, Combobox, ComboboxOption, Icon, MultiCombobox, Tooltip, useStyles2 } from '@grafana/ui';
 
 // Group header component
 interface GroupHeaderProps {
@@ -40,7 +12,7 @@ interface GroupHeaderProps {
   onToggle: (group: string, isOpen: boolean) => void;
 }
 
-const GroupHeader = memo(({ group, isOpen, onToggle }: GroupHeaderProps) => {
+export const GroupHeader = memo(({ group, isOpen, onToggle }: GroupHeaderProps) => {
   const styles = useStyles2(getGroupStyles);
 
   return (
@@ -81,7 +53,7 @@ interface FilterRowProps {
   getValueOptions: (key: string, operator: string, inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 }
 
-const FilterRow = memo(
+export const FilterRow = memo(
   ({
     keyOption,
     keyValue,
@@ -176,106 +148,13 @@ const FilterRow = memo(
 
 FilterRow.displayName = 'FilterRow';
 
-// Main row component with resize observer for dynamic height
-export const FiltersOverviewRow = memo(({ index, style, data }: ListChildComponentProps<RowData>) => {
-  const item = data.items[index];
-  if (!item) {
-    return null;
-  }
-
-  if (item.type === 'group') {
-    const isOpen = data.openGroups[item.group] ?? true;
-    return (
-      <div style={style}>
-        <GroupHeader group={item.group} isOpen={isOpen} onToggle={data.actions.toggleGroup} />
-      </div>
-    );
-  }
-
-  return (
-    <FilterRowWithResize
-      index={index}
-      style={style}
-      item={item}
-      data={data}
-    />
-  );
-});
-
-FiltersOverviewRow.displayName = 'FiltersOverviewRow';
-
-// Wrapper for FilterRow that handles resize observation
-interface FilterRowWithResizeProps {
-  index: number;
-  style: React.CSSProperties;
-  item: Extract<ListItem, { type: 'row' }>;
-  data: RowData;
-}
-
-const FilterRowWithResize = memo(({ index, style, item, data }: FilterRowWithResizeProps) => {
-  const rowRef = useRef<HTMLDivElement | null>(null);
-  const lastHeightRef = useRef<number | null>(null);
-
-  const { keyOption, keyValue } = item;
-  const operatorValue = data.operatorsByKey[keyValue] ?? '=';
-  const isMultiOperator = data.multiOperatorValues.has(operatorValue);
-
-  useLayoutEffect(() => {
-    const node = rowRef.current;
-    if (!node || typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    const applySize = () => {
-      const nextHeight = node.getBoundingClientRect().height;
-      if (lastHeightRef.current !== nextHeight) {
-        lastHeightRef.current = nextHeight;
-        data.actions.setRowHeight(index, nextHeight);
-      }
-    };
-
-    const observer = new ResizeObserver(applySize);
-    observer.observe(node);
-    applySize();
-
-    return () => observer.disconnect();
-  }, [data.actions, data.measureKey, index]);
-
-  return (
-    <div style={style}>
-      <div ref={rowRef}>
-        <FilterRow
-          keyOption={keyOption}
-          keyValue={keyValue}
-          operatorValue={operatorValue}
-          isMultiOperator={isMultiOperator}
-          singleValue={data.singleValuesByKey[keyValue] ?? ''}
-          multiValues={data.multiValuesByKey[keyValue] ?? []}
-          isGroupBy={data.isGrouped[keyValue] ?? false}
-          isOrigin={data.isOriginByKey[keyValue] ?? false}
-          hasGroupByVariable={Boolean(data.groupByVariable)}
-          operatorOptions={data.operatorOptions}
-          onOperatorChange={data.actions.setOperator}
-          onSingleValueChange={data.actions.setSingleValue}
-          onMultiValuesChange={data.actions.setMultiValues}
-          onGroupByToggle={data.actions.toggleGroupBy}
-          getValueOptions={data.actions.getValueOptionsForKey}
-        />
-      </div>
-    </div>
-  );
-});
-
-FilterRowWithResize.displayName = 'FilterRowWithResize';
-
 // Styles
 const getGroupStyles = (theme: GrafanaTheme2) => ({
   groupRow: css({
     display: 'flex',
     alignItems: 'center',
     width: '100%',
-    padding: '0 4px',
-    boxSizing: 'border-box',
+    padding: theme.spacing(1, 0.5),
   }),
   groupButton: css({
     width: '100%',
@@ -291,10 +170,10 @@ const getGroupStyles = (theme: GrafanaTheme2) => ({
   groupButtonInner: css({
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: theme.spacing(0.75),
   }),
   groupLabel: css({
-    fontWeight: 500,
+    fontWeight: theme.typography.fontWeightMedium,
   }),
 });
 
@@ -302,25 +181,21 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
   row: css({
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '8px',
+    gap: theme.spacing(1),
     width: '100%',
-    overflow: 'hidden',
   }),
   labelCell: css({
     flex: '1 1 auto',
     minWidth: 0,
-    overflow: 'hidden',
   }),
   operatorCell: css({
     flex: '0 0 auto',
     width: theme.spacing(8),
-    overflow: 'hidden',
     '& > *': { width: '100%' },
   }),
   valueCell: css({
     flex: '0 0 auto',
     width: theme.spacing(26),
-    overflow: 'hidden',
     '& > *': { width: '100%' },
   }),
   groupByCell: css({
@@ -329,7 +204,6 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     alignSelf: 'center',
-    overflow: 'hidden',
   }),
   labelShell: css({
     display: 'flex',
@@ -345,7 +219,6 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
     minWidth: 0,
     boxSizing: 'border-box',
     color: theme.colors.text.primary,
-    overflow: 'hidden',
   }),
   labelText: css({
     overflow: 'hidden',
