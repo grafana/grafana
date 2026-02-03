@@ -31,10 +31,8 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
   const styles = useStyles2(getStyles);
 
   const handleClick = useCallback(() => {
-    if (!disabled) {
-      onSelect(value!);
-    }
-  }, [value, onSelect, disabled]);
+    onSelect(value!);
+  }, [value, onSelect]);
 
   const tooltipContent = disabled || description;
 
