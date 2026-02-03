@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
-import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/fieldSelectorUtils';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
 import { DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../constants';
@@ -83,8 +83,7 @@ export const LogsTableFieldSelector = ({
   }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
-    // @todo not expanding back to prior width
-    const width = getFieldSelectorWidth(SETTING_KEY_ROOT, DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH);
+    const width = getFieldSelectorWidth(SETTING_KEY_ROOT);
     setSidebarWidthWrapper(width < 2 * MIN_SIDEBAR_WIDTH ? DEFAULT_SIDEBAR_WIDTH : width);
     reportInteraction(`${SETTING_KEY_ROOT}.field_selector_expand_clicked`, {
       mode: 'table',
