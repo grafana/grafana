@@ -98,7 +98,7 @@ In this example, that means only the last row of data is displayed in the gauges
 
 If you want to show one gauge per table cell, you can change the **Show** setting from **Calculate** to **All values**, and each gauge is labeled by concatenating the text column with each value's column name.
 
-If you want to visualize the list of values as a time series alongside your calculated gauge value, you can enable the **Sparkline** mode.
+If you want to visualize the list of values as a time series alongside your calculated gauge value, toggle on the **Show sparkline** switch.
 
 ![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example7.png)
 
@@ -149,28 +149,34 @@ Adjust how the gauge is displayed.
 
 | Option | Description |
 | ------ | ----------- |
-| Style | Choose a gauge shape:<ul><li>**Circle** - fills clockwise around a circle, starting from the top (e.g. 12 o'clock).</li><li>**Arc** - fills from left to right across an arc shape, like a speedometer.</li></ul> |
+| Style | Choose a gauge shape:<ul><li>**Circle** - Fills clockwise around a circle, starting from the 12 o'clock position.</li><li>**Arc** - Fills from left to right around an arc.</li></ul> |
 | Orientation | Choose a stacking direction:<ul><li>**Auto** - Gauges display in rows and columns.</li><li>**Horizontal** - Gauges display top to bottom.</li><li>**Vertical** - Gauges display left to right.</li></ul> |
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Bar width | This factor between 0.1 and 1 is used to determine the width of the gauge bar. |
-| Segment count | If greater than 1, this breaks the gauge into the selected number of equal segments across the selected shape. Note that segments are always fully filled, regardless of whether the gauge's current value would land somewhere "within" the segment. |
-| Segment spacing | When segments are enabled, this factor between 0 and 1 controls the size of the gap between each segment. |
-| Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - renders both the value and series name.</li><li>**Value** - renders only the value.</li><li>**Name** - renders only the series name.</li><li>**None** - renders the gauge with no labels.</li></ul> |
- <!-- FIXME: I think we want to link out to some images of what neutral does here. --> 
-| Neutral | Set the starting value from which every gauge will be filled. |
-<!-- FIXME: I think we want to link out to some images of how sparklines look. --> 
-| Show sparkline | If true, a sparkline will be rendered containing the series data for the gauge. |
+| Bar width | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
+| Segments | Enter a value between 1 and 100 to break the gauge into equal segments. Segments are always fully filled, even if the gauge's current value falls within a segment. |
+| Segment spacing | Enter a value between 0 and 1 to set the factor that controls the size of the gap between each segment. This option is only applies when the **Segments** value is more than `1`. |
+| Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - Renders both the value and series name.</li><li>**Value** - Renders only the value.</li><li>**Name** - Renders only the series name.</li><li>**None** - Renders the gauge with no labels.</li></ul> |
+| [Neutral value](#neutral-value) | Set the starting value from which every gauge will be filled. |
+| [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |
 | [Show thresholds](#show-threshold-markers) | Controls if a threshold band is shown outside the inner gauge value band. |
-| Show labels | Controls if threshold, neutral and min/max labels are shown around the outside of the gauge. |
-| Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - if enabled, color transitions will be represented with gradients for color schemes where the gauge color will differ by value.</li><li>**Bar glow** - adds a glowing shadow around the gauge bar.</li><li>**Center glow** - the color representing the current gauge value will be visible in the center of the gauge.</li></ul> |
+| Show labels | Control whether threshold, neutral and min/max labels are shown around the outside of the gauge. |
+| Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color  differs by value.</li><li>**Bar glow** - Adds a glowing shadow around the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
-#### Show threshold markers
+#### Neutral value
 
-Controls if a threshold band is shown around the inner gauge value band.
+TBD
+
+#### Show sparkline
+
+TBD
+
+#### Show thresholds {#show-threshold-markers}
+
+Control whether a threshold band is shown around the inner gauge value band.
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
 
