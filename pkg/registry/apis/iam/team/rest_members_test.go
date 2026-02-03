@@ -358,7 +358,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		require.Empty(t, result.Items)
 	})
 
-	t.Run("should return error when subject_name column is missing", func(t *testing.T) {
+	t.Run("should return error when subject column is missing", func(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -371,11 +371,11 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		}
 		result, err := parseResults(searchResult, 0)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "required column 'subject_name' not found")
+		require.Contains(t, err.Error(), "required column 'subject' not found")
 		require.Empty(t, result.Items)
 	})
 
-	t.Run("should return error when team_ref column is missing", func(t *testing.T) {
+	t.Run("should return error when team column is missing", func(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -388,7 +388,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		}
 		result, err := parseResults(searchResult, 0)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "required column 'team_ref' not found")
+		require.Contains(t, err.Error(), "required column 'team' not found")
 		require.Empty(t, result.Items)
 	})
 
