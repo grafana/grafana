@@ -3724,6 +3724,9 @@
       "manage-permissions": "権限を管理する",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "フォルダを選択：{{ label }}が現在選択されています",
       "button-label": "フォルダを選択",
@@ -4928,6 +4931,7 @@
       },
       "variables": {
         "add-variable": "変数を追加",
+        "reorder": "",
         "select-type": "変数タイプを選択",
         "select-type-card-tooltip": "クリックして種類を選択",
         "select-variable": "選択"
@@ -5792,7 +5796,7 @@
       "load": "読み込む"
     },
     "gcom-field": {
-      "label": "<1></1>で一般的なアプリケーションのダッシュボードを検索してインポートします",
+      "label": "",
       "load-button": "読み込む",
       "placeholder": "Grafana.comダッシュボードのURLまたはID",
       "validation-required": "GrafanaダッシュボードのURLまたはIDが必要です"
@@ -6295,6 +6299,11 @@
         "remove-panel": "パネルを削除"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "アラート"
     },
@@ -6661,6 +6670,16 @@
         }
       },
       "label": "非表示"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "変数タイプ"
@@ -10306,9 +10325,15 @@
       "options": "オプション"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "<2>Grafana.com</2>からダッシュボードをインポート中",
+      "importing-from": "",
       "published-by": "公開者",
       "updated-on": "更新日"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "「{{snapshotToRemove}}」を削除してもよろしいですか？",
@@ -11169,6 +11194,9 @@
     "noOptionsMessage-no-organizations-found": "組織が見つかりません",
     "select-placeholder": "組織を選択"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "タイトルを編集"
@@ -11666,6 +11694,7 @@
       "text-installed": "インストール済み"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Grafanaの依存関係",
       "installed-version": "{{versionNumber}}（インストール済みバージョン）",
       "latest-compatible-version": "{{versionNumber}}（最新の互換バージョン）",
@@ -11847,6 +11876,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -11855,6 +11888,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12351,23 +12385,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "この操作によりリポジトリの設定が削除され、すべての変更内容が失われます。本当に破棄してもよろしいですか？",
         "confirm": "はい、破棄します",
         "dismiss": "作業を続ける",
         "title": "リポジトリの設定を破棄しますか？"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12379,21 +12417,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "同期する内容を選択",
       "step-configure-repo": "",
       "step-connect": "接続",
       "step-finish": "追加設定を選択",
-      "step-github-app": "",
       "step-synchronize": "外部ストレージと同期",
       "sync-description": "リソースを外部ストレージと同期します。この一度限りの手順が完了すると、その後のすべての更新は自動的にリポジトリに保存され、インスタンスにプロビジョニングされます。",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "同期する内容を選択",
       "title-configure-repo": "",
       "title-connect": "外部ストレージに接続",
       "title-finish": "追加設定を選択",
-      "title-github-app": "",
       "title-synchronize": "外部ストレージと同期"
     },
     "wizard-content": {
