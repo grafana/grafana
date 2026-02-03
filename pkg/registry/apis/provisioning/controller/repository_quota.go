@@ -63,15 +63,15 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeQuota,
 			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonRepositoryQuotaExceeded,
-			Message: fmt.Sprintf("Repository quota exceeded: %d/%d repositories", activeCount, maxRepos),
+			Reason:  provisioning.ReasonRepositoryQuotaReached,
+			Message: fmt.Sprintf("Repository quota reached: %d/%d repositories", activeCount, maxRepos),
 		}, nil
 	case activeCount > int(maxRepos):
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeQuota,
 			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonRepositoryQuotaReached,
-			Message: fmt.Sprintf("Repository quota reached: %d/%d repositories", activeCount, maxRepos),
+			Reason:  provisioning.ReasonRepositoryQuotaExceeded,
+			Message: fmt.Sprintf("Repository quota exceeded: %d/%d repositories", activeCount, maxRepos),
 		}, nil
 	default:
 		return metav1.Condition{
