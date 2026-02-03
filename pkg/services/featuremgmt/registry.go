@@ -553,20 +553,12 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "dashboardSceneForViewers",
-			Description:  "Enables dashboard rendering using Scenes for viewer roles",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
-			Name:         "dashboardSceneSolo",
-			Description:  "Enables rendering dashboards using scenes for solo panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
+			Name:            "annotationPermissionUpdate",
+			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
+			Stage:           FeatureStageGeneralAvailability,
+			RequiresDevMode: false,
+			Expression:      "true", // enabled by default
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:         "dashboardScene",

@@ -11934,11 +11934,12 @@
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
-      "available-repositories": "Other available repositories",
+      "available-repositories": "This connection has access to the following repositories",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
       "create-new-connection-button": "Create connection",
+      "creating-connection-button": "Creating connection...",
       "description-app-id": "The ID of your GitHub App",
       "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
@@ -12278,6 +12279,9 @@
         "view-repository": "View repository"
       }
     },
+    "repository-list": {
+      "no-repositories": "No repositories configured"
+    },
     "repository-overview": {
       "checked": "Checked:",
       "connection-status": "Connection status:",
@@ -12471,7 +12475,6 @@
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
       "github-app-select-connection": "Select a GitHub App connection",
-      "github-app-sync-connection": "Sync Connection",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",

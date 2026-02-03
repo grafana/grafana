@@ -1,12 +1,10 @@
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { useConnectionList } from '../hooks/useConnectionList';
-import { isConnectionReady } from '../utils/connectionStatus';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 
 import { GitHubAppFields } from './GitHubAppFields';
 import { RepositoryField } from './components/RepositoryField';
@@ -55,13 +53,9 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
 
-  const shouldFetchConnections = githubAuthType === 'github-app';
-  const [connections] = useConnectionList(shouldFetchConnections ? {} : skipToken);
-
-  const isSelectedConnectionReady = useMemo(() => {
-    const selectedConnection = connections?.find((c) => c.metadata?.name === githubAppConnectionName);
-    return isConnectionReady(selectedConnection?.status);
-  }, [connections, githubAppConnectionName]);
+  const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
+    githubAuthType === 'github-app' ? githubAppConnectionName : undefined
+  );
 
   return (
     <Stack direction="column" gap={2}>
