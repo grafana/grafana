@@ -23,6 +23,3 @@ func NewTemplateGroupSpec() *TemplateGroupSpec {
 		Kind: TemplateGroupTemplateKindGrafana,
 	}
 }
-func (TemplateGroupSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupSpec"
-}

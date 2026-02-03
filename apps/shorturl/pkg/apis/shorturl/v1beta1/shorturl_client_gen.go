@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 type ShortURLClient struct {
@@ -105,7 +106,7 @@ type GetGotoRequest struct {
 	Headers http.Header
 }
 
-func (c *ShortURLClient) GetGoto(ctx context.Context, identifier resource.Identifier, request GetGotoRequest) (*GetGoto, error) {
+func (c *ShortURLClient) GetGoto(ctx context.Context, identifier resource.Identifier, request GetGotoRequest) (*GetGotoBody, error) {
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "/goto",
 		Verb:    "GET",
@@ -114,7 +115,7 @@ func (c *ShortURLClient) GetGoto(ctx context.Context, identifier resource.Identi
 	if err != nil {
 		return nil, err
 	}
-	cast := GetGoto{}
+	cast := GetGotoBody{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response bytes into GetGoto: %w", err)

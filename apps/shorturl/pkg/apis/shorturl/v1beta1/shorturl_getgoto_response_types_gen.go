@@ -3,11 +3,14 @@
 package v1beta1
 
 // +k8s:openapi-gen=true
-type GetGoto struct {
+type GetGotoBody struct {
 	Url string `json:"url"`
 }
 
-// NewGetGoto creates a new GetGoto object.
-func NewGetGoto() *GetGoto {
-	return &GetGoto{}
+// NewGetGotoBody creates a new GetGotoBody object.
+func NewGetGotoBody() *GetGotoBody {
+	return &GetGotoBody{}
+}
+func (GetGotoBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGotoBody"
 }

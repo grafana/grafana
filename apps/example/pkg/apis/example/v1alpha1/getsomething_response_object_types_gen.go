@@ -34,4 +34,8 @@ func (o *GetSomething) DeepCopyInto(dst *GetSomething) {
 	o.GetSomethingBody.DeepCopyInto(&dst.GetSomethingBody)
 }
 
+func (GetSomething) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetSomething"
+}
+
 var _ runtime.Object = NewGetSomething()

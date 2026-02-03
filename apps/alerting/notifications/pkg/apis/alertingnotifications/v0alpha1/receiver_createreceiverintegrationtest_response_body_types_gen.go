@@ -21,7 +21,3 @@ const (
 	CreateReceiverIntegrationTestBodyStatusSuccess CreateReceiverIntegrationTestBodyStatus = "success"
 	CreateReceiverIntegrationTestBodyStatusFailure CreateReceiverIntegrationTestBodyStatus = "failure"
 )
-
-func (CreateReceiverIntegrationTestBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestBody"
-}

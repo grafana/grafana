@@ -17,6 +17,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta": schema_pkg_apis_meta_v1_ObjectMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":   schema_pkg_apis_meta_v1_ListMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Condition":  schema_pkg_apis_meta_v1_Condition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":       schema_pkg_apis_meta_v1_Time(ref),
+
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue": InlineSecureValue{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference":   schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":      Unstructured{}.OpenAPIDefinition(),

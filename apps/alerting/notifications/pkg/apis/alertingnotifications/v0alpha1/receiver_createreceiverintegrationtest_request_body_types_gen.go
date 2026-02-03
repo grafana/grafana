@@ -43,12 +43,3 @@ func NewCreateReceiverIntegrationTestRequestBody() *CreateReceiverIntegrationTes
 		Alert:       *NewCreateReceiverIntegrationTestRequestAlert(),
 	}
 }
-func (CreateReceiverIntegrationTestRequestIntegration) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestIntegration"
-}
-func (CreateReceiverIntegrationTestRequestAlert) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestAlert"
-}
-func (CreateReceiverIntegrationTestRequestBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestBody"
-}

@@ -70,16 +70,3 @@ const (
 	RoutingTreeMatcherTypeEqualRegex    RoutingTreeMatcherType = "=~"
 	RoutingTreeMatcherTypeNotEqualRegex RoutingTreeMatcherType = "!~"
 )
-
-func (RoutingTreeRouteDefaults) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRouteDefaults"
-}
-func (RoutingTreeRoute) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRoute"
-}
-func (RoutingTreeMatcher) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeMatcher"
-}
-func (RoutingTreeSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeSpec"
-}

@@ -44,7 +44,7 @@ func GetOtherHandler(ctx context.Context, writer app.CustomRouteResponseWriter, 
 	if request.URL.Query().Has("message") {
 		message = request.URL.Query().Get("message")
 	}
-	return json.NewEncoder(writer).Encode(v1alpha1.GetOther{
+	return json.NewEncoder(writer).Encode(v1alpha1.GetOtherBody{
 		Message: message,
 	})
 }

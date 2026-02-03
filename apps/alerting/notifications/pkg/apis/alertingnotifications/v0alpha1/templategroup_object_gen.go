@@ -228,10 +228,6 @@ func (o *TemplateGroup) DeepCopyInto(dst *TemplateGroup) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (TemplateGroup) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &TemplateGroup{}
 
@@ -283,10 +279,6 @@ func (o *TemplateGroupList) DeepCopy() *TemplateGroupList {
 
 func (o *TemplateGroupList) DeepCopyInto(dst *TemplateGroupList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (TemplateGroupList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList"
 }
 
 // Interface compliance compile-time check
