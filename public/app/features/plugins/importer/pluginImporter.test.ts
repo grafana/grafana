@@ -14,11 +14,18 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
-import { setPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
+
+jest.mock('../extensions/registry/setup', () => ({
+  ...jest.requireActual('../extensions/registry/setup'),
+  getPluginExtensionRegistries: jest.fn(),
+}));
+
+const { getPluginExtensionRegistries } = jest.requireMock('../extensions/registry/setup');
+const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
 
 describe('pluginImporter', () => {
   let exposedComponentsRegistry: ExposedComponentsRegistry;
@@ -39,12 +46,14 @@ describe('pluginImporter', () => {
     addedLinksRegistry.register = jest.fn();
     exposedComponentsRegistry.register = jest.fn();
 
-    setPluginExtensionRegistries({
+    const registries = {
       addedComponentsRegistry,
       addedFunctionsRegistry,
       addedLinksRegistry,
       exposedComponentsRegistry,
-    });
+    };
+
+    getPluginExtensionRegistriesMock.mockResolvedValue(registries);
   });
 
   describe('importPanel', () => {

@@ -1,8 +1,7 @@
-import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { MonitoringLogger } from '@grafana/runtime';
+import { getAppPluginMetas, invalidateCache, setLogger } from '@grafana/runtime/internal';
 
-import { log } from '../logs/log';
-
-import { getPluginExtensionRegistries, setPluginExtensionRegistries } from './setup';
+import { getPluginExtensionRegistries } from './setup';
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
@@ -10,14 +9,21 @@ jest.mock('@grafana/runtime/internal', () => ({
 }));
 
 const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
+let logger: MonitoringLogger;
 
 describe('getPluginExtensionRegistries', () => {
-  let logSpy: jest.SpyInstance;
   beforeEach(() => {
-    setPluginExtensionRegistries();
     jest.resetAllMocks();
+    invalidateCache();
     getAppPluginMetasMock.mockResolvedValue([]);
-    logSpy = jest.spyOn(log, 'error');
+    logger = {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    };
+    setLogger(logger);
   });
 
   test('should only call getAppPluginMetas once', async () => {
@@ -56,10 +62,11 @@ describe('getPluginExtensionRegistries', () => {
     expect(first).not.toBe(second);
     expect(first).not.toBe(third);
     expect(second).toBe(third);
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith('Failed to init plugin extension registries.', {
+    expect(logger.logError).toHaveBeenCalledTimes(1);
+    expect(logger.logError).toHaveBeenCalledWith(new Error('Something failed while resolving a cached promise'), {
       message: 'Some error',
       stack: expect.any(String),
+      key: 'initPluginExtensionRegistries',
     });
   });
 });

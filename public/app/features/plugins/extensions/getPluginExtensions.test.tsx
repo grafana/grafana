@@ -20,7 +20,7 @@ import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
-import { setPluginExtensionRegistries } from './registry/setup';
+import { getPluginExtensionRegistries } from './registry/setup';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
@@ -40,6 +40,13 @@ jest.mock('./logs/log', () => {
     log: createLogMock(),
   };
 });
+
+jest.mock('./registry/setup', () => ({
+  ...jest.requireActual('./registry/setup'),
+  getPluginExtensionRegistries: jest.fn(),
+}));
+
+const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
 
 async function createRegistries(
   preloadResults: Array<{
@@ -565,12 +572,14 @@ describe('getObservablePluginExtensions()', () => {
     addedFunctionsRegistry = new AddedFunctionsRegistry([]);
     exposedComponentsRegistry = new ExposedComponentsRegistry([]);
 
-    setPluginExtensionRegistries({
-      addedLinksRegistry,
+    const registries = {
       addedComponentsRegistry,
       addedFunctionsRegistry,
+      addedLinksRegistry,
       exposedComponentsRegistry,
-    });
+    };
+
+    getPluginExtensionRegistriesMock.mockResolvedValue(registries);
 
     addedLinksRegistry.register({
       pluginId,
@@ -658,12 +667,14 @@ describe('getObservablePluginLinks()', () => {
     addedFunctionsRegistry = new AddedFunctionsRegistry([]);
     exposedComponentsRegistry = new ExposedComponentsRegistry([]);
 
-    setPluginExtensionRegistries({
-      addedLinksRegistry,
+    const registries = {
       addedComponentsRegistry,
       addedFunctionsRegistry,
+      addedLinksRegistry,
       exposedComponentsRegistry,
-    });
+    };
+
+    getPluginExtensionRegistriesMock.mockResolvedValue(registries);
 
     addedLinksRegistry.register({
       pluginId,
@@ -739,7 +750,7 @@ describe('getObservablePluginLinks()', () => {
   });
 
   it('should receive an empty array if there are no links', async () => {
-    setPluginExtensionRegistries({
+    getPluginExtensionRegistriesMock.mockResolvedValue({
       addedLinksRegistry: new AddedLinksRegistry([]),
       addedComponentsRegistry: new AddedComponentsRegistry([]),
       addedFunctionsRegistry: new AddedFunctionsRegistry([]),
@@ -767,12 +778,14 @@ describe('getObservablePluginComponents()', () => {
     addedFunctionsRegistry = new AddedFunctionsRegistry([]);
     exposedComponentsRegistry = new ExposedComponentsRegistry([]);
 
-    setPluginExtensionRegistries({
-      addedLinksRegistry,
+    const registries = {
       addedComponentsRegistry,
       addedFunctionsRegistry,
+      addedLinksRegistry,
       exposedComponentsRegistry,
-    });
+    };
+
+    getPluginExtensionRegistriesMock.mockResolvedValue(registries);
 
     addedLinksRegistry.register({
       pluginId,
@@ -849,7 +862,7 @@ describe('getObservablePluginComponents()', () => {
   });
 
   it('should receive an empty array if there are no components', async () => {
-    setPluginExtensionRegistries({
+    getPluginExtensionRegistriesMock.mockResolvedValue({
       addedLinksRegistry: new AddedLinksRegistry([]),
       addedComponentsRegistry: new AddedComponentsRegistry([]),
       addedFunctionsRegistry: new AddedFunctionsRegistry([]),
