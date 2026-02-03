@@ -9,7 +9,7 @@ import (
 
 func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) {
 	tracer := otel.Tracer("index-server-distributor")
-	svc := resource.ProvideSearchDistributorService(ms.cfg, tracer, ms.searchServerRing, ms.searchServerRingClientPool)
+	svc := resource.ProvideSearchDistributorService(tracer, ms.searchServerRing, ms.searchServerRingClientPool)
 	if err := svc.RegisterGRPCServices(ms.grpcServer); err != nil {
 		return nil, err
 	}

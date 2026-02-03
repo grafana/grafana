@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,31 +30,23 @@ type SearchDistributorService interface {
 	RegisterGRPCServices(srv *grpc.Server) error
 }
 
-type searchDistributorService struct {
-	cfg    *setting.Cfg
-	server *distributorServer
-}
-
-func ProvideSearchDistributorService(cfg *setting.Cfg, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) SearchDistributorService {
-	return &searchDistributorService{
-		cfg: cfg,
-		server: &distributorServer{
-			log:        log.New("index-server-distributor"),
-			ring:       ring,
-			clientPool: ringClientPool,
-			tracing:    tracer,
-		},
+func ProvideSearchDistributorService(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) SearchDistributorService {
+	return &distributorServer{
+		log:        log.New("index-server-distributor"),
+		ring:       ring,
+		clientPool: ringClientPool,
+		tracing:    tracer,
 	}
 }
 
-func (s *searchDistributorService) RegisterGRPCServices(srv *grpc.Server) error {
-	healthService, err := ProvideHealthService(s.server)
+func (s *distributorServer) RegisterGRPCServices(srv *grpc.Server) error {
+	healthService, err := ProvideHealthService(s)
 	if err != nil {
 		return err
 	}
 
-	resourcepb.RegisterResourceIndexServer(srv, s.server)
-	resourcepb.RegisterManagedObjectIndexServer(srv, s.server)
+	resourcepb.RegisterResourceIndexServer(srv, s)
+	resourcepb.RegisterManagedObjectIndexServer(srv, s)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	grpcserver.RegisterReflection(srv)
 
