@@ -11926,6 +11926,9 @@
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
+    "connect-step": {
+      "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
+    },
     "connection": {
       "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
       "disconnected-title": "Connection is disconnected"
