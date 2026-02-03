@@ -197,7 +197,7 @@ func TestIntegrationDistributor(t *testing.T) {
 		count := strings.Count(distributorRes.Details, "{instance:")
 		podCount := distributorRes.ContactedPods
 		require.Equal(t, len(testServers), count)
-		require.Equal(t, len(testServers), podCount)
+		require.Equal(t, len(testServers), int(podCount))
 	})
 
 	var wg sync.WaitGroup
