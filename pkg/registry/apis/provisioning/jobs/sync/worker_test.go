@@ -182,7 +182,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					}
 					// Find the Quota condition
 					for _, c := range conditions {
-						if c.Type == provisioning.ConditionTypeQuota {
+						if c.Type == provisioning.ConditionTypeResourceQuota {
 							capturedQuotaCondition = c
 							return true
 						}
@@ -217,7 +217,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			// Verify quota condition
-			require.Equal(t, provisioning.ConditionTypeQuota, capturedQuotaCondition.Type)
+			require.Equal(t, provisioning.ConditionTypeResourceQuota, capturedQuotaCondition.Type)
 			require.Equal(t, tt.expectedQuotaReason, capturedQuotaCondition.Reason)
 			if tt.expectedQuotaStatus {
 				require.Equal(t, metav1.ConditionTrue, capturedQuotaCondition.Status)
