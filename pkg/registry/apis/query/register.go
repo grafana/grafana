@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -164,7 +165,7 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
 		&query.QueryTypeDefinitionList{},
-		&query.SQLSchemas{},
+		&query.QueryResponseSQLSchemas{},
 	)
 }
 
@@ -204,8 +205,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
-
-	storage["sqlschemas"] = newSQLSchemasREST(b)
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
@@ -302,6 +301,16 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	})
 	if err != nil {
 		return oas, nil
+	}
+
+	// Use the same request body for query as sql schemas
+	query, ok := oas.Paths.Paths[root+"namespaces/{namespace}/query"]
+	if !ok || query.Post == nil || query.Post.RequestBody == nil {
+		return nil, fmt.Errorf("could not find query path")
+	}
+	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
+	if ok && sqlschemas.Post != nil {
+		sqlschemas.Post.RequestBody = query.Post.RequestBody
 	}
 
 	return oas, nil

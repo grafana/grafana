@@ -19,11 +19,6 @@
  */
 export interface FeatureToggles {
   /**
-  * Disable envelope encryption (emergency only)
-  * @default false
-  */
-  disableEnvelopeEncryption?: boolean;
-  /**
   * Search for dashboards using panel title
   * @default false
   */
@@ -59,11 +54,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Logs the path for requests that are instrumented as unknown
-  * @default false
-  */
-  logRequestsInstrumentedAsUnknown?: boolean;
-  /**
   * Run the GRPC server
   * @default false
   */
@@ -78,11 +68,6 @@ export interface FeatureToggles {
   * @default false
   */
   showDashboardValidationWarnings?: boolean;
-  /**
-  * Use double quotes to escape keyword in a MySQL query
-  * @default false
-  */
-  mysqlAnsiQuotes?: boolean;
   /**
   * Rule backtesting API for alerting
   * @default false
@@ -249,16 +234,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
   */
@@ -388,11 +363,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemotePrimary?: boolean;
-  /**
-  * Change the way annotation permissions work by scoping them to folders and dashboards.
-  * @default true
-  */
-  annotationPermissionUpdate?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
@@ -599,6 +569,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables Saved queries (query library) RBAC permissions
+  * @default false
+  */
+  savedQueriesRBAC?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -608,6 +583,11 @@ export interface FeatureToggles {
   * @default false
   */
   suggestedDashboards?: boolean;
+  /**
+  * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+  * @default false
+  */
+  dashboardValidatorApp?: boolean;
   /**
   * Enables a flow to get started with a new dashboard from a template
   * @default false
@@ -658,11 +638,6 @@ export interface FeatureToggles {
   * @default false
   */
   authZGRPCServer?: boolean;
-  /**
-  * Use the new SSO Settings API to configure LDAP
-  * @default true
-  */
-  ssoSettingsLDAP?: boolean;
   /**
   * Use openFGA as authorization engine.
   * @default false
@@ -781,12 +756,12 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   /**
   * Enables time range panning functionality
-  * @default false
+  * @default true
   */
   timeRangePan?: boolean;
   /**
   * Enables new keyboard shortcuts for time range zoom operations
-  * @default false
+  * @default true
   */
   newTimeRangeZoomShortcuts?: boolean;
   /**
@@ -816,7 +791,7 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   /**
   * Enables SCIM support for user and group management
-  * @default false
+  * @default true
   */
   enableSCIM?: boolean;
   /**
@@ -1006,6 +981,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
+  * @deprecated
   * @default false
   */
   localeFormatPreference?: boolean;
@@ -1111,6 +1087,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesApi?: boolean;
   /**
+  * Registers AuthZ TeamLBACRule /apis endpoint
+  * @default false
+  */
+  kubernetesAuthzTeamLBACRuleApi?: boolean;
+  /**
   * Registers AuthZ Role Bindings /apis endpoint
   * @default false
   */
@@ -1165,6 +1146,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerUI?: boolean;
+  /**
+  * Disables the DMA feature in the UI
+  * @default false
+  */
+  alertingDisableDMAinUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   * @default true
@@ -1430,4 +1416,19 @@ export interface FeatureToggles {
   * @default false
   */
   queryWithAssistant?: boolean;
+  /**
+  * Enables next generation query editor experience
+  * @default false
+  */
+  queryEditorNext?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
+  /**
+  * Enables the ability to create multiple alerting policies
+  * @default false
+  */
+  alertingMultiplePolicies?: boolean;
 }

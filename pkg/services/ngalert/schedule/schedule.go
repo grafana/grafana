@@ -29,6 +29,8 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
+	// Status returns the status of a rule's last evaluation.
+	Status(ctx context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
@@ -191,7 +193,7 @@ func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]stri
 }
 
 // Status fetches the health of a given scheduled rule, by key.
-func (sch *schedule) Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
+func (sch *schedule) Status(_ context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
 	if rule, ok := sch.registry.get(key); ok {
 		return rule.Status(), true
 	}

@@ -1,6 +1,8 @@
 package generic
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,11 +46,18 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 		predicateFunc = Matcher
 	}
 
+	var keyFunc func(ctx context.Context, name string) (string, error)
+	if resourceInfo.IsClusterScoped() {
+		keyFunc = ClusterScopedKeyFunc(resourceInfo.GroupResource())
+	} else {
+		keyFunc = NamespaceKeyFunc(resourceInfo.GroupResource())
+	}
+
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
 		KeyRootFunc:               KeyRootFunc(resourceInfo.GroupResource()),
-		KeyFunc:                   NamespaceKeyFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   keyFunc,
 		PredicateFunc:             predicateFunc,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),

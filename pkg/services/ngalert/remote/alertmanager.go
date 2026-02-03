@@ -30,14 +30,17 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -89,6 +92,8 @@ type Alertmanager struct {
 	externalURL   string
 
 	runtimeConfig remoteClient.RuntimeConfig
+
+	features featuremgmt.FeatureToggles
 }
 
 type AlertmanagerConfig struct {
@@ -134,7 +139,16 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(
+	ctx context.Context,
+	cfg AlertmanagerConfig,
+	store stateStore,
+	crypto Crypto,
+	autogenFn AutogenFn,
+	metrics *metrics.RemoteAlertmanager,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -210,6 +224,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		promoteConfig: cfg.PromoteConfig,
 		smtp:          cfg.SmtpConfig,
 		runtimeConfig: cfg.RuntimeConfig,
+
+		features: features,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -320,6 +336,12 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 
 	if err := am.crypto.DecryptExtraConfigs(ctx, c); err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
+	}
+
+	// Add managed routes to the configuration.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
 	}
 
 	mergeResult, err := c.GetMergedAlertmanagerConfig()
@@ -632,6 +654,55 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		Alert:     alert,
 		Receivers: apiReceivers,
 	})
+}
+
+func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	decrypted := integrationConfig.Clone()
+	err := decrypted.Decrypt(notifier.DecryptIntegrationSettings(ctx, am.crypto))
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to decrypt receivers: %w", err)
+	}
+	cfg, err := notifier.IntegrationToIntegrationConfig(decrypted)
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to convert integration to integration config: %w", err)
+	}
+	if err = decrypted.Validate(notifier.DecryptIntegrationSettings(ctx, am.crypto)); err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to validate integration settings: %w", err)
+	}
+
+	apiReceivers := []*alertingNotify.APIReceiver{
+		{
+			ConfigReceiver: alertingNotify.ConfigReceiver{
+				Name: receiverName,
+			},
+			ReceiverConfig: alertingModels.ReceiverConfig{
+				Integrations: []*alertingModels.IntegrationConfig{
+					&cfg,
+				},
+			},
+		},
+	}
+
+	t := time.Now()
+	// TODO:yuri replace with TestIntegrations when implemented
+	result, _, err := am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
+		Alert:     &alert,
+		Receivers: apiReceivers,
+	})
+	duration := time.Since(t)
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to test integration: %w", err)
+	}
+	status := alertingModels.IntegrationStatus{
+		LastNotifyAttempt:         strfmt.DateTime(result.NotifedAt),
+		LastNotifyAttemptDuration: model.Duration(duration).String(),
+		Name:                      cfg.Type,
+		SendResolved:              false,
+	}
+	if len(result.Receivers) > 0 && len(result.Receivers[0].Configs) > 0 {
+		status.LastNotifyAttemptError = result.Receivers[0].Configs[0].Error
+	}
+	return status, nil
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {

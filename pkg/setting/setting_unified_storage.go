@@ -85,6 +85,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
+	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
@@ -107,10 +108,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
-	cfg.IndexScoringModel = section.Key("index_scoring_model").MustString("")
-	if cfg.IndexScoringModel != "" {
-		cfg.Logger.Info("Index scoring model set", "model", cfg.IndexScoringModel)
-	}
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -121,8 +118,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 
+	// garbage collection
+	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
+	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
+	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
+	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
+
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+	// enable sqlkv backwards compatibility mode with sql/backend
+	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")

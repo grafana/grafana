@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { of, map } from 'rxjs';
 
 import {
+  CoreApp,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
@@ -19,6 +20,7 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -37,6 +39,7 @@ import {
   testDashboardV2,
 } from '../testfiles/testDashboard';
 
+import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
 
 async function createModelMock() {
@@ -271,17 +274,95 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
+// Mock QueryLibraryContext with minimal setup
+const mockOpenDrawer = jest.fn();
+const mockQueryLibraryEnabled = jest.fn(() => false);
+jest.mock('../../../explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => ({
+    openDrawer: mockOpenDrawer,
+    queryLibraryEnabled: mockQueryLibraryEnabled(),
+    renderSavedQueryButtons: jest.fn(() => null), // Add this to prevent errors
+  }),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasPermission: jest.fn(),
+    isSignedIn: jest.fn(),
+    user: { uid: 'test-uid' },
+  },
+}));
+
+const mockContextSrv = jest.mocked(contextSrv);
+
 const data = jest.requireMock('@grafana/data');
 let deactivators = [] as Array<() => void>;
 
 describe('PanelDataQueriesTab', () => {
   beforeEach(() => {
     data.store.setObject.mockClear();
+    // Reset mocks to default state
+    mockOpenDrawer.mockClear();
+    mockQueryLibraryEnabled.mockReturnValue(false);
+    mockContextSrv.hasPermission.mockReturnValue(false);
+    mockContextSrv.user.isSignedIn = true;
   });
 
   afterEach(() => {
     deactivators.forEach((deactivate) => deactivate());
     deactivators = [];
+  });
+
+  describe('Add from saved queries button', () => {
+    it('should show button only when queryLibraryEnabled and canReadQueries are both true', async () => {
+      const modelMock = await createModelMock();
+
+      // Test: Button hidden when both flags are false
+      mockQueryLibraryEnabled.mockReturnValue(false);
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockContextSrv.user.isSignedIn = true;
+      const { rerender } = render(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button hidden when only queryLibraryEnabled is true
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockContextSrv.isSignedIn = false;
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button hidden when only canReadQueries is true (non-RBAC mode)
+      mockQueryLibraryEnabled.mockReturnValue(false);
+      mockContextSrv.isSignedIn = true;
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button visible when both are true (non-RBAC mode - isSignedIn)
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockContextSrv.isSignedIn = true;
+      config.featureToggles.savedQueriesRBAC = false;
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      let button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(button).toBeInTheDocument();
+      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
+
+      // Test: Button visible when both are true (RBAC mode - hasPermission)
+      config.featureToggles.savedQueriesRBAC = true;
+      mockContextSrv.isSignedIn = true;
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(button).toBeInTheDocument();
+
+      // Test: Button click calls openDrawer with correct params
+      await userEvent.click(button);
+      expect(mockOpenDrawer).toHaveBeenCalledWith({
+        onSelectQuery: expect.any(Function),
+        options: {
+          context: CoreApp.PanelEditor,
+        },
+      });
+    });
   });
 
   describe('Adding queries', () => {
@@ -369,7 +450,6 @@ describe('PanelDataQueriesTab', () => {
       // arrange
       const modelMock = await createModelMock();
       const dsSettingsMock: DataSourceInstanceSettings<DataSourceJsonData> = {
-        id: 1,
         uid: 'gdev-testdata',
         name: 'testDs1',
         type: 'grafana-testdata-datasource',
@@ -919,7 +999,11 @@ async function setupScene(panelId: string) {
   deactivators.push(dashboard.activate());
   deactivators.push(panelEditor.activate());
 
-  const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+  const dataPane = panelEditor.state.dataPane;
+  if (!dataPane || !(dataPane instanceof PanelDataPane)) {
+    throw new Error('Expected PanelDataPane for this test');
+  }
+  const queriesTab = dataPane.state.tabs[0] as PanelDataQueriesTab;
   deactivators.push(queriesTab.activate());
 
   await Promise.resolve();
@@ -940,7 +1024,11 @@ async function setupV2Scene(panelKey: string) {
   deactivators.push(dashboard.activate());
   deactivators.push(panelEditor.activate());
 
-  const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+  const dataPane = panelEditor.state.dataPane;
+  if (!dataPane || !(dataPane instanceof PanelDataPane)) {
+    throw new Error('Expected PanelDataPane for this test');
+  }
+  const queriesTab = dataPane.state.tabs[0] as PanelDataQueriesTab;
   deactivators.push(queriesTab.activate());
 
   await Promise.resolve();

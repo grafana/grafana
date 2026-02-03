@@ -85,6 +85,15 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
+      // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
+      const originalUid = options?.k8s?.name;
+      if (originalUid && dashboard.uid !== originalUid) {
+        delete obj.spec.id;
+        if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
+          delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
+        }
+      }
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -93,6 +102,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     };
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
     delete obj.metadata.name;
+    // on create, always clear the id to prevent duplicate ids
+    delete obj.spec.id;
+    if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
+      delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
+    }
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
