@@ -18,19 +18,26 @@ export function scrollToQueryRow(refId: string) {
   }
 }
 
-/**
- * Checks if all datasources used in queries are frontend datasources (no backend)
- * Frontend datasources have meta.backend === false or undefined
- * Backend datasources have meta.backend === true
- * Defaults to backend if the type can't be determined for safety
- */
-export function areAllDatasourcesFrontend(datasourceUid: string | undefined, queries: DataQuery[]): boolean {
-  // The dashboard datasource is always FE
-  if (datasourceUid === SHARED_DASHBOARD_QUERY) {
-    return true;
+function isBackendDatasource(uid: string): boolean {
+  if (uid === SHARED_DASHBOARD_QUERY) {
+    return false;
   }
+  const settings = getDataSourceSrv().getInstanceSettings(uid);
+  return settings?.meta.backend === true;
+}
 
-  if (!datasourceUid) {
+/**
+ * Checks if there's at least one backend datasource available in the panel
+ * Backend datasources have meta.backend === true
+ */
+export function hasBackendDatasource({
+  datasourceUid,
+  queries,
+}: {
+  datasourceUid: string | undefined;
+  queries?: DataQuery[];
+}): boolean {
+  if (!datasourceUid || datasourceUid === SHARED_DASHBOARD_QUERY) {
     return false;
   }
 
@@ -39,38 +46,11 @@ export function areAllDatasourcesFrontend(datasourceUid: string | undefined, que
     return false;
   }
 
-  // If its mixed we need to check all the datasources since there's no top level info if it's all FE or all BE
-  if (mainDsSettings.meta.mixed === true) {
-    const datasourceUids = new Set<string>();
-    for (const query of queries) {
-      if (query.datasource?.uid) {
-        datasourceUids.add(query.datasource.uid);
-      }
-    }
-
-    // If there are datasources in queries, check if any are backend
-    if (datasourceUids.size > 0) {
-      for (const uid of datasourceUids) {
-        if (uid === SHARED_DASHBOARD_QUERY) {
-          continue;
-        }
-
-        const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
-        if (!dsSettings) {
-          return false;
-        }
-
-        if (dsSettings.meta.backend === true) {
-          return false;
-        }
-      }
-    }
-
-    // If there are no datasources in queries, default to frontend since "Mixed" is technically a FE datasource
-    return true;
+  // For mixed datasource, check if any query uses a backend datasource
+  if (mainDsSettings.meta.mixed && queries) {
+    return queries.some((query) => query.datasource?.uid && isBackendDatasource(query.datasource.uid));
   }
 
-  // For non-mixed datasources, check the main datasource
-  // Frontend datasources have meta.backend === false or undefined
-  return mainDsSettings.meta.backend !== true;
+  // For non-mixed, check the main datasource
+  return mainDsSettings.meta.backend === true;
 }

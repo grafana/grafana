@@ -13,7 +13,7 @@ import { TransformationCard } from '../../../dashboard/components/Transformation
 import sqlDarkImage from '../../../transformers/images/dark/sqlExpression.svg';
 import sqlLightImage from '../../../transformers/images/light/sqlExpression.svg';
 
-import { areAllDatasourcesFrontend } from './utils';
+import { hasBackendDatasource } from './utils';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
@@ -97,8 +97,10 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
 
   // SQL expressions require backend datasources
   // Hide the SQL card if all datasources are frontend-only (Dashboard, Mixed with all frontend datasources, etc.)
-  const isFrontendOnly = areAllDatasourcesFrontend(props.datasourceUid, props.queries ?? []);
-  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions && !isFrontendOnly;
+  const showSqlCard =
+    hasGoToQueries &&
+    config.featureToggles.sqlExpressions &&
+    hasBackendDatasource({ datasourceUid: props.datasourceUid, queries: props.queries });
 
   return (
     <Box padding={2}>

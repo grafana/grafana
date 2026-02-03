@@ -43,7 +43,7 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
-import { areAllDatasourcesFrontend } from './utils';
+import { hasBackendDatasource } from './utils';
 
 interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
@@ -370,7 +370,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
 
   // Determine if SQL expressions should be disabled (for frontend-only datasources)
   const disableSqlExpression = useMemo(() => {
-    return areAllDatasourcesFrontend(datasourceState?.uid, queries);
+    return hasBackendDatasource({ datasourceUid: datasourceState?.uid, queries });
   }, [datasourceState?.uid, queries]);
 
   if (!datasource || !dsSettings || !data) {
