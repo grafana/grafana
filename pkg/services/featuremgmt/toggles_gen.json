@@ -753,7 +753,8 @@
       "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-10-31T13:30:13Z"
+        "creationTimestamp": "2023-10-31T13:30:13Z",
+        "deletionTimestamp": "2026-01-31T00:02:02Z"
       },
       "spec": {
         "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
@@ -1432,7 +1433,8 @@
       "metadata": {
         "name": "disableEnvelopeEncryption",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2022-05-24T08:34:47Z"
+        "creationTimestamp": "2022-05-24T08:34:47Z",
+        "deletionTimestamp": "2026-01-29T15:12:34Z"
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
@@ -4260,7 +4262,8 @@
       "metadata": {
         "name": "ssoSettingsLDAP",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "deletionTimestamp": "2026-01-31T01:56:50Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",

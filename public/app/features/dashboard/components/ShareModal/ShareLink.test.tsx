@@ -153,11 +153,12 @@ describe('ShareModal', () => {
 
       const base = 'http://server';
       const path = '/#!/test';
-      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        base + path + '?editPanel=1&from=1000&to=2000&orgId=1'
-      );
-      const linkUrl = await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage });
+      const textboxUrl = await screen.findByRole('textbox', { name: 'Link URL' });
+      const linkUrl = await screen.findByRole('link', {
+        name: selectors.pages.SharePanelModal.linkToRenderedImage,
+      });
       await waitFor(() => {
+        expect(textboxUrl).toHaveValue(base + path + '?editPanel=1&from=1000&to=2000&orgId=1');
         expect(linkUrl).toHaveAttribute(
           'href',
           base + path + '?from=1000&to=2000&orgId=1&panelId=1&hideLogo=true&width=1000&height=500&scale=1&tz=UTC'

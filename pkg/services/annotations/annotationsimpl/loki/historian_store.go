@@ -173,11 +173,12 @@ func (r *LokiHistorianStore) annotationsFromStream(stream lokiclient.Stream, ac 
 			continue
 		}
 
-		annotationText, annotationData := historian.BuildAnnotationTextAndData(
+		annotationText, annotationData, _ := historian.BuildAnnotationTextAndData(
 			historymodel.RuleMeta{
 				Title: entry.RuleTitle,
 			},
 			transition.State,
+			0, // maxTagsLength not used for Loki store
 		)
 
 		items = append(items, &annotations.ItemDTO{
@@ -205,9 +206,6 @@ func (r *LokiHistorianStore) GetTags(ctx context.Context, query annotations.Tags
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
 	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""
 	dashFilter := func() bool {
-		if !resources.CanAccessDashAnnotations {
-			return false
-		}
 		_, canAccess := resources.Dashboards[entry.DashboardUID]
 		return canAccess
 	}

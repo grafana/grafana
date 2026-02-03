@@ -105,7 +105,7 @@ describe('SignupInvitedPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
-      expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
+      await waitFor(async () => expect(await screen.findByText(/email is required/i)).toBeInTheDocument());
       expect(await screen.findByText(/username is required/i)).toBeInTheDocument();
       expect(await screen.findByText(/password is required/i)).toBeInTheDocument();
       expect(postSpy).toHaveBeenCalledTimes(0);

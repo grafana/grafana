@@ -49,7 +49,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
 
-  const validationTimeoutRef = useRef<NodeJS.Timeout>(null);
+  const validationTimeoutRef = useRef<NodeJS.Timeout>(undefined);
 
   // Validate title on form mount to catch invalid default values
   useEffect(() => {

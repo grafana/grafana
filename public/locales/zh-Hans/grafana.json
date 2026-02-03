@@ -2320,7 +2320,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "分组依据",
-      "description-group-by": "通过相同的标签值将多个警报分组，从而将它们合并成单个通知。如果为空，则继承自默认通知策略。",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -3618,7 +3619,9 @@
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "此操作将删除以下内容：",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "删除",
@@ -3720,6 +3723,9 @@
       "folder-actions": "文件夹操作",
       "manage-permissions": "管理权限",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
@@ -4925,6 +4931,7 @@
       },
       "variables": {
         "add-variable": "添加变量",
+        "reorder": "",
         "select-type": "选择变量类型",
         "select-type-card-tooltip": "点击以选择类型",
         "select-variable": "选择"
@@ -5132,6 +5139,9 @@
       "panel-data-label": "面板数据",
       "panel-json-description": "保存在仪表板 JSON 中的模型，用于配置整体运作方式。",
       "panel-json-label": "面板 JSON",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "选择源",
       "unknown": "未知对象：{{show}}"
     },
@@ -5461,10 +5471,6 @@
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
         "title": ""
       },
@@ -5790,7 +5796,7 @@
       "load": "加载"
     },
     "gcom-field": {
-      "label": "在<1></1>查找并导入常见应用程序的仪表板",
+      "label": "",
       "load-button": "加载",
       "placeholder": "Grafana.com 仪表板网址或 ID",
       "validation-required": "Grafana 仪表板网址或 ID 是必需项"
@@ -6219,7 +6225,9 @@
     },
     "inspect-json-tab": {
       "apply": "应用",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6290,6 +6298,11 @@
       "title": {
         "remove-panel": "移除面板"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
@@ -6658,6 +6671,16 @@
       },
       "label": "隐藏"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "变量类型"
     },
@@ -6723,7 +6746,7 @@
       "delete-button": "删除",
       "title": "删除"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "您要删除这个数据面板吗？",
     "general": {
       "auto-refresh-description": "定义应显示于自动刷新列表中的自动刷新间隔。使用格式“5s”表示秒，“1m”表示分，“1h”表示小时，“1d”表示天（例如：“5s,10s,30s,1m,5m,15m,30m,1h,2h,1d”）。",
@@ -10302,9 +10325,15 @@
       "options": "选项"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "从 <2>Grafana.com</2> 导入数据面板",
+      "importing-from": "",
       "published-by": "发布者",
       "updated-on": "更新日期"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "您确定要删除“{{snapshotToRemove}}”吗？",
@@ -11165,6 +11194,9 @@
     "noOptionsMessage-no-organizations-found": "未找到组织",
     "select-placeholder": "选择组织"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "编辑标题"
@@ -11662,6 +11694,7 @@
       "text-installed": "已安装"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Grafana 依赖关系",
       "installed-version": "{{versionNumber}}（已安装版本）",
       "latest-compatible-version": "{{versionNumber}}（最新兼容版本）",
@@ -11843,13 +11876,19 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -11859,6 +11898,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -11873,7 +11913,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12165,6 +12204,7 @@
       "jobs": "作业"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "设置",
       "source-code": "源代码"
     },
@@ -12187,6 +12227,7 @@
     },
     "repository-overview": {
       "checked": "已检查：",
+      "connection-status": "",
       "finished": "",
       "health": "健康",
       "healthy": "状态良好",
@@ -12344,23 +12385,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "此操作将删除存储库配置，您将丢失所有进度。您确定要丢弃更改吗？",
         "confirm": "是，丢弃",
         "dismiss": "继续工作",
         "title": "丢弃存储库设置？"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12372,21 +12417,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "选择要同步的内容",
       "step-configure-repo": "",
       "step-connect": "连接",
       "step-finish": "选择附加设置",
-      "step-github-app": "",
       "step-synchronize": "与外部存储同步",
       "sync-description": "将资源与外部存储同步。完成此一次性步骤后，所有后续更新都将自动保存到存储库中，并预配回实例。",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "选择要同步的内容",
       "title-configure-repo": "",
       "title-connect": "连接到外部存储",
       "title-finish": "选择附加设置",
-      "title-github-app": "",
       "title-synchronize": "与外部存储同步"
     },
     "wizard-content": {
@@ -12619,13 +12662,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12664,7 +12711,7 @@
     },
     "page": {
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
-      "no-deleted-dashboards-text": "当您删除数据面板时，它将在此处显示 30 天，然后会被永久删除。您的组织管理员可以还原最近删除的数据面板。",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "未找到与您的查询相关的结果"
     },
     "restore-modal": {
@@ -14781,6 +14828,9 @@
       "description": {
         "variable-values-fetched-datasource-query": "从数据源查询中获取变量值"
       }
+    },
+    "create-switch-variable-adapter": {
+      "description": ""
     },
     "data-source-variable-slice": {
       "text": {

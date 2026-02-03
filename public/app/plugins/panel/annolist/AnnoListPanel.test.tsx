@@ -137,7 +137,7 @@ describe('AnnoListPanel', () => {
       });
 
       getMock.mockClear();
-      expect(screen.getByRole('link')).toBeInTheDocument();
+      expect(await screen.findByRole('link')).toBeInTheDocument();
       expect(getMock).not.toHaveBeenCalled();
     });
 
@@ -212,8 +212,8 @@ describe('AnnoListPanel', () => {
         const { getMock, pushSpy } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
+        expect(await screen.findByRole('button', { name: /result text/i })).toBeInTheDocument();
+        await userEvent.click(await screen.findByRole('button', { name: /result text/i }));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardUIDs: '7MeksYbmk' });
@@ -226,9 +226,9 @@ describe('AnnoListPanel', () => {
           results: [{ ...defaultResult, dashboardUID: null, panelId: 0 }],
         });
         getMock.mockClear();
-        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /result text/i })).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
+        await userEvent.click(await screen.findByRole('button', { name: /result text/i }));
 
         expect(getMock).not.toHaveBeenCalled();
         expect(partialSpy).toHaveBeenCalledTimes(1);
@@ -240,9 +240,9 @@ describe('AnnoListPanel', () => {
           results: [{ ...defaultResult, dashboardUID: null }],
         });
         getMock.mockClear();
-        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /result text/i })).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
+        await userEvent.click(await screen.findByRole('button', { name: /result text/i }));
 
         expect(getMock).not.toHaveBeenCalled();
         expect(partialSpy).toHaveBeenCalledTimes(1);
@@ -256,8 +256,8 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
 
-        expect(screen.getByRole('button', { name: /result tag b/i })).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: /result tag b/i }));
+        expect(await screen.findByRole('button', { name: /result tag b/i })).toBeInTheDocument();
+        await userEvent.click(await screen.findByRole('button', { name: /result tag b/i }));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
@@ -270,8 +270,8 @@ describe('AnnoListPanel', () => {
           },
           expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
         );
-        expect(screen.getByText(/filter:/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/result tag b/i)).toHaveLength(2);
+        expect(await screen.findByText(/filter:/i)).toBeInTheDocument();
+        expect(await screen.findAllByText(/result tag b/i)).toHaveLength(2);
       });
     });
 
@@ -280,8 +280,8 @@ describe('AnnoListPanel', () => {
         const { getMock } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByRole('img')).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('img'));
+        expect(await screen.findByRole('img')).toBeInTheDocument();
+        await userEvent.click(await screen.findByRole('img'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
@@ -295,8 +295,8 @@ describe('AnnoListPanel', () => {
           },
           expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
         );
-        expect(screen.getByText(/filter:/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /result email/i })).toBeInTheDocument();
+        expect(await screen.findByText(/filter:/i)).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /result email/i })).toBeInTheDocument();
       });
     });
 
@@ -306,7 +306,7 @@ describe('AnnoListPanel', () => {
         const { getMock } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByRole('img')).toBeInTheDocument();
+        expect(await screen.findByRole('img')).toBeInTheDocument();
       });
     });
   });

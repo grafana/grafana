@@ -157,21 +157,23 @@ export class CloudWatchDatasource
     return merge(...dataQueryResponses);
   }
 
-  interpolateVariablesInQueries(queries: CloudWatchQuery[], scopedVars: ScopedVars): CloudWatchQuery[] {
-    if (!queries.length) {
-      return queries;
+  applyTemplateVariables(query: CloudWatchQuery, scopedVars: ScopedVars): CloudWatchQuery {
+    if (isCloudWatchMetricsQuery(query)) {
+      return this.metricsQueryRunner.interpolateMetricsQueryVariables(query, scopedVars);
     }
 
-    return queries.map((query) => ({
+    if (isCloudWatchLogsQuery(query)) {
+      return {
+        ...query,
+        region: this.templateSrv.replace(this.getActualRegion(query.region), scopedVars),
+        ...this.logsQueryRunner.interpolateLogsQueryVariables(query, scopedVars),
+      };
+    }
+
+    return {
       ...query,
-      region: this.metricsQueryRunner.replaceVariableAndDisplayWarningIfMulti(
-        this.getActualRegion(query.region),
-        scopedVars
-      ),
-      ...(isCloudWatchMetricsQuery(query) &&
-        this.metricsQueryRunner.interpolateMetricsQueryVariables(query, scopedVars)),
-      ...(isCloudWatchLogsQuery(query) && this.logsQueryRunner.interpolateLogsQueryVariables(query, scopedVars)),
-    }));
+      region: this.templateSrv.replace(this.getActualRegion(query.region), scopedVars),
+    };
   }
 
   /**
@@ -182,15 +184,31 @@ export class CloudWatchDatasource
     return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
   }
 
-  targetContainsTemplate(target: any) {
-    return (
-      this.templateSrv.containsTemplate(target.region) ||
-      this.templateSrv.containsTemplate(target.namespace) ||
-      this.templateSrv.containsTemplate(target.metricName) ||
-      this.templateSrv.containsTemplate(target.expression!) ||
-      target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
-      find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
-    );
+  targetContainsTemplate(target: CloudWatchQuery) {
+    if (this.templateSrv.containsTemplate(target.region)) {
+      return true;
+    }
+
+    if (isCloudWatchMetricsQuery(target)) {
+      return (
+        this.templateSrv.containsTemplate(target.namespace) ||
+        this.templateSrv.containsTemplate(target.metricName) ||
+        this.templateSrv.containsTemplate(target.expression) ||
+        !!find(target.dimensions, (v, k) => {
+          const values = Array.isArray(v) ? v : [v];
+          return this.templateSrv.containsTemplate(k) || values.some((val) => this.templateSrv.containsTemplate(val));
+        })
+      );
+    }
+
+    if (isCloudWatchLogsQuery(target)) {
+      return (
+        this.templateSrv.containsTemplate(target.expression) ||
+        !!target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup))
+      );
+    }
+
+    return false;
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {

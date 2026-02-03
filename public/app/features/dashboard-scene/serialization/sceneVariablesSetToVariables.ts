@@ -93,6 +93,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         staticOptions: variable.state.staticOptions?.map((option) => ({
           text: option.label,
           value: String(option.value),
+          ...(option.properties && { properties: option.properties }),
         })),
         staticOptionsOrder: variable.state.staticOptionsOrder,
       };
@@ -284,6 +285,7 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
     value: String(o.value),
     text: o.label,
     selected: Array.isArray(varState.value) ? varState.value.includes(o.value) : varState.value === o.value,
+    ...(o.properties && { properties: o.properties }),
   }));
 }
 
@@ -392,6 +394,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           staticOptions: variable.state.staticOptions?.map((option) => ({
             text: option.label,
             value: String(option.value),
+            ...(option.properties && { properties: option.properties }),
           })),
           staticOptionsOrder: variable.state.staticOptionsOrder,
         },

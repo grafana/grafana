@@ -20,9 +20,8 @@ import (
 
 type userTeamsResponse struct {
 	Items []struct {
-		TeamRef struct {
-			Name string `json:"name"`
-		} `json:"teamRef"`
+		Team       string `json:"team"`
+		User       string `json:"user"`
 		Permission string `json:"permission"`
 		External   bool   `json:"external"`
 	} `json:"items"`
@@ -60,12 +59,12 @@ func TestIntegrationUserTeams(t *testing.T) {
 
 			t.Cleanup(func() { helper.Shutdown() })
 
-			doUserTeamsTests(t, helper, mode)
+			doUserTeamsTests(t, helper)
 		})
 	}
 }
 
-func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	ctx := context.Background()
 	orgNS := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
 
@@ -123,7 +122,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWr
 		require.NoError(t, err)
 	}
 
-	t.Run(fmt.Sprintf("returns the bound team for the user with dual writer mode %d", mode), func(t *testing.T) {
+	t.Run("returns the bound team for the user", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u1.GetName())
 
 		var res userTeamsResponse
@@ -137,11 +136,13 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWr
 		require.True(t, containsTeam(res, teams[0].GetName()), "expected response to contain team %q, got %#v", teams[0].GetName(), res.Items)
 
 		item := findTeam(res, teams[0].GetName())
+		require.Equal(t, u1.GetName(), item.User)
+		require.Equal(t, teams[0].GetName(), item.Team)
 		require.Equal(t, "admin", item.Permission)
 		require.False(t, item.External)
 	})
 
-	t.Run(fmt.Sprintf("does not return the bound team for a different user with dual writer mode %d", mode), func(t *testing.T) {
+	t.Run("does not return the bound team for a different user", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u2.GetName())
 
 		var res userTeamsResponse
@@ -155,7 +156,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWr
 		require.False(t, containsTeam(res, teams[0].GetName()), "did not expect response to contain team %q, got %#v", teams[0].GetName(), res.Items)
 	})
 
-	t.Run(fmt.Sprintf("paging with page and limit with dual writer mode %d", mode), func(t *testing.T) {
+	t.Run("paging with page and limit", func(t *testing.T) {
 		// Page 1, Limit 2
 		res1 := getUserTeamsWithPaging(t, helper, u1.GetName(), 1, 2)
 		require.Len(t, res1.Items, 2)
@@ -170,24 +171,24 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWr
 
 		seen := make(map[string]bool)
 		for _, item := range res1.Items {
-			teamName := item.TeamRef.Name
+			teamName := item.Team
 			require.False(t, seen[teamName], "Team %s seen in page 1 twice", teamName)
 			seen[teamName] = true
 		}
 		for _, item := range res2.Items {
-			teamName := item.TeamRef.Name
+			teamName := item.Team
 			require.False(t, seen[teamName], "Team %s seen in page 1 and 2", teamName)
 			seen[teamName] = true
 		}
 		for _, item := range res3.Items {
-			teamName := item.TeamRef.Name
+			teamName := item.Team
 			require.False(t, seen[teamName], "Team %s seen in previous pages", teamName)
 			seen[teamName] = true
 		}
 		require.Len(t, seen, 5, "Should have seen all 5 teams across pages")
 	})
 
-	t.Run(fmt.Sprintf("paging with offset and limit with dual writer mode %d", mode), func(t *testing.T) {
+	t.Run("paging with offset and limit", func(t *testing.T) {
 		// Offset 0, Limit 2
 		res1 := getUserTeamsWithOffset(t, helper, u1.GetName(), 0, 2)
 		require.Len(t, res1.Items, 2)
@@ -202,17 +203,17 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWr
 
 		seen := make(map[string]bool)
 		for _, item := range res1.Items {
-			teamName := item.TeamRef.Name
+			teamName := item.Team
 			require.False(t, seen[teamName], "Team %s seen in offset 0 twice", teamName)
 			seen[teamName] = true
 		}
 		for _, item := range res2.Items {
-			teamName := item.TeamRef.Name
+			teamName := item.Team
 			require.False(t, seen[teamName], "Team %s seen in offset 0 and 2", teamName)
 			seen[teamName] = true
 		}
 		for _, item := range res3.Items {
-			teamName := item.TeamRef.Name
+			teamName := item.Team
 			require.False(t, seen[teamName], "Team %s seen in previous offsets", teamName)
 			seen[teamName] = true
 		}
@@ -231,7 +232,7 @@ func createTeamObject(helper *apis.K8sTestHelper, teamName string, title string,
 
 func containsTeam(res userTeamsResponse, teamName string) bool {
 	for _, it := range res.Items {
-		if it.TeamRef.Name == teamName {
+		if it.Team == teamName {
 			return true
 		}
 	}
@@ -239,14 +240,13 @@ func containsTeam(res userTeamsResponse, teamName string) bool {
 }
 
 func findTeam(res userTeamsResponse, teamName string) (out struct {
-	TeamRef struct {
-		Name string `json:"name"`
-	} `json:"teamRef"`
+	Team       string `json:"team"`
+	User       string `json:"user"`
 	Permission string `json:"permission"`
 	External   bool   `json:"external"`
 }) {
 	for _, it := range res.Items {
-		if it.TeamRef.Name == teamName {
+		if it.Team == teamName {
 			return it
 		}
 	}
