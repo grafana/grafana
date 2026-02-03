@@ -350,4 +350,52 @@ describe('InteractiveTable', () => {
       expect(screen.getByText('Value 2')).toBeInTheDocument();
     });
   });
+
+  describe('column width', () => {
+    it('should apply width style to header and cell when width is specified', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID', width: '100px' },
+        { id: 'country', header: 'Country', width: 200 },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const idHeader = screen.getByRole('columnheader', { name: 'ID' });
+      const countryHeader = screen.getByRole('columnheader', { name: 'Country' });
+
+      expect(idHeader).toHaveStyle({ width: '100px' });
+      expect(countryHeader).toHaveStyle({ width: '200px' });
+
+      // Check cells have the width applied
+      const cells = screen.getAllByRole('cell');
+      expect(cells[0]).toHaveStyle({ width: '100px' });
+      expect(cells[1]).toHaveStyle({ width: '200px' });
+    });
+
+    it('should not apply width style when width is not specified', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID' },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const idHeader = screen.getByRole('columnheader', { name: 'ID' });
+      const countryHeader = screen.getByRole('columnheader', { name: 'Country' });
+
+      // Headers should not have inline width style
+      expect(idHeader).not.toHaveAttribute('style');
+      expect(countryHeader).not.toHaveAttribute('style');
+    });
+
+    it('should not apply width style when width is 0 (disableGrow case)', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID', width: 0 }];
+      const data: TableData[] = [{ id: '1' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const idHeader = screen.getByRole('columnheader', { name: 'ID' });
+      // width: 0 should trigger disableGrow class, not inline style
+      expect(idHeader).not.toHaveAttribute('style');
+    });
+  });
 });

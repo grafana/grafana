@@ -30,4 +30,10 @@ export interface Column<TableData extends object> {
    * Determines starting sort direction when the column header is clicked.
    */
   sortDescFirst?: boolean;
+  /**
+   * Optional fixed width for the column. Can be any valid CSS width value
+   * (e.g., '100px', '20%', 'auto'). If not provided, column width is determined automatically.
+   * This is applied as an inline style to both header and cell elements.
+   */
+  width?: string | number;
 }
