@@ -115,14 +115,10 @@ export function RepositoryList({ items }: Props) {
           ) : (
             <EmptyState
               variant="not-found"
-              message={
-                isEmpty
-                  ? t('provisioning.repository-list.no-repositories', 'No repositories configured')
-                  : t(
-                      'provisioning.folder-repository-list.no-results-matching-your-query',
-                      'No results matching your query'
-                    )
-              }
+              message={t(
+                'provisioning.folder-repository-list.no-results-matching-your-query',
+                'No results matching your query'
+              )}
             />
           )}
         </Stack>
