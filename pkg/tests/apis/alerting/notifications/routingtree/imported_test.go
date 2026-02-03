@@ -99,7 +99,7 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 			},
 		},
 	}
-	expected.ObjectMeta.UID = importedRoute.ObjectMeta.UID // UID is generated.
+	expected.UID = importedRoute.UID // UID is generated.
 	expected.SetProvenanceStatus(string(models.ProvenanceConvertedPrometheus))
 	require.Equal(t, expected, importedRoute)
 
