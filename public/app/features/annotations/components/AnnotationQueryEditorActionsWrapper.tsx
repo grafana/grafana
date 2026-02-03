@@ -12,17 +12,26 @@ interface Props {
   annotation: AnnotationQuery<DataQuery>;
   datasource: DataSourceApi;
   onQueryReplace: (query: DataQuery) => void;
+  disableQueryLibrary?: boolean;
 }
 
-export function AnnotationQueryEditorActionsWrapper({ children, annotation, datasource, onQueryReplace }: Props) {
+export function AnnotationQueryEditorActionsWrapper({
+  children,
+  annotation,
+  datasource,
+  onQueryReplace,
+  disableQueryLibrary,
+}: Props) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
 
-  const savedQueryButtons = renderSavedQueryButtons(
-    getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
-    CoreApp.Dashboard,
-    undefined,
-    onQueryReplace
-  );
+  const savedQueryButtons = disableQueryLibrary
+    ? undefined
+    : renderSavedQueryButtons(
+        getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
+        CoreApp.Dashboard,
+        undefined,
+        onQueryReplace
+      );
 
   return (
     <Stack direction="column" gap={1}>

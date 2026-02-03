@@ -30,6 +30,7 @@ export interface Props {
   datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;
   onChange: (annotation: AnnotationQuery<DataQuery>) => void;
+  disableQueryLibrary?: boolean;
 }
 
 interface State {
@@ -315,6 +316,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
           <AnnotationQueryEditorActionsWrapper
+            disableQueryLibrary={this.props.disableQueryLibrary}
             annotation={annotation}
             datasource={datasource}
             onQueryReplace={this.onQueryReplace}

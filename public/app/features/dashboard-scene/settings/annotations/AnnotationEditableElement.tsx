@@ -1,28 +1,34 @@
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { AppEvents, CoreApp, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { config, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { dataLayers, VizPanel } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Box,
   Button,
+  ButtonGroup,
   Checkbox,
   Combobox,
   ComboboxOption,
+  Dropdown,
   Field,
   Input,
+  Menu,
   Modal,
   MultiCombobox,
   Stack,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
@@ -439,23 +445,96 @@ function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer }) {
   );
 }
 
+function AnnotationQueryLibraryDropdown({
+  layer,
+  onQuerySelected,
+}: {
+  layer: AnnotationLayer;
+  onQuerySelected: () => void;
+}) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { openDrawer, closeDrawer } = useQueryLibraryContext();
+
+  const { query } = layer.useState();
+  const { value: datasource } = useAsync(() => {
+    return getDataSourceSrv().get(query?.datasource);
+  }, [query?.datasource]);
+
+  const onSelectFromQueryLibrary = useCallback(() => {
+    openDrawer({
+      options: {
+        context: CoreApp.Dashboard,
+      },
+      onSelectQuery: async (selectedQuery: DataQuery) => {
+        try {
+          const updatedQuery = await updateAnnotationFromSavedQuery(query, selectedQuery);
+          layer.setState({ query: updatedQuery });
+          layer.runLayer();
+        } catch (error) {
+          console.error('Failed to replace annotation query!', error);
+          getAppEvents().publish({
+            type: AppEvents.alertError.name,
+            payload: ['Failed to create annotation query!', error instanceof Error ? error.message : error],
+          });
+          return;
+        }
+        closeDrawer();
+        onQuerySelected();
+      },
+    });
+  }, [closeDrawer, layer, onQuerySelected, openDrawer, query]);
+
+  const menuOverlay = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          icon="book-open"
+          label={t(
+            'dashboard-scene.annotation-query-editor-button.menu-actions.label-select-from-query-library',
+            'Select from query library'
+          )}
+          onClick={onSelectFromQueryLibrary}
+        />
+      </Menu>
+    ),
+    [onSelectFromQueryLibrary]
+  );
+
+  if (!datasource) {
+    return null;
+  }
+
+  return (
+    <Dropdown overlay={menuOverlay} placement="bottom-end" onVisibleChange={setIsDropdownOpen}>
+      <Button
+        aria-label={t('dashboard-scene.annotation-query-editor-button.aria-label-toggle-menu', 'Toggle menu')}
+        icon={isDropdownOpen ? 'angle-up' : 'angle-down'}
+        size="sm"
+      />
+    </Dropdown>
+  );
+}
+
 function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <>
       <Box display={'flex'} direction={'column'} paddingBottom={1}>
-        <Button
-          tooltip={t(
-            'dashboard.edit-pane.annotation.open-query-editor-tooltip',
-            'Open the query editor to configure the annotation query'
-          )}
-          onClick={() => setIsModalOpen(true)}
-          size="sm"
-          fullWidth
-        >
-          <Trans i18nKey="dashboard.edit-pane.annotation.open-query-editor">Open query editor</Trans>
-        </Button>
+        <ButtonGroup>
+          <Button
+            tooltip={t(
+              'dashboard.edit-pane.annotation.open-query-editor-tooltip',
+              'Open the query editor to configure the annotation query'
+            )}
+            onClick={() => setIsModalOpen(true)}
+            size="sm"
+            fullWidth
+          >
+            <Trans i18nKey="dashboard.edit-pane.annotation.open-query-editor">Open query editor</Trans>
+          </Button>
+          <AnnotationQueryLibraryDropdown layer={layer} onQuerySelected={() => setIsModalOpen(true)} />
+        </ButtonGroup>
       </Box>
       <Modal
         title={t('dashboard.edit-pane.annotation.query-editor-modal-title', 'Annotation Query')}
@@ -499,6 +578,7 @@ function AnnotationQueryEditor({ layer }: { layer: AnnotationLayer }) {
 
   return (
     <StandardAnnotationQueryEditor
+      disableQueryLibrary
       datasource={ds}
       datasourceInstanceSettings={dsi}
       annotation={query}
