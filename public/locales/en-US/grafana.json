@@ -11866,9 +11866,6 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
-      "unavailable-options": {
-        "title": "Unavailable options"
-      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
