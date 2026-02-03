@@ -6,14 +6,14 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e
-	github.com/grafana/grafana-app-sdk v0.49.1
+	github.com/grafana/grafana-app-sdk v0.50.0
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
-	k8s.io/apimachinery v0.34.3
+	k8s.io/apimachinery v0.35.0
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
 )
 
@@ -105,8 +105,8 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
-	github.com/onsi/gomega v1.36.2 // indirect
+	github.com/onsi/ginkgo/v2 v2.27.2 // indirect
+	github.com/onsi/gomega v1.38.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -177,9 +177,9 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.3 // indirect
-	k8s.io/apiextensions-apiserver v0.34.3 // indirect
-	k8s.io/client-go v0.34.3 // indirect
+	k8s.io/api v0.35.0 // indirect
+	k8s.io/apiextensions-apiserver v0.35.0 // indirect
+	k8s.io/client-go v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect

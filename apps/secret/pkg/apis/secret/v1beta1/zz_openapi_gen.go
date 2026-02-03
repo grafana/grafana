@@ -56,7 +56,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -77,7 +77,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperSpec", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperSpec", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -329,7 +329,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"items": {
@@ -350,7 +350,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.Keeper", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.Keeper", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -541,7 +541,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -562,7 +562,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueSpec", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueSpec", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -589,7 +589,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"items": {
@@ -610,7 +610,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValue", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValue", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 

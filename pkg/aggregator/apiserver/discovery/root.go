@@ -51,7 +51,8 @@ func (a *RootDiscoveryHandler) Handle(req *restful.Request, resp *restful.Respon
 		chain.ProcessFilter(req, resp)
 		return
 	}
-	apisHandlerWithAggregationSupport := aggregated.WrapAggregatedDiscoveryToHandler(a.v1handler(chain), a.v2handler(chain))
+	// TODO: just duplicated the handler here, as it seems that the k8s code which uses it did the same thing when it upgraded to v1.35.0
+	apisHandlerWithAggregationSupport := aggregated.WrapAggregatedDiscoveryToHandler(a.v1handler(chain), a.v2handler(chain), a.v2handler(chain))
 	apisHandlerWithAggregationSupport.ServeHTTP(resp.ResponseWriter, req.Request)
 }
 

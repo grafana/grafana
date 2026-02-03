@@ -58,7 +58,7 @@ func (p *RequestHandler) HandleReceiverTestingRequest(ctx context.Context, w app
 		responseBody.Status = v0alpha1.CreateReceiverIntegrationTestBodyStatusFailure
 		responseBody.Error = &result.LastNotifyAttemptError
 	}
-	jsonData, err := json.Marshal(v0alpha1.CreateReceiverIntegrationTest{
+	jsonData, err := json.Marshal(v0alpha1.CreateReceiverIntegrationTestResponse{
 		TypeMeta:                          metav1.TypeMeta{},
 		CreateReceiverIntegrationTestBody: responseBody,
 	})

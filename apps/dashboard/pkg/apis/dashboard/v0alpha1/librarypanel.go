@@ -23,6 +23,10 @@ type LibraryPanel struct {
 	Status *LibraryPanelStatus `json:"status,omitempty"`
 }
 
+func (LibraryPanel) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+}
+
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibraryPanelList struct {
@@ -31,6 +35,10 @@ type LibraryPanelList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []LibraryPanel `json:"items"`
+}
+
+func (LibraryPanelList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
 }
 
 // +k8s:deepcopy-gen=true
@@ -73,12 +81,20 @@ type LibraryPanelSpec struct {
 	Targets []data.DataQuery `json:"targets,omitempty"`
 }
 
+func (LibraryPanelSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec"
+}
+
 // +k8s:deepcopy-gen=true
 type GridPos struct {
 	W int `json:"w"`
 	H int `json:"h"`
 	X int `json:"x"`
 	Y int `json:"y"`
+}
+
+func (GridPos) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.GridPos"
 }
 
 // +k8s:deepcopy-gen=true
@@ -88,4 +104,8 @@ type LibraryPanelStatus struct {
 
 	// The properties previously stored in SQL that are not included in this model
 	Missing common.Unstructured `json:"missing,omitempty"`
+}
+
+func (LibraryPanelStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus"
 }

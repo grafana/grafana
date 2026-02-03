@@ -34,4 +34,8 @@ func (o *CreateRegister) DeepCopyInto(dst *CreateRegister) {
 	o.CreateRegisterBody.DeepCopyInto(&dst.CreateRegisterBody)
 }
 
+func (CreateRegister) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+}
+
 var _ runtime.Object = NewCreateRegister()

@@ -44,7 +44,7 @@ func schema_pkg_apis_collections_v1alpha1_Stars(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -59,7 +59,7 @@ func schema_pkg_apis_collections_v1alpha1_Stars(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -86,7 +86,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -107,7 +107,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

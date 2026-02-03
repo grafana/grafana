@@ -748,6 +748,11 @@ func (s *Storage) ReadinessCheck() error {
 	return nil
 }
 
+func (s *Storage) EnableResourceSizeEstimation(storage.KeysFunc) error {
+	// TODO: what do we need to do here? This is now required as of k8s.io v1.35.0
+	return nil
+}
+
 // validateMinimumResourceVersion returns a 'too large resource' version error when the provided minimumResourceVersion is
 // greater than the most recent actualRevision available from storage.
 func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, actualRevision uint64) error {

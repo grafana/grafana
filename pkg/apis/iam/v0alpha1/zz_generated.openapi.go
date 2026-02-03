@@ -97,7 +97,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"keys": {
@@ -164,7 +164,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -221,7 +221,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSetting(ref common.ReferenceCallback) commo
 						SchemaProps: spec.SchemaProps{
 							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
 							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -234,7 +234,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSetting(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -261,7 +261,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -282,7 +282,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -336,17 +336,17 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountToken(ref common.ReferenceCallba
 					},
 					"expires": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
 						},
 					},
 					"lastUsed": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
 						},
 					},
 					"created": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
 						},
 					},
 				},
@@ -354,7 +354,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountToken(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"io.k8s.apimachinery.pkg.apis.meta.v1.Time"},
 	}
 }
 
@@ -381,7 +381,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountTokenList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -402,7 +402,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountTokenList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -487,7 +487,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -508,7 +508,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -618,7 +618,7 @@ func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -639,6 +639,6 @@ func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }

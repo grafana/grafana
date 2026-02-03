@@ -52,7 +52,7 @@ func schema_pkg_apis_advisor_v0alpha1_Check(ref common.ReferenceCallback) common
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -73,7 +73,7 @@ func schema_pkg_apis_advisor_v0alpha1_Check(ref common.ReferenceCallback) common
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -129,7 +129,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"items": {
@@ -150,7 +150,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -361,7 +361,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckType(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -382,7 +382,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckType(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -409,7 +409,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypeList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"items": {
@@ -430,7 +430,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypeList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckType", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckType", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 

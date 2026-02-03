@@ -42,3 +42,10 @@ const (
 	PlaylistStatusOperatorStateStateInProgress PlaylistStatusOperatorStateState = "in_progress"
 	PlaylistStatusOperatorStateStateFailed     PlaylistStatusOperatorStateState = "failed"
 )
+
+func (PlayliststatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlayliststatusOperatorState"
+}
+func (PlaylistStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
+}

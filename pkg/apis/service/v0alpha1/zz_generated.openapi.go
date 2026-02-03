@@ -43,7 +43,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalName(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -56,7 +56,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalName(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/service/v0alpha1.ExternalNameSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/service/v0alpha1.ExternalNameSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -83,7 +83,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalNameList(ref common.ReferenceCallb
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -104,7 +104,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalNameList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/service/v0alpha1.ExternalName", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/service/v0alpha1.ExternalName", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

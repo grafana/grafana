@@ -34,10 +34,10 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.49.1
+	github.com/grafana/grafana-app-sdk v0.50.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/stretchr/testify v1.11.1
-	k8s.io/apimachinery v0.34.3
+	k8s.io/apimachinery v0.35.0
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
 )
 
@@ -379,11 +379,11 @@ require (
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.3 // indirect
-	k8s.io/apiextensions-apiserver v0.34.3 // indirect
-	k8s.io/apiserver v0.34.3 // indirect
-	k8s.io/client-go v0.34.3 // indirect
-	k8s.io/component-base v0.34.3 // indirect
+	k8s.io/api v0.35.0 // indirect
+	k8s.io/apiextensions-apiserver v0.35.0 // indirect
+	k8s.io/apiserver v0.35.0 // indirect
+	k8s.io/client-go v0.35.0 // indirect
+	k8s.io/component-base v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	modernc.org/libc v1.66.10 // indirect
