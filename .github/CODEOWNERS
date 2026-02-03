@@ -751,6 +751,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/api-clients
 /packages/grafana-api-clients/ @grafana/grafana-frontend-platform @grafana/grafana-search-navigate-organise
+/packages/grafana-api-clients/src/clients/rtkq/*.alerting/ @grafana/alerting-frontend
 /packages/grafana-api-clients/src/clients/rtkq/advisor/ @grafana/plugins-platform-frontend
 /packages/grafana-api-clients/src/clients/rtkq/correlations/ @grafana/datapro
 /packages/grafana-api-clients/src/clients/rtkq/dashboard/ @grafana/dashboards-squad
