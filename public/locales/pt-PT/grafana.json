@@ -3740,6 +3740,9 @@
       "manage-permissions": "Gerir permissões",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "Selecionar a pasta: {{ label }} selecionada atualmente",
       "button-label": "Selecionar a pasta",
@@ -4947,6 +4950,7 @@
       },
       "variables": {
         "add-variable": "Adicionar variável",
+        "reorder": "",
         "select-type": "Escolher tipo de variável",
         "select-type-card-tooltip": "Clique para selecionar o tipo",
         "select-variable": "Selecionar"
@@ -5812,7 +5816,7 @@
       "load": "Carregar"
     },
     "gcom-field": {
-      "label": "Encontre e importe painéis de controlo para aplicações comuns em <1></1>",
+      "label": "",
       "load-button": "Carregar",
       "placeholder": "URL ou ID do painel de controlo de Grafana.com",
       "validation-required": "É necessário um URL ou ID do painel de controlo da Grafana"
@@ -6317,6 +6321,11 @@
         "remove-panel": "Remover painel"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alertar"
     },
@@ -6684,6 +6693,16 @@
         }
       },
       "label": "Ocultar"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Tipo de variável"
@@ -10350,9 +10369,15 @@
       "options": "Opções"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "A importar o painel de <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Publicado por",
       "updated-on": "Atualizado a"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Tem a certeza de que pretende eliminar '{{snapshotToRemove}}'?",
@@ -11216,6 +11241,9 @@
     "noOptionsMessage-no-organizations-found": "Nenhuma organização encontrada",
     "select-placeholder": "Selecionar organização"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Editar o título"
@@ -11713,6 +11741,7 @@
       "text-installed": "Instalado"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Dependência da Grafana",
       "installed-version": "{{versionNumber}} (versão instalada)",
       "latest-compatible-version": "{{versionNumber}} (última versão compatível)",
@@ -11897,6 +11926,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -11905,6 +11938,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12404,23 +12438,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Isto eliminará a configuração do repositório e todo o progresso será perdido. Tem a certeza de que pretende rejeitar as suas alterações?",
         "confirm": "Sim, rejeitar",
         "dismiss": "Continuar a trabalhar",
         "title": "Rejeitar a configuração do repositório?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12432,21 +12470,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Escolha o que sincronizar",
       "step-configure-repo": "",
       "step-connect": "Conectar ",
       "step-finish": "Escolha as definições adicionais",
-      "step-github-app": "",
       "step-synchronize": "Sincronizar com armazenamento externo",
       "sync-description": "Sincronize recursos com um armazenamento externo. Após este passo único, todas as atualizações futuras serão guardadas automaticamente no repositório e aprovisionadas novamente para a instância.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Escolha o que sincronizar",
       "title-configure-repo": "",
       "title-connect": "Ligar a um armazenamento externo",
       "title-finish": "Escolha as definições adicionais",
-      "title-github-app": "",
       "title-synchronize": "Sincronizar com armazenamento externo"
     },
     "wizard-content": {
