@@ -2328,7 +2328,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Groeperen op",
-      "description-group-by": "Combineer meerdere waarschuwingen tot één melding door ze te groeperen op dezelfde labelwaarden. Als dit leeg is, wordt het overgenomen van het standaardmeldingsbeleid.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -3629,7 +3630,9 @@
       "delete-button": "Verwijderen",
       "delete-modal-invalid-text": "Een of meer mappen bevatten bibliotheekpanelen of waarschuwingsregels. Verwijder deze eerst om verder te gaan.",
       "delete-modal-invalid-title": "Kan de map niet verwijderen",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Verwijderen",
@@ -3736,6 +3739,9 @@
       "folder-actions": "Mapacties",
       "manage-permissions": "Toestemmingen beheren",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Map selecteren: {{ label }} is momenteel geselecteerd",
@@ -4944,6 +4950,7 @@
       },
       "variables": {
         "add-variable": "Variabele toevoegen",
+        "reorder": "",
         "select-type": "Kies type variabele",
         "select-type-card-tooltip": "Klik om te selecteren",
         "select-variable": "Selecteren"
@@ -5151,6 +5158,9 @@
       "panel-data-label": "Paneelgegevens",
       "panel-json-description": "Het model opgeslagen in het dashboard JSON dat configureert hoe alles werkt.",
       "panel-json-label": "JSON-paneel",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Bron selecteren",
       "unknown": "Onbekend object: {{show}}"
     },
@@ -5481,10 +5491,6 @@
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
         "title": ""
       },
@@ -5810,7 +5816,7 @@
       "load": "Laden"
     },
     "gcom-field": {
-      "label": "Vind en importeer dashboards voor veelgebruikte toepassingen op <1></1>",
+      "label": "",
       "load-button": "Laden",
       "placeholder": "Dashboard-URL of -ID van Grafana.com",
       "validation-required": "Een dashboard-URL of -ID van Grafana is vereist"
@@ -6240,7 +6246,9 @@
     },
     "inspect-json-tab": {
       "apply": "Toepassen",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6312,6 +6320,11 @@
       "title": {
         "remove-panel": "Paneel verwijderen"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Waarschuwing"
@@ -6681,6 +6694,16 @@
       },
       "label": "Verbergen"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "Type variabele"
     },
@@ -6747,7 +6770,7 @@
       "delete-button": "Verwijderen",
       "title": "Verwijderen"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "Wil je dit dashboard verwijderen?",
     "general": {
       "auto-refresh-description": "Definieer de intervallen voor automatisch vernieuwen die beschikbaar moeten zijn in de lijst voor automatisch vernieuwen. Gebruik de notatie '5s' voor seconden, '1m' voor minuten, '1h' voor uren en '1d' voor dagen (bijvoorbeeld: '5s, 10s, 30s, 1m, 5m, 15m, 30m, 1h, 2h, 1d').",
@@ -10346,9 +10369,15 @@
       "options": "Opties"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Dashboard importeren van <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Gepubliceerd door",
       "updated-on": "Bijgewerkt op"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Weet je zeker dat je '{{snapshotToRemove}}' wilt verwijderen?",
@@ -11212,6 +11241,9 @@
     "noOptionsMessage-no-organizations-found": "Geen organisaties gevonden",
     "select-placeholder": "Organisatie selecteren"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Titel bewerken"
@@ -11709,6 +11741,7 @@
       "text-installed": "Geïnstalleerd"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Afhankelijkheid van Grafana",
       "installed-version": "{{versionNumber}} (geïnstalleerde versie)",
       "latest-compatible-version": "{{versionNumber}} (nieuwste compatibele versie)",
@@ -11893,13 +11926,19 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -11909,6 +11948,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -11923,7 +11963,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12218,6 +12257,7 @@
       "jobs": "Taken"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "Instellingen",
       "source-code": "Broncode"
     },
@@ -12240,6 +12280,7 @@
     },
     "repository-overview": {
       "checked": "Gecontroleerd:",
+      "connection-status": "",
       "finished": "",
       "health": "Gezondheid",
       "healthy": "Gezond",
@@ -12397,23 +12438,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Hiermee wordt de repository-configuratie verwijderd en verlies je alle voortgang. Weet je zeker dat je je wijzigingen wilt negeren?",
         "confirm": "Ja, verwijderen",
         "dismiss": "Blijf werken",
         "title": "Repository-instellingen verwijderen?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12425,21 +12470,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Kies wat je wilt synchroniseren",
       "step-configure-repo": "",
       "step-connect": "Verbinden",
       "step-finish": "Kies aanvullende instellingen",
-      "step-github-app": "",
       "step-synchronize": "Synchroniseren met externe opslag",
       "sync-description": "Bronnen synchroniseren met externe opslag. Na deze eenmalige stap worden alle toekomstige updates automatisch opgeslagen in de repository en opnieuw ingericht in de instantie.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Kies wat je wilt synchroniseren",
       "title-configure-repo": "",
       "title-connect": "Verbinden met externe opslag",
       "title-finish": "Kies aanvullende instellingen",
-      "title-github-app": "",
       "title-synchronize": "Synchroniseren met externe opslag"
     },
     "wizard-content": {
@@ -12673,13 +12716,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12718,7 +12765,7 @@
     },
     "page": {
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
-      "no-deleted-dashboards-text": "Wanneer je een dashboard verwijdert, wordt dit hier 30 dagen weergegeven voordat het definitief wordt verwijderd. Je organisatiebeheerder kan recent verwijderde dashboards herstellen.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "Geen resultaten gevonden voor je zoekopdracht"
     },
     "restore-modal": {
