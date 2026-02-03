@@ -22,14 +22,14 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/server")
 
 func (ms *ModuleServer) initGRPCServer(authenticatorEnabled bool) (services.Service, error) {
-	var authn interceptors.AuthenticatorFunc
+	var authn interceptors.Authenticator
 	if authenticatorEnabled {
 		// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 		// grpcutils.NewGrpcAuthenticator should be used instead.
-		authn = newAuthenticatorWithFallback(ms.cfg, ms.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+		authn = interceptors.AuthenticatorFunc(newAuthenticatorWithFallback(ms.cfg, ms.registerer, tracer, func(ctx context.Context) (context.Context, error) {
 			auth := grpc.Authenticator{Tracer: tracer}
 			return auth.Authenticate(ctx)
-		})
+		}))
 	}
 
 	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, authn, tracer, ms.registerer)
