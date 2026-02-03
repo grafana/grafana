@@ -7,7 +7,6 @@ import (
 	"hash/fnv"
 	"math/rand"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/ring"
@@ -149,12 +148,10 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	}
 	rCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), r.Namespace)
 
+	expectedPods := len(rs.Instances)
 	var wg sync.WaitGroup
-	var totalRebuildCount atomic.Int64
-	var contactedPods atomic.Int32
-	detailsCh := make(chan string, len(rs.Instances))
-	errorCh := make(chan error, len(rs.Instances))
-	buildTimesCh := make(chan *resourcepb.RebuildIndexesResponse_IndexBuildTime, len(rs.Instances)*10) // Allow for multiple indexes per pod
+	responseCh := make(chan *resourcepb.RebuildIndexesResponse, expectedPods)
+	errorCh := make(chan error, expectedPods)
 
 	for _, inst := range rs.Instances {
 		wg.Add(1)
@@ -167,8 +164,6 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 				return
 			}
 
-			contactedPods.Add(1)
-
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
@@ -180,44 +175,50 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 				return
 			}
 
+			// Add instance ID to details if present
 			if rsp.Details != "" {
-				detailsCh <- fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
+				rsp.Details = fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
 			}
 
-			for _, bt := range rsp.BuildTimes {
-				buildTimesCh <- bt
-			}
-
-			totalRebuildCount.Add(rsp.RebuildCount)
+			responseCh <- rsp
 		}()
 	}
 
 	wg.Wait()
 	close(errorCh)
-	close(detailsCh)
-	close(buildTimesCh)
+	close(responseCh)
 
+	// Collect errors
 	errs := make([]error, 0, len(errorCh))
 	for err := range errorCh {
-		ds.log.Error("rebuild indexes call failed with %w", err)
+		ds.log.Error("rebuild indexes call failed", "error", err)
 		errs = append(errs, err)
 	}
 
+	// Aggregate responses
+	var totalRebuildCount int64
 	var details string
-	for d := range detailsCh {
-		if len(details) > 0 {
-			details += ", "
-		}
-		details += d
-	}
-
-	// Compute MIN(build time) for each resource type
 	minBuildTimes := make(map[string]*resourcepb.RebuildIndexesResponse_IndexBuildTime)
-	for bt := range buildTimesCh {
-		key := bt.Group + "/" + bt.Resource
-		existing, found := minBuildTimes[key]
-		if !found || bt.BuildTimeUnix < existing.BuildTimeUnix {
-			minBuildTimes[key] = bt
+	contactedPods := 0
+
+	for rsp := range responseCh {
+		contactedPods++
+		totalRebuildCount += rsp.RebuildCount
+
+		if rsp.Details != "" {
+			if len(details) > 0 {
+				details += ", "
+			}
+			details += rsp.Details
+		}
+
+		// Compute MIN(build time) for each resource type
+		for _, bt := range rsp.BuildTimes {
+			key := bt.Group + "/" + bt.Resource
+			existing, found := minBuildTimes[key]
+			if !found || bt.BuildTimeUnix < existing.BuildTimeUnix {
+				minBuildTimes[key] = bt
+			}
 		}
 	}
 
@@ -227,11 +228,14 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 		buildTimes = append(buildTimes, bt)
 	}
 
+	// Determine if all pods were contacted
+	contactedAllPods := contactedPods == expectedPods && expectedPods > 0
+
 	response := &resourcepb.RebuildIndexesResponse{
-		RebuildCount:  totalRebuildCount.Load(),
-		Details:       details,
-		ContactedPods: contactedPods.Load(),
-		BuildTimes:    buildTimes,
+		RebuildCount:     totalRebuildCount,
+		Details:          details,
+		BuildTimes:       buildTimes,
+		ContactedAllPods: contactedAllPods,
 	}
 	if len(errs) > 0 {
 		response.Error = AsErrorResult(errors.Join(errs...))

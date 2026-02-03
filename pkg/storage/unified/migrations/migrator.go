@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-const IndexRebuildBufferDuration = 30 * time.Second
-
 // Read from legacy and write into unified storage
 //
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
@@ -216,12 +214,12 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 	}
 
 	if opts.UsingDistributor {
-		if response.ContactedPods == 0 {
-			m.log.Error("no pods contacted by distributor", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-			return fmt.Errorf("rebuild index error: no pods contacted by distributor")
+		if !response.ContactedAllPods {
+			m.log.Error("distributor did not contact all pods", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: distributor did not contact all pods")
 		}
 
-		m.log.Info("distributor contacted pods", "count", response.ContactedPods, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+		m.log.Info("distributor contacted all pods", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
 
 		buildTimeMap := make(map[string]int64)
 		for _, bt := range response.BuildTimes {
@@ -229,18 +227,20 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 			buildTimeMap[key] = bt.BuildTimeUnix
 		}
 
-		// Allow a small buffer for clock skew between pods (30 seconds before migration finished)
-		minAcceptableTime := opts.MigrationFinishedAt.Add(-IndexRebuildBufferDuration).Unix()
+		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
+		// Only validate resources that have a build time reported.
+		// Resources with no data (and therefore no index) won't have a build time,
+		// and that's fine - we skip validation for those.
 		for _, res := range opts.Resources {
 			key := res.Group + "/" + res.Resource
 			buildTime, found := buildTimeMap[key]
 			if !found {
-				m.log.Error("no build time reported for resource", "resource", key, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
-				return fmt.Errorf("rebuild index error: no build time reported for resource %s", key)
+				m.log.Info("no build time reported for resource, skipping validation (index may not exist)", "resource", key, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				continue
 			}
 
-			if buildTime < minAcceptableTime {
+			if buildTime < migrationFinishTime {
 				m.log.Error("index build time is before migration finished", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
 				return fmt.Errorf("rebuild index error: index for %s was built before migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
 			}

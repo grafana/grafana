@@ -205,10 +205,10 @@ message RebuildIndexesResponse {
   // Error details
   ErrorResult error = 3;
 
-  // Number of pods contacted (only set by distributor)
-  int32 contactedPods = 4;
-
   // Build times for indexes (set by search pods, aggregated as MIN by distributor)
-  repeated IndexBuildTime buildTimes = 5;
+  repeated IndexBuildTime buildTimes = 4;
+
+  // Whether all pods in the ring were contacted (only set by distributor)
+  bool contactedAllPods = 5;
 }
 
