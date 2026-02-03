@@ -146,6 +146,10 @@ type mockSearchBackend struct {
 	mu              sync.Mutex
 	buildIndexCalls []buildIndexCall
 	cache           map[NamespacedResource]ResourceIndex
+
+	// Configurable GetFileBuildInfo response
+	fileBuildInfo    *IndexBuildInfo
+	fileBuildInfoErr error
 }
 
 type buildIndexCall struct {
@@ -196,6 +200,12 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
 	return m.openIndexes
+}
+
+func (m *mockSearchBackend) GetFileBuildInfo(key NamespacedResource, size int64) (*IndexBuildInfo, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.fileBuildInfo, m.fileBuildInfoErr
 }
 
 func TestSearchGetOrCreateIndex(t *testing.T) {
@@ -983,4 +993,176 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
 		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
 	})
+}
+
+func TestShouldRebuildClosedIndex(t *testing.T) {
+	now := time.Now()
+	minBuildVersion := semver.MustParse("11.0.0")
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	dashboardKey := NamespacedResource{Namespace: "ns", Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}
+
+	tests := []struct {
+		name                 string
+		key                  NamespacedResource
+		fileBuildInfo        *IndexBuildInfo
+		fileBuildInfoErr     error
+		maxIndexAge          time.Duration
+		dashboardIndexMaxAge time.Duration
+		minBuildVersion      *semver.Version
+		lastImportTimes      []ResourceLastImportTime
+		expectRebuild        bool
+	}{
+		{
+			name:            "no file-based index exists",
+			key:             key,
+			fileBuildInfo:   nil,
+			minBuildVersion: minBuildVersion,
+			expectRebuild:   false,
+		},
+		{
+			name:             "error getting file build info",
+			key:              key,
+			fileBuildInfoErr: errors.New("some error"),
+			minBuildVersion:  minBuildVersion,
+			expectRebuild:    false,
+		},
+		{
+			name: "file-based index is up to date",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now,
+				BuildVersion: semver.MustParse("12.0.0"),
+			},
+			minBuildVersion: minBuildVersion,
+			maxIndexAge:     24 * time.Hour,
+			expectRebuild:   false,
+		},
+		{
+			name: "file-based index has old build version",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now,
+				BuildVersion: semver.MustParse("10.0.0"),
+			},
+			minBuildVersion: minBuildVersion,
+			expectRebuild:   true,
+		},
+		{
+			name: "file-based index with nil build version",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now,
+				BuildVersion: nil,
+			},
+			minBuildVersion: minBuildVersion,
+			expectRebuild:   true,
+		},
+		{
+			name: "file-based index has old build time",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now.Add(-48 * time.Hour),
+				BuildVersion: semver.MustParse("12.0.0"),
+			},
+			minBuildVersion: minBuildVersion,
+			maxIndexAge:     24 * time.Hour,
+			expectRebuild:   true,
+		},
+		{
+			name: "file-based index was built before last import time",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now.Add(-1 * time.Hour),
+				BuildVersion: semver.MustParse("12.0.0"),
+			},
+			minBuildVersion: minBuildVersion,
+			lastImportTimes: []ResourceLastImportTime{
+				{NamespacedResource: key, LastImportTime: now},
+			},
+			expectRebuild: true,
+		},
+		{
+			name: "file-based index was built after last import time",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now,
+				BuildVersion: semver.MustParse("12.0.0"),
+			},
+			minBuildVersion: minBuildVersion,
+			lastImportTimes: []ResourceLastImportTime{
+				{NamespacedResource: key, LastImportTime: now.Add(-1 * time.Hour)},
+			},
+			expectRebuild: false,
+		},
+		{
+			name: "dashboard uses dashboardIndexMaxAge",
+			key:  dashboardKey,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now.Add(-12 * time.Hour),
+				BuildVersion: semver.MustParse("12.0.0"),
+			},
+			minBuildVersion:      minBuildVersion,
+			maxIndexAge:          24 * time.Hour, // This should NOT be used for dashboards
+			dashboardIndexMaxAge: 6 * time.Hour,  // This should be used for dashboards
+			expectRebuild:        true,
+		},
+		{
+			name: "dashboard within dashboardIndexMaxAge",
+			key:  dashboardKey,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now.Add(-2 * time.Hour),
+				BuildVersion: semver.MustParse("12.0.0"),
+			},
+			minBuildVersion:      minBuildVersion,
+			maxIndexAge:          24 * time.Hour,
+			dashboardIndexMaxAge: 6 * time.Hour,
+			expectRebuild:        false,
+		},
+		{
+			name: "no minBuildVersion configured",
+			key:  key,
+			fileBuildInfo: &IndexBuildInfo{
+				BuildTime:    now,
+				BuildVersion: nil, // nil version in index
+			},
+			minBuildVersion: nil, // no minimum version configured
+			expectRebuild:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			storage := &mockStorageBackend{
+				lastImportTimes: tt.lastImportTimes,
+			}
+			search := &mockSearchBackend{
+				fileBuildInfo:    tt.fileBuildInfo,
+				fileBuildInfoErr: tt.fileBuildInfoErr,
+			}
+			supplier := &TestDocumentBuilderSupplier{
+				GroupsResources: map[string]string{
+					"group":           "resource",
+					dashboardv1.GROUP: dashboardv1.DASHBOARD_RESOURCE,
+				},
+			}
+
+			opts := SearchOptions{
+				Backend:              search,
+				Resources:            supplier,
+				InitMinCount:         1,
+				DashboardIndexMaxAge: tt.dashboardIndexMaxAge,
+				MaxIndexAge:          tt.maxIndexAge,
+			}
+
+			server, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+			require.NoError(t, err)
+			require.NotNil(t, server)
+
+			// Set minBuildVersion
+			server.minBuildVersion = tt.minBuildVersion
+
+			result := server.shouldRebuildClosedIndex(context.Background(), tt.key, 100)
+			require.Equal(t, tt.expectRebuild, result, "shouldRebuildClosedIndex result mismatch")
+		})
+	}
 }

@@ -104,6 +104,11 @@ type SearchBackend interface {
 	// GetIndex returns existing index, or nil.
 	GetIndex(key NamespacedResource) ResourceIndex
 
+	// GetFileBuildInfo returns the build info of a file-based index if it exists.
+	// This is used to determine if an index needs to be rebuilt before opening it.
+	// Returns nil if no file-based index exists for the given key.
+	GetFileBuildInfo(key NamespacedResource, size int64) (*IndexBuildInfo, error)
+
 	// BuildIndex builds an index from scratch.
 	// Depending on the size, the backend may choose different options (eg: memory vs disk).
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
@@ -978,13 +983,25 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				}
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false)
+			// Check if we need to rebuild the file-based index before opening it.
+			// This handles the case where a file-based index was created with an older version
+			// or before the last import.
+			rebuild := s.shouldRebuildClosedIndex(ctx, key, size)
+			if rebuild {
+				// Clear dashboard cache if applicable
+				if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+					s.builders.clearNamespacedCache(key)
+				}
+			}
+
+			idx, err = s.build(ctx, key, size, reason, rebuild)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
 			if idx == nil {
 				return nil, fmt.Errorf("nil index after build")
 			}
+
 			return idx, nil
 		})
 
@@ -1015,6 +1032,50 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	span.AddEvent("Index updated")
 
 	return idx, nil
+}
+
+// shouldRebuildClosedIndex checks if a file-based index needs to be rebuilt before opening it.
+// This handles the case where a file-based index was created with an older version or before the last import.
+// Returns true if the index should be rebuilt, false otherwise.
+func (s *searchServer) shouldRebuildClosedIndex(ctx context.Context, key NamespacedResource, size int64) bool {
+	// Check if there's an existing file-based index and get its build info
+	bi, err := s.search.GetFileBuildInfo(key, size)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("failed to get file build info", "key", key, "error", err)
+		return false
+	}
+	if bi == nil {
+		// No file-based index exists, no need to rebuild
+		return false
+	}
+
+	maxAge := s.maxIndexAge
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		maxAge = s.dashboardIndexMaxAge
+	}
+
+	var minBuildTime time.Time
+	if maxAge > 0 {
+		minBuildTime = time.Now().Add(-maxAge)
+	}
+
+	// Get last import time for this specific key
+	var lastImportTime time.Time
+	importTimes, err := s.getLastImportTimes(ctx)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("failed to get last import times", "error", err)
+		// Continue without import time check
+	} else {
+		lastImportTime = importTimes[key]
+	}
+
+	if shouldRebuildIndex(*bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
+		s.log.FromContext(ctx).Info("File-based index needs rebuild before opening", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource,
+			"buildTime", bi.BuildTime, "buildVersion", bi.BuildVersion, "minBuildVersion", s.minBuildVersion, "minBuildTime", minBuildTime, "lastImportTime", lastImportTime)
+		return true
+	}
+
+	return false
 }
 
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
