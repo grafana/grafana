@@ -506,7 +506,7 @@ DataQueryKind: {
 	kind: "DataQuery"
 	group: string
 	version: string | *"v0"
-	label?: string
+	labels?: {[string]: string}
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	datasource?: {
@@ -1000,7 +1000,7 @@ GroupByVariableKind: {
 	datasource?: {
 		name?: string
 	}
-	label?: string
+	labels?: {[string]: string}
 	spec: GroupByVariableSpec
 }
 
@@ -1046,7 +1046,7 @@ AdhocVariableKind: {
 	datasource?: {
 		name?: string
 	}
-	label?: string
+	labels?: {[string]: string}
 	spec: AdhocVariableSpec
 }
 

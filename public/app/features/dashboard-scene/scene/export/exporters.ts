@@ -431,7 +431,10 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       return;
     }
 
-    dataQueryKind.label = getLabel(dataQueryKind.group, datasourceUid);
+    dataQueryKind.labels = {
+      ...(dataQueryKind.labels ?? {}),
+      exportLabel: getLabel(dataQueryKind.group, datasourceUid),
+    };
 
     dataQueryKind.datasource = undefined;
   };
