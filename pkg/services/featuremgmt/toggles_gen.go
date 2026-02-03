@@ -383,10 +383,6 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
-	// FlagSsoSettingsLDAP
-	// Use the new SSO Settings API to configure LDAP
-	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
-
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"

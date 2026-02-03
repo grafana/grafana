@@ -1,11 +1,11 @@
 import React from 'react';
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { AppPluginConfig } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
+import { basicApp } from '../test-fixtures/config.apps';
 import { isGrafanaDevMode } from '../utils';
 
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
@@ -30,48 +30,17 @@ jest.mock('../logs/log', () => {
 });
 
 describe('ExposedComponentsRegistry', () => {
-  const originalApps = config.apps;
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new ExposedComponentsRegistry(override);
 
   beforeEach(() => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
-  });
-
-  afterEach(() => {
-    config.apps = originalApps;
   });
 
   it('should return empty registry when no exposed components have been registered', async () => {
-    const reactiveRegistry = new ExposedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
@@ -80,7 +49,7 @@ describe('ExposedComponentsRegistry', () => {
   it('should be possible to register exposed components in the registry', async () => {
     const pluginId = 'grafana-basic-app';
     const id = `${pluginId}/hello-world/v1`;
-    const reactiveRegistry = new ExposedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     reactiveRegistry.register({
       pluginId,
@@ -110,7 +79,7 @@ describe('ExposedComponentsRegistry', () => {
     const id1 = `${pluginId}/hello-world1/v1`;
     const id2 = `${pluginId}/hello-world2/v1`;
     const id3 = `${pluginId}/hello-world3/v1`;
-    const reactiveRegistry = new ExposedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     reactiveRegistry.register({
       pluginId,
@@ -151,7 +120,7 @@ describe('ExposedComponentsRegistry', () => {
     const id2 = `${pluginId1}/hello-world2/v1`;
     const id3 = `${pluginId2}/hello-world1/v1`;
     const id4 = `${pluginId2}/hello-world2/v1`;
-    const reactiveRegistry = new ExposedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     reactiveRegistry.register({
       pluginId: pluginId1,
@@ -199,7 +168,7 @@ describe('ExposedComponentsRegistry', () => {
   });
 
   it('should notify subscribers when the registry changes', async () => {
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
     const observable = registry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -241,7 +210,7 @@ describe('ExposedComponentsRegistry', () => {
   });
 
   it('should give the last version of the registry for new subscribers', async () => {
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
     const observable = registry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -272,7 +241,7 @@ describe('ExposedComponentsRegistry', () => {
   });
 
   it('should log an error if another component with the same id already exists in the registry', async () => {
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       configs: [
@@ -312,7 +281,7 @@ describe('ExposedComponentsRegistry', () => {
   });
 
   it('should skip registering component and log an error when id is not prefixed with plugin id', async () => {
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       configs: [
@@ -333,7 +302,7 @@ describe('ExposedComponentsRegistry', () => {
   });
 
   it('should not register component when title is missing', async () => {
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
 
     registry.register({
       pluginId: 'grafana-basic-app',
@@ -355,7 +324,7 @@ describe('ExposedComponentsRegistry', () => {
 
   it('should not be possible to register a component on a read-only registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
 
     expect(() => {
@@ -378,7 +347,7 @@ describe('ExposedComponentsRegistry', () => {
 
   it('should pass down fresh registrations to the read-only version of the registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new ExposedComponentsRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
     const subscribeCallback = jest.fn();
     let readOnlyState;
@@ -414,7 +383,6 @@ describe('ExposedComponentsRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = new ExposedComponentsRegistry();
     const componentConfig = {
       id: `${pluginId}/exposed-component/v1`,
       title: 'Component title',
@@ -422,9 +390,7 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.exposedComponents = [];
-
+    const registry = await createRegistry();
     registry.register({
       pluginId,
       configs: [componentConfig],
@@ -440,7 +406,6 @@ describe('ExposedComponentsRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = new ExposedComponentsRegistry();
     const componentConfig = {
       id: `${pluginId}/exposed-component/v1`,
       title: 'Component title',
@@ -448,6 +413,7 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
+    const registry = await createRegistry();
     registry.register({
       pluginId: 'grafana',
       configs: [componentConfig],
@@ -463,7 +429,6 @@ describe('ExposedComponentsRegistry', () => {
     // Production mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
 
-    const registry = new ExposedComponentsRegistry();
     const componentConfig = {
       id: `${pluginId}/exposed-component/v1`,
       title: 'Component title',
@@ -471,9 +436,7 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.exposedComponents = [];
-
+    const registry = await createRegistry();
     registry.register({
       pluginId,
       configs: [componentConfig],
@@ -489,17 +452,19 @@ describe('ExposedComponentsRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = new ExposedComponentsRegistry();
     const componentConfig = {
       id: `${pluginId}/exposed-component/v1`,
       title: 'Component title',
       description: 'Component description',
       component: () => React.createElement('div', null, 'Hello World1'),
     };
+    const { description, id, title } = componentConfig;
+    const app = {
+      ...basicApp,
+      extensions: { ...basicApp.extensions, exposedComponents: [{ description, id, title }] },
+    };
 
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.exposedComponents = [componentConfig];
-
+    const registry = await createRegistry([app]);
     registry.register({
       pluginId,
       configs: [componentConfig],
@@ -513,7 +478,7 @@ describe('ExposedComponentsRegistry', () => {
 
   describe('asObservableSlice', () => {
     it('should return the selected exposed component from the registry', async () => {
-      const registry = new ExposedComponentsRegistry();
+      const registry = await createRegistry();
       const componentId = 'test-plugin/exposed-component/v1';
 
       registry.register({
@@ -540,7 +505,7 @@ describe('ExposedComponentsRegistry', () => {
     });
 
     it('should deep freeze exposed components', async () => {
-      const registry = new ExposedComponentsRegistry();
+      const registry = await createRegistry();
       const componentId = 'test-plugin/exposed-component/v1';
 
       registry.register({
@@ -566,7 +531,7 @@ describe('ExposedComponentsRegistry', () => {
     });
 
     it('should only emit when the selected exposed component changes', async () => {
-      const registry = new ExposedComponentsRegistry();
+      const registry = await createRegistry();
       const componentId1 = 'test-plugin/component1/v1';
       const componentId2 = 'test-plugin/component2/v1';
       const subscribeCallback = jest.fn();

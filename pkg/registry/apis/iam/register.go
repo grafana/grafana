@@ -395,7 +395,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		storage[teamResource.StoragePath()] = dw
 	}
 
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store, b.accessClient)
+	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
+
+	teamBindingSearchClient := resource.NewSearchClient(
+		dualwrite.NewSearchAdapter(b.dual),
+		iamv0.TeamBindingResourceInfo.GroupResource(),
+		b.unified,
+		legacyTeamBindingSearchClient,
+		b.features,
+	)
+
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
+
 	if b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 	}
@@ -473,7 +484,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		b.features,
 	)
 
-	storage[userResource.StoragePath("teams")] = user.NewTeamMemberREST(teamBindingSearchClient, b.tracing, b.features)
+	storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
 
 	return nil
 }

@@ -69,8 +69,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-24,alertingUIUseFullyCompatBackendFilters,experimental,@grafana/alerting-squad,false,false,false
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
-2023-11-02,dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
-2024-02-11,dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 2023-11-13,dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 2024-10-23,dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
@@ -124,7 +122,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-05,pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 2024-06-06,azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-2024-06-18,ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
 2024-10-25,reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
@@ -256,6 +253,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-20,newGauge,preview,@grafana/dataviz-squad,false,false,true
 2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
+2026-01-28,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false

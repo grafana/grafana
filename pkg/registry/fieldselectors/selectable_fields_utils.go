@@ -47,6 +47,9 @@ func BuildGetAttrsFn(k sdkres.Kind) func(obj runtime.Object) (labels.Set, fields
 			return nil, nil, fmt.Errorf("not a resource.Object")
 		} else {
 			fieldsSet := fields.Set{}
+			// Always include metadata.name and metadata.namespace as they are the default selectable fields
+			fieldsSet["metadata.name"] = robj.GetName()
+			fieldsSet["metadata.namespace"] = robj.GetNamespace()
 
 			for _, f := range k.SelectableFields() {
 				v, err := f.FieldValueFunc(robj)

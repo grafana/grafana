@@ -369,16 +369,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables dashboard rendering using Scenes for viewer roles
-  * @default true
-  */
-  dashboardSceneForViewers?: boolean;
-  /**
-  * Enables rendering dashboards using scenes for solo panels
-  * @default true
-  */
-  dashboardSceneSolo?: boolean;
-  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -643,11 +633,6 @@ export interface FeatureToggles {
   * @default false
   */
   authZGRPCServer?: boolean;
-  /**
-  * Use the new SSO Settings API to configure LDAP
-  * @default true
-  */
-  ssoSettingsLDAP?: boolean;
   /**
   * Use openFGA as authorization engine.
   * @default false
@@ -1301,6 +1286,11 @@ export interface FeatureToggles {
   * @default false
   */
   newVizSuggestions?: boolean;
+  /**
+  * Enable style actions (copy/paste) in the panel editor
+  * @default false
+  */
+  panelStyleActions?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false

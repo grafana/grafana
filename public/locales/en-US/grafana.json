@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Reset to default values",
-      "title-invalid-configuration": "Invalid configuration",
       "title-more-actions": "More actions",
       "tooltip-more-actions": "More actions"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Group by",
       "aria-label-group-interval": "Group interval",
       "aria-label-group-wait": "Group wait",
+      "aria-label-name": "Name",
       "aria-label-repeat-interval": "Repeat interval",
       "create-a-contact-point": "Create a contact point",
+      "description-unique-routing": "A unique name for the routing tree",
       "label-default-contact-point": "Default contact point",
+      "label-name": "Name",
       "label-timing-options": "Timing options",
       "message": {
         "required": "Required."
       },
-      "or": "or"
+      "or": "or",
+      "validate-name": "Name is required"
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",
@@ -930,9 +933,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policy",
+      "used-by_other": "Used by {{ count }} notification policies",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rule"
+      "used-by-rules_other": "Used by {{ count }} alert rules"
     },
     "contact-points-filter": {
       "aria-label-clear": "clear",
@@ -2138,6 +2141,10 @@
       "new-policy": "Add new policy",
       "no-matchers": "No matchers",
       "reload-policies": "Reload policies",
+      "root-policy": {
+        "description": "All alert instances associated with this Route will be handled by this default policy if no other matching policies are found.",
+        "title": "Default policy for '{{routeName}}'"
+      },
       "save-policy": "Save policy",
       "update": {
         "please-wait": "Please wait while we update your notification policies.",
@@ -2154,6 +2161,54 @@
         "suffix": "Please refresh the page and try again.",
         "title": "Failed to add or update notification policy"
       }
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "add policy",
+        "text": "Create policy"
+      },
+      "delete-reasons": {
+        "no-permissions": "You do not have the required permission to delete this routing tree",
+        "provisioned": "Routing tree is provisioned and cannot be deleted via the UI"
+      },
+      "delete-text": "Routing tree cannot be deleted for the following reasons:",
+      "empty-state": {
+        "message": "No policies found"
+      },
+      "fetch": {
+        "error": "Failed to fetch policies"
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "delete",
+          "delete-label": "Delete",
+          "reset-label": "Reset"
+        },
+        "edit": {
+          "text": "Edit"
+        },
+        "export": {
+          "aria-label": "export",
+          "label": "Export"
+        },
+        "more-actions": {
+          "aria-label": "More actions for routing tree \"{{name}}\""
+        },
+        "view": {
+          "provisioned-tooltip": "Provisioned routing trees cannot be edited in the UI",
+          "text": "View"
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "You do not have the required permission to reset this routing tree",
+        "provisioned": "Routing tree is provisioned and cannot be reset via the UI"
+      },
+      "reset-text": "Routing tree cannot be reset for the following reasons:",
+      "text-loading": "Loading...."
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "Sorry, this routing tree does not seem to exist.",
+      "title-routing-tree-not-found": "Routing tree not found"
     },
     "policy": {
       "label-new-child-policy": "New child policy",
@@ -2337,6 +2392,13 @@
       "label-override-grouping": "Override grouping",
       "label-override-timings": "Override timings",
       "repeat-interval": "Repeat interval: <strong>{{repeatIntervalValue}}</strong>"
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "clear",
+      "aria-label-search-routing-trees": "search routing trees",
+      "clear": "Clear",
+      "label-search-by-name-or-receiver": "Search by name or receiver",
+      "placeholder-search": "Search"
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
@@ -3103,6 +3165,12 @@
       "label-edit": "Edit",
       "label-export": "Export"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "Add routing tree",
+        "title-create-routing-tree": "Create routing tree"
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Yes, delete contact point",
       "deleting": "Deleting...",
@@ -3120,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Delete notification policy"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "Are you sure you want to delete this routing tree?",
+        "delete-yes": "Yes, delete routing tree",
+        "deleting": "Deleting...",
+        "deleting-routing-permanently-remove": "Deleting this routing tree will permanently remove it.",
+        "title-delete-routing-tree": "Delete routing tree"
       }
     },
     "use-edit-configuration-drawer": {
@@ -3739,6 +3816,9 @@
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move this folder"
+    },
+    "folder-owners": {
+      "owned-by": "Owned by:"
     },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
@@ -4911,7 +4991,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable",
+          "modal-title": "Custom options",
           "values": "Values separated by comma"
         },
         "datasource-options": {
@@ -4947,6 +5027,7 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "reorder": "Drag to reorder",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
         "select-variable": "Select"
@@ -5812,7 +5893,7 @@
       "load": "Load"
     },
     "gcom-field": {
-      "label": "Find and import dashboards for common applications at <1></1>",
+      "label": "Find and import dashboards for common applications at <link />",
       "load-button": "Load",
       "placeholder": "Grafana.com dashboard URL or ID",
       "validation-required": "A Grafana dashboard URL or ID is required"
@@ -6235,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Cancel",
+      "float-grid-items-warning-body": "The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers will be truncated to integers.",
+      "float-grid-items-warning-title": "Floating grid items",
       "label-folder": "Folder"
     },
     "inspect-data-tab": {
@@ -6316,6 +6399,11 @@
       "title": {
         "remove-panel": "Remove panel"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "Remove option",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
+      "tooltip-remove-option": "Remove option"
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
@@ -6684,6 +6772,16 @@
         }
       },
       "label": "Hide"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": "Reorder variables list"
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": "Static options"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"
@@ -9774,7 +9872,6 @@
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
       "error-validate-form": "Error validating LDAP settings",
-      "feature-flag-disabled": "This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.",
       "saved": "LDAP settings saved"
     },
     "bind-dn": {
@@ -10350,9 +10447,15 @@
       "options": "Options"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importing dashboard from <2>Grafana.com</2>",
+      "importing-from": "Importing dashboard from <1>Grafana.com</1>",
       "published-by": "Published by",
       "updated-on": "Updated on"
+    },
+    "import-resource-format-error": {
+      "cancel": "Cancel",
+      "title": "Unsupported format",
+      "v1-message": "This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.",
+      "v2-message": "This dashboard is in v2 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard."
     },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
@@ -11216,6 +11319,9 @@
     "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
   },
+  "owner-reference": {
+    "team-members": "Team members:"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edit title"
@@ -11262,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Copy",
+      "copy-styles": "Copy styles",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -11273,11 +11380,13 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "new-alert-rule": "New alert rule",
+      "paste-styles": "Paste styles",
       "query": "Query",
       "remove": "Remove",
       "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
+      "styles": "Styles",
       "time-settings": "Time settings",
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
@@ -11713,6 +11822,7 @@
       "text-installed": "Installed"
     },
     "version-list": {
+      "deprecated": "Deprecated",
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
@@ -11846,9 +11956,6 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
-      "unavailable-options": {
-        "title": "Unavailable options"
-      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
@@ -11897,14 +12004,23 @@
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
+    "connect-step": {
+      "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
+    },
+    "connection": {
+      "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
+      "disconnected-title": "Connection is disconnected"
+    },
     "connection-form": {
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
-      "available-repositories": "Other available repositories",
+      "available-repositories": "This connection has access to the following repositories",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "create-new-connection-button": "Create connection",
+      "creating-connection-button": "Creating connection...",
       "description-app-id": "The ID of your GitHub App",
       "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
@@ -12244,6 +12360,9 @@
         "view-repository": "View repository"
       }
     },
+    "repository-list": {
+      "no-repositories": "No repositories configured"
+    },
     "repository-overview": {
       "checked": "Checked:",
       "connection-status": "Connection status:",
@@ -12404,23 +12523,27 @@
       "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
+      "auth-type-description": "Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
       "auth-type-github-app-description": "Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.",
       "auth-type-github-app-label": "Connect with GitHub App",
+      "auth-type-label": "Authentication method",
       "auth-type-pat-description": "Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.",
       "auth-type-pat-label": "Connect with Personal Access Token",
-      "auth-type-subtitle": "Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "check-status-button": "Check repository status",
       "check-status-message": "Repository connecting, synchronize will be ready soon.",
+      "connect-step": "Connect",
+      "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
         "dismiss": "Keep working",
         "title": "Discard repository setup?"
       },
+      "github-app-connection-status": "Connection status:",
       "github-app-creation-default-error": "Failed to create connection",
       "github-app-creation-failed": "Failed to create GitHub App connection",
       "github-app-error-loading": "Failed to load connections",
@@ -12432,21 +12555,18 @@
       "github-app-mode-new": "Connect to a new app",
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
-      "step-auth-type": "Choose connection type",
+      "github-app-select-connection": "Select a GitHub App connection",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
-      "step-github-app": "Connect",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
       "sync-option-migrate-resources": "Migrate existing resources",
-      "title-auth-type": "Choose connection type",
       "title-bootstrap": "Choose what to synchronize",
       "title-configure-repo": "Configure repository",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
-      "title-github-app": "Connect to GitHub",
       "title-synchronize": "Synchronize with external storage"
     },
     "wizard-content": {
@@ -13588,6 +13708,7 @@
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
