@@ -24,7 +24,7 @@ import {
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
@@ -39,6 +39,7 @@ import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
@@ -630,6 +631,196 @@ describe('DashboardScene', () => {
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+      });
+
+      describe('Copy/Paste panel styles', () => {
+        const createTimeseriesPanel = () => {
+          return new VizPanel({
+            title: 'Timeseries Panel',
+            key: `panel-timeseries-${Math.random()}`,
+            pluginId: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'palette-classic' },
+                custom: {
+                  lineWidth: 1,
+                  fillOpacity: 10,
+                },
+              },
+              overrides: [],
+            },
+          });
+        };
+
+        beforeEach(() => {
+          store.delete(LS_STYLES_COPY_KEY);
+          config.featureToggles.panelStyleActions = true;
+        });
+
+        afterEach(() => {
+          config.featureToggles.panelStyleActions = false;
+        });
+
+        it('Should copy panel styles when feature flag is enabled', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+          const timeseriesPanel = createTimeseriesPanel();
+
+          scene.copyPanelStyles(timeseriesPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('timeseries');
+          expect(stored.styles).toBeDefined();
+          expect(spy).not.toHaveBeenCalled(); // Analytics only called from menu
+        });
+
+        it('Should not copy panel styles when feature flag is disabled', () => {
+          config.featureToggles.panelStyleActions = false;
+          const timeseriesPanel = createTimeseriesPanel();
+
+          scene.copyPanelStyles(timeseriesPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
+        });
+
+        it('Should not copy styles for non-timeseries panels', () => {
+          const vizPanel = findVizPanelByKey(scene, 'panel-1')!;
+          scene.copyPanelStyles(vizPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
+        });
+
+        it('Should return false for hasPanelStylesToPaste when no styles copied', () => {
+          expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
+        });
+
+        it('Should return false for hasPanelStylesToPaste when feature flag is disabled', () => {
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+          config.featureToggles.panelStyleActions = false;
+
+          expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
+        });
+
+        it('Should return true for hasPanelStylesToPaste when styles exist for matching panel type', () => {
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+
+          expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(true);
+        });
+
+        it('Should return false for hasPanelStylesToPaste for different panel type', () => {
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+
+          expect(DashboardScene.hasPanelStylesToPaste('table')).toBe(false);
+        });
+
+        it('Should paste panel styles when feature flag is enabled', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+          const timeseriesPanel = createTimeseriesPanel();
+          const mockOnFieldConfigChange = jest.fn();
+          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          const styles = {
+            panelType: 'timeseries',
+            styles: {
+              fieldConfig: {
+                defaults: {
+                  color: { mode: 'palette-classic' },
+                  custom: {
+                    lineWidth: 2,
+                    fillOpacity: 10,
+                  },
+                },
+              },
+            },
+          };
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('Should not paste panel styles when feature flag is disabled', () => {
+          config.featureToggles.panelStyleActions = false;
+          const timeseriesPanel = createTimeseriesPanel();
+          const mockOnFieldConfigChange = jest.fn();
+          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          const styles = {
+            panelType: 'timeseries',
+            styles: { fieldConfig: { defaults: {} } },
+          };
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+        });
+
+        it('Should not paste styles when no styles are copied', () => {
+          const timeseriesPanel = createTimeseriesPanel();
+          const mockOnFieldConfigChange = jest.fn();
+          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+        });
+
+        it('Should not paste styles to different panel type', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+          const timeseriesPanel = createTimeseriesPanel();
+          const mockOnFieldConfigChange = jest.fn();
+          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          const styles = {
+            panelType: 'table',
+            styles: { fieldConfig: { defaults: {} } },
+          };
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+          expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('Should allow pasting styles multiple times', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+          const timeseriesPanel1 = createTimeseriesPanel();
+          const timeseriesPanel2 = createTimeseriesPanel();
+          const mockOnFieldConfigChange1 = jest.fn();
+          const mockOnFieldConfigChange2 = jest.fn();
+          timeseriesPanel1.onFieldConfigChange = mockOnFieldConfigChange1;
+          timeseriesPanel2.onFieldConfigChange = mockOnFieldConfigChange2;
+
+          const styles = {
+            panelType: 'timeseries',
+            styles: { fieldConfig: { defaults: { custom: { lineWidth: 3 } } } },
+          };
+          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
+
+          scene.pastePanelStyles(timeseriesPanel1);
+          expect(mockOnFieldConfigChange1).toHaveBeenCalled();
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+
+          scene.pastePanelStyles(timeseriesPanel2);
+          expect(mockOnFieldConfigChange2).toHaveBeenCalled();
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('Should report analytics on paste error', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+          jest.spyOn(console, 'error').mockImplementation();
+
+          store.set(LS_STYLES_COPY_KEY, 'invalid json');
+          scene.pastePanelStyles(createTimeseriesPanel());
+
+          expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number), true);
+        });
       });
 
       it('Should unlink a library panel', () => {
