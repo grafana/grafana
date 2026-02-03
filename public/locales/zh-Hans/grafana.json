@@ -3724,6 +3724,9 @@
       "manage-permissions": "管理权限",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
@@ -4928,6 +4931,7 @@
       },
       "variables": {
         "add-variable": "添加变量",
+        "reorder": "",
         "select-type": "选择变量类型",
         "select-type-card-tooltip": "点击以选择类型",
         "select-variable": "选择"
@@ -5792,7 +5796,7 @@
       "load": "加载"
     },
     "gcom-field": {
-      "label": "在<1></1>查找并导入常见应用程序的仪表板",
+      "label": "",
       "load-button": "加载",
       "placeholder": "Grafana.com 仪表板网址或 ID",
       "validation-required": "Grafana 仪表板网址或 ID 是必需项"
@@ -6295,6 +6299,11 @@
         "remove-panel": "移除面板"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
     },
@@ -6661,6 +6670,16 @@
         }
       },
       "label": "隐藏"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "变量类型"
@@ -10306,9 +10325,15 @@
       "options": "选项"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "从 <2>Grafana.com</2> 导入数据面板",
+      "importing-from": "",
       "published-by": "发布者",
       "updated-on": "更新日期"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "您确定要删除“{{snapshotToRemove}}”吗？",
@@ -11169,6 +11194,9 @@
     "noOptionsMessage-no-organizations-found": "未找到组织",
     "select-placeholder": "选择组织"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "编辑标题"
@@ -11666,6 +11694,7 @@
       "text-installed": "已安装"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Grafana 依赖关系",
       "installed-version": "{{versionNumber}}（已安装版本）",
       "latest-compatible-version": "{{versionNumber}}（最新兼容版本）",
@@ -11847,6 +11876,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -11855,6 +11888,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12351,23 +12385,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "此操作将删除存储库配置，您将丢失所有进度。您确定要丢弃更改吗？",
         "confirm": "是，丢弃",
         "dismiss": "继续工作",
         "title": "丢弃存储库设置？"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12379,21 +12417,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "选择要同步的内容",
       "step-configure-repo": "",
       "step-connect": "连接",
       "step-finish": "选择附加设置",
-      "step-github-app": "",
       "step-synchronize": "与外部存储同步",
       "sync-description": "将资源与外部存储同步。完成此一次性步骤后，所有后续更新都将自动保存到存储库中，并预配回实例。",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "选择要同步的内容",
       "title-configure-repo": "",
       "title-connect": "连接到外部存储",
       "title-finish": "选择附加设置",
-      "title-github-app": "",
       "title-synchronize": "与外部存储同步"
     },
     "wizard-content": {

@@ -9,9 +9,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/cliutil"
-	"github.com/grafana/grafana/pkg/build/daggerbuild/containers"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/daggerutil"
-	"github.com/grafana/grafana/pkg/build/daggerbuild/frontend"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/git"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/pipeline"
 	"github.com/urfave/cli/v2"
@@ -101,7 +99,9 @@ func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, r
 		}
 		localPath = absolute
 		slog.Info("Using local directory for repository", "path", localPath, "repo", repo)
-		return daggerutil.HostDir(client, localPath)
+		return daggerutil.HostDir(client, localPath, dagger.HostDirectoryOpts{
+			Exclude: []string{"dist", "node_modules"},
+		})
 	}
 
 	ght, err := githubToken(ctx, ght)
@@ -189,23 +189,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		}
 	}
 
-	nodeVersion, err := frontend.NodeVersion(opts.Client, src).Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
-	}
-
-	yarnCache, err := opts.State.CacheVolume(ctx, YarnCacheDirectory)
-	if err != nil {
-		return nil, err
-	}
-
-	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache, opts.Platform)
-
-	if _, err := containers.ExitError(ctx, container); err != nil {
-		return nil, err
-	}
-
-	return container.Directory("/src"), nil
+	return src, nil
 }
 
 func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {

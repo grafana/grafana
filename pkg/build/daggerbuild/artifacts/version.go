@@ -73,6 +73,10 @@ func (b *Version) VerifyDirectory(ctx context.Context, client *dagger.Client, di
 	return nil
 }
 
+func (b *Version) String() string {
+	return "version"
+}
+
 func NewVersionFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	version, err := state.String(ctx, arguments.Version)
 	if err != nil {
