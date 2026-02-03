@@ -261,8 +261,8 @@ describe('TabsLayoutManager', () => {
 
       expect(source.state.tabs).toEqual([a]);
       expect(destination.state.tabs).toEqual([c, b]);
-      // Preserve destination selection to avoid jarring content switches.
-      expect(destination.state.currentTabSlug).toBe(c.getSlug());
+      // Select moved tab in destination
+      expect(destination.state.currentTabSlug).toBe(b.getSlug());
       // moved tab was active in source, so source should pick a new active tab
       expect(source.state.currentTabSlug).toBe(a.getSlug());
       expect(dashboardEditActions.moveElement).toHaveBeenCalled();
@@ -303,7 +303,7 @@ describe('TabsLayoutManager', () => {
       source.setState({ currentTabSlug: b.getSlug() });
       destination.setState({ currentTabSlug: c.getSlug() });
 
-      source.moveTabToManager(b, destination, 0, { selectMovedTab: true });
+      source.moveTabToManager(b, destination, 0);
 
       expect(source.state.tabs).toEqual([a]);
       expect(destination.state.tabs).toEqual([b, c]);

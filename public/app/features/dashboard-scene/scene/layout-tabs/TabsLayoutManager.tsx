@@ -380,17 +380,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
-  public moveTabToManager(
-    tab: TabItem,
-    destination: TabsLayoutManager,
-    destinationIndex: number,
-    options?: { selectMovedTab?: boolean }
-  ) {
+  public moveTabToManager(tab: TabItem, destination: TabsLayoutManager, destinationIndex: number) {
     if (destination === this) {
       return;
     }
 
-    const selectMovedTab = options?.selectMovedTab ?? false;
     const prevSourceTabs = [...this.state.tabs];
     const prevSourceSlug = this.state.currentTabSlug;
     const prevDestinationTabs = [...destination.state.tabs];
@@ -426,8 +420,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         tab.clearParent();
         destination.setState({
           tabs: destTabs,
-          // Avoid switching the visible content on drop unless explicitly requested.
-          currentTabSlug: selectMovedTab ? tab.getSlug() : prevDestinationSlug,
+          currentTabSlug: tab.getSlug(),
         });
       },
       undo: () => {
