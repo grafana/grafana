@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useMemo, memo } from 'react';
+import { useLayoutEffect, useState, useCallback, memo } from 'react';
 import uPlot from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
@@ -24,23 +24,17 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
   /**
    * returns true if all non-time series are null at the given index
    */
-  const allValuesNullAtIndex = useMemo(() => {
-    const cache: boolean[] = [];
-    return (idx: number): boolean => {
-      if (cache[idx] !== undefined) {
-        return cache[idx];
-      }
-      let isNull = true;
+  const allValuesNullAtIndex = useCallback(
+    (idx: number): boolean => {
       for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
         if (data[seriesIdx][idx] != null) {
-          isNull = false;
-          break;
+          return false;
         }
       }
-      cache[idx] = isNull;
-      return isNull;
-    };
-  }, [data]);
+      return true;
+    },
+    [data]
+  );
 
   const timeValues = data[0];
   if (!timeValues || timeValues.length < 1 || !onChangeTimeRange) {

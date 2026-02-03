@@ -143,7 +143,7 @@ describe('OutsideRangePlugin', () => {
     });
   });
 
-  it('handles null value cache toggles correctly', () => {
+  it('handles changes to the data correctly', () => {
     const { container } = renderPlugin();
 
     // initial: one point inside range -> not rendered
