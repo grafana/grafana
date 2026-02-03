@@ -17,7 +17,6 @@ export interface WizardStep {
   id: StepKey;
   name: string;
   description: string;
-  url: string;
 }
 
 export type VisitedSteps = Partial<Record<StepKey, StepState>>;
