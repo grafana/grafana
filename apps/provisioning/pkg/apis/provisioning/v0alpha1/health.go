@@ -56,6 +56,10 @@ const (
 	ReasonResourceQuotaReached = "ResourceQuotaReached"
 	// ReasonResourceQuotaExceeded indicates the resource count exceeds the limit.
 	ReasonResourceQuotaExceeded = "ResourceQuotaExceeded"
+	// ReasonRepositoryQuotaReached indicates the repository count is exactly at the limit.
+	ReasonRepositoryQuotaReached = "RepositoryQuotaReached"
+	// ReasonRepositoryQuotaExceeded indicates the repository count exceeds the limit.
+	ReasonRepositoryQuotaExceeded = "RepositoryQuotaExceeded"
 )
 
 type HealthStatus struct {

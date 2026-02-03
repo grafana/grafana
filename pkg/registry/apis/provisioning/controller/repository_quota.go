@@ -2,49 +2,52 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
 // RepositoryQuotaChecker checks if a namespace exceeds its repository quota limits.
 type RepositoryQuotaChecker struct {
-	quotaGetter quotas.QuotaGetter
-	repoLister  listers.RepositoryLister
+	repoLister listers.RepositoryLister
 }
 
 // NewRepositoryQuotaChecker creates a new RepositoryQuotaChecker.
 func NewRepositoryQuotaChecker(
-	quotaGetter quotas.QuotaGetter,
 	repoLister listers.RepositoryLister,
 ) *RepositoryQuotaChecker {
 	return &RepositoryQuotaChecker{
-		quotaGetter: quotaGetter,
-		repoLister:  repoLister,
+		repoLister: repoLister,
 	}
 }
 
-// NamespaceOverQuota checks if a namespace has more repositories than allowed by its quota.
-// It returns true if the namespace exceeds its repository quota, false otherwise.
-// Repositories with DeletionTimestamp set are excluded from the count as they are being deleted.
-func (c *RepositoryQuotaChecker) NamespaceOverQuota(
-	ctx context.Context,
+// RepositoryQuotaConditions checks if a namespace has more repositories than allowed by its quota.
+// It returns the conditions based on the check result.
+func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
+	_ context.Context,
 	namespace string,
-) (bool, error) {
+	quotaStatus provisioning.QuotaStatus,
+) (metav1.Condition, error) {
 	// Get quota limits for this namespace/tier
-	quotaStatus := c.quotaGetter.GetQuotaStatus(ctx, namespace)
 	maxRepos := quotaStatus.MaxRepositories
 
 	// If maxRepos is 0, it means unlimited quota
 	if maxRepos == 0 {
-		return false, nil
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeQuota,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonQuotaUnlimited,
+			Message: "No quota limits configured",
+		}, nil
 	}
 
 	// List all repositories from informer cache
 	repos, err := c.repoLister.Repositories(namespace).List(labels.Everything())
 	if err != nil {
-		return false, err
+		return metav1.Condition{}, err
 	}
 
 	// Count only non-deleted repositories
@@ -55,6 +58,27 @@ func (c *RepositoryQuotaChecker) NamespaceOverQuota(
 		}
 	}
 
-	// Check if count exceeds quota
-	return activeCount > int(maxRepos), nil
+	switch {
+	case activeCount == int(maxRepos):
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeQuota,
+			Status:  metav1.ConditionFalse,
+			Reason:  provisioning.ReasonRepositoryQuotaExceeded,
+			Message: fmt.Sprintf("Repository quota exceeded: %d/%d repositories", activeCount, maxRepos),
+		}, nil
+	case activeCount > int(maxRepos):
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeQuota,
+			Status:  metav1.ConditionFalse,
+			Reason:  provisioning.ReasonRepositoryQuotaReached,
+			Message: fmt.Sprintf("Repository quota reached: %d/%d repositories", activeCount, maxRepos),
+		}, nil
+	default:
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeQuota,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonWithinQuota,
+			Message: fmt.Sprintf("Within quota: %d/%d repositories", activeCount, maxRepos),
+		}, nil
+	}
 }

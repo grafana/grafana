@@ -15,16 +15,6 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 )
 
-// MockQuotaGetter is a mock implementation of quotas.QuotaGetter
-type MockQuotaGetter struct {
-	mock.Mock
-}
-
-func (m *MockQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
-	args := m.Called(ctx, namespace)
-	return args.Get(0).(provisioning.QuotaStatus)
-}
-
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
 type MockRepositoryNamespaceLister struct {
 	mock.Mock
@@ -58,90 +48,96 @@ func (m *MockRepositoryLister) Repositories(namespace string) listers.Repository
 	return m.namespaceLister
 }
 
-func TestNewRepositoryQuotaChecker(t *testing.T) {
-	mockQuotaGetter := &MockQuotaGetter{}
-	mockNamespaceLister := &MockRepositoryNamespaceLister{}
-	mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
-
-	checker := NewRepositoryQuotaChecker(mockQuotaGetter, mockRepoLister)
-
-	assert.NotNil(t, checker)
-	assert.Equal(t, mockQuotaGetter, checker.quotaGetter)
-	assert.Equal(t, mockRepoLister, checker.repoLister)
-}
-
-func TestNamespaceOverQuota(t *testing.T) {
+func TestRepositoryQuotaConditions(t *testing.T) {
 	tests := []struct {
-		name           string
-		namespace      string
-		maxRepos       int64
-		repoCount      int
-		expectedResult bool
-		expectError    bool
+		name               string
+		namespace          string
+		maxRepos           int64
+		repoCount          int
+		expectedStatus     metav1.ConditionStatus
+		expectedReason     string
+		expectedMessageFmt string
+		expectError        bool
 	}{
 		{
-			name:           "unlimited quota (maxRepos = 0)",
-			namespace:      "test-ns",
-			maxRepos:       0,
-			repoCount:      100,
-			expectedResult: false,
-			expectError:    false,
+			name:               "unlimited quota (maxRepos = 0)",
+			namespace:          "test-ns",
+			maxRepos:           0,
+			repoCount:          100,
+			expectedStatus:     metav1.ConditionTrue,
+			expectedReason:     provisioning.ReasonQuotaUnlimited,
+			expectedMessageFmt: "No quota limits configured",
+			expectError:        false,
 		},
 		{
-			name:           "under quota (3 of 5)",
-			namespace:      "test-ns",
-			maxRepos:       5,
-			repoCount:      3,
-			expectedResult: false,
-			expectError:    false,
+			name:               "under quota (3 of 5)",
+			namespace:          "test-ns",
+			maxRepos:           5,
+			repoCount:          3,
+			expectedStatus:     metav1.ConditionTrue,
+			expectedReason:     provisioning.ReasonWithinQuota,
+			expectedMessageFmt: "Within quota: 3/5 repositories",
+			expectError:        false,
 		},
 		{
-			name:           "at quota limit (5 of 5)",
-			namespace:      "test-ns",
-			maxRepos:       5,
-			repoCount:      5,
-			expectedResult: false,
-			expectError:    false,
+			name:               "at quota limit (5 of 5)",
+			namespace:          "test-ns",
+			maxRepos:           5,
+			repoCount:          5,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedMessageFmt: "Repository quota exceeded: 5/5 repositories",
+			expectError:        false,
 		},
 		{
-			name:           "over quota (7 of 5)",
-			namespace:      "test-ns",
-			maxRepos:       5,
-			repoCount:      7,
-			expectedResult: true,
-			expectError:    false,
+			name:               "over quota (7 of 5)",
+			namespace:          "test-ns",
+			maxRepos:           5,
+			repoCount:          7,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedMessageFmt: "Repository quota reached: 7/5 repositories",
+			expectError:        false,
 		},
 		{
-			name:           "over quota (6 of 5)",
-			namespace:      "test-ns",
-			maxRepos:       5,
-			repoCount:      6,
-			expectedResult: true,
-			expectError:    false,
+			name:               "over quota (6 of 5)",
+			namespace:          "test-ns",
+			maxRepos:           5,
+			repoCount:          6,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedMessageFmt: "Repository quota reached: 6/5 repositories",
+			expectError:        false,
 		},
 		{
-			name:           "empty namespace (0 repos)",
-			namespace:      "test-ns",
-			maxRepos:       5,
-			repoCount:      0,
-			expectedResult: false,
-			expectError:    false,
+			name:               "empty namespace (0 repos)",
+			namespace:          "test-ns",
+			maxRepos:           5,
+			repoCount:          0,
+			expectedStatus:     metav1.ConditionTrue,
+			expectedReason:     provisioning.ReasonWithinQuota,
+			expectedMessageFmt: "Within quota: 0/5 repositories",
+			expectError:        false,
 		},
 		{
-			name:           "single repo with limit 1",
-			namespace:      "test-ns",
-			maxRepos:       1,
-			repoCount:      1,
-			expectedResult: false,
-			expectError:    false,
+			name:               "single repo with limit 1",
+			namespace:          "test-ns",
+			maxRepos:           1,
+			repoCount:          1,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedMessageFmt: "Repository quota exceeded: 1/1 repositories",
+			expectError:        false,
 		},
 		{
-			name:           "two repos with limit 1",
-			namespace:      "test-ns",
-			maxRepos:       1,
-			repoCount:      2,
-			expectedResult: true,
-			expectError:    false,
+			name:               "two repos with limit 1",
+			namespace:          "test-ns",
+			maxRepos:           1,
+			repoCount:          2,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedMessageFmt: "Repository quota reached: 2/1 repositories",
+			expectError:        false,
 		},
 	}
 
@@ -160,82 +156,91 @@ func TestNamespaceOverQuota(t *testing.T) {
 				}
 			}
 
-			// Setup mocks
-			mockQuotaGetter := &MockQuotaGetter{}
-			mockQuotaGetter.On("GetQuotaStatus", ctx, tt.namespace).Return(
-				provisioning.QuotaStatus{
-					MaxRepositories:           tt.maxRepos,
-					MaxResourcesPerRepository: 100,
-				},
-			)
-
 			mockNamespaceLister := &MockRepositoryNamespaceLister{}
 			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
 			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			checker := NewRepositoryQuotaChecker(mockQuotaGetter, mockRepoLister)
+			checker := NewRepositoryQuotaChecker(mockRepoLister)
+
+			quotaStatus := provisioning.QuotaStatus{
+				MaxRepositories:           tt.maxRepos,
+				MaxResourcesPerRepository: 100,
+			}
 
 			// Execute
-			result, err := checker.NamespaceOverQuota(ctx, tt.namespace)
+			condition, err := checker.RepositoryQuotaConditions(ctx, tt.namespace, quotaStatus)
 
 			// Assert
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedResult, result)
+				assert.Equal(t, provisioning.ConditionTypeQuota, condition.Type)
+				assert.Equal(t, tt.expectedStatus, condition.Status)
+				assert.Equal(t, tt.expectedReason, condition.Reason)
+				assert.Equal(t, tt.expectedMessageFmt, condition.Message)
 			}
-
-			mockQuotaGetter.AssertExpectations(t)
 		})
 	}
 }
 
-func TestNamespaceOverQuota_ExcludesDeletingRepos(t *testing.T) {
+func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-ns"
 
 	tests := []struct {
-		name              string
-		maxRepos          int64
-		activeRepos       int
-		deletingRepos     int
-		expectedOverQuota bool
+		name               string
+		maxRepos           int64
+		activeRepos        int
+		deletingRepos      int
+		expectedStatus     metav1.ConditionStatus
+		expectedReason     string
+		expectedMessageFmt string
 	}{
 		{
-			name:              "deleting repos excluded from count - under quota",
-			maxRepos:          5,
-			activeRepos:       3,
-			deletingRepos:     5,
-			expectedOverQuota: false,
+			name:               "deleting repos excluded from count - under quota",
+			maxRepos:           5,
+			activeRepos:        3,
+			deletingRepos:      5,
+			expectedStatus:     metav1.ConditionTrue,
+			expectedReason:     provisioning.ReasonWithinQuota,
+			expectedMessageFmt: "Within quota: 3/5 repositories",
 		},
 		{
-			name:              "deleting repos excluded from count - at quota",
-			maxRepos:          5,
-			activeRepos:       5,
-			deletingRepos:     2,
-			expectedOverQuota: false,
+			name:               "deleting repos excluded from count - at quota",
+			maxRepos:           5,
+			activeRepos:        5,
+			deletingRepos:      2,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedMessageFmt: "Repository quota exceeded: 5/5 repositories",
 		},
 		{
-			name:              "deleting repos excluded from count - over quota",
-			maxRepos:          5,
-			activeRepos:       7,
-			deletingRepos:     3,
-			expectedOverQuota: true,
+			name:               "deleting repos excluded from count - over quota",
+			maxRepos:           5,
+			activeRepos:        7,
+			deletingRepos:      3,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedMessageFmt: "Repository quota reached: 7/5 repositories",
 		},
 		{
-			name:              "all repos being deleted - not over quota",
-			maxRepos:          5,
-			activeRepos:       0,
-			deletingRepos:     10,
-			expectedOverQuota: false,
+			name:               "all repos being deleted - not over quota",
+			maxRepos:           5,
+			activeRepos:        0,
+			deletingRepos:      10,
+			expectedStatus:     metav1.ConditionTrue,
+			expectedReason:     provisioning.ReasonWithinQuota,
+			expectedMessageFmt: "Within quota: 0/5 repositories",
 		},
 		{
-			name:              "deletion brings namespace under quota",
-			maxRepos:          3,
-			activeRepos:       3,
-			deletingRepos:     2,
-			expectedOverQuota: false,
+			name:               "deletion brings namespace under quota",
+			maxRepos:           3,
+			activeRepos:        3,
+			deletingRepos:      2,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedMessageFmt: "Repository quota exceeded: 3/3 repositories",
 		},
 	}
 
@@ -265,30 +270,32 @@ func TestNamespaceOverQuota_ExcludesDeletingRepos(t *testing.T) {
 			}
 
 			// Setup mocks
-			mockQuotaGetter := &MockQuotaGetter{}
-			mockQuotaGetter.On("GetQuotaStatus", ctx, namespace).Return(
-				provisioning.QuotaStatus{
-					MaxRepositories:           tt.maxRepos,
-					MaxResourcesPerRepository: 100,
-				},
-			)
-
 			mockNamespaceLister := &MockRepositoryNamespaceLister{}
 			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
 			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			checker := NewRepositoryQuotaChecker(mockQuotaGetter, mockRepoLister)
+			checker := NewRepositoryQuotaChecker(mockRepoLister)
+
+			quotaStatus := provisioning.QuotaStatus{
+				MaxRepositories:           tt.maxRepos,
+				MaxResourcesPerRepository: 100,
+			}
 
 			// Execute
-			result, err := checker.NamespaceOverQuota(ctx, namespace)
+			condition, err := checker.RepositoryQuotaConditions(ctx, namespace, quotaStatus)
 
 			// Assert
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedOverQuota, result,
-				"Expected over quota: %v, got: %v (active: %d, deleting: %d, max: %d)",
-				tt.expectedOverQuota, result, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
-
-			mockQuotaGetter.AssertExpectations(t)
+			assert.Equal(t, provisioning.ConditionTypeQuota, condition.Type)
+			assert.Equal(t, tt.expectedStatus, condition.Status,
+				"Expected status: %v, got: %v (active: %d, deleting: %d, max: %d)",
+				tt.expectedStatus, condition.Status, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
+			assert.Equal(t, tt.expectedReason, condition.Reason,
+				"Expected reason: %s, got: %s (active: %d, deleting: %d, max: %d)",
+				tt.expectedReason, condition.Reason, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
+			assert.Equal(t, tt.expectedMessageFmt, condition.Message,
+				"Expected message: %s, got: %s (active: %d, deleting: %d, max: %d)",
+				tt.expectedMessageFmt, condition.Message, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
 		})
 	}
 }

@@ -117,7 +117,7 @@ func NewRepositoryController(
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
-		quotaChecker:      NewRepositoryQuotaChecker(quotaGetter, repoInformer.Lister()),
+		quotaChecker:      NewRepositoryQuotaChecker(repoInformer.Lister()),
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:        resourceLister,
@@ -364,25 +364,32 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	return patchOperations, nil
 }
 
-// isQuotaExceeded checks if the repository has a quota condition indicating quota is exceeded
-func isQuotaExceeded(obj *provisioning.Repository) bool {
-	for _, condition := range obj.Status.Conditions {
+// isQuotaExceeded checks if the given conditions has
+func isQuotaExceeded(conditions []v1.Condition) bool {
+	for _, condition := range conditions {
 		if condition.Type == provisioning.ConditionTypeQuota {
 			return condition.Status == v1.ConditionFalse &&
-				condition.Reason == provisioning.ReasonResourceQuotaExceeded
+				condition.Reason == provisioning.ReasonRepositoryQuotaExceeded
 		}
 	}
 	return false
 }
 
-func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, repo repository.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
+func (rc *RepositoryController) determineSyncStrategy(
+	ctx context.Context,
+	obj *provisioning.Repository,
+	repo repository.Repository,
+	shouldResync bool,
+	isBlocked bool,
+	healthStatus provisioning.HealthStatus,
+) *provisioning.SyncJobOptions {
 	logger := logging.FromContext(ctx)
 
 	switch {
 	case !obj.Spec.Sync.Enabled:
 		logger.Info("skip sync as it's disabled")
 		return nil
-	case isQuotaExceeded(obj):
+	case isBlocked:
 		logger.Info("skip sync for repository over quota",
 			"repository", obj.Name,
 			"namespace", obj.Namespace,
@@ -555,15 +562,15 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
 	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
-	overQuota, err := rc.quotaChecker.NamespaceOverQuota(ctx, namespace)
+	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(ctx, namespace, newQuota)
 	if err != nil {
 		return fmt.Errorf("check repository quota: %w", err)
 	}
-
-	isBlocked := isQuotaExceeded(obj)
+	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
+	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
 
 	// Blocked repos MUST process to check if they can unblock
-	forceProcessForUnblock := isBlocked && !overQuota
+	forceProcessForUnblock := isCurrentlyBlocked && !isOverQuota
 
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
@@ -578,7 +585,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Determine the main triggering condition
 	switch {
 	// First, we check if the repository is blocked and return early in such a case.
-	case isBlocked && overQuota:
+	case isCurrentlyBlocked && isOverQuota:
 		logger.Info("repository blocked and over quota, skipping reconciliation")
 		return nil
 	case hasSpecChanged:
@@ -606,32 +613,27 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	if !isBlocked && overQuota {
+	// Set quota information from configuration (only if changed)
+	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
+		})
+	}
+
+	// Repository needs to be blocked.
+	if !isCurrentlyBlocked && isOverQuota {
 		// Rule 1: Not blocked + over quota -> Block and exit
 		logger.Info("namespace over quota, blocking repository",
 			"namespace", namespace,
 			"max_repositories", newQuota.MaxRepositories,
 		)
 
-		// Update quota status if changed
-		if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-			obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
-			patchOperations = append(patchOperations, map[string]interface{}{
-				"op":    "replace",
-				"path":  "/status/quota",
-				"value": newQuota,
-			})
-		}
-
-		// Set blocked quota condition
-		quotaCondition := v1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
-			Status:  v1.ConditionFalse,
-			Reason:  provisioning.ReasonResourceQuotaExceeded,
-			Message: fmt.Sprintf("Repository quota exceeded (max: %d)", newQuota.MaxRepositories),
-		}
-
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(obj.Status.Conditions, obj.GetGeneration(), quotaCondition); conditionPatchOps != nil {
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
 			patchOperations = append(patchOperations, conditionPatchOps...)
 		}
 
@@ -642,6 +644,15 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 		return nil
+	}
+
+	// We're unblocking the repository. Here - we should set the condition correctly, to match this case.
+	if forceProcessForUnblock {
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
 	}
 
 	if shouldGenerateToken {
@@ -714,32 +725,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	// Set quota information from configuration (only if changed)
-	// Note: newQuota and overQuota were already fetched at the beginning of process()
-	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/quota",
-			"value": newQuota,
-		})
-	}
-
-	// Set condition to "within quota" for normal reconciliation.
-	// If the repo gets blocked due to exceeding quota, its Condition is already set.
-	quotaCondition := v1.Condition{
-		Type:    provisioning.ConditionTypeQuota,
-		Status:  v1.ConditionTrue,
-		Reason:  provisioning.ReasonWithinQuota,
-		Message: "Repository quota within limits",
-	}
-
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(obj.Status.Conditions, obj.GetGeneration(), quotaCondition); conditionPatchOps != nil {
-		patchOperations = append(patchOperations, conditionPatchOps...)
-	}
-
 	// determine the sync strategy and sync status to apply
-	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
+	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
 	// Apply all patch operations
