@@ -3740,6 +3740,9 @@
       "manage-permissions": "Toestemmingen beheren",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "Map selecteren: {{ label }} is momenteel geselecteerd",
       "button-label": "Map selecteren",
@@ -4947,6 +4950,7 @@
       },
       "variables": {
         "add-variable": "Variabele toevoegen",
+        "reorder": "",
         "select-type": "Kies type variabele",
         "select-type-card-tooltip": "Klik om te selecteren",
         "select-variable": "Selecteren"
@@ -5812,7 +5816,7 @@
       "load": "Laden"
     },
     "gcom-field": {
-      "label": "Vind en importeer dashboards voor veelgebruikte toepassingen op <1></1>",
+      "label": "",
       "load-button": "Laden",
       "placeholder": "Dashboard-URL of -ID van Grafana.com",
       "validation-required": "Een dashboard-URL of -ID van Grafana is vereist"
@@ -6317,6 +6321,11 @@
         "remove-panel": "Paneel verwijderen"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Waarschuwing"
     },
@@ -6684,6 +6693,16 @@
         }
       },
       "label": "Verbergen"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Type variabele"
@@ -10350,9 +10369,15 @@
       "options": "Opties"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Dashboard importeren van <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Gepubliceerd door",
       "updated-on": "Bijgewerkt op"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Weet je zeker dat je '{{snapshotToRemove}}' wilt verwijderen?",
@@ -11216,6 +11241,9 @@
     "noOptionsMessage-no-organizations-found": "Geen organisaties gevonden",
     "select-placeholder": "Organisatie selecteren"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Titel bewerken"
@@ -11713,6 +11741,7 @@
       "text-installed": "Geïnstalleerd"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Afhankelijkheid van Grafana",
       "installed-version": "{{versionNumber}} (geïnstalleerde versie)",
       "latest-compatible-version": "{{versionNumber}} (nieuwste compatibele versie)",
@@ -11897,6 +11926,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -11905,6 +11938,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12404,23 +12438,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Hiermee wordt de repository-configuratie verwijderd en verlies je alle voortgang. Weet je zeker dat je je wijzigingen wilt negeren?",
         "confirm": "Ja, verwijderen",
         "dismiss": "Blijf werken",
         "title": "Repository-instellingen verwijderen?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12432,21 +12470,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Kies wat je wilt synchroniseren",
       "step-configure-repo": "",
       "step-connect": "Verbinden",
       "step-finish": "Kies aanvullende instellingen",
-      "step-github-app": "",
       "step-synchronize": "Synchroniseren met externe opslag",
       "sync-description": "Bronnen synchroniseren met externe opslag. Na deze eenmalige stap worden alle toekomstige updates automatisch opgeslagen in de repository en opnieuw ingericht in de instantie.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Kies wat je wilt synchroniseren",
       "title-configure-repo": "",
       "title-connect": "Verbinden met externe opslag",
       "title-finish": "Kies aanvullende instellingen",
-      "title-github-app": "",
       "title-synchronize": "Synchroniseren met externe opslag"
     },
     "wizard-content": {

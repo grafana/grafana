@@ -3772,6 +3772,9 @@
       "manage-permissions": "Управление разрешениями",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "Выбрать папку: в данный момент выбрана {{ label }}",
       "button-label": "Выбрать папку",
@@ -4985,6 +4988,7 @@
       },
       "variables": {
         "add-variable": "Добавление переменной",
+        "reorder": "",
         "select-type": "Выберите тип переменной",
         "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
         "select-variable": "Выбрать"
@@ -5852,7 +5856,7 @@
       "load": "Загрузить"
     },
     "gcom-field": {
-      "label": "Найти и импортировать дашборды для распространенных приложений по адресу <1></1>",
+      "label": "",
       "load-button": "Загрузить",
       "placeholder": "URL-адрес или идентификатор дашборда Grafana.com",
       "validation-required": "Требуется URL-адрес или идентификатор дашборда Grafana"
@@ -6361,6 +6365,11 @@
         "remove-panel": "Удалить панель"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Оповещение"
     },
@@ -6730,6 +6739,16 @@
         }
       },
       "label": "Скрыть"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Тип переменной"
@@ -10438,9 +10457,15 @@
       "options": "Параметры"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Импорт дашборда с <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Кем опубликовано",
       "updated-on": "Дата обновления"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Действительно удалить «{{snapshotToRemove}}»?",
@@ -11310,6 +11335,9 @@
     "noOptionsMessage-no-organizations-found": "Организации не найдены",
     "select-placeholder": "Выбрать организацию"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Редактировать заголовок"
@@ -11807,6 +11835,7 @@
       "text-installed": "Установлено"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Зависимость Grafana",
       "installed-version": "{{versionNumber}} (установленная версия)",
       "latest-compatible-version": "{{versionNumber}} (последняя совместимая версия)",
@@ -11997,6 +12026,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -12005,6 +12038,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12510,23 +12544,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Конфигурация репозитория будет удалена, и вы потеряете весь прогресс. Действительно отменить изменения?",
         "confirm": "Да, отменить",
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12538,21 +12576,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-configure-repo": "",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
-      "step-github-app": "",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Выберите, что синхронизировать",
       "title-configure-repo": "",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
-      "title-github-app": "",
       "title-synchronize": "Синхронизировать с внешним хранилищем"
     },
     "wizard-content": {
