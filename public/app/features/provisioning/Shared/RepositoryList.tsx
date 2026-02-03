@@ -26,7 +26,7 @@ export function RepositoryList({ items }: Props) {
   if (isEmpty) {
     return (
       <EmptyState
-        variant="completed"
+        variant="not-found"
         message={t('provisioning.repository-list.no-repositories', 'No repositories configured')}
       />
     );
@@ -114,7 +114,7 @@ export function RepositoryList({ items }: Props) {
             filteredItems.map((item) => <RepositoryListItem key={item.metadata?.name} repository={item} />)
           ) : (
             <EmptyState
-              variant={isEmpty ? 'completed' : 'not-found'}
+              variant="not-found"
               message={
                 isEmpty
                   ? t('provisioning.repository-list.no-repositories', 'No repositories configured')

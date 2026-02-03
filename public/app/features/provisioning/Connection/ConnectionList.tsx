@@ -39,7 +39,7 @@ export function ConnectionList({ items }: Props) {
           filteredItems.map((item) => <ConnectionListItem key={item.metadata?.name} connection={item} />)
         ) : (
           <EmptyState
-            variant={isEmpty ? 'completed' : 'not-found'}
+            variant="not-found"
             message={
               isEmpty
                 ? t('provisioning.connections.no-connections', 'No connections configured')
