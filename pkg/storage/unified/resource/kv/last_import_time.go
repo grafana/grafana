@@ -155,7 +155,7 @@ func LastImportTimeKey(ns, group, resource string, ts time.Time) string {
 func ParseLastImportTimeKey(key string) (ns, group, resource string, ts time.Time, _ error) {
 	parts := strings.Split(key, "~")
 	if len(parts) != 4 {
-		return "", "", "", time.Time{}, fmt.Errorf("invalid key format: expected 4 parts, got %d", len(parts))
+		return "", "", "", time.Time{}, fmt.Errorf("invalid key format %q: expected 4 parts, got %d", key, len(parts))
 	}
 
 	t, err := strconv.ParseUint(parts[3], 10, 64)
