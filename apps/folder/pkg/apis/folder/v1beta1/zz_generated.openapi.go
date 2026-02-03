@@ -15,17 +15,17 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.DescendantCounts": schema_pkg_apis_folder_v1beta1_DescendantCounts(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder":           schema_pkg_apis_folder_v1beta1_Folder(ref),
+		Folder{}.OpenAPIModelName(): schema_pkg_apis_folder_v1beta1_Folder(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderAccessInfo": schema_pkg_apis_folder_v1beta1_FolderAccessInfo(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderClient":     schema_pkg_apis_folder_v1beta1_FolderClient(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo":       schema_pkg_apis_folder_v1beta1_FolderInfo(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfoList":   schema_pkg_apis_folder_v1beta1_FolderInfoList(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderJSONCodec":  schema_pkg_apis_folder_v1beta1_FolderJSONCodec(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderList":       schema_pkg_apis_folder_v1beta1_FolderList(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderMetadata":   schema_pkg_apis_folder_v1beta1_FolderMetadata(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec":       schema_pkg_apis_folder_v1beta1_FolderSpec(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus":     schema_pkg_apis_folder_v1beta1_FolderStatus(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.ResourceStats":    schema_pkg_apis_folder_v1beta1_ResourceStats(ref),
+		FolderList{}.OpenAPIModelName(): schema_pkg_apis_folder_v1beta1_FolderList(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderMetadata": schema_pkg_apis_folder_v1beta1_FolderMetadata(ref),
+		FolderSpec{}.OpenAPIModelName():                                                schema_pkg_apis_folder_v1beta1_FolderSpec(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus":  schema_pkg_apis_folder_v1beta1_FolderStatus(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.ResourceStats": schema_pkg_apis_folder_v1beta1_ResourceStats(ref),
 	}
 }
 
@@ -101,7 +101,7 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Folder",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec"),
+							Ref:         ref(FolderSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -109,7 +109,7 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			FolderSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -341,7 +341,7 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder"),
+										Ref:     ref(Folder{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -352,7 +352,7 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Folder{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
