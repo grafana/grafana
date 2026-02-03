@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -46,6 +47,7 @@ func TestFrontendService_ServerCreation(t *testing.T) {
 	t.Run("should create HTTP server with correct configuration", func(t *testing.T) {
 		publicDir := setupTestWebAssets(t)
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "1234",
 			StaticRootPath: publicDir,
 		}
@@ -64,6 +66,7 @@ func TestFrontendService_ServerCreation(t *testing.T) {
 func TestFrontendService_Routes(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:            ini.Empty(),
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 	}
@@ -139,6 +142,7 @@ func TestFrontendService_Routes(t *testing.T) {
 func TestFrontendService_Middleware(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:            ini.Empty(),
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 	}
@@ -190,6 +194,7 @@ func TestFrontendService_Middleware(t *testing.T) {
 func TestFrontendService_LoginErrorCookie(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:                    ini.Empty(),
 		HTTPPort:               "3000",
 		StaticRootPath:         publicDir,
 		BuildVersion:           "10.3.0",
@@ -262,6 +267,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 
 	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {
 		customCfg := &setting.Cfg{
+			Raw:                    ini.Empty(),
 			HTTPPort:               "3000",
 			StaticRootPath:         publicDir,
 			BuildVersion:           "10.3.0",
@@ -296,6 +302,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 func TestFrontendService_IndexHooks(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:            ini.Empty(),
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 		BuildVersion:   "10.3.0",
@@ -351,6 +358,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should set CSP headers when enabled", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
 			StaticRootPath: publicDir,
 			BuildVersion:   "10.3.0",
@@ -379,6 +387,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should set CSP-Report-Only header when enabled", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			Raw:                   ini.Empty(),
 			HTTPPort:              "3000",
 			StaticRootPath:        publicDir,
 			BuildVersion:          "10.3.0",
@@ -406,6 +415,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should set both CSP headers when both enabled", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			Raw:                   ini.Empty(),
 			HTTPPort:              "3000",
 			StaticRootPath:        publicDir,
 			BuildVersion:          "10.3.0",
@@ -436,6 +446,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should not set CSP headers when disabled", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
 			StaticRootPath: publicDir,
 			BuildVersion:   "10.3.0",
@@ -463,6 +474,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should store nonce in request context", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
 			StaticRootPath: publicDir,
 			BuildVersion:   "10.3.0",
@@ -496,6 +508,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
 			StaticRootPath: publicDir,
 			BuildVersion:   "10.3.0",
