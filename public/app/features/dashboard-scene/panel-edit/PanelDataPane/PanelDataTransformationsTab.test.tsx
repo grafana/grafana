@@ -169,7 +169,6 @@ describe('PanelDataTransformationsTab', () => {
 
   it('renders the new empty transformations message with transformationsEmptyPlaceholder on', async () => {
     config.featureToggles.transformationsEmptyPlaceholder = true;
-    config.featureToggles.sqlExpressions = true;
     const modelMock = createModelMock(mockData);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
