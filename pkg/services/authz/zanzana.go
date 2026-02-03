@@ -243,6 +243,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
+	z.zanzanaServer = zanzanaServer
 
 	var authenticatorInterceptor interceptors.Authenticator
 	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
