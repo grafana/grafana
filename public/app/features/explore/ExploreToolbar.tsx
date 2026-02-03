@@ -205,7 +205,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
-        testId={selectors.pages.Explore.toolbar.bar}
+        data-testid={selectors.pages.Explore.toolbar.bar}
         leftItems={[
           <ToolbarButton
             key="content-outline"

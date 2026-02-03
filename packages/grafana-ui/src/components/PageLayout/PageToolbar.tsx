@@ -57,7 +57,7 @@ export const PageToolbar = memo(
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
     forceShowLeftItems = false,
-    testId,
+    'data-testid': testId,
   }: Props) => {
     const styles = useStyles2(getStyles);
 

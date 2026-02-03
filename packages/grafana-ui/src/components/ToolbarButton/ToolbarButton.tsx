@@ -77,7 +77,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     iconOnly,
     'aria-label': ariaLabel,
     isHighlighted,
-    testId,
+    'data-testid': testId,
     ...rest
   } = props;
 
