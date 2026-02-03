@@ -8,35 +8,48 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
-import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
 import { CONNECTIONS_URL } from './constants';
+import { useConnectionList } from './hooks/useConnectionList';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 export default function HomePage() {
-  const [items, isLoading] = useRepositoryList({ watch: true });
+  const [items, isLoadingRepos] = useRepositoryList({ watch: true });
+  const [connections, isLoadingConnections] = useConnectionList({ watch: true });
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read tab from URL - null means default (repositories)
-  const activeTab = searchParams.get('tab');
+  const isLoading = isLoadingRepos || isLoadingConnections;
+
+  // Read tab from URL, with smart default based on data
+  const urlTab = searchParams.get('tab');
+  const defaultTab = useMemo(() => {
+    if (isLoading) {
+      return 'repositories'; // Default to repositories while loading
+    }
+    if (items?.length) {
+      return 'repositories'; // Has repos → repositories tab
+    }
+    if (connections?.length) {
+      return 'connections'; // Has connections but no repos → connections tab
+    }
+    return 'getting-started'; // Neither → getting started tab
+  }, [isLoading, items?.length, connections?.length]);
+
+  const activeTab = urlTab ?? defaultTab;
 
   // Handler to update URL when tab changes
-  const handleTabChange = (tab: string | null) => {
-    if (tab) {
-      searchParams.set('tab', tab);
-    } else {
-      searchParams.delete('tab');
-    }
+  const handleTabChange = (tab: string) => {
+    searchParams.set('tab', tab);
     setSearchParams(searchParams, { replace: true });
   };
 
   const tabInfo = useMemo(
     () => [
       {
-        value: null,
+        value: 'repositories',
         label: t('provisioning.home-page.tab-repositories', 'Repositories'),
         title: t('provisioning.home-page.tab-repositories-title', 'List of repositories'),
       },
@@ -54,11 +67,6 @@ export default function HomePage() {
     []
   );
 
-  // Early return for onboarding
-  if (!items?.length && !isLoading) {
-    return <GettingStartedPage items={items ?? []} />;
-  }
-
   const onConfirmDelete = () => {
     deleteAll({});
     setShowDeleteModal(false);
@@ -70,6 +78,7 @@ export default function HomePage() {
         return <ConnectionsTabContent />;
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
+      case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;
     }
@@ -83,6 +92,9 @@ export default function HomePage() {
             <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>
           </LinkButton>
         );
+      case 'getting-started':
+        return null;
+      case 'repositories':
       default:
         return <ConnectRepositoryButton items={items} />;
     }

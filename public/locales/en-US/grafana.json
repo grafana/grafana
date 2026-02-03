@@ -11932,7 +11932,7 @@
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
-      "available-repositories": "Other available repositories",
+      "available-repositories": "This connection has access to the following repositories",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
@@ -12275,6 +12275,9 @@
       "sync-job": {
         "view-repository": "View repository"
       }
+    },
+    "repository-list": {
+      "no-repositories": "No repositories configured"
     },
     "repository-overview": {
       "checked": "Checked:",

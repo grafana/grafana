@@ -18,9 +18,19 @@ interface Props {
 export function RepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const isProvisionedInstance = useIsProvisionedInstance();
-  const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0].metadata?.name);
+  const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0]?.metadata?.name);
 
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
+  const isEmpty = items.length === 0;
+
+  if (isEmpty) {
+    return (
+      <EmptyState
+        variant="completed"
+        message={t('provisioning.repository-list.no-repositories', 'No repositories configured')}
+      />
+    );
+  }
   const { instanceConnected } = checkSyncSettings(items);
   const hasInstanceSyncRepo = items.some((item) => item.spec?.sync?.target === 'instance');
 
@@ -104,11 +114,15 @@ export function RepositoryList({ items }: Props) {
             filteredItems.map((item) => <RepositoryListItem key={item.metadata?.name} repository={item} />)
           ) : (
             <EmptyState
-              variant="not-found"
-              message={t(
-                'provisioning.folder-repository-list.no-results-matching-your-query',
-                'No results matching your query'
-              )}
+              variant={isEmpty ? 'completed' : 'not-found'}
+              message={
+                isEmpty
+                  ? t('provisioning.repository-list.no-repositories', 'No repositories configured')
+                  : t(
+                      'provisioning.folder-repository-list.no-results-matching-your-query',
+                      'No results matching your query'
+                    )
+              }
             />
           )}
         </Stack>
