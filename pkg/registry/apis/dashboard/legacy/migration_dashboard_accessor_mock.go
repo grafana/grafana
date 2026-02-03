@@ -81,6 +81,65 @@ func (_c *MockMigrationDashboardAccessor_CountResources_Call) RunAndReturn(run f
 	return _c
 }
 
+// LockMigrationTables provides a mock function with given fields: ctx, tables
+func (_m *MockMigrationDashboardAccessor) LockMigrationTables(ctx context.Context, tables []string) (func() error, error) {
+	ret := _m.Called(ctx, tables)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LockMigrationTables")
+	}
+
+	var r0 func() error
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string) (func() error, error)); ok {
+		return rf(ctx, tables)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string) func() error); ok {
+		r0 = rf(ctx, tables)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(func() error)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
+		r1 = rf(ctx, tables)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockMigrationDashboardAccessor_LockMigrationTables_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LockMigrationTables'
+type MockMigrationDashboardAccessor_LockMigrationTables_Call struct {
+	*mock.Call
+}
+
+// LockMigrationTables is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tables []string
+func (_e *MockMigrationDashboardAccessor_Expecter) LockMigrationTables(ctx interface{}, tables interface{}) *MockMigrationDashboardAccessor_LockMigrationTables_Call {
+	return &MockMigrationDashboardAccessor_LockMigrationTables_Call{Call: _e.mock.On("LockMigrationTables", ctx, tables)}
+}
+
+func (_c *MockMigrationDashboardAccessor_LockMigrationTables_Call) Run(run func(ctx context.Context, tables []string)) *MockMigrationDashboardAccessor_LockMigrationTables_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *MockMigrationDashboardAccessor_LockMigrationTables_Call) Return(_a0 func() error, _a1 error) *MockMigrationDashboardAccessor_LockMigrationTables_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockMigrationDashboardAccessor_LockMigrationTables_Call) RunAndReturn(run func(context.Context, []string) (func() error, error)) *MockMigrationDashboardAccessor_LockMigrationTables_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MigrateDashboards provides a mock function with given fields: ctx, orgId, opts, stream
 func (_m *MockMigrationDashboardAccessor) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	ret := _m.Called(ctx, orgId, opts, stream)

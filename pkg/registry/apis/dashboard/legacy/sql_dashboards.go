@@ -260,6 +260,92 @@ func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOpt
 	return rsp, nil
 }
 
+// LockMigrationTables locks the legacy tables during migration to prevent concurrent writes.
+func (a *dashboardSqlAccess) LockMigrationTables(ctx context.Context, tables []string) (func() error, error) {
+	if len(tables) == 0 {
+		return func() error { return nil }, nil
+	}
+
+	sqlHelper, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	quotedTables := make([]string, 0, len(tables))
+	seen := make(map[string]struct{}, len(tables))
+	for _, table := range tables {
+		if table == "" {
+			continue
+		}
+		if _, ok := seen[table]; ok {
+			continue
+		}
+		seen[table] = struct{}{}
+		quotedTables = append(quotedTables, sqlHelper.DB.Quote(sqlHelper.Table(table)))
+	}
+	if len(quotedTables) == 0 {
+		return func() error { return nil }, nil
+	}
+
+	dbType := string(sqlHelper.DB.GetDBType())
+	session := sqlHelper.DB.GetEngine().NewSession()
+
+	switch dbType {
+	case "mysql":
+		var lockTables strings.Builder
+		lockTables.WriteString("LOCK TABLES ")
+		for i, table := range quotedTables {
+			if i > 0 {
+				lockTables.WriteString(", ")
+			}
+			lockTables.WriteString(table)
+			lockTables.WriteString(" READ")
+		}
+
+		if _, err := session.Exec(lockTables.String()); err != nil {
+			_ = session.Close()
+			return nil, err
+		}
+
+		return func() error {
+			defer session.Close()
+			_, err := session.Exec("UNLOCK TABLES")
+			return err
+		}, nil
+	case "postgres":
+		if err := session.Begin(); err != nil {
+			_ = session.Close()
+			return nil, err
+		}
+
+		lockTables := fmt.Sprintf("LOCK TABLE %s IN SHARE MODE", strings.Join(quotedTables, ", "))
+		if _, err := session.Exec(lockTables); err != nil {
+			_ = session.Rollback()
+			_ = session.Close()
+			return nil, err
+		}
+
+		return func() error {
+			defer session.Close()
+			return session.Commit()
+		}, nil
+	case "sqlite3":
+		if _, err := session.Exec("BEGIN IMMEDIATE"); err != nil {
+			_ = session.Close()
+			return nil, err
+		}
+
+		return func() error {
+			defer session.Close()
+			_, err := session.Exec("COMMIT")
+			return err
+		}, nil
+	default:
+		_ = session.Close()
+		return nil, fmt.Errorf("unsupported database type for migration lock: %s", dbType)
+	}
+}
+
 // MigrateDashboards handles the dashboard migration logic
 func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	query := &DashboardQuery{

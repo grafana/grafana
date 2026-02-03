@@ -76,6 +76,8 @@ type DashboardAccessor interface {
 type MigrationDashboardAccessor interface {
 	// Migration helper methods - these support the separate LegacyMigrator
 	CountResources(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
+	// LockMigrationTables locks legacy tables during migration to prevent concurrent updates.
+	LockMigrationTables(ctx context.Context, tables []string) (func() error, error)
 	MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 	MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 	MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error

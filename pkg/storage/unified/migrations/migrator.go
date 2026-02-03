@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"google.golang.org/grpc/metadata"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -120,6 +121,19 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 		return m.CountResources(ctx, opts)
 	}
 
+	lockTables := lockTablesForResources(opts.Resources)
+	unlockTables, err := m.MigrationDashboardAccessor.LockMigrationTables(ctx, lockTables)
+	if err != nil {
+		return nil, err
+	}
+	if unlockTables != nil {
+		defer func() {
+			if err := unlockTables(); err != nil {
+				m.log.Error("error unlocking legacy tables", "error", err, "namespace", opts.Namespace)
+			}
+		}()
+	}
+
 	stream, err := m.streamProvider.createStream(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -145,4 +159,21 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
+}
+
+func lockTablesForResources(resources []schema.GroupResource) []string {
+	tables := make([]string, 0, len(resources))
+	seen := make(map[string]struct{}, len(resources))
+	for _, res := range resources {
+		table := Registry.GetLockTable(res)
+		if table == "" {
+			continue
+		}
+		if _, ok := seen[table]; ok {
+			continue
+		}
+		seen[table] = struct{}{}
+		tables = append(tables, table)
+	}
+	return tables
 }

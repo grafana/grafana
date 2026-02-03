@@ -155,6 +155,18 @@ func (r *MigrationRegistry) GetMigratorFunc(accessor legacy.MigrationDashboardAc
 	return nil
 }
 
+// GetLockTable returns the legacy table name for a resource, if registered.
+func (r *MigrationRegistry) GetLockTable(gr schema.GroupResource) string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, def := range r.definitions {
+		if table := def.GetLockTable(gr); table != "" {
+			return table
+		}
+	}
+	return ""
+}
+
 // HasResource checks if a resource is registered in any migration definition.
 func (r *MigrationRegistry) HasResource(gr schema.GroupResource) bool {
 	r.mu.RLock()
