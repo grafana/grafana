@@ -211,7 +211,7 @@ jobs:
     - name: Check circular dependencies on PR
       # the first sed command is used to clean yarn dlx stuff from output
       run: |
-        yarn dlx madge --circular --extensions ts,tsx --no-count --no-spinner . &> /tmp/pr-circular.txt || true
+        yarn dlx madge@8.0.0 --circular --extensions ts,tsx --no-count --no-spinner . &> /tmp/pr-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular dependencies!$/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
         echo "Circular dependencies on PR:"
         pr_count=$(sed -n 's/.*Found \([0-9]*\) circular dependencies!$/\1/p' /tmp/pr-circular-clean.txt)
@@ -223,7 +223,7 @@ jobs:
       # the first sed command is used to clean yarn dlx stuff from output
       run: |
         git checkout main
-        yarn dlx madge --circular --extensions ts,tsx --no-count --no-spinner . &> /tmp/main-circular.txt || true
+        yarn dlx madge@8.0.0 --circular --extensions ts,tsx --no-count --no-spinner . &> /tmp/main-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular dependencies!$/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
         echo "Circular dependencies on main:"
         main_count=$(sed -n 's/.*Found \([0-9]*\) circular dependencies!$/\1/p' /tmp/main-circular-clean.txt)
