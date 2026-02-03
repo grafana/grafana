@@ -1,11 +1,22 @@
+import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { StepperStateProvider } from './StepperState';
 import { WizardStep } from './WizardStep';
 import { StepKey } from './types';
 
+// Wrapper component that provides FormProvider context
+function TestFormWrapper({ children }: { children: React.ReactNode }) {
+  const methods = useForm();
+  return <FormProvider {...methods}>{children}</FormProvider>;
+}
+
 const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
-  return render(<StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>);
+  return render(
+    <TestFormWrapper>
+      <StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>
+    </TestFormWrapper>
+  );
 };
 
 describe('WizardStep', () => {
