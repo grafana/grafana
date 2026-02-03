@@ -140,82 +140,16 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       // This could come as conversion error from v0 or v2 to V1.
       if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
-        throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
+        throw new DashboardVersionError(
+          dash.status.conversion.storedVersion,
+          dash.status.conversion.error,
+          dash.status.conversion.source,
+          dash.access,
+          dash.kind
+        );
       }
 
-      const result: DashboardDTO = {
-        meta: {
-          ...dash.access,
-          isNew: false,
-          isFolder: false,
-          uid: dash.metadata.name,
-          k8s: dash.metadata,
-          version: dash.metadata.generation,
-          created: dash.metadata.creationTimestamp,
-          publicDashboardEnabled: dash.access.isPublic,
-          conversionStatus: dash.status?.conversion
-            ? {
-                storedVersion: dash.status.conversion.storedVersion,
-                failed: dash.status.conversion.failed,
-                error: dash.status.conversion.error,
-              }
-            : undefined,
-        },
-        dashboard: {
-          ...dash.spec,
-          version: dash.metadata.generation,
-          uid: dash.metadata.name,
-        },
-      };
-
-      /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
-      /** Not intended to be used in production, we will be removing this in short-term future */
-      if (dash.metadata.annotations?.[AnnoReloadOnParamsChange]) {
-        result.meta.reloadOnParamsChange = true;
-      }
-
-      const annotations = dash.metadata.annotations ?? {};
-      const managerKind = annotations[AnnoKeyManagerKind];
-
-      if (managerKind) {
-        // `meta.provisioned` is used by the save/delete UI to decide if a dashboard is locked
-        // (i.e. it can't be saved from the UI). This should match the legacy behavior where
-        // `allowUiUpdates: true` keeps the dashboard editable/savable.
-        const allowsEdits = annotations[AnnoKeyManagerAllowsEdits] === 'true';
-        result.meta.provisioned = !allowsEdits && managerKind !== ManagerKind.Repo;
-        result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
-      }
-
-      // Inject source link for repo-managed dashboards
-      const sourceLink = await buildSourceLink(annotations);
-      if (sourceLink) {
-        const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
-        result.dashboard.links = [sourceLink, ...linksWithoutSource];
-      }
-
-      if (dash.metadata.labels?.[DeprecatedInternalId]) {
-        result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
-      }
-
-      if (dash.metadata.annotations?.[AnnoKeyFolder]) {
-        try {
-          const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
-          result.meta.folderTitle = folder.title;
-          result.meta.folderUrl = folder.url;
-          result.meta.folderUid = folder.uid;
-          result.meta.folderId = folder.id;
-        } catch (e) {
-          // If user has access to dashboard but not to folder, continue without folder info
-          if (getStatusFromError(e) !== 403) {
-            throw new Error('Failed to load folder');
-          }
-          // we still want to save the folder uid so that we can properly handle disabling the folder picker in Settings -> General
-          // this is an edge case when user has edit access to a dashboard but doesn't have access to the folder
-          result.meta.folderUid = dash.metadata.annotations?.[AnnoKeyFolder];
-        }
-      }
-
-      return result;
+      return enrichV1DashboardResponse(dash);
     } catch (e) {
       const status = getStatusFromError(e);
       const message = getMessageFromError(e);
@@ -240,4 +174,82 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     dashboard.metadata.resourceVersion = '';
     return this.client.create(dashboard);
   }
+}
+
+export async function enrichV1DashboardResponse(
+  dash: DashboardWithAccessInfo<DashboardDataDTO>
+): Promise<DashboardDTO> {
+  const result: DashboardDTO = {
+    meta: {
+      ...dash.access,
+      isNew: false,
+      isFolder: false,
+      uid: dash.metadata.name,
+      k8s: dash.metadata,
+      version: dash.metadata.generation,
+      created: dash.metadata.creationTimestamp,
+      publicDashboardEnabled: dash.access.isPublic,
+      conversionStatus: dash.status?.conversion
+        ? {
+            storedVersion: dash.status.conversion.storedVersion,
+            failed: dash.status.conversion.failed,
+            error: dash.status.conversion.error,
+          }
+        : undefined,
+    },
+    dashboard: {
+      ...dash.spec,
+      version: dash.metadata.generation,
+      uid: dash.metadata.name,
+    },
+  };
+
+  /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
+  /** Not intended to be used in production, we will be removing this in short-term future */
+  if (dash.metadata.annotations?.[AnnoReloadOnParamsChange]) {
+    result.meta.reloadOnParamsChange = true;
+  }
+
+  const annotations = dash.metadata.annotations ?? {};
+  const managerKind = annotations[AnnoKeyManagerKind];
+
+  if (managerKind) {
+    // `meta.provisioned` is used by the save/delete UI to decide if a dashboard is locked
+    // (i.e. it can't be saved from the UI). This should match the legacy behavior where
+    // `allowUiUpdates: true` keeps the dashboard editable/savable.
+    const allowsEdits = annotations[AnnoKeyManagerAllowsEdits] === 'true';
+    result.meta.provisioned = !allowsEdits && managerKind !== ManagerKind.Repo;
+    result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+  }
+
+  // Inject source link for repo-managed dashboards
+  const sourceLink = await buildSourceLink(annotations);
+  if (sourceLink) {
+    const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
+    result.dashboard.links = [sourceLink, ...linksWithoutSource];
+  }
+
+  if (dash.metadata.labels?.[DeprecatedInternalId]) {
+    result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
+  }
+
+  if (dash.metadata.annotations?.[AnnoKeyFolder]) {
+    try {
+      const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
+      result.meta.folderTitle = folder.title;
+      result.meta.folderUrl = folder.url;
+      result.meta.folderUid = folder.uid;
+      result.meta.folderId = folder.id;
+    } catch (e) {
+      // If user has access to dashboard but not to folder, continue without folder info
+      if (getStatusFromError(e) !== 403) {
+        throw new Error('Failed to load folder');
+      }
+      // we still want to save the folder uid so that we can properly handle disabling the folder picker in Settings -> General
+      // this is an edge case when user has edit access to a dashboard but doesn't have access to the folder
+      result.meta.folderUid = dash.metadata.annotations?.[AnnoKeyFolder];
+    }
+  }
+
+  return result;
 }

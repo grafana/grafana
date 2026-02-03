@@ -15,6 +15,9 @@ import (
 // The dsIndexProvider is used to resolve default datasources when queries/variables/annotations
 // don't have explicit datasource references.
 func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+	// TEMPORARY: Force conversion failure for testing source field
+	return fmt.Errorf("forced conversion failure for testing source field")
+
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind // Preserve the Kind from input (should be "Dashboard")

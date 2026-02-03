@@ -48,36 +48,16 @@ export class K8sDashboardV2API
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       // This could come as conversion error from v0 or v2 to V1.
       if (dashboard.status?.conversion?.failed && isV0V1StoredVersion(dashboard.status.conversion.storedVersion)) {
-        throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
+        throw new DashboardVersionError(
+          dashboard.status.conversion.storedVersion,
+          dashboard.status.conversion.error,
+          dashboard.status.conversion.source,
+          dashboard.access,
+          dashboard.kind
+        );
       }
 
-      // load folder info if available
-      if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
-        try {
-          const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
-          dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
-          dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
-        } catch (e) {
-          // If user has access to dashboard but not to folder, continue without folder info
-          if (getStatusFromError(e) !== 403) {
-            throw new Error('Failed to load folder');
-          }
-        }
-      } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
-        // Set AnnoKeyFolder to empty string for top-level dashboards
-        // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
-        // AnnoKeyFolder undefined -> top-level dashboard -> empty string
-        dashboard.metadata.annotations[AnnoKeyFolder] = '';
-      }
-
-      // Inject source link for repo-managed dashboards
-      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
-      if (sourceLink) {
-        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
-        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
-      }
-
-      return dashboard;
+      return enrichV2DashboardResponse(dashboard);
     } catch (e) {
       const status = getStatusFromError(e);
       const message = getMessageFromError(e);
@@ -194,4 +174,36 @@ export class K8sDashboardV2API
     dashboard.metadata.resourceVersion = '';
     return this.client.create(dashboard);
   }
+}
+
+export async function enrichV2DashboardResponse(
+  dashboard: DashboardWithAccessInfo<DashboardV2Spec>
+): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+  // load folder info if available
+  if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
+    try {
+      const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
+      dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
+      dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
+    } catch (e) {
+      // If user has access to dashboard but not to folder, continue without folder info
+      if (getStatusFromError(e) !== 403) {
+        throw new Error('Failed to load folder');
+      }
+    }
+  } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
+    // Set AnnoKeyFolder to empty string for top-level dashboards
+    // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
+    // AnnoKeyFolder undefined -> top-level dashboard -> empty string
+    dashboard.metadata.annotations[AnnoKeyFolder] = '';
+  }
+
+  // Inject source link for repo-managed dashboards
+  const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
+  if (sourceLink) {
+    const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
+    dashboard.spec.links = [sourceLink, ...linksWithoutSource];
+  }
+
+  return dashboard;
 }

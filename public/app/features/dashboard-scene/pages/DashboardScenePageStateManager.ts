@@ -19,6 +19,8 @@ import {
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
+import { enrichV1DashboardResponse } from 'app/features/dashboard/api/v1';
+import { enrichV2DashboardResponse } from 'app/features/dashboard/api/v2';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -741,28 +743,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
       }
 
-      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
-      // Playlists manage their own URL generation and redirects would break the navigation flow
-      if (rsp.meta.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
-        const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
-        const currentPath = locationService.getLocation().pathname;
-
-        if (dashboardUrl !== currentPath) {
-          // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
-        }
-      }
-
-      // Populate nav model in global store according to the folder
-      if (rsp.meta.folderUid) {
-        await updateNavModel(rsp.meta.folderUid);
-      }
-
-      // Do not cache new dashboards
+      await this.postProcessResponse(rsp, route);
       this.setDashboardCache(cacheKey, rsp);
     } catch (e) {
       // Ignore cancelled errors
@@ -774,6 +755,28 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     return rsp;
+  }
+
+  async postProcessResponse(rsp: DashboardDTO, route: DashboardRoutes): Promise<void> {
+    // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+    // Playlists manage their own URL generation and redirects would break the navigation flow
+    if (rsp.meta.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
+      const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
+      const currentPath = locationService.getLocation().pathname;
+
+      if (dashboardUrl !== currentPath) {
+        // Spread current location to persist search params used for navigation
+        locationService.replace({
+          ...locationService.getLocation(),
+          pathname: dashboardUrl,
+        });
+      }
+    }
+
+    // Populate nav model in global store according to the folder
+    if (rsp.meta.folderUid) {
+      await updateNavModel(rsp.meta.folderUid);
+    }
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap): Promise<void> {
@@ -849,6 +852,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         throw err;
       }
     }
+  }
+
+  async enrichResponse(dashboard: DashboardWithAccessInfo<DashboardDataDTO>): Promise<DashboardDTO> {
+    return enrichV1DashboardResponse(dashboard);
   }
 }
 
@@ -954,25 +961,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
           }
       }
-      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
-      // Playlists manage their own URL generation and redirects would break the navigation flow
-      if (rsp.access.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
-        const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.access.url);
-        const currentPath = locationService.getLocation().pathname;
-        if (dashboardUrl !== currentPath) {
-          // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
-        }
-      }
-      // Populate nav model in global store according to the folder
-      if (rsp.metadata.annotations?.[AnnoKeyFolder]) {
-        await updateNavModel(rsp.metadata.annotations?.[AnnoKeyFolder]);
-      }
-      // Do not cache new dashboards
+      await this.postProcessResponse(rsp, route);
       this.setDashboardCache(cacheKey, rsp);
     } catch (e) {
       // Ignore cancelled errors
@@ -982,6 +971,27 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       throw e;
     }
     return rsp;
+  }
+
+  async postProcessResponse(rsp: DashboardWithAccessInfo<DashboardV2Spec>, route: DashboardRoutes): Promise<void> {
+    // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+    // Playlists manage their own URL generation and redirects would break the navigation flow
+    if (rsp.access.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
+      const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.access.url);
+      const currentPath = locationService.getLocation().pathname;
+      if (dashboardUrl !== currentPath) {
+        // Spread current location to persist search params used for navigation
+        locationService.replace({
+          ...locationService.getLocation(),
+          pathname: dashboardUrl,
+        });
+      }
+    }
+
+    // Populate nav model in global store according to the folder
+    if (rsp.metadata.annotations?.[AnnoKeyFolder]) {
+      await updateNavModel(rsp.metadata.annotations?.[AnnoKeyFolder]);
+    }
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap): Promise<void> {
@@ -1047,6 +1057,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
     }
   }
+
+  async enrichResponse(
+    dashboard: DashboardWithAccessInfo<DashboardV2Spec>
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    return enrichV2DashboardResponse(dashboard);
+  }
 }
 
 export function shouldForceV2API(): boolean {
@@ -1069,7 +1085,8 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   private async withVersionHandling<T>(
-    operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
+    operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>,
+    options?: LoadDashboardOptions
   ): Promise<T> {
     try {
       return await operation(this.activeManager);
@@ -1077,6 +1094,25 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       if (error instanceof DashboardVersionError) {
         const manager = isV2StoredVersion(error.data.storedVersion) ? this.v2Manager : this.v1Manager;
         this.activeManager = manager;
+
+        if (error.data.source && error.data.access && error.data.kind && options) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const source = error.data.source as Record<string, unknown>;
+          const dashboard = {
+            ...source,
+            kind: error.data.kind,
+            access: error.data.access,
+          };
+
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+          const enriched = await manager.enrichResponse(dashboard as any);
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+          await manager.postProcessResponse(enriched as any, options.route);
+
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          return enriched as T;
+        }
+
         return await operation(manager);
       } else {
         throw error;
@@ -1089,8 +1125,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async fetchDashboard(options: LoadDashboardOptions) {
-    return this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
-      manager.fetchDashboard(options)
+    return this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>(
+      (manager) => manager.fetchDashboard(options),
+      options
     );
   }
 
