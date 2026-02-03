@@ -27,6 +27,7 @@ import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -36,8 +37,6 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { DecoratedRevisionModel } from '../settings/VersionsEditView';
-import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -46,12 +45,21 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
-jest.mock('../settings/version-history/HistorySrv');
+const mockRestoreDashboardVersion = jest.fn();
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    restoreDashboardVersion: mockRestoreDashboardVersion,
+  }),
+}));
 jest.mock('../serialization/transformSaveModelToScene');
 jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
@@ -81,11 +89,6 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     prev: jest.fn(),
     stop: jest.fn(),
   },
-}));
-
-jest.mock('app/features/manage-dashboards/state/actions', () => ({
-  ...jest.requireActual('app/features/manage-dashboards/state/actions'),
-  deleteDashboard: jest.fn().mockResolvedValue({}),
 }));
 
 locationUtil.initialize({
@@ -647,6 +650,31 @@ describe('DashboardScene', () => {
         expect(isLibraryPanel(libPanel)).toBe(false);
       });
 
+      it('Should unlink a library panel for auto grid panels', () => {
+        const libPanel = new VizPanel({
+          title: 'Panel B',
+          pluginId: 'table',
+          $behaviors: [new LibraryPanelBehavior({ name: 'lib panel', uid: 'abc', isLoaded: true })],
+        });
+
+        const autoGridItem = new AutoGridItem({
+          key: 'auto-grid-item-1',
+          body: libPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new AutoGridLayoutManager({
+            layout: new AutoGridLayout({ children: [autoGridItem] }),
+          }),
+        });
+
+        expect(isLibraryPanel(libPanel)).toBe(true);
+
+        scene.unlinkLibraryPanel(libPanel);
+
+        expect(isLibraryPanel(libPanel)).toBe(false);
+      });
+
       it('Should create a library panel', () => {
         const vizPanel = new VizPanel({
           title: 'Panel A',
@@ -676,6 +704,38 @@ describe('DashboardScene', () => {
 
         expect(grid.state.children.length).toBe(1);
         expect(newGridItem.state.body).toBeInstanceOf(VizPanel);
+        expect(behavior.state.uid).toBe('uid');
+        expect(behavior.state.name).toBe('name');
+      });
+
+      it('Should create a library panel for auto grid panels', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
+        const autoGridItem = new AutoGridItem({
+          key: 'auto-grid-item-1',
+          body: vizPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new AutoGridLayoutManager({
+            layout: new AutoGridLayout({ children: [autoGridItem] }),
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
+
+        const behavior = autoGridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
+
+        expect(autoGridItem.state.body).toBeInstanceOf(VizPanel);
         expect(behavior.state.uid).toBe('uid');
         expect(behavior.state.name).toBe('name');
       });
@@ -841,7 +901,7 @@ describe('DashboardScene', () => {
         version: 4,
       });
 
-      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
       return scene.onRestore(getVersionMock()).then((res) => {
@@ -860,7 +920,7 @@ describe('DashboardScene', () => {
         uid: 'dash-1',
         version: 4,
       });
-      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
       const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
@@ -886,9 +946,8 @@ describe('DashboardScene', () => {
       reloadSpy.mockRestore();
     });
 
-    it('should return early if historySrv does not return a valid version number', () => {
-      jest
-        .mocked(historySrv.restoreDashboard)
+    it('should return early if API does not return a valid version number', () => {
+      mockRestoreDashboardVersion
         .mockResolvedValueOnce({ version: null })
         .mockResolvedValueOnce({ version: undefined })
         .mockResolvedValueOnce({ version: Infinity })
@@ -979,106 +1038,496 @@ describe('DashboardScene', () => {
     });
   });
 
-  describe('getExpressionTypes', () => {
-    it('should extract SQL expression type from V1 and V2 dashboards', () => {
+  describe('getTransformationCounts', () => {
+    it('should count transformations from V1 dashboards', () => {
       const scene = buildTestScene();
-      const saveModel = createV1DashboardWithExpressions(['sql']);
-      const saveModelV2 = createV2DashboardWithExpressions(['sql']);
+      const saveModel = createV1DashboardWithTransformations(['reduce', 'calculateField', 'reduce']);
 
-      const result = scene.getExpressionTypes(saveModel);
-      const resultV2 = scene.getExpressionTypes(saveModelV2);
+      const result = scene.getTransformationCounts(saveModel);
 
-      expect(result).toEqual(['sql']);
-      expect(resultV2).toEqual(['sql']);
+      expect(result).toEqual({ calculateField: 1, reduce: 2 });
     });
 
-    it('should extract multiple expression types from V1 and V2 dashboards', () => {
+    it('should count transformations from V2 dashboards', () => {
       const scene = buildTestScene();
-      const saveModel = createV1DashboardWithExpressions(['sql', 'reduce', 'math']);
-      const saveModelV2 = createV2DashboardWithExpressions(['sql', 'reduce', 'math']);
+      const saveModel = createV2DashboardWithTransformations(['filterByValue', 'organize', 'filterByValue']);
 
-      const result = scene.getExpressionTypes(saveModel);
-      const resultV2 = scene.getExpressionTypes(saveModelV2);
+      const result = scene.getTransformationCounts(saveModel);
 
-      expect(result).toEqual(['sql', 'reduce', 'math']);
-      expect(resultV2).toEqual(['sql', 'reduce', 'math']);
+      expect(result).toEqual({ filterByValue: 2, organize: 1 });
     });
 
-    it('should deduplicate expression types', () => {
+    it('should return undefined when no transformations exist', () => {
       const scene = buildTestScene();
-      const saveModel = createV1DashboardWithExpressions(['sql', 'sql', 'reduce']);
-      const saveModelV2 = createV2DashboardWithExpressions(['sql', 'sql', 'reduce']);
-
-      const result = scene.getExpressionTypes(saveModel);
-      const resultV2 = scene.getExpressionTypes(saveModelV2);
-
-      expect(result).toEqual(['sql', 'reduce']);
-      expect(resultV2).toEqual(['sql', 'reduce']);
-    });
-
-    it('should return undefined when no expressions exist for V1 and V2 dashboards', () => {
-      const scene = buildTestScene();
-      const saveModel = createV1DashboardWithExpressions([]);
+      const saveModelV1 = createV1DashboardWithExpressions([]);
       const saveModelV2 = createV2DashboardWithExpressions([]);
 
-      const result = scene.getExpressionTypes(saveModel);
-      const resultV2 = scene.getExpressionTypes(saveModelV2);
+      const resultV1 = scene.getTransformationCounts(saveModelV1);
+      const resultV2 = scene.getTransformationCounts(saveModelV2);
 
-      expect(result).toBeUndefined();
+      expect(resultV1).toBeUndefined();
       expect(resultV2).toBeUndefined();
     });
 
-    it('should return undefined for empty dashboard', () => {
+    it('should return undefined for empty V1 dashboard', () => {
       const scene = buildTestScene();
-      const saveModel = { panels: [] } as unknown as Dashboard;
+      const saveModel = {
+        title: 'Empty Dashboard',
+        schemaVersion: 30,
+        panels: [],
+      } as unknown as Dashboard;
 
-      const result = scene.getExpressionTypes(saveModel);
+      const result = scene.getTransformationCounts(saveModel);
 
       expect(result).toBeUndefined();
     });
 
-    it('should skip non-expression datasources', () => {
+    it('should return undefined for empty V2 dashboard', () => {
       const scene = buildTestScene();
       const saveModel = {
+        title: 'Empty Dashboard V2',
+        elements: {},
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle multiple panels with transformations in V1', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard',
+        schemaVersion: 30,
         panels: [
           {
+            id: 1,
             type: 'timeseries',
-            targets: [
-              {
-                datasource: { type: 'prometheus', uid: 'prometheus-uid' },
-                type: 'instant',
-              },
+            transformations: [
+              { id: 'reduce', options: {} },
+              { id: 'calculateField', options: {} },
             ],
+          },
+          {
+            id: 2,
+            type: 'graph',
+            transformations: [{ id: 'reduce', options: {} }],
           },
         ],
       } as unknown as Dashboard;
 
-      const result = scene.getExpressionTypes(saveModel);
+      const result = scene.getTransformationCounts(saveModel);
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({ calculateField: 1, reduce: 2 });
     });
 
-    it('should skip LibraryPanel elements in V2', () => {
+    it('should handle multiple panels with transformations in V2', () => {
       const scene = buildTestScene();
       const saveModel = {
+        title: 'Test Dashboard V2',
         elements: {
-          'lib-panel-1': {
-            kind: 'LibraryPanel',
+          'panel-1': {
+            kind: 'Panel',
             spec: {
               id: 1,
-              title: 'Library Panel',
-              libraryPanel: {
-                uid: 'some-library-panel',
-                name: 'Some Library Panel',
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [],
+                  transformations: [
+                    { kind: 'organize', spec: { id: 'organize', options: {} } },
+                    { kind: 'filterByValue', spec: { id: 'filterByValue', options: {} } },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'panel-2': {
+            kind: 'Panel',
+            spec: {
+              id: 2,
+              title: 'Panel 2',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [],
+                  transformations: [{ kind: 'organize', spec: { id: 'organize', options: {} } }],
+                  queryOptions: {},
+                },
               },
             },
           },
         },
       } as unknown as DashboardV2Spec;
 
-      const result = scene.getExpressionTypes(saveModel);
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toEqual({ filterByValue: 1, organize: 2 });
+    });
+
+    it('should return object with correct structure', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithTransformations(['organize', 'calculateField', 'filterByValue']);
+
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toEqual({
+        calculateField: 1,
+        filterByValue: 1,
+        organize: 1,
+      });
+    });
+
+    it('should skip LibraryPanel elements in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [],
+                  transformations: [{ kind: 'organize', spec: { id: 'organize', options: {} } }],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'library-panel-1': {
+            kind: 'LibraryPanel',
+            spec: {
+              uid: 'library-uid',
+              name: 'Library Panel',
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toEqual({ organize: 1 });
+    });
+  });
+
+  describe('getExpressionCounts', () => {
+    it('should count all expression types from V1 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions(['sql', 'sql', 'reduce']);
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ reduce: 1, sql: 2 });
+    });
+
+    it('should count all expression types from V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV2DashboardWithExpressions(['sql', 'math', 'sql']);
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ math: 1, sql: 2 });
+    });
+
+    it('should return undefined when no expressions exist for V1 and V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModelV1 = createV1DashboardWithExpressions([]);
+      const saveModelV2 = createV2DashboardWithExpressions([]);
+
+      const resultV1 = scene.getExpressionCounts(saveModelV1);
+      const resultV2 = scene.getExpressionCounts(saveModelV2);
+
+      expect(resultV1).toBeUndefined();
+      expect(resultV2).toBeUndefined();
+    });
+
+    it('should return undefined for empty V1 dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Empty Dashboard',
+        schemaVersion: 30,
+        panels: [],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionCounts(saveModel);
 
       expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for empty V2 dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Empty Dashboard V2',
+        elements: {},
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle multiple panels with expressions in V1', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard',
+        schemaVersion: 30,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            targets: [
+              {
+                refId: 'A',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'sql',
+              },
+            ],
+          },
+          {
+            id: 2,
+            type: 'graph',
+            targets: [
+              {
+                refId: 'A',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'sql',
+              },
+              {
+                refId: 'B',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'math',
+              },
+            ],
+          },
+        ],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ math: 1, sql: 2 });
+    });
+
+    it('should handle multiple panels with expressions in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'sql' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'panel-2': {
+            kind: 'Panel',
+            spec: {
+              id: 2,
+              title: 'Panel 2',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'sql' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'math' },
+                        },
+                        refId: 'B',
+                      },
+                    },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ math: 1, sql: 2 });
+    });
+
+    it('should return object with correct structure for multiple expression types', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions(['reduce', 'math', 'sql']);
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ math: 1, reduce: 1, sql: 1 });
+    });
+
+    it('should skip non-expression datasources in V1 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard',
+        schemaVersion: 30,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            targets: [
+              {
+                refId: 'A',
+                datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+                type: 'instant',
+              },
+              {
+                refId: 'B',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'sql',
+              },
+            ],
+          },
+        ],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ sql: 1 });
+    });
+
+    it('should skip non-expression datasources in V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: 'prometheus',
+                          datasource: { name: 'prometheus-uid' },
+                          spec: { expr: 'up' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'math' },
+                        },
+                        refId: 'B',
+                      },
+                    },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ math: 1 });
+    });
+
+    it('should skip LibraryPanel elements in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'sql' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'library-panel-1': {
+            kind: 'LibraryPanel',
+            spec: {
+              uid: 'library-uid',
+              name: 'Library Panel',
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ sql: 1 });
     });
   });
 });
@@ -1102,6 +1551,29 @@ function createV1DashboardWithExpressions(expressionTypes: string[]): Dashboard 
             type,
           })),
         ],
+      },
+    ],
+  };
+}
+
+function createV1DashboardWithTransformations(transformationIds: string[]): Dashboard {
+  return {
+    title: 'Test Dashboard',
+    schemaVersion: 30,
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        targets: [
+          {
+            refId: 'A',
+            datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+          },
+        ],
+        transformations: transformationIds.map((id) => ({
+          id,
+          options: {},
+        })),
       },
     ],
   };
@@ -1181,6 +1653,88 @@ function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV
               ],
               queryOptions: {},
               transformations: [],
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            version: '1.0.0',
+            group: 'timeseries',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function createV2DashboardWithTransformations(transformationIds: string[]): DashboardV2Spec {
+  return {
+    title: 'Test Dashboard V2',
+    annotations: [],
+    cursorSync: 'Off',
+    editable: true,
+    links: [],
+    preload: false,
+    tags: [],
+    timeSettings: {
+      timezone: 'browser',
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '',
+      autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
+    },
+    elements: {
+      'panel-1': {
+        kind: 'Panel',
+        spec: {
+          id: 1,
+          title: 'Panel',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      group: 'prometheus',
+                      version: 'v0',
+                      datasource: {
+                        name: 'prometheus-uid',
+                      },
+                      spec: {},
+                    },
+                    refId: 'A',
+                  },
+                },
+              ],
+              queryOptions: {},
+              transformations: transformationIds.map((id) => ({
+                kind: id,
+                spec: {
+                  id,
+                  options: {},
+                },
+              })),
             },
           },
           vizConfig: {
@@ -1313,9 +1867,8 @@ function getVersionMock(): DecoratedRevisionModel {
     id: 2,
     checked: false,
     uid: 'uid',
-    parentVersion: 1,
     version: 2,
-    created: new Date(),
+    created: new Date().toISOString(),
     createdBy: 'admin',
     message: '',
     data: dash,

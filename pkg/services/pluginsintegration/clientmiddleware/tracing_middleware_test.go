@@ -362,6 +362,10 @@ func (m *alwaysErrorFuncMiddleware) QueryData(ctx context.Context, req *backend.
 	return nil, m.f()
 }
 
+func (m *alwaysErrorFuncMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return m.f()
+}
+
 func (m *alwaysErrorFuncMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return m.f()
 }

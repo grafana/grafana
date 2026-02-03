@@ -56,9 +56,10 @@ describe('DashboardApi', () => {
     });
   });
 
-  describe('when scenes disabled', () => {
+  describe('when scenes and dashboardNewLayouts are disabled', () => {
     beforeEach(() => {
       config.featureToggles.dashboardScene = false;
+      config.featureToggles.dashboardNewLayouts = false;
     });
 
     it('should use legacy api when kubernetesDashboards toggle is disabled', () => {
@@ -80,8 +81,20 @@ describe('DashboardApi', () => {
       expect(getDashboardAPI('v1')).toBeInstanceOf(K8sDashboardAPI);
     });
 
-    it('should use v2 when v2 is passed in the params', () => {
+    it('should throw when v2 is passed in the params', () => {
       expect(() => getDashboardAPI('v2')).toThrow('v2 is not supported for legacy architecture');
+    });
+  });
+
+  describe('when dashboardScene disabled but dashboardNewLayouts enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardScene = false;
+      config.featureToggles.dashboardNewLayouts = true;
+    });
+
+    it('should use v2 when v2 is passed in the params', () => {
+      config.featureToggles.kubernetesDashboards = true;
+      expect(getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
     });
   });
 });

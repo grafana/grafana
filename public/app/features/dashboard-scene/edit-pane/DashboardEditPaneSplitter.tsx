@@ -19,6 +19,8 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { useUserActivity } from './useUserActivity';
+
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
@@ -56,7 +58,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-  const isEditingNewDashboard = isEditing && !dashboard.state.uid;
+  const isUserActive = useUserActivity(10000);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -74,20 +76,15 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
-  useEffect(() => {
-    if (isEditingNewDashboard) {
-      editPane.openPane('add');
-    }
-  }, [isEditingNewDashboard, editPane]);
-
   const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane) || isEditingNewDashboard,
+    hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
+    isHidden: !isUserActive,
   });
 
   /**
@@ -132,7 +129,12 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
         {...sidebarContext.outerWrapperProps}
       >
-        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+        <div
+          className={cx(styles.scrollContainer, !isUserActive && styles.scrollContainerNoSidebar)}
+          ref={onBodyRef}
+          onPointerDown={onClearSelection}
+          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+        >
           {body}
         </div>
 
@@ -215,6 +217,12 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flex: '1 1 0',
       overflow: 'hidden',
 
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('padding', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+
       [theme.breakpoints.down('sm')]: {
         flex: 1,
 
@@ -237,6 +245,15 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('padding', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+    scrollContainerNoSidebar: css({
+      paddingRight: theme.spacing(2),
     }),
     body: css({
       label: 'body',

@@ -86,12 +86,6 @@ describe('useWizardNavigation', () => {
       expect(result.current.currentStepConfig?.id).toBe('connection');
       expect(result.current.currentStepConfig?.name).toBe('Connection');
     });
-
-    it('should calculate visibleStepIndex excluding authType step', () => {
-      const { result } = setup({ initialStep: 'connection' });
-      // authType is filtered out, so connection is at index 0
-      expect(result.current.visibleStepIndex).toBe(0);
-    });
   });
 
   describe('goToNextStep', () => {
@@ -233,20 +227,6 @@ describe('useWizardNavigation', () => {
       });
 
       expect(result.current.activeStep).toBe('bootstrap');
-    });
-  });
-
-  describe('visibleSteps', () => {
-    it('should return steps excluding authType', () => {
-      const { result } = setup();
-
-      expect(result.current.visibleSteps).toHaveLength(4);
-      expect(result.current.visibleSteps.map((s) => s.id)).toEqual([
-        'connection',
-        'bootstrap',
-        'synchronize',
-        'finish',
-      ]);
     });
   });
 });

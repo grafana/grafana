@@ -715,7 +715,9 @@ VariableOption: {
   // Text to be displayed for the option
   text: string | [...string]
   // Value of the option
-value: string | [...string]
+  value: string | [...string]
+  // Additional properties for multi-props variables
+  properties?: {[string]: string}
 }
 
 // Query variable specification

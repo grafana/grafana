@@ -7,6 +7,7 @@ import { ConnectionList } from './ConnectionList';
 const createMockConnection = (overrides: Partial<Connection> = {}): Connection => ({
   metadata: { name: 'test-connection' },
   spec: {
+    title: 'Test Connection',
     type: 'github',
     url: 'https://github.com/settings/installations/12345678',
     github: {
@@ -15,9 +16,18 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
     },
   },
   status: {
-    state: 'connected',
     health: { healthy: true },
     observedGeneration: 1,
+    conditions: [
+      {
+        type: 'Ready',
+        status: 'True',
+        reason: 'Available',
+        message: 'Connection is available',
+        lastTransitionTime: new Date().toISOString(),
+        observedGeneration: 1,
+      },
+    ],
   },
   ...overrides,
 });
@@ -26,6 +36,7 @@ const mockConnections: Connection[] = [
   createMockConnection({
     metadata: { name: 'github-conn-1' },
     spec: {
+      title: 'GitHub Connection 1',
       type: 'github',
       url: 'https://github.com/settings/installations/103343308',
       github: {
@@ -36,11 +47,12 @@ const mockConnections: Connection[] = [
   }),
   createMockConnection({
     metadata: { name: 'gitlab-conn-2' },
-    spec: { type: 'gitlab', url: 'https://gitlab.com/org2/repo2' },
+    spec: { title: 'GitLab Connection 2', type: 'gitlab', url: 'https://gitlab.com/org2/repo2' },
   }),
   createMockConnection({
     metadata: { name: 'another-github' },
     spec: {
+      title: 'Another GitHub Connection',
       type: 'github',
       url: 'https://github.com/settings/installations/987654321',
       github: {
