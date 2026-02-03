@@ -47,19 +47,25 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 
   const onChangeLayout = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
 
+  const switchLayout = useCallback(
+    (layoutItem: LayoutRegistryItem) => {
+      const layoutParent = layoutManager.parent;
+
+      if (layoutParent && isLayoutParent(layoutParent)) {
+        layoutParent.switchLayout(layoutItem.createFromLayout(layoutManager));
+      }
+    },
+    [layoutManager]
+  );
+
   const onConfirmNewLayout = useCallback(() => {
     if (!newLayout) {
       return;
     }
 
-    const layoutParent = layoutManager.parent;
-
-    if (layoutParent && isLayoutParent(layoutParent)) {
-      layoutParent.switchLayout(newLayout.createFromLayout(layoutManager));
-    }
-
+    switchLayout(newLayout);
     setNewLayout(undefined);
-  }, [newLayout, layoutManager]);
+  }, [newLayout, switchLayout]);
 
   const onDismissNewLayout = useCallback(() => setNewLayout(undefined), []);
 
@@ -95,20 +101,22 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           fullWidth
           value={layoutManager.descriptor}
           options={radioOptions}
-          onChange={onChangeLayout}
+          onChange={!isGridLayout ? switchLayout : onChangeLayout}
           disabledOptions={disabledOptions}
         />
       </Box>
-      <ConfirmModal
-        isOpen={!!newLayout}
-        title={t('dashboard.layout.panel.modal.title', 'Change layout')}
-        body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
-        confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
-        dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
-        confirmButtonVariant="primary"
-        onConfirm={onConfirmNewLayout}
-        onDismiss={onDismissNewLayout}
-      />
+      {isGridLayout && (
+        <ConfirmModal
+          isOpen={!!newLayout}
+          title={t('dashboard.layout.panel.modal.title', 'Change layout')}
+          body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
+          confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
+          dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
+          confirmButtonVariant="primary"
+          onConfirm={onConfirmNewLayout}
+          onDismiss={onDismissNewLayout}
+        />
+      )}
     </>
   );
 }
