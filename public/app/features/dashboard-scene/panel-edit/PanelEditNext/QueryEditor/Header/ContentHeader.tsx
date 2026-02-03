@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
+import { upperFirst } from 'lodash';
 import { RefObject, useRef } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2, Icon, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
@@ -18,7 +21,7 @@ import { HeaderActions } from './HeaderActions';
  * This interface defines everything needed to render the header without Scene coupling.
  */
 export interface ContentHeaderProps {
-  selectedQuery: DataQuery | null;
+  selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   queries: DataQuery[];
   cardType: QueryEditorType;
@@ -66,7 +69,6 @@ export function ContentHeader({
 
   const styles = useStyles2(getStyles, { cardType });
 
-  // Early return if nothing selected
   if (!selectedQuery && !selectedTransformation) {
     return null;
   }
@@ -75,28 +77,55 @@ export function ContentHeader({
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+
         {cardType === QueryEditorType.Query && selectedQuery && (
-          <DatasourceSection
-            selectedQuery={selectedQuery}
-            onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
-          />
+          <>
+            <DatasourceSection
+              selectedQuery={selectedQuery}
+              onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
+            />
+            <Separator />
+          </>
         )}
+
+        {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
+          <>
+            <Text weight="light" variant="body" color="primary">
+              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor.header.expression">Expression</Trans>
+            </Text>
+            <Separator />
+          </>
+        )}
+
+        {cardType === QueryEditorType.Transformation && selectedTransformation && (
+          <>
+            <Text weight="light" variant="body" color="primary">
+              <Trans i18nKey="query-editor.header.transformation">Transformation</Trans>
+            </Text>
+            <Separator />
+            <Text weight="light" variant="code" color="primary">
+              {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
+            </Text>
+          </>
+        )}
+
         {selectedQuery && (
           <>
             <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}
-        {selectedTransformation && (
-          <Text weight="light" variant="body" color="primary">
-            {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
-          </Text>
-        )}
       </div>
       <HeaderActions queries={queries} containerRef={containerRef} />
     </div>
   );
 }
+
+const Separator = () => (
+  <Text variant="h4" color="secondary">
+    /
+  </Text>
+);
 
 /**
  * Scene-aware wrapper for ContentHeader.
@@ -141,9 +170,6 @@ function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) 
       <div className={styles.dataSourcePickerWrapper}>
         <DataSourcePicker dashboard={true} variables={true} current={selectedQuery.datasource} onChange={onChange} />
       </div>
-      <Text variant="h4" color="secondary">
-        /
-      </Text>
     </>
   );
 }

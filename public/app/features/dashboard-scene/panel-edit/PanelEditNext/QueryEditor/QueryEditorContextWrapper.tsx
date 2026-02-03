@@ -11,6 +11,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
@@ -140,7 +141,7 @@ export function QueryEditorContextWrapper({
     () => ({
       selectedQuery,
       selectedTransformation,
-      setSelectedQuery: (query: DataQuery | null) => {
+      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         setSelectedQueryRefId(query?.refId ?? null);
         // Clear transformation selection when selecting a query
         setSelectedTransformationId(null);

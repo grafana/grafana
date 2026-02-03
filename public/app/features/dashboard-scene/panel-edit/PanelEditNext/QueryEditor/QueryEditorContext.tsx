@@ -3,6 +3,7 @@ import { createContext, ReactNode, useContext } from 'react';
 import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { QueryEditorType } from '../constants';
 
@@ -27,9 +28,9 @@ export interface PanelState {
 }
 
 export interface QueryEditorUIState {
-  selectedQuery: DataQuery | null;
+  selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
-  setSelectedQuery: (query: DataQuery | null) => void;
+  setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
