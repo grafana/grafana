@@ -78,6 +78,10 @@ func (r *gitRepository) Branch() string {
 	return r.gitConfig.Branch
 }
 
+func (r *gitRepository) SetBranch(branch string) {
+	r.gitConfig.Branch = branch
+}
+
 func (r *gitRepository) Config() *provisioning.Repository {
 	return r.config
 }
