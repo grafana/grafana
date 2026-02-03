@@ -114,6 +114,46 @@ func TestIntegrationAnnotations(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, annotations, 1)
 		})
+
+		t.Run("should include alertId field even when zero for manual annotations", func(t *testing.T) {
+			// Create a manual annotation (no alertId)
+			createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+				"text": "Manual annotation without alert",
+				"time": 1234567890000,
+			})
+
+			url := fmt.Sprintf("http://admin:admin@%s/api/annotations", grafanaListedAddr)
+			resp, err := http.Get(url) // nolint:gosec
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
+			var annotations []map[string]interface{}
+			err = json.Unmarshal(body, &annotations)
+			require.NoError(t, err)
+			require.NotEmpty(t, annotations, "should have at least one annotation")
+
+			// Verify that all annotations have the alertId field
+			foundManualAnnotation := false
+			for _, annotation := range annotations {
+				_, exists := annotation["alertId"]
+				assert.True(t, exists, "alertId field must be present in API response even when zero (manual annotation)")
+
+				// Find the manual annotation we just created
+				if textVal, ok := annotation["text"].(string); ok && textVal == "Manual annotation without alert" {
+					foundManualAnnotation = true
+					alertID, ok := annotation["alertId"].(float64) // JSON numbers are float64
+					assert.True(t, ok, "alertId should be a number")
+					assert.Equal(t, float64(0), alertID, "Manual annotation should have alertId = 0")
+				}
+			}
+
+			assert.True(t, foundManualAnnotation, "Should find the manual annotation we created")
+		})
 	})
 
 	t.Run("access control tests", func(t *testing.T) {
