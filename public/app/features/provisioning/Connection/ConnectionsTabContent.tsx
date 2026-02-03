@@ -1,6 +1,3 @@
-import { SerializedError } from '@reduxjs/toolkit';
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
-
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
@@ -11,7 +8,7 @@ import { ConnectionList } from './ConnectionList';
 
 interface Props {
   items: Connection[];
-  error?: FetchBaseQueryError | SerializedError;
+  error?: unknown;
 }
 
 export function ConnectionsTabContent({ items, error }: Props) {
