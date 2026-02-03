@@ -41,7 +41,7 @@ export function BasicExtensions(props: ExtensionDropdownProps) {
       <Dropdown onVisibleChange={setIsModalOpen} placement="bottom-start" overlay={menu}>
         <ToolbarButton
           aria-label={t('explore.basic-extensions.aria-label-add', 'Add')}
-          testId={selectors.pages.Explore.toolbar.addTo}
+          data-testid={selectors.pages.Explore.toolbar.addTo}
           disabled={!Boolean(noQueriesInPane)}
           variant="canvas"
           isOpen={isModalOpen}

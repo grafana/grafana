@@ -30,7 +30,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         variant={buttonVariant}
         icon={!isLive || isPaused ? 'play' : 'pause'}
         onClick={onClickMain}
-        testId={selectors.pages.Explore.toolbar.live}
+        data-testid={selectors.pages.Explore.toolbar.live}
         tooltip={
           !isLive || isPaused
             ? t('explore.live-tail-button.start-live-stream-your-logs', 'Start live stream your logs')

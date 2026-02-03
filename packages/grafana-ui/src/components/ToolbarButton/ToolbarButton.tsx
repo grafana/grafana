@@ -36,7 +36,7 @@ interface BaseProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Show highlight dot */
   isHighlighted?: boolean;
   /** Test ID for testing purposes */
-  testId?: string;
+  'data-testid'?: string;
 }
 
 interface BasePropsWithChildren extends BaseProps {

@@ -32,7 +32,7 @@ export interface Props {
    * By default left items are hidden on small screens.
    */
   forceShowLeftItems?: boolean;
-  testId?: string;
+  'data-testid'?: string;
 }
 
 /**
