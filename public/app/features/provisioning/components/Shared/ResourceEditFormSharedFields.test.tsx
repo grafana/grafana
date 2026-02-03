@@ -152,6 +152,24 @@ describe('ResourceEditFormSharedFields', () => {
 
       expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     });
+
+    it('should render a read-only branch input when only configured branch is allowed', () => {
+      const restrictedRepo: RepositoryView = {
+        ...mockRepo.github,
+        workflows: ['write'],
+      };
+
+      setup({
+        formDefaultValues: { workflow: 'write', ref: 'main' },
+        repository: restrictedRepo,
+        workflow: 'write',
+        canPushToConfiguredBranch: true,
+      });
+
+      const branchInput = screen.getByLabelText(/branch/i);
+      expect(branchInput).toHaveAttribute('readonly');
+      expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
+    });
   });
 
   describe('User Interactions', () => {
