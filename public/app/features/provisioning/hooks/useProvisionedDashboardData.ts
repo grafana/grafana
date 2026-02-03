@@ -55,7 +55,8 @@ export function useDefaultValues({
 
   return {
     values: {
-      ref: defaultWorkflow === 'branch' ? `dashboard/${timestamp}` : (repository?.branch ?? ''),
+      // When workflow is branch, we don't set a default ref, user will select from branches dropdown
+      ref: defaultWorkflow === 'branch' ? '' : (repository?.branch ?? ''),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',

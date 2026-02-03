@@ -6,7 +6,6 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { getCanPushToConfiguredBranch, getDefaultWorkflow } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
-import { generateTimestamp } from '../components/utils/timestamp';
 import { BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
@@ -31,7 +30,6 @@ export function useProvisionedFolderFormData({
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
   const { repository, folder, isLoading, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
 
-  const timestamp = generateTimestamp();
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
   const initialValues = useMemo(() => {
@@ -44,12 +42,13 @@ export function useProvisionedFolderFormData({
     return {
       title: title || '',
       comment: '',
-      ref: defaultWorkflow === 'branch' ? `folder/${timestamp}` : (repository?.branch ?? ''),
+      // When workflow is branch, we don't set a default ref, user will select from branches dropdown
+      ref: defaultWorkflow === 'branch' ? '' : (repository?.branch ?? ''),
       repo: repository.name || '',
       path: folder?.metadata?.annotations?.[AnnoKeySourcePath] || '',
       workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, timestamp, folder?.metadata?.annotations]);
+  }, [repository, isLoading, title, folder?.metadata?.annotations]);
 
   return {
     repository,
