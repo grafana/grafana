@@ -20,8 +20,8 @@ import {
 } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { DryRunValidationResult } from '../DryRunValidationModal';
 import { ImportFormValues } from '../ImportToGMA';
+import { DryRunValidationResult } from '../types';
 
 interface Step1ContentProps {
   /** Whether the user has permission to import notifications */

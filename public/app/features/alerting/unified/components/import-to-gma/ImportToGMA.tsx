@@ -21,7 +21,6 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
-import { DryRunValidationResult } from './DryRunValidationModal';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -29,6 +28,7 @@ import { WizardStep } from './Wizard/WizardStep';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
+import { DryRunValidationResult } from './types';
 import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
 
 /**
@@ -91,8 +91,7 @@ const ImportToGMA = () => {
  * Inner content component that uses the stepper state
  */
 function ImportWizardContent() {
-  const { activeStep, setStepCompleted, setStepSkipped, setActiveStep, setVisitedStep, setStepErrors } =
-    useStepperState();
+  const { activeStep, setStepErrors } = useStepperState();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [dryRunState, setDryRunState] = useState<'idle' | 'loading' | 'success' | 'warning' | 'error'>('idle');
@@ -197,52 +196,36 @@ function ImportWizardContent() {
     }
   }, [getValues, runDryRun, setStepErrors]);
 
-  // Step 1 handlers - now just proceeds if validation passed
+  // Step 1 handlers
+  // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
+  // These handlers only need to update form values and control whether to proceed
   const handleStep1Next = useCallback((): boolean => {
-    // Check if dry-run validation passed (not error state)
+    // Block navigation if dry-run validation failed
     if (dryRunState === 'error') {
       return false;
     }
-
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
-    setStepCompleted(StepKey.Notifications, true);
-    setStepSkipped(StepKey.Notifications, false);
-    setVisitedStep(StepKey.Notifications);
     return true;
-  }, [dryRunState, setValue, setStepCompleted, setStepSkipped, setVisitedStep]);
+  }, [dryRunState, setValue]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
     setValue('notificationPolicyOption', 'default');
-    setStepCompleted(StepKey.Notifications, false);
-    setStepSkipped(StepKey.Notifications, true);
-    setStepErrors(StepKey.Notifications, false);
-    setVisitedStep(StepKey.Notifications);
-    setActiveStep(StepKey.Rules);
-  }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep, setActiveStep]);
+  }, [setValue]);
 
   // Step 2 handlers
   const handleStep2Next = useCallback((): boolean => {
     setValue('step2Completed', true);
     setValue('step2Skipped', false);
-    setStepCompleted(StepKey.Rules, true);
-    setStepSkipped(StepKey.Rules, false);
-    setStepErrors(StepKey.Rules, false);
-    setVisitedStep(StepKey.Rules);
     return true;
-  }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep]);
+  }, [setValue]);
 
   const handleStep2Skip = useCallback(() => {
     setValue('step2Completed', false);
     setValue('step2Skipped', true);
-    setStepCompleted(StepKey.Rules, false);
-    setStepSkipped(StepKey.Rules, true);
-    setStepErrors(StepKey.Rules, false);
-    setVisitedStep(StepKey.Rules);
-    setActiveStep(StepKey.Review);
-  }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep, setActiveStep]);
+  }, [setValue]);
 
   // Get ruler rules for rules import (needed when importing from datasource)
   const formValues = getValues();

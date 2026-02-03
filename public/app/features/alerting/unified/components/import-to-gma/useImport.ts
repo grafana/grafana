@@ -5,7 +5,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 
-import type { DryRunValidationResult } from './DryRunValidationModal';
+import type { DryRunValidationResult } from './types';
 
 interface MigrateNotificationsParams {
   source: 'datasource' | 'yaml';
