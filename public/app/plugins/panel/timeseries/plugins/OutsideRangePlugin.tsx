@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState } from 'react';
-import { TypedArray, Scale } from 'uplot';
+import uPlot, { TypedArray, Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -11,17 +11,19 @@ interface ThresholdControlsPluginProps {
 }
 
 export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
+  const [timeValues, setTimeValues] = useState<uPlot['data'][0]>([]);
+  const [nonTimeValues, setNonTimeValues] = useState<Array<uPlot['data'][1]>>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
 
   useLayoutEffect(() => {
     config.addHook('setScale', (u) => {
       setTimeValues(u.data?.[0] ?? []);
+      setNonTimeValues(u.data?.slice(1) ?? []);
       setTimeRange(u.scales['x'] ?? undefined);
     });
   }, [config]);
 
-  if (timevalues.length < 1 || !onChangeTimeRange) {
+  if (timeValues.length < 1 || !onChangeTimeRange) {
     return null;
   }
 
@@ -30,37 +32,47 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
   }
 
   // Time values are always sorted for uPlot to work
-  let i = 0,
-    j = timevalues.length - 1;
 
-  while (i <= j && timevalues[i] == null) {
+  const memoCache: boolean[] = [];
+  const isNullAtIndex = (idx: number) => {
+    if (memoCache[idx] !== undefined) {
+      return memoCache[idx];
+    }
+    const isNull = nonTimeValues.every((v) => v[idx] == null);
+    memoCache[idx] = isNull;
+    return isNull;
+  };
+
+  let i = 0,
+    j = timeValues.length - 1;
+
+  while (i <= j && isNullAtIndex(i)) {
     i++;
   }
 
-  while (j >= 0 && timevalues[j] == null) {
+  while (j >= 0 && isNullAtIndex(j)) {
     j--;
   }
 
-  let first = timevalues[i];
-  let last = timevalues[j];
-  const fromX = timeRange.min;
-  const toX = timeRange.max;
-
-  if (first == null || last == null) {
+  // all values are null
+  if (isNullAtIndex(i) && isNullAtIndex(j)) {
     return null;
   }
 
+  let first = !isNullAtIndex(i) ? timeValues[i] : timeValues[j];
+  let last = !isNullAtIndex(j) ? timeValues[j] : timeValues[i];
+
   // (StartA <= EndB) and (EndA >= StartB)
-  if (first <= toX && last >= fromX) {
+  if (first <= timeRange.max && last >= timeRange.min) {
     return null;
   }
 
   // if only one point is outside the range, we will use a timerange which
   // is of the same width as the current timerange around the point.
   if (first === last) {
-    const width = toX - fromX;
-    first = first - width / 2;
-    last = last + width / 2;
+    const delta = timeRange.max - timeRange.min;
+    first -= delta / 2;
+    last += delta / 2;
   }
 
   return (

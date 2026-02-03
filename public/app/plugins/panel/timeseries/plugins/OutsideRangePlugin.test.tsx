@@ -94,14 +94,14 @@ describe('OutsideRangePlugin', () => {
     expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 1000, to: 3000 });
   });
 
-  it('should not render anything for null time values', () => {
+  it('should not render anything for all null values', () => {
     const { container } = render(<OutsideRangePlugin config={config} onChangeTimeRange={jest.fn()} />);
 
     act(() => {
       hooks.setScale({
         data: [
+          [100, 200, 300],
           [null, null, null],
-          [1, 2, 3],
         ],
         scales: {
           x: { time: true, min: 4000, max: 5000 },
@@ -112,22 +112,29 @@ describe('OutsideRangePlugin', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('should render when some time values are null but all others are outside the range', () => {
-    const { getByText } = render(<OutsideRangePlugin config={config} onChangeTimeRange={jest.fn()} />);
+  it('should render when some values are null but all others are outside the time range', async () => {
+    const onChangeTimeRange = jest.fn();
+    const { getByText } = render(<OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />);
 
     act(() => {
       hooks.setScale({
         data: [
-          [null, 1000, null, null],
-          [1, 2, 3, 4],
+          [0, 500, 1000, 1500, 2000],
+          [null, 2, null, 3, null],
         ],
         scales: {
-          x: { time: true, min: 2000, max: 3000 },
+          x: { time: true, min: 2500, max: 3500 },
         },
       } as unknown as uPlot);
     });
 
     expect(getByText('Data outside time range')).toBeInTheDocument();
+
+    const button = getByText('Zoom to data');
+    await userEvent.click(button);
+
+    // The new range should be centered around the single point with the same width as the original range
+    expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 500, to: 1500 });
   });
 
   it('should not render when some time values are null but at least one other is inside the range', () => {
@@ -136,7 +143,7 @@ describe('OutsideRangePlugin', () => {
     act(() => {
       hooks.setScale({
         data: [
-          [null, 1000, 2500, null],
+          [500, 1000, 1500, 2000],
           [1, 2, 3, 4],
         ],
         scales: {
@@ -176,8 +183,8 @@ describe('OutsideRangePlugin', () => {
       act(() => {
         hooks.setScale({
           data: [
-            [null, 1000, null, null],
-            [1, 2, 3, 4],
+            [500, 1000, 1500, 2000, 2500, 3000],
+            [null, 2, null, null, null, null],
           ],
           scales: {
             x: { time: true, min: 2000, max: 3000 },
