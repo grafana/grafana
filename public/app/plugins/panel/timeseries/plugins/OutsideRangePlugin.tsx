@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useMemo } from 'react';
+import { useLayoutEffect, useState, useMemo, memo } from 'react';
 import uPlot from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
@@ -10,13 +10,13 @@ interface ThresholdControlsPluginProps {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const [data, setData] = useState<uPlot['data']>([[]]);
+export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
+  const [data, setData] = useState<uPlot['data']>([]);
   const [timeRange, setTimeRange] = useState<uPlot['scales']['x']>();
 
   useLayoutEffect(() => {
     config.addHook('setScale', (u) => {
-      setData(u.data ?? [[]]);
+      setData(u.data ?? []);
       setTimeRange(u.scales['x']);
     });
   }, [config]);
@@ -43,7 +43,7 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
   }, [data]);
 
   const timeValues = data[0];
-  if (timeValues.length < 1 || !onChangeTimeRange) {
+  if (timeValues?.length < 1 || !onChangeTimeRange) {
     return null;
   }
 
@@ -108,6 +108,6 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
       </div>
     </div>
   );
-};
+});
 
 OutsideRangePlugin.displayName = 'OutsideRangePlugin';

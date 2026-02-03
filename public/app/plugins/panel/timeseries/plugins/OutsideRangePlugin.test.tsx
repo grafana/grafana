@@ -177,9 +177,23 @@ describe('OutsideRangePlugin', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('should not fail if data is missing', () => {
-    const { container } = renderPlugin();
-    applyScale(undefined, {});
-    expect(container).toBeEmptyDOMElement();
+  describe('edge cases', () => {
+    it('should not fail if data is missing', () => {
+      const { container } = renderPlugin();
+      applyScale(undefined, {});
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('should not fail if data is empty time data is present', () => {
+      const { container } = renderPlugin();
+      applyScale([], {});
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('should not fail if only time data is present', () => {
+      const { container } = renderPlugin();
+      applyScale([[1, 2, 3]], { x: { time: true, min: 2000, max: 3000 } });
+      expect(container).toBeEmptyDOMElement();
+    });
   });
 });
