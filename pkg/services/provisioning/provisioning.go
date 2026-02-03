@@ -325,7 +325,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		features = ps.alertingStore.FeatureToggles
 	}
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), features)
-	routeService := routes.NewService(configStore, ps.alertingStore, ps.alertingStore, ps.Cfg.UnifiedAlerting, features, ps.log, validation.ValidateProvenanceRelaxed)
+	routeService := routes.NewService(configStore, ps.alertingStore, ps.alertingStore, ps.Cfg.UnifiedAlerting, features, ps.log, validation.ValidateProvenanceRelaxed, ps.tracer)
 	receiverSvc := notifier.NewReceiverService(
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,
