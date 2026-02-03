@@ -282,7 +282,10 @@ describe('AlertRuleDrawerForm', () => {
       await user.click(screen.getByRole('button', { name: /Create/i }));
 
       await waitFor(() => {
-        expect(mockError).toHaveBeenCalledWith('There are errors in the form. Please correct them and try again!');
+        expect(mockError).toHaveBeenCalledWith(
+          'Validation error',
+          'Please correct the errors in the form and try again.'
+        );
       });
     });
   });
