@@ -210,8 +210,8 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 				{
 					Results: &resourcepb.ResourceTable{
 						Columns: []*resourcepb.ResourceTableColumnDefinition{
-							{Name: builders.TEAM_BINDING_SUBJECT_NAME},
-							{Name: builders.TEAM_BINDING_TEAM_REF},
+							{Name: builders.TEAM_BINDING_SUBJECT},
+							{Name: builders.TEAM_BINDING_TEAM},
 							{Name: builders.TEAM_BINDING_PERMISSION},
 							{Name: builders.TEAM_BINDING_EXTERNAL},
 						},
@@ -289,8 +289,8 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		httpHandler.ServeHTTP(w, req)
 
 		expectedFields := []string{
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 		}
@@ -298,7 +298,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.Equal(t, iamv0alpha1.TeamBindingResourceInfo.GroupResource().Group, mockClient.LastSearchRequest.Options.Key.Group)
 		require.Equal(t, iamv0alpha1.TeamBindingResourceInfo.GroupResource().Resource, mockClient.LastSearchRequest.Options.Key.Resource)
 		require.Equal(t, "test-namespace", mockClient.LastSearchRequest.Options.Key.Namespace)
-		require.Equal(t, resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_TEAM_REF, mockClient.LastSearchRequest.Options.Fields[0].Key)
+		require.Equal(t, resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_TEAM, mockClient.LastSearchRequest.Options.Fields[0].Key)
 		require.Equal(t, "testteam", mockClient.LastSearchRequest.Options.Fields[0].Values[0])
 	})
 
@@ -362,7 +362,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: builders.TEAM_BINDING_TEAM_REF},
+					{Name: builders.TEAM_BINDING_TEAM},
 					{Name: builders.TEAM_BINDING_PERMISSION},
 					{Name: builders.TEAM_BINDING_EXTERNAL},
 				},
@@ -379,7 +379,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: builders.TEAM_BINDING_SUBJECT_NAME},
+					{Name: builders.TEAM_BINDING_SUBJECT},
 					{Name: builders.TEAM_BINDING_PERMISSION},
 					{Name: builders.TEAM_BINDING_EXTERNAL},
 				},
@@ -396,8 +396,8 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: builders.TEAM_BINDING_SUBJECT_NAME},
-					{Name: builders.TEAM_BINDING_TEAM_REF},
+					{Name: builders.TEAM_BINDING_SUBJECT},
+					{Name: builders.TEAM_BINDING_TEAM},
 					{Name: builders.TEAM_BINDING_EXTERNAL},
 				},
 				Rows: []*resourcepb.ResourceTableRow{},
@@ -413,8 +413,8 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: builders.TEAM_BINDING_SUBJECT_NAME},
-					{Name: builders.TEAM_BINDING_TEAM_REF},
+					{Name: builders.TEAM_BINDING_SUBJECT},
+					{Name: builders.TEAM_BINDING_TEAM},
 					{Name: builders.TEAM_BINDING_PERMISSION},
 				},
 				Rows: []*resourcepb.ResourceTableRow{},
@@ -430,8 +430,8 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: builders.TEAM_BINDING_SUBJECT_NAME},
-					{Name: builders.TEAM_BINDING_TEAM_REF},
+					{Name: builders.TEAM_BINDING_SUBJECT},
+					{Name: builders.TEAM_BINDING_TEAM},
 					{Name: builders.TEAM_BINDING_PERMISSION},
 					{Name: builders.TEAM_BINDING_EXTERNAL},
 				},
@@ -474,8 +474,8 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: builders.TEAM_BINDING_SUBJECT_NAME},
-					{Name: builders.TEAM_BINDING_TEAM_REF},
+					{Name: builders.TEAM_BINDING_SUBJECT},
+					{Name: builders.TEAM_BINDING_TEAM},
 					{Name: builders.TEAM_BINDING_PERMISSION},
 					{Name: builders.TEAM_BINDING_EXTERNAL},
 				},
@@ -502,8 +502,8 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					nil,
-					{Name: builders.TEAM_BINDING_SUBJECT_NAME},
-					{Name: builders.TEAM_BINDING_TEAM_REF},
+					{Name: builders.TEAM_BINDING_SUBJECT},
+					{Name: builders.TEAM_BINDING_TEAM},
 					{Name: builders.TEAM_BINDING_PERMISSION},
 					{Name: builders.TEAM_BINDING_EXTERNAL},
 				},
