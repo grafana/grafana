@@ -515,25 +515,31 @@ export const LogListContextProvider = ({
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
-  const onClickShowFieldWrapper = useCallback((key: string) => {
-    if (!onClickShowField) {
-      return;
-    }
-    onClickShowField(key);
-    reportInteraction('logs_log_list_context_show_field', {
-      key,
-    });
-  }, [onClickShowField]);
+  const onClickShowFieldWrapper = useCallback(
+    (key: string) => {
+      if (!onClickShowField) {
+        return;
+      }
+      onClickShowField(key);
+      reportInteraction('logs_log_list_context_show_field', {
+        key,
+      });
+    },
+    [onClickShowField]
+  );
 
-  const onClickHideFieldWrapper = useCallback((key: string) => {
-    if (!onClickHideField) {
-      return;
-    }
-    onClickHideField(key);
-    reportInteraction('logs_log_list_context_hide_field', {
-      key,
-    });
-  }, [onClickHideField]);
+  const onClickHideFieldWrapper = useCallback(
+    (key: string) => {
+      if (!onClickHideField) {
+        return;
+      }
+      onClickHideField(key);
+      reportInteraction('logs_log_list_context_hide_field', {
+        key,
+      });
+    },
+    [onClickHideField]
+  );
 
   return (
     <LogListContext.Provider
