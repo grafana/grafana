@@ -249,7 +249,7 @@ export function TableNG(props: TableNGProps) {
     width: availableWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0,
+    headerHeight: hasHeader ? TABLE.HEADER_HEIGHT : 0,
     rowHeight,
   });
 
@@ -337,7 +337,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
         summaryRowHeight: footerHeight,
         headerRowClass: styles.headerRow,
-        headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
+        headerRowHeight: noHeader ? 0 : TABLE.HEADER_HEIGHT,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
@@ -352,6 +352,10 @@ export function TableNG(props: TableNGProps) {
       footerHeight,
     ]
   );
+
+  const selectFirstCell = useCallback(() => {
+    gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+  }, [gridRef]);
 
   const buildNestedTableExpanderColumn = useCallback(
     (
@@ -711,6 +715,7 @@ export function TableNG(props: TableNGProps) {
               crossFilterRows={crossFilterRows}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
+              selectFirstCell={selectFirstCell}
             />
           ),
           renderSummaryCell: () => (
@@ -748,6 +753,7 @@ export function TableNG(props: TableNGProps) {
       rows,
       rowHeight,
       rowHeightFn,
+      selectFirstCell,
       setFilter,
       sortedRows,
       showTypeIcons,
@@ -855,16 +861,21 @@ export function TableNG(props: TableNGProps) {
             preventGridDefault();
           }
         }}
-        onCellKeyDown={
-          hasNestedFrames || disableKeyboardEvents
-            ? (_, event) => {
-                if (disableKeyboardEvents || event.isDefaultPrevented()) {
-                  // skip parent grid keyboard navigation if nested grid handled it
-                  event.preventGridDefault();
-                }
-              }
-            : null
-        }
+        onCellKeyDown={({ column, row }, event) => {
+          // if top-left cell, use default browser tabbing and
+          if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+            event.preventGridDefault();
+            gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 }); // select the far right cell of the header
+            return;
+          }
+
+          if (
+            disableKeyboardEvents ||
+            (hasNestedFrames && event.isDefaultPrevented()) // skip parent grid keyboard navigation if nested grid handled it
+          ) {
+            event.preventGridDefault();
+          }
+        }}
         renderers={{ renderRow, renderCell: renderCellRoot }}
       />
 

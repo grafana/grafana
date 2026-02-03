@@ -23,7 +23,7 @@ interface Props {
   operator: SelectableValue<string>;
 }
 
-const ITEM_HEIGHT = 28;
+const ITEM_HEIGHT = 32;
 const MIN_HEIGHT = ITEM_HEIGHT * 4.5; // split an item in the middle to imply there are more items to scroll
 
 export const REGEX_OPERATOR = operatorSelectableValues['Contains'];

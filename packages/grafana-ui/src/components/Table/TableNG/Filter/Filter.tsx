@@ -63,6 +63,15 @@ export const Filter = ({
       ref={ref}
       type="button"
       data-testid={selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton}
+      tabIndex={0}
+      onKeyDown={(ev) => {
+        // can't use tabindex alone to handle this, because column sort would intercept the keypress.
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          setPopoverVisible(true);
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+      }}
       onClick={(ev) => {
         setPopoverVisible(true);
         ev.stopPropagation();
@@ -83,6 +92,7 @@ export const Filter = ({
               setSearchFilter={setSearchFilter}
               operator={operator}
               setOperator={setOperator}
+              buttonElement={ref.current}
             />
           }
           onKeyDown={(event) => {

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -45,6 +45,7 @@ interface Props {
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
   setOperator: (item: SelectableValue<string>) => void;
+  buttonElement: HTMLButtonElement | null;
 }
 
 export const FilterPopup = ({
@@ -58,6 +59,7 @@ export const FilterPopup = ({
   setSearchFilter,
   operator,
   setOperator,
+  buttonElement,
 }: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
@@ -66,8 +68,30 @@ export const FilterPopup = ({
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
+  // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  const onCancel = useCallback(() => onClose(), [onClose]);
+
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onCancel();
+        buttonElement?.focus();
+      }
+    }
+    document.addEventListener('keyup', handleEscape);
+
+    return () => {
+      document.removeEventListener('keyup', handleEscape);
+    };
+  }, [onCancel, buttonElement]);
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
@@ -123,10 +147,12 @@ export const FilterPopup = ({
           <Stack gap={1}>
             <div className={styles.inputContainer}>
               <FilterInput
+                ref={inputRef}
                 placeholder={filterInputPlaceholder}
                 title={filterInputPlaceholder}
                 onChange={setSearchFilter}
                 value={searchFilter}
+                autoFocus
                 suffix={
                   <ButtonSelect
                     className={styles.buttonSelectOverrides}
