@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TODO is there a better place for this client to live?
+// TODO is there a better place for this client to live? If we want to put it
+// in pkg/apis/query/v0alpha1/connection.go, we need to remove the circular
+// dependency by moving DirectRestConfigProvider to its own package.
 //
 // ConnectionClient provides access to datasource connection info via K8s API.
 // Methods that don't take a plugin type argument are deprecated and will be removed.
