@@ -152,12 +152,6 @@ export const LogsTable = ({
     return null;
   }
 
-  console.log('Render', {
-    displayedFields: options.displayedFields,
-    options,
-    panelData,
-  });
-
   return (
     <div className={styles.wrapper}>
       <LogsTableFields
