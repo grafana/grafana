@@ -222,7 +222,17 @@ Dashboards are reloaded when the JSON files change.
 
 #### `protocol`
 
-`http`,`https`,`h2` or `socket`
+`http`, `https`, `h2`, or `socket`
+
+- `http`: Standard HTTP/1.1
+- `https`: HTTPS with HTTP/1.1 (requires `cert_file` and `cert_key`)
+- `h2`: HTTP/2 over TLS (requires `cert_file` and `cert_key`)
+- `socket`: Unix socket
+
+{{< admonition type="note" >}}
+HTTP/3 (QUIC) support can be enabled alongside `https` or `h2` by setting `http3_enabled = true`.
+This requires the `http3Server` feature toggle.
+{{< /admonition >}}
 
 #### `min_tls_version`
 
@@ -346,6 +356,37 @@ For example, given a CDN URL like `https://cdn.myserver.com`, Grafana tries to l
 
 Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
 `0` means there is no timeout for reading the request.
+
+#### `http3_enabled`
+
+{{< admonition type="note" >}}
+This is an experimental feature. Enable the `http3Server` feature toggle to use this feature.
+{{< /admonition >}}
+
+Set to `true` to enable HTTP/3 (QUIC) support. HTTP/3 runs on UDP alongside HTTP/1.1 and HTTP/2 on TCP (dual-stack).
+Browsers automatically upgrade to HTTP/3 via the `Alt-Svc` response header.
+
+HTTP/3 requires:
+- The `protocol` to be set to `https` or `h2`
+- Valid TLS certificates (`cert_file` and `cert_key`)
+- The `http3Server` feature toggle to be enabled
+
+Default is `false`.
+
+#### `http3_port`
+
+The UDP port for HTTP/3. If empty, uses the same value as `http_port`.
+Note that HTTP/3 uses UDP while HTTP/1.1 and HTTP/2 use TCP, so both can listen on the same port number.
+
+#### `http3_max_incoming_streams`
+
+Maximum number of concurrent incoming HTTP/3 streams per connection.
+Default is `100`.
+
+#### `http3_idle_timeout`
+
+The idle timeout for HTTP/3 connections using a duration format (5s/5m/5ms).
+Default is `30s`.
 
 <hr />
 

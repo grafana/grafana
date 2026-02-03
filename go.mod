@@ -670,6 +670,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+require github.com/quic-go/quic-go v0.48.0
+
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-00010101000000-000000000000 // @grafana/alerting-backend
@@ -694,6 +696,12 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go-v2/service/signin v1.0.5 // indirect
+	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
+	github.com/prometheus/otlptranslator v1.0.0 // indirect
+	github.com/quic-go/qpack v0.5.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/kms v0.35.1 // indirect
 	modernc.org/libc v1.67.6 // indirect

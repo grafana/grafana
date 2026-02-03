@@ -7,6 +7,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-03-17,storage,experimental,@grafana/search-and-storage,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 2022-09-26,grpcServer,preview,@grafana/search-and-storage,false,false,false
+2026-02-03,http3Server,experimental,@grafana/grafana-backend-group,false,true,false
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 2023-01-27,logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true

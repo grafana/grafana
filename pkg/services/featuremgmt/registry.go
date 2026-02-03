@@ -77,6 +77,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:            "http3Server",
+			Description:     "Run HTTP/3 (QUIC) server alongside HTTP/1.1 and HTTP/2",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaBackendGroup,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,

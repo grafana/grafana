@@ -25,6 +25,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/youmark/pkcs8"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -121,6 +123,8 @@ type HTTPServer struct {
 	web              *web.Mux
 	context          context.Context
 	httpSrv          *http.Server
+	http3Srv         *http3.Server
+	http3Enabled     bool
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
@@ -439,6 +443,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	hs.applyRoutes()
 
+	// Check if HTTP/3 is enabled via config and feature flag
+	hs.http3Enabled = hs.Cfg.HTTP3Enabled && hs.Features.IsEnabledGlobally(featuremgmt.FlagHttp3Server)
+
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
@@ -466,6 +473,11 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 				hs.log.Debug("HTTP Server certificates reload feature is NOT enabled")
 			}
 		}
+
+		// Configure HTTP/3 server if enabled (requires TLS)
+		if err := hs.configureHTTP3Server(); err != nil {
+			return err
+		}
 	default:
 	}
 
@@ -475,7 +487,8 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
-		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
+		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath,
+		"http3Enabled", hs.http3Enabled)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -485,10 +498,38 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		defer wg.Done()
 
 		<-ctx.Done()
+
+		// Shutdown HTTP/3 server first if enabled
+		if hs.http3Srv != nil {
+			if err := hs.http3Srv.Close(); err != nil {
+				hs.log.Error("Failed to shutdown HTTP/3 server", "error", err)
+			} else {
+				hs.log.Debug("HTTP/3 server was shutdown gracefully")
+			}
+		}
+
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
 	}()
+
+	// Start HTTP/3 server in background if enabled
+	if hs.http3Srv != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			hs.log.Info("HTTP/3 Server Listen", "address", hs.http3Srv.Addr)
+			if err := hs.http3Srv.ListenAndServeTLS(hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+				// http3.Server doesn't have ErrServerClosed, check if context is done
+				select {
+				case <-ctx.Done():
+					hs.log.Debug("HTTP/3 server was shutdown")
+				default:
+					hs.log.Error("HTTP/3 server error", "error", err)
+				}
+			}
+		}()
+	}
 
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
@@ -663,6 +704,9 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
+
+	// Add Alt-Svc header for HTTP/3 support
+	m.Use(middleware.AltSvcHeader(hs.Cfg, hs.Features))
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
@@ -973,6 +1017,34 @@ func (hs *HTTPServer) configureTLS() error {
 		hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 	}
 
+	return nil
+}
+
+func (hs *HTTPServer) configureHTTP3Server() error {
+	if !hs.http3Enabled {
+		return nil
+	}
+
+	// Clone TLS config and ensure TLS 1.3 minimum (required for QUIC)
+	tlsConfig := hs.httpSrv.TLSConfig.Clone()
+	tlsConfig.MinVersion = tls.VersionTLS13
+	tlsConfig.NextProtos = []string{"h3"}
+
+	// Configure the HTTP/3 server to listen on the same address as HTTP/2
+	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
+	addr := net.JoinHostPort(host, hs.Cfg.HTTP3Port)
+
+	hs.http3Srv = &http3.Server{
+		Addr:        addr,
+		Handler:     hs.web,
+		TLSConfig:   tlsConfig,
+		IdleTimeout: hs.Cfg.HTTP3IdleTimeout,
+		QUICConfig: &quic.Config{
+			MaxIncomingStreams: hs.Cfg.HTTP3MaxIncomingStreams,
+		},
+	}
+
+	hs.log.Info("HTTP/3 server configured", "address", addr)
 	return nil
 }
 
