@@ -16,7 +16,7 @@ import { useRepositoryList } from './hooks/useRepositoryList';
 
 export default function HomePage() {
   const [items, isLoadingRepos] = useRepositoryList({ watch: true });
-  const [connections, isLoadingConnections] = useConnectionList({ watch: true });
+  const [connections, isLoadingConnections, connectionsError] = useConnectionList({ watch: true });
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -74,7 +74,7 @@ export default function HomePage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'connections':
-        return <ConnectionsTabContent />;
+        return <ConnectionsTabContent items={connections ?? []} error={connectionsError} />;
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
       case 'repositories':
