@@ -368,10 +368,17 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     [model]
   );
 
-  // Determine if SQL expressions should be disabled (for frontend-only datasources)
-  const disableSqlExpression = useMemo(() => {
-    return !hasBackendDatasource({ datasourceUid: datasourceState?.uid, queries });
-  }, [datasourceState?.uid, queries]);
+  // Determine which expressions should be disabled (for frontend-only datasources)
+  const disabledExpressions = useMemo(() => {
+    const hasBackendDs = hasBackendDatasource({ datasourceUid: datasourceState?.uid ?? dsSettings?.uid, queries });
+    if (!hasBackendDs) {
+      return {
+        [ExpressionQueryType.sql]:
+          'SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.',
+      };
+    }
+    return {};
+  }, [datasourceState?.uid, dsSettings?.uid, queries]);
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -459,7 +466,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <ExpressionTypeDropdown handleOnSelect={handleAddExpression} disableSqlExpression={disableSqlExpression}>
+          <ExpressionTypeDropdown handleOnSelect={handleAddExpression} disabledExpressions={disabledExpressions}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>

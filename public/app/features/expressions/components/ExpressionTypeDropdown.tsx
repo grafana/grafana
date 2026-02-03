@@ -17,17 +17,16 @@ const EXPRESSION_ICON_MAP = {
 interface ExpressionTypeDropdownProps {
   children: ReactElement<Record<string, unknown>>;
   handleOnSelect: (value: ExpressionQueryType) => void;
-  disableSqlExpression?: boolean;
+  disabledExpressions?: Partial<Record<ExpressionQueryType, string>>;
 }
 
 interface ExpressionMenuItemProps {
   item: SelectableValue<ExpressionQueryType>;
   onSelect: (value: ExpressionQueryType) => void;
-  disabled?: boolean;
-  disabledReason?: string;
+  disabled?: string;
 }
 
-const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disabled, disabledReason }) => {
+const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disabled }) => {
   const { value, label, description } = item;
   const styles = useStyles2(getStyles);
 
@@ -37,12 +36,12 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
     }
   }, [value, onSelect, disabled]);
 
-  const tooltipContent = disabled ? disabledReason : description;
+  const tooltipContent = disabled || description;
 
   return (
     <Menu.Item
       component={() => (
-        <div className={styles.expressionTypeItem} role="menuitem" aria-disabled={disabled}>
+        <div className={styles.expressionTypeItem} role="menuitem" aria-disabled={!!disabled}>
           <div
             className={styles.expressionTypeItemContent}
             data-testid={`expression-type-${value}`}
@@ -52,7 +51,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
             {label}
             {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>
-          <Tooltip placement="right" content={tooltipContent || ''}>
+          <Tooltip placement="right" content={tooltipContent!}>
             <Icon className={styles.infoIcon} name="info-circle" />
           </Tooltip>
         </div>
@@ -60,7 +59,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
       key={value}
       label=""
       onClick={handleClick}
-      disabled={disabled}
+      disabled={!!disabled}
     />
   );
 });
@@ -68,26 +67,17 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
 ExpressionMenuItem.displayName = 'ExpressionMenuItem';
 
 export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(
-  ({ handleOnSelect, children, disableSqlExpression = false }) => {
+  ({ handleOnSelect, children, disabledExpressions = {} }) => {
     const menuItems = useMemo(
       () =>
         expressionTypes.map((item) => {
-          const isDisabled = item.value === ExpressionQueryType.sql && disableSqlExpression;
-          const disabledReason = isDisabled
-            ? 'SQL expressions require a backend datasource. The current datasource only supports frontend queries.'
-            : undefined;
+          const disabledReason = item.value ? disabledExpressions[item.value] : undefined;
 
           return (
-            <ExpressionMenuItem
-              key={item.value}
-              item={item}
-              onSelect={handleOnSelect}
-              disabled={isDisabled}
-              disabledReason={disabledReason}
-            />
+            <ExpressionMenuItem key={item.value} item={item} onSelect={handleOnSelect} disabled={disabledReason} />
           );
         }),
-      [handleOnSelect, disableSqlExpression]
+      [handleOnSelect, disabledExpressions]
     );
 
     const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
