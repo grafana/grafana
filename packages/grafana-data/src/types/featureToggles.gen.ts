@@ -59,6 +59,11 @@ export interface FeatureToggles {
   */
   grpcServer?: boolean;
   /**
+  * Run HTTP/3 (QUIC) server alongside HTTP/1.1 and HTTP/2
+  * @default false
+  */
+  http3Server?: boolean;
+  /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
   */

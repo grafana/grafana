@@ -31,6 +31,10 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
+	// FlagHttp3Server
+	// Run HTTP/3 (QUIC) server alongside HTTP/1.1 and HTTP/2
+	FlagHttp3Server = "http3Server"
+
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
