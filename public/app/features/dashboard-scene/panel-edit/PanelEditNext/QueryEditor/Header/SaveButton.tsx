@@ -65,19 +65,15 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
     return null;
   }
 
-  return (
-    <>
-      {renderSavedQueryButtons(
-        {
-          ...selectedQuery,
-          datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
-        },
-        CoreApp.PanelEditor,
-        onUpdateSuccess,
-        onSelectQuery,
-        undefined,
-        parentRef
-      )}
-    </>
+  return renderSavedQueryButtons(
+    {
+      ...selectedQuery,
+      datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
+    },
+    CoreApp.PanelEditor,
+    onUpdateSuccess,
+    onSelectQuery,
+    undefined,
+    parentRef
   );
 }

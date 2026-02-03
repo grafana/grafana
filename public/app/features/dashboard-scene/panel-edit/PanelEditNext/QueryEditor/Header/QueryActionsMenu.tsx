@@ -139,7 +139,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
             <>
               <Menu.Divider />
               <Menu.Item
-                label={t('query-editor.action.remove', 'Remove query')}
+                label={t('query-editor.action.remove-query', 'Remove query')}
                 icon="trash-alt"
                 onClick={() => deleteQuery(selectedQuery.refId)}
                 destructive
@@ -189,6 +189,7 @@ function useAdaptiveTelemetryComponents(query: DataQuery | null) {
       pluginId: /grafana-adaptive.*/,
     });
   } catch (error) {
+    console.error('Failed to render adaptive telemetry components:', error);
     return null;
   }
 }

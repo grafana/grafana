@@ -74,7 +74,7 @@ export function WarningBadges() {
           return acc;
         }
 
-        const notices = filter(series.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
+        const notices = filter(series.meta.notices, (item: QueryResultMetaNotice) => item.severity === type);
         return acc.concat(notices);
       }, []);
 

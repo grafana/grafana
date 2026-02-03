@@ -12719,7 +12719,8 @@
       "hide-help": "Hide data source help",
       "inspector": "Query inspector",
       "more-actions": "More actions",
-      "remove": "Remove transformation",
+      "remove-query": "Remove query",
+      "remove-transformation": "Remove transformation",
       "show": "Show response",
       "show-help": "Show data source help"
     },
