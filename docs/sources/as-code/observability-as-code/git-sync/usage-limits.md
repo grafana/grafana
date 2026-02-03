@@ -50,7 +50,7 @@ The following Git Sync per-tier limits apply:
 | Tier                       | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
 | -------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
 | Amount of repositories      | 1                | 10                | 10              | 10                     |
-| Amount of synced resources | 20               | Grafana limit     | No limit        | No limit               |
+| Amount of synced resources per repository | 20               | Grafana limit     | No limit        | No limit               |
 
 ## Authentication
 
