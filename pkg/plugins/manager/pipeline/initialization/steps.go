@@ -3,6 +3,7 @@ package initialization
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
@@ -81,6 +82,7 @@ func newBackendProcessStarter(processManager process.Manager) *BackendClientStar
 
 // Start will start the backend plugin process.
 func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	before := time.Now()
 	if err := b.processManager.Start(ctx, p); err != nil {
 		b.log.Error("Could not start plugin backend", "pluginId", p.ID, "error", err)
 		return nil, (&plugins.Error{
@@ -88,6 +90,7 @@ func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*p
 			ErrorCode: plugins.ErrorCodeFailedBackendStart,
 		}).WithMessage(err.Error())
 	}
+	b.log.Debug("Started plugin backend", "pluginId", p.ID, "startupDuration", time.Since(before))
 	return p, nil
 }
 
