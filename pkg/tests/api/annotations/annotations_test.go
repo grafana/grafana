@@ -116,13 +116,18 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("should include alertId field even when zero for manual annotations", func(t *testing.T) {
-			// Create a manual annotation (no alertId)
+			// Create a manual annotation (no alertId) within a specific time range
+			annotationTime := int64(1234567890000) // milliseconds
 			createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 				"text": "Manual annotation without alert",
-				"time": 1234567890000,
+				"time": annotationTime,
 			})
 
-			url := fmt.Sprintf("http://admin:admin@%s/api/annotations", grafanaListedAddr)
+			// Query /api/annotations endpoint with a time range containing the manual annotation
+			// This reproduces the exact scenario from the bug report
+			from := annotationTime - 86400000 // 1 day before
+			to := annotationTime + 86400000   // 1 day after
+			url := fmt.Sprintf("http://admin:admin@%s/api/annotations?from=%d&to=%d", grafanaListedAddr, from, to)
 			resp, err := http.Get(url) // nolint:gosec
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -135,24 +140,26 @@ func TestIntegrationAnnotations(t *testing.T) {
 			var annotations []map[string]interface{}
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
-			require.NotEmpty(t, annotations, "should have at least one annotation")
+			require.NotEmpty(t, annotations, "should have at least one annotation in the time range")
 
-			// Verify that all annotations have the alertId field
+			// Access annotation['alertId'] field in response - this is what breaks in the bug
 			foundManualAnnotation := false
 			for _, annotation := range annotations {
-				_, exists := annotation["alertId"]
-				assert.True(t, exists, "alertId field must be present in API response even when zero (manual annotation)")
+				// Verify that alertId field exists (this is the key test - it should not be missing)
+				alertIDValue, exists := annotation["alertId"]
+				assert.True(t, exists, "alertId field must be present in API response even when zero (manual annotation). This prevents KeyError when accessing annotation['alertId']")
 
 				// Find the manual annotation we just created
 				if textVal, ok := annotation["text"].(string); ok && textVal == "Manual annotation without alert" {
 					foundManualAnnotation = true
-					alertID, ok := annotation["alertId"].(float64) // JSON numbers are float64
+					// Verify the value is 0 (not missing)
+					alertID, ok := alertIDValue.(float64) // JSON numbers are float64
 					assert.True(t, ok, "alertId should be a number")
-					assert.Equal(t, float64(0), alertID, "Manual annotation should have alertId = 0")
+					assert.Equal(t, float64(0), alertID, "Manual annotation should have alertId = 0, not be omitted from response")
 				}
 			}
 
-			assert.True(t, foundManualAnnotation, "Should find the manual annotation we created")
+			assert.True(t, foundManualAnnotation, "Should find the manual annotation we created in the time range")
 		})
 	})
 
