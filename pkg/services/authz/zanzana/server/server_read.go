@@ -56,7 +56,7 @@ func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 		}
 	}
 
-	res, err := s.openfga.Read(ctx, readReq)
+	res, err := s.openFGAClient.Read(ctx, readReq)
 	if err != nil {
 		s.logger.Error("failed to perform openfga Read request", "error", errors.Unwrap(err))
 		return nil, err

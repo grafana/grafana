@@ -96,6 +96,30 @@ describe('OpenQueryLibraryExposedComponent', () => {
     });
   });
 
+  it('calls openDrawer to load a query with for a given context', async () => {
+    const mockDatasourceFilters = ['loki'];
+    const mockOnSelectQuery = jest.fn();
+
+    render(
+      <OpenQueryLibraryExposedComponent
+        context="test"
+        datasourceFilters={mockDatasourceFilters}
+        onSelectQuery={mockOnSelectQuery}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(mockOpenDrawer).toHaveBeenCalledWith({
+      options: {
+        context: 'test',
+      },
+      datasourceFilters: mockDatasourceFilters,
+      onSelectQuery: mockOnSelectQuery,
+      query: undefined,
+    });
+  });
+
   it('opens the drawer when no arguments are provided', async () => {
     render(<OpenQueryLibraryExposedComponent />);
 

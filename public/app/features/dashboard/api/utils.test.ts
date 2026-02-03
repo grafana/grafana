@@ -74,7 +74,7 @@ describe('resource type guards handle unknown inputs safely', () => {
   describe('isDashboardResource', () => {
     it.each([
       ['valid k8s resource', v1Resource, true],
-      ['wrong kind', { kind: 'Dashboard', spec: v1Spec }, false],
+      ['valid k8s resource with kind Dashboard', { kind: 'Dashboard', spec: v1Spec }, true],
       ['missing spec', { kind: 'DashboardWithAccessInfo' }, false],
       ['plain dashboard', v1Spec, false],
       ['null', null, false],
