@@ -92,6 +92,15 @@ export const versionedComponents = {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
   },
   TimePicker: {
+    moveBackwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-backward-button',
+    },
+    moveForwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-forward-button',
+    },
+    zoomOut: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-zoom-out-button',
+    },
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
     },
