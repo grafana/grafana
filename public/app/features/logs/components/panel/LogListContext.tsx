@@ -59,6 +59,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setTimestampResolution: (format: LogLineTimestampResolution) => void;
+  setUnwrappedColumns: (unwrappedColumns: boolean) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   timestampResolution: LogLineTimestampResolution;
   isAssistantAvailable: boolean;
@@ -89,6 +90,7 @@ export const LogListContext = createContext<LogListContextData>({
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setTimestampResolution: () => {},
+  setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
@@ -173,6 +175,7 @@ export interface Props {
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: LogLineTimestampResolution;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -218,6 +221,7 @@ export const LogListContextProvider = ({
   timestampResolution = logOptionsStorageKey
     ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
     : 'ms',
+  unwrappedColumns: unwrappedColumnsProp,
   wrapLogMessage: wrapLogMessageProp,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -236,6 +240,7 @@ export const LogListContextProvider = ({
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
+  const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
 
   useEffect(() => {
     if (noInteractions) {
@@ -466,6 +471,16 @@ export const LogListContextProvider = ({
     [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
+  const setUnwrappedColumns = useCallback(
+    (unwrappedColumns: boolean) => {
+      setUnwrappedColumnsState(unwrappedColumns);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.unwrappedColumns`, unwrappedColumns);
+      }
+    },
+    [logOptionsStorageKey]
+  );
+
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
       setWrapLogMessageState(wrapLogMessage);
@@ -564,12 +579,14 @@ export const LogListContextProvider = ({
         setSortOrder,
         setSyntaxHighlighting,
         setTimestampResolution,
+        setUnwrappedColumns,
         setWrapLogMessage,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
         timestampResolution: logListState.timestampResolution,
+        unwrappedColumns,
         wrapLogMessage,
         isAssistantAvailable,
         openAssistantByLog,

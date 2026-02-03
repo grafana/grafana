@@ -95,6 +95,7 @@ export interface Props {
   timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -113,6 +114,7 @@ type LogListComponentProps = Omit<
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'unwrappedColumns'
   | 'wrapLogMessage'
 >;
 
@@ -168,6 +170,7 @@ export const LogList = ({
   timeRange,
   timestampResolution,
   timeZone,
+  unwrappedColumns = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.unwrappedColumns`, true) : true,
   wrapLogMessage,
 }: Props) => {
   return (
@@ -210,6 +213,7 @@ export const LogList = ({
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
       timestampResolution={timestampResolution}
+      unwrappedColumns={unwrappedColumns}
       wrapLogMessage={wrapLogMessage}
     >
       <LogDetailsContextProvider
