@@ -976,6 +976,10 @@ export type DashboardTimeSettingsSpec = {
   weekStart?: 'saturday' | 'monday' | 'sunday';
 };
 export type DashboardVariableOption = {
+  /** Additional properties for multi-props variables */
+  properties?: {
+    [key: string]: string;
+  };
   /** Whether the option is selected or not */
   selected?: boolean;
   /** Text to be displayed for the option */

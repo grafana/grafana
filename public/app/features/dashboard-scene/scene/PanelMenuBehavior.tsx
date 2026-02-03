@@ -26,7 +26,8 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
-import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { PluginExtensionRegistries } from 'app/features/plugins/extensions/registry/types';
 import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { dispatch } from 'app/store/store';
@@ -47,12 +48,12 @@ import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 let getPluginExtensions: GetPluginExtensions;
 
-function setupGetPluginExtensions() {
+function setupGetPluginExtensions(registries: PluginExtensionRegistries) {
   if (getPluginExtensions) {
     return getPluginExtensions;
   }
 
-  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
+  getPluginExtensions = createPluginExtensionsGetter(registries);
 
   return getPluginExtensions;
 }
@@ -300,7 +301,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    setupGetPluginExtensions();
+    const registries = await getPluginExtensionRegistries();
+    setupGetPluginExtensions(registries);
 
     const { extensions } = getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
