@@ -24,6 +24,8 @@ import { ImportFormValues } from '../ImportToGMA';
 import { getNotificationsSourceOptions } from '../Wizard/constants';
 import { DryRunValidationResult } from '../types';
 
+import { hasValidSourceSelection, isStep1Valid } from './utils';
+
 interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
@@ -67,16 +69,9 @@ export function Step1Content({
 
   // Trigger dry-run when source selection changes and all required fields are filled
   const canRunDryRun = useMemo(() => {
-    if (!policyTreeName) {
-      return false;
-    }
-    if (notificationsSource === 'yaml' && !notificationsYamlFile) {
-      return false;
-    }
-    if (notificationsSource === 'datasource' && !notificationsDatasourceUID) {
-      return false;
-    }
-    return true;
+    return (
+      policyTreeName && hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID)
+    );
   }, [policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
 
   // Auto-trigger dry-run when conditions are met
@@ -95,22 +90,15 @@ export function Step1Content({
 
   const sourceOptions = getNotificationsSourceOptions();
 
-  // Validation logic - same as before
+  // Validation logic
   const isValid = useMemo(() => {
-    // Can't proceed without permission
-    if (!canImport) {
-      return false;
-    }
-    if (!policyTreeName) {
-      return false;
-    }
-    if (notificationsSource === 'yaml' && !notificationsYamlFile) {
-      return false;
-    }
-    if (notificationsSource === 'datasource' && !notificationsDatasourceUID) {
-      return false;
-    }
-    return true;
+    return isStep1Valid({
+      canImport,
+      policyTreeName,
+      notificationsSource,
+      notificationsYamlFile,
+      notificationsDatasourceUID,
+    });
   }, [canImport, policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
 
   // Report validation changes to parent
@@ -332,19 +320,13 @@ export function useStep1Validation(canImport: boolean): boolean {
   ]);
 
   return useMemo(() => {
-    if (!canImport) {
-      return false;
-    }
-    if (!policyTreeName) {
-      return false;
-    }
-    if (notificationsSource === 'yaml' && !notificationsYamlFile) {
-      return false;
-    }
-    if (notificationsSource === 'datasource' && !notificationsDatasourceUID) {
-      return false;
-    }
-    return true;
+    return isStep1Valid({
+      canImport,
+      policyTreeName,
+      notificationsSource,
+      notificationsYamlFile,
+      notificationsDatasourceUID,
+    });
   }, [canImport, policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
 }
 

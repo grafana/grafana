@@ -33,6 +33,8 @@ import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRule
 import { ImportFormValues } from '../ImportToGMA';
 import { getPolicyOptions, getRulesSourceOptions } from '../Wizard/constants';
 
+import { isStep2Valid } from './utils';
+
 interface Step2ContentProps {
   step1Completed: boolean;
   step1Skipped: boolean;
@@ -113,26 +115,18 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
   const rulesSourceOptions = getRulesSourceOptions(isImportYamlEnabled);
   const policyOptions = getPolicyOptions({ step1Completed, policyTreeName });
 
-  // Validation logic - same as before
+  // Validation logic
   const isValid = useMemo(() => {
-    // Can't proceed without permission
-    if (!canImport) {
-      return false;
-    }
-    if (rulesSource === 'yaml' && !rulesYamlFile) {
-      return false;
-    }
-    if (rulesSource === 'datasource' && !rulesDatasourceUID) {
-      return false;
-    }
-    if (notificationPolicyOption === 'manual' && (!manualLabelName || !manualLabelValue)) {
-      return false;
-    }
-    // Target data source for recording rules is required
-    if (!targetDatasourceUID) {
-      return false;
-    }
-    return true;
+    return isStep2Valid({
+      canImport,
+      rulesSource,
+      rulesYamlFile,
+      rulesDatasourceUID,
+      notificationPolicyOption,
+      manualLabelName,
+      manualLabelValue,
+      targetDatasourceUID,
+    });
   }, [
     canImport,
     rulesSource,
@@ -511,22 +505,16 @@ export function useStep2Validation(canImport: boolean): boolean {
   ]);
 
   return useMemo(() => {
-    if (!canImport) {
-      return false;
-    }
-    if (rulesSource === 'yaml' && !rulesYamlFile) {
-      return false;
-    }
-    if (rulesSource === 'datasource' && !rulesDatasourceUID) {
-      return false;
-    }
-    if (notificationPolicyOption === 'manual' && (!manualLabelName || !manualLabelValue)) {
-      return false;
-    }
-    if (!targetDatasourceUID) {
-      return false;
-    }
-    return true;
+    return isStep2Valid({
+      canImport,
+      rulesSource,
+      rulesYamlFile,
+      rulesDatasourceUID,
+      notificationPolicyOption,
+      manualLabelName,
+      manualLabelValue,
+      targetDatasourceUID,
+    });
   }, [
     canImport,
     rulesSource,
