@@ -5,6 +5,7 @@ import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { useBranchOptions } from '../hooks/useBranchOptions';
+import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { RepositoryField } from './components/RepositoryField';
@@ -23,13 +24,12 @@ export const ConnectStep = memo(function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = ''] = watch([
-    'repository.url',
-    'repository.token',
-    'repository.tokenUser',
-  ]);
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType = '', repositoryName = ''] =
+    watch(['repository.url', 'repository.token', 'repository.tokenUser', 'githubAuthType', 'repositoryName']);
   const isGitBased = isGitProvider(type);
+  const isGithubType = type === 'github' || githubAuthType === 'github-app';
 
+  // this hook fetches branches directly from the git provider
   const {
     options: branchOptions,
     loading: branchesLoading,
@@ -41,6 +41,14 @@ export const ConnectStep = memo(function ConnectStep() {
     repositoryTokenUser,
   });
 
+  // this hook returns branches from internal endpoint (only available for Github PAT and Github App)
+  const { options: repositoryRefsOptions, loading: isRefsLoading } = useGetRepositoryRefs({
+    repositoryType: type,
+    repositoryName: isGithubType ? repositoryName : undefined,
+  });
+
+  const branches = isGithubType ? repositoryRefsOptions : branchOptions;
+  const isBranchesLoading = isGithubType ? isRefsLoading : branchesLoading;
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
 
@@ -72,8 +80,8 @@ export const ConnectStep = memo(function ConnectStep() {
                   invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.branchConfig.placeholder}
-                  options={branchOptions}
-                  loading={branchesLoading}
+                  options={branches || []}
+                  loading={isBranchesLoading}
                   createCustomValue
                   isClearable
                   {...field}
