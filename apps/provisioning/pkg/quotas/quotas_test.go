@@ -84,7 +84,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			condition := tt.limits.EvaluateCondition(tt.stats)
 
-			assert.Equal(t, provisioning.ConditionTypeQuota, condition.Type)
+			assert.Equal(t, provisioning.ConditionTypeResourceQuota, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)
 			assert.Equal(t, tt.expectedReason, condition.Reason)
 			assert.Equal(t, tt.expectedMsg, condition.Message)

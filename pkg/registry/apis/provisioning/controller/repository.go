@@ -367,9 +367,9 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 // isQuotaExceeded checks if the given conditions have a RepositoryQuotaExceeded one.
 func isQuotaExceeded(conditions []v1.Condition) bool {
 	for _, condition := range conditions {
-		if condition.Type == provisioning.ConditionTypeQuota {
+		if condition.Type == provisioning.ConditionTypeNamespaceQuota {
 			return condition.Status == v1.ConditionFalse &&
-				condition.Reason == provisioning.ReasonRepositoryQuotaExceeded
+				condition.Reason == provisioning.ReasonResourceQuotaExceeded
 		}
 	}
 	return false
@@ -623,6 +623,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
+	}
+
 	// Repository needs to be blocked.
 	if !isCurrentlyBlocked && isOverQuota {
 		// Rule 1: Not blocked + over quota -> Block and exit
@@ -631,11 +637,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"max_repositories", newQuota.MaxRepositories,
 		)
 
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-		); conditionPatchOps != nil {
-			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
+		// Mark the repository as unhealthy
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":   "replace",
+			"path": "/status/health",
+			"value": provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{quotaCondition.Message},
+			},
+		})
 
 		// Apply patch and exit
 		if len(patchOperations) > 0 {

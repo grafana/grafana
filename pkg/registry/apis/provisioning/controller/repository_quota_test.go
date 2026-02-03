@@ -85,7 +85,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			maxRepos:           5,
 			repoCount:          5,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedReason:     provisioning.ReasonResourceQuotaReached,
 			expectedMessageFmt: "Repository quota reached: 5/5 repositories",
 			expectError:        false,
 		},
@@ -95,7 +95,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			maxRepos:           5,
 			repoCount:          7,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedReason:     provisioning.ReasonResourceQuotaExceeded,
 			expectedMessageFmt: "Repository quota exceeded: 7/5 repositories",
 			expectError:        false,
 		},
@@ -105,7 +105,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			maxRepos:           5,
 			repoCount:          6,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedReason:     provisioning.ReasonResourceQuotaExceeded,
 			expectedMessageFmt: "Repository quota exceeded: 6/5 repositories",
 			expectError:        false,
 		},
@@ -125,7 +125,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			maxRepos:           1,
 			repoCount:          1,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedReason:     provisioning.ReasonResourceQuotaReached,
 			expectedMessageFmt: "Repository quota reached: 1/1 repositories",
 			expectError:        false,
 		},
@@ -165,7 +165,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, provisioning.ConditionTypeQuota, condition.Type)
+				assert.Equal(t, provisioning.ConditionTypeNamespaceQuota, condition.Type)
 				assert.Equal(t, tt.expectedStatus, condition.Status)
 				assert.Equal(t, tt.expectedReason, condition.Reason)
 				assert.Equal(t, tt.expectedMessageFmt, condition.Message)
@@ -202,7 +202,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			activeRepos:        5,
 			deletingRepos:      2,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedReason:     provisioning.ReasonResourceQuotaReached,
 			expectedMessageFmt: "Repository quota reached: 5/5 repositories",
 		},
 		{
@@ -211,7 +211,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			activeRepos:        7,
 			deletingRepos:      3,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaExceeded,
+			expectedReason:     provisioning.ReasonResourceQuotaExceeded,
 			expectedMessageFmt: "Repository quota exceeded: 7/5 repositories",
 		},
 		{
@@ -229,7 +229,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			activeRepos:        3,
 			deletingRepos:      2,
 			expectedStatus:     metav1.ConditionFalse,
-			expectedReason:     provisioning.ReasonRepositoryQuotaReached,
+			expectedReason:     provisioning.ReasonResourceQuotaReached,
 			expectedMessageFmt: "Repository quota reached: 3/3 repositories",
 		},
 	}
@@ -276,7 +276,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 
 			// Assert
 			require.NoError(t, err)
-			assert.Equal(t, provisioning.ConditionTypeQuota, condition.Type)
+			assert.Equal(t, provisioning.ConditionTypeNamespaceQuota, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status,
 				"Expected status: %v, got: %v (active: %d, deleting: %d, max: %d)",
 				tt.expectedStatus, condition.Status, tt.activeRepos, tt.deletingRepos, tt.maxRepos)

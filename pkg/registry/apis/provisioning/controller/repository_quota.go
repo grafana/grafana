@@ -37,7 +37,7 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	// If maxRepos is 0, it means unlimited quota
 	if maxRepos == 0 {
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonQuotaUnlimited,
 			Message: "No quota limits configured",
@@ -61,21 +61,21 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	switch {
 	case activeCount == int(maxRepos):
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonRepositoryQuotaReached,
+			Reason:  provisioning.ReasonResourceQuotaReached,
 			Message: fmt.Sprintf("Repository quota reached: %d/%d repositories", activeCount, maxRepos),
 		}, nil
 	case activeCount > int(maxRepos):
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonRepositoryQuotaExceeded,
+			Reason:  provisioning.ReasonResourceQuotaExceeded,
 			Message: fmt.Sprintf("Repository quota exceeded: %d/%d repositories", activeCount, maxRepos),
 		}, nil
 	default:
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
 			Message: fmt.Sprintf("Within quota: %d/%d repositories", activeCount, maxRepos),

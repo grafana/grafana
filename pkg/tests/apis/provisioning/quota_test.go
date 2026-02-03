@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				if !ok {
 					continue
 				}
-				if cond["type"] == provisioning.ConditionTypeQuota {
+				if cond["type"] == provisioning.ConditionTypeResourceQuota {
 					quotaCondition = cond
 					break
 				}
@@ -111,7 +111,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				if !ok {
 					continue
 				}
-				if cond["type"] == provisioning.ConditionTypeQuota {
+				if cond["type"] == provisioning.ConditionTypeResourceQuota {
 					quotaCondition = cond
 					break
 				}
@@ -169,7 +169,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				if !ok {
 					continue
 				}
-				if cond["type"] == provisioning.ConditionTypeQuota {
+				if cond["type"] == provisioning.ConditionTypeResourceQuota {
 					quotaCondition = cond
 					break
 				}
