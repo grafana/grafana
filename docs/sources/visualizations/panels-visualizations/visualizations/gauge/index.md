@@ -98,8 +98,6 @@ In this example, that means only the last row of data is displayed in the gauges
 
 If you want to show one gauge per table cell, you can change the **Show** setting from **Calculate** to **All values**, and each gauge is labeled by concatenating the text column with each value's column name.
 
-If you want to visualize the list of values as a time series alongside your calculated gauge value, toggle on the **Show sparkline** switch.
-
 ![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example7.png)
 
 ### Example - Defined min and max
@@ -189,9 +187,10 @@ If you enter a neutral value of `0`, the visualization looks like this and is ea
 
 #### Show sparkline
 
-Toggle on the **Show sparkline** switch to render a sparkline containing the series data for the gauge:
+If you want to visualize the list of values as a time series along with the calculated gauge value, toggle on the **Show sparkline** switch.
+Each gauge displays the sparkline inside the circle or arc:
 
-
+![Gauge with a sparkline](screenshot-gauge-w-sparkline-v12.4.png)
 
 #### Show thresholds {#show-threshold-markers}
 
