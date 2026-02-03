@@ -90,8 +90,8 @@ import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
+import { createDefaultGridLayoutManager } from './layouts-shared/defaultGridUtils';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
@@ -208,7 +208,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
+      body: state.body ?? createDefaultGridLayoutManager(),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
