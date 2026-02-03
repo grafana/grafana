@@ -56,7 +56,6 @@ export interface DashboardVersionError extends Error {
     // Currently known versions are: 'v2beta1' | 'v1beta1' | 'v0alpha1'
     storedVersion: string;
     message: string;
-    // Source dashboard from failed conversion (typed as unknown since schema generates `any`)
     source?: unknown;
     access?: DashboardWithAccessInfo<unknown>['access'];
     kind?: string;

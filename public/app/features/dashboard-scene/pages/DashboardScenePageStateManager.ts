@@ -19,8 +19,6 @@ import {
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
-import { enrichV1DashboardResponse } from 'app/features/dashboard/api/v1';
-import { enrichV2DashboardResponse } from 'app/features/dashboard/api/v2';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -855,7 +853,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   }
 
   async enrichResponse(dashboard: DashboardWithAccessInfo<DashboardDataDTO>): Promise<DashboardDTO> {
-    return enrichV1DashboardResponse(dashboard);
+    return this.enrichDashboardResponse(dashboard);
   }
 }
 
@@ -1061,7 +1059,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   async enrichResponse(
     dashboard: DashboardWithAccessInfo<DashboardV2Spec>
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
-    return enrichV2DashboardResponse(dashboard);
+    return this.enrichDashboardResponse(dashboard);
   }
 }
 
