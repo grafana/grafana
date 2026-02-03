@@ -27,6 +27,7 @@ import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -36,8 +37,6 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { DecoratedRevisionModel } from '../settings/VersionsEditView';
-import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -54,7 +53,13 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
-jest.mock('../settings/version-history/HistorySrv');
+const mockRestoreDashboardVersion = jest.fn();
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    restoreDashboardVersion: mockRestoreDashboardVersion,
+  }),
+}));
 jest.mock('../serialization/transformSaveModelToScene');
 jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
@@ -896,7 +901,7 @@ describe('DashboardScene', () => {
         version: 4,
       });
 
-      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
       return scene.onRestore(getVersionMock()).then((res) => {
@@ -915,7 +920,7 @@ describe('DashboardScene', () => {
         uid: 'dash-1',
         version: 4,
       });
-      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
       const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
@@ -941,9 +946,8 @@ describe('DashboardScene', () => {
       reloadSpy.mockRestore();
     });
 
-    it('should return early if historySrv does not return a valid version number', () => {
-      jest
-        .mocked(historySrv.restoreDashboard)
+    it('should return early if API does not return a valid version number', () => {
+      mockRestoreDashboardVersion
         .mockResolvedValueOnce({ version: null })
         .mockResolvedValueOnce({ version: undefined })
         .mockResolvedValueOnce({ version: Infinity })
@@ -1863,9 +1867,8 @@ function getVersionMock(): DecoratedRevisionModel {
     id: 2,
     checked: false,
     uid: 'uid',
-    parentVersion: 1,
     version: 2,
-    created: new Date(),
+    created: new Date().toISOString(),
     createdBy: 'admin',
     message: '',
     data: dash,
