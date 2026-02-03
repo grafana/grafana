@@ -12,9 +12,10 @@ import (
 func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) {
 	tracer := otel.Tracer("index-server-distributor")
 	svc := resource.ProvideSearchDistributorService(tracer, ms.searchServerRing, ms.searchServerRingClientPool)
-	if err := svc.RegisterGRPCServices(ms.grpcServer); err != nil {
+	if err := svc.RegisterGRPCServices(ms.grpcService.GetServer()); err != nil {
 		return nil, err
 	}
+	ms.grpcService.StartListening()
 	// The service needs a running function to stay alive until shutdown
 	running := func(ctx context.Context) error {
 		<-ctx.Done()

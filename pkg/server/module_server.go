@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
-	"google.golang.org/grpc"
 
 	"github.com/grafana/dskit/services"
 
@@ -29,11 +28,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"go.opentelemetry.io/otel"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
@@ -147,8 +150,8 @@ type ModuleServer struct {
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
 
-	// grpcServer is the shared gRPC server used by modules that need to expose gRPC services
-	grpcServer *grpc.Server
+	// grpcService is the shared gRPC service used by modules that need to expose gRPC services.
+	grpcService *grpcserver.DSKitService
 
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
@@ -195,14 +198,17 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
-		authenticatorEnabled := true
+		tracer := otel.Tracer("grpc-server")
 		switch {
 		case m.IsModuleEnabled(modules.SearchServerDistributor):
-			// Distributor forwards to search
-			authenticatorEnabled = false
-			return s.initGRPCServer(authenticatorEnabled)
+			// Distributor forwards to search, no authentication needed
+			return s.initGRPCServer(nil, tracer)
 		case m.IsModuleEnabled(modules.StorageServer), m.IsModuleEnabled(modules.SearchServer):
-			return s.initGRPCServer(authenticatorEnabled)
+			authn := interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+				auth := resourcegrpc.Authenticator{Tracer: tracer}
+				return auth.Authenticate(ctx)
+			}))
+			return s.initGRPCServer(authn, tracer)
 		default:
 			return services.NewBasicService(nil, nil, nil).WithName(modules.GRPCServer), nil
 		}
@@ -242,9 +248,10 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		if err := svc.RegisterGRPCServices(s.grpcServer); err != nil {
+		if err := svc.RegisterGRPCServices(s.grpcService.GetServer()); err != nil {
 			return nil, err
 		}
+		s.grpcService.StartListening()
 		return svc, nil
 	})
 
@@ -257,9 +264,10 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		if err := svc.RegisterGRPCServices(s.grpcServer); err != nil {
+		if err := svc.RegisterGRPCServices(s.grpcService.GetServer()); err != nil {
 			return nil, err
 		}
+		s.grpcService.StartListening()
 		return svc, nil
 	})
 

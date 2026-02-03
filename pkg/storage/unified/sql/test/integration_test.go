@@ -211,6 +211,7 @@ func TestClientServer(t *testing.T) {
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterGRPCServices(grpcService.GetServer()))
+	grpcService.StartListening()
 	var client resourcepb.ResourceStoreClient
 
 	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
@@ -320,6 +321,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterGRPCServices(grpcService.GetServer()))
+	grpcService.StartListening()
 
 	var client resource.SearchClient
 	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
