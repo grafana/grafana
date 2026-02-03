@@ -1,13 +1,21 @@
 import { ReactNode, useMemo, useState } from 'react';
+import { v4 } from 'uuid';
 
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
-import { CustomTransformerDefinition, SceneDataTransformer } from '@grafana/scenes';
+import {
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  LoadingState,
+  standardTransformersRegistry,
+} from '@grafana/data';
+import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { Transformation } from './types';
+import { isDataTransformerConfig } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -24,7 +32,28 @@ export function QueryEditorContextWrapper({
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
-  const [selectedCardRefId, setSelectedCardRefId] = useState<string | null>(null);
+  const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
+  const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
+
+  const transformations: Transformation[] = useMemo(() => {
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
+      const transformationList = panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
+        isDataTransformerConfig(t)
+      );
+
+      const transformationsList: Transformation[] = transformationList.map((t) => {
+        return {
+          transformConfig: t,
+          registryItem: standardTransformersRegistry.getIfExists(t.id),
+          transformId: v4(),
+        };
+      });
+
+      return transformationsList;
+    }
+    return [];
+  }, [panel]);
 
   const dsState = useMemo(
     () => ({
@@ -45,51 +74,74 @@ export function QueryEditorContextWrapper({
   );
 
   const panelState = useMemo(() => {
-    let transformations: Array<DataTransformerConfig | CustomTransformerDefinition> = [];
-
-    if (panel.state.$data instanceof SceneDataTransformer) {
-      transformations = panel.state.$data.state.transformations;
-    }
-
     return {
       panel,
       transformations,
     };
-  }, [panel]);
+  }, [panel, transformations]);
 
-  const selectedCard = useMemo(() => {
+  const selectedQuery = useMemo(() => {
     const queries = queryRunnerState?.queries ?? [];
-    // If we have a selected refId, try to find that query
-    if (selectedCardRefId) {
-      const query = queries.find((q) => q.refId === selectedCardRefId);
+
+    // If we have a selected query refId, try to find that query
+    if (selectedQueryRefId) {
+      const query = queries.find((q) => q.refId === selectedQueryRefId);
       if (query) {
         return query;
       }
     }
 
+    // If a transformation is selected, don't select any query
+    if (selectedTransformationId) {
+      return null;
+    }
+
     // Otherwise, default to the first query if available
     return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedCardRefId]);
+  }, [queryRunnerState?.queries, selectedQueryRefId, selectedTransformationId]);
+
+  const selectedTransformation = useMemo(() => {
+    // If we have a selected transformation id, try to find that transformation
+    if (selectedTransformationId) {
+      const transformation = transformations.find((t) => t.transformId === selectedTransformationId);
+      if (transformation) {
+        return transformation;
+      }
+    }
+
+    return null;
+  }, [transformations, selectedTransformationId]);
 
   const uiState = useMemo(
     () => ({
-      selectedCard,
-      setSelectedCard: (query: DataQuery | null) => {
-        setSelectedCardRefId(query?.refId ?? null);
+      selectedQuery,
+      selectedTransformation,
+      setSelectedQuery: (query: DataQuery | null) => {
+        setSelectedQueryRefId(query?.refId ?? null);
+        // Clear transformation selection when selecting a query
+        setSelectedTransformationId(null);
+      },
+      setSelectedTransformation: (transformation: Transformation | null) => {
+        setSelectedTransformationId(transformation?.transformId ?? null);
+        // Clear query selection when selecting a transformation
+        setSelectedQueryRefId(null);
       },
     }),
-    [selectedCard]
+    [selectedQuery, selectedTransformation]
   );
 
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
+      updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
+        dataPane.updateSelectedQuery(updatedQuery, originalRefId);
+      },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,
       runQueries: dataPane.runQueries,
-      changeDataSource: (settings: DataSourceInstanceSettings) => {
-        dataPane.changeDataSource(getDataSourceRef(settings));
+      changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
+        dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
     }),
     [dataPane]

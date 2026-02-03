@@ -24,8 +24,8 @@ describe('getSteps', () => {
     const stepIds = steps.map((s) => s.id);
 
     expect(stepIds).toContain('authType');
-    expect(stepIds).toContain('githubApp');
-    expect(stepIds).toEqual(['authType', 'githubApp', 'connection', 'bootstrap', 'synchronize', 'finish']);
+    expect(stepIds).not.toContain('githubApp');
+    expect(stepIds).toEqual(['authType', 'connection', 'bootstrap', 'synchronize', 'finish']);
   });
 
   it('should have correct step properties', () => {

@@ -13,6 +13,13 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+import { useRepositoryStatus } from './useRepositoryStatus';
+
+export type UseResourceStatsOptions = {
+  enableRepositoryStatus?: boolean;
+  isHealthy?: boolean;
+};
+
 function getManagedCount(managed?: ManagerStats[]) {
   let totalCount = 0;
 
@@ -100,9 +107,21 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, syncTarget?: RepositoryView['target'], migrateResources?: boolean) {
+
+// TODO: update params to be object
+export function useResourceStats(
+  repoName?: string,
+  syncTarget?: RepositoryView['target'],
+  migrateResources?: boolean,
+  options?: UseResourceStatsOptions
+) {
+  const enableRepositoryStatus = options?.enableRepositoryStatus ?? true; // provide option to skip repo status check
+  const { isHealthy: statusHealthy } = useRepositoryStatus(enableRepositoryStatus ? repoName : undefined);
+  const effectiveHealthy = enableRepositoryStatus ? statusHealthy : options?.isHealthy;
+
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
+  // files endpoint requires healthy repository
+  const filesQuery = useGetRepositoryFilesQuery(repoName && effectiveHealthy ? { name: repoName } : skipToken);
 
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
 

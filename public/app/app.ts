@@ -100,7 +100,7 @@ import { usePluginComponent } from './features/plugins/extensions/usePluginCompo
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
+import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
@@ -117,6 +117,7 @@ import { getVariablesUrlParams } from './features/variables/getAllVariableValues
 import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
+import { createSwitchVariableAdapter } from './features/variables/switch/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
@@ -217,6 +218,7 @@ export class GrafanaApp {
         createIntervalVariableAdapter(),
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
+        createSwitchVariableAdapter(),
       ]);
 
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
@@ -258,13 +260,7 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const [appPluginsToAwait, appPluginsToPreload] = await Promise.all([
-          getAppPluginsToAwait(),
-          getAppPluginsToPreload(),
-        ]);
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
+        preloadPlugins(await getAppPluginsToPreload());
       }
 
       getPluginExtensionRegistries();
@@ -317,11 +313,7 @@ export class GrafanaApp {
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);
-      root.render(
-        createElement(AppWrapper, {
-          app: this,
-        })
-      );
+      root.render(createElement(AppWrapper, { context: this.context }));
 
       await postInitTasks();
     } catch (error) {

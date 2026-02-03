@@ -59,6 +59,7 @@ const injectedRtkApi = api
           params: {
             delegatable: queryArg.delegatable,
             includeHidden: queryArg.includeHidden,
+            targetOrgId: queryArg.targetOrgId,
           },
         }),
         providesTags: ['access_control', 'enterprise'],
@@ -115,7 +116,12 @@ const injectedRtkApi = api
         providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addTeamRole: build.mutation<AddTeamRoleApiResponse, AddTeamRoleApiArg>({
@@ -131,6 +137,9 @@ const injectedRtkApi = api
           url: `/access-control/teams/${queryArg.teamId}/roles`,
           method: 'PUT',
           body: queryArg.setTeamRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -150,7 +159,14 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       listUserRoles: build.query<ListUserRolesApiResponse, ListUserRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/users/${queryArg.userId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/users/${queryArg.userId}/roles`,
+          params: {
+            includeHidden: queryArg.includeHidden,
+            includeMapped: queryArg.includeMapped,
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addUserRole: build.mutation<AddUserRoleApiResponse, AddUserRoleApiArg>({
@@ -166,6 +182,9 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           method: 'PUT',
           body: queryArg.setUserRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -2068,6 +2087,7 @@ export type ListRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListRolesApiArg = {
   delegatable?: boolean;
   includeHidden?: boolean;
+  targetOrgId?: number;
 };
 export type CreateRoleApiResponse = /** status 201 (empty) */ RoleDto;
 export type CreateRoleApiArg = {
@@ -2110,6 +2130,7 @@ export type ListTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type ListTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
 };
 export type AddTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2121,6 +2142,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
   setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
@@ -2138,6 +2160,9 @@ export type ListUsersRolesApiArg = {
 export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
+  includeHidden?: boolean;
+  includeMapped?: boolean;
+  targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2149,6 +2174,7 @@ export type SetUserRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetUserRolesApiArg = {
   userId: number;
+  targetOrgId?: number;
   setUserRolesCommand: SetUserRolesCommand;
 };
 export type RemoveUserRoleApiResponse =
