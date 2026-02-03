@@ -34,4 +34,8 @@ func (o *GetUsage) DeepCopyInto(dst *GetUsage) {
 	o.GetUsageBody.DeepCopyInto(&dst.GetUsageBody)
 }
 
+func (GetUsage) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.quotas.pkg.apis.quotas.v0alpha1.GetUsage"
+}
+
 var _ runtime.Object = NewGetUsage()
