@@ -105,6 +105,7 @@ export class GrafanaBootConfig {
   externalUserMngInfo = '';
   externalUserMngAnalytics = false;
   externalUserMngAnalyticsParams = '';
+  externalUserUpgradeLinkUrl = '';
   allowOrgCreate = false;
   feedbackLinksEnabled = true;
   disableLoginForm = false;
@@ -175,6 +176,7 @@ export class GrafanaBootConfig {
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  awsPerDatasourceHTTPProxyEnabled = false;
   azure: AzureSettingsGrafanaData = {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,

@@ -1,5 +1,6 @@
 import { Unsubscribable } from 'rxjs';
 
+import { LoadingState } from '@grafana/data';
 import { SceneDataTransformer, SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -121,7 +122,18 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
         // since we never re-run the query, only reprocess the transformations, the panel will not update.
         const transformerSub = dataTransformer.subscribeToState((newState, oldState) => {
-          if (newState.data !== oldState.data) {
+          // Only re-run if there's actually new data to process.
+          // This prevents re-running when the source panel is cancelled, which only changes
+          // the loading state but keeps the same requestId.
+          // We trigger when:
+          // 1. requestId changed (new query completed)
+          // 2. isStreaming (continuous data updates)
+          const newRequestId = newState.data?.request?.requestId;
+          const oldRequestId = oldState.data?.request?.requestId;
+          const hasNewRequest = newRequestId !== oldRequestId;
+          const isStreaming = newState.data?.state === LoadingState.Streaming;
+
+          if (newState.data !== oldState.data && (hasNewRequest || isStreaming)) {
             queryRunner.runQueries();
           }
         });

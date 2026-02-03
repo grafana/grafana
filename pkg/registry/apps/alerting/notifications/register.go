@@ -54,6 +54,10 @@ func RegisterAppInstaller(
 		ng:  ng,
 	}
 
+	customCfg := notificationsApp.Config{
+		ReceiverTestingHandler: receiver.New(ng.Api.ReceiverTestService),
+	}
+
 	localManifest := apis.LocalManifest()
 
 	provider := simple.NewAppProvider(localManifest, nil, notificationsApp.New)
@@ -61,7 +65,7 @@ func RegisterAppInstaller(
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
 		ManifestData:   *localManifest.ManifestData,
-		SpecificConfig: nil,
+		SpecificConfig: &customCfg,
 	}
 
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
@@ -111,7 +115,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
-		return routingtree.NewStorage(api.Policies, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

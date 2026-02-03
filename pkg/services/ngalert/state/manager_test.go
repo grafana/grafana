@@ -315,7 +315,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
-	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics, ac)
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics, ac, 500)
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 		ExternalURL:   nil,
@@ -1287,7 +1287,7 @@ func TestProcessEvalResults(t *testing.T) {
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 			ac := &acfakes.FakeRuleService{}
-			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac)
+			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac, 500)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
 				Metrics:       stateMetrics,

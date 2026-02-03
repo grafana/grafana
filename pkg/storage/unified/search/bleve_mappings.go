@@ -1,30 +1,32 @@
 package search
 
 import (
+	"strings"
+
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
+	index "github.com/blevesearch/bleve_index_api"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func GetBleveMappings(scoringModel string, fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
+func GetBleveMappings(fields resource.SearchableDocumentFields, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
-	if scoringModel != "" {
-		mapper.ScoringModel = scoringModel
-	}
+	mapper.ScoringModel = index.BM25Scoring
 
 	err := RegisterCustomAnalyzers(mapper)
 	if err != nil {
 		return nil, err
 	}
-	mapper.DefaultMapping = getBleveDocMappings(fields)
+	mapper.DefaultMapping = getBleveDocMappings(fields, selectableFields)
 
 	return mapper, nil
 }
 
-func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.DocumentMapping {
+func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
@@ -77,7 +79,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
 		Type:               "text",
 		Analyzer:           keyword.Name,
-		Store:              false,
+		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
@@ -175,7 +177,19 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 		}
 	}
 
-	mapper.AddSubDocumentMapping("fields", fieldMapper)
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, "."), fieldMapper)
+
+	selectableFieldsMapper := bleve.NewDocumentStaticMapping()
+	for _, field := range selectableFields {
+		selectableFieldsMapper.AddFieldMappingsAt(field, &mapping.FieldMapping{
+			Name:     field,
+			Type:     "text",
+			Analyzer: keyword.Name,
+			Store:    false,
+			Index:    true,
+		})
+	}
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_SELECTABLE_FIELDS_PREFIX, "."), selectableFieldsMapper)
 
 	return mapper
 }

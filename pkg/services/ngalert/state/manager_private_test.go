@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -5624,3 +5625,66 @@ func TestStatesToRuleStatus(t *testing.T) {
 		require.Equal(t, newerDuration, status.EvaluationDuration, "EvaluationDuration should be from the state with newest LastEvaluationTime")
 	})
 }
+
+func TestManager_ClearCache(t *testing.T) {
+	testCases := []struct {
+		name   string
+		setup  func(m *Manager)
+		verify func(t *testing.T, m *Manager)
+	}{
+		{
+			name:  "clears empty cache",
+			setup: func(m *Manager) {},
+			verify: func(t *testing.T, m *Manager) {
+				require.Empty(t, m.cache.GetAlertInstances())
+			},
+		},
+		{
+			name: "clears populated cache",
+			setup: func(m *Manager) {
+				m.cache.set(&State{OrgID: 1, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				m.cache.set(&State{OrgID: 1, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Pending})
+				m.cache.set(&State{OrgID: 2, AlertRuleUID: "rule3", CacheID: data.Fingerprint(3), State: eval.Normal})
+			},
+			verify: func(t *testing.T, m *Manager) {
+				require.Empty(t, m.cache.GetAlertInstances())
+				require.Empty(t, m.cache.getAll(1))
+				require.Empty(t, m.cache.getAll(2))
+			},
+		},
+		{
+			name: "does not affect persister",
+			setup: func(m *Manager) {
+				m.cache.set(&State{OrgID: 1, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+			},
+			verify: func(t *testing.T, m *Manager) {
+				require.NotNil(t, m.persister)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			persister := &fakePersister{name: "test"}
+			mgr := NewManager(ManagerCfg{
+				Clock: clock.NewMock(),
+				Log:   log.NewNopLogger(),
+			}, persister)
+
+			tc.setup(mgr)
+			mgr.ClearCache()
+			tc.verify(t, mgr)
+		})
+	}
+}
+
+type fakePersister struct {
+	name string
+}
+
+func (f *fakePersister) Async(_ context.Context, _ AlertInstancesProvider) {}
+
+func (f *fakePersister) Sync(_ context.Context, _ trace.Span, _ ngmodels.AlertRuleKeyWithGroup, _ StateTransitions) {
+}
+
+var _ StatePersister = (*fakePersister)(nil)

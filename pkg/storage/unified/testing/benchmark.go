@@ -3,14 +3,16 @@ package test
 import (
 	"context"
 	"fmt"
-	"sort"
+	"os"
+	"slices"
+	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/stretchr/testify/require"
 )
@@ -25,14 +27,33 @@ type BenchmarkOptions struct {
 }
 
 // DefaultBenchmarkOptions returns the default benchmark options
-func DefaultBenchmarkOptions() *BenchmarkOptions {
-	return &BenchmarkOptions{
-		NumResources:     1000,
-		Concurrency:      50,
-		NumNamespaces:    1,
-		NumGroups:        1,
-		NumResourceTypes: 1,
+func DefaultBenchmarkOptions(t *testing.T) *BenchmarkOptions {
+	envOrDefault := func(name string, defaultVal int) int {
+		envVar := fmt.Sprintf("US_BACKEND_BENCH_%s", name)
+		if str := os.Getenv(envVar); str != "" {
+			n, err := strconv.ParseInt(str, 10, 64)
+			require.NoError(t, err)
+
+			return int(n)
+		}
+
+		return defaultVal
 	}
+
+	return &BenchmarkOptions{
+		NumResources:     envOrDefault("RESOURCES", 1000),
+		Concurrency:      envOrDefault("CONCURRENCY", 50),
+		NumNamespaces:    envOrDefault("NAMESPACES", 1),
+		NumGroups:        envOrDefault("GROUPS", 1),
+		NumResourceTypes: envOrDefault("RESOURCE_TYPES", 1),
+	}
+}
+
+func (opts *BenchmarkOptions) String() string {
+	return fmt.Sprintf(
+		"Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d",
+		opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes,
+	)
 }
 
 // BenchmarkResult contains the benchmark metrics
@@ -69,14 +90,9 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 
 // runStorageBackendBenchmark runs a write throughput benchmark
 func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
-	if opts == nil {
-		opts = DefaultBenchmarkOptions()
-	}
-
 	// Create channels for workers
 	jobs := make(chan int, opts.NumResources)
-	results := make(chan time.Duration, opts.NumResources)
-	errors := make(chan error, opts.NumResources)
+	latencies := make([]time.Duration, opts.NumResources)
 
 	// Fill the jobs channel
 	for i := 0; i < opts.NumResources; i++ {
@@ -84,14 +100,12 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	}
 	close(jobs)
 
-	var wg sync.WaitGroup
+	g, ctx := errgroup.WithContext(ctx)
 
 	// Start workers
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		g.Go(func() error {
 			for jobID := range jobs {
 				// Calculate a unique ID for this job that's guaranteed to be unique across all workers
 				uniqueID := jobID
@@ -111,38 +125,26 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 					WithValue(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20))) // ~1.21 KiB
 
 				if err != nil {
-					errors <- err
-					return
+					return err
 				}
 
-				results <- time.Since(writeStart)
+				latencies[jobID] = time.Since(writeStart)
 			}
-		}()
+
+			return nil
+		})
 	}
 
 	// Wait for all workers to complete
-	wg.Wait()
-	close(results)
-	close(errors)
-
-	// Check for errors
-	if len(errors) > 0 {
-		return nil, <-errors // Return the first error encountered
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
-
-	// Collect all latencies
-	latencies := make([]time.Duration, 0, opts.NumResources)
-	for latency := range results {
-		latencies = append(latencies, latency)
-	}
-
-	// Sort latencies for percentile calculation
-	sort.Slice(latencies, func(i, j int) bool {
-		return latencies[i] < latencies[j]
-	})
 
 	totalDuration := time.Since(startTime)
 	throughput := float64(opts.NumResources) / totalDuration.Seconds()
+
+	// Sort latencies for percentile calculation
+	slices.Sort(latencies)
 
 	return &BenchmarkResult{
 		TotalDuration: totalDuration,
@@ -154,49 +156,33 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	}, nil
 }
 
-// BenchmarkStorageBackend runs a benchmark test for a storage backend implementation
-func BenchmarkStorageBackend(b testing.TB, backend resource.StorageBackend, opts *BenchmarkOptions) {
-	ctx := context.Background()
-
+// RunStorageBackendBenchmark runs a benchmark test for a storage backend implementation
+func RunStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, opts *BenchmarkOptions) {
 	// Initialize the backend
-	err := initializeBackend(ctx, backend, opts)
-	require.NoError(b, err)
+	require.NoError(t, initializeBackend(t.Context(), backend, opts))
 
 	// Run the benchmark
-	result, err := runStorageBackendBenchmark(ctx, backend, opts)
-	require.NoError(b, err)
+	result, err := runStorageBackendBenchmark(t.Context(), backend, opts)
+	require.NoError(t, err)
 
-	// Only report metrics if we're running a benchmark
-	if bb, ok := b.(*testing.B); ok {
-		bb.ReportMetric(result.Throughput, "writes/sec")
-		bb.ReportMetric(float64(result.P50Latency.Milliseconds()), "p50-latency-ms")
-		bb.ReportMetric(float64(result.P90Latency.Milliseconds()), "p90-latency-ms")
-		bb.ReportMetric(float64(result.P99Latency.Milliseconds()), "p99-latency-ms")
-	}
-
-	// Also log the results for better visibility
-	b.Logf("Benchmark Configuration: Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d", opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes)
-	b.Logf("")
-	b.Logf("Benchmark Results:")
-	b.Logf("Total Duration: %v", result.TotalDuration)
-	b.Logf("Write Count: %d", result.WriteCount)
-	b.Logf("Throughput: %.2f writes/sec", result.Throughput)
-	b.Logf("P50 Latency: %v", result.P50Latency)
-	b.Logf("P90 Latency: %v", result.P90Latency)
-	b.Logf("P99 Latency: %v", result.P99Latency)
+	// Log the results for better visibility.
+	t.Logf("Benchmark Configuration: %s", opts)
+	t.Logf("")
+	t.Logf("Benchmark Results:")
+	t.Logf("Total Duration: %v", result.TotalDuration)
+	t.Logf("Write Count: %d", result.WriteCount)
+	t.Logf("Throughput: %.2f writes/sec", result.Throughput)
+	t.Logf("P50 Latency: %v", result.P50Latency)
+	t.Logf("P90 Latency: %v", result.P90Latency)
+	t.Logf("P99 Latency: %v", result.P99Latency)
 }
 
 // runSearchBackendBenchmarkWriteThroughput runs a write throughput benchmark for search backend
 // This is a simple benchmark that writes a single resource/group/namespace because indices are per-tenant/group/resource.
 func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resource.SearchBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
-	if opts == nil {
-		opts = DefaultBenchmarkOptions()
-	}
-
 	// Create channels for workers
 	jobs := make(chan int, opts.NumResources)
-	results := make(chan time.Duration, opts.NumResources)
-	errors := make(chan error, opts.NumResources)
+	latencies := make([]time.Duration, opts.NumResources)
 
 	// Fill the jobs channel
 	for i := 0; i < opts.NumResources; i++ {
@@ -204,7 +190,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 	}
 	close(jobs)
 
-	var wg sync.WaitGroup
+	g, ctx := errgroup.WithContext(ctx)
 
 	// Initialize namespace and resource type
 	nr := resource.NamespacedResource{
@@ -225,12 +211,13 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 	// Start workers
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		g.Go(func() error {
 			batch := make([]*resource.BulkIndexItem, 0, 1000)
+			var jobIDs []int
 
 			for jobID := range jobs {
+				jobIDs = append(jobIDs, jobID)
+
 				doc := &resource.IndexableDocument{
 					Key: &resourcepb.ResourceKey{
 						Namespace: nr.Namespace,
@@ -258,43 +245,31 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 						Items: batch,
 					})
 					if err != nil {
-						errors <- err
-						return
+						return err
 					}
 
 					// Record the latency for each document in the batch
-					latency := time.Since(writeStart)
-					for i := 0; i < len(batch); i++ {
-						results <- latency
+					for _, jid := range jobIDs {
+						latencies[jid] = time.Since(writeStart)
 					}
 
 					// Reset the batch
 					batch = batch[:0]
+					jobIDs = nil
 				}
 			}
-		}()
+
+			return nil
+		})
 	}
 
 	// Wait for all workers to complete
-	wg.Wait()
-	close(results)
-	close(errors)
-
-	// Check for errors
-	if len(errors) > 0 {
-		return nil, <-errors // Return the first error encountered
-	}
-
-	// Collect all latencies
-	latencies := make([]time.Duration, 0, opts.NumResources)
-	for latency := range results {
-		latencies = append(latencies, latency)
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	// Sort latencies for percentile calculation
-	sort.Slice(latencies, func(i, j int) bool {
-		return latencies[i] < latencies[j]
-	})
+	slices.Sort(latencies)
 
 	totalDuration := time.Since(startTime)
 	throughput := float64(opts.NumResources) / totalDuration.Seconds()
@@ -309,28 +284,19 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 	}, nil
 }
 
-// BenchmarkSearchBackend runs a benchmark test for a search backend implementation
-func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts *BenchmarkOptions) {
-	ctx := context.Background()
+// RunSearchBackendBenchmark runs a benchmark test for a search backend implementation
+func RunSearchBackendBenchmark(t *testing.T, backend resource.SearchBackend, opts *BenchmarkOptions) {
+	result, err := runSearchBackendBenchmarkWriteThroughput(t.Context(), backend, opts)
+	require.NoError(t, err)
 
-	result, err := runSearchBackendBenchmarkWriteThroughput(ctx, backend, opts)
-	require.NoError(tb, err)
-
-	if b, ok := tb.(*testing.B); ok {
-		b.ReportMetric(result.Throughput, "writes/sec")
-		b.ReportMetric(float64(result.P50Latency.Milliseconds()), "p50-latency-ms")
-		b.ReportMetric(float64(result.P90Latency.Milliseconds()), "p90-latency-ms")
-		b.ReportMetric(float64(result.P99Latency.Milliseconds()), "p99-latency-ms")
-	}
-
-	// Also log the results for better visibility
-	tb.Logf("Benchmark Configuration: Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d", opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes)
-	tb.Logf("")
-	tb.Logf("Benchmark Results:")
-	tb.Logf("Total Duration: %v", result.TotalDuration)
-	tb.Logf("Write Count: %d", result.WriteCount)
-	tb.Logf("Throughput: %.2f writes/sec", result.Throughput)
-	tb.Logf("P50 Latency: %v", result.P50Latency)
-	tb.Logf("P90 Latency: %v", result.P90Latency)
-	tb.Logf("P99 Latency: %v", result.P99Latency)
+	// Log the results for better visibility
+	t.Logf("Benchmark Configuration: %s", opts)
+	t.Logf("")
+	t.Logf("Benchmark Results:")
+	t.Logf("Total Duration: %v", result.TotalDuration)
+	t.Logf("Write Count: %d", result.WriteCount)
+	t.Logf("Throughput: %.2f writes/sec", result.Throughput)
+	t.Logf("P50 Latency: %v", result.P50Latency)
+	t.Logf("P90 Latency: %v", result.P90Latency)
+	t.Logf("P99 Latency: %v", result.P99Latency)
 }

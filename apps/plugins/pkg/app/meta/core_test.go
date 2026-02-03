@@ -35,7 +35,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -50,7 +50,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result, err := provider.GetMeta(ctx, "nonexistent-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "nonexistent-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -73,8 +73,8 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result1, err1 := provider.GetMeta(ctx, "test-plugin", "1.0.0")
-		result2, err2 := provider.GetMeta(ctx, "test-plugin", "2.0.0")
+		result1, err1 := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
+		result2, err2 := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "2.0.0"})
 
 		require.NoError(t, err1)
 		require.NoError(t, err2)
@@ -98,7 +98,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -117,7 +117,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		require.NoError(t, os.Chdir(tempDir))
 
 		provider := NewCoreProvider(pluginsPathFunc(""))
-		result, err := provider.GetMeta(ctx, "any-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "any-plugin", Version: "1.0.0"})
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
 		assert.Nil(t, result)
@@ -148,7 +148,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider := NewCoreProvider(pluginsPathFunc(pluginsPath))
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		assert.Len(t, provider.loadedPlugins, 53)
+		assert.Len(t, provider.loadedPlugins, 52)
 	})
 
 	t.Run("returns error when static root path not found", func(t *testing.T) {
@@ -232,7 +232,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider.mu.RUnlock()
 
 		if loaded {
-			result, err := provider.GetMeta(ctx, "test-datasource", "1.0.0")
+			result, err := provider.GetMeta(ctx, PluginRef{ID: "test-datasource", Version: "1.0.0"})
 			require.NoError(t, err)
 			assert.Equal(t, "test-datasource", result.Meta.PluginJson.Id)
 			assert.Equal(t, "Test Datasource", result.Meta.PluginJson.Name)
@@ -316,6 +316,92 @@ func TestJsonDataToMeta(t *testing.T) {
 		assert.Nil(t, meta.Info.Description)
 		assert.Nil(t, meta.Info.Author)
 		assert.Empty(t, meta.Info.Keywords)
+	})
+
+	t.Run("maps optional boolean fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypePanel,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Suggestions: true,
+			Alerting:    true,
+			Annotations: true,
+			Backend:     true,
+			BuiltIn:     true,
+			Logs:        true,
+			Metrics:     true,
+			Tracing:     true,
+			Streaming:   true,
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.True(t, *meta.Suggestions)
+		assert.True(t, *meta.Alerting)
+		assert.True(t, *meta.Annotations)
+		assert.True(t, *meta.Backend)
+		assert.True(t, *meta.BuiltIn)
+		assert.True(t, *meta.Logs)
+		assert.True(t, *meta.Metrics)
+		assert.True(t, *meta.Tracing)
+		assert.True(t, *meta.Streaming)
+	})
+
+	t.Run("maps optional string fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypeDataSource,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Executable: "plugin-executable",
+			BuildMode:  "production",
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.Equal(t, "plugin-executable", *meta.Executable)
+		assert.Equal(t, "production", *meta.BuildMode)
+	})
+
+	t.Run("does not map false optional boolean fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypePanel,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Suggestions: false,
+			Alerting:    false,
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.Nil(t, meta.Suggestions)
+		assert.Nil(t, meta.Alerting)
+	})
+
+	t.Run("does not map empty optional string fields", func(t *testing.T) {
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypeDataSource,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+			Executable: "",
+			BuildMode:  "",
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+
+		assert.Nil(t, meta.Executable)
+		assert.Nil(t, meta.BuildMode)
 	})
 }
 

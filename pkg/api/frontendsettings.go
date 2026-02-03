@@ -248,6 +248,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngLinkName:              hs.Cfg.ExternalUserMngLinkName,
 		ExternalUserMngAnalytics:             hs.Cfg.ExternalUserMngAnalytics,
 		ExternalUserMngAnalyticsParams:       hs.Cfg.ExternalUserMngAnalyticsParams,
+		ExternalUserUpgradeLinkUrl:           hs.Cfg.ExternalUserUpgradeLinkUrl,
 		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
 		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
@@ -315,6 +316,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
+		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
