@@ -1,11 +1,17 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariable,
+  sceneGraph,
+  SceneVariableSet,
+  VariableValueSingle,
+} from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 
 import { RowItem } from './RowItem';
@@ -106,8 +112,15 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
 
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
 
+    const baseVariables = getRowRepeatBaseVariables(row.state.$variables);
     rowClone.setState({
-      $variables: getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]),
+      $variables: getRepeatVariableValueSet(
+        variable,
+        variableValues[rowIndex],
+        variableTexts[rowIndex],
+        baseVariables,
+        !isSourceRow
+      ),
       layout,
     });
 
@@ -149,4 +162,19 @@ function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSi
   }
 
   return values;
+}
+
+function getRowRepeatBaseVariables(variables?: SceneVariableSet): SceneVariableSet | undefined {
+  if (!variables) {
+    return undefined;
+  }
+
+  const baseVariables = variables.state.variables.filter((variable) => !(variable instanceof LocalValueVariable));
+  if (baseVariables.length === 0) {
+    return undefined;
+  }
+
+  return new SceneVariableSet({
+    variables: baseVariables,
+  });
 }

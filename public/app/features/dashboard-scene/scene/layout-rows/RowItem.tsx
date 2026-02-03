@@ -11,6 +11,7 @@ import {
   VariableDependencyConfig,
   SceneGridItemLike,
   SceneGridLayout,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
@@ -52,6 +53,7 @@ export interface RowItemState extends SceneObjectState {
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   repeatedRows?: RowItem[];
+  $variables?: SceneVariableSet;
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
 }

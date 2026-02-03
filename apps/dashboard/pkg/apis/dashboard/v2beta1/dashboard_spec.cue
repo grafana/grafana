@@ -643,6 +643,7 @@ RowsLayoutRowSpec: {
 	fillScreen?:           bool
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
+	variables?:            [...(AdhocVariableKind | GroupByVariableKind)]
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 

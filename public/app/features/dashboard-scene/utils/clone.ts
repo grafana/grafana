@@ -50,3 +50,24 @@ export function getLocalVariableValueSet(
     ],
   });
 }
+
+export function getRepeatVariableValueSet(
+  variable: SceneVariable<MultiValueVariableState>,
+  value: VariableValueSingle,
+  text: VariableValueSingle,
+  baseSet?: SceneVariableSet,
+  cloneBaseVariables = false
+): SceneVariableSet {
+  const localSet = getLocalVariableValueSet(variable, value, text);
+  if (!baseSet) {
+    return localSet;
+  }
+
+  const baseVariables = cloneBaseVariables
+    ? baseSet.state.variables.map((variable) => variable.clone())
+    : baseSet.state.variables;
+
+  return new SceneVariableSet({
+    variables: [...localSet.state.variables, ...baseVariables],
+  });
+}
