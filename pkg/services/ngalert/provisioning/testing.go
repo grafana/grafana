@@ -233,6 +233,7 @@ type fakeReceiverService struct {
 	Calls                                  []call
 	GetReceiversFunc                       func(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 	RenameReceiverInDependentResourcesFunc func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
+	ReceiverNameUsedByRoutesFunc           func(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool
 }
 
 func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
@@ -249,4 +250,12 @@ func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Con
 		return f.RenameReceiverInDependentResourcesFunc(ctx, orgID, revision, oldName, newName, receiverProvenance)
 	}
 	return nil
+}
+
+func (f *fakeReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool {
+	f.Calls = append(f.Calls, call{Method: "ReceiverNameUsedByRoutes", Args: []interface{}{ctx, revision, name}})
+	if f.ReceiverNameUsedByRoutesFunc != nil {
+		return f.ReceiverNameUsedByRoutesFunc(ctx, revision, name)
+	}
+	return false
 }

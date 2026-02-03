@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
@@ -66,10 +67,12 @@ func NewTimeIntervalClient(t *testing.T, user apis.User) *apis.TypedClient[v0alp
 // UpdateDefaultRoute helper method to update the default route based on api definition.
 func UpdateDefaultRoute(t *testing.T, user apis.User, r *definitions.Route) {
 	t.Helper()
-	v1Route, err := routingtree.ConvertToK8sResource(user.Identity.GetOrgID(), *r, "", func(int64) string { return apis.DefaultNamespace })
+	routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
-	routeAdminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(user.GetClientRegistry())
+	route := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, r)
+	route.Version = "" // Avoid version conflict.
+	v1route, err := routingtree.ConvertToK8sResource(user.Identity.GetOrgID(), route, func(int64) string { return apis.DefaultNamespace })
 	require.NoError(t, err)
-	_, err = routeAdminClient.Update(context.Background(), v1Route, resource.UpdateOptions{})
+	_, err = routeClient.Update(context.Background(), v1route, resource.UpdateOptions{})
 	require.NoError(t, err)
 }

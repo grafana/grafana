@@ -2344,7 +2344,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Seřadit podle",
-      "description-group-by": "Kombinujte více výstrah do jednoho oznámení jejich seskupením podle stejných hodnot štítku. Pokud není vyplněno, načte se z výchozí zásady oznamování.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -3651,7 +3652,9 @@
       "delete-button": "Odstranit",
       "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
       "delete-modal-invalid-title": "Složku nelze odstranit",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Tato akce odstraní následující obsah:",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Odstranit",
@@ -3768,6 +3771,9 @@
       "folder-actions": "Akce složky",
       "manage-permissions": "Spravovat oprávnění",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Vybrat složku: {{ label }} aktuálně vybraná",
@@ -4982,6 +4988,7 @@
       },
       "variables": {
         "add-variable": "Přidat proměnnou",
+        "reorder": "",
         "select-type": "Vyberte typ proměnné",
         "select-type-card-tooltip": "Klikněte pro výběr typu",
         "select-variable": "Vybrat"
@@ -5189,6 +5196,9 @@
       "panel-data-label": "Data panelu",
       "panel-json-description": "Model uložený v nástěnce JSON, který konfiguruje, jak vše funguje.",
       "panel-json-label": "Panel JSON",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Vyberte zdroj",
       "unknown": "Neznámý objekt: {{show}}"
     },
@@ -5521,10 +5531,6 @@
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
         "title": ""
       },
@@ -5850,7 +5856,7 @@
       "load": "Načíst"
     },
     "gcom-field": {
-      "label": "Najděte a importujte nástěnky pro běžné aplikace na <1></1>",
+      "label": "",
       "load-button": "Načíst",
       "placeholder": "Adresa URL nebo ID nástěnky na Grafana.com",
       "validation-required": "Je vyžadována adresa URL nebo ID nástěnky Grafana"
@@ -6282,7 +6288,9 @@
     },
     "inspect-json-tab": {
       "apply": "Použít",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6356,6 +6364,11 @@
       "title": {
         "remove-panel": "Odebrat panel"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Výstraha"
@@ -6727,6 +6740,16 @@
       },
       "label": "Skrýt"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "Typ proměnné"
     },
@@ -6795,7 +6818,7 @@
       "delete-button": "Odstranit",
       "title": "Odstranit"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "Chcete odstranit tuto nástěnku?",
     "general": {
       "auto-refresh-description": "Definujte intervaly automatického obnovení, které by měly být k dispozici v seznamu automatického obnovení. Použijte formát „5 s“ pro sekundy, „1 m“ pro minuty, „1 h“ pro hodiny a „1 d“ pro dny (např.: „5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d“).",
@@ -10434,9 +10457,15 @@
       "options": "Možnosti"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importování nástěnky z <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Zveřejnil uživatel",
       "updated-on": "Aktualizováno dne"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Opravdu chcete odstranit „{{snapshotToRemove}}“?",
@@ -11306,6 +11335,9 @@
     "noOptionsMessage-no-organizations-found": "Nebyly nalezeny žádné organizace",
     "select-placeholder": "Vyberte organizaci"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Upravit název"
@@ -11803,6 +11835,7 @@
       "text-installed": "Nainstalované"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Závislost Grafany",
       "installed-version": "{{versionNumber}} (nainstalovaná verze)",
       "latest-compatible-version": "{{versionNumber}} (nejnovější kompatibilní verze)",
@@ -11993,13 +12026,19 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12009,6 +12048,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -12023,7 +12063,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12324,6 +12363,7 @@
       "jobs": "Práce"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "Nastavení",
       "source-code": "Zdrojový kód"
     },
@@ -12346,6 +12386,7 @@
     },
     "repository-overview": {
       "checked": "Zkontrolováno:",
+      "connection-status": "",
       "finished": "",
       "health": "Kondice",
       "healthy": "Zdravý",
@@ -12503,23 +12544,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Tímto odstraníte konfiguraci úložiště a přijdete o veškerý pokrok. Opravdu chcete zahodit změny?",
         "confirm": "Ano, zahodit",
         "dismiss": "Pokračovat v práci",
         "title": "Zahodit nastavení úložiště?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12531,21 +12576,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
       "step-configure-repo": "",
       "step-connect": "Připojit",
       "step-finish": "Vybrat další nastavení",
-      "step-github-app": "",
       "step-synchronize": "Synchronizovat s externím úložištěm",
       "sync-description": "Synchronizujte zdroje s externím úložištěm. Po tomto jednorázovém kroku budou všechny budoucí aktualizace automaticky uloženy do úložiště a zajištěny zpět do instance.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Vyberte, co chcete synchronizovat",
       "title-configure-repo": "",
       "title-connect": "Připojit k externímu úložišti",
       "title-finish": "Vybrat další nastavení",
-      "title-github-app": "",
       "title-synchronize": "Synchronizovat s externím úložištěm"
     },
     "wizard-content": {
@@ -12781,13 +12824,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12826,7 +12873,7 @@
     },
     "page": {
       "no-deleted-dashboards": "V poslední době jste neodstranili žádné nástěnky.",
-      "no-deleted-dashboards-text": "Když odstraníte nástěnku, zobrazí se tady po dobu 30 dnů, než bude trvale odstraněna. Správce organizace může obnovit nedávno odstraněné nástěnky.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
     "restore-modal": {
@@ -14955,6 +15002,9 @@
       "description": {
         "variable-values-fetched-datasource-query": "Hodnoty proměnných jsou načteny z dotazu na zdroj dat"
       }
+    },
+    "create-switch-variable-adapter": {
+      "description": ""
     },
     "data-source-variable-slice": {
       "text": {

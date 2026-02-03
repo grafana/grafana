@@ -28,12 +28,12 @@ func TestIsMigrationEnabled(t *testing.T) {
 	playlistDef := MigrationDefinition{
 		ID:          "test-playlists",
 		MigrationID: "playlists migration",
-		Resources:   []schema.GroupResource{playlistGR},
+		Resources:   []ResourceInfo{{GroupResource: playlistGR}},
 	}
 	foldersDashboardsDef := MigrationDefinition{
 		ID:          "test-folders-dashboards",
 		MigrationID: "folders and dashboards migration",
-		Resources:   []schema.GroupResource{folderGR, dashboardGR},
+		Resources:   []ResourceInfo{{GroupResource: folderGR}, {GroupResource: dashboardGR}},
 	}
 
 	// Build a minimal cfg with UnifiedStorage entries
@@ -116,12 +116,12 @@ func TestRegisterMigrations(t *testing.T) {
 		Registry.Register(MigrationDefinition{
 			ID:          "test-playlists",
 			MigrationID: "playlists migration",
-			Resources:   []schema.GroupResource{playlistGR},
+			Resources:   []ResourceInfo{{GroupResource: playlistGR}},
 		})
 		Registry.Register(MigrationDefinition{
 			ID:          "test-folders-dashboards",
 			MigrationID: "folders and dashboards migration",
-			Resources:   []schema.GroupResource{folderGR, dashboardGR},
+			Resources:   []ResourceInfo{{GroupResource: folderGR}, {GroupResource: dashboardGR}},
 		})
 	}
 

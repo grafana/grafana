@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagDisableEnvelopeEncryption
-	// Disable envelope encryption (emergency only)
-	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -386,10 +382,6 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
-
-	// FlagSsoSettingsLDAP
-	// Use the new SSO Settings API to configure LDAP
-	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.

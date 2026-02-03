@@ -67,6 +67,21 @@ describe('RadialGauge color utils', () => {
       ).toMatchSnapshot();
     });
 
+    it('should map threshold colors correctly (for percentage thresholds)', () => {
+      expect(
+        buildGradientColors(
+          createTheme(),
+          buildFieldDisplay(createField(FieldColorModeId.Thresholds), {
+            field: {
+              thresholds: {
+                mode: ThresholdsMode.Percentage,
+              },
+            },
+          })
+        )
+      ).toMatchSnapshot();
+    });
+
     it('should return gradient colors for continuous color modes', () => {
       expect(
         buildGradientColors(

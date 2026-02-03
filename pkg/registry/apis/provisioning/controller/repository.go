@@ -538,6 +538,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
+	shouldGenerateToken := false
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
+	}
+
 	// Determine the main triggering condition
 	switch {
 	case hasSpecChanged:
@@ -551,12 +556,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:
 		logger.Info("health is stale", "health_status", obj.Status.Health.Healthy)
+	case shouldGenerateToken:
+		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
 	}
 
-	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+	if shouldGenerateToken {
+		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
 			logger.Error("retrieving connection",
@@ -566,23 +575,21 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return err
 		}
 
-		if rc.shouldGenerateTokenFromConnection(obj, c) {
-			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
-
-			token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
-			if err != nil {
-				logger.Error("generating token for repository",
-					"connection", obj.Spec.Connection.Name,
-					"error", err,
-				)
-				return err
-			}
-
-			if len(tokenOps) > 0 {
-				patchOperations = append(patchOperations, tokenOps...)
-			}
-			obj.Secure.Token.Create = token
+		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
+		if err != nil {
+			logger.Error("generating token for repository",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
 		}
+
+		if len(tokenOps) > 0 {
+			patchOperations = append(patchOperations, tokenOps...)
+		}
+
+		// Adding secure token to object as it will be used for healthchecks and hooks process
+		obj.Secure.Token.Create = token
 	}
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
@@ -692,24 +699,20 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 // We're going to work on this in https://github.com/grafana/git-ui-sync-project/issues/744.
 func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	obj *provisioning.Repository,
-	c *provisioning.Connection,
 ) bool {
-	// Should always generate a token if it does not exist.
+	// We should generate a token from the connection when
+	// - The token has never been generated, i.e. a new Repository is being added
+	// or
+	// - The token has not been recently created, and
+	// - The token will expire before the next resync interval
 	if obj.Secure.Token.IsZero() {
 		return true
 	}
 
-	// We should regenerate a token from the connection when
-	// - The token has not been recently created
-	// - The token will expire before the next resync interval
-	// - The linked connection is healthy (which means it is able to generate valid tokens)
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
-	shouldRefresh := shouldRefreshBeforeExpiration(
-		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
-	)
+	shouldRefresh := shouldRefreshBeforeExpiration(time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval)
 	return !recentlyCreated &&
-		shouldRefresh &&
-		c.Status.Health.Healthy
+		shouldRefresh
 }
 
 func (rc *RepositoryController) generateRepositoryToken(
