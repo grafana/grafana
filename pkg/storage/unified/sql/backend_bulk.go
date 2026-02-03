@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -103,6 +104,25 @@ func (x *bulkLock) Active() bool {
 	x.mu.Lock()
 	defer x.mu.Unlock()
 	return len(x.running) > 0
+}
+
+// buildKeyPath constructs the key_path for a bulk import entry.
+// The format matches the key_path used in normal write operations.
+func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkRequest_Action, folder string) string {
+	var actionStr string
+	switch action {
+	case resourcepb.BulkRequest_ADDED:
+		actionStr = "created"
+	case resourcepb.BulkRequest_MODIFIED:
+		actionStr = "updated"
+	case resourcepb.BulkRequest_DELETED:
+		actionStr = "deleted"
+	default:
+		actionStr = fmt.Sprintf("%d", action)
+	}
+	snowflakeRV := rvmanager.SnowflakeFromRV(rv)
+	return fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s",
+		key.Group, key.Resource, key.Namespace, key.Name, snowflakeRV, actionStr, folder)
 }
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
@@ -256,6 +276,12 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			continue
 		}
 
+		// Compute RV first so we can use it for key_path
+		resourceVersion := rv.next(obj)
+
+		// Build key_path for indexing/searching
+		keyPath := buildKeyPath(req.Key, resourceVersion, req.Action, req.Folder)
+
 		// Write the event to history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -267,7 +293,8 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			},
 			Folder:          req.Folder,
 			GUID:            uuid.New().String(),
-			ResourceVersion: rv.next(obj),
+			ResourceVersion: resourceVersion,
+			KeyPath:         keyPath,
 		}); err != nil {
 			return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
 		}

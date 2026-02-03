@@ -1242,7 +1242,8 @@
       "metadata": {
         "name": "dashboardSceneForViewers",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-11-02T19:02:25Z"
+        "creationTimestamp": "2023-11-02T19:02:25Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
@@ -1256,7 +1257,8 @@
       "metadata": {
         "name": "dashboardSceneSolo",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-02-11T08:08:47Z"
+        "creationTimestamp": "2024-02-11T08:08:47Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
@@ -4262,7 +4264,8 @@
       "metadata": {
         "name": "ssoSettingsLDAP",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "deletionTimestamp": "2026-01-31T01:56:50Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",

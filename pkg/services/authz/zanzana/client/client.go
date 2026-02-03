@@ -66,7 +66,7 @@ func (c *Client) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authli
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.BatchCheck")
 	defer span.End()
 
-	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("BatchCheck", req.Checks[0].Namespace))
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("BatchCheck", req.Namespace))
 	defer timer.ObserveDuration()
 
 	return c.authzlibclient.BatchCheck(ctx, id, req)

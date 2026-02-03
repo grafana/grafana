@@ -267,6 +267,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 		t.Logf("Verifying migrations are correctly registered")
 		verifyRegisteredMigrations(t, helper, false, false)
+
+		t.Logf("Verifying key_path is populated in resource_history after bulkimport")
+		verifyKeyPathPopulated(t, helper)
 	})
 }
 
@@ -335,4 +338,40 @@ func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, sh
 	} else {
 		require.Error(t, err)
 	}
+}
+
+// verifyKeyPathPopulated verifies that all rows in resource_history have a non-empty key_path.
+// This is important because bulkimport must populate key_path for indexing/searching to work.
+func verifyKeyPathPopulated(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Helper()
+
+	query := "SELECT COUNT(*) FROM resource_history WHERE key_path = ''"
+	rows, err := helper.GetEnv().SQLStore.GetEngine().DB().Query(query)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var emptyKeyPathCount int
+	require.True(t, rows.Next(), "expected at least one row from COUNT query")
+	require.NoError(t, rows.Scan(&emptyKeyPathCount))
+	require.NoError(t, rows.Err())
+
+	require.Equal(t, 0, emptyKeyPathCount, "found %d rows in resource_history with empty key_path", emptyKeyPathCount)
+
+	// Also verify that there are actually some rows with key_path populated
+	queryTotal := "SELECT COUNT(*) FROM resource_history WHERE key_path != ''"
+	rowsTotal, err := helper.GetEnv().SQLStore.GetEngine().DB().Query(queryTotal)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rowsTotal.Close())
+	}()
+
+	var populatedKeyPathCount int
+	require.True(t, rowsTotal.Next(), "expected at least one row from COUNT query")
+	require.NoError(t, rowsTotal.Scan(&populatedKeyPathCount))
+	require.NoError(t, rowsTotal.Err())
+
+	t.Logf("Verified %d rows in resource_history have populated key_path", populatedKeyPathCount)
+	require.Greater(t, populatedKeyPathCount, 0, "expected at least one row in resource_history with populated key_path")
 }

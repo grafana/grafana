@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
@@ -36,7 +36,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
   const selectedTarget = watch('repository.sync.target');
   const repositoryType = watch('repository.type');
-  const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
+  const { enabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions?.[0];
 
   const {
@@ -182,28 +182,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             />
           </Field>
         )}
-
-        {disabledOptions?.length > 0 && (
-          <>
-            {/* Unavailable options */}
-            <Box marginTop={3}>
-              <Text variant="h4">
-                {t('provisioning.bootstrap-step.unavailable-options.title', 'Unavailable options')}
-              </Text>
-            </Box>
-            {disabledOptions?.map((action) => (
-              <Card key={action.target} noMargin disabled={action.disabled}>
-                <Card.Heading>
-                  <Text variant="h5">{action.label}</Text>
-                </Card.Heading>
-                <Card.Description>
-                  <div className={styles.divider} />
-                  <Icon name="info-circle" className={styles.infoIcon} /> {action.disabledReason}
-                </Card.Description>
-              </Card>
-            ))}
-          </>
-        )}
       </Stack>
     </Stack>
   );
@@ -216,10 +194,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.border.medium,
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
-  }),
-  infoIcon: css({
-    color: theme.colors.primary.main,
-    marginRight: theme.spacing(0.25),
-    marginBottom: theme.spacing(0.25),
   }),
 });
