@@ -61,7 +61,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isHealthy: isRepositoryHealthy,
   });
 
-  // Check if file count exceeds free-tier limit for folder sync.
   const isQuotaExceeded = Boolean(
     isFreeTierLicense() && selectedTarget === 'folder' && resourceCount > FREE_TIER_FOLDER_RESOURCE_LIMIT
   );
