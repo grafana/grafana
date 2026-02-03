@@ -19,9 +19,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/server")
-
 func (ms *ModuleServer) initGRPCServer(authenticatorEnabled bool) (services.Service, error) {
+	tracer := otel.Tracer("grpc-server")
 	var authn interceptors.Authenticator
 	if authenticatorEnabled {
 		// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
