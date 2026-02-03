@@ -25,18 +25,12 @@ import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
+import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/constants';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { DryRunValidationResult } from './types';
 import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
-
-/**
- * Label name used in X-Grafana-Alerting-Merge-Matchers header.
- * We use __grafana_managed_route__ as the label name for merge matchers.
- * Alerts matching this label will be routed through the imported policy tree.
- */
-export const MERGE_MATCHERS_LABEL_NAME = '__grafana_managed_route__';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources

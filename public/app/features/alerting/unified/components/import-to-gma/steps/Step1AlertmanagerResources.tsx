@@ -21,6 +21,7 @@ import {
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
 import { ImportFormValues } from '../ImportToGMA';
+import { getNotificationsSourceOptions } from '../Wizard/constants';
 import { DryRunValidationResult } from '../types';
 
 interface Step1ContentProps {
@@ -92,21 +93,7 @@ export function Step1Content({
     policyTreeName,
   ]);
 
-  const sourceOptions = [
-    {
-      label: t('alerting.import-to-gma.step1.source.yaml', 'YAML file'),
-      description: t(
-        'alerting.import-to-gma.step1.source.yaml-desc',
-        'Import from an Alertmanager configuration YAML file'
-      ),
-      value: 'yaml' as const,
-    },
-    {
-      label: t('alerting.import-to-gma.step1.source.datasource', 'Data source'),
-      description: t('alerting.import-to-gma.step1.source.datasource-desc', 'Import from an Alertmanager data source'),
-      value: 'datasource' as const,
-    },
-  ];
+  const sourceOptions = getNotificationsSourceOptions();
 
   // Validation logic - same as before
   const isValid = useMemo(() => {

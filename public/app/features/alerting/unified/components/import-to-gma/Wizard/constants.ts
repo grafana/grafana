@@ -1,6 +1,13 @@
 import { t } from '@grafana/i18n';
 
-import { StepKey, WizardStep } from './types';
+import { NotificationsSourceOption, PolicyOption, RulesSourceOption, StepKey, WizardStep } from './types';
+
+/**
+ * Label name used in X-Grafana-Alerting-Merge-Matchers header.
+ * We use __grafana_managed_route__ as the label name for merge matchers.
+ * Alerts matching this label will be routed through the imported policy tree.
+ */
+export const MERGE_MATCHERS_LABEL_NAME = '__grafana_managed_route__';
 
 /**
  * Returns the wizard steps configuration.
@@ -54,4 +61,94 @@ export const isFirstStep = (currentStep: StepKey): boolean => {
  */
 export const isLastStep = (currentStep: StepKey): boolean => {
   return currentStep === StepKey.Review;
+};
+
+/**
+ * Returns the source options for importing Alertmanager notification resources (Step 1).
+ * Uses a function to ensure translations are evaluated at runtime.
+ */
+export const getNotificationsSourceOptions = (): NotificationsSourceOption[] => [
+  {
+    label: t('alerting.import-to-gma.step1.source.yaml', 'YAML file'),
+    description: t(
+      'alerting.import-to-gma.step1.source.yaml-desc',
+      'Import from an Alertmanager configuration YAML file'
+    ),
+    value: 'yaml',
+  },
+  {
+    label: t('alerting.import-to-gma.step1.source.datasource', 'Data source'),
+    description: t('alerting.import-to-gma.step1.source.datasource-desc', 'Import from an Alertmanager data source'),
+    value: 'datasource',
+  },
+];
+
+/**
+ * Returns the source options for importing alert rules (Step 2).
+ * @param includeYaml - Whether to include the YAML option (based on feature flag)
+ */
+export const getRulesSourceOptions = (includeYaml: boolean): RulesSourceOption[] => {
+  const options: RulesSourceOption[] = [
+    {
+      label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
+      description: t(
+        'alerting.import-to-gma.step2.source.datasource-desc',
+        'Import from a Prometheus, Mimir, or Loki data source'
+      ),
+      value: 'datasource',
+    },
+  ];
+
+  if (includeYaml) {
+    options.push({
+      label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
+      description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
+      value: 'yaml',
+    });
+  }
+
+  return options;
+};
+
+/**
+ * Returns the notification policy options for routing imported rules (Step 2).
+ */
+export const getPolicyOptions = (params: { step1Completed: boolean; policyTreeName: string }): PolicyOption[] => {
+  const { step1Completed, policyTreeName } = params;
+  const options: PolicyOption[] = [
+    {
+      label: t('alerting.import-to-gma.step2.policy.default', 'Use Grafana default policy'),
+      value: 'default',
+      description: t(
+        'alerting.import-to-gma.step2.policy.default-desc',
+        'Alerts will be routed using the default Grafana notification policy'
+      ),
+    },
+  ];
+
+  if (step1Completed) {
+    options.push({
+      label: t('alerting.import-to-gma.step2.policy.imported', 'Use imported policy'),
+      value: 'imported',
+      description: t(
+        'alerting.import-to-gma.step2.policy.imported-desc',
+        'Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.',
+        {
+          label: MERGE_MATCHERS_LABEL_NAME,
+          value: policyTreeName,
+        }
+      ),
+    });
+  }
+
+  options.push({
+    label: t('alerting.import-to-gma.step2.policy.manual', 'Enter label manually'),
+    value: 'manual',
+    description: t(
+      'alerting.import-to-gma.step2.policy.manual-desc',
+      'Specify a custom label to add to all imported rules'
+    ),
+  });
+
+  return options;
 };

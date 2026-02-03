@@ -30,7 +30,8 @@ import {
 } from '../../../utils/datasource';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
-import { ImportFormValues, MERGE_MATCHERS_LABEL_NAME } from '../ImportToGMA';
+import { ImportFormValues } from '../ImportToGMA';
+import { getPolicyOptions, getRulesSourceOptions } from '../Wizard/constants';
 
 interface Step2ContentProps {
   step1Completed: boolean;
@@ -107,61 +108,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
     setValue('ruleGroup', undefined);
   }, [rulesDatasourceName, setValue]);
 
-  const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
+  const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI ?? false;
 
-  const rulesSourceOptions: Array<{ label: string; description: string; value: 'datasource' | 'yaml' }> = [
-    {
-      label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
-      description: t(
-        'alerting.import-to-gma.step2.source.datasource-desc',
-        'Import from a Prometheus, Mimir, or Loki data source'
-      ),
-      value: 'datasource',
-    },
-  ];
-
-  if (isImportYamlEnabled) {
-    rulesSourceOptions.push({
-      label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
-      description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
-      value: 'yaml',
-    });
-  }
-
-  const policyOptions: Array<{ label: string; value: 'default' | 'imported' | 'manual'; description: string }> = [
-    {
-      label: t('alerting.import-to-gma.step2.policy.default', 'Use Grafana default policy'),
-      value: 'default',
-      description: t(
-        'alerting.import-to-gma.step2.policy.default-desc',
-        'Alerts will be routed using the default Grafana notification policy'
-      ),
-    },
-  ];
-
-  if (step1Completed) {
-    policyOptions.push({
-      label: t('alerting.import-to-gma.step2.policy.imported', 'Use imported policy'),
-      value: 'imported',
-      description: t(
-        'alerting.import-to-gma.step2.policy.imported-desc',
-        'Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.',
-        {
-          label: MERGE_MATCHERS_LABEL_NAME,
-          value: policyTreeName,
-        }
-      ),
-    });
-  }
-
-  policyOptions.push({
-    label: t('alerting.import-to-gma.step2.policy.manual', 'Enter label manually'),
-    value: 'manual',
-    description: t(
-      'alerting.import-to-gma.step2.policy.manual-desc',
-      'Specify a custom label to add to all imported rules'
-    ),
-  });
+  const rulesSourceOptions = getRulesSourceOptions(isImportYamlEnabled);
+  const policyOptions = getPolicyOptions({ step1Completed, policyTreeName });
 
   // Validation logic - same as before
   const isValid = useMemo(() => {

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
@@ -76,6 +77,8 @@ const lokiDataSource = mockDataSource({
 });
 
 describe('Step2AlertRules', () => {
+  const originalFeatureToggles = config.featureToggles;
+
   beforeEach(() => {
     setupDataSources(prometheusDataSource, lokiDataSource);
     grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
@@ -211,6 +214,34 @@ describe('Step2AlertRules', () => {
 
       expect(screen.getByText(/rules yaml file/i)).toBeInTheDocument();
     });
+
+    it('should only show YAML source option when feature flag is enabled', () => {
+      // Default: feature flag is off
+      config.featureToggles.alertingImportYAMLUI = false;
+      const { rerender } = render(
+        <TestWrapper>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByRole('radio', { name: /yaml file/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/import from a prometheus rules yaml file/i)).not.toBeInTheDocument();
+
+      // Enable feature flag
+      config.featureToggles.alertingImportYAMLUI = true;
+      rerender(
+        <TestWrapper>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByRole('radio', { name: /yaml file/i })).toBeInTheDocument();
+      expect(screen.getByText(/import from a prometheus rules yaml file/i)).toBeInTheDocument();
+    });
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
   });
 
   describe('useStep2Validation hook', () => {
