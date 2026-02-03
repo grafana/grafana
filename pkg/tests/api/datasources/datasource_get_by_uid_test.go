@@ -136,66 +136,60 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	// TODO: support resource-scoped tests against the k8s-reroute path (currently they give 403)
-	if modePrefix == "legacy" {
-		t.Run("GET - specific UID scope granted", func(t *testing.T) {
-			dsUID := fmt.Sprintf("%s-ds-get-perms-0", modePrefix)
-			createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for GET Permissions 0")
+	t.Run("GET - specific UID scope granted", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-get-perms-0", modePrefix)
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for GET Permissions 0")
 
-			login := fmt.Sprintf("%s-user-get-0", modePrefix)
-			createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
-				{
-					Actions:           []string{datasources.ActionRead},
-					Resource:          "datasources",
-					ResourceAttribute: "uid",
-					ResourceID:        dsUID,
-				},
-			})
-
-			url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
-			resp, err := http.Get(url)
-			require.NoError(t, err)
-			defer resp.Body.Close()
-
-			require.Equal(t, http.StatusOK, resp.StatusCode)
+		login := fmt.Sprintf("%s-user-get-0", modePrefix)
+		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{datasources.ActionRead},
+				Resource:          "datasources",
+				ResourceAttribute: "uid",
+				ResourceID:        dsUID,
+			},
 		})
-	}
 
-	// TODO: support wildcard resource-scoped tests against the k8s-reroute path (currently they give 403)
-	if modePrefix == "legacy" {
-		t.Run("GET - wildcard UID scope granted", func(t *testing.T) {
-			dsUID := fmt.Sprintf("%s-ds-get-perms-1", modePrefix)
-			_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
-				&datasources.AddDataSourceCommand{
-					OrgID:  1,
-					Access: datasources.DS_ACCESS_PROXY,
-					Name:   "Test DS for GET Permissions 1",
-					Type:   datasources.DS_PROMETHEUS,
-					UID:    dsUID,
-					URL:    "http://localhost:9090",
-				})
-			require.NoError(t, err)
+		url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
 
-			login := fmt.Sprintf("%s-user-get-1", modePrefix)
-			password := "testpass"
-			createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
-				{
-					Actions:           []string{datasources.ActionRead},
-					Resource:          "datasources",
-					ResourceAttribute: "uid",
-					ResourceID:        "*",
-				},
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("GET - wildcard UID scope granted", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-get-perms-1", modePrefix)
+		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
+			&datasources.AddDataSourceCommand{
+				OrgID:  1,
+				Access: datasources.DS_ACCESS_PROXY,
+				Name:   "Test DS for GET Permissions 1",
+				Type:   datasources.DS_PROMETHEUS,
+				UID:    dsUID,
+				URL:    "http://localhost:9090",
 			})
+		require.NoError(t, err)
 
-			url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
-				login, password, grafanaListeningAddr, dsUID)
-			resp, err := http.Get(url)
-			require.NoError(t, err)
-			defer resp.Body.Close()
-
-			require.Equal(t, http.StatusOK, resp.StatusCode)
+		login := fmt.Sprintf("%s-user-get-1", modePrefix)
+		password := "testpass"
+		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{datasources.ActionRead},
+				Resource:          "datasources",
+				ResourceAttribute: "uid",
+				ResourceID:        "*",
+			},
 		})
-	}
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
+			login, password, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 
 	t.Run("GET - permission denied (wrong UID scope)", func(t *testing.T) {
 		dsUID := fmt.Sprintf("%s-ds-get-perms-2", modePrefix)
