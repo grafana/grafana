@@ -204,6 +204,7 @@ type UserTeam struct {
 	UID        string
 	Name       string
 	Permission team.PermissionType
+	External   bool
 }
 
 var sqlQueryUserTeamsTemplate = mustTemplate("user_teams_query.sql")
@@ -267,7 +268,7 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 		// regression: team_member.permission has been nulled in some instances
 		// Team memberships created before the permission column was added will have a NULL value
 		var nullablePermission *int64
-		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission)
+		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission, &t.External)
 		if err != nil {
 			return nil, err
 		}

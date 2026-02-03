@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
@@ -118,7 +119,7 @@ func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb
 				// We don't have the team_member UID here, using team UID instead for this subresource response.
 				Name: t.UID,
 			},
-			Cells: userTeamCells(t, fields, subjectUID),
+			Cells: userTeamCells(t, fields, subjectUID, t.External),
 		})
 	}
 
@@ -165,7 +166,7 @@ func userTeamColumns(fields []string) []*resourcepb.ResourceTableColumnDefinitio
 	return cols
 }
 
-func userTeamCells(t legacy.UserTeam, fields []string, subjectUID string) [][]byte {
+func userTeamCells(t legacy.UserTeam, fields []string, subjectUID string, external bool) [][]byte {
 	cells := make([][]byte, 0, len(fields))
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
@@ -177,7 +178,7 @@ func userTeamCells(t legacy.UserTeam, fields []string, subjectUID string) [][]by
 		case builders.TEAM_BINDING_PERMISSION:
 			cells = append(cells, []byte(string(common.MapTeamPermission(t.Permission))))
 		case builders.TEAM_BINDING_EXTERNAL:
-			cells = append(cells, []byte("false"))
+			cells = append(cells, []byte(strconv.FormatBool(external)))
 		}
 	}
 	return cells

@@ -196,6 +196,15 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 		}
 	}
 
+	binding, err := l.Get(ctx, teamMemberObj.Name, nil)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	if binding != nil {
+		return nil, apierrors.NewAlreadyExists(bindingResource.GroupResource(), teamMemberObj.Name)
+	}
+
 	// Fetch the user by ID
 	userObj, err := l.store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
 		UID: teamMemberObj.Spec.Subject.Name,
