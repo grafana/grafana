@@ -16,6 +16,22 @@ import { Transformation } from '../types';
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
 
+function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
+  const styles = useStyles2(getDatasourceSectionStyles);
+
+  return (
+    <div className={styles.dataSourcePickerWrapper}>
+      <DataSourcePicker dashboard={true} variables={true} current={selectedQuery.datasource} onChange={onChange} />
+    </div>
+  );
+}
+
+const Separator = () => (
+  <Text variant="h4" color="secondary">
+    /
+  </Text>
+);
+
 /**
  * Props for the standalone ContentHeader component.
  * This interface defines everything needed to render the header without Scene coupling.
@@ -121,12 +137,6 @@ export function ContentHeader({
   );
 }
 
-const Separator = () => (
-  <Text variant="h4" color="secondary">
-    /
-  </Text>
-);
-
 /**
  * Scene-aware wrapper for ContentHeader.
  * Reads state from Scene contexts and passes as props to the standalone component.
@@ -160,18 +170,6 @@ export function ContentHeaderSceneWrapper({
 interface DatasourceSectionProps {
   selectedQuery: DataQuery;
   onChange: (ds: DataSourceInstanceSettings) => void;
-}
-
-function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
-  const styles = useStyles2(getDatasourceSectionStyles);
-
-  return (
-    <>
-      <div className={styles.dataSourcePickerWrapper}>
-        <DataSourcePicker dashboard={true} variables={true} current={selectedQuery.datasource} onChange={onChange} />
-      </div>
-    </>
-  );
 }
 
 const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {

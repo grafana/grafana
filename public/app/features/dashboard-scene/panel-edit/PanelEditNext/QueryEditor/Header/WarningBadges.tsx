@@ -4,6 +4,7 @@ import pluralize from 'pluralize';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, QueryResultMetaNotice } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
@@ -33,9 +34,12 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
       color={color}
       icon={icon}
       text={
-        <>
-          {notices.length} {pluralize(type, notices.length)}
-        </>
+        <Trans
+          i18nKey="query-editor.header.warning-badges.text"
+          values={{ count: notices.length, type: pluralize(type, notices.length) }}
+        >
+          {'{{count}} {{type}}'}
+        </Trans>
       }
       tooltip={
         <ul className={styles.noticeList}>
@@ -92,13 +96,7 @@ export function WarningBadges() {
     return null;
   }
 
-  return (
-    <>
-      {severityGroups.map(({ type, notices }) => (
-        <SeverityBadge key={type} type={type} notices={notices} />
-      ))}
-    </>
-  );
+  return severityGroups.map(({ type, notices }) => <SeverityBadge key={type} type={type} notices={notices} />);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
