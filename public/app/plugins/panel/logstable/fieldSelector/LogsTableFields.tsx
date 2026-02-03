@@ -23,6 +23,7 @@ interface Props {
   bodyFieldName: string;
 }
 
+// @todo take getSuggestedFields as prop and delete this component
 export function LogsTableFields({
   tableWidth,
   sidebarWidth = FIELD_SELECTOR_DEFAULT_WIDTH,
