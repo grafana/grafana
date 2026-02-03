@@ -121,40 +121,38 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
           />
         ))}
       </TabsBar>
+      <Field
+        className={styles.searchField}
+        noMargin
+        htmlFor={filterId}
+        aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+      >
+        <Stack direction="row" gap={1}>
+          {showBackButton && (
+            <Button
+              aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+              fill="text"
+              variant="secondary"
+              icon="arrow-left"
+              data-testid={selectors.components.PanelEditor.toggleVizPicker}
+              onClick={handleBackButtonClick}
+            >
+              <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
+            </Button>
+          )}
+          <FilterInput
+            id={filterId}
+            autoFocus={!isMobile}
+            className={styles.filter}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+          />
+        </Stack>
+      </Field>
       <ScrollContainer>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
-            <Field
-              tabIndex={0}
-              className={styles.searchField}
-              noMargin
-              htmlFor={filterId}
-              aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-            >
-              <Stack direction="row" gap={1}>
-                {showBackButton && (
-                  <Button
-                    aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
-                    fill="text"
-                    variant="secondary"
-                    icon="arrow-left"
-                    data-testid={selectors.components.PanelEditor.toggleVizPicker}
-                    onClick={handleBackButtonClick}
-                  >
-                    <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
-                  </Button>
-                )}
-                <FilterInput
-                  id={filterId}
-                  autoFocus={!isMobile}
-                  className={styles.filter}
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-                />
-              </Stack>
-            </Field>
-
             {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions
                 onChange={onChange}
@@ -189,7 +187,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
   }),
   searchField: css({
-    margin: theme.spacing(0.5, 0, 1, 0), // input glow with the boundary without this
+    margin: theme.spacing(0.5, 1.5, 1, 1.5), // input glow with the boundary without this
+    padding: theme.spacing(0, 0.5, 0, 0.5), // slight adjustment to align with scroll container
   }),
   tabs: css({
     width: '100%',
