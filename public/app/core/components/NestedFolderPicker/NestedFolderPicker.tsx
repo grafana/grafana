@@ -6,6 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
@@ -20,8 +21,11 @@ import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
+import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
+
+const TEAM_FOLDERS_UID = 'teamfolders';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -82,21 +86,27 @@ export function NestedFolderPicker({
   id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const selectedFolder = useGetFolderQueryFacade(value);
+  const getSelectedFolderResult = useGetFolderQueryFacade(value);
+
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
   // but doesn't have access to the folder
-  const isForbidden = getStatusFromError(selectedFolder.error) === 403;
+  const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
+
   const [autoFocusButton, setAutoFocusButton] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({});
+  // keep Team folders expanded by default so the UX matches when team folders were previously listed at top level
+  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({ [TEAM_FOLDERS_UID]: true });
   const overlayId = useId();
+
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
+
+  const { teamFolderTreeItems, teamFolderOwnersByUid } = useTeamFolders(value, onChange, foldersOpenState);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -168,6 +178,11 @@ export function NestedFolderPicker({
     async (uid: string, newOpenState: boolean) => {
       setFoldersOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
+      // Team folders is a virtual folder, so don't trigger browse pagination for it
+      if (uid === TEAM_FOLDERS_UID) {
+        return;
+      }
+
       if (newOpenState && !foldersOpenState[uid]) {
         fetchFolderPage(uid);
       }
@@ -229,6 +244,11 @@ export function NestedFolderPicker({
         })) ?? [];
     }
 
+    if (teamFolderTreeItems.length) {
+      // Make "Team folders" a sibling root to the "Dashboards" root.
+      flatTree = [...teamFolderTreeItems, ...flatTree];
+    }
+
     // It's not super optimal to filter these in an additional iteration, but
     // these options are used infrequently that its not a big deal
     if (!showRootFolder || excludeUIDs?.length) {
@@ -246,7 +266,7 @@ export function NestedFolderPicker({
     }
 
     return flatTree;
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder]);
+  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -275,8 +295,8 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label = selectedFolder.data?.title;
-  if (value === '') {
+  let label = getSelectedFolderResult.data?.title;
+  if (!label) {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
 
@@ -284,7 +304,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={selectedFolder.data} />
+      <FolderRepo folder={getSelectedFolderResult.data} />
     </Stack>
   ) : (
     ''
@@ -297,7 +317,7 @@ export function NestedFolderPicker({
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
-        isLoading={selectedFolder.isLoading}
+        isLoading={getSelectedFolderResult.isLoading}
         autoFocus={autoFocusButton}
         ref={refs.setReference}
         aria-label={
@@ -371,12 +391,79 @@ export function NestedFolderPicker({
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
               emptyFolders={emptyFolders}
+              teamFolderOwnersByUid={teamFolderOwnersByUid}
             />
           </div>
         )}
       </fieldset>
     </>
   );
+}
+
+function useTeamFolders(
+  value: string | undefined,
+  onChange: (folderUID: string | undefined, folderName: string | undefined) => void,
+  foldersOpenState: Record<string, boolean>
+) {
+  const { foldersByTeam } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
+  const firstTeamFolder = foldersByTeam[0]?.folders[0];
+
+  const teamFolderOwnersByUid = useMemo(() => {
+    return foldersByTeam.reduce<Record<string, { name: string; avatarUrl?: string }>>((acc, { team, folders }) => {
+      for (const f of folders) {
+        acc[f.name] = { name: team.name, avatarUrl: team.avatarUrl };
+      }
+      return acc;
+    }, {});
+  }, [foldersByTeam]);
+
+  const teamFolderTreeItems = useMemo(() => {
+    if (!foldersByTeam || foldersByTeam.length === 0) {
+      return [];
+    }
+    // "Team folders" is a virtual root, sibling to the "Dashboards" virtual root.
+    const baseLevel = 0;
+    const childLevel = 1;
+    const teamFoldersIsOpen = foldersOpenState[TEAM_FOLDERS_UID] ?? true;
+
+    const parentItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+      isOpen: teamFoldersIsOpen,
+      level: baseLevel,
+      item: {
+        kind: 'folder' as const,
+        title: t('browse-dashboards.folder-picker.team-folders', 'Team folders'),
+        uid: TEAM_FOLDERS_UID,
+        parentUID: undefined,
+      },
+    };
+
+    const children = foldersByTeam.flatMap(({ folders }) => {
+      return folders.map((folder) => ({
+        isOpen: false,
+        level: childLevel,
+        parentUID: TEAM_FOLDERS_UID,
+        item: {
+          kind: 'folder' as const,
+          title: folder.title,
+          uid: folder.name,
+          parentUID: TEAM_FOLDERS_UID,
+        },
+      }));
+    });
+
+    return teamFoldersIsOpen ? [parentItem, ...children] : [parentItem];
+  }, [foldersByTeam, foldersOpenState]);
+
+  useEffect(() => {
+    if (!value && firstTeamFolder && onChange) {
+      onChange(firstTeamFolder.name, firstTeamFolder.title);
+    }
+  }, [value, firstTeamFolder, onChange]);
+
+  return {
+    teamFolderTreeItems,
+    teamFolderOwnersByUid,
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
