@@ -1,4 +1,4 @@
-import { createListenerMiddleware, configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
+import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 

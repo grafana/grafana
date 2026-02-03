@@ -59,8 +59,7 @@ const rootReducers = {
 
 const addedReducers = {};
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const addReducer = (newReducers: ReducersMapObject<any, any>) => {
+export const addReducer = (newReducers: ReducersMapObject) => {
   Object.assign(addedReducers, newReducers);
 };
 
