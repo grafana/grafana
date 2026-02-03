@@ -19,9 +19,6 @@ type LastImportTimeKey struct {
 }
 
 func (k LastImportTimeKey) String() string {
-	// TODO: we reuse kv.LastImportTimeKey and kv.ParseLastImportTimeKey from SQL/KV implementation.
-	// The dependency tree is wrong (generic store depending on specific KV implementation), but it is what it is.
-	// When sqlkv implementation is removed, we will move the methods back here.
 	return kv.LastImportTimeKey(k.Namespace, k.Group, k.Resource, k.LastImportTime)
 }
 
@@ -58,7 +55,6 @@ func (k LastImportTimeKey) ToResourceLastImportTime() ResourceLastImportTime {
 }
 
 func ParseLastImportKey(key string) (LastImportTimeKey, error) {
-	// TODO: move kv.ParseLastImportTimeKey to this package when sqlkv is removed.
 	ns, group, resource, t, err := kv.ParseLastImportTimeKey(key)
 	if err != nil {
 		return LastImportTimeKey{}, err
