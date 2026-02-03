@@ -36,7 +36,7 @@ inputs:
     type: string
     description: Repository to load for patches repo. If empty, patches won't be applied. Must be an HTTPS git URL.
     required: false
-    default: ""
+    default: ''
   patches-ref:
     type: string
     description: git ref in the patches repo to check out.
@@ -64,12 +64,12 @@ inputs:
     required: false
   docker-tag-format:
     type: string
-    default: "{{ .version }}-{{ .arch }}"
+    default: '{{ .version }}-{{ .arch }}'
     description: Go template of Docker image tag
     required: false
   docker-tag-format-ubuntu:
     type: string
-    default: "{{ .version }}-ubuntu-{{ .arch }}"
+    default: '{{ .version }}-ubuntu-{{ .arch }}'
     description: Go template of Docker image tag
     required: false
   docker-org:
@@ -84,11 +84,11 @@ inputs:
     required: false
   ubuntu-base:
     type: string
-    default: 'ubuntu:22.04'
+    default: 'ubuntu-base'
     required: false
   alpine-base:
     type: string
-    default: 'alpine:3.22'
+    default: 'alpine-base'
     required: false
   cache-builders:
     type: boolean
@@ -111,7 +111,7 @@ outputs:
     description: The `grafana` version that was embedded in the binary
     value: ${{ steps.output.outputs.version }}
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - shell: bash
       run: | # zizmor: ignore[github-env]
