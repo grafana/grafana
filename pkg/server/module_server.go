@@ -231,7 +231,8 @@ func (s *ModuleServer) Run() error {
 		var err error
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
-			docBuilders, err := InitializeDocumentBuilders(s.cfg)
+			var docBuilders resource.DocumentBuilderSupplier
+			docBuilders, err = InitializeDocumentBuilders(s.cfg)
 			if err != nil {
 				return nil, err
 			}
