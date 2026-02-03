@@ -38,16 +38,8 @@ import (
 )
 
 var (
-	_ UnifiedStorageGrpcService = (*service)(nil)
+	_ resource.UnifiedStorageGrpcService = (*service)(nil)
 )
-
-type UnifiedStorageGrpcService interface {
-	services.NamedService
-
-	// RegisterGRPCServices registers the gRPC services on the provided server.
-	// This must be called before the service is started.
-	RegisterGRPCServices(srv *grpc.Server) error
-}
 
 type service struct {
 	*services.BasicService
@@ -93,7 +85,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
-) (UnifiedStorageGrpcService, error) {
+) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
@@ -123,7 +115,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
-) (UnifiedStorageGrpcService, error) {
+) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers

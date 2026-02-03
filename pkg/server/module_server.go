@@ -150,7 +150,7 @@ type ModuleServer struct {
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
 
-	// grpcService is the shared gRPC service used by modules that need to expose gRPC services.
+	// grpcService a shared gRPC service/server used by modules to register their gRPC endpoints.
 	grpcService *grpcserver.DSKitService
 
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
@@ -234,19 +234,19 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		var svc sql.UnifiedStorageGrpcService
+		// Only set docBuilders and indexMetrics if enable_search is true
 		var docBuilders resource.DocumentBuilderSupplier
 		var indexMetrics *resource.BleveIndexMetrics
-		var err error
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
+			var err error
 			docBuilders, err = InitializeDocumentBuilders(s.cfg)
 			if err != nil {
 				return nil, err
 			}
 			indexMetrics = s.indexMetrics
 		}
-		svc, err = sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
 		if err != nil {
 			return nil, err
 		}

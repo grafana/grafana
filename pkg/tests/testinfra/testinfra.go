@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -136,7 +137,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	})
 
 	// UnifiedStorageOverGRPC
-	var storage sql.UnifiedStorageGrpcService
+	var storage resource.UnifiedStorageGrpcService
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")

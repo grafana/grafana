@@ -201,8 +201,7 @@ func (s *gPRCServerService) GetAddress() string {
 }
 
 // DSKitService is a wrapper around a dskit BasicService and a Provider.
-// It delays starting to listen for connections until StartListening is called.
-// Note: Shutdown ordering is handled by dskit's module manager via inverse dependencies.
+// It starts listening for connections after StartListening is called.
 type DSKitService struct {
 	*services.BasicService
 	Provider

@@ -20,22 +20,32 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// SearchDistributorServer is a service that distributes search requests to the appropriate search server.
-type SearchDistributorServer interface {
+type UnifiedStorageGrpcService interface {
+	services.NamedService
 	// RegisterGRPCServices registers the gRPC services on the provided server.
 	RegisterGRPCServices(srv *grpc.Server) error
 }
 
-func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) SearchDistributorServer {
+var (
+	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
+)
+
+func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) UnifiedStorageGrpcService {
+	svc := services.NewBasicService(nil, func(ctx context.Context) error {
+		<-ctx.Done()
+		return nil
+	}, nil).WithName(modules.SearchServerDistributor)
 	return &distributorServer{
-		log:        log.New("index-server-distributor"),
-		ring:       ring,
-		clientPool: ringClientPool,
-		tracing:    tracer,
+		BasicService: svc,
+		log:          log.New("index-server-distributor"),
+		ring:         ring,
+		clientPool:   ringClientPool,
+		tracing:      tracer,
 	}
 }
 
@@ -77,6 +87,7 @@ const RingHeartbeatTimeout = time.Minute
 const RingNumTokens = 128
 
 type distributorServer struct {
+	*services.BasicService
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
 	log        log.Logger
