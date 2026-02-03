@@ -7,10 +7,12 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import {
+  FIELD_SELECTOR_MIN_WIDTH,
+  FIELD_SELECTOR_DEFAULT_WIDTH,
+} from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/fieldSelectorUtils';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
-
-import { DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../constants';
 
 import { FieldSelector } from './FieldSelector';
 import { getFieldsWithStats } from './getFieldsWithStats';
@@ -76,7 +78,7 @@ export const LogsTableFieldSelector = ({
   );
 
   const collapse = useCallback(() => {
-    setSidebarWidthWrapper(MIN_SIDEBAR_WIDTH);
+    setSidebarWidthWrapper(FIELD_SELECTOR_MIN_WIDTH);
     reportInteraction(`${SETTING_KEY_ROOT}.field_selector_collapse_clicked`, {
       mode: 'table',
     });
@@ -84,7 +86,7 @@ export const LogsTableFieldSelector = ({
 
   const expand = useCallback(() => {
     const width = getFieldSelectorWidth(SETTING_KEY_ROOT);
-    setSidebarWidthWrapper(width < 2 * MIN_SIDEBAR_WIDTH ? DEFAULT_SIDEBAR_WIDTH : width);
+    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? FIELD_SELECTOR_DEFAULT_WIDTH : width);
     reportInteraction(`${SETTING_KEY_ROOT}.field_selector_expand_clicked`, {
       mode: 'table',
     });
@@ -151,11 +153,11 @@ export const LogsTableFieldSelector = ({
       handleClasses={{ right: dragStyles.dragHandleVertical }}
       size={{ width: sidebarWidth, height: sidebarHeight }}
       defaultSize={{ width: sidebarWidth, height: sidebarHeight }}
-      minWidth={MIN_SIDEBAR_WIDTH}
+      minWidth={FIELD_SELECTOR_MIN_WIDTH}
       maxWidth={maxWidth}
       onResize={handleResize}
     >
-      {sidebarWidth > MIN_SIDEBAR_WIDTH * 2 ? (
+      {sidebarWidth > FIELD_SELECTOR_MIN_WIDTH * 2 ? (
         <FieldSelector
           activeFields={displayedColumns}
           clear={clear}

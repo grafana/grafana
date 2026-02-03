@@ -1,4 +1,2 @@
-export const DEFAULT_SIDEBAR_WIDTH = 200;
-export const MIN_SIDEBAR_WIDTH = 20;
 export const DEFAULT_FIRST_FIELD_WIDTH = 160;
 export const ROW_ACTION_BUTTON_WIDTH = 55;

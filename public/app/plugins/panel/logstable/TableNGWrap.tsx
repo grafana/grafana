@@ -3,11 +3,10 @@ import { useCallback } from 'react';
 
 import { FieldConfigSource, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 
 import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
-
-import { DEFAULT_SIDEBAR_WIDTH } from './constants';
 
 interface Props extends PanelProps<TableOptions> {
   fieldSelectorWidth: number | undefined;
@@ -34,7 +33,7 @@ export function TableNGWrap({
   fieldSelectorWidth,
   initialRowIndex,
 }: Props) {
-  const sidebarWidth = fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
+  const sidebarWidth = fieldSelectorWidth ?? FIELD_SELECTOR_DEFAULT_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
   // Callbacks

@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { CoreApp, DataFrame, FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import {
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -13,7 +14,6 @@ import { PanelDataErrorView } from 'app/features/panel/components/PanelDataError
 import type { Options as TableOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { TableNGWrap } from './TableNGWrap';
-import { DEFAULT_SIDEBAR_WIDTH } from './constants';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
@@ -44,7 +44,7 @@ export const LogsTable = ({
   renderCounter,
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
-  const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
+  const sidebarWidth = options.fieldSelectorWidth ?? FIELD_SELECTOR_DEFAULT_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;

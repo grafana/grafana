@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LogsFrame } from 'app/features/logs/logsFrame';
-
-import { DEFAULT_SIDEBAR_WIDTH } from '../constants';
 
 import { LogsTableFieldSelector } from './LogsTableFieldSelector';
 import { buildColumnsWithMeta } from './buildColumnsWithMeta';
@@ -26,7 +25,7 @@ interface Props {
 
 export function LogsTableFields({
   tableWidth,
-  sidebarWidth = DEFAULT_SIDEBAR_WIDTH,
+  sidebarWidth = FIELD_SELECTOR_DEFAULT_WIDTH,
   height,
   dataFrame,
   displayedFields,
