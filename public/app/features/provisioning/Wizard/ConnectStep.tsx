@@ -24,10 +24,14 @@ export const ConnectStep = memo(function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType = '', repositoryName = ''] =
-    watch(['repository.url', 'repository.token', 'repository.tokenUser', 'githubAuthType', 'repositoryName']);
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', repositoryName = ''] = watch([
+    'repository.url',
+    'repository.token',
+    'repository.tokenUser',
+    'repositoryName',
+  ]);
   const isGitBased = isGitProvider(type);
-  const isGithubType = type === 'github' || githubAuthType === 'github-app';
+  const isGithubType = type === 'github';
 
   // this hook fetches branches directly from the git provider
   const {
@@ -42,13 +46,18 @@ export const ConnectStep = memo(function ConnectStep() {
   });
 
   // this hook returns branches from internal endpoint (only available for Github PAT and Github App)
-  const { options: repositoryRefsOptions, loading: isRefsLoading } = useGetRepositoryRefs({
+  const {
+    options: repositoryRefsOptions,
+    loading: isRefsLoading,
+    error: refsError,
+  } = useGetRepositoryRefs({
     repositoryType: type,
     repositoryName: isGithubType ? repositoryName : undefined,
   });
 
   const branches = isGithubType ? repositoryRefsOptions : branchOptions;
   const isBranchesLoading = isGithubType ? isRefsLoading : branchesLoading;
+  const branchesErrorMsg = isGithubType ? refsError : branchesError;
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
 
@@ -67,9 +76,9 @@ export const ConnectStep = memo(function ConnectStep() {
             noMargin
             label={gitFields.branchConfig.label}
             description={gitFields.branchConfig.description}
-            error={errors?.repository?.branch?.message}
+            error={errors?.repository?.branch?.message || branchesErrorMsg}
             required={gitFields.branchConfig.required}
-            invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+            invalid={Boolean(errors?.repository?.branch?.message || branchesErrorMsg)}
           >
             <Controller
               name="repository.branch"
@@ -77,7 +86,7 @@ export const ConnectStep = memo(function ConnectStep() {
               rules={gitFields.branchConfig.validation}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
-                  invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+                  invalid={Boolean(errors?.repository?.branch?.message || branchesErrorMsg)}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.branchConfig.placeholder}
                   options={branches || []}
