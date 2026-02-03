@@ -174,9 +174,7 @@ export function Step1Content({
               </Field>
             )}
 
-            {notificationsSource === 'datasource' && (
-              <AlertmanagerDataSourceSelect onSelectionChange={onTriggerDryRun} />
-            )}
+            {notificationsSource === 'datasource' && <AlertmanagerDataSourceSelect />}
           </Box>
         </div>
       </div>
@@ -333,7 +331,7 @@ export function useStep1Validation(canImport: boolean): boolean {
 /**
  * Component to select an Alertmanager data source (excludes Grafana built-in)
  */
-function AlertmanagerDataSourceSelect({ onSelectionChange }: { onSelectionChange?: () => void }) {
+function AlertmanagerDataSourceSelect() {
   const {
     control,
     setValue,
