@@ -364,15 +364,10 @@ export interface FeatureToggles {
   */
   alertmanagerRemotePrimary?: boolean;
   /**
-  * Enables dashboard rendering using Scenes for viewer roles
+  * Change the way annotation permissions work by scoping them to folders and dashboards.
   * @default true
   */
-  dashboardSceneForViewers?: boolean;
-  /**
-  * Enables rendering dashboards using scenes for solo panels
-  * @default true
-  */
-  dashboardSceneSolo?: boolean;
+  annotationPermissionUpdate?: boolean;
   /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
