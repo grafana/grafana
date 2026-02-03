@@ -14,22 +14,25 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/server")
 
 func (ms *ModuleServer) initGRPCServer(authenticatorEnabled bool) (services.Service, error) {
 	var authn interceptors.AuthenticatorFunc
 	if authenticatorEnabled {
 		// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 		// grpcutils.NewGrpcAuthenticator should be used instead.
-		authn = NewAuthenticatorWithFallback(ms.cfg, ms.registerer, ms.tracer, func(ctx context.Context) (context.Context, error) {
-			auth := grpc.Authenticator{Tracer: ms.tracer}
+		authn = newAuthenticatorWithFallback(ms.cfg, ms.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+			auth := grpc.Authenticator{Tracer: tracer}
 			return auth.Authenticate(ctx)
 		})
 	}
 
-	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, authn, ms.tracer, ms.registerer)
+	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, authn, tracer, ms.registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +86,7 @@ func newGRPCMetrics(reg prometheus.Registerer) *grpcMetrics {
 	}
 }
 
-func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
+func readGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
 	return &grpcutils.AuthenticatorConfig{
@@ -93,8 +96,8 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 	}
 }
 
-func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
-	authCfg := ReadGrpcServerConfig(cfg)
+func newAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
+	authCfg := readGrpcServerConfig(cfg)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
 	metrics := newGRPCMetrics(reg)
 	return func(ctx context.Context) (context.Context, error) {

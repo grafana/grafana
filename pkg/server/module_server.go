@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
-	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/dskit/services"
@@ -53,7 +52,7 @@ func NewModule(opts Options,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, tracer)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,6 @@ func newModuleServer(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
-	tracer tracing.Tracer,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -109,7 +107,6 @@ func newModuleServer(opts Options,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
-		tracer:           tracer,
 	}
 
 	return s, nil
@@ -156,7 +153,6 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
-	tracer           trace.Tracer
 }
 
 // init initializes the server and its services.
@@ -231,18 +227,18 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
 		var svc sql.UnifiedStorageGrpcService
+		var docBuilders resource.DocumentBuilderSupplier
+		var indexMetrics *resource.BleveIndexMetrics
 		var err error
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
-			var docBuilders resource.DocumentBuilderSupplier
 			docBuilders, err = InitializeDocumentBuilders(s.cfg)
 			if err != nil {
 				return nil, err
 			}
-			svc, err = sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
-		} else {
-			svc, err = sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+			indexMetrics = s.indexMetrics
 		}
+		svc, err = sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
 		if err != nil {
 			return nil, err
 		}
