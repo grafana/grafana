@@ -85,7 +85,9 @@ func TestSelectableFieldsBuildGetAttrsFn(t *testing.T) {
 
 	obj := &sdkres.TypedSpecObject[any]{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{"label": "value"},
+			Labels:    map[string]string{"label": "value"},
+			Namespace: "ns",
+			Name:      "name",
 		},
 	}
 
@@ -94,5 +96,7 @@ func TestSelectableFieldsBuildGetAttrsFn(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, labels.Set{"label": "value"}, lbls)
-	require.Equal(t, fields.Set{"spec.foo": "bar"}, flds)
+	require.Equal(t, fields.Set{"metadata.name": "name", "metadata.namespace": "ns", "spec.foo": "bar"}, flds)
+	require.Equal(t, "name", flds["metadata.name"])
+	require.Equal(t, "ns", flds["metadata.namespace"])
 }
