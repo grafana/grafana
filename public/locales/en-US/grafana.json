@@ -6238,6 +6238,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Cancel",
+      "float-grid-items-warning-body": "The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers will be truncated to integers.",
+      "float-grid-items-warning-title": "Floating grid items",
       "label-folder": "Folder"
     },
     "inspect-data-tab": {
@@ -11873,9 +11875,6 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
-      "unavailable-options": {
-        "title": "Unavailable options"
-      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {

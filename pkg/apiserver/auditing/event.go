@@ -13,8 +13,7 @@ type Event struct {
 	ObservedAt time.Time `json:"-"` // see MarshalJSON for why this is omitted
 
 	// Who/what performed the action.
-	SubjectName string `json:"subjectName"`
-	SubjectUID  string `json:"subjectUID"`
+	SubjectUID string `json:"subjectUID"`
 
 	// What was performed.
 	Verb string `json:"verb"`
@@ -54,7 +53,6 @@ func (e Event) KVPairs() []any {
 		"audit", true,
 		"namespace", e.Namespace,
 		"observedAt", e.ObservedAt.UTC().Format(time.RFC3339Nano),
-		"subjectName", e.SubjectName,
 		"subjectUID", e.SubjectUID,
 		"verb", e.Verb,
 		"object", e.Object,
