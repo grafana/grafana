@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/services"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -146,9 +148,14 @@ type ModuleServer struct {
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
 
+	// grpcServer is the shared gRPC server used by modules that need to expose gRPC services
+	grpcServer *grpcserver.DSKitService
+
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
+	reg              prometheus.Registerer
+	tracer           trace.Tracer
 }
 
 // init initializes the server and its services.
@@ -190,6 +197,17 @@ func (s *ModuleServer) Run() error {
 		return s.initInstrumentationServer()
 	})
 
+	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
+		switch {
+		case m.IsModuleEnabled(modules.SearchServerDistributor),
+			m.IsModuleEnabled(modules.SearchServer),
+			m.IsModuleEnabled(modules.StorageServer):
+			return s.initGRPCServer()
+		default:
+			return services.NewBasicService(nil, nil, nil).WithName(modules.GRPCServer), nil
+		}
+	})
+
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, s.initSearchServerDistributor)
@@ -208,19 +226,25 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		grpcService, err := sql.ProvideUnifiedStorageGRPCService(s.cfg, s.features, s.registerer)
-		if err != nil {
-			return nil, err
-		}
+		var svc sql.UnifiedStorageGrpcService
+		var err error
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
 			docBuilders, err := InitializeDocumentBuilders(s.cfg)
 			if err != nil {
 				return nil, err
 			}
-			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcService, s.storageBackend, s.searchClient)
+			svc, err = sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+		} else {
+			svc, err = sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcService, s.storageBackend, s.searchClient)
+		if err != nil {
+			return nil, err
+		}
+		if err := svc.RegisterGRPCServices(s.grpcServer.GetServer()); err != nil {
+			return nil, err
+		}
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -228,11 +252,14 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		grpcService, err := sql.ProvideUnifiedStorageGRPCService(s.cfg, s.features, s.registerer)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, grpcService, s.storageBackend)
+		if err := svc.RegisterGRPCServices(s.grpcServer.GetServer()); err != nil {
+			return nil, err
+		}
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

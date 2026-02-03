@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
@@ -32,4 +33,10 @@ func ProvideReflectionService(cfg *setting.Cfg, grpcServerProvider Provider) (*R
 		cfg:              cfg,
 		reflectionServer: re,
 	}, nil
+}
+
+// RegisterReflection registers the reflection service on the provided gRPC server.
+func RegisterReflection(srv *grpc.Server) {
+	re := &reflectionServer{reflection.NewServer(reflection.ServerOptions{Services: srv})}
+	grpc_reflection_v1alpha.RegisterServerReflectionServer(srv, re)
 }

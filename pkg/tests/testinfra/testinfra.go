@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -135,12 +137,17 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
+	var grpcService *grpcserver.DSKitService
 	if runstore {
-		grpcService, grpcErr := sql.ProvideUnifiedStorageGRPCService(env.Cfg, env.FeatureToggles, prometheus.NewPedanticRegistry())
+		tracer := otel.Tracer("test-grpc-server")
+		handler, grpcErr := grpcserver.ProvideService(env.Cfg, env.FeatureToggles, nil, tracer, prometheus.NewPedanticRegistry())
 		require.NoError(t, grpcErr)
+		grpcService = grpcserver.ProvideDSKitService(handler, "test-grpc-server")
+
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, grpcService, nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 		require.NoError(t, err)
+		require.NoError(t, storage.RegisterGRPCServices(grpcService.GetServer()))
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
 		require.NoError(t, err)
@@ -148,7 +155,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		require.NoError(t, err)
 
 		require.NoError(t, err)
-		t.Logf("Unified storage running on %s", storage.GetAddress())
+		t.Logf("Unified storage running on %s", grpcService.GetAddress())
 	}
 
 	go func() {
