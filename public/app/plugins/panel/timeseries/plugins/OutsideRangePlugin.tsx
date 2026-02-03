@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useMemo, useRef } from 'react';
+import { useLayoutEffect, useState, useMemo } from 'react';
 import uPlot, { Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
@@ -10,31 +10,33 @@ interface ThresholdControlsPluginProps {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-const areAllNonTimeValuesNullAtIndex = (values: Array<uPlot['data'][1]>, idx: number, cache: boolean[]) => {
-  if (cache[idx] !== undefined) {
-    return cache[idx];
-  }
-  const isNull = values.every((v) => v[idx] == null);
-  cache[idx] = isNull;
-  return isNull;
-};
-
 export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
   const [timeValues, setTimeValues] = useState<uPlot['data'][0]>([]);
   const [nonTimeValues, setNonTimeValues] = useState<Array<uPlot['data'][1]>>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
-
-  // store this as a ref so it can be reset when setScale is called
-  const memoCache = useRef<boolean[]>([]);
 
   useLayoutEffect(() => {
     config.addHook('setScale', (u) => {
       setTimeValues(u.data?.[0] ?? []);
       setNonTimeValues(u.data?.slice(1) ?? []);
       setTimeRange(u.scales['x'] ?? undefined);
-      memoCache.current = [];
     });
   }, [config]);
+
+  /**
+   * returns true if all non-time series are null at the given index
+   */
+  const allValuesNullAtIndex = useMemo(() => {
+    const cache: boolean[] = [];
+    return (idx: number): boolean => {
+      if (cache[idx] !== undefined) {
+        return cache[idx];
+      }
+      const isNull = nonTimeValues.every((v) => v[idx] == null);
+      cache[idx] = isNull;
+      return isNull;
+    };
+  }, [nonTimeValues]);
 
   if (timeValues.length < 1 || !onChangeTimeRange) {
     return null;
@@ -48,19 +50,16 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
   let i = 0,
     j = timeValues.length - 1;
 
-  while (i <= j && areAllNonTimeValuesNullAtIndex(nonTimeValues, i, memoCache.current)) {
+  while (i <= j && allValuesNullAtIndex(i)) {
     i++;
   }
 
-  while (j >= 0 && areAllNonTimeValuesNullAtIndex(nonTimeValues, j, memoCache.current)) {
+  while (j >= 0 && allValuesNullAtIndex(j)) {
     j--;
   }
 
   // never found any non null values
-  if (
-    areAllNonTimeValuesNullAtIndex(nonTimeValues, i, memoCache.current) ||
-    areAllNonTimeValuesNullAtIndex(nonTimeValues, j, memoCache.current)
-  ) {
+  if (allValuesNullAtIndex(i) || allValuesNullAtIndex(j)) {
     return null;
   }
 

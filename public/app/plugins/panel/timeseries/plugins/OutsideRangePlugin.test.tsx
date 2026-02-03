@@ -155,6 +155,55 @@ describe('OutsideRangePlugin', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('should handle null value cache correctly', () => {
+    const { container } = render(<OutsideRangePlugin config={config} onChangeTimeRange={jest.fn()} />);
+
+    // shouldn't render because 2000 is inside the range
+    act(() => {
+      hooks.setScale({
+        data: [
+          [500, 1000, 1500, 2000],
+          [1, 2, 3, 4],
+        ],
+        scales: {
+          x: { time: true, min: 2000, max: 3000 },
+        },
+      } as unknown as uPlot);
+    });
+
+    expect(container).toBeEmptyDOMElement();
+
+    // should render because all points are outside the range
+    act(() => {
+      hooks.setScale({
+        data: [
+          [500, 1000, 1500, 2000],
+          [1, 2, 3, 4],
+        ],
+        scales: {
+          x: { time: true, min: 2500, max: 3500 },
+        },
+      } as unknown as uPlot);
+    });
+
+    expect(container).not.toBeEmptyDOMElement();
+
+    // shouldn't render because 2000 is inside the range
+    act(() => {
+      hooks.setScale({
+        data: [
+          [500, 1000, 1500, 2000],
+          [1, 2, 3, 4],
+        ],
+        scales: {
+          x: { time: true, min: 2000, max: 3000 },
+        },
+      } as unknown as uPlot);
+    });
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
   describe('single value cases', () => {
     it('should handle single time value outside range', async () => {
       const onChangeTimeRange = jest.fn();
