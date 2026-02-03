@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
 
@@ -149,24 +148,6 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
     });
 
-    it('should hide SQL expression card when datasourceUid is SHARED_DASHBOARD_QUERY', () => {
-      render(
-        <EmptyTransformationsMessage
-          onShowPicker={onShowPicker}
-          onGoToQueries={onGoToQueries}
-          onAddTransformation={onAddTransformation}
-          data={[]}
-          datasourceUid={SHARED_DASHBOARD_QUERY}
-          queries={[]}
-        />
-      );
-
-      // SQL card should not be shown for Dashboard datasource (frontend datasource)
-      expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
-      // But other transformation cards should still be shown
-      expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
-    });
-
     it('should hide SQL expression card for frontend datasources', () => {
       const mockGetInstanceSettings = jest.fn().mockReturnValue({
         uid: MOCK_DATA_SOURCE_UID,
@@ -194,6 +175,9 @@ describe('EmptyTransformationsMessage', () => {
 
       // SQL card should not be shown for frontend datasource
       expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
+
+      // But other transformation cards should still be shown
+      expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
     });
 
     it('should show SQL expression card for backend datasources', () => {

@@ -95,8 +95,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
     props.onShowPicker();
   };
 
-  // SQL expressions require backend datasources
-  // Hide the SQL card if all datasources are frontend-only (Dashboard, Mixed with all frontend datasources, etc.)
+  // Show the SQL Expression card if any datasource in the query set is a backend datasource.
   const showSqlCard =
     hasGoToQueries &&
     config.featureToggles.sqlExpressions &&
