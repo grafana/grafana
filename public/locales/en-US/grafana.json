@@ -6248,6 +6248,10 @@
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "description": "Add a panel to visualize your data",
+      "grid-selector": {
+        "auto": "Auto grid",
+        "custom": "Custom grid"
+      },
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
