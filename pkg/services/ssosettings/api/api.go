@@ -214,7 +214,7 @@ func (api *Api) patchProviderSettings(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
-	if body.Settings == nil || len(body.Settings) == 0 {
+	if len(body.Settings) == 0 {
 		return response.Error(http.StatusBadRequest, "At least one setting must be provided", nil)
 	}
 
