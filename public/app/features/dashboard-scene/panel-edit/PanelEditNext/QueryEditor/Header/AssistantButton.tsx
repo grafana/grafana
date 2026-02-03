@@ -3,15 +3,14 @@ import { DataQuery } from '@grafana/schema';
 import { QueryActionAssistantButton } from 'app/features/query/components/QueryActionAssistantButton';
 
 import { QueryEditorType } from '../../constants';
-import { useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface AssistantButtonProps {
   queries: DataQuery[];
 }
 
 export function AssistantButton({ queries }: AssistantButtonProps) {
-  const { datasource, dsSettings } = useDatasourceContext();
-  const { selectedQuery, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
 
   // Only show for queries (not expressions or transformations)
   if (cardType !== QueryEditorType.Query) {
@@ -19,15 +18,15 @@ export function AssistantButton({ queries }: AssistantButtonProps) {
   }
 
   // Require datasource settings and selected query
-  if (!dsSettings || !selectedQuery) {
+  if (!selectedQueryDsData?.dsSettings || !selectedQuery) {
     return null;
   }
 
   return (
     <QueryActionAssistantButton
       app={CoreApp.PanelEditor}
-      datasourceApi={datasource ?? null}
-      dataSourceInstanceSettings={dsSettings}
+      datasourceApi={selectedQueryDsData.datasource ?? null}
+      dataSourceInstanceSettings={selectedQueryDsData.dsSettings}
       queries={queries}
       query={selectedQuery}
     />

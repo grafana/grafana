@@ -5,7 +5,7 @@ import { DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { QueryEditorType } from '../../constants';
-import { useActionsContext, useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface SaveButtonProps {
   // Ref to the parent container for positioning/formatting the saved queries dropdown
@@ -14,9 +14,8 @@ interface SaveButtonProps {
 
 // TODO: Confirm this works as expected once we get the query content work completed
 export function SaveButton({ parentRef }: SaveButtonProps) {
-  const { datasource } = useDatasourceContext();
   const { queryLibraryEnabled, renderSavedQueryButtons, isEditingQuery, setIsEditingQuery } = useQueryLibraryContext();
-  const { selectedQuery, setSelectedQuery, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, setSelectedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
   const { updateSelectedQuery, runQueries } = useActionsContext();
 
   const onUpdateSuccess = useCallback(() => {
@@ -64,6 +63,8 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
   if (isEditingQuery) {
     return null;
   }
+
+  const datasource = selectedQueryDsData?.datasource;
 
   return renderSavedQueryButtons(
     {

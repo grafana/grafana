@@ -16,12 +16,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
 
 import { QueryEditorType } from '../../constants';
-import {
-  useActionsContext,
-  useDatasourceContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 interface QueryActionsMenuProps {
   app?: CoreApp;
@@ -32,7 +27,6 @@ interface QueryActionsMenuProps {
  * Handles duplicate, hide/show, plugin actions, help, and delete.
  */
 export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
-  const { dsSettings } = useDatasourceContext();
   const { queries, data } = useQueryRunnerContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide, addQuery } = useActionsContext();
   const {
@@ -66,12 +60,12 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
           queries,
           timeRange: data?.timeRange,
           onAddQuery: addQuery,
-          dataSource: dsSettings,
+          dataSource: selectedQueryDsData?.dsSettings,
           key: index,
         })
       )
       .filter(Boolean);
-  }, [selectedQuery, queries, data, app, dsSettings, addQuery]);
+  }, [selectedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
 
   // Adaptive telemetry plugin extensions
   const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
