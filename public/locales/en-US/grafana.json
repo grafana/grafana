@@ -1619,27 +1619,6 @@
         "label": "Data source",
         "required-message": "Please select a data source"
       },
-      "dry-run": {
-        "btn-cancel": "Cancel",
-        "btn-close": "Close",
-        "btn-continue": "Continue",
-        "btn-continue-anyway": "Continue anyway",
-        "error-help": "Please fix the configuration errors and try again.",
-        "error-title": "Configuration error",
-        "error-unknown": "An unknown error occurred",
-        "loading-text": "Checking your Alertmanager configuration for conflicts...",
-        "new-name": "New name",
-        "original-name": "Original name",
-        "renamed-receivers": "Renamed receivers",
-        "renamed-time-intervals": "Renamed time intervals",
-        "success-text": "Your Alertmanager configuration is valid and ready to be imported. No conflicts were detected.",
-        "title-error": "Validation failed",
-        "title-loading": "Validating configuration...",
-        "title-success": "Validation successful",
-        "title-warning": "Validation passed with warnings",
-        "warning-text": "The following resources have names that conflict with existing resources in Grafana. They will be renamed automatically during import.",
-        "warning-title": "Some resources will be renamed"
-      },
       "error": "Failed to import resources",
       "group": {
         "description": "Type to search for an existing group",
@@ -1799,6 +1778,10 @@
       },
       "wizard": {
         "cancel": "Cancel",
+        "cancel-confirm-body": "Are you sure you want to cancel? All your progress will be lost.",
+        "cancel-confirm-no": "Dismiss",
+        "cancel-confirm-title": "Cancel import?",
+        "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
