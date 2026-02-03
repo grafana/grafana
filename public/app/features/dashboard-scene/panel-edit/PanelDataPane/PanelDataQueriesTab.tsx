@@ -370,7 +370,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
 
   // Determine if SQL expressions should be disabled (for frontend-only datasources)
   const disableSqlExpression = useMemo(() => {
-    return hasBackendDatasource({ datasourceUid: datasourceState?.uid, queries });
+    return !hasBackendDatasource({ datasourceUid: datasourceState?.uid, queries });
   }, [datasourceState?.uid, queries]);
 
   if (!datasource || !dsSettings || !data) {
