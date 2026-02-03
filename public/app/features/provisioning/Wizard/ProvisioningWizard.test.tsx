@@ -486,8 +486,7 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      expect(await screen.findByRole('alert')).toBeInTheDocument();
-      expect(await screen.findByText('Repository request failed')).toBeInTheDocument();
+      expect(await screen.findByRole('alert', { name: 'Repository request failed' })).toBeInTheDocument();
 
       // Still on connection step (now step 2)
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();

@@ -68,16 +68,16 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 	teamRef := teamRefFromRequirements(req.Options.Fields)
 	if subjectUID == "" && teamRef == "" {
 		return nil, fmt.Errorf("missing required field filters: %q or %q",
-			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_SUBJECT_NAME,
-			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_TEAM_REF,
+			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_SUBJECT,
+			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_TEAM,
 		)
 	}
 
 	fields := req.Fields
 	if len(fields) == 0 {
 		fields = []string{
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 		}
@@ -144,13 +144,13 @@ func (c *LegacyTeamBindingSearchClient) RebuildIndexes(ctx context.Context, in *
 }
 
 func subjectUIDFromRequirements(reqs []*resourcepb.Requirement) string {
-	subjectUIDKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME // fields.subject_name
+	subjectUIDKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT // fields.subject_name
 
 	return getFieldValueFromRequirements(reqs, subjectUIDKey)
 }
 
 func teamRefFromRequirements(reqs []*resourcepb.Requirement) string {
-	teamRefKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF // fields.team_ref
+	teamRefKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM // fields.team_ref
 
 	return getFieldValueFromRequirements(reqs, teamRefKey)
 }
@@ -187,9 +187,9 @@ func teamBindingCells(t legacy.TeamMember, fields []string) [][]byte {
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
 		switch name {
-		case builders.TEAM_BINDING_SUBJECT_NAME:
+		case builders.TEAM_BINDING_SUBJECT:
 			cells = append(cells, []byte(t.UserUID))
-		case builders.TEAM_BINDING_TEAM_REF:
+		case builders.TEAM_BINDING_TEAM:
 			cells = append(cells, []byte(t.TeamUID))
 		case builders.TEAM_BINDING_PERMISSION:
 			cells = append(cells, []byte(string(common.MapTeamPermission(t.Permission))))

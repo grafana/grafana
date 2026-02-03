@@ -3772,6 +3772,9 @@
       "manage-permissions": "Zarządzaj uprawnieniami",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "Wybierz folder: aktualnie wybrano {{ label }}",
       "button-label": "Wybierz folder",
@@ -4985,6 +4988,7 @@
       },
       "variables": {
         "add-variable": "Dodaj zmienną",
+        "reorder": "",
         "select-type": "Wybierz typ zmiennej",
         "select-type-card-tooltip": "Kliknij aby wybrać typ",
         "select-variable": "Wybierz"
@@ -5852,7 +5856,7 @@
       "load": "Załaduj"
     },
     "gcom-field": {
-      "label": "Znajdź i zaimportuj pulpity do typowych zastosowań w <1></1>",
+      "label": "",
       "load-button": "Załaduj",
       "placeholder": "Adres URL lub identyfikator pulpitu Grafana.com",
       "validation-required": "Wymagany jest adres URL lub identyfikator pulpitu Grafana"
@@ -6361,6 +6365,11 @@
         "remove-panel": "Usuń panel"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -6730,6 +6739,16 @@
         }
       },
       "label": "Ukryj"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Typ zmiennej"
@@ -10438,9 +10457,15 @@
       "options": "Opcje"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importowanie pulpitu ze strony <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Opublikowane przez",
       "updated-on": "Data aktualizacji"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Czy na pewno chcesz usunąć „{{snapshotToRemove}}”?",
@@ -11310,6 +11335,9 @@
     "noOptionsMessage-no-organizations-found": "Nie znaleziono organizacji",
     "select-placeholder": "Wybierz organizację"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edytuj tytuł"
@@ -11807,6 +11835,7 @@
       "text-installed": "Zainstalowane"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Zależność Grafany",
       "installed-version": "{{versionNumber}} (zainstalowana wersja)",
       "latest-compatible-version": "{{versionNumber}} (najnowsza zgodna wersja)",
@@ -11997,6 +12026,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -12005,6 +12038,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12510,23 +12544,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Spowoduje to usunięcie konfiguracji repozytorium i utracisz wszystkie postępy. Czy na pewno chcesz odrzucić zmiany?",
         "confirm": "Tak, odrzuć",
         "dismiss": "Pracuj dalej",
         "title": "Odrzucić konfigurację repozytorium?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12538,21 +12576,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Wybierz, co chcesz zsynchronizować",
       "step-configure-repo": "",
       "step-connect": "Połącz",
       "step-finish": "Wybierz dodatkowe ustawienia",
-      "step-github-app": "",
       "step-synchronize": "Synchronizuj z zewnętrzną pamięcią masową",
       "sync-description": "Zsynchronizuj zasoby z zewnętrzną pamięcią masową. Po tym jednorazowym kroku wszystkie przyszłe aktualizacje zostaną automatycznie zapisane w repozytorium i ponownie aprowizowane w instancji.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Wybierz, co chcesz zsynchronizować",
       "title-configure-repo": "",
       "title-connect": "Połączenie z zewnętrzną pamięcią masową",
       "title-finish": "Wybierz dodatkowe ustawienia",
-      "title-github-app": "",
       "title-synchronize": "Synchronizuj z zewnętrzną pamięcią masową"
     },
     "wizard-content": {

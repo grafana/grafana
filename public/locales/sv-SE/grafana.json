@@ -3740,6 +3740,9 @@
       "manage-permissions": "Hantera behörigheter",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "Välj mapp: {{ label }} för närvarande vald",
       "button-label": "Välj mapp",
@@ -4947,6 +4950,7 @@
       },
       "variables": {
         "add-variable": "Lägg till variabel",
+        "reorder": "",
         "select-type": "Välj typ av variabel",
         "select-type-card-tooltip": "Klicka för att välja typ",
         "select-variable": "Välj"
@@ -5812,7 +5816,7 @@
       "load": "Ladda"
     },
     "gcom-field": {
-      "label": "Hitta och importera instrumentpaneler för vanliga applikationer på <1></1>",
+      "label": "",
       "load-button": "Ladda",
       "placeholder": "URL eller ID för Grafana.com instrumentpanel",
       "validation-required": "URL eller ID för Grafana instrumentpanel krävs"
@@ -6317,6 +6321,11 @@
         "remove-panel": "Ta bort panel"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Varning"
     },
@@ -6684,6 +6693,16 @@
         }
       },
       "label": "Dölj"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Variabeltyp"
@@ -10350,9 +10369,15 @@
       "options": "Alternativ"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importerar instrumentpanel från <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Publicerad av",
       "updated-on": "Uppdaterat den"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Är du säker på att du vill radera ”{{snapshotToRemove}}”?",
@@ -11216,6 +11241,9 @@
     "noOptionsMessage-no-organizations-found": "Inga organisationer hittades",
     "select-placeholder": "Välj organisation"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Redigera rubrik"
@@ -11713,6 +11741,7 @@
       "text-installed": "Installerad"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Grafana-beroende",
       "installed-version": "{{versionNumber}} (installerad version)",
       "latest-compatible-version": "{{versionNumber}} (senaste kompatibla versionen)",
@@ -11897,6 +11926,10 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -11905,6 +11938,7 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12404,23 +12438,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Detta kommer att radera lagringsplatskonfigurationen och du kommer att förlora alla ändringar. Är du säker på att du vill kassera dina ändringar?",
         "confirm": "Ja, kassera",
         "dismiss": "Fortsätta jobba",
         "title": "Kassera lagringsplatsinställningen?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12432,21 +12470,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Välj vad du vill synkronisera",
       "step-configure-repo": "",
       "step-connect": "Anslut",
       "step-finish": "Välj ytterligare inställningar",
-      "step-github-app": "",
       "step-synchronize": "Synkronisera med extern lagring",
       "sync-description": "Synkronisera resurser med extern lagring. Efter det här engångssteget sparas alla framtida uppdateringar automatiskt på lagringsplatsen och provisioneras tillbaka till instansen.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Välj vad du vill synkronisera",
       "title-configure-repo": "",
       "title-connect": "Anslut till extern lagring",
       "title-finish": "Välj ytterligare inställningar",
-      "title-github-app": "",
       "title-synchronize": "Synkronisera med extern lagring"
     },
     "wizard-content": {
