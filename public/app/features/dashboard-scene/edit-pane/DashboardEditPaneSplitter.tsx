@@ -58,7 +58,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-  const isUserActive = useUserActivity(1000);
+  const isUserActive = useUserActivity(10000);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
