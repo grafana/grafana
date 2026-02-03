@@ -5,7 +5,7 @@ import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 describe('Registry.asObservableSlice ', () => {
   describe('Shared behaviour', () => {
     it('should handle selecting a non-existent key that later gets added', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = new AddedComponentsRegistry([]);
       const extensionPointId = 'grafana/alerting/home';
       const subscribeCallback = jest.fn();
 
@@ -35,7 +35,7 @@ describe('Registry.asObservableSlice ', () => {
     });
 
     it('should handle multiple subscribers independently', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = new AddedComponentsRegistry([]);
       const extensionPointId1 = 'grafana/alerting/home';
       const extensionPointId2 = 'grafana/other/point';
       const callback1 = jest.fn();
