@@ -225,23 +225,13 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 
 	// First clear everything in the transaction
-	if setting.RebuildCollection {
-		for _, key := range setting.Collection {
-			summary, err := bulk.deleteCollection(key)
-			if err != nil {
-				return rollbackWithError(err)
-			}
-			summaries[resource.NSGR(key)] = summary
-			rsp.Summary = append(rsp.Summary, summary)
+	for _, key := range setting.Collection {
+		summary, err := bulk.deleteCollection(key)
+		if err != nil {
+			return rollbackWithError(err)
 		}
-	} else {
-		for _, key := range setting.Collection {
-			summaries[resource.NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			}
-		}
+		summaries[resource.NSGR(key)] = summary
+		rsp.Summary = append(rsp.Summary, summary)
 	}
 
 	obj := &unstructured.Unstructured{}
