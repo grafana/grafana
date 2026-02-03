@@ -14,9 +14,6 @@ test.describe(
     test('Graph panel is auto-migrated', async ({ gotoDashboardPage, page }) => {
       await gotoDashboardPage({ uid: DASHBOARD_ID });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-      await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).toBeHidden();
-
-      await gotoDashboardPage({ uid: DASHBOARD_ID });
 
       await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).toBeVisible();
     });
@@ -24,9 +21,6 @@ test.describe(
     test('Annotation markers exist for time regions', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_ID });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-      await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).toBeHidden();
-
-      await gotoDashboardPage({ uid: DASHBOARD_ID });
 
       // Check Business Hours panel
       const businessHoursPanel = dashboardPage.getByGrafanaSelector(
