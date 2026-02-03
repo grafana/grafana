@@ -18,15 +18,18 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (ms *ModuleServer) initGRPCServer() (services.Service, error) {
-	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
-	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := NewAuthenticatorWithFallback(ms.cfg, ms.registerer, ms.tracer, func(ctx context.Context) (context.Context, error) {
-		auth := grpc.Authenticator{Tracer: ms.tracer}
-		return auth.Authenticate(ctx)
-	})
+func (ms *ModuleServer) initGRPCServer(authenticatorEnabled bool) (services.Service, error) {
+	var authn interceptors.AuthenticatorFunc
+	if authenticatorEnabled {
+		// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+		// grpcutils.NewGrpcAuthenticator should be used instead.
+		authn = NewAuthenticatorWithFallback(ms.cfg, ms.registerer, ms.tracer, func(ctx context.Context) (context.Context, error) {
+			auth := grpc.Authenticator{Tracer: ms.tracer}
+			return auth.Authenticate(ctx)
+		})
+	}
 
-	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, interceptors.AuthenticatorFunc(authn), ms.tracer, ms.registerer)
+	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, authn, ms.tracer, ms.registerer)
 	if err != nil {
 		return nil, err
 	}

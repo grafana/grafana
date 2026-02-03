@@ -199,11 +199,14 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
+		authenticatorEnabled := true
 		switch {
-		case m.IsModuleEnabled(modules.SearchServerDistributor),
-			m.IsModuleEnabled(modules.SearchServer),
-			m.IsModuleEnabled(modules.StorageServer):
-			return s.initGRPCServer()
+		case m.IsModuleEnabled(modules.SearchServerDistributor):
+			// Distributor forwards to search
+			authenticatorEnabled = false
+			return s.initGRPCServer(authenticatorEnabled)
+		case m.IsModuleEnabled(modules.StorageServer), m.IsModuleEnabled(modules.SearchServer):
+			return s.initGRPCServer(authenticatorEnabled)
 		default:
 			return services.NewBasicService(nil, nil, nil).WithName(modules.GRPCServer), nil
 		}
