@@ -364,7 +364,7 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	return patchOperations, nil
 }
 
-// isQuotaExceeded checks if the given conditions has
+// isQuotaExceeded checks if the given conditions have a RepositoryQuotaExceeded one.
 func isQuotaExceeded(conditions []v1.Condition) bool {
 	for _, condition := range conditions {
 		if condition.Type == provisioning.ConditionTypeQuota {
