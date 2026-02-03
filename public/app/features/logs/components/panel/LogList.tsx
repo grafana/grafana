@@ -23,7 +23,7 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
+import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
