@@ -12,10 +12,10 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Git Sync limitations and known issues
+title: Usage and performance limitations
 menuTitle: Limits and known issues
 weight: 110
-canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/known-issues/
+canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/usage-limits/
 refs:
   roles-and-permissions:
     - pattern: /docs/grafana/
@@ -25,7 +25,7 @@ refs:
 aliases:
 ---
 
-# Git Sync limitations and known issues
+# Usage and performance limitations
 
 {{< admonition type="caution" >}}
 
