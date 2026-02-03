@@ -8,7 +8,7 @@ import (
 
 func TestExpandJinja2Summary_BasicVariables(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{
+		Labels: Labels{
 			"pod":       "web-1",
 			"namespace": "prod",
 		},
@@ -22,7 +22,7 @@ func TestExpandJinja2Summary_BasicVariables(t *testing.T) {
 
 func TestExpandJinja2Summary_NoTemplateMarkers(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
+		Labels: Labels{"pod": "web-1"},
 	}
 
 	result, err := ExpandJinja2Summary("Plain text without markers", ctx)
@@ -33,7 +33,7 @@ func TestExpandJinja2Summary_NoTemplateMarkers(t *testing.T) {
 
 func TestExpandJinja2Summary_InvalidSyntax(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
+		Labels: Labels{"pod": "web-1"},
 	}
 
 	_, err := ExpandJinja2Summary("{{ invalid syntax {% ", ctx)
@@ -45,7 +45,7 @@ func TestExpandJinja2Summary_InvalidSyntax(t *testing.T) {
 
 func TestExpandJinja2Summary_MissingLabel(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
+		Labels: Labels{"pod": "web-1"},
 	}
 
 	result, err := ExpandJinja2Summary("{{ labels.nonexistent }}{{ alert.labels.nonexistent }}", ctx)
@@ -56,7 +56,7 @@ func TestExpandJinja2Summary_MissingLabel(t *testing.T) {
 
 func TestExpandJinja2Summary_EmptyLabels(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{},
+		Labels: Labels{},
 	}
 
 	result, err := ExpandJinja2Summary("{{ labels.pod }}{{ alert.labels.pod }}", ctx)
@@ -76,7 +76,7 @@ func TestExpandJinja2Summary_NilLabels(t *testing.T) {
 
 func TestExpandJinja2Summary_SpecialCharactersInLabels(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{
+		Labels: Labels{
 			"pod": "web-1 <test> & \"special\"",
 		},
 	}
@@ -89,7 +89,7 @@ func TestExpandJinja2Summary_SpecialCharactersInLabels(t *testing.T) {
 
 func TestExpandJinja2Summary_MultiplePlaceholders(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{
+		Labels: Labels{
 			"pod":       "web-1",
 			"namespace": "prod",
 			"service":   "api",
@@ -106,7 +106,7 @@ func TestExpandJinja2Summary_MultiplePlaceholders(t *testing.T) {
 
 func TestExpandJinja2Summary_EmptyTemplate(t *testing.T) {
 	ctx := SummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
+		Labels: Labels{"pod": "web-1"},
 	}
 
 	result, err := ExpandJinja2Summary("", ctx)
@@ -219,7 +219,7 @@ func TestExpandJinja2Summary_AllFields(t *testing.T) {
 	ctx := SummaryContext{
 		MonitorName: "High CPU",
 		Severity:    "warning",
-		Labels: map[string]string{
+		Labels: Labels{
 			"pod":       "web-1",
 			"namespace": "prod",
 		},
@@ -236,4 +236,47 @@ func TestExpandJinja2Summary_AllFields(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "[warning] High CPU(High CPU): web-1(web-1) in prod(prod) - Alerting (85.500000/80.000000) query=cpu > 80 by=ops-team fingerprint=abc123(abc123)", result)
+}
+
+func TestExpandJinja2Summary_LabelsString(t *testing.T) {
+	ctx := SummaryContext{
+		Labels: Labels{
+			"namespace": "prod",
+			"pod":       "web-1",
+			"service":   "api",
+		},
+	}
+
+	result, err := ExpandJinja2Summary("Labels: {{ labels }}", ctx)
+
+	require.NoError(t, err)
+	require.Equal(t, "Labels: namespace=prod, pod=web-1, service=api", result)
+
+	result, err = ExpandJinja2Summary("Labels: {{ alert.labels }}", ctx)
+
+	require.NoError(t, err)
+	require.Equal(t, "Labels: namespace=prod, pod=web-1, service=api", result)
+}
+
+func TestExpandJinja2Summary_LabelsForLoop(t *testing.T) {
+	ctx := SummaryContext{
+		Labels: Labels{
+			"pod":       "web-1",
+			"namespace": "prod",
+		},
+	}
+
+	tmpl := `{% for label in labels %}{{ label }}={{ labels[label] }} {% endfor %}`
+	result, err := ExpandJinja2Summary(tmpl, ctx)
+
+	require.NoError(t, err)
+	require.Contains(t, result, "namespace=prod")
+	require.Contains(t, result, "pod=web-1")
+
+	tmpl = `{% for key, val in alert.labels %}{{ key }}={{ val }} {% endfor %}`
+	result, err = ExpandJinja2Summary(tmpl, ctx)
+
+	require.NoError(t, err)
+	require.Contains(t, result, "namespace=prod")
+	require.Contains(t, result, "pod=web-1")
 }

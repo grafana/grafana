@@ -16,7 +16,7 @@ func init() {
 type SummaryContext struct {
 	MonitorName string
 	Severity    string
-	Labels      map[string]string
+	Labels      Labels
 	Fingerprint string
 	Value       float64
 	Threshold   float64

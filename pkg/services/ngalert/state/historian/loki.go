@@ -349,7 +349,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			template.SummaryContext{
 				MonitorName: rule.Title,
 				Severity:    labelMap[models.GCSeverityLabel],
-				Labels:      labelMap,
+				Labels:      template.Labels(labelMap),
 				Fingerprint: fingerprint,
 				Value:       state.State.Values[models.GCThresholdInputQueryKey],
 				Threshold:   state.State.Values[models.GCThreshold1Key],
