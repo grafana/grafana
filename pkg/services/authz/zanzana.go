@@ -85,6 +85,11 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 
 // ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
 func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Server, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return zServer.NewNoopServer(), nil
+	}
+
 	logger := log.New("zanzana.server")
 
 	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, db, logger, tracer, reg)
