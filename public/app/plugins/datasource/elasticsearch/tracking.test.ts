@@ -89,7 +89,7 @@ describe('trackQuery', () => {
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_elasticsearch_query_executed',
       expect.objectContaining({
-        editor_type: 'code'
+        editor_type: 'code',
       })
     );
   });
