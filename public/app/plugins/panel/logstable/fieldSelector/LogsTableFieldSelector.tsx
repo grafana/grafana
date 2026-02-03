@@ -13,10 +13,10 @@ import {
   FieldSelector,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/fieldSelectorUtils';
-import { getFieldsWithStats } from 'app/features/logs/components/fieldSelector/getFieldsWithStats';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
 import { getSuggestedFields } from './getSuggestedFields';
+import { getTableFieldsWithStats } from './getTableFieldsWithStats';
 
 const SETTING_KEY_ROOT = 'grafana.panel.logs-table';
 
@@ -35,7 +35,7 @@ const logsFieldSelectorWrapperStyles = {
 
 interface LogsTableFieldSelectorProps {
   columnsWithMeta: FieldNameMetaStore;
-  dataFrames: DataFrame[];
+  dataFrame: DataFrame;
   sidebarWidth: number;
   sidebarHeight: number;
   maxWidth: number;
@@ -54,7 +54,7 @@ interface LogsTableFieldSelectorProps {
 export const LogsTableFieldSelector = ({
   columnsWithMeta,
   clear: clearProp,
-  dataFrames,
+  dataFrame,
   reorder,
   setSidebarWidth,
   sidebarWidth,
@@ -133,9 +133,10 @@ export const LogsTableFieldSelector = ({
   );
 
   const suggestedFields = useMemo(() => {
-    return getSuggestedFields(displayedColumns, defaultColumns);
-  }, [defaultColumns, displayedColumns]);
-  const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
+    return getSuggestedFields(dataFrame, displayedColumns, defaultColumns);
+  }, [dataFrame, defaultColumns, displayedColumns]);
+
+  const fields = useMemo(() => getTableFieldsWithStats(dataFrame), [dataFrame]);
 
   if (sidebarHeight === 0) {
     return null;

@@ -83,7 +83,7 @@ export function LogsTableFields({
             onDisplayedFieldsChange(defaultDisplayedFields);
           }}
           columnsWithMeta={columnsWithMeta}
-          dataFrames={[dataFrame]}
+          dataFrame={dataFrame}
           reorder={onDisplayedFieldsChange}
           setSidebarWidth={onSidebarWidthChange}
           sidebarWidth={sidebarWidth}
