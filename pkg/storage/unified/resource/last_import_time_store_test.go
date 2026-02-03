@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -24,12 +23,12 @@ func TestLastImportStore(t *testing.T) {
 }
 
 func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupResource bool) {
-	store := newLastImportStore(kv, 10*time.Minute, log.NewNopLogger())
+	const maxLastImportTimeAge = 10 * time.Minute
+
+	store := newLastImportStore(kv)
 
 	dnsr := NamespacedResource{Namespace: "namespace", Group: "dashboards", Resource: "dashboard"}
-
 	fnsr := NamespacedResource{Namespace: "namespace", Group: "folders", Resource: "folder"}
-
 	pnsr := NamespacedResource{Namespace: "namespace", Group: "playlists", Resource: "playlist"}
 
 	now := time.Now().Truncate(time.Second).UTC()
@@ -66,14 +65,18 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	}
 	require.Equal(t, expectedKeys, collectKeys(t, store.kv.Keys(t.Context(), lastImportTimesSection, ListOptions{})))
 
-	expectedTimes := []ResourceLastImportTime{
-		{NamespacedResource: dnsr, LastImportTime: now.Add(2 * time.Minute)},
-		{NamespacedResource: fnsr, LastImportTime: now.Add(5 * time.Minute)},
+	expectedTimes := map[NamespacedResource]LastImportTimeKey{
+		dnsr: {Namespace: dnsr.Namespace, Group: dnsr.Group, Resource: dnsr.Resource, LastImportTime: now.Add(2 * time.Minute)},
+		fnsr: {Namespace: fnsr.Namespace, Group: fnsr.Group, Resource: fnsr.Resource, LastImportTime: now.Add(5 * time.Minute)},
 	}
 
-	times, err := store.ListLastImportTimes(t.Context())
+	times, _, err := store.ListLastImportTimes(t.Context(), maxLastImportTimeAge)
 	require.NoError(t, err)
-	require.ElementsMatch(t, expectedTimes, times)
+	require.Equal(t, expectedTimes, times)
+
+	deleted, err := store.CleanupLastImportTimes(t.Context(), maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.NotZero(t, deleted) // Deleted will be 1 for sqlkv, but 5 for regular KV.
 
 	// Verify that all other times were deleted.
 	expectedKeysAfterList := []string{

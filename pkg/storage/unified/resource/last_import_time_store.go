@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/atomic"
-
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
@@ -76,18 +73,11 @@ func ParseLastImportKey(key string) (LastImportTimeKey, error) {
 }
 
 type lastImportStore struct {
-	kv                         KV
-	lastImportTimeMaxAge       time.Duration // If not zero, this store will regularly remove times from "last import times" older than this.
-	lastImportTimeDeletionTime atomic.Time
-	logger                     log.Logger
+	kv KV
 }
 
-func newLastImportStore(kv KV, lastImportTimeMaxAge time.Duration, logger log.Logger) *lastImportStore {
-	return &lastImportStore{
-		kv:                   kv,
-		lastImportTimeMaxAge: lastImportTimeMaxAge,
-		logger:               logger,
-	}
+func newLastImportStore(kv KV) *lastImportStore {
+	return &lastImportStore{kv: kv}
 }
 
 func (s *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime) error {
@@ -110,16 +100,8 @@ func (s *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime)
 	return writer.Close()
 }
 
-const (
-	limitLastImportTimesDeletion = 10 * time.Minute
-	// Limit the number of deleted keys to avoid ListLastImportTimes calls being too slow.
-	maxDeletedImportTimes = 50
-)
-
-func (s *lastImportStore) ListLastImportTimes(ctx context.Context) ([]ResourceLastImportTime, error) {
-	toReturn := map[NamespacedResource]LastImportTimeKey{}
-	toDelete := []LastImportTimeKey(nil)
-
+func (s *lastImportStore) ListLastImportTimes(ctx context.Context, lastImportTimeMaxAge time.Duration) (valid map[NamespacedResource]LastImportTimeKey, toDelete []LastImportTimeKey, _ error) {
+	valid = map[NamespacedResource]LastImportTimeKey{}
 	now := time.Now()
 
 	for k, err := range s.kv.Keys(ctx, lastImportTimesSection, ListOptions{
@@ -127,52 +109,48 @@ func (s *lastImportStore) ListLastImportTimes(ctx context.Context) ([]ResourceLa
 		Limit: 0, // Get all.
 	}) {
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		key, err := ParseLastImportKey(k)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		if s.lastImportTimeMaxAge > 0 && now.Sub(key.LastImportTime) > s.lastImportTimeMaxAge {
+		if lastImportTimeMaxAge > 0 && now.Sub(key.LastImportTime) > lastImportTimeMaxAge {
 			// Too old import time, don't return this value, but delete it.
 			toDelete = append(toDelete, key)
 			continue
 		}
 
 		nsr := key.ToNamespacedResource()
-		prev, exists := toReturn[nsr]
+		prev, exists := valid[nsr]
 		if !exists || key.LastImportTime.After(prev.LastImportTime) {
 			if exists {
 				// Save previous value for deletion.
 				toDelete = append(toDelete, prev)
 			}
-			toReturn[nsr] = key
+			valid[nsr] = key
 		}
 	}
 
-	// Delete old or duplicate entries if enough time has passed since the last deletion.
-	if time.Since(s.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
-		deleted := 0
-		for i := 0; i < len(toDelete) && i < maxDeletedImportTimes; i++ {
-			err := s.kv.Delete(ctx, lastImportTimesSection, toDelete[i].String())
-			if err != nil {
-				s.logger.Warn("Failed to delete old last import times", "key", toDelete[i].String(), "err", err)
-			} else {
-				deleted++
-			}
-		}
-		s.lastImportTimeDeletionTime.Store(now)
-		if deleted > 0 {
-			s.logger.Info("Deleted old last import times", "keys", deleted)
-		}
+	return valid, toDelete, nil
+}
+
+func (s *lastImportStore) CleanupLastImportTimes(ctx context.Context, lastImportTimeMaxAge time.Duration) (int, error) {
+	_, obsolete, err := s.ListLastImportTimes(ctx, lastImportTimeMaxAge)
+	if err != nil {
+		return 0, err
 	}
 
-	// Convert toReturn to slice
-	result := make([]ResourceLastImportTime, 0, len(toReturn))
-	for _, key := range toReturn {
-		result = append(result, key.ToResourceLastImportTime())
+	deleted := 0
+	for i := 0; i < len(obsolete); i++ {
+		err := s.kv.Delete(ctx, lastImportTimesSection, obsolete[i].String())
+		if err != nil {
+			return 0, fmt.Errorf("failed to delete old last import time %s: %w", obsolete[i].String(), err)
+		} else {
+			deleted++
+		}
 	}
-	return result, nil
+	return deleted, nil
 }
