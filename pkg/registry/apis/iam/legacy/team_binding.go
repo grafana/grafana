@@ -64,6 +64,13 @@ func (r listTeamBindingsQuery) Validate() error {
 	return nil // TODO
 }
 
+func (r listTeamBindingsQuery) ExternalValue() bool {
+	if r.Query.External != nil {
+		return *r.Query.External
+	}
+	return false
+}
+
 func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) listTeamBindingsQuery {
 	return listTeamBindingsQuery{
 		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),

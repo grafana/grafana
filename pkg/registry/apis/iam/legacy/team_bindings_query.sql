@@ -16,8 +16,8 @@ WHERE
   {{- if .Query.Pagination.Continue }}
     AND tm.id >= {{ .Arg .Query.Pagination.Continue }}
   {{- end }}
-  {{- if .Query.External }}
-    AND tm.external = {{ .Arg .Query.External }}
+  {{- if ne .Query.External nil }}
+    AND tm.external = {{ .Arg .ExternalValue }}
   {{- end }}
 ORDER BY t.id ASC
 LIMIT {{ .Arg .Query.Pagination.Limit }};

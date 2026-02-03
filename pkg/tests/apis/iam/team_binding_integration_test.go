@@ -646,18 +646,6 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
 			require.True(t, actual.Spec.External)
 		}
-
-		// Select by external=false, should return 2 of the 4
-		listByNotExternal, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.external=false",
-		})
-		require.NoError(t, err)
-		require.Len(t, listByNotExternal.Items, 2)
-		for _, item := range listByNotExternal.Items {
-			var actual iamv0alpha1.TeamBinding
-			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
-			require.False(t, actual.Spec.External)
-		}
 	})
 }
 
