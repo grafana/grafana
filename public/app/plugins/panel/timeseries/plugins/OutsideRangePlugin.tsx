@@ -1,5 +1,6 @@
+import { FALSE } from 'ol/functions';
 import { useLayoutEffect, useState, useMemo } from 'react';
-import uPlot, { Scale } from 'uplot';
+import uPlot from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -11,15 +12,13 @@ interface ThresholdControlsPluginProps {
 }
 
 export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const [timeValues, setTimeValues] = useState<uPlot['data'][0]>([]);
-  const [nonTimeValues, setNonTimeValues] = useState<Array<uPlot['data'][1]>>([]);
-  const [timeRange, setTimeRange] = useState<Scale | undefined>();
+  const [data, setData] = useState<uPlot['data']>([[]]);
+  const [timeRange, setTimeRange] = useState<uPlot['scales']['x']>();
 
   useLayoutEffect(() => {
     config.addHook('setScale', (u) => {
-      setTimeValues(u.data?.[0] ?? []);
-      setNonTimeValues(u.data?.slice(1) ?? []);
-      setTimeRange(u.scales['x'] ?? undefined);
+      setData(u.data ?? [[]]);
+      setTimeRange(u.scales['x']);
     });
   }, [config]);
 
@@ -32,12 +31,19 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
       if (cache[idx] !== undefined) {
         return cache[idx];
       }
-      const isNull = nonTimeValues.every((v) => v[idx] == null);
+      let isNull = true;
+      for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
+        if (data[seriesIdx][idx] != null) {
+          isNull = false;
+          break;
+        }
+      }
       cache[idx] = isNull;
       return isNull;
     };
-  }, [nonTimeValues]);
+  }, [data]);
 
+  const timeValues = data[0];
   if (timeValues.length < 1 || !onChangeTimeRange) {
     return null;
   }
