@@ -15,8 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// sqlAdapter adapts the legacy annotations.Repository to the new Store interface.
+// This is the bridge between OLD (pkg/services/annotations) and NEW (Store interface) systems.
+//
+// Responsibilities:
+//   - Implements Store interface by wrapping annotations.Repository
+//   - Converts between v0alpha1.Annotation (K8s-style) ↔ annotations.ItemDTO (legacy)
+//   - Enables dual-writer pattern during migration
+//
+// Once migration is complete and all code uses Store interface, this adapter can be removed.
 type sqlAdapter struct {
-	repo     annotations.Repository
+	repo     annotations.Repository // OLD Grafana annotation service
 	cleaner  annotations.Cleaner
 	nsMapper request.NamespaceMapper
 	cfg      *setting.Cfg
@@ -190,6 +199,8 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 	return tags, nil
 }
 
+// toK8sResource converts legacy ItemDTO → new K8s-style Annotation resource.
+// This is where the data model translation happens: OLD format → NEW format.
 func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) *annotationV0.Annotation {
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
@@ -216,6 +227,8 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 	return anno
 }
 
+// fromK8sResource converts new K8s-style Annotation → legacy Item for saving to old Repository.
+// This is the reverse translation: NEW format → OLD format.
 func (a *sqlAdapter) fromK8sResource(anno *annotationV0.Annotation) *annotations.Item {
 	item := &annotations.Item{
 		Text:  anno.Spec.Text,
