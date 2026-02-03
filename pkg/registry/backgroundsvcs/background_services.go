@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -74,6 +75,7 @@ func ProvideBackgroundServiceRegistry(
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
 	installSync installsync.Syncer,
+	zanzanaService *authz.EmbeddedZanzanaService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -122,6 +124,7 @@ func ProvideBackgroundServiceRegistry(
 		secretsGarbageCollectionWorker,
 		fixedRolesLoader,
 		installSync,
+		zanzanaService,
 	)
 }
 

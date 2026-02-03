@@ -95,6 +95,28 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 	return srv, nil
 }
 
+// ProvideEmbeddedZanzanaService creates a background service wrapper for the embedded zanzana server
+// to ensure proper cleanup when Grafana shuts down.
+func ProvideEmbeddedZanzanaService(server zanzana.Server) *EmbeddedZanzanaService {
+	return &EmbeddedZanzanaService{
+		server: server,
+	}
+}
+
+// EmbeddedZanzanaService wraps the embedded zanzana server as a background service
+// to ensure Close() is called during shutdown.
+type EmbeddedZanzanaService struct {
+	server zanzana.Server
+}
+
+func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
+	// The zanzana server doesn't have a blocking Run method,
+	// so we just wait for shutdown
+	<-ctx.Done()
+	s.server.Close()
+	return nil
+}
+
 // ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
 // Client connects to a remote Zanzana server specified in the configuration.
 func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
@@ -291,8 +313,8 @@ func (z *Zanzana) running(ctx context.Context) error {
 func (z *Zanzana) stopping(err error) error {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
-		z.zanzanaServer.Close()
 	}
+	z.zanzanaServer.Close()
 	return nil
 }
 
