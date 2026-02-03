@@ -23,7 +23,7 @@ describe('OutsideRangePlugin', () => {
     return render(<OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />);
   }
 
-  function applyScale(data: unknown[][], scales: unknown) {
+  function applyScale(data: uPlot['data'] | undefined, scales: uPlot['scales']) {
     act(() => {
       hooks.setScale({
         data,
@@ -174,6 +174,12 @@ describe('OutsideRangePlugin', () => {
       ],
       { x: { time: true, min: 2000, max: 3000 } }
     );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('should not fail if data is missing', () => {
+    const { container } = renderPlugin();
+    applyScale(undefined, {});
     expect(container).toBeEmptyDOMElement();
   });
 });
