@@ -22,12 +22,15 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -56,12 +59,11 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
-import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
-import { historySrv } from '../settings/version-history/HistorySrv';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -447,19 +449,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
+    const api = getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
-    let versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
+    const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
     if (!Number.isInteger(versionRsp.version)) {
       return false;
     }
 
-    const dashboardDTO: DashboardDTO = {
-      dashboard: new DashboardModel(version.data),
-      meta: this.state.meta,
-    };
+    let dashScene: DashboardScene;
 
-    const dashScene = transformSaveModelToScene(dashboardDTO);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
+      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      dashScene = transformSaveModelSchemaV2ToScene(dto);
+    } else {
+      const dashboardDTO: DashboardDTO = {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
+        dashboard: new DashboardModel(version.data as Dashboard),
+        meta: this.state.meta,
+      };
+
+      dashScene = transformSaveModelToScene(dashboardDTO);
+    }
+
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
@@ -822,29 +835,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return dashboardSceneGraph.getVizPanels(this);
   }
 
-  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] | undefined {
+  public getTransformationCounts(saveModel?: Dashboard | DashboardV2Spec): Record<string, number> | undefined {
     const model = saveModel ?? this.getSaveModel();
 
-    const expressionTypes = new Set<string>();
+    const transformationCounts = new Map<string, number>();
 
     // Handle V1 dashboards
     if ('panels' in model && model.panels) {
       for (const panel of model.panels) {
-        // Skip panels without targets (e.g., row panels)
-        if (!('targets' in panel) || !panel.targets?.length) {
-          continue;
-        }
-
-        for (const target of panel.targets) {
-          // Only count if it's actually an expression query
-          const datasourceUid =
-            target?.datasource && typeof target.datasource === 'object' && 'uid' in target.datasource
-              ? target.datasource.uid
-              : undefined;
-
-          const targetType = target?.type;
-          if (datasourceUid === '__expr__' && typeof targetType === 'string' && targetType) {
-            expressionTypes.add(targetType);
+        // Count transformations
+        if ('transformations' in panel && Array.isArray(panel.transformations)) {
+          for (const transformation of panel.transformations) {
+            const transformId = transformation?.id;
+            if (typeof transformId === 'string' && transformId) {
+              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
+            }
           }
         }
       }
@@ -858,33 +863,102 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           continue;
         }
 
-        const queries = element.spec.data?.spec?.queries;
-        if (!Array.isArray(queries)) {
+        const dataSpec = element.spec.data?.spec;
+        if (!dataSpec || typeof dataSpec !== 'object') {
           continue;
         }
 
-        for (const query of queries) {
-          const querySpec = query?.spec?.query;
-          if (!querySpec || typeof querySpec !== 'object') {
-            continue;
-          }
-
-          const datasource = querySpec.datasource;
-          const datasourceName =
-            datasource && typeof datasource === 'object' && 'name' in datasource ? datasource.name : undefined;
-
-          const spec = querySpec.spec;
-          const queryType = spec && typeof spec === 'object' && 'type' in spec ? spec.type : undefined;
-
-          if (datasourceName === '__expr__' && typeof queryType === 'string' && queryType) {
-            expressionTypes.add(queryType);
+        // Count transformations
+        const transformations = dataSpec.transformations;
+        if (Array.isArray(transformations)) {
+          for (const transformation of transformations) {
+            // V2 transformations have a 'kind' field which is the transformation id
+            const transformId = transformation?.kind || transformation?.spec?.id;
+            if (typeof transformId === 'string' && transformId) {
+              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
+            }
           }
         }
       }
     }
 
-    // Return array of expression types or undefined if no expressions
-    return expressionTypes.size > 0 ? Array.from(expressionTypes) : undefined;
+    if (transformationCounts.size === 0) {
+      return undefined;
+    }
+
+    // Convert map to object
+    return Object.fromEntries(transformationCounts);
+  }
+
+  public getExpressionCounts(saveModel?: Dashboard | DashboardV2Spec): Record<string, number> | undefined {
+    const model = saveModel ?? this.getSaveModel();
+
+    const expressionCounts = new Map<string, number>();
+
+    // Handle V1 dashboards
+    if ('panels' in model && model.panels) {
+      for (const panel of model.panels) {
+        // Count expressions from targets
+        if ('targets' in panel && panel.targets?.length) {
+          for (const target of panel.targets) {
+            // Only count if it's actually an expression query
+            const datasourceUid =
+              target?.datasource && typeof target.datasource === 'object' && 'uid' in target.datasource
+                ? target.datasource.uid
+                : undefined;
+
+            const targetType = target?.type;
+            if (datasourceUid === '__expr__' && typeof targetType === 'string' && targetType) {
+              expressionCounts.set(targetType, (expressionCounts.get(targetType) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle V2 dashboards
+    if ('elements' in model && model.elements) {
+      for (const element of Object.values(model.elements)) {
+        // Check if element is a Panel (not LibraryPanel)
+        if (element.kind !== 'Panel') {
+          continue;
+        }
+
+        const dataSpec = element.spec.data?.spec;
+        if (!dataSpec || typeof dataSpec !== 'object') {
+          continue;
+        }
+
+        // Count expressions from queries
+        const queries = dataSpec.queries;
+        if (Array.isArray(queries)) {
+          for (const query of queries) {
+            const querySpec = query?.spec?.query;
+            if (!querySpec || typeof querySpec !== 'object') {
+              continue;
+            }
+
+            const datasource = querySpec.datasource;
+            const datasourceName =
+              datasource && typeof datasource === 'object' && 'name' in datasource ? datasource.name : undefined;
+
+            const spec = querySpec.spec;
+            const queryType = spec && typeof spec === 'object' && 'type' in spec ? spec.type : undefined;
+
+            if (datasourceName === '__expr__' && typeof queryType === 'string' && queryType) {
+              expressionCounts.set(queryType, (expressionCounts.get(queryType) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+
+    if (expressionCounts.size === 0) {
+      return undefined;
+    }
+
+    // Convert map to object
+    return Object.fromEntries(expressionCounts);
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
