@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, transformDataFrame } from '@grafana/data';
@@ -33,6 +34,7 @@ export function useOrganizeFields({
   options,
 }: Props) {
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
+  const isMounted = useMountedState();
 
   /**
    * Organize fields transform
@@ -51,11 +53,20 @@ export function useOrganizeFields({
       supportsPermalink,
       onPermalinkClick
     ).then((frame) => {
-      if (frame) {
+      if (frame && isMounted()) {
         setOrganizedFrame(frame);
       }
     });
-  }, [bodyFieldName, extractedFrame, options, timeFieldName, logsFrame, supportsPermalink, onPermalinkClick]);
+  }, [
+    bodyFieldName,
+    extractedFrame,
+    options,
+    timeFieldName,
+    logsFrame,
+    supportsPermalink,
+    onPermalinkClick,
+    isMounted,
+  ]);
 
   return { organizedFrame };
 }

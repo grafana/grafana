@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -23,6 +24,7 @@ interface Props {
 
 export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props) {
   const dataLinksContext = useDataLinksContext();
+  const isMounted = useMountedState();
   const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
   const [extractedFrame, setExtractedFrame] = useState<DataFrame | null>(null);
   const theme = useTheme2();
@@ -48,7 +50,9 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
         timeZone,
         dataLinkPostProcessor,
       });
-      setExtractedFrame(extractedFrames[0]);
+      if (isMounted()) {
+        setExtractedFrame(extractedFrames[0]);
+      }
     });
     // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency, so we check for changes in the timestamps instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
