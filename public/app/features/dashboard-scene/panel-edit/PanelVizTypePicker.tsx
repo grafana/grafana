@@ -93,9 +93,19 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
         creator_team: 'grafana_plugins_catalog',
         schema_version: '1.0.0',
       });
+
+      // @TODO: WIP saved panel in All visualizations tab
+      if (value === VisualizationSelectPaneTab.Visualizations && editPreview.state.pluginId !== panel.state.pluginId) {
+        editPreview.setState({
+          pluginId: panel.state.pluginId,
+          options: panel.state.options,
+          fieldConfig: panel.state.fieldConfig,
+        });
+      }
+
       setListMode(value);
     },
-    [setListMode]
+    [setListMode, editPreview, panel]
   );
 
   const handleBackButtonClick = useCallback(() => {
@@ -107,6 +117,13 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
     });
     onClose();
   }, [listMode, onClose]);
+
+  const handleVizPickerChange = useCallback(
+    (options: VizTypeChangeDetails) => {
+      onChange(options, options.withModKey ? editPreview : undefined);
+    },
+    [onChange, editPreview]
+  );
 
   return (
     <div className={styles.wrapper}>
@@ -170,7 +187,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
                 pluginId={panel.state.pluginId}
                 searchQuery={searchQuery}
                 trackSearch={trackSearch}
-                onChange={onChange}
+                onChange={handleVizPickerChange}
               />
             )}
           </Stack>

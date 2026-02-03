@@ -418,6 +418,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     editPreview.setState({
       title: panel.state.title,
       description: panel.state.description,
+      pluginId: panel.state.pluginId,
+      options: panel.state.options,
+      fieldConfig: panel.state.fieldConfig,
       $data: panel.state.$data ? new DataProviderSharer({ source: panel.state.$data.getRef() }) : undefined,
     });
     return editPreview;
