@@ -23,19 +23,18 @@ export default function HomePage() {
 
   const isLoading = isLoadingRepos || isLoadingConnections;
 
-  // Read tab from URL, with smart default based on data
   const urlTab = searchParams.get('tab');
   const defaultTab = useMemo(() => {
     if (isLoading) {
-      return 'repositories'; // Default to repositories while loading
+      return 'repositories';
     }
     if (items?.length) {
-      return 'repositories'; // Has repos → repositories tab
+      return 'repositories';
     }
     if (connections?.length) {
-      return 'connections'; // Has connections but no repos → connections tab
+      return 'connections';
     }
-    return 'getting-started'; // Neither → getting started tab
+    return 'getting-started';
   }, [isLoading, items?.length, connections?.length]);
 
   const activeTab = urlTab ?? defaultTab;
