@@ -152,3 +152,19 @@ export const getPolicyOptions = (params: { step1Completed: boolean; policyTreeNa
 
   return options;
 };
+
+/**
+ * Returns a label describing which rules will be paused after import.
+ */
+export function getPauseRulesLabel(pauseAlertingRules: boolean, pauseRecordingRules: boolean): string {
+  if (pauseAlertingRules && pauseRecordingRules) {
+    return t('alerting.import-to-gma.review.pause-all', 'All rules paused');
+  }
+  if (pauseAlertingRules) {
+    return t('alerting.import-to-gma.review.pause-alerting', 'Alert rules paused');
+  }
+  if (pauseRecordingRules) {
+    return t('alerting.import-to-gma.review.pause-recording', 'Recording rules paused');
+  }
+  return t('alerting.import-to-gma.review.pause-none', 'No rules paused');
+}

@@ -25,7 +25,7 @@ import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/constants';
+import { MERGE_MATCHERS_LABEL_NAME, getPauseRulesLabel } from './Wizard/constants';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
@@ -447,20 +447,6 @@ function Step2Wrapper({ step1Completed, step1Skipped, canImport, onNext, onSkip 
       <Step2Content step1Completed={step1Completed} step1Skipped={step1Skipped} canImport={canImport} />
     </WizardStep>
   );
-}
-
-// Helper function for pause rules label
-function getPauseRulesLabel(pauseAlertingRules: boolean, pauseRecordingRules: boolean): string {
-  if (pauseAlertingRules && pauseRecordingRules) {
-    return t('alerting.import-to-gma.review.pause-all', 'All rules paused');
-  }
-  if (pauseAlertingRules) {
-    return t('alerting.import-to-gma.review.pause-alerting', 'Alert rules paused');
-  }
-  if (pauseRecordingRules) {
-    return t('alerting.import-to-gma.review.pause-recording', 'Recording rules paused');
-  }
-  return t('alerting.import-to-gma.review.pause-none', 'No rules paused');
 }
 
 // Validation Status Indicator Component
