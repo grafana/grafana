@@ -338,14 +338,14 @@ describe('BootstrapStep', () => {
   });
 
   describe('quota exceeded', () => {
-    it('should not render content when file count exceeds free-tier limit on folder sync', () => {
+    it('should not render content when resource count exceeds free-tier limit on folder sync', () => {
       (isFreeTierLicense as jest.Mock).mockReturnValue(true);
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
         fileCount: 25,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
+        resourceCount: 25, // Exceeds free-tier limit of 20
+        resourceCountString: '25 resources',
         fileCountString: '25 files',
         isLoading: false,
         requiresMigration: false,
@@ -359,14 +359,14 @@ describe('BootstrapStep', () => {
       expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
     });
 
-    it('should render content when file count exceeds free-tier limit but not on free tier', async () => {
+    it('should render content when resource count exceeds free-tier limit but not on free tier', async () => {
       (isFreeTierLicense as jest.Mock).mockReturnValue(false);
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
         fileCount: 25,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
+        resourceCount: 25, // Exceeds limit but not on free tier
+        resourceCountString: '25 resources',
         fileCountString: '25 files',
         isLoading: false,
         requiresMigration: false,
@@ -379,14 +379,14 @@ describe('BootstrapStep', () => {
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
 
-    it('should render content when file count is within quota on free tier', async () => {
+    it('should render content when resource count is within quota on free tier', async () => {
       (isFreeTierLicense as jest.Mock).mockReturnValue(true);
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
         fileCount: 15,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
+        resourceCount: 15, // Within free-tier limit of 20
+        resourceCountString: '15 resources',
         fileCountString: '15 files',
         isLoading: false,
         requiresMigration: false,
@@ -398,14 +398,14 @@ describe('BootstrapStep', () => {
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
 
-    it('should render content when file count equals quota limit on free tier', async () => {
+    it('should render content when resource count equals quota limit on free tier', async () => {
       (isFreeTierLicense as jest.Mock).mockReturnValue(true);
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
         fileCount: 20,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
+        resourceCount: 20, // Exactly at free-tier limit of 20
+        resourceCountString: '20 resources',
         fileCountString: '20 files',
         isLoading: false,
         requiresMigration: false,
@@ -418,7 +418,7 @@ describe('BootstrapStep', () => {
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
 
-    it('should render content when file count exceeds limit on free tier for instance sync', async () => {
+    it('should render content when resource count exceeds limit on free tier for instance sync', async () => {
       (isFreeTierLicense as jest.Mock).mockReturnValue(true);
 
       (useModeOptions as jest.Mock).mockReturnValue({
@@ -436,8 +436,8 @@ describe('BootstrapStep', () => {
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
         fileCount: 25,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
+        resourceCount: 25, // Exceeds limit but instance sync is not restricted
+        resourceCountString: '25 resources',
         fileCountString: '25 files',
         isLoading: false,
         requiresMigration: false,
