@@ -2328,7 +2328,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Raggruppa per",
-      "description-group-by": "Combina più avvisi in un'unica notifica raggruppandoli in base agli stessi valori di etichetta. Se vuoto, viene ereditato dal criterio di notifica predefinito.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -3629,7 +3630,9 @@
       "delete-button": "Elimina",
       "delete-modal-invalid-text": "Una o più cartelle contengono pannelli della libreria o regole di avviso. Eliminarli prima di procedere.",
       "delete-modal-invalid-title": "Impossibile eliminare la cartella",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Questa azione eliminerà il seguente contenuto:",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Elimina",
@@ -3736,6 +3739,9 @@
       "folder-actions": "Azioni cartella",
       "manage-permissions": "Gestisci autorizzazioni",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Seleziona cartella: {{ label }} attualmente selezionata",
@@ -4944,6 +4950,7 @@
       },
       "variables": {
         "add-variable": "Aggiungi variabile",
+        "reorder": "",
         "select-type": "Scegli il tipo di variabile",
         "select-type-card-tooltip": "Fai clic per selezionare il tipo",
         "select-variable": "Seleziona"
@@ -5151,6 +5158,9 @@
       "panel-data-label": "Dati del pannello",
       "panel-json-description": "Il modello salvato nel dashboard JSON che configura il funzionamento di tutto.",
       "panel-json-label": "JSON del pannello",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Seleziona origine",
       "unknown": "Oggetto sconosciuto: {{show}}"
     },
@@ -5481,10 +5491,6 @@
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
         "title": ""
       },
@@ -5810,7 +5816,7 @@
       "load": "Carica"
     },
     "gcom-field": {
-      "label": "Trova e importa dashboard per applicazioni comuni su <1></1>",
+      "label": "",
       "load-button": "Carica",
       "placeholder": "URL o ID del dashboard Grafana.com",
       "validation-required": "È richiesto un URL o un ID del dashboard Grafana"
@@ -6240,7 +6246,9 @@
     },
     "inspect-json-tab": {
       "apply": "Applica",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6312,6 +6320,11 @@
       "title": {
         "remove-panel": "Rimuovi pannello"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Avviso"
@@ -6681,6 +6694,16 @@
       },
       "label": "Nascondi"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "Tipo variabile"
     },
@@ -6747,7 +6770,7 @@
       "delete-button": "Elimina",
       "title": "Elimina"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "Vuoi eliminare questo dashboard?",
     "general": {
       "auto-refresh-description": "Definisci gli intervalli di aggiornamento automatico che dovrebbero essere disponibili nell'elenco di aggiornamento automatico. Utilizza il formato \"5s\" per i secondi, \"1m\" per i minuti, \"1h\" per le ore e \"1d\" per i giorni (ad esempio: \"5s,10s,30s,1m,5m,15m,30m,1h,2h,1d\").",
@@ -10346,9 +10369,15 @@
       "options": "Opzioni"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importazione della dashboard da <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Pubblicato da",
       "updated-on": "Aggiornato il"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Vuoi davvero eliminare \"{{snapshotToRemove}}\"?",
@@ -11212,6 +11241,9 @@
     "noOptionsMessage-no-organizations-found": "Nessuna organizzazione trovata",
     "select-placeholder": "Seleziona organizzazione"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Modifica titolo"
@@ -11709,6 +11741,7 @@
       "text-installed": "Installato"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Dipendenza Grafana",
       "installed-version": "{{versionNumber}} (versione installata)",
       "latest-compatible-version": "{{versionNumber}} (ultima versione compatibile)",
@@ -11893,13 +11926,19 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -11909,6 +11948,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -11923,7 +11963,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12218,6 +12257,7 @@
       "jobs": "Attività"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "Impostazioni",
       "source-code": "Codice sorgente"
     },
@@ -12240,6 +12280,7 @@
     },
     "repository-overview": {
       "checked": "Verificato:",
+      "connection-status": "",
       "finished": "",
       "health": "Stato",
       "healthy": "Correttamente funzionante",
@@ -12397,23 +12438,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Questa operazione eliminerà la configurazione del repository e perderai tutti i progressi. Vuoi davvero eliminare le modifiche?",
         "confirm": "Sì, elimina",
         "dismiss": "Continua a lavorare",
         "title": "Annullare la configurazione del repository?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12425,21 +12470,19 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
+      "github-app-sync-connection": "",
       "step-bootstrap": "Scegli cosa sincronizzare",
       "step-configure-repo": "",
       "step-connect": "Connetti",
       "step-finish": "Scegli impostazioni aggiuntive",
-      "step-github-app": "",
       "step-synchronize": "Sincronizza con la memoria esterna",
       "sync-description": "Sincronizza le risorse con la memoria esterna. Dopo questo passaggio una tantum, tutti gli aggiornamenti futuri verranno salvati automaticamente nel repository e ripristinati nell'istanza.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Scegli cosa sincronizzare",
       "title-configure-repo": "",
       "title-connect": "Connetti a una memoria esterna",
       "title-finish": "Scegli impostazioni aggiuntive",
-      "title-github-app": "",
       "title-synchronize": "Sincronizza con la memoria esterna"
     },
     "wizard-content": {
@@ -12673,13 +12716,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12718,7 +12765,7 @@
     },
     "page": {
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
-      "no-deleted-dashboards-text": "Quando elimini un dashboard, questo verrà visualizzato qui per 30 giorni prima di essere eliminato definitivamente. L'amministratore dell'organizzazione può ripristinare i dashboard eliminati di recente.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "Nessun risultato trovato per la ricerca"
     },
     "restore-modal": {

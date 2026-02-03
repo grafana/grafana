@@ -1,7 +1,13 @@
 import { useAsync } from 'react-use';
 
 import { getAppPluginMeta, getAppPluginMetas, getAppPluginVersion, isAppPluginInstalled } from './apps';
-import { getListedPanelPluginIds, getPanelPluginMeta, getPanelPluginMetas } from './panels';
+import {
+  getListedPanelPluginIds,
+  getPanelPluginMeta,
+  getPanelPluginMetas,
+  getPanelPluginVersion,
+  isPanelPluginInstalled,
+} from './panels';
 
 export function useAppPluginMetas() {
   const { loading, error, value } = useAsync(async () => getAppPluginMetas());
@@ -42,6 +48,28 @@ export function useAppPluginInstalled(pluginId: string) {
  */
 export function useAppPluginVersion(pluginId: string) {
   const { loading, error, value } = useAsync(async () => getAppPluginVersion(pluginId));
+  return { loading, error, value };
+}
+
+/**
+ * Hook that checks if an panel plugin is installed.
+ * @param pluginId - The ID of the panel plugin.
+ * @returns loading, error, value of the panel plugin installed status.
+ * The value is true if the panel plugin is installed, false otherwise.
+ */
+export function usePanelPluginInstalled(pluginId: string) {
+  const { loading, error, value } = useAsync(async () => isPanelPluginInstalled(pluginId));
+  return { loading, error, value };
+}
+
+/**
+ * Hook that gets the version of an panel plugin.
+ * @param pluginId - The ID of the panel plugin.
+ * @returns loading, error, value of the panel plugin version.
+ * The value is the version of the panel plugin, or null if the plugin is not installed.
+ */
+export function usePanelPluginVersion(pluginId: string) {
+  const { loading, error, value } = useAsync(async () => getPanelPluginVersion(pluginId));
   return { loading, error, value };
 }
 

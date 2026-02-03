@@ -15,8 +15,17 @@ import {
   useListedPanelPluginIds,
   usePanelPluginMeta,
   usePanelPluginMetas,
+  usePanelPluginInstalled,
+  usePanelPluginVersion,
 } from './hooks';
-import { getListedPanelPluginIds, getPanelPluginMeta, getPanelPluginMetas, setPanelPluginMetas } from './panels';
+import {
+  getListedPanelPluginIds,
+  getPanelPluginMeta,
+  getPanelPluginMetas,
+  getPanelPluginVersion,
+  isPanelPluginInstalled,
+  setPanelPluginMetas,
+} from './panels';
 import { apps } from './test-fixtures/config.apps';
 import { panels } from './test-fixtures/config.panels';
 
@@ -33,6 +42,8 @@ jest.mock('./panels', () => ({
   ...jest.requireActual('./panels'),
   getPanelPluginMeta: jest.fn(),
   getPanelPluginMetas: jest.fn(),
+  isPanelPluginInstalled: jest.fn(),
+  getPanelPluginVersion: jest.fn(),
   getListedPanelPluginIds: jest.fn(),
 }));
 const getAppPluginMetaMock = jest.mocked(getAppPluginMeta);
@@ -41,6 +52,8 @@ const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
 const getAppPluginVersionMock = jest.mocked(getAppPluginVersion);
 const getPanelPluginMetaMock = jest.mocked(getPanelPluginMeta);
 const getPanelPluginMetasMock = jest.mocked(getPanelPluginMetas);
+const isPanelPluginInstalledMock = jest.mocked(isPanelPluginInstalled);
+const getPanelPluginVersionMock = jest.mocked(getPanelPluginVersion);
 const getListedPanelPluginIdsMock = jest.mocked(getListedPanelPluginIds);
 
 describe('useAppPluginMeta', () => {
@@ -384,6 +397,106 @@ describe('useListedPanelPluginIds', () => {
     getListedPanelPluginIdsMock.mockRejectedValue(new Error('Some error'));
 
     const { result } = renderHook(() => useListedPanelPluginIds());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
+  });
+});
+
+describe('usePanelPluginInstalled', () => {
+  beforeEach(() => {
+    setPanelPluginMetas(panels);
+    jest.resetAllMocks();
+    isPanelPluginInstalledMock.mockImplementation(actualPanels.isPanelPluginInstalled);
+  });
+
+  it('should return correct default values', async () => {
+    const { result } = renderHook(() => usePanelPluginInstalled('timeseries'));
+
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toEqual(true));
+  });
+
+  it('should return correct values after loading', async () => {
+    const { result } = renderHook(() => usePanelPluginInstalled('timeseries'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(true);
+  });
+
+  it('should return correct values if the pluginId does not exist', async () => {
+    const { result } = renderHook(() => usePanelPluginInstalled('otherorg-otherplugin-panel'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(false);
+  });
+
+  it('should return correct values if isPanelPluginInstalled throws', async () => {
+    isPanelPluginInstalledMock.mockRejectedValue(new Error('Some error'));
+
+    const { result } = renderHook(() => usePanelPluginInstalled('otherorg-otherplugin-panel'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
+  });
+});
+
+describe('usePanelPluginVersion', () => {
+  beforeEach(() => {
+    setPanelPluginMetas(panels);
+    jest.resetAllMocks();
+    getPanelPluginVersionMock.mockImplementation(actualPanels.getPanelPluginVersion);
+  });
+
+  it('should return correct default values', async () => {
+    const { result } = renderHook(() => usePanelPluginVersion('timeseries'));
+
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toEqual(true));
+  });
+
+  it('should return correct values after loading', async () => {
+    const { result } = renderHook(() => usePanelPluginVersion('timeseries'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual('');
+  });
+
+  it('should return correct values if the pluginId does not exist', async () => {
+    const { result } = renderHook(() => usePanelPluginVersion('otherorg-otherplugin-panel'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(null);
+  });
+
+  it('should return correct values if getAppPluginVersion throws', async () => {
+    getPanelPluginVersionMock.mockRejectedValue(new Error('Some error'));
+
+    const { result } = renderHook(() => usePanelPluginVersion('otherorg-otherplugin-panel'));
 
     await waitFor(() => expect(result.current.loading).toEqual(false));
 

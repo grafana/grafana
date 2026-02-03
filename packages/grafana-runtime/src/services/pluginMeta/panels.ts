@@ -43,6 +43,26 @@ export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginM
 }
 
 /**
+ * Check if an panel plugin is installed. The function does not check if the panel plugin is enabled.
+ * @param pluginId - The id of the panel plugin.
+ * @returns True if the panel plugin is installed, false otherwise.
+ */
+export async function isPanelPluginInstalled(pluginId: string): Promise<boolean> {
+  const panel = await getPanelPluginMeta(pluginId);
+  return Boolean(panel);
+}
+
+/**
+ * Get the version of an panel plugin.
+ * @param pluginId - The id of the panel plugin.
+ * @returns The version of the panel plugin, or null if the plugin is not installed.
+ */
+export async function getPanelPluginVersion(pluginId: string): Promise<string | null> {
+  const panel = await getPanelPluginMeta(pluginId);
+  return panel?.info.version ?? null;
+}
+
+/**
  * Get a list of panel plugin ids that are not hidden from list
  * @returns an array of panel plugin ids that are not hidden from list
  */

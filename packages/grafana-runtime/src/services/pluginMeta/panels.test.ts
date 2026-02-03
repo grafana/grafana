@@ -1,6 +1,13 @@
 import { evaluateBooleanFlag } from '../../internal/openFeature';
 
-import { getListedPanelPluginIds, getPanelPluginMeta, getPanelPluginMetas, setPanelPluginMetas } from './panels';
+import {
+  getListedPanelPluginIds,
+  getPanelPluginMeta,
+  getPanelPluginMetas,
+  getPanelPluginVersion,
+  isPanelPluginInstalled,
+  setPanelPluginMetas,
+} from './panels';
 import { initPluginMetas } from './plugins';
 import { panel } from './test-fixtures/config.panels';
 
@@ -30,6 +37,20 @@ describe('when useMTPlugins flag is enabled and panels is not initialized', () =
 
   it('getPanelPluginMeta should call initPluginMetas and return correct result', async () => {
     const result = await getPanelPluginMeta('grafana-test-panel');
+
+    expect(result).toEqual(null);
+    expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('isPanelPluginInstalled should call initPluginMetas and return false', async () => {
+    const installed = await isPanelPluginInstalled('grafana-test-panel');
+
+    expect(installed).toEqual(false);
+    expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('getPanelPluginVersion should call initPluginMetas and return null', async () => {
+    const result = await getPanelPluginVersion('grafana-test-panel');
 
     expect(result).toEqual(null);
     expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
@@ -70,6 +91,32 @@ describe('when useMTPlugins flag is enabled and panels is initialized', () => {
     expect(result).toEqual(null);
   });
 
+  it('isPanelPluginInstalled should not call initPluginMetas and return true', async () => {
+    const installed = await isPanelPluginInstalled('grafana-test-panel');
+
+    expect(installed).toEqual(true);
+    expect(initPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('isPanelPluginInstalled should return false if the pluginId is not found', async () => {
+    const result = await isPanelPluginInstalled('otherorg-otherplugin-app');
+
+    expect(result).toEqual(false);
+  });
+
+  it('getPanelPluginVersion should not call initPluginMetas and return correct result', async () => {
+    const result = await getPanelPluginVersion('grafana-test-panel');
+
+    expect(result).toEqual('1.0.0');
+    expect(initPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('getPanelPluginVersion should return null if the pluginId is not found', async () => {
+    const result = await getPanelPluginVersion('otherorg-otherplugin-app');
+
+    expect(result).toEqual(null);
+  });
+
   it('getListedPanelPluginIds should not call initPluginMetas and return correct pluginIds', async () => {
     const installed = await getListedPanelPluginIds();
 
@@ -94,6 +141,20 @@ describe('when useMTPlugins flag is disabled and panels is not initialized', () 
 
   it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
     const result = await getPanelPluginMeta('grafana-test-panel');
+
+    expect(result).toEqual(null);
+    expect(initPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('isPanelPluginInstalled should not call initPluginMetas and return false', async () => {
+    const result = await isPanelPluginInstalled('grafana-test-panel');
+
+    expect(result).toEqual(false);
+    expect(initPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('getPanelPluginVersion should not call initPluginMetas and return correct result', async () => {
+    const result = await getPanelPluginVersion('grafana-test-panel');
 
     expect(result).toEqual(null);
     expect(initPluginMetasMock).not.toHaveBeenCalled();
@@ -130,6 +191,32 @@ describe('when useMTPlugins flag is disabled and panels is initialized', () => {
 
   it('getPanelPluginMeta should return null if the pluginId is not found', async () => {
     const result = await getPanelPluginMeta('otherorg-otherplugin-panel');
+
+    expect(result).toEqual(null);
+  });
+
+  it('isPanelPluginInstalled should not call initPluginMetas and return true', async () => {
+    const result = await isPanelPluginInstalled('grafana-test-panel');
+
+    expect(result).toEqual(true);
+    expect(initPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('isPanelPluginInstalled should return false if the pluginId is not found', async () => {
+    const result = await isPanelPluginInstalled('otherorg-otherplugin-app');
+
+    expect(result).toEqual(false);
+  });
+
+  it('getPanelPluginVersion should not call initPluginMetas and return correct result', async () => {
+    const result = await getPanelPluginVersion('grafana-test-panel');
+
+    expect(result).toEqual('1.0.0');
+    expect(initPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('getPanelPluginVersion should return null if the pluginId is not found', async () => {
+    const result = await getPanelPluginVersion('otherorg-otherplugin-app');
 
     expect(result).toEqual(null);
   });
