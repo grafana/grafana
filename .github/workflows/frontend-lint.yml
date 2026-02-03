@@ -208,37 +208,35 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
-    - name: Install dependencies
-      run: yarn install --immutable
     - name: Check circular dependencies on PR
-      id: pr-check
+      # the first sed command is used to clean yarn dlx stuff from output
       run: |
-        yarn dlx madge --circular --extensions ts,tsx . &> /tmp/pr-circular.txt || true
+        yarn dlx madge --circular --extensions ts,tsx --no-count --no-spinner . &> /tmp/pr-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular dependencies!$/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
         echo "Circular dependencies on PR:"
-        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular.txt)
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular dependencies!$/\1/p' /tmp/pr-circular-clean.txt)
         echo "$pr_count"
-        echo "count=$pr_count" >> "$GITHUB_OUTPUT"
     - name: Fetch main branch
-      id: main-check
       # Making sure we compare with main in the grafana/grafana repo for PRs in forks
       run: git fetch https://github.com/${{ github.repository }} main:main --depth=1
     - name: Check circular dependencies on main
+      # the first sed command is used to clean yarn dlx stuff from output
       run: |
         git checkout main
-        yarn dlx madge --circular --extensions ts,tsx . &> /tmp/main-circular.txt || true
+        yarn dlx madge --circular --extensions ts,tsx --no-count --no-spinner . &> /tmp/main-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular dependencies!$/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
         echo "Circular dependencies on main:"
-        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular.txt)
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular dependencies!$/\1/p' /tmp/main-circular-clean.txt)
         echo "$main_count"
-        echo "count=$main_count" >> "$GITHUB_OUTPUT"
     - name: Compare circular dependencies
       run: |
-        main_count="${{ steps.main-check.outputs.count }}"
-        pr_count="${{ steps.pr-check.outputs.count }}"
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular dependencies!$/\1/p' /tmp/main-circular-clean.txt)
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular dependencies!$/\1/p' /tmp/pr-circular-clean.txt)
         echo "Main branch circular dependencies: $main_count lines"
         echo "PR branch circular dependencies: $pr_count lines"
         if [ "$pr_count" -gt "$main_count" ]; then
           echo "🚨 ERROR: PR introduces new circular dependencies!"
           echo "Diff between main and PR:"
-          diff /tmp/main-circular.txt /tmp/pr-circular.txt || true
+          diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
           exit 1
         fi

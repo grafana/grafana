@@ -10,8 +10,9 @@ import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, 
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
+import { GrafanaApp } from './app';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { GrafanaContext, GrafanaContextType } from './core/context/GrafanaContext';
+import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
@@ -23,7 +24,7 @@ import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
-  context: GrafanaContextType;
+  app: GrafanaApp;
 }
 
 interface AppWrapperState {
@@ -95,7 +96,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   render() {
-    const { context } = this.props;
+    const { app } = this.props;
     const { ready, registries } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
@@ -119,7 +120,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     return (
       <Provider store={store}>
         <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
-          <GrafanaContext.Provider value={context}>
+          <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
               <CacheProvider name={this.iconCacheID}>
                 <KBarProvider
