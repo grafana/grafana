@@ -1,5 +1,5 @@
-import { useLayoutEffect, useState } from 'react';
-import uPlot, { TypedArray, Scale } from 'uplot';
+import { useLayoutEffect, useState, useMemo, useRef } from 'react';
+import uPlot, { Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -10,16 +10,29 @@ interface ThresholdControlsPluginProps {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
+const areAllNonTimeValuesNullAtIndex = (values: Array<uPlot['data'][1]>, idx: number, cache: boolean[]) => {
+  if (cache[idx] !== undefined) {
+    return cache[idx];
+  }
+  const isNull = values.every((v) => v[idx] == null);
+  cache[idx] = isNull;
+  return isNull;
+};
+
 export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
   const [timeValues, setTimeValues] = useState<uPlot['data'][0]>([]);
   const [nonTimeValues, setNonTimeValues] = useState<Array<uPlot['data'][1]>>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
+
+  // store this as a ref so it can be reset when setScale is called
+  const memoCache = useRef<boolean[]>([]);
 
   useLayoutEffect(() => {
     config.addHook('setScale', (u) => {
       setTimeValues(u.data?.[0] ?? []);
       setNonTimeValues(u.data?.slice(1) ?? []);
       setTimeRange(u.scales['x'] ?? undefined);
+      memoCache.current = [];
     });
   }, [config]);
 
@@ -32,35 +45,27 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
   }
 
   // Time values are always sorted for uPlot to work
-
-  const memoCache: boolean[] = [];
-  const isNullAtIndex = (idx: number) => {
-    if (memoCache[idx] !== undefined) {
-      return memoCache[idx];
-    }
-    const isNull = nonTimeValues.every((v) => v[idx] == null);
-    memoCache[idx] = isNull;
-    return isNull;
-  };
-
   let i = 0,
     j = timeValues.length - 1;
 
-  while (i <= j && isNullAtIndex(i)) {
+  while (i <= j && areAllNonTimeValuesNullAtIndex(nonTimeValues, i, memoCache.current)) {
     i++;
   }
 
-  while (j >= 0 && isNullAtIndex(j)) {
+  while (j >= 0 && areAllNonTimeValuesNullAtIndex(nonTimeValues, j, memoCache.current)) {
     j--;
   }
 
-  // all values are null
-  if (isNullAtIndex(i) && isNullAtIndex(j)) {
+  // never found any non null values
+  if (
+    areAllNonTimeValuesNullAtIndex(nonTimeValues, i, memoCache.current) ||
+    areAllNonTimeValuesNullAtIndex(nonTimeValues, j, memoCache.current)
+  ) {
     return null;
   }
 
-  let first = !isNullAtIndex(i) ? timeValues[i] : timeValues[j];
-  let last = !isNullAtIndex(j) ? timeValues[j] : timeValues[i];
+  let first = timeValues[i];
+  let last = timeValues[j];
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= timeRange.max && last >= timeRange.min) {
