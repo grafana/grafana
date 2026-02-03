@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Reset to default values",
-      "title-invalid-configuration": "Invalid configuration",
       "title-more-actions": "More actions",
       "tooltip-more-actions": "More actions"
     },
@@ -9793,7 +9792,6 @@
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
       "error-validate-form": "Error validating LDAP settings",
-      "feature-flag-disabled": "This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.",
       "saved": "LDAP settings saved"
     },
     "bind-dn": {
@@ -11875,9 +11873,6 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
-      "unavailable-options": {
-        "title": "Unavailable options"
-      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
@@ -11925,6 +11920,9 @@
       "configure": "Configure",
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
+    },
+    "connect-step": {
+      "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
       "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
