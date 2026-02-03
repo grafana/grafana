@@ -65,7 +65,19 @@ export const RadialArcPath = memo(
     const xEnd = centerX + radius * Math.cos(endRadians);
     const yEnd = centerY + radius * Math.sin(endRadians);
 
-    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
+    let bgDivHeight = vizHeight;
+    if (shape === 'gauge') {
+      // total circle radius is radius and barWidth * 2 - when the shape is gauge, we need to extend the
+      // conic gradient below the bottom of the viz area of get the full circle mapped to the correct position.
+      bgDivHeight = (radius + barWidth * 2) * 2;
+    }
+
+    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = {
+      width: boxSize,
+      height: bgDivHeight,
+      marginLeft: boxX,
+      marginTop: Math.max(boxY, 0),
+    };
     const pathProps: SVGProps<SVGPathElement> = {};
     if (isGradient) {
       bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);

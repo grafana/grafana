@@ -218,14 +218,14 @@ describe('RadialGauge color utils', () => {
       expect(css).toBe('conic-gradient(from 0deg, #ff0000 0.00%, #00ff00 50.00%, #0000ff 100.00%)');
     });
 
-    it('should return linear-gradient CSS for arc shape', () => {
+    it('should return conic-gradient CSS for arc shape', () => {
       const gradient = [
         { color: '#ff0000', percent: 0 },
         { color: '#00ff00', percent: 0.5 },
         { color: '#0000ff', percent: 1 },
       ];
       const css = getGradientCss(gradient, 'gauge');
-      expect(css).toBe('linear-gradient(90deg, #ff0000 0.00%, #00ff00 50.00%, #0000ff 100.00%)');
+      expect(css).toBe('conic-gradient(from 250deg, #ff0000 0deg, #00ff00 110deg, #0000ff 220deg, #0000 0 220deg)');
     });
   });
 

@@ -12,7 +12,7 @@ import { FieldColorModeId } from '@grafana/schema';
 
 import { getFormattedThresholds } from '../Gauge/utils';
 
-import { DEFAULT_DECIMALS } from './constants';
+import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GradientStop, RadialShape } from './types';
 import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
 
@@ -168,11 +168,11 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
 }
 
 export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
-  const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
   if (shape === 'circle') {
-    return `conic-gradient(from 0deg, ${colorStrings.join(', ')})`;
+    return `conic-gradient(from 0deg, ${gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`).join(', ')})`;
   }
-  return `linear-gradient(90deg, ${colorStrings.join(', ')})`;
+  const range = (ARC_END + 360 - ARC_START) % 360;
+  return `conic-gradient(from ${ARC_START}deg, ${gradientStops.map((stop) => `${stop.color} ${stop.percent * range}deg`).join(', ')}, #0000 0 ${range}deg)`;
 }
 
 // the theme does not make the full palette available to us, and we
