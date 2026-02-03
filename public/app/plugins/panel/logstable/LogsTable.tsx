@@ -1,7 +1,16 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { CoreApp, DataFrame, FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  FieldConfigSource,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  PanelProps,
+} from '@grafana/data';
+import type { Options as TableOptions } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { useStyles2 } from '@grafana/ui';
 import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import {
@@ -11,18 +20,18 @@ import {
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
-import type { Options as TableOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
+import { getDisplayedFields } from './options/getDisplayedFields';
+import { Options } from './options/types';
 import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
 import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
-type Options = LogsTableOptions & TableOptions;
 interface LogsTablePanelProps extends PanelProps<Options> {}
 
 export const LogsTable = ({
@@ -53,6 +62,7 @@ export const LogsTable = ({
     [rawTableFrame]
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
+  // @todo otelLogsFormatting
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = getLogsTablePanelState()?.logs?.id ?? undefined;
   const initialRowIndex = permalinkedLogId
@@ -129,19 +139,31 @@ export const LogsTable = ({
       return { ...data, series, frameIndex };
     }
 
-    return null;
+    return data;
   }, [organizedFrame, data, frameIndex]);
 
-  if (!extractedFrame || !organizedFrame || !logsFrame || !timeFieldName || !bodyFieldName || !panelData) {
+  // Show no data state if query returns nothing
+  if (data.series.length === 0 && data.state === LoadingState.Done) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
+
+  // We're rendering before the hooks have transformed the required data, we return null to prevent the panel data error view from flashing
+  if (!timeFieldName || !bodyFieldName || !logsFrame || !organizedFrame || !extractedFrame) {
+    return null;
+  }
+
+  console.log('Render', {
+    displayedFields: options.displayedFields,
+    options,
+    panelData,
+  });
 
   return (
     <div className={styles.wrapper}>
       <LogsTableFields
         tableWidth={width}
         sidebarWidth={options.fieldSelectorWidth}
-        displayedFields={options.displayedFields ?? [timeFieldName, bodyFieldName]}
+        displayedFields={getDisplayedFields(options, timeFieldName, bodyFieldName)}
         height={height}
         logsFrame={logsFrame}
         timeFieldName={timeFieldName}
@@ -159,7 +181,7 @@ export const LogsTable = ({
         id={id}
         timeRange={timeRange}
         timeZone={timeZone}
-        options={{ ...options }}
+        options={options}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}

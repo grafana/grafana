@@ -8,6 +8,7 @@ import { LogsFrame } from 'app/features/logs/logsFrame';
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getFieldWidth } from '../fields/getFieldWidth';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
+import { getDisplayedFields } from '../options/getDisplayedFields';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 import { organizeLogsFieldsTransform } from '../transforms/organizeLogsFieldsTransform';
 import { BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
@@ -72,7 +73,7 @@ const organizeFields = async (
     return Promise.resolve(null);
   }
 
-  const displayedFields = options.displayedFields ?? [timeFieldName, bodyFieldName];
+  const displayedFields = getDisplayedFields(options, timeFieldName, bodyFieldName);
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
@@ -106,7 +107,6 @@ const organizeFields = async (
                       supportsPermalink={supportsPermalink}
                       cellProps={cellProps}
                       options={options}
-                      bodyFieldName={bodyFieldName}
                       buildLinkToLog={
                         isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick
                       }

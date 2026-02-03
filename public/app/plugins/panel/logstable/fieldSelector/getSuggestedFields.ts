@@ -1,5 +1,4 @@
 import { DataFrame } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 import { FieldWithStats } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import {
@@ -17,16 +16,17 @@ export function getSuggestedFields(dataFrame: DataFrame, displayedFields: string
     },
   }));
 
-  if (config.featureToggles.otelLogsFormatting) {
-    getSuggestedFieldsForTable(dataFrame).forEach((field) => {
-      suggestedFields.push({
-        name: field,
-        stats: {
-          percentOfLinesWithLabel: 100,
-        },
-      });
-    });
-  }
+  // @todo Currently broken
+  // if (config.featureToggles.otelLogsFormatting) {
+  //   getSuggestedFieldsForTable(dataFrame).forEach((field) => {
+  //     suggestedFields.push({
+  //       name: field,
+  //       stats: {
+  //         percentOfLinesWithLabel: 100,
+  //       },
+  //     });
+  //   });
+  // }
 
   if (
     !defaultFields.length &&

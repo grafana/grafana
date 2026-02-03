@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
@@ -18,7 +18,6 @@ import { BuildLinkToLogLine } from '../types';
 interface Props extends CustomCellRendererProps {
   buildLinkToLog?: BuildLinkToLogLine;
   showInspectLogLine: boolean;
-  bodyFieldName: string;
   logsFrame: LogsFrame;
 }
 
@@ -28,7 +27,7 @@ interface Props extends CustomCellRendererProps {
  * @constructor
  */
 export function LogsTableRowActionButtons(props: Props) {
-  const { rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine, logsFrame } = props;
+  const { rowIndex, buildLinkToLog, showInspectLogLine, logsFrame } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
@@ -82,7 +81,7 @@ export function LogsTableRowActionButtons(props: Props) {
       </div>
       {isInspecting && (
         <TableCellInspector
-          value={getLineValue(bodyFieldName, frame, rowIndex)}
+          value={getLineValue(logsFrame, rowIndex)}
           mode={TableCellInspectorMode.code}
           onDismiss={function (): void {
             setIsInspecting(false);
@@ -93,10 +92,8 @@ export function LogsTableRowActionButtons(props: Props) {
   );
 }
 
-const getLineValue = (bodyFieldName: string, frame: DataFrame, rowIndex: number) => {
-  const bodyField = bodyFieldName
-    ? frame.fields.find((field) => field.name === bodyFieldName)
-    : frame.fields.find((field) => field.type === 'string');
+const getLineValue = (logsFrame: LogsFrame, rowIndex: number) => {
+  const bodyField = logsFrame.bodyField;
   return bodyField?.values[rowIndex];
 };
 

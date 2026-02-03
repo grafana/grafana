@@ -11,13 +11,12 @@ import { BuildLinkToLogLine } from '../types';
 
 export function LogsTableCustomCellRenderer(props: {
   cellProps: CustomCellRendererProps;
-  bodyFieldName: string;
   buildLinkToLog?: BuildLinkToLogLine;
   options: LogsTableOptions;
   logsFrame: LogsFrame;
   supportsPermalink: boolean;
 }) {
-  const { bodyFieldName, logsFrame, buildLinkToLog, options, supportsPermalink } = props;
+  const { logsFrame, buildLinkToLog, options, supportsPermalink } = props;
   const cellPadding =
     options.showInspectLogLine && options.showCopyLogLink
       ? ROW_ACTION_BUTTON_WIDTH
@@ -31,7 +30,6 @@ export function LogsTableCustomCellRenderer(props: {
       <LogsTableRowActionButtons
         {...props.cellProps}
         logsFrame={logsFrame}
-        bodyFieldName={bodyFieldName}
         buildLinkToLog={supportsPermalink && options.showCopyLogLink ? buildLinkToLog : undefined}
         showInspectLogLine={options.showInspectLogLine ?? true}
       />

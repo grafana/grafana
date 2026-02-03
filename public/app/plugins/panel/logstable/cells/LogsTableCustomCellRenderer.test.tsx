@@ -51,7 +51,6 @@ describe('LogsTableCustomCellRenderer', () => {
           frame: testLogsDataFrame[0],
           value: CellValueText,
         }}
-        bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
       />
     );
 
@@ -76,7 +75,6 @@ describe('LogsTableCustomCellRenderer', () => {
             frame: testLogsDataFrame[0],
             value: CellValueText,
           }}
-          bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
         />
       );
 
@@ -100,7 +98,6 @@ describe('LogsTableCustomCellRenderer', () => {
             frame: testLogsDataFrame[0],
             value: CellValueText,
           }}
-          bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
         />
       );
       expect(screen.queryByText('log 1')).not.toBeInTheDocument();
@@ -125,7 +122,6 @@ describe('LogsTableCustomCellRenderer', () => {
             frame: testLogsDataFrame[0],
             value: CellValueText,
           }}
-          bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
         />
       );
       expect(screen.queryByText('log 1')).not.toBeInTheDocument();
@@ -150,7 +146,6 @@ describe('LogsTableCustomCellRenderer', () => {
             value: CellValueText,
           }}
           buildLinkToLog={() => null}
-          bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
         />
       );
 
@@ -174,7 +169,6 @@ describe('LogsTableCustomCellRenderer', () => {
             value: CellValueText,
           }}
           buildLinkToLog={() => null}
-          bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
         />
       );
 
