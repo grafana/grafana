@@ -113,8 +113,14 @@ func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
 	// The zanzana server doesn't have a blocking Run method,
 	// so we just wait for shutdown
 	<-ctx.Done()
-	s.server.Close()
+	if s.server != nil {
+		s.server.Close()
+	}
 	return nil
+}
+
+func (s *EmbeddedZanzanaService) IsDisabled() bool {
+	return s.server == nil
 }
 
 // ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
