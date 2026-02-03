@@ -1242,7 +1242,8 @@
       "metadata": {
         "name": "dashboardSceneForViewers",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-11-02T19:02:25Z"
+        "creationTimestamp": "2023-11-02T19:02:25Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
@@ -1256,7 +1257,8 @@
       "metadata": {
         "name": "dashboardSceneSolo",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-02-11T08:08:47Z"
+        "creationTimestamp": "2024-02-11T08:08:47Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
@@ -3308,6 +3310,20 @@
         "description": "Enables a group by action per panel",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelStyleActions",
+        "resourceVersion": "1769620237787",
+        "creationTimestamp": "2026-01-28T17:10:37Z"
+      },
+      "spec": {
+        "description": "Enable style actions (copy/paste) in the panel editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
       }

@@ -18,13 +18,11 @@ import {
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
-import {
-  getFieldSelectorWidth,
-  LogsTableFieldSelector,
-  MIN_WIDTH,
-} from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
+import { LogsTableFieldSelector } from '../../logs/components/fieldSelector/LogsTableFieldSelector';
+import { getFieldSelectorWidth } from '../../logs/components/fieldSelector/fieldSelectorUtils';
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
@@ -508,7 +506,7 @@ export function LogsTableWrap(props: Props) {
           handleClasses={{ right: dragStyles.dragHandleVertical }}
           size={{ width: sidebarWidth, height: getLogsTableHeight() }}
           defaultSize={{ width: sidebarWidth, height: getLogsTableHeight() }}
-          minWidth={MIN_WIDTH}
+          minWidth={FIELD_SELECTOR_MIN_WIDTH}
           maxWidth={props.width * 0.8}
           onResize={getOnResize}
         >
