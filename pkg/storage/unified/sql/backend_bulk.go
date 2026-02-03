@@ -118,7 +118,7 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 	case resourcepb.BulkRequest_DELETED:
 		actionStr = "deleted"
 	default:
-		actionStr = "unknown"
+		actionStr = fmt.Sprintf("%d", action)
 	}
 	snowflakeRV := rvmanager.SnowflakeFromRV(rv)
 	return fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s",
