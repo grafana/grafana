@@ -9,6 +9,10 @@ import {
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
+export function resetDefaultGrid(): void {
+  setDefaultGrid(config.featureToggles?.dashboardNewLayouts ? 'AutoGridLayout' : 'GridLayout');
+}
+
 export function setDefaultGrid(grid: 'AutoGridLayout' | 'GridLayout'): void {
   window.sessionStorage.setItem('dashboardScene.defaultGrid', grid);
 }
