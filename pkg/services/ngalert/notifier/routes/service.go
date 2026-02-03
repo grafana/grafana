@@ -6,8 +6,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/alerting/definition"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -41,6 +44,7 @@ type Service struct {
 	settings        setting.UnifiedAlertingSettings
 	validator       provenanceValidator
 	FeatureToggles  featuremgmt.FeatureToggles
+	tracer          tracing.Tracer
 }
 
 func NewService(
@@ -51,6 +55,7 @@ func NewService(
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
 	validator provenanceValidator,
+	tracer tracing.Tracer,
 ) *Service {
 	return &Service{
 		configStore:     am,
@@ -60,10 +65,18 @@ func NewService(
 		settings:        settings,
 		FeatureToggles:  features,
 		validator:       validator,
+		tracer:          tracer,
 	}
 }
 
 func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error) {
+	ctx, span := nps.tracer.Start(ctx, "alerting.routes.get", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+		attribute.String("query_name", name),
+		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+	))
+	defer span.End()
+
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -79,6 +92,10 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
+	span.AddEvent("Loaded route", trace.WithAttributes(
+		attribute.String("concurrency_token", rev.ConcurrencyToken),
+	))
+
 	provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
 	if err != nil {
 		return legacy_storage.ManagedRoute{}, err
@@ -89,6 +106,12 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 }
 
 func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error) {
+	ctx, span := nps.tracer.Start(ctx, "alerting.routes.getMany", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+	))
+	defer span.End()
+
 	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -101,6 +124,12 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 
 	// Backwards compatibility when managed routes FF is disabled. Don't include any custom managed routes.
 	managedRoutes := rev.GetManagedRoutes(nps.managedRoutesEnabled())
+
+	span.AddEvent("Loaded routes", trace.WithAttributes(
+		attribute.String("concurrency_token", rev.ConcurrencyToken),
+		attribute.Int("count", len(managedRoutes)),
+	))
+
 	for _, mr := range managedRoutes {
 		provenance, ok := provenances[mr.ResourceID()]
 		if !ok {
@@ -113,6 +142,12 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 }
 
 func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string) (*legacy_storage.ManagedRoute, error) {
+	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+		attribute.String("route_name", name),
+		attribute.String("route_version", version),
+		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+	))
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -133,7 +168,13 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
-	err = nps.checkOptimisticConcurrency(existing, p, version, "update")
+	span.AddEvent("Loaded current route", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+		attribute.String("route_name", name),
+		attribute.String("route_version", existing.Version),
+	))
+
+	err = nps.checkOptimisticConcurrency(existing, version)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +200,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 			// TODO temporarily get the conflicting matchers
 			return nil, models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
 		}
-		nps.log.Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
+		nps.log.FromContext(ctx).Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -171,10 +212,22 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
+	span.AddEvent("Route updated", trace.WithAttributes(
+		attribute.String("version", updated.Version),
+	))
+	nps.log.FromContext(ctx).Info("Updated route", "name", name, "oldVersion", existing.Version, "newVersion", updated.Version)
 	return updated, nil
 }
 
 func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string) error {
+	ctx, span := nps.tracer.Start(ctx, "alerting.routes.delete", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+		attribute.String("route_name", name),
+		attribute.String("route_version", version),
+		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+	))
+	defer span.End()
+
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -190,9 +243,14 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
-	err = nps.checkOptimisticConcurrency(existing, p, version, "delete")
-	if err != nil {
-		return err
+	// Optimistic concurrency is optional for delete operations, but we still check it if a version is provided.
+	if version != "" {
+		err = nps.checkOptimisticConcurrency(existing, version)
+		if err != nil {
+			return err
+		}
+	} else {
+		nps.log.FromContext(ctx).Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
 	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, existing, orgID)
@@ -203,6 +261,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		return err
 	}
 
+	action := "Deleted"
 	if name == legacy_storage.UserDefinedRoutingTreeName {
 		defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 		if err != nil {
@@ -213,6 +272,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err != nil {
 			return err
 		}
+		action = "Reset"
 	} else {
 		revision.DeleteManagedRoute(name)
 	}
@@ -222,15 +282,29 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		return fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
 	}
 
-	return nps.xact.InTransaction(ctx, func(ctx context.Context) error {
+	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
 		return nps.provenanceStore.DeleteProvenance(ctx, existing, orgID)
 	})
+	if err != nil {
+		return err
+	}
+	span.AddEvent(fmt.Sprintf("%s route", action), trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+	))
+	nps.log.FromContext(ctx).Info(fmt.Sprintf("%s route", action), "name", name)
+	return nil
 }
 
 func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance) (*legacy_storage.ManagedRoute, error) {
+	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+		attribute.String("route_name", name),
+		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+	))
+	defer span.End()
 	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
 	if !nps.managedRoutesEnabled() {
 		return nil, models.ErrMultipleRoutesNotSupported.Errorf("")
@@ -265,19 +339,17 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
+	span.AddEvent("Route created", trace.WithAttributes(
+		attribute.String("version", created.Version),
+	))
+	nps.log.FromContext(ctx).Info("Created route", "name", name, "version", created.Version)
 	return created, nil
 }
 
-func (nps *Service) checkOptimisticConcurrency(current *legacy_storage.ManagedRoute, provenance models.Provenance, desiredVersion string, action string) error {
-	if desiredVersion == "" {
-		if provenance != models.ProvenanceFile {
-			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
-			nps.log.Debug("ignoring optimistic concurrency check because version was not provided", "operation", action)
-		}
-		return nil
-	}
+// checkOptimisticConcurrency checks if the existing routes's version matches the desired version.
+func (nps *Service) checkOptimisticConcurrency(current *legacy_storage.ManagedRoute, desiredVersion string) error {
 	if current.Version != desiredVersion {
-		return models.ErrVersionConflict.Errorf("provided version %s of routing tree does not match current version %s", desiredVersion, current.Version)
+		return models.MakeErrRouteVersionConflict(current.Name, current.Version, desiredVersion)
 	}
 	return nil
 }

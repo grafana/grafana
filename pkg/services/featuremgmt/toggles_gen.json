@@ -4262,7 +4262,8 @@
       "metadata": {
         "name": "ssoSettingsLDAP",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "deletionTimestamp": "2026-01-31T01:56:50Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
