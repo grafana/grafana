@@ -13638,6 +13638,7 @@
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
     "tooltip-placement-options": {
       "label-auto": "Auto",
