@@ -450,7 +450,10 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       return;
     }
 
-    variable.label = getLabel(variable.group, datasourceUid);
+    variable.labels = {
+      ...(variable.labels ?? {}),
+      exportLabel: getLabel(variable.group, datasourceUid),
+    };
     variable.datasource = undefined;
   };
 

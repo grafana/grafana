@@ -284,10 +284,18 @@ describe('extractV2Inputs', () => {
     const dashboard = {
       elements: {},
       variables: [
-        { kind: 'QueryVariable', spec: { name: 'var1', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } } },
-        { kind: 'QueryVariable', spec: { name: 'var2', query: { group: 'prometheus', labels: { exportLabel: 'prom-2' } } } },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var2', query: { group: 'prometheus', labels: { exportLabel: 'prom-2' } } },
+        },
       ],
-      annotations: [{ spec: { name: 'Deployments', query: { group: 'prometheus', labels: { exportLabel: 'prom-3' } } } }],
+      annotations: [
+        { spec: { name: 'Deployments', query: { group: 'prometheus', labels: { exportLabel: 'prom-3' } } } },
+      ],
     };
 
     const result = extractV2Inputs(dashboard);
@@ -301,8 +309,14 @@ describe('extractV2Inputs', () => {
     const dashboard = {
       elements: {},
       variables: [
-        { kind: 'QueryVariable', spec: { name: 'promvar', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } } },
-        { kind: 'QueryVariable', spec: { name: 'lokivar', query: { group: 'loki', labels: { exportLabel: 'loki-1' } } } },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'lokivar', query: { group: 'loki', labels: { exportLabel: 'loki-1' } } },
+        },
       ],
     };
 
