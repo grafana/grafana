@@ -142,7 +142,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       padding: theme.spacing(1, 0),
       flexGrow: 0,
-      gap: theme.spacing(1),
+      gap: theme.spacing(2),
       overflow: 'hidden',
       width: theme.spacing(SIDE_BAR_WIDTH_WITH_TEXT),
     }),
@@ -152,7 +152,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     divider: css({
       height: '1px',
       background: theme.colors.border.weak,
-      width: theme.spacing(3),
+      width: '70%',
     }),
     flexGrow: css({
       flexGrow: 1,

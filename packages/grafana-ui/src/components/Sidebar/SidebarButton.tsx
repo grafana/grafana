@@ -5,6 +5,7 @@ import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -15,11 +16,11 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   tooltip?: string;
   title: string;
-  iconColor?: string;
+  variant?: ButtonVariant;
 }
 
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ icon, active, onClick, title, tooltip, iconColor, ...restProps }, ref) => {
+  ({ icon, active, onClick, title, tooltip, variant, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
     const context = useContext(SidebarContext);
 
@@ -43,7 +44,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           onClick={onClick}
           {...restProps}
         >
-          <div className={cx(styles.iconWrapper, iconColor, active && styles.iconActive)}>{renderIcon(icon)}</div>
+          <div className={cx(styles.iconWrapper, variant, active && styles.iconActive)}>{renderIcon(icon)}</div>
           {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
@@ -72,11 +73,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
-      minHeight: theme.spacing(theme.components.height.md),
+      minHeight: theme.spacing(theme.components.height.sm),
       padding: theme.spacing(0, 1),
       width: '100%',
       overflow: 'hidden',
-      lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
+      lineHeight: `${theme.components.height.sm * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
       background: 'transparent',
@@ -95,12 +96,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     compact: css({
-      height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
       width: theme.spacing(5),
     }),
     iconWrapper: css({
-      padding: 2,
+      padding: 3,
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -122,6 +122,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     iconActive: css({
+      color: theme.colors.text.primary,
       background: theme.colors.secondary.main,
       '&::before': {
         display: 'block',

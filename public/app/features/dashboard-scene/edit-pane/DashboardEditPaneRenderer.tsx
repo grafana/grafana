@@ -112,7 +112,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           <>
             <Sidebar.Button
               icon="plus"
-              iconColor="primary"
+              variant="primary"
               onClick={() => {
                 onSetLayoutElement(selectedObject);
                 editPane.openPane('add');
@@ -131,14 +131,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <Sidebar.Divider />
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
-            <Sidebar.Divider />
             <Sidebar.Button
               style={{ color: '#ff671d' }}
               icon="comment-alt-message"
@@ -157,6 +149,14 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 'Give feedback on the new dashboard editing experience'
               )}
             />
+            {config.featureToggles.dashboardUndoRedo && (
+              <>
+                <Sidebar.Divider />
+                <UndoButton dashboard={dashboard} />
+                <RedoButton dashboard={dashboard} />
+                <Sidebar.Divider />
+              </>
+            )}
           </>
         )}
         {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
