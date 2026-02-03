@@ -171,6 +171,9 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		if storage != nil {
 			storage.StopAsync()
 		}
+		if grpcService != nil {
+			grpcService.StopAsync()
+		}
 	})
 
 	// Wait for Grafana to be ready

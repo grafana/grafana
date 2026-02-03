@@ -98,10 +98,10 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		if err != nil {
 			return nil, err
 		}
-	}
-	err := s.initializeSubservicesManager()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
+		err = s.initializeSubservicesManager()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
+		}
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
 	return s, nil

@@ -53,7 +53,7 @@ func NewModule(opts Options,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +77,7 @@ func newModuleServer(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
+	tracer tracing.Tracer,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -108,6 +109,7 @@ func newModuleServer(opts Options,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
+		tracer:           tracer,
 	}
 
 	return s, nil
@@ -154,7 +156,6 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
-	reg              prometheus.Registerer
 	tracer           trace.Tracer
 }
 

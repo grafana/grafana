@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -20,12 +19,14 @@ import (
 )
 
 func (ms *ModuleServer) initGRPCServer() (services.Service, error) {
+	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+	// grpcutils.NewGrpcAuthenticator should be used instead.
 	authn := NewAuthenticatorWithFallback(ms.cfg, ms.registerer, ms.tracer, func(ctx context.Context) (context.Context, error) {
 		auth := grpc.Authenticator{Tracer: ms.tracer}
 		return auth.Authenticate(ctx)
 	})
 
-	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, interceptors.AuthenticatorFunc(authn), ms.tracer, prometheus.DefaultRegisterer)
+	handler, err := grpcserver.ProvideService(ms.cfg, ms.features, interceptors.AuthenticatorFunc(authn), ms.tracer, ms.registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +93,6 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 	authCfg := ReadGrpcServerConfig(cfg)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
 	metrics := newGRPCMetrics(reg)
-	logger := log.New("grpc-authenticator")
-
 	return func(ctx context.Context) (context.Context, error) {
 		a := &authenticatorWithFallback{
 			authenticator: authenticator,
@@ -101,10 +100,6 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 			tracer:        tracer,
 			metrics:       metrics,
 		}
-		newCtx, err := a.Authenticate(ctx)
-		if err != nil {
-			logger.Debug("Authentication failed", "error", err)
-		}
-		return newCtx, err
+		return a.Authenticate(ctx)
 	}
 }
