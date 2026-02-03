@@ -146,37 +146,6 @@ export function Step1Content({
         </Alert>
       )}
 
-      {/* Policy Tree Name Card */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <Text variant="h5" element="h3">
-            {t('alerting.import-to-gma.step1.policy-tree-title', 'Policy Tree Name')}
-          </Text>
-        </div>
-        <div className={styles.cardContent}>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="alerting.import-to-gma.step1.policy-tree-desc">
-              Name for the imported notification policy tree. Alerts with the label{' '}
-              <code>__grafana_managed_route__</code> matching this name will be routed through this policy tree.
-            </Trans>
-          </Text>
-          <Box marginTop={2}>
-            <Field
-              label={t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}
-              invalid={!!errors.policyTreeName}
-              error={errors.policyTreeName?.message}
-              noMargin
-            >
-              <Input
-                {...register('policyTreeName', { required: 'Policy tree name is required' })}
-                placeholder={t('alerting.import-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
-                width={40}
-              />
-            </Field>
-          </Box>
-        </div>
-      </div>
-
       {/* Import Source Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
@@ -233,6 +202,37 @@ export function Step1Content({
             {notificationsSource === 'datasource' && (
               <AlertmanagerDataSourceSelect onSelectionChange={onTriggerDryRun} />
             )}
+          </Box>
+        </div>
+      </div>
+
+      {/* Policy Tree Name Card */}
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <Text variant="h5" element="h3">
+            {t('alerting.import-to-gma.step1.policy-tree-title', 'Policy Tree Name')}
+          </Text>
+        </div>
+        <div className={styles.cardContent}>
+          <Text color="secondary" variant="bodySmall">
+            <Trans i18nKey="alerting.import-to-gma.step1.policy-tree-desc">
+              Name for the imported notification policy tree. Alerts with the label{' '}
+              <code>__grafana_managed_route__</code> matching this name will be routed through this policy tree.
+            </Trans>
+          </Text>
+          <Box marginTop={2}>
+            <Field
+              label={t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}
+              invalid={!!errors.policyTreeName}
+              error={errors.policyTreeName?.message}
+              noMargin
+            >
+              <Input
+                {...register('policyTreeName', { required: 'Policy tree name is required' })}
+                placeholder={t('alerting.import-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
+                width={40}
+              />
+            </Field>
           </Box>
         </div>
       </div>
