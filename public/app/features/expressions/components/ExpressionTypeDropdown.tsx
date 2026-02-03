@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { memo, ReactElement, useCallback, useMemo } from 'react';
 
 import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -41,9 +41,8 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
       component={() => (
         <div className={styles.expressionTypeItem} role="menuitem" aria-disabled={!!disabled}>
           <div
-            className={styles.expressionTypeItemContent}
+            className={cx(styles.expressionTypeItemContent, { [styles.expressionTypeItemDisabled]: !!disabled })}
             data-testid={`expression-type-${value}`}
-            style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
           >
             <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
             {label}
@@ -104,6 +103,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+    }),
+
+    expressionTypeItemDisabled: css({
+      opacity: 0.5,
+      cursor: 'not-allowed',
     }),
 
     icon: css({
