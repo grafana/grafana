@@ -98,7 +98,7 @@ describe('ImportOverviewV2', () => {
     });
   });
 
-  describe('float grid items', () => {
+  describe('float grid items warning', () => {
     it('does not show warning when dashboard has no float grid items', async () => {
       const layout = defaultGridLayoutKind();
       layout.spec.items = [
@@ -185,7 +185,7 @@ describe('ImportOverviewV2', () => {
       expect(savedLayout.spec.items[0].spec.height).toBe(8);
     });
 
-    it('does not truncate grid items when there are no floats', async () => {
+    it('preserves grid items when there are no floats', async () => {
       const layout = defaultGridLayoutKind();
       layout.spec.items = [
         {
