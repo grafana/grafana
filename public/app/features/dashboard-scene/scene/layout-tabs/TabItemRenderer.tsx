@@ -151,13 +151,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    // Without this min height, the custom grid (SceneGridLayout) wont render
+    // Without this min height, the custom grid (SceneGridLayout) wont render
     // Should be bigger than paddingTop value
     // consist of paddingTop + 0.125 = 9px
     minHeight: theme.spacing(1 + 0.125),
     paddingTop: theme.spacing(1),
 
+    // Show grid controls when hovering over the tab content
     '&:hover .dashboard-canvas-controls': {
+      opacity: 1,
+    },
+    // But hide controls inside nested rows (they'll show when that row is hovered)
+    '&:hover .dashboard-row-wrapper .dashboard-canvas-controls': {
+      opacity: 0,
+    },
+    // Re-enable for the specific nested row being hovered
+    '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
       opacity: 1,
     },
   }),

@@ -72,7 +72,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               )}
             </Droppable>
             {isEditing && !isClone && (
-              <div className={cx(styles.tabsContainer, layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
+              <div className={cx(styles.tabControls, layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
                 <Button
                   icon="plus"
                   variant="secondary"
@@ -130,10 +130,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tabsBar: css({
     ...dashboardCanvasAddButtonHoverStyles,
-
-    '& .dashboard-canvas-controls': {
-      opacity: 1,
-    },
   }),
   tabsRow: css({
     display: 'flex',
@@ -148,6 +144,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
+  }),
+  tabControls: css({
+    marginLeft: theme.spacing(1),
   }),
   nestedTabsMargin: css({
     marginLeft: theme.spacing(2),

@@ -4,9 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export const dashboardCanvasAddButtonHoverStyles = {
   '&:hover,:focus-within': {
-    '.dashboard-canvas-add-button': {
+    '.dashboard-canvas-controls': {
       opacity: 1,
-      filter: 'unset',
     },
   },
 };

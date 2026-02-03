@@ -89,6 +89,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
           className={cx(
             styles.wrapper,
+            'dashboard-row-wrapper',
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
             isCollapsed && styles.wrapperCollapsed,
@@ -215,12 +216,21 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      // Without this min height, the custom grid (SceneGridLayout) wont render
+      // Without this min height, the custom grid (SceneGridLayout) wont render
       // should be 1px more than row header + padding + margin
       // consist of lineHeight + paddingBlock + margin + 0.125 = 39px
       minHeight: theme.spacing(2.75 + 1 + 1 + 0.125),
 
+      // Show grid controls when hovering anywhere on the row
       '&:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+      // But hide controls inside nested rows (they'll show when that row is hovered)
+      '&:hover .dashboard-row-wrapper .dashboard-canvas-controls': {
+        opacity: 0,
+      },
+      // Re-enable for the specific nested row being hovered
+      '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
         opacity: 1,
       },
     }),

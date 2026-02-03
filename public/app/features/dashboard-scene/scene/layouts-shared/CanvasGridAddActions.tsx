@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,6 +24,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   const styles = useStyles2(getLayoutControlsStyles);
   const localStyles = useStyles2(getStyles);
   const { hasCopiedPanel } = useClipboardState();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { disableGrouping, disableTabs } = useMemo(() => {
     if (config.featureToggles.unlimitedLayoutsNesting) {
@@ -59,7 +60,12 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
 
   return (
     <div
-      className={cx(styles.controls, localStyles.addAction, 'dashboard-canvas-controls')}
+      className={cx(
+        styles.controls,
+        localStyles.addAction,
+        'dashboard-canvas-controls',
+        isMenuOpen && localStyles.menuOpen
+      )}
       onPointerUp={(evt) => evt.stopPropagation()}
       onPointerDown={(evt) => evt.stopPropagation()}
     >
@@ -76,6 +82,8 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
       </Button>
       <Dropdown
+        placement="bottom-start"
+        onVisibleChange={setIsMenuOpen}
         overlay={
           <Menu>
             <Menu.Item
@@ -92,6 +100,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
               testId={selectors.components.CanvasGridAddActions.addTab}
               label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
               disabled={disableTabs}
+              className={disableTabs ? localStyles.disabledMenuItem : undefined}
               description={
                 disableTabs
                   ? t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs')
@@ -148,6 +157,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     opacity: 0,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
+    },
+  }),
+  menuOpen: css({
+    '&.dashboard-canvas-controls': {
+      opacity: 1,
+    },
+  }),
+  disabledMenuItem: css({
+    // Make the label inherit the disabled text color from the parent
+    '& > div > span': {
+      color: 'inherit',
     },
   }),
 });
