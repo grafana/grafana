@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -44,7 +43,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     },
   });
 
-  const [createConnection] = useCreateOrUpdateConnection();
+  const [createConnection, connectionRequest] = useCreateOrUpdateConnection();
   const {
     options: connectionOptions,
     isLoading,
@@ -54,7 +53,6 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
 
   const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
   const { connection: selectedConnection } = useConnectionStatus(githubAppConnectionName);
-  const [isCreatingConnection, setIsCreatingConnection] = useState(false);
 
   const handleCreateConnection = async () => {
     // Reset any existing step errors
@@ -93,7 +91,6 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return false;
     };
 
-    setIsCreatingConnection(true);
     try {
       const result = await createConnection(spec, privateKey);
       if (result.data?.metadata?.name) {
@@ -111,8 +108,6 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
         return;
       }
       onGitHubAppSubmit({ success: false, error: extractErrorMessage(error) || defaultErrorMessage });
-    } finally {
-      setIsCreatingConnection(false);
     }
   };
 
@@ -210,7 +205,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
           <GitHubConnectionFields
             required
             onNewConnectionCreation={handleCreateConnection}
-            isCreating={isCreatingConnection}
+            isCreating={connectionRequest.isLoading}
           />
         </FormProvider>
       )}
