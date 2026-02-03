@@ -84,6 +84,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
+    isHidden: !isUserActive,
   });
 
   /**
@@ -126,7 +127,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
       <div
         className={styles.bodyWrapper}
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-        {...(isUserActive ? sidebarContext.outerWrapperProps : {})}
+        {...sidebarContext.outerWrapperProps}
       >
         <div
           className={cx(styles.scrollContainer, !isUserActive && styles.scrollContainerNoSidebar)}
@@ -137,7 +138,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext} hidden={!isUserActive}>
+        <Sidebar contextValue={sidebarContext}>
           <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
         </Sidebar>
       </div>

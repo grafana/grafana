@@ -17,10 +17,9 @@ import { useCustomClickAway } from './useSidebarClickAway';
 export interface Props {
   children?: ReactNode;
   contextValue: SidebarContextValue;
-  hidden?: boolean;
 }
 
-export function SidebarComp({ children, contextValue, hidden }: Props) {
+export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin } = contextValue;
@@ -30,7 +29,7 @@ export function SidebarComp({ children, contextValue, hidden }: Props) {
     [styles.undockedPaneOpen]: hasOpenPane && !isDocked,
     [styles.containerLeft]: position === 'left',
     [styles.containerTabsMode]: tabsMode,
-    [styles.containerHidden]: !!hidden,
+    [styles.containerHidden]: !!contextValue.isHidden,
   });
 
   const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
@@ -54,7 +53,7 @@ export function SidebarComp({ children, contextValue, hidden }: Props) {
         style={style}
         id="sidebar-container"
         data-testid={selectors.components.Sidebar.container}
-        aria-hidden={hidden}
+        aria-hidden={contextValue.isHidden}
       >
         {!tabsMode && <SidebarResizer />}
         {children}
