@@ -11,6 +11,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { setDefaultGrid } from './defaultGridUtils';
 import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';
 
@@ -55,6 +56,10 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     const layoutParent = layoutManager.parent;
 
     if (layoutParent && isLayoutParent(layoutParent)) {
+      if (newLayout.id === 'AutoGridLayout' || newLayout.id === 'GridLayout') {
+        setDefaultGrid(newLayout.id);
+      }
+
       layoutParent.switchLayout(newLayout.createFromLayout(layoutManager));
     }
 
