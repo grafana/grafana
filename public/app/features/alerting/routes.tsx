@@ -101,6 +101,22 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/routes/policy/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        ...PERMISSIONS_NOTIFICATION_POLICIES_READ,
+        ...PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
+      ]),
+      component: config.featureToggles.alertingMultiplePolicies
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting/routes" />,
+    },
+    {
       path: '/alerting/silences',
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,

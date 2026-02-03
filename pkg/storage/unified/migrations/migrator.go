@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"google.golang.org/grpc/metadata"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -34,10 +35,7 @@ type streamProvider interface {
 }
 
 func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
-	settings := resource.BulkSettings{
-		RebuildCollection: true,
-		SkipValidation:    true,
-	}
+	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
 		key := buildResourceKey(res, opts.Namespace)
 		if key != nil {
