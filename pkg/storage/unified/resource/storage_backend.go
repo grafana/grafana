@@ -1322,67 +1322,57 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
-	if setting.RebuildCollection {
-		for _, key := range setting.Collection {
-			events := make([]string, 0)
-			for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
-				if err != nil {
-					b.log.Error("failed to list event: %s", err)
-					return rsp
-				}
-
-				evtKey, err := ParseEventKey(evtKeyStr)
-				if err != nil {
-					b.log.Error("error parsing event key: %s", err)
-					return rsp
-				}
-
-				if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
-					continue
-				}
-
-				events = append(events, evtKeyStr)
-			}
-
-			if err := b.eventStore.batchDelete(ctx, events); err != nil {
-				b.log.Error("failed to delete events: %s", err)
+	for _, key := range setting.Collection {
+		events := make([]string, 0)
+		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
+			if err != nil {
+				b.log.Error("failed to list event: %s", err)
 				return rsp
 			}
 
-			historyKeys := make([]DataKey, 0)
-
-			for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			}, SortOrderAsc) {
-				if err != nil {
-					b.log.Error("failed to list collection before delete: %s", err)
-					return rsp
-				}
-
-				historyKeys = append(historyKeys, dataKey)
-			}
-
-			previousCount := int64(len(historyKeys))
-			if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
-				b.log.Error("failed to delete collection: %s", err)
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				b.log.Error("error parsing event key: %s", err)
 				return rsp
 			}
-			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace:     key.Namespace,
-				Group:         key.Group,
-				Resource:      key.Resource,
-				PreviousCount: previousCount,
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
 			}
+
+			events = append(events, evtKeyStr)
 		}
-	} else {
-		for _, key := range setting.Collection {
-			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+
+		if err := b.eventStore.batchDelete(ctx, events); err != nil {
+			b.log.Error("failed to delete events: %s", err)
+			return rsp
+		}
+
+		historyKeys := make([]DataKey, 0)
+
+		for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, SortOrderAsc) {
+			if err != nil {
+				b.log.Error("failed to list collection before delete: %s", err)
+				return rsp
 			}
+
+			historyKeys = append(historyKeys, dataKey)
+		}
+
+		previousCount := int64(len(historyKeys))
+		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
+			b.log.Error("failed to delete collection: %s", err)
+			return rsp
+		}
+		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
+			Namespace:     key.Namespace,
+			Group:         key.Group,
+			Resource:      key.Resource,
+			PreviousCount: previousCount,
 		}
 	}
 
