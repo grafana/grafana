@@ -31,8 +31,9 @@ func (ms *ModuleServer) initGRPCServer() (services.Service, error) {
 		return nil, err
 	}
 
-	ms.grpcServer = grpcserver.ProvideDSKitService(handler, modules.GRPCServer)
-	return ms.grpcServer, nil
+	grpcService := grpcserver.ProvideDSKitService(handler, modules.GRPCServer)
+	ms.grpcServer = grpcService.GetServer()
+	return grpcService, nil
 }
 
 type authenticatorWithFallback struct {

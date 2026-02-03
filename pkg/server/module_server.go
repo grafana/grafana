@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/dskit/services"
 
@@ -29,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -151,7 +151,7 @@ type ModuleServer struct {
 	searchServerRingClientPool *ringclient.Pool
 
 	// grpcServer is the shared gRPC server used by modules that need to expose gRPC services
-	grpcServer *grpcserver.DSKitService
+	grpcServer *grpc.Server
 
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
@@ -242,7 +242,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		if err := svc.RegisterGRPCServices(s.grpcServer.GetServer()); err != nil {
+		if err := svc.RegisterGRPCServices(s.grpcServer); err != nil {
 			return nil, err
 		}
 		return svc, nil
@@ -257,7 +257,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		if err := svc.RegisterGRPCServices(s.grpcServer.GetServer()); err != nil {
+		if err := svc.RegisterGRPCServices(s.grpcServer); err != nil {
 			return nil, err
 		}
 		return svc, nil
