@@ -670,12 +670,14 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/migrationHandler* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /packages/grafana-runtime/src/utils/plugin.ts @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/utils/publicDashboardQueryHandler.ts @grafana/grafana-operator-experience-squad
+/packages/grafana-runtime/src/utils/qscheck* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/queryResponse* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/rbac.ts @grafana/identity-access-team
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/utils/toDataQueryError.ts @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/userStorage* @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/useFavoriteDatasources* @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/utils/getCachedPromise* @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
 # @grafana/schema
 /packages/grafana-schema/ @grafana/grafana-app-platform-squad
@@ -823,7 +825,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/NavLandingPage/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/NestedFolderPicker/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
-/public/app/core/components/OwnerReferences/OwnerReferenceSelector.tsx @grafana/grafana-search-navigate-organise
+/public/app/core/components/OwnerReferences/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Page/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageActionBar/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageInfo/ @grafana/grafana-search-navigate-organise
@@ -914,6 +916,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/fetch* @grafana/grafana-frontend-platform
 /public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isShallowEqual.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/isRecord.ts @grafana/dashboards-squad
 /public/app/core/utils/kbn* @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
 /public/app/core/utils/object* @grafana/grafana-frontend-platform

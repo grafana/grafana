@@ -1,10 +1,20 @@
 import tinycolor from 'tinycolor2';
 
-import { colorManipulator, FALLBACK_COLOR, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  FALLBACK_COLOR,
+  FieldDisplay,
+  getFieldColorMode,
+  GrafanaTheme2,
+  ThresholdsMode,
+} from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
+import { getFormattedThresholds } from '../Gauge/utils';
+
+import { DEFAULT_DECIMALS } from './constants';
 import { GradientStop, RadialShape } from './types';
-import { getFieldConfigMinMax, getFieldDisplayProcessor, getValuePercentageForValue } from './utils';
+import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
 
 export function buildGradientColors(
   theme: GrafanaTheme2,
@@ -15,24 +25,16 @@ export function buildGradientColors(
 
   // thresholds get special handling
   if (colorMode.id === FieldColorModeId.Thresholds) {
-    const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
-    const [min, max] = getFieldConfigMinMax(fieldDisplay);
-    const thresholds = fieldDisplay.field.thresholds?.steps ?? [];
-
-    const result: Array<{ color: string; percent: number }> = [
-      { color: displayProcessor(min).color ?? baseColor, percent: 0 },
-    ];
-
-    for (const threshold of thresholds) {
-      if (threshold.value > min && threshold.value < max) {
-        const percent = (threshold.value - min) / (max - min);
-        result.push({ color: theme.visualization.getColorByName(threshold.color), percent });
+    return getFormattedThresholds(fieldDisplay.field.decimals ?? DEFAULT_DECIMALS, fieldDisplay.field, theme).map(
+      (threshold) => {
+        const percent = getThresholdPercentageValue(
+          threshold,
+          fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute,
+          fieldDisplay
+        );
+        return { color: theme.visualization.getColorByName(threshold.color), percent };
       }
-    }
-
-    result.push({ color: displayProcessor(max).color ?? baseColor, percent: 1 });
-
-    return result;
+    );
   }
 
   // Handle continuous color modes before other by-value modes

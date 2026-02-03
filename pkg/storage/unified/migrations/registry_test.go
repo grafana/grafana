@@ -15,7 +15,7 @@ import (
 )
 
 // Test helper to create a simple MigrationDefinition for testing
-func testMigrationDefinition(id string, resources ...schema.GroupResource) MigrationDefinition {
+func testMigrationDefinition(id string, resources ...ResourceInfo) MigrationDefinition {
 	return MigrationDefinition{
 		ID:          id,
 		MigrationID: id + " migration",
@@ -27,6 +27,14 @@ func testMigrationDefinition(id string, resources ...schema.GroupResource) Migra
 // Test helper to create a GroupResource
 func testGroupResource(group, resource string) schema.GroupResource {
 	return schema.GroupResource{Group: group, Resource: resource}
+}
+
+// Test helper to create a ResourceInfo
+func testResourceInfo(group, resource, lockTable string) ResourceInfo {
+	return ResourceInfo{
+		GroupResource: schema.GroupResource{Group: group, Resource: resource},
+		LockTable:     lockTable,
+	}
 }
 
 func TestNewMigrationRegistry(t *testing.T) {
@@ -44,7 +52,7 @@ func TestNewMigrationRegistry(t *testing.T) {
 func TestMigrationRegistry_Register(t *testing.T) {
 	t.Run("registers single definition", func(t *testing.T) {
 		r := NewMigrationRegistry()
-		def := testMigrationDefinition("test-1", testGroupResource("group1", "resource1"))
+		def := testMigrationDefinition("test-1", testResourceInfo("group1", "resource1", "table1"))
 
 		r.Register(def)
 
@@ -58,9 +66,9 @@ func TestMigrationRegistry_Register(t *testing.T) {
 
 	t.Run("registers multiple definitions", func(t *testing.T) {
 		r := NewMigrationRegistry()
-		def1 := testMigrationDefinition("test-1", testGroupResource("group1", "resource1"))
-		def2 := testMigrationDefinition("test-2", testGroupResource("group2", "resource2"))
-		def3 := testMigrationDefinition("test-3", testGroupResource("group3", "resource3"))
+		def1 := testMigrationDefinition("test-1", testResourceInfo("group1", "resource1", "table1"))
+		def2 := testMigrationDefinition("test-2", testResourceInfo("group2", "resource2", "table2"))
+		def3 := testMigrationDefinition("test-3", testResourceInfo("group3", "resource3", "table3"))
 
 		r.Register(def1)
 		r.Register(def2)
@@ -84,10 +92,11 @@ func TestMigrationRegistry_Register(t *testing.T) {
 	t.Run("stores definition with all fields", func(t *testing.T) {
 		r := NewMigrationRegistry()
 		gr := testGroupResource("test.grafana.app", "widgets")
+		ri := ResourceInfo{GroupResource: gr, LockTable: "widgets"}
 		def := MigrationDefinition{
 			ID:          "widgets-migration",
 			MigrationID: "widgets migration log id",
-			Resources:   []schema.GroupResource{gr},
+			Resources:   []ResourceInfo{ri},
 			Migrators: map[schema.GroupResource]MigratorFactory{
 				gr: func(a legacy.MigrationDashboardAccessor) MigratorFunc {
 					return nil
@@ -102,7 +111,7 @@ func TestMigrationRegistry_Register(t *testing.T) {
 		require.Equal(t, "widgets-migration", stored.ID)
 		require.Equal(t, "widgets migration log id", stored.MigrationID)
 		require.Len(t, stored.Resources, 1)
-		require.Equal(t, gr, stored.Resources[0])
+		require.Equal(t, ri, stored.Resources[0])
 	})
 }
 
@@ -141,7 +150,7 @@ func TestMigrationRegistry_Register_DuplicatePanics(t *testing.T) {
 func TestMigrationRegistry_Get(t *testing.T) {
 	t.Run("returns definition and true for existing ID", func(t *testing.T) {
 		r := NewMigrationRegistry()
-		def := testMigrationDefinition("existing", testGroupResource("g", "r"))
+		def := testMigrationDefinition("existing", testResourceInfo("g", "r", "table"))
 		r.Register(def)
 
 		result, ok := r.Get("existing")
@@ -173,15 +182,15 @@ func TestMigrationRegistry_Get(t *testing.T) {
 
 	t.Run("retrieves correct definition among multiple", func(t *testing.T) {
 		r := NewMigrationRegistry()
-		r.Register(testMigrationDefinition("first", testGroupResource("g1", "r1")))
-		r.Register(testMigrationDefinition("second", testGroupResource("g2", "r2")))
-		r.Register(testMigrationDefinition("third", testGroupResource("g3", "r3")))
+		r.Register(testMigrationDefinition("first", testResourceInfo("g1", "r1", "t1")))
+		r.Register(testMigrationDefinition("second", testResourceInfo("g2", "r2", "t2")))
+		r.Register(testMigrationDefinition("third", testResourceInfo("g3", "r3", "t3")))
 
 		result, ok := r.Get("second")
 
 		require.True(t, ok)
 		require.Equal(t, "second", result.ID)
-		require.Equal(t, testGroupResource("g2", "r2"), result.Resources[0])
+		require.Equal(t, testResourceInfo("g2", "r2", "t2"), result.Resources[0])
 	})
 }
 
@@ -322,8 +331,8 @@ func TestMigrationRegistry_HasResource(t *testing.T) {
 func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("formats single resource correctly", func(t *testing.T) {
 		def := MigrationDefinition{
-			Resources: []schema.GroupResource{
-				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			Resources: []ResourceInfo{
+				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTable: "dashboard"},
 			},
 		}
 
@@ -335,10 +344,10 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 
 	t.Run("formats multiple resources correctly", func(t *testing.T) {
 		def := MigrationDefinition{
-			Resources: []schema.GroupResource{
-				{Group: "folder.grafana.app", Resource: "folders"},
-				{Group: "dashboard.grafana.app", Resource: "dashboards"},
-				{Group: "playlist.grafana.app", Resource: "playlists"},
+			Resources: []ResourceInfo{
+				{GroupResource: schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, LockTable: "folder"},
+				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTable: "dashboard"},
+				{GroupResource: schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}, LockTable: "playlist"},
 			},
 		}
 
@@ -352,7 +361,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 
 	t.Run("returns empty slice for no resources", func(t *testing.T) {
 		def := MigrationDefinition{
-			Resources: []schema.GroupResource{},
+			Resources: []ResourceInfo{},
 		}
 
 		result := def.ConfigResources()
@@ -363,8 +372,8 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 
 	t.Run("handles empty group", func(t *testing.T) {
 		def := MigrationDefinition{
-			Resources: []schema.GroupResource{
-				{Group: "", Resource: "configmaps"},
+			Resources: []ResourceInfo{
+				{GroupResource: schema.GroupResource{Group: "", Resource: "configmaps"}, LockTable: "configmaps"},
 			},
 		}
 
@@ -376,8 +385,8 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 
 	t.Run("handles empty resource", func(t *testing.T) {
 		def := MigrationDefinition{
-			Resources: []schema.GroupResource{
-				{Group: "some.group", Resource: ""},
+			Resources: []ResourceInfo{
+				{GroupResource: schema.GroupResource{Group: "some.group", Resource: ""}, LockTable: ""},
 			},
 		}
 
