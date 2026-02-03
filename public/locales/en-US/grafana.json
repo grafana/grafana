@@ -12721,6 +12721,10 @@
       "show-help": "Show data source help"
     },
     "edit-query-name": "Edit query name",
+    "header": {
+      "expression": "Expression",
+      "transformation": "Transformation"
+    },
     "help": {
       "close": "Close help",
       "close-aria": "Close help panel"
