@@ -129,6 +129,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       queryType: 'both',
       profileTypeId: '',
       groupBy: [],
+      includeExemplars: false,
     };
   }
 

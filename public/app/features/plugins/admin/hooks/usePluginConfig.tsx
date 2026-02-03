@@ -11,7 +11,11 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
-    const isPluginInstalled = config.pluginAdminExternalManageEnabled ? plugin.isFullyInstalled : plugin.isInstalled;
+    // On Cloud, check both isFullyInstalled (for multi-instance setup) and isInstalled (fallback for single instance)
+    // This ensures tabs show even if instance data hasn't fully loaded
+    const isPluginInstalled = config.pluginAdminExternalManageEnabled
+      ? plugin.isFullyInstalled || plugin.isInstalled
+      : plugin.isInstalled;
 
     if (isPluginInstalled && !plugin.isDisabled) {
       return loadPlugin(plugin.id);

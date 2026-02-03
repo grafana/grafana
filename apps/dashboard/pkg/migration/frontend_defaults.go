@@ -151,8 +151,8 @@ func ensureAnnotationsExist(dashboard map[string]interface{}) {
 	}
 }
 
-// ensurePanelsHaveUniqueIds ensures all panels have unique IDs
-func ensurePanelsHaveUniqueIds(dashboard map[string]interface{}) {
+// EnsurePanelsHaveUniqueIds ensures all panels have unique IDs.
+func EnsurePanelsHaveUniqueIds(dashboard map[string]interface{}) {
 	panels := getPanels(dashboard)
 	if len(panels) == 0 {
 		return
@@ -425,6 +425,21 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 					for _, nestedPanelInterface := range nestedPanels {
 						if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
 							panels = append(panels, nestedPanel)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Also get panels from rows
+	if rows, ok := dashboard["rows"].([]interface{}); ok {
+		for _, rowInterface := range rows {
+			if row, ok := rowInterface.(map[string]interface{}); ok {
+				if rowPanels, ok := row["panels"].([]interface{}); ok {
+					for _, panelInterface := range rowPanels {
+						if panel, ok := panelInterface.(map[string]interface{}); ok {
+							panels = append(panels, panel)
 						}
 					}
 				}

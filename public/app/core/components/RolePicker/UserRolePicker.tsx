@@ -3,7 +3,7 @@ import { useAsyncFn } from 'react-use';
 
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction, Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';
@@ -96,6 +96,7 @@ export const UserRolePicker = ({
 
   return (
     <RolePicker
+      pickerId={`user-picker-${userId}-${orgId}`}
       appliedRoles={appliedRoles}
       basicRole={basicRole}
       onRolesChange={onRolesChange}

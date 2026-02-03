@@ -86,6 +86,10 @@ export type GrafanaManagedReceiverConfig = {
   settings: GrafanaManagedReceiverConfigSettings;
   type: string;
   /**
+   * Version of the integration (e.g. "v0" for Mimir legacy, "v1" for Grafana)
+   */
+  version?: string;
+  /**
    * Name of the _receiver_, which in most cases will be the
    * same as the contact point's name. This should not be used, and is optional because the
    * kubernetes API does not return it for us (and we don't want to/shouldn't use it)
@@ -104,7 +108,7 @@ export interface GrafanaManagedContactPoint {
   /** If parsed from k8s API, we'll have an ID property */
   id?: string;
   metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  provisioned?: boolean;
+  provenance?: string;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
 
@@ -144,7 +148,7 @@ export type Route = {
   provenance?: string;
   /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
   [ROUTES_META_SYMBOL]?: {
-    provisioned?: boolean;
+    provenance?: string;
     resourceVersion?: string;
     name?: string;
   };

@@ -41,9 +41,13 @@ Select a group to expand it and view the list of alert rules within that group.
 
 The list view includes a number of filters to simplify managing large volumes of alerts.
 
+## Filter and save searches
+
 Click the **Filter** button to open the filter popup. You can filter by name, label, folder/namespace, evaluation group, data source, contact point, rule source, rule state, rule type, and the health of the alert rule from the popup menu. Click **Apply** at the bottom of the filter popup to enact the filters as you search.
 
-{{< figure src="/media/docs/alerting/alerting-list-view-filter.png" max-width="750px" alt="Alert rule filter options" >}}
+Click the **Saved searches** button to open the list of previously saved searches, or click **+ Save current search** to add your current search to the saved searches list. You can also rename a saved search or set it as a default search. When you set a saved search as the default search, the Alert rules page opens with the search applied.
+
+{{< figure src="/media/docs/alerting/alerting-saved-searches.png" max-width="750px" alt="Alert rule filter options" >}}
 
 ## Change alert rules list view
 

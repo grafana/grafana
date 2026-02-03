@@ -317,6 +317,7 @@ export const handyTestingSchema: Spec = {
         query: 'option1, option2',
         skipUrlSync: false,
         allowCustomValue: true,
+        valuesFormat: 'csv',
       },
     },
     {

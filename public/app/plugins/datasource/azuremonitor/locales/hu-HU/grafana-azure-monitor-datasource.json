@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure-naplók előbeállításos lekérdezése gomb",
       "body-switching-to-builder": "A szerkesztő módra váltás elveti az aktuális KQL-lekérdezést és törli a KQL-szerkesztőben lévő tartalmat. Biztosan folytatja?",
-      "body-switching-to-kql": "A KQL-re váltás elveti az aktuális szerkesztő beállításait. Biztosan folytatja?",
       "button-kick-start-your-query": "Előbeállításos lekérdezés",
       "button-run-query": "Lekérdezés futtatása",
       "confirmText-switch-to": "Váltás erre: {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Időoszlop",
       "label-time-range": "Időtartomány",
       "tooltip-time-column": "<0>Meghatározza a szűréshez használt időoszlopot. Alapértelmezés szerint az első táblák <1>timeSpan</1> oszlopa, az első megtalált <3>datetime</3> oszlop vagy a <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Meghatározza a lekérdezéshez használt időtartományt. A <1>Lekérdezés</1> opció csak a lekérdezésben megadott időtartományokat használja. Az <3>Irányítópult</3> csak a Grafana-időtartományt használja. Naplólétrehozási módban csak az irányítópult ideje lesz felhasználva.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Felső"

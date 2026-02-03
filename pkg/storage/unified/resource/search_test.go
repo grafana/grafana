@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -217,7 +218,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -273,7 +274,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -322,7 +323,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -600,7 +601,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		MinBuildVersion:      semver.MustParse("5.5.5"),
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -674,7 +675,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -733,7 +734,7 @@ func TestRebuildIndexes(t *testing.T) {
 	})
 }
 
-func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest, indexExists, expectedRebuild bool) {
+func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, indexExists, expectedRebuild bool) {
 	ctx := context.Background()
 
 	idxBefore := support.search.GetIndex(req.NamespacedResource)
@@ -785,7 +786,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -835,4 +836,57 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
+	opts := SearchOptions{
+		Backend: &mockSearchBackend{},
+		Resources: &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		},
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	t.Run("negative limit returns error", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "ns",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+			Limit: -100,
+		}
+		rsp, err := support.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+		require.Equal(t, "limit cannot be negative", rsp.Error.Message)
+	})
+
+	t.Run("negative offset returns error", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "ns",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+			Limit:  10,
+			Offset: -50,
+		}
+		rsp, err := support.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
+	})
 }

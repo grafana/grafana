@@ -75,32 +75,6 @@ func (r *githubRepository) Client() Client {
 	return r.gh
 }
 
-// Validate implements provisioning.Repository.
-func (r *githubRepository) Validate() (list field.ErrorList) {
-	cfg := r.Config()
-	gh := cfg.Spec.GitHub
-	if gh == nil {
-		list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
-		return list
-	}
-	if gh.URL == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "url"), "a github url is required"))
-	} else {
-		_, _, err := ParseOwnerRepoGithub(gh.URL)
-		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
-		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://github.com/"))
-		}
-	}
-
-	if len(list) > 0 {
-		return list
-	}
-
-	return r.GitRepository.Validate()
-}
-
 func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
 	giturl = strings.TrimSuffix(giturl, ".git")
 	giturl = strings.TrimSuffix(giturl, "/")

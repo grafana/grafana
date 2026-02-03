@@ -184,6 +184,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
       allowCustomValue: variable.allowCustomValue,
+      valuesFormat: variable.valuesFormat ?? 'csv',
     });
     // Query variable
   } else if (variable.type === 'query') {
@@ -208,6 +209,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       staticOptions: variable.staticOptions?.map((option) => ({
         label: String(option.text),
         value: String(option.value),
+        properties: option.properties,
       })),
       staticOptionsOrder: variable.staticOptionsOrder,
     });

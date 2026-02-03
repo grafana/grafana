@@ -32,11 +32,11 @@ type ConnectionSecure struct {
 
 	// Token is the reference of the token used to act as the Connection.
 	// This value is stored securely and cannot be read back
-	Token common.InlineSecureValue `json:"webhook,omitzero,omitempty"`
+	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
 }
 
 func (v ConnectionSecure) IsZero() bool {
-	return v.PrivateKey.IsZero() && v.Token.IsZero()
+	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
 
 type GitHubConnectionConfig struct {
@@ -69,6 +69,10 @@ const (
 )
 
 type ConnectionSpec struct {
+	// The connection display name (shown in the UI)
+	Title string `json:"title"`
+	// The connection description
+	Description string `json:"description,omitempty"`
 	// The connection provider type
 	Type ConnectionType `json:"type"`
 	// The connection URL
@@ -85,24 +89,23 @@ type ConnectionSpec struct {
 	Gitlab *GitlabConnectionConfig `json:"gitlab,omitempty"`
 }
 
-// ConnectionState defines the state of a Connection
-// +enum
-type ConnectionState string
-
-// ConnectionState values
-const (
-	ConnectionStateConnected    ConnectionState = "connected"
-	ConnectionStateDisconnected ConnectionState = "disconnected"
-)
-
 // The status of a Connection.
 // This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatus struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration int64 `json:"observedGeneration"`
 
-	// Connection state
-	State ConnectionState `json:"state"`
+	// FieldErrors are errors that occurred during validation of the connection spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	// +listType=atomic
+	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
+
+	// Conditions represent the latest available observations of the connection's state.
+	// +listType=map
+	// +listMapKey=type
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 
 	// The connection health status
 	Health HealthStatus `json:"health"`
@@ -115,4 +118,27 @@ type ConnectionList struct {
 
 	// +listType=atomic
 	Items []Connection `json:"items"`
+}
+
+// ExternalRepositoryList lists repositories from an external git provider
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ExternalRepositoryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ExternalRepository `json:"items"`
+}
+
+type ExternalRepository struct {
+	// Name of the repository
+	Name string `json:"name"`
+	// Owner is the user, organization, or workspace that owns the repository
+	// For GitHub: organization or user
+	// For GitLab: namespace (user or group)
+	// For Bitbucket: workspace
+	// For pure Git: empty
+	Owner string `json:"owner,omitempty"`
+	// URL of the repository
+	URL string `json:"url"`
 }

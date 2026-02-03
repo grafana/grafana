@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.5
+GO_VERSION = 1.25.6
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -135,7 +135,7 @@ i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
 i18n-extract-enterprise:
-	@echo "Extracting i18n strings for Enterprise"	
+	@echo "Extracting i18n strings for Enterprise"
 	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
 endif
 
@@ -217,6 +217,20 @@ gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
+.PHONY: gen-app-manifests-unistore
+gen-app-manifests-unistore: ## Generate unified storage app manifests list
+	@echo "generating unified storage app manifests"
+	$(GO) generate ./pkg/storage/unified/resource/app_manifests.go
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet pkg/storage/unified/resource/app_manifests.go; then \
+			echo "Error: pkg/storage/unified/resource/app_manifests.go is not up to date. Please run 'make gen-app-manifests-unistore' to regenerate."; \
+			git diff pkg/storage/unified/resource/app_manifests.go; \
+			exit 1; \
+		fi; \
+		echo "Generated app manifests code is up to date."; \
+	fi
+
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
@@ -226,6 +240,10 @@ fix-cue:
 .PHONY: gen-jsonnet
 gen-jsonnet:
 	go generate ./devenv/jsonnet
+
+.PHONY: gen-themes
+gen-themes:
+	go generate ./pkg/services/preference
 
 .PHONY: update-workspace
 update-workspace: gen-go
@@ -244,6 +262,7 @@ build-go-fast: ## Build all Go binaries without updating workspace.
 .PHONY: build-backend
 build-backend: ## Build Grafana backend.
 	@echo "build backend"
+	$(MAKE) gen-themes
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
 
 .PHONY: build-air

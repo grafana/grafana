@@ -5,13 +5,37 @@
 package v0alpha1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaTeamBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewTeamBinding(), &TeamBindingList{}, resource.WithKind("TeamBinding"),
-		resource.WithPlural("teambindings"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("teambindings"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.teamRef.name",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*TeamBinding)
+				if !ok {
+					return "", errors.New("provided object must be of type *TeamBinding")
+				}
+
+				return cast.Spec.TeamRef.Name, nil
+			},
+		},
+			{
+				FieldSelector: "spec.subject.name",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*TeamBinding)
+					if !ok {
+						return "", errors.New("provided object must be of type *TeamBinding")
+					}
+
+					return cast.Spec.Subject.Name, nil
+				},
+			},
+		}))
 	kindTeamBinding = resource.Kind{
 		Schema: schemaTeamBinding,
 		Codecs: map[resource.KindEncoding]resource.Codec{

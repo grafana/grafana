@@ -22,6 +22,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -33,6 +34,9 @@ const (
 
 	// How long we keep silences in the kvstore after they've expired.
 	silenceRetention = 5 * 24 * time.Hour
+
+	// How long we keep flushes in the kvstore after they've expired.
+	flushRetention = 5 * 24 * time.Hour
 )
 
 type AlertingStore interface {
@@ -44,8 +48,10 @@ type AlertingStore interface {
 type stateStore interface {
 	SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error)
 	SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error)
+	SaveFlushLog(ctx context.Context, st alertingNotify.State) (int64, error)
 	GetSilences(ctx context.Context) (string, error)
 	GetNotificationLog(ctx context.Context) (string, error)
+	GetFlushLog(ctx context.Context) (string, error)
 }
 
 type alertmanager struct {
@@ -101,6 +107,10 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	if err != nil {
 		return nil, err
 	}
+	flushLog, err := stateStore.GetFlushLog(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	silencesOptions := maintenanceOptions{
 		initialState:         silences,
@@ -123,12 +133,29 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 	l := log.New("ngalert.notifier")
 
+	dispatchTimer := GetDispatchTimer(featureToggles)
+
+	var flushLogOptions *maintenanceOptions
+	if dispatchTimer == alertingNotify.DispatchTimerSync {
+		flushLogOptions = &maintenanceOptions{
+			initialState:         flushLog,
+			retention:            flushRetention,
+			maintenanceFrequency: maintenanceInterval,
+			maintenanceFunc: func(state alertingNotify.State) (int64, error) {
+				// Detached context here is to make sure that when the service is shut down the persist operation is executed.
+				return stateStore.SaveFlushLog(context.Background(), state)
+			},
+		}
+	}
+
 	opts := alertingNotify.GrafanaAlertmanagerOpts{
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,
 		Nflog:              nflogOptions,
+		FlushLog:           flushLogOptions,
+		DispatchTimer:      dispatchTimer,
 		Limits: alertingNotify.Limits{
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
@@ -347,6 +374,12 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	err := am.crypto.DecryptExtraConfigs(ctx, cfg)
 	if err != nil {
 		return false, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
+	// Add managed routes to the configuration.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
 	}
 
 	mergeResult, err := cfg.GetMergedAlertmanagerConfig()

@@ -93,6 +93,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         staticOptions: variable.state.staticOptions?.map((option) => ({
           text: option.label,
           value: String(option.value),
+          ...(option.properties && { properties: option.properties }),
         })),
         staticOptionsOrder: variable.state.staticOptionsOrder,
       };
@@ -120,6 +121,9 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
+        // Ensure we persist the backend default when not specified to stay aligned with
+        // transformSaveModelSchemaV2ToScene which injects 'csv' on load.
+        valuesFormat: variable.state.valuesFormat ?? 'csv',
       };
       variables.push(customVariable);
     } else if (sceneUtils.isDataSourceVariable(variable)) {
@@ -281,6 +285,7 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
     value: String(o.value),
     text: o.label,
     selected: Array.isArray(varState.value) ? varState.value.includes(o.value) : varState.value === o.value,
+    ...(o.properties && { properties: o.properties }),
   }));
 }
 
@@ -389,6 +394,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           staticOptions: variable.state.staticOptions?.map((option) => ({
             text: option.label,
             value: String(option.value),
+            ...(option.properties && { properties: option.properties }),
           })),
           staticOptionsOrder: variable.state.staticOptionsOrder,
         },
@@ -408,6 +414,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          valuesFormat: variable.state.valuesFormat ?? 'csv',
         },
       };
       variables.push(customVariable);

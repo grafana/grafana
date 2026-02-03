@@ -236,9 +236,7 @@ kubernetesDashboards = true
 kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
-unifiedStorageSearch = true
 unifiedStorageSearchPermissionFiltering = false
-unifiedStorageSearchSprinkles = false
 
 [unified_storage]
 enable_search = true
@@ -293,15 +291,15 @@ overrides_path = overrides.yaml
 overrides_reload_period = 5s
 ```
 
-To overrides the default quota for a tenant, add the following to the overrides.yaml file:
+To override the default quota for a tenant, add the following to the `overrides.yaml` file:
 ```yaml
 overrides:
   <NAMESPACE>:
     quotas:
-      <GROUP>.<RESOURCE>:
+      <GROUP>/<RESOURCE>:
         limit: 10
 ```
-Unless otherwise set, the NAMESPACE when running locally is `default`.
+Unless otherwise set, the `NAMESPACE` when running locally is `default`.
 
 To access quotas, use the following API endpoint:
 ```
@@ -315,9 +313,6 @@ To enable it, add the following to your `custom.ini` under the `[feature_toggles
 [feature_toggles]
 ; Used by the Grafana instance
 unifiedStorageSearchUI = true
-
-; (optional) Allows you to sort dashboards by usage insights fields when using enterprise
-; unifiedStorageSearchSprinkles = true
 
 [unified_storage]
 ; Used by unified storage server
@@ -806,8 +801,10 @@ flowchart TD
 
 #### Setting Dual Writer Mode
 ```ini
-[unified_storage.{resource}.{kind}.{group}]
-dualWriterMode = {0-5}
+; [unified_storage.{resource}.{group}]
+[unified_storage.dashboards.dashboard.grafana.app]
+; modes {0-5}
+dualWriterMode = 0
 ```
 
 #### Background Sync Configuration
@@ -933,7 +930,6 @@ Unified Search requires several feature flags to be enabled depending on the des
 | Feature Flag | Purpose | Stage | Required For |
 |--------------|---------|-------|--------------|
 | `unifiedStorageSearchUI` | Frontend search interface | Experimental | Grafana UI search |
-| `unifiedStorageSearchSprinkles` | Usage insights integration | Experimental | Dashboard usage sorting (Enterprise) |
 | `unifiedStorageSearchDualReaderEnabled` | Shadow traffic to unified search | Experimental | Shadow traffic during migration |
 
 #### Unified Search Specific Configuration
@@ -953,9 +949,6 @@ unifiedStorageSearchUI = true
 
 ; Enable shadow traffic during migration (optional)
 unifiedStorageSearchDualReaderEnabled = true
-
-; Enable usage insights sorting (Enterprise only)
-unifiedStorageSearchSprinkles = true
 
 [unified_storage]
 ; Enable core search functionality (required)
@@ -1376,4 +1369,3 @@ disable_data_migrations = false
 ### Documentation
 
 For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).
- 

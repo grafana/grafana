@@ -32,6 +32,7 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
+  /** @deprecated it will be removed in a future release */
   angular: AngularMeta;
   loadingStrategy: PluginLoadingStrategy;
   dependencies: PluginDependencies;
@@ -219,6 +220,7 @@ export interface GrafanaConfig {
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
+  /** @deprecated it will be removed in a future release */
   apps: Record<string, AppPluginConfig>;
   auth: AuthSettings;
   minRefreshInterval: string;
@@ -234,6 +236,7 @@ export interface GrafanaConfig {
   externalUserMngInfo: string;
   externalUserMngAnalytics: boolean;
   externalUserMngAnalyticsParams: string;
+  externalUserUpgradeLinkUrl: string;
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;

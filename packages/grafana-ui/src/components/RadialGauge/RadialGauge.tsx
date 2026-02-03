@@ -15,6 +15,7 @@ import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { buildGradientColors } from './colors';
+import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
@@ -67,6 +68,11 @@ export interface RadialGaugeProps {
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
   showScaleLabels?: boolean;
+  /**
+   * If set, the gauge will use the neutral value instead of the min value as the starting point for a gauge.
+   * this is most useful when you need to show positive and negative values on a gauge.
+   */
+  neutral?: number;
   /** For data links */
   onClick?: React.MouseEventHandler<HTMLElement>;
   timeRange?: TimeRange;
@@ -89,8 +95,9 @@ export function RadialGauge(props: RadialGaugeProps) {
     segmentCount = 0,
     segmentSpacing = 0.1,
     roundedBars = true,
-    thresholdsBar = false,
+    thresholdsBar: rawThresholdsBar = false,
     showScaleLabels = false,
+    neutral,
     endpointMarker,
     onClick,
     values,
@@ -104,8 +111,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
   }
 
-  const startAngle = shape === 'gauge' ? 250 : 0;
-  const endAngle = shape === 'gauge' ? 110 : 360;
+  const startAngle = shape === 'gauge' ? ARC_START : 0;
+  const endAngle = shape === 'gauge' ? ARC_END : 360;
 
   const defs: ReactNode[] = [];
   const graphics: ReactNode[] = [];
@@ -113,7 +120,15 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
-    const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
+    // if min === max, the min and max thresholds will also be equal, which causes visual bugs.
+    const thresholdsBar = rawThresholdsBar && displayValue.field.min !== displayValue.field.max;
+    const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
+      displayValue,
+      startAngle,
+      endAngle,
+      neutral
+    );
+
     const gradientStops = gradient ? buildGradientColors(theme, displayValue) : undefined;
     const color = displayValue.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
@@ -140,7 +155,7 @@ export function RadialGauge(props: RadialGaugeProps) {
         <SpotlightGradient
           key={spotlightGradientId}
           id={spotlightGradientId}
-          angle={angle + startAngle}
+          angle={endValueAngle + startAngle}
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
@@ -156,6 +171,8 @@ export function RadialGauge(props: RadialGaugeProps) {
           fieldDisplay={displayValue}
           angleRange={angleRange}
           startAngle={startAngle}
+          startValueAngle={startValueAngle}
+          endValueAngle={endValueAngle}
           glowFilter={glowFilterRef}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
@@ -168,9 +185,10 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBar
           key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
+          startValueAngle={startValueAngle}
+          endValueAngle={endValueAngle}
           roundedBars={roundedBars}
           glowFilter={glowFilterRef}
           endpointMarkerGlowFilter={spotlightGradientRef}
@@ -207,8 +225,11 @@ export function RadialGauge(props: RadialGaugeProps) {
       );
 
       if (showScaleLabels || thresholdsBar) {
-        const decimals = displayValue.field.decimals ?? 2;
-        const thresholds = getFormattedThresholds(decimals, displayValue.field, theme);
+        const thresholds = getFormattedThresholds(
+          displayValue.field.decimals ?? DEFAULT_DECIMALS,
+          displayValue.field,
+          theme
+        );
 
         if (showScaleLabels) {
           graphics.push(
@@ -221,6 +242,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               dimensions={dimensions}
               startAngle={startAngle}
               endAngle={endAngle}
+              neutral={neutral}
             />
           );
         }
@@ -230,6 +252,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             <ThresholdsBar
               key="thresholds-bar"
               thresholds={thresholds}
+              thresholdsMode={displayValue.field.thresholds?.mode}
               dimensions={dimensions}
               fieldDisplay={displayValue}
               startAngle={startAngle}
