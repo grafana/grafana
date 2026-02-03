@@ -1,8 +1,7 @@
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
+import { FieldWithStats } from 'app/features/logs/components/fieldSelector/FieldSelector';
 
-import { FieldWithStats } from './FieldSelector';
-
-// Copy pasta from /app/features/logs/components/fieldSelector/FieldSelector.tsx (removed LogListModel dep)
+// Adapted /app/features/logs/components/fieldSelector/FieldSelector.tsx to remove LogListModel
 export function getSuggestedFields(displayedFields: string[], defaultFields: string[] = []) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
     name: field,

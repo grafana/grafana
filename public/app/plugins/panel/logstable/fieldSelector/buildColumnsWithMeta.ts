@@ -10,7 +10,7 @@ export interface LogsFrameFields {
   timeField: FieldWithIndex;
 }
 
-// sync with logs version (or deprecate)
+// @todo sync with logs version (or deprecate)
 export const buildColumnsWithMeta = (
   logsFrameFields: LogsFrameFields,
   dataFrame: DataFrame,

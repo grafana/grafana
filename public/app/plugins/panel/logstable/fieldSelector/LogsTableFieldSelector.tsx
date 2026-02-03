@@ -10,12 +10,12 @@ import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import {
   FIELD_SELECTOR_MIN_WIDTH,
   FIELD_SELECTOR_DEFAULT_WIDTH,
+  FieldSelector,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/fieldSelectorUtils';
+import { getFieldsWithStats } from 'app/features/logs/components/fieldSelector/getFieldsWithStats';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
-import { FieldSelector } from './FieldSelector';
-import { getFieldsWithStats } from './getFieldsWithStats';
 import { getSuggestedFields } from './getSuggestedFields';
 
 const SETTING_KEY_ROOT = 'grafana.panel.logs-table';
@@ -33,10 +33,6 @@ const logsFieldSelectorWrapperStyles = {
   }),
 };
 
-/**
- * @todo sync with version used in logs
- * FieldSelector wrapper for the LogsTable visualization.
- */
 interface LogsTableFieldSelectorProps {
   columnsWithMeta: FieldNameMetaStore;
   dataFrames: DataFrame[];
