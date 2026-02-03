@@ -207,7 +207,6 @@ func TestClientServer(t *testing.T) {
 
 	grpcService, err := provideTestGRPCService(cfg, features, prometheus.NewPedanticRegistry())
 	require.NoError(t, err)
-	err = services.StartAndAwaitRunning(ctx, grpcService)
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 	require.NoError(t, err)
@@ -222,6 +221,8 @@ func TestClientServer(t *testing.T) {
 	}))
 
 	t.Run("Start and stop service", func(t *testing.T) {
+		err = services.StartAndAwaitRunning(ctx, grpcService)
+		require.NoError(t, err)
 		err = services.StartAndAwaitRunning(ctx, svc)
 		require.NoError(t, err)
 		require.NotEmpty(t, grpcService.GetAddress())
@@ -315,7 +316,6 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	grpcService, err := provideTestGRPCService(cfg, features, prometheus.NewPedanticRegistry())
 	require.NoError(t, err)
-	err = services.StartAndAwaitRunning(ctx, grpcService)
 
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
@@ -334,6 +334,8 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	})
 
 	t.Run("Start service", func(t *testing.T) {
+		err = services.StartAndAwaitRunning(ctx, grpcService)
+		require.NoError(t, err)
 		err = services.StartAndAwaitRunning(ctx, svc)
 		require.NoError(t, err)
 		require.NotEmpty(t, grpcService.GetAddress())
