@@ -5,18 +5,17 @@ import { useCallback, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { sceneUtils, SceneComponentProps } from '@grafana/scenes';
+import { sceneUtils, SceneComponentProps, SceneVariableSet } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { DrilldownControls } from '../DrilldownControls';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { VariableValueSelectWrapper } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { VariableValueSelectWrapper } from '../VariableControls';
 
 import { RowItem } from './RowItem';
 
@@ -37,18 +36,12 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
   const rowVariablesSet = model.state.$variables;
-  const rowVariables = rowVariablesSet?.useState().variables ?? [];
-  const rowDrilldownVariables = rowVariables.filter(
-    (variable) => sceneUtils.isAdHocVariable(variable) || sceneUtils.isGroupByVariable(variable)
-  );
-  const adHocVar = rowDrilldownVariables.find((variable) => sceneUtils.isAdHocVariable(variable));
-  const groupByVar = rowDrilldownVariables.find((variable) => sceneUtils.isGroupByVariable(variable));
 
   const myIndex = rows.findIndex((row) => row === model);
 
   const shouldGrow = !isCollapsed && fillScreen;
   const isHidden = isConditionallyHidden && !isEditing;
-  const showRowVariables = !isCollapsed && rowDrilldownVariables.length > 0;
+  const showRowVariables = Boolean(rowVariablesSet);
 
   // Highlight the full row when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
@@ -99,7 +92,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
           className={cx(
             styles.wrapper,
-            !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
@@ -153,29 +145,42 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
+              {showRowVariables && rowVariablesSet && (
+                <RowVariables rowVariablesSet={rowVariablesSet} styles={styles} />
+              )}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
-          {!isCollapsed && (
-            <div className={styles.rowContent}>
-              {showRowVariables && (
-                <div className={styles.rowVariables}>
-                  {adHocVar && groupByVar ? (
-                    <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} />
-                  ) : (
-                    rowDrilldownVariables.map((variable) => (
-                      <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
-                    ))
-                  )}
-                </div>
-              )}
-              <layout.Component model={layout} />
-            </div>
-          )}
+          {!isCollapsed && <layout.Component model={layout} />}
           {conditionalRenderingOverlay}
         </div>
       )}
     </Draggable>
+  );
+}
+
+function RowVariables({
+  rowVariablesSet,
+  styles,
+}: {
+  rowVariablesSet: SceneVariableSet;
+  styles: ReturnType<typeof getStyles>;
+}) {
+  const { variables } = rowVariablesSet.useState();
+  const rowDrilldownVariables = variables.filter(
+    (variable) => sceneUtils.isAdHocVariable(variable) || sceneUtils.isGroupByVariable(variable)
+  );
+
+  if (rowDrilldownVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.rowVariables}>
+      {rowDrilldownVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
   );
 }
 
