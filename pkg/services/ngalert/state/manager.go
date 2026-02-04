@@ -338,7 +338,7 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
+	missingSeriesStates, staleCount := st.findAndResolveMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int("state_transitions", len(states)),
 		attribute.Int("stale_states", staleCount),
@@ -485,23 +485,22 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// processMissingSeriesStates finds cached states missing from the current evaluation,
+// findAndResolveMissingSeriesStates finds cached states missing from the current evaluation,
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
-func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
-	missingTransitions := []StateTransition{}
-	var staleStatesCount int
+func (st *Manager) findAndResolveMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
+	var missingTransitions []StateTransition
+	toDeleteStates := map[data.Fingerprint]struct{}{}
 
-	toDelete := func(s *State) bool {
+	for _, s := range st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
 		// Skip states that were just evaluated. They're not missing.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
-			return false
+			continue
 		}
+
 		// After this point, we know that the state is not in the current evaluation.
 		// Check if it's stale, and if so, resolve it.
-		oldState := s.State
-		oldReason := s.StateReason
-
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
+
 		// 'Error' and 'NoData' states (including Pending with Error/NoData reason) should be resolved
 		// after 1 missing evaluation instead of waiting for the configured missing series evaluations.
 		// This ensures these transient error conditions are cleaned up promptly when the series disappears.
@@ -509,8 +508,9 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			(s.State == eval.Pending && (s.StateReason == ngModels.StateReasonError || s.StateReason == ngModels.StateReasonNoData)) {
 			missingEvalsToResolve = 1
 		}
-		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
 
+		oldState, oldReason := s.State, s.StateReason
+		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
 		if isStale {
 			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 
@@ -522,43 +522,29 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
-				image := takeImageFn("stale state")
-				if image != nil {
-					s.Image = image
-				}
+				s.Image = takeImageFn("stale state") // Potentially nil
 			}
 
-			staleStatesCount++
+			toDeleteStates[s.CacheID] = struct{}{}
 		} else if s.State == eval.Alerting {
 			// Update 'EndsAt' so the Alertmanager won't auto-resolve this alert.
 			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 
-		record := StateTransition{
+		missingTransitions = append(missingTransitions, StateTransition{
 			State:               s,
 			PreviousState:       oldState,
 			PreviousStateReason: oldReason,
-		}
-		missingTransitions = append(missingTransitions, record)
-
-		return isStale
+		})
 	}
 
-	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-
-	toDeleteStates := map[data.Fingerprint]struct{}{}
-	for _, s := range states {
-		if toDelete(s) {
-			toDeleteStates[s.CacheID] = struct{}{}
-		}
-	}
-
+	// deleteRuleStates holds a lock on the cache, thus the pre-computed map of states.
 	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		_, ok := toDeleteStates[s.CacheID]
 		return ok
 	})
 
-	return missingTransitions, staleStatesCount
+	return missingTransitions, len(toDeleteStates)
 }
 
 // stateIsStale determines whether the evaluation state is considered stale.
