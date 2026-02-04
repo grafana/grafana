@@ -83,25 +83,16 @@ func ProvideSecretsService(
 		log:                 log.New("secrets"),
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	enabled := !features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption)
-
-	if enabled {
-		err := s.InitProviders()
-		if err != nil {
-			return nil, err
-		}
+	err := s.InitProviders()
+	if err != nil {
+		return nil, err
 	}
 
-	if _, ok := s.providers[currentProviderID]; enabled && !ok {
+	if _, ok := s.providers[currentProviderID]; !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	if !enabled && currentProviderID != kmsproviders.Default {
-		s.log.Warn("Changing encryption provider requires enabling envelope encryption feature")
-	}
-
-	s.log.Info("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
+	s.log.Info("Envelope encryption state", "current provider", currentProviderID)
 
 	s.registerUsageMetrics()
 
@@ -119,13 +110,6 @@ func (s *SecretsService) InitProviders() (err error) {
 func (s *SecretsService) registerUsageMetrics() {
 	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
 		usageMetrics := make(map[string]any)
-
-		// Enabled / disabled
-		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
-			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
-		}
 
 		// Current provider
 		kind, err := s.currentProviderID.Kind()
@@ -153,10 +137,6 @@ func (s *SecretsService) registerUsageMetrics() {
 	})
 }
 
-func (s *SecretsService) providersInitialized() bool {
-	return len(s.providers) > 0
-}
-
 func (s *SecretsService) encryptedWithEnvelopeEncryption(payload []byte) bool {
 	return len(payload) > 0 && payload[0] == keyIdDelimiter
 }
@@ -166,12 +146,6 @@ var b64 = base64.RawStdEncoding
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
 	defer span.End()
-
-	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
-		return s.enc.Encrypt(ctx, payload, s.cfg.SecretKey)
-	}
 
 	var err error
 	defer func() {
@@ -343,18 +317,9 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		return nil, err
 	}
 
-	// If encrypted with envelope encryption, the feature is disabled and
-	// no provider is initialized, then we throw an error.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.encryptedWithEnvelopeEncryption(payload) &&
-		s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) &&
-		!s.providersInitialized() {
-		err = fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
-		return nil, err
-	}
-
 	var dataKey []byte
 
+	// Still support decrypting without envelope encryption.
 	if !s.encryptedWithEnvelopeEncryption(payload) {
 		secretKey := s.cfg.SectionWithEnvOverrides("security").Key("secret_key").Value()
 		dataKey = []byte(secretKey)
@@ -482,16 +447,6 @@ func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
 
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 	s.log.Info("Data keys re-encryption triggered")
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
-		s.log.Info("Envelope encryption is not enabled but trying to init providers anyway...")
-
-		if err := s.InitProviders(); err != nil {
-			s.log.Error("Envelope encryption providers initialization failed", "error", err)
-			return err
-		}
-	}
 
 	if err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID); err != nil {
 		s.log.Error("Data keys re-encryption failed", "error", err)

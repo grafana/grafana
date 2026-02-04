@@ -454,6 +454,10 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting new dash meta accessor: %w", err)
 	}
 
+	if oldAccessor.GetDeprecatedInternalID() != newAccessor.GetDeprecatedInternalID() { // nolint:staticcheck
+		return apierrors.NewBadRequest("cannot change the ID of a dashboard. set the label grafana.app/deprecatedInternalID to the previous value")
+	}
+
 	// Parse namespace for old dashboard
 	nsInfo, err := authlib.ParseNamespace(oldAccessor.GetNamespace())
 	if err != nil {

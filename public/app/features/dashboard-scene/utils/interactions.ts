@@ -87,19 +87,30 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
+  // dashboards_variables_reordered
+  // when a user drags and drops a variable in the content outline
+  variablesReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('variables_reordered', properties);
+  },
+
   panelActionClicked(
-    item: 'configure' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
     source: 'panel' | 'edit_pane'
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source });
   },
 
+  // Panel styles copy/paste interactions
+  panelStylesMenuClicked(action: 'copy' | 'paste', panelType: string, panelId: number, error?: boolean) {
+    reportDashboardInteraction('panel_styles_menu_clicked', { action, panelType, panelId, error });
+  },
+
   // Dashboard edit item actions
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
   trackAddPanelClick(
-    source?: 'sidebar' | 'canvas',
+    source: 'sidebar' | 'canvas' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
     action: 'drop' | 'click' = 'click'
   ) {
@@ -250,6 +261,12 @@ export const DashboardInteractions = {
   },
   copyImageUrlClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_url_copied', properties);
+  },
+
+  // move item interactions
+  trackMoveItem: (item: 'panel' | 'row' | 'tab', action: 'drag' | 'drop', context: { isCrossLayout: boolean }) => {
+    const properties = { item, action, context };
+    reportDashboardInteraction('move_item', properties);
   },
 };
 

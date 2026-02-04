@@ -148,24 +148,11 @@ class K8sAPI implements DashboardSnapshotSrv {
       ),
     ]);
 
-    const snapshot = snapshotResponse.data;
-    const dashboard = dashboardResponse.data;
-
     return {
-      dashboard: dashboard.spec,
+      dashboard: dashboardResponse.data.spec,
       meta: {
         isSnapshot: true,
-        canSave: false,
-        canEdit: false,
-        canAdmin: false,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isFolder: false,
-        provisioned: false,
-        created: snapshot.metadata.creationTimestamp,
-        expires: snapshot.spec.expires?.toString(),
-        k8s: snapshot.metadata,
+        k8s: snapshotResponse.data.metadata,
       },
     };
   }
