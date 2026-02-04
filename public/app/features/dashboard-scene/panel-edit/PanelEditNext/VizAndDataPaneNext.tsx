@@ -20,12 +20,14 @@ export function VizAndDataPaneNext({
 }: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
   const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
   const styles = useStyles2(getStyles, layout.sidebarSize);
+  const { editPreview } = model.useState();
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
     return null;
   }
 
   const nextDataPane = scene.dataPane;
+  const isPreview = !!editPreview;
 
   const vizSizeClass = css({
     height: layout.vizResize.height,
@@ -47,7 +49,9 @@ export function VizAndDataPaneNext({
         </div>
       )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout }, vizSizeClass)}>
-        <scene.panelToShow.Component model={scene.panelToShow} />
+        <div className={cx(styles.vizInner, isPreview && styles.previewBorder)}>
+          <scene.panelToShow.Component model={scene.panelToShow} />
+        </div>
         <div className={styles.vizResizerWrapper}>
           <div ref={layout.vizResize.handleRef} className={layout.vizResize.className} data-testid="viz-resizer" />
         </div>
@@ -159,6 +163,14 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       left: 0,
       right: 0,
       width: '100%',
+    }),
+    vizInner: css({
+      height: '100%',
+      width: '100%',
+    }),
+    previewBorder: css({
+      border: `1px solid ${theme.colors.primary.border}`,
+      borderRadius: theme.shape.radius.default,
     }),
   };
 }

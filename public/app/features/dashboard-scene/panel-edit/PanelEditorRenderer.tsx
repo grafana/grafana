@@ -113,7 +113,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={editPreview ?? panel} tableView={tableView} />
+          <VizWrapper panel={editPreview ?? panel} tableView={tableView} isPreview={!!editPreview} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -163,15 +163,18 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 interface VizWrapperProps {
   panel: VizPanel;
   tableView?: VizPanel;
+  isPreview?: boolean;
 }
 
-function VizWrapper({ panel, tableView }: VizWrapperProps) {
+function VizWrapper({ panel, tableView, isPreview }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
   const panelToShow = tableView ?? panel;
 
   return (
     <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
+      <div className={cx(styles.vizInner, isPreview && styles.previewBorder)}>
+        <panelToShow.Component model={panelToShow} />
+      </div>
     </div>
   );
 }
@@ -274,6 +277,14 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       paddingLeft: theme.spacing(2),
+    }),
+    previewBorder: css({
+      border: `1px solid ${theme.colors.primary.border}`,
+      borderRadius: theme.shape.radius.default,
+    }),
+    vizInner: css({
+      height: '100%',
+      width: '100%',
     }),
     fixedSizeViz: css({
       height: '100vh',
