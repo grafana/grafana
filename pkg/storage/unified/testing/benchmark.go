@@ -189,10 +189,9 @@ func runStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, o
 	updateResult := performOperation(func(ctx context.Context, jobID int, namespace, group, resource, name string) error {
 		var err error
 		rvs[jobID], err = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED,
-			WithNamespace(namespace),
+			WithNamespaceAndRV(namespace, rvs[jobID]),
 			WithGroup(group),
 			WithResource(resource),
-			WithPreviousRV(rvs[jobID]),
 			WithValue(strings.Repeat("9876543210ZYXWVUTSRQPONMLKJIHGFEDCBAzyxwvutsrqponmlkjihgfedcba", 20))) // ~1.21 KiB
 
 		return err
@@ -200,10 +199,9 @@ func runStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, o
 
 	deleteResult := performOperation(func(ctx context.Context, jobID int, namespace, group, resource, name string) error {
 		_, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_DELETED,
-			WithNamespace(namespace),
+			WithNamespaceAndRV(namespace, rvs[jobID]),
 			WithGroup(group),
 			WithResource(resource),
-			WithPreviousRV(rvs[jobID]),
 		)
 
 		return err

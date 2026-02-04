@@ -1245,12 +1245,6 @@ func WithResource(resource string) WriteEventOption {
 	}
 }
 
-func WithPreviousRV(rv int64) WriteEventOption {
-	return func(o *WriteEventOptions) {
-		o.PreviousRV = rv
-	}
-}
-
 // WithFolder sets the folder for the write event
 func WithFolder(folder string) WriteEventOption {
 	return func(o *WriteEventOptions) {
