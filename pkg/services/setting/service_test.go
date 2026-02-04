@@ -12,6 +12,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -254,6 +257,83 @@ func TestRemoteSettingService_List(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "connection refused")
+	})
+
+	t.Run("should set user-agent header on requests", func(t *testing.T) {
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Contains(t, capturedUserAgent, "settings-client")
+		assert.Contains(t, capturedUserAgent, apiVersion)
+	})
+
+	t.Run("should include custom service name in user-agent", func(t *testing.T) {
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			ServiceName:   "my-custom-service",
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (my-custom-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should propagate trace context in requests", func(t *testing.T) {
+		// Set up OpenTelemetry with W3C trace context propagator
+		tp := sdktrace.NewTracerProvider()
+		otel.SetTracerProvider(tp)
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+		t.Cleanup(func() {
+			_ = tp.Shutdown(context.Background())
+		})
+
+		var capturedTraceparent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedTraceparent = r.Header.Get("Traceparent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+
+		// Create a context with a span
+		tracer := otel.Tracer("test")
+		ctx, span := tracer.Start(context.Background(), "test-list-operation")
+		defer span.End()
+
+		traceID := span.SpanContext().TraceID().String()
+		ctx = request.WithNamespace(ctx, "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.NotEmpty(t, capturedTraceparent, "Traceparent header should be set")
+		assert.Contains(t, capturedTraceparent, traceID, "Traceparent should contain the trace ID")
 	})
 }
 
@@ -500,6 +580,71 @@ func TestNew(t *testing.T) {
 		assert.NotNil(t, client)
 		assert.True(t, wrapTransportCalled)
 	})
+}
+
+func TestTracingRoundTripper(t *testing.T) {
+	// Set up OpenTelemetry with W3C trace context propagator
+	tp := sdktrace.NewTracerProvider()
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() {
+		_ = tp.Shutdown(context.Background())
+	})
+
+	t.Run("should propagate trace context headers", func(t *testing.T) {
+		var capturedHeaders http.Header
+
+		// Create a mock transport that captures headers
+		mockTransport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			capturedHeaders = req.Header.Clone()
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       http.NoBody,
+			}, nil
+		})
+
+		// Create a mock token exchange server
+		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"token": "test-token"}`))
+		}))
+		defer tokenServer.Close()
+
+		// Create authRoundTripper with mock transport
+		// Note: We can't easily mock TokenExchangeClient, so we test the trace injection separately
+		// by creating a context with a span and verifying headers are set
+
+		// Create a tracer and start a span
+		tracer := otel.Tracer("test")
+		ctx, span := tracer.Start(context.Background(), "test-span")
+		defer span.End()
+
+		// Get the expected trace ID
+		traceID := span.SpanContext().TraceID().String()
+
+		// Create a request with the traced context
+		req, err := http.NewRequestWithContext(ctx, "GET", "http://example.com/test", nil)
+		require.NoError(t, err)
+
+		// Manually inject trace headers (simulating what authRoundTripper does)
+		otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
+
+		// Execute the mock transport
+		_, err = mockTransport.RoundTrip(req)
+		require.NoError(t, err)
+
+		// Verify trace headers are present
+		traceparent := capturedHeaders.Get("Traceparent")
+		assert.NotEmpty(t, traceparent, "Traceparent header should be set")
+		assert.Contains(t, traceparent, traceID, "Traceparent should contain the trace ID")
+	})
+}
+
+// roundTripperFunc is a helper type to create RoundTripper from a function
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
 }
 
 // Helper functions

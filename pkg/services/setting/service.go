@@ -10,6 +10,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +40,8 @@ const (
 	apiVersion = "v1beta1"
 	resource   = "settings"
 )
+
+const defaultServiceName = "grafana"
 
 var settingGroupVersion = schema.GroupVersion{
 	Group:   ApiGroup,
@@ -126,6 +129,10 @@ type Config struct {
 	Burst int
 	// PageSize sets the number of items per API page (defaults to DefaultPageSize).
 	PageSize int64
+	// ServiceName is used to identify the client in the UserAgent header.
+	// The UserAgent format is "settings-client <version> (<service_name>)".
+	// Defaults to "grafana" if not set.
+	ServiceName string
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -386,15 +393,20 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		return nil, fmt.Errorf("must set either TokenExchangeClient or WrapTransport")
 	}
 
-	wrapTransport := config.WrapTransport
-	if wrapTransport == nil {
+	authTransport := config.WrapTransport
+	if authTransport == nil {
 		log.Debug("using default wrapTransport with TokenExchangeClient")
-		wrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+		authTransport = func(rt http.RoundTripper) http.RoundTripper {
 			return &authRoundTripper{
 				tokenClient: config.TokenExchangeClient,
 				transport:   rt,
 			}
 		}
+	}
+
+	// Wrap with tracing to propagate trace context to all outbound requests
+	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		return &tracingRoundTripper{transport: authTransport(rt)}
 	}
 
 	qps := DefaultQPS
@@ -407,6 +419,12 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		burst = config.Burst
 	}
 
+	serviceName := config.ServiceName
+	if serviceName == "" {
+		serviceName = defaultServiceName
+	}
+	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, serviceName)
+
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
 
@@ -416,6 +434,7 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		WrapTransport:   wrapTransport,
 		QPS:             qps,
 		Burst:           burst,
+		UserAgent:       userAgent,
 		// Configure for our API group
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
@@ -446,6 +465,19 @@ func (a *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	reqCopy := req.Clone(req.Context())
 	reqCopy.Header.Set("X-Access-Token", fmt.Sprintf("Bearer %s", token.Token))
 	return a.transport.RoundTrip(reqCopy)
+}
+
+// tracingRoundTripper wraps an HTTP transport with trace context propagation.
+type tracingRoundTripper struct {
+	transport http.RoundTripper
+}
+
+var _ http.RoundTripper = (*tracingRoundTripper)(nil)
+
+func (t *tracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	reqCopy := req.Clone(req.Context())
+	otel.GetTextMapPropagator().Inject(req.Context(), propagation.HeaderCarrier(reqCopy.Header))
+	return t.transport.RoundTrip(reqCopy)
 }
 
 func initMetrics() remoteSettingServiceMetrics {
