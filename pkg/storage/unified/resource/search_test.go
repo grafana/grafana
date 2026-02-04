@@ -164,7 +164,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -373,7 +373,7 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 	return m.cache[key]
 }
 
-func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	m.wg.Add(1)
 	defer m.wg.Done()
 
@@ -383,7 +383,7 @@ func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key Namespa
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild)
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime)
 	if err != nil {
 		return nil, err
 	}

@@ -114,6 +114,8 @@ type SearchBackend interface {
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
+	// rebuild forces a full rebuild of the index, regardless of state.
+	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -123,6 +125,7 @@ type SearchBackend interface {
 		builder BuildFn,
 		updater UpdateFn,
 		rebuild bool,
+		lastImportTime time.Time,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -628,7 +631,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			reason := "init"
-			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, time.Time{})
+			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
 			return err
 		})
 	}
@@ -872,8 +875,8 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		}
 	}
 
-	// Pass time.Now() to force rebuild of any existing file-based index
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", time.Now())
+	// Pass rebuild=true to force rebuild of any existing file-based index
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
@@ -995,7 +998,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, size, reason, lastImportTime)
+			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
@@ -1035,7 +1038,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
-func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, lastImportTime time.Time) (ResourceIndex, error) {
+func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
 
@@ -1202,28 +1205,13 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return rv, docs, nil
 	}
 
-	// Determine if we need to rebuild based on lastImportTime
-	rebuild := false
-	if !lastImportTime.IsZero() {
-		// Check if there's an existing file-based index and get its build info
-		bi, err := s.search.GetFileBuildInfo(nsr, size)
-		if err != nil {
-			logger.Warn("failed to get file build info", "error", err)
-		} else if bi != nil {
-			// If the index was built before the last import, we need to rebuild
-			if bi.BuildTime.Before(lastImportTime) {
-				logger.Info("File-based index needs rebuild before opening", "buildTime", bi.BuildTime, "lastImportTime", lastImportTime)
-				rebuild = true
-
-				// Clear dashboard cache if applicable
-				if nsr.Resource == dashboardv1.DASHBOARD_RESOURCE {
-					s.builders.clearNamespacedCache(nsr)
-				}
-			}
-		}
+	// If lastImportTime is set and this is a dashboard resource, clear the cache
+	// to ensure we get the latest usage insights data when rebuilding
+	if !lastImportTime.IsZero() && nsr.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		s.builders.clearNamespacedCache(nsr)
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild)
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime)
 
 	if err != nil {
 		return nil, err
