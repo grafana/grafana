@@ -83,9 +83,9 @@ Each repository resource creates bidirectional synchronization between a Grafana
 
 ### Git Sync connection resource
 
-If you're setting up Git Sync using a GitHub App, a connection represents the installation of the app so you can connect a group of repositories to your Grafana instance.
+If you're setting up Git Sync using a GitHub App, a connection represents the installation of the app so you can connect a group of repositories to your Grafana instance. You don't need to use a Personal Access Token, instead the connection will handle syncing with the repositories.
 
-It includes:
+The connection resource includes:
 
 - The GitHub App: The application registered with GitHub that enables authentication and authorization.
 - The GitHub App installation: An instance of the app you've installed.
