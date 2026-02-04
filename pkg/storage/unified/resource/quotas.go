@@ -58,11 +58,6 @@ type Overrides struct {
 	Namespaces map[string]NamespaceOverrides
 }
 
-type QuotaCheck struct {
-	Limit int
-	Used  int
-}
-
 /*
 This service loads overrides (currently just quotas) from a YAML file with the following yaml structure:
 
