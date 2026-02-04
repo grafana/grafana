@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { LinkButton, useStyles2, Alert, Badge, Stack } from '@grafana/ui';
+import { LinkButton, useStyles2, Alert, Badge, Stack, Tab, TabsBar, TabContent } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SECRETS_KEEPER_NEW_URL } from './constants';
@@ -13,12 +14,48 @@ export default function HomePage() {
   const { keepers, isLoading, error, activeKeeper } = useKeepers();
   const styles = useStyles2(getStyles);
 
+  const tabInfo = useMemo(
+    () => [
+      {
+        value: 'values',
+        label: t('secrets.tabs.values', 'Values'),
+        title: t('secrets.tabs.values-title', 'Manage secret values'),
+        href: '/admin/secrets',
+      },
+      {
+        value: 'keepers',
+        label: t('secrets.tabs.keepers', 'Keepers'),
+        title: t('secrets.tabs.keepers-title', 'Configure external secrets storage'),
+        active: true,
+      },
+      // Placeholder for future
+      // {
+      //   value: 'audit',
+      //   label: t('secrets.tabs.audit', 'Audit Logs'),
+      //   title: t('secrets.tabs.audit-title', 'View secret access logs'),
+      // },
+    ],
+    []
+  );
+
   return (
     <Page navId="secrets-management" subTitle="Manage external secrets storage for Grafana">
       <Page.Contents isLoading={isLoading}>
-        <Stack direction="column" gap={3}>
-          {/* Header with action */}
-          <div className={styles.header}>
+        <Stack direction="column" gap={2}>
+          <TabsBar>
+            {tabInfo.map((tab) => (
+              <Tab
+                key={tab.value}
+                label={tab.label}
+                active={tab.active || false}
+                href={tab.href}
+                title={tab.title}
+              />
+            ))}
+          </TabsBar>
+          <TabContent>
+            {/* Header with action */}
+            <div className={styles.header}>
             <div>
               <h3>
                 <Trans i18nKey="secrets-keeper.home.title">Secrets Keepers</Trans>
@@ -58,14 +95,15 @@ export default function HomePage() {
             </Alert>
           )}
 
-          {/* Keepers list */}
-          {keepers.length > 0 && (
-            <div className={styles.list}>
-              {keepers.map((keeper) => (
-                <KeeperCard key={keeper.name} keeper={keeper} />
-              ))}
-            </div>
-          )}
+            {/* Keepers list */}
+            {keepers.length > 0 && (
+              <div className={styles.list}>
+                {keepers.map((keeper) => (
+                  <KeeperCard key={keeper.name} keeper={keeper} />
+                ))}
+              </div>
+            )}
+          </TabContent>
         </Stack>
       </Page.Contents>
     </Page>
