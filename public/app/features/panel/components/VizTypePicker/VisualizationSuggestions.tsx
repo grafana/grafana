@@ -126,6 +126,13 @@ function VisualizationSuggestionsCore({
     return map;
   }, [suggestions]);
 
+  // Cleanup edit preview on unmount, so that it is removed if you navigate to "all visualizations."
+  useEffect(() => {
+    return () => {
+      panelEditor?.setState({ editPreview: undefined });
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const applySuggestion = useCallback(
     (
       suggestion: PanelPluginVisualizationSuggestion,
