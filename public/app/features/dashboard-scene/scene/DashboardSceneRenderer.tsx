@@ -17,7 +17,6 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanel
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
-import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -101,12 +100,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   const handleBeforeCapture = (before: BeforeCapture) => {
-    // BeforeCapture does not include the draggable "type".
-    // Only rows need special orchestrator handling for cross-tab row drags, so we
-    // attempt a lookup and only act if the draggable is a RowItem.
-    const row = sceneGraph.findByKey(model, before.draggableId);
-    if (row instanceof RowItem) {
-      model.state.layoutOrchestrator?.startRowDrag(row);
+    const draggable = sceneGraph.findByKey(model, before.draggableId);
+    if (draggable instanceof RowItem) {
+      model.state.layoutOrchestrator?.startRowDrag(draggable);
+    } else if (draggable instanceof TabItem) {
+      model.state.layoutOrchestrator?.startTabDrag(draggable);
     }
   };
 
@@ -117,57 +115,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         rowsManager.forceSelectRow(start.draggableId);
       }
     }
-
-    // if (start.type === 'TAB') {
-    //   // Intentionally do not select the tab in the edit pane on drag start.
-    //   // Selecting triggers side pane updates / lazy loads, which can cause a noticeable hitch
-    //   // on the first drag. We focus the moved tab on drop (cross-group) instead.
-    // }
-  };
-
-  const mapTabInsertIndex = (destination: TabsLayoutManager, destinationIndexIncludingRepeats: number): number => {
-    const allTabs = destination.getTabsIncludingRepeats();
-    const ranges = new Map<string, { start: number; end: number }>();
-
-    for (let i = 0; i < allTabs.length; i++) {
-      const t = allTabs[i];
-      const originalKey = t.state.repeatSourceKey ?? t.state.key;
-      if (!originalKey) {
-        continue;
-      }
-      const existing = ranges.get(originalKey);
-      if (!existing) {
-        ranges.set(originalKey, { start: i, end: i + 1 });
-      } else {
-        existing.end = i + 1;
-      }
-    }
-
-    const originalTabs = destination.state.tabs;
-    const insertAt = Math.max(0, Math.min(destinationIndexIncludingRepeats, allTabs.length));
-
-    for (let originalIndex = 0; originalIndex < originalTabs.length; originalIndex++) {
-      const originalKey = originalTabs[originalIndex].state.key;
-      if (!originalKey) {
-        continue;
-      }
-      const range = ranges.get(originalKey);
-      if (!range) {
-        continue;
-      }
-
-      // If inserting before the group, insert before this original tab.
-      if (insertAt <= range.start) {
-        return originalIndex;
-      }
-
-      // If inserting inside the group (between original and its repeats), insert after the group.
-      if (insertAt < range.end) {
-        return originalIndex + 1;
-      }
-    }
-
-    return originalTabs.length;
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -192,32 +139,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     if (result.type === 'TAB') {
-      if (!result.destination) {
-        return;
-      }
-
-      const sourceManager = sceneGraph.findByKey(model, result.source.droppableId);
-      const destinationManager = sceneGraph.findByKey(model, result.destination.droppableId);
-      const tab = sceneGraph.findByKey(model, result.draggableId);
-
-      if (!(sourceManager instanceof TabsLayoutManager) || !(destinationManager instanceof TabsLayoutManager)) {
-        return;
-      }
-      if (!(tab instanceof TabItem)) {
-        return;
-      }
-
-      if (sourceManager === destinationManager) {
-        if (result.destination.index === result.source.index) {
-          return;
-        }
-        sourceManager.moveTab(result.source.index, result.destination.index);
-        return;
-      }
-
-      const destinationIndex = mapTabInsertIndex(destinationManager, result.destination.index);
-      // When moving a tab into a new tab group, make it the active tab.
-      sourceManager.moveTabToManager(tab, destinationManager, destinationIndex);
+      model.state.layoutOrchestrator?.endTabDrag(
+        result.destination?.droppableId,
+        result.source.index,
+        result.destination?.index
+      );
     }
   };
 

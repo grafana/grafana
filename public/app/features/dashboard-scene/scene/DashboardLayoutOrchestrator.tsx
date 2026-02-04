@@ -39,6 +39,7 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
   draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
   /** Row currently being dragged */
   draggingRow?: SceneObjectRef<RowItem>;
+  draggingTab?: SceneObjectRef<TabItem>;
   /** Key of the source tab where drag started */
   sourceTabKey?: string;
   /** Key of the tab currently being hovered during drag */
@@ -257,6 +258,105 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Add pointerup listener to handle drop after cross-tab switch
     // Use capture phase to ensure we receive the event even if something calls stopPropagation
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
+  }
+
+  public startTabDrag(draggingTab: TabItem): void {
+    this.setState({
+      draggingTab: draggingTab.getRef(),
+    });
+  }
+
+  public endTabDrag(
+    destinationManagerKey: string | undefined,
+    sourceIndex: number,
+    destinationIndex: number | undefined
+  ): void {
+    const tab = this.state.draggingTab?.resolve();
+
+    this.setState({
+      draggingTab: undefined,
+    });
+
+    if (!tab || !destinationManagerKey || destinationIndex === undefined) {
+      return;
+    }
+
+    const sourceManager = tab.getParentLayout();
+    const destinationManager = sceneGraph.findByKeyAndType(
+      this._getDashboard(),
+      destinationManagerKey,
+      TabsLayoutManager
+    );
+
+    if (!destinationManager) {
+      return;
+    }
+
+    // moving within the same TabsLayoutManager
+    if (sourceManager === destinationManager) {
+      if (sourceIndex === destinationIndex) {
+        return;
+      }
+      sourceManager.moveTab(sourceIndex, destinationIndex);
+      return;
+    }
+    // moving to a different TabsLayoutManager
+    else {
+      const realDestinationIndex = this._mapTabInsertIndex(destinationManager, destinationIndex);
+      // When moving a tab into a new tab group, make it the active tab.
+      sourceManager.moveTabToManager(tab, destinationManager, realDestinationIndex);
+    }
+  }
+
+  /**
+   * Calculates the correct index to insert a tab when dragging within the same TabsLayoutManager, accounting for repeated tabs.
+   * @param {TabsLayoutManager} destination - the TabsLayoutManager where the tab is being dragged over
+   * @param {number } destinationIndexIncludingRepeats - the index where the tab would be inserted if repeated tabs were included as separate entries
+   * @private
+   */
+  private _mapTabInsertIndex(destination: TabsLayoutManager, destinationIndexIncludingRepeats: number): number {
+    const allTabs = destination.getTabsIncludingRepeats();
+    const ranges = new Map<string, { start: number; end: number }>();
+
+    for (let i = 0; i < allTabs.length; i++) {
+      const t = allTabs[i];
+      const originalKey = t.state.repeatSourceKey ?? t.state.key;
+      if (!originalKey) {
+        continue;
+      }
+      const existing = ranges.get(originalKey);
+      if (!existing) {
+        ranges.set(originalKey, { start: i, end: i + 1 });
+      } else {
+        existing.end = i + 1;
+      }
+    }
+
+    const originalTabs = destination.state.tabs;
+    const insertAt = Math.max(0, Math.min(destinationIndexIncludingRepeats, allTabs.length));
+
+    for (let originalIndex = 0; originalIndex < originalTabs.length; originalIndex++) {
+      const originalKey = originalTabs[originalIndex].state.key;
+      if (!originalKey) {
+        continue;
+      }
+      const range = ranges.get(originalKey);
+      if (!range) {
+        continue;
+      }
+
+      // If inserting before the group, insert before this original tab.
+      if (insertAt <= range.start) {
+        return originalIndex;
+      }
+
+      // If inserting inside the group (between original and its repeats), insert after the group.
+      if (insertAt < range.end) {
+        return originalIndex + 1;
+      }
+    }
+
+    return originalTabs.length;
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {
