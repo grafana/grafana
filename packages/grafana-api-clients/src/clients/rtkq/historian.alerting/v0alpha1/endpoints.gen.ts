@@ -605,12 +605,50 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type CreateNotificationquery = {
-  entries: any;
+export type CreateNotificationqueryNotificationEntryAlert = {
+  annotations: {
+    [key: string]: string;
+  };
+  endsAt: string;
+  labels: {
+    [key: string]: string;
+  };
+  startsAt: string;
+  status: string;
 };
-export type CreateNotificationqueryMatchers = any;
 export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
 export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
+export type CreateNotificationqueryNotificationEntry = {
+  /** Alerts are the alerts grouped into the notification. */
+  alerts: CreateNotificationqueryNotificationEntryAlert[];
+  /** Duration is the length of time the notification attempt took in nanoseconds. */
+  duration: number;
+  /** Error is the message returned by the contact point if delivery failed. */
+  error?: string;
+  /** GroupKey uniquely idenifies the dispatcher alert group. */
+  groupKey: string;
+  /** GroupLabels are the labels uniquely identifying the alert group within a route. */
+  groupLabels: {
+    [key: string]: string;
+  };
+  /** Outcome indicaes if the notificaion attempt was successful or if it failed. */
+  outcome: CreateNotificationqueryNotificationOutcome;
+  /** PipelineTime is the time at which the flush began. */
+  pipelineTime: string;
+  /** Receiver is the receiver (contact point) title. */
+  receiver: string;
+  /** Retry indicates if the attempt was a retried attempt. */
+  retry: boolean;
+  /** Status indicates if the notification contains one or more firing alerts. */
+  status: CreateNotificationqueryNotificationStatus;
+  /** Timestamp is the time at which the notification attempt completed. */
+  timestamp: string;
+};
+export type CreateNotificationquery = {
+  entries: CreateNotificationqueryNotificationEntry[];
+};
+export type CreateNotificationqueryMatcher = object;
+export type CreateNotificationqueryMatchers = CreateNotificationqueryMatcher[];
 export type CreateNotificationqueryRequestBody = {
   /** From is the starting timestamp for the query. */
   from?: string;

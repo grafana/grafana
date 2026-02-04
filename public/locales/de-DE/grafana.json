@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Auf Standardwerte zurücksetzen",
-      "title-invalid-configuration": "Ungültige Konfiguration",
       "title-more-actions": "Weitere Aktionen",
       "tooltip-more-actions": "Weitere Aktionen"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Gruppieren nach",
       "aria-label-group-interval": "Gruppenintervall",
       "aria-label-group-wait": "Gruppenwartezeit",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Wiederholungsintervall",
       "create-a-contact-point": "Kontaktpunkt erstellen",
+      "description-unique-routing": "",
       "label-default-contact-point": "Standard-Kontaktpunkt",
+      "label-name": "",
       "label-timing-options": "Timing-Optionen",
       "message": {
         "required": "Erforderlich."
       },
-      "or": "oder"
+      "or": "oder",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Matcher hinzufügen",
@@ -2136,6 +2139,10 @@
       "new-policy": "Neue Richtlinie hinzufügen",
       "no-matchers": "Keine Matcher",
       "reload-policies": "Richtlinien erneut laden",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Richtlinie speichern",
       "update": {
         "please-wait": "Bitte warten Sie, während wir Ihre Benachrichtigungsrichtlinien aktualisieren.",
@@ -2154,6 +2161,54 @@
       },
       "n-more-policies_one": "{{count}} zusätzliche Richtlinie",
       "n-more-policies_other": "{{count}} zusätzliche Richtlinien"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Neue untergeordnete Richtlinie",
@@ -2328,7 +2383,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Gruppieren nach",
-      "description-group-by": "Kombinieren Sie mehrere Warnungen in einer einzigen Benachrichtigung, indem Sie sie nach denselben Label-Werten gruppieren. Wenn dies leer ist, erfolgt eine Übernahme von der standardmäßigen Benachrichtigungsrichtlinie.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -2336,6 +2392,13 @@
       "label-override-grouping": "Gruppierung überschreiben",
       "label-override-timings": "Zeitsteuerungen überschreiben",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Bearbeiten",
@@ -3102,6 +3165,12 @@
       "label-edit": "Bearbeiten",
       "label-export": "Exportieren"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, Kontaktpunkt löschen",
       "deleting": "Löschen...",
@@ -3119,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3629,7 +3707,9 @@
       "delete-button": "Löschen",
       "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Löschen",
@@ -3736,6 +3816,9 @@
       "folder-actions": "Ordneraktionen",
       "manage-permissions": "Berechtigungen verwalten",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
@@ -4944,6 +5027,7 @@
       },
       "variables": {
         "add-variable": "Variable hinzufügen",
+        "reorder": "",
         "select-type": "Variablentyp auswählen",
         "select-type-card-tooltip": "Klicken Sie zur Auswahl des Typs",
         "select-variable": "Auswählen"
@@ -5151,6 +5235,9 @@
       "panel-data-label": "Panel-Daten",
       "panel-json-description": "Das im Dashboard-JSON gespeicherte Modell, das konfiguriert, wie alles funktioniert.",
       "panel-json-label": "Panel-JSON",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Quelle auswählen",
       "unknown": "Unbekanntes Objekt: {{show}}"
     },
@@ -5481,10 +5568,6 @@
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
         "title": ""
       },
@@ -5810,7 +5893,7 @@
       "load": "Laden"
     },
     "gcom-field": {
-      "label": "Dashboards für gängige Anwendungen finden und importieren unter <1></1>",
+      "label": "",
       "load-button": "Laden",
       "placeholder": "Grafana.com Dashboard URL oder ID",
       "validation-required": "Eine Grafana Dashboard URL oder ID ist erforderlich"
@@ -6233,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Abbrechen",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Ordner"
     },
     "inspect-data-tab": {
@@ -6240,7 +6325,9 @@
     },
     "inspect-json-tab": {
       "apply": "Anwenden",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6312,6 +6399,11 @@
       "title": {
         "remove-panel": "Panel entfernen"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Warnung"
@@ -6681,6 +6773,16 @@
       },
       "label": "Ausblenden"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "Variablentyp"
     },
@@ -6747,7 +6849,7 @@
       "delete-button": "Löschen",
       "title": "Löschen"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "Möchten Sie dieses Dashboard löschen?",
     "general": {
       "auto-refresh-description": "Definieren Sie die Intervalle für die automatischen Aktualisierungen, die in der Liste für die automatische Aktualisierung verfügbar sein sollen. Verwenden Sie das Format „5s“ für Sekunden, „1m“ für Minuten, „1h“ für Stunden und „1d“ für Tage (z. B.: „5s,10s,30s,1m,5m,15m,30m,1h,2h,1d“).",
@@ -9770,7 +9872,6 @@
       "error-fetching": "Fehler beim Abrufen der LDAP-Einstellungen",
       "error-saving": "Fehler beim Speichern der LDAP-Einstellungen",
       "error-validate-form": "Fehler beim Überprüfen der LDAP-Einstellungen",
-      "feature-flag-disabled": "",
       "saved": "LDAP-Einstellungen gespeichert"
     },
     "bind-dn": {
@@ -10346,9 +10447,15 @@
       "options": "Optionen"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Import des Dashboards von <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Veröffentlicht von",
       "updated-on": "Aktualisiert am"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Sind Sie sich sicher, dass Sie „{{snapshotToRemove}}“ löschen möchten?",
@@ -11212,6 +11319,9 @@
     "noOptionsMessage-no-organizations-found": "Keine Organisationen gefunden",
     "select-placeholder": "Organisation auswählen"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Titel bearbeiten"
@@ -11258,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Kopieren",
+      "copy-styles": "",
       "create-library-panel": "Bibliotheksleiste erstellen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
@@ -11269,11 +11380,13 @@
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
       "new-alert-rule": "Neue Warnregel",
+      "paste-styles": "",
       "query": "Abfrage",
       "remove": "Entfernen",
       "replace-library-panel": "Bibliotheks-Panel ersetzen",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "view": "Anzeigen"
@@ -11709,6 +11822,7 @@
       "text-installed": "Installiert"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Grafana: Abhängigkeit",
       "installed-version": "{{versionNumber}} (installierte Version)",
       "latest-compatible-version": "{{versionNumber}} (neueste kompatible Version)",
@@ -11836,9 +11950,6 @@
       "label-display-name": "Anzeigename",
       "placeholder-my-repository-connection": "Meine Repository-Verbindung",
       "text-loading-resource-information": "Ressourceninformationen werden geladen ...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} Dashboard",
       "dashboards-count_other": "{{count}} Dashboard",
@@ -11893,13 +12004,23 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -11909,6 +12030,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -11923,7 +12045,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12218,6 +12339,7 @@
       "jobs": "Aufträge"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "Einstellungen",
       "source-code": "Quellcode"
     },
@@ -12238,8 +12360,12 @@
         "view-repository": "Repository anzeigen"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Geprüft:",
+      "connection-status": "",
       "finished": "",
       "health": "Zustand",
       "healthy": "Guter Zustand",
@@ -12397,23 +12523,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fertigstellen",
       "button-start": "Synchronisierung starten",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Dadurch wird die Repository-Konfiguration gelöscht und Sie verlieren alle Fortschritte. Sind Sie sicher, dass Sie Ihre Änderungen verwerfen möchten?",
         "confirm": "Ja, verwerfen",
         "dismiss": "Arbeit fortsetzen",
         "title": "Repository-Einrichtung verwerfen?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12425,21 +12555,18 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "step-configure-repo": "",
       "step-connect": "Verbinden",
       "step-finish": "Zusätzliche Einstellungen auswählen",
-      "step-github-app": "",
       "step-synchronize": "Mit externem Speicher synchronisieren",
       "sync-description": "Synchronisieren Sie Ressourcen mit externem Speicher. Nach diesem einmaligen Schritt werden alle zukünftigen Updates automatisch im Repository gespeichert und wieder in der Instanz bereitgestellt.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "title-configure-repo": "",
       "title-connect": "Mit externem Speicher verbinden",
       "title-finish": "Zusätzliche Einstellungen auswählen",
-      "title-github-app": "",
       "title-synchronize": "Mit externem Speicher synchronisieren"
     },
     "wizard-content": {
@@ -12673,13 +12800,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12718,7 +12849,7 @@
     },
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
-      "no-deleted-dashboards-text": "Wenn Sie ein Dashboard löschen, wird es hier 30 Tage lang angezeigt, bevor es endgültig gelöscht wird. Der Administrator Ihrer Organisation kann kürzlich gelöschte Dashboards wiederherstellen.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "Keine Ergebnisse für deine Abfrage gefunden"
     },
     "restore-modal": {
@@ -13577,6 +13708,7 @@
     "name-wrap-header-text": "Kopfzeilentext umbrechen",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
