@@ -52,11 +52,15 @@ export function useOrganizeFields({
       bodyFieldName,
       supportsPermalink,
       onPermalinkClick
-    ).then((frame) => {
-      if (frame && isMounted()) {
-        setOrganizedFrame(frame);
-      }
-    });
+    )
+      .then((frame) => {
+        if (frame && isMounted()) {
+          setOrganizedFrame(frame);
+        }
+      })
+      .catch((err) => {
+        console.error('LogsTable: Organize fields transform error', err);
+      });
   }, [
     bodyFieldName,
     extractedFrame,

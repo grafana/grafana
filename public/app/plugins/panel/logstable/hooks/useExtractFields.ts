@@ -41,19 +41,23 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
       return await lastValueFrom(transformDataFrame(extractLogsFieldsTransform(rawTableFrame), [rawTableFrame]));
     };
 
-    extractFields().then((data) => {
-      const extractedFrames = applyFieldOverrides({
-        data,
-        fieldConfig,
-        replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
-        theme,
-        timeZone,
-        dataLinkPostProcessor,
+    extractFields()
+      .then((data) => {
+        const extractedFrames = applyFieldOverrides({
+          data,
+          fieldConfig,
+          replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
+          theme,
+          timeZone,
+          dataLinkPostProcessor,
+        });
+        if (isMounted()) {
+          setExtractedFrame(extractedFrames[0]);
+        }
+      })
+      .catch((err) => {
+        console.error('LogsTable: Extract fields transform error', err);
       });
-      if (isMounted()) {
-        setExtractedFrame(extractedFrames[0]);
-      }
-    });
     // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency, so we check for changes in the timestamps instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataLinkPostProcessor, fieldConfig, rawTableFrame?.fields[1]?.values, theme, timeZone]);
