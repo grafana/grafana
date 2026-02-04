@@ -76,8 +76,10 @@ export function ProvisioningAlert({ error, warning, success, action }: Provision
     if (!action) {
       return undefined;
     }
-    if (action.href) {
-      return () => window.open(textUtil.sanitizeUrl(action.href!), '_blank');
+    // Save href to a var for the types to resolve properly
+    const href = action.href;
+    if (href) {
+      return () => window.open(textUtil.sanitizeUrl(href), '_blank');
     }
     return action.onClick;
   };
