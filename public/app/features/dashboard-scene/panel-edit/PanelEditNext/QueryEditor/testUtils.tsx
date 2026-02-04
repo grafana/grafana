@@ -46,4 +46,7 @@ export const mockActions: QueryEditorActions = {
   duplicateQuery: jest.fn(),
   runQueries: jest.fn(),
   changeDataSource: jest.fn(),
+  toggleQueryHide: function (refId: string): void {
+    throw new Error('Function not implemented.');
+  },
 };
