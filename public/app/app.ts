@@ -83,7 +83,6 @@ import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
-import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
@@ -190,8 +189,6 @@ export class GrafanaApp {
       setTimeZoneResolver(() => contextSrv.user.timezone);
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
-
-      initAuthConfig();
 
       // Expose the app-wide eventbus
       setAppEvents(appEvents);

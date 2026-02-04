@@ -751,6 +751,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/api-clients
 /packages/grafana-api-clients/ @grafana/grafana-frontend-platform @grafana/grafana-search-navigate-organise
+/packages/grafana-api-clients/src/clients/rtkq/*.alerting/ @grafana/alerting-frontend
 /packages/grafana-api-clients/src/clients/rtkq/advisor/ @grafana/plugins-platform-frontend
 /packages/grafana-api-clients/src/clients/rtkq/correlations/ @grafana/datapro
 /packages/grafana-api-clients/src/clients/rtkq/dashboard/ @grafana/dashboards-squad
@@ -929,6 +930,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/timeRegions* @grafana/dataviz-squad
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
 /public/app/core/utils/version.ts @grafana/partner-datasources
+/public/app/core/utils/roles.ts @grafana/identity-access-team
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 /public/app/features/actions/ @grafana/dataviz-squad

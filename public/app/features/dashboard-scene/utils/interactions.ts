@@ -107,6 +107,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('panel_action_clicked', { item, id, source });
   },
 
+  // Panel styles copy/paste interactions
+  panelStylesMenuClicked(action: 'copy' | 'paste', panelType: string, panelId: number, error?: boolean) {
+    reportDashboardInteraction('panel_styles_menu_clicked', { action, panelType, panelId, error });
+  },
+
   // Dashboard edit item actions
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
