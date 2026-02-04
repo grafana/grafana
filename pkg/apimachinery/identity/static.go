@@ -59,6 +59,9 @@ func (u *StaticRequester) GetSubject() string {
 }
 
 func (u *StaticRequester) GetAudience() []string {
+	if u.AccessTokenClaims != nil && len(u.AccessTokenClaims.Audience) > 0 {
+		return u.AccessTokenClaims.Audience
+	}
 	return []string{fmt.Sprintf("org:%d", u.OrgID)}
 }
 

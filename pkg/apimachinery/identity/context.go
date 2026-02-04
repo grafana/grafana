@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 type ctxUserKey struct{}
@@ -103,6 +104,15 @@ func WithProvisioningIdentity(ctx context.Context, namespace string, opts ...Ide
 		return nil, nil, err
 	}
 
+	// Add provisioning audience to the identity claims
+	// This ensures the provisioning identity passes the audience check in managed.go:80
+	provisioningOpt := func(sr *StaticRequester) {
+		if sr.AccessTokenClaims != nil {
+			sr.AccessTokenClaims.Audience = []string{provisioning.GROUP}
+		}
+	}
+
+	opts = append([]IdentityOpts{provisioningOpt}, opts...)
 	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID, opts...)
 	return WithRequester(ctx, r), r, nil
 }
