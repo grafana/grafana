@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { useAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -9,6 +10,7 @@ import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
+import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
 interface Details {
   id: string;
@@ -50,12 +52,28 @@ function DashboardCardComponent({
 
   const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
 
+  // Create structured context item with template metadata for the Assistant
+  const templateContext = useMemo(
+    () =>
+      createAssistantContextItem('structured', {
+        title: buildTemplateContextTitle(dashboard, title),
+        data: buildTemplateContextData(dashboard, title, kind),
+      }),
+    [dashboard, title, kind]
+  );
+
+  // Build the enhanced prompt with template details
+  const assistantPrompt = useMemo(() => buildAssistantPrompt(dashboard, title, kind), [dashboard, title, kind]);
+
   const onUseAssistantClick = () => {
     if (assistantAvailable) {
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
+        // @ts-expect-error - 'dashboarding' mode is valid but not in current type definitions
+        // TODO: Is there a better way to do this?
         mode: 'dashboarding',
-        prompt: `Create a dashboard using the dashboard template ${title}`,
+        prompt: assistantPrompt,
+        context: [templateContext],
         autoSend: true,
       });
       onClose?.();
