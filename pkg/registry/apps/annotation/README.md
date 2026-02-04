@@ -95,11 +95,12 @@ Three decoupled interfaces:
 - Optimized for time-range scans
 - PR: https://github.com/grafana/grafana/pull/114780
 
-**3. SQL with Time-Based Partitioning** (Recommended)
+**3. SQL with Time-Based Partitioning** (Recommended for Cloud)
 - Weekly partitions (e.g., `annotations_2025w04`)
 - PostgreSQL recommended with BRIN indices (4x speedup)
 - Cleanup via partition drop (no expensive DELETE queries)
 - SQLite: no partitioning support
+- **Status**: Implementation in progress - see [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## Important Constraints
 
