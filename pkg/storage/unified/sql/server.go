@@ -6,12 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -218,12 +217,13 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	}
 
 	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:            sqlkv,
-		Tracer:             opts.Tracer,
-		Reg:                opts.Reg,
-		UseChannelNotifier: !isHA,
-		Log:                log.New("storage-backend"),
-		DBKeepAlive:        eDB,
+		KvStore:              sqlkv,
+		Tracer:               opts.Tracer,
+		Reg:                  opts.Reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
 	}
 
 	if opts.Cfg.EnableSQLKVCompatibilityMode {
