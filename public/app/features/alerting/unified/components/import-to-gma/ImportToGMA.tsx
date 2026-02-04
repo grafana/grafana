@@ -31,6 +31,7 @@ import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResou
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { DryRunValidationResult } from './types';
 import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
+import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources
@@ -49,9 +50,7 @@ export interface ImportFormValues {
   // Step 2: Alert rules
   step2Completed: boolean;
   step2Skipped: boolean;
-  notificationPolicyOption: 'default' | 'imported' | 'manual';
-  manualLabelName: string;
-  manualLabelValue: string;
+  selectedRoutingTree: string; // Routing tree name from the API or from Step 1
   rulesSource: 'datasource' | 'yaml';
   rulesDatasourceUID?: string;
   rulesDatasourceName: string | null;
@@ -110,9 +109,7 @@ function ImportWizardContent() {
       // Step 2
       step2Completed: false,
       step2Skipped: false,
-      notificationPolicyOption: 'default',
-      manualLabelName: '',
-      manualLabelValue: '',
+      selectedRoutingTree: '',
       rulesSource: 'datasource',
       rulesDatasourceUID: undefined,
       rulesDatasourceName: null,
@@ -206,7 +203,7 @@ function ImportWizardContent() {
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
-    setValue('notificationPolicyOption', 'default');
+    setValue('selectedRoutingTree', '');
   }, [setValue]);
 
   // Step 2 handlers
@@ -263,13 +260,10 @@ function ImportWizardContent() {
           rulesPayload = filteredConfig;
         }
 
-        // Calculate extra labels based on notification policy option
-        let extraLabels: string | undefined;
-        if (values.notificationPolicyOption === 'imported') {
-          extraLabels = `${MERGE_MATCHERS_LABEL_NAME}=${values.policyTreeName}`;
-        } else if (values.notificationPolicyOption === 'manual') {
-          extraLabels = `${values.manualLabelName}=${values.manualLabelValue}`;
-        }
+        // Add routing tree label to all imported rules
+        const extraLabels = values.selectedRoutingTree
+          ? `${MERGE_MATCHERS_LABEL_NAME}=${values.selectedRoutingTree}`
+          : undefined;
 
         await importRules({
           dataSourceUID: values.rulesDatasourceUID,
@@ -709,18 +703,11 @@ function ReviewStep({ formData, onStartImport, dryRunResult, rulesFromDatasource
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.routing', 'Notification routing')}</Text>
                     <Text>
-                      {formData.notificationPolicyOption === 'default' &&
-                        t('alerting.import-to-gma.review.routing-default', 'Default Grafana policy')}
-                      {formData.notificationPolicyOption === 'imported' &&
-                        t('alerting.import-to-gma.review.routing-imported', 'Imported policy ({{label}}={{value}})', {
-                          label: MERGE_MATCHERS_LABEL_NAME,
-                          value: formData.policyTreeName,
-                        })}
-                      {formData.notificationPolicyOption === 'manual' &&
-                        t('alerting.import-to-gma.review.routing-manual', 'Manual label ({{label}}={{value}})', {
-                          label: formData.manualLabelName,
-                          value: formData.manualLabelValue,
-                        })}
+                      {formData.selectedRoutingTree
+                        ? t('alerting.import-to-gma.review.routing-tree', 'Policy tree: {{name}}', {
+                            name: getRoutingTreeLabel(formData.selectedRoutingTree),
+                          })
+                        : t('alerting.import-to-gma.review.routing-none', 'No policy tree selected')}
                     </Text>
                   </div>
                   {(formData.namespace || formData.ruleGroup) && (
