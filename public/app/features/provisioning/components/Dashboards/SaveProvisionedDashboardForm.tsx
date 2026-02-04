@@ -193,12 +193,12 @@ export function SaveProvisionedDashboardForm({
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
       : dashboard.getSaveResource({
-          isNew,
-          title,
-          description,
-          copyTags,
-          saveAsCopy,
-        });
+        isNew,
+        title,
+        description,
+        copyTags,
+        saveAsCopy,
+      });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,
@@ -342,9 +342,9 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
     return error instanceof Error
       ? error.message
       : t(
-          'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
-          'Dashboard title validation failed.'
-        );
+        'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
+        'Dashboard title validation failed.'
+      );
   }
 }
 
@@ -372,7 +372,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

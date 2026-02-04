@@ -192,7 +192,6 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBe(true);
 
         scene.saveCompleted({} as Dashboard, {
-          id: 1,
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -1114,7 +1113,7 @@ describe('DashboardScene', () => {
       mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
-      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
+      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => { });
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };

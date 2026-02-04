@@ -65,7 +65,7 @@ export const useDashboardSave = (isCopy = false) => {
         if (isCopy) {
           DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          trackDashboardCreatedOrSaved(!!dashboard.id, {
+          trackDashboardCreatedOrSaved((dashboard.uid?.length === 0), {
             name: dashboard.title,
             url: result.url,
             uid: result.uid,

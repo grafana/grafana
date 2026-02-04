@@ -390,7 +390,6 @@ abstract class DashboardScenePageStateManagerBase<T>
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,
-          id: dashboard.state.id,
         });
       }
     } catch (err) {

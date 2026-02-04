@@ -2227,7 +2227,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 23
+      "count": 22
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {

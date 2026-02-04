@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -453,7 +453,8 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting new dash meta accessor: %w", err)
 	}
 
-	if oldAccessor.GetDeprecatedInternalID() != newAccessor.GetDeprecatedInternalID() { // nolint:staticcheck
+	id := newAccessor.GetDeprecatedInternalID()                 // nolint:staticcheck
+	if id != 0 && oldAccessor.GetDeprecatedInternalID() != id { // nolint:staticcheck
 		return apierrors.NewBadRequest("cannot change the ID of a dashboard. set the label grafana.app/deprecatedInternalID to the previous value")
 	}
 
