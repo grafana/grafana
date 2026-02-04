@@ -38,12 +38,13 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 
 	var searchResp *resourcepb.ResourceSearchResponse
 	var err error
-	if s.searchClient != nil {
-		// Use remote search service
-		searchResp, err = s.searchClient.Search(ctx, srq)
-	} else {
+	if s.search != nil {
 		// Use local search service
 		searchResp, err = s.search.Search(ctx, srq)
+	} else {
+		// Use remote search service
+		// if search is not configured, searchClient will be set
+		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
 	if err != nil {
 		return nil, err
