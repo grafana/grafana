@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -22,12 +22,23 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
 
   const repository = query.data?.items?.[0];
   const { healthy: isHealthy, message: healthMessage, checked } = repository?.status?.health || {};
-  console.log('stat', repository?.status);
+
   const healthStatusNotReady = isHealthy === false && repository?.status?.observedGeneration === 0;
   const isReady = Boolean(repoName) && query.isSuccess && !healthStatusNotReady;
 
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
+
+  // Store current values in refs for use in resetTimeout callback
+  const isHealthyRef = useRef(isHealthy);
+  const isSuccessRef = useRef(query.isSuccess);
+  const repoNameRef = useRef(repoName);
+
+  useEffect(() => {
+    isHealthyRef.current = isHealthy;
+    isSuccessRef.current = query.isSuccess;
+    repoNameRef.current = repoName;
+  }, [isHealthy, query.isSuccess, repoName]);
 
   // Reset timeout when repository becomes healthy
   useEffect(() => {
@@ -70,19 +81,19 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
     };
   }, [repoName, hasTimedOut, isHealthy, query.isSuccess]);
 
-  const resetTimeout = () => {
+  const resetTimeout = useCallback(() => {
     setHasTimedOut(false);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = undefined;
     }
     // Restart timeout if still not healthy
-    if (repoName && isHealthy !== true && query.isSuccess) {
+    if (repoNameRef.current && isHealthyRef.current !== true && isSuccessRef.current) {
       timeoutRef.current = setTimeout(() => {
         setHasTimedOut(true);
       }, TIMEOUT_MS);
     }
-  };
+  }, []);
 
   return {
     isReady,

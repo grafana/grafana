@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -62,6 +62,11 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
   const isWaitingForHealth = isRepositoryReady && isRepositoryHealthy === undefined && !repositoryStatusError;
 
+  const handleRetryWithReset = useCallback(() => {
+    resetTimeout();
+    retryRepositoryStatus();
+  }, [resetTimeout, retryRepositoryStatus]);
+
   useEffect(() => {
     // Pick a name nice name based on type+settings
     const repository = getValues('repository');
@@ -84,10 +89,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             'The repository did not become healthy within 30 seconds. Please check the repository settings and try again.'
           ),
         },
-        retry: () => {
-          resetTimeout();
-          retryRepositoryStatus();
-        },
+        retry: handleRetryWithReset,
       });
       return;
     }
@@ -121,7 +123,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     retryRepositoryStatus,
     isRepositoryHealthy,
     hasTimedOut,
-    resetTimeout,
+    handleRetryWithReset,
     isWaitingForHealth,
   ]);
 
