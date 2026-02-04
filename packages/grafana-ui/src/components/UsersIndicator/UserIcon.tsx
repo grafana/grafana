@@ -72,7 +72,7 @@ export const UserIcon = ({
     <button
       type={'button'}
       onClick={onClick}
-      className={cx(styles.container, onClick && styles.pointer, className)}
+      className={cx(styles.container, (showTooltip || onClick) && styles.hover, onClick && styles.pointer, className)}
       aria-label={t('grafana-ui.user-icon.label', '{{name}} icon', { name: user.name })}
     >
       {children ? (
@@ -128,6 +128,7 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       background: 'none',
       border: 'none',
       borderRadius: theme.shape.radius.circle,
+      cursor: 'default',
       '& > *': {
         borderRadius: theme.shape.radius.circle,
       },
@@ -138,9 +139,6 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       border: `3px ${theme.colors.background.primary} solid`,
       boxShadow: getIconBorder(shadowColor),
       backgroundClip: 'padding-box',
-      '&:hover': {
-        boxShadow: getIconBorder(shadowHoverColor),
-      },
     }),
     textContent: css({
       background: theme.colors.background.primary,
@@ -176,6 +174,11 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
     }),
     pointer: css({
       cursor: 'pointer',
+    }),
+    hover: css({
+      '&:hover > *': {
+        boxShadow: getIconBorder(shadowHoverColor),
+      },
     }),
   };
 };

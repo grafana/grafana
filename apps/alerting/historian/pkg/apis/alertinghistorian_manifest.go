@@ -181,6 +181,13 @@ var appManifestData = app.ManifestData{
 																		"entries": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntry"),
+																						}},
+																				},
 																			},
 																		},
 																	},
@@ -235,6 +242,13 @@ var appManifestData = app.ManifestData{
 					"createNotificationqueryMatchers": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryMatcher"),
+									}},
+							},
 						},
 					},
 					"createNotificationqueryNotificationEntry": {
@@ -245,6 +259,13 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"array"},
 										Description: "Alerts are the alerts grouped into the notification.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntryAlert"),
+												}},
+										},
 									},
 								},
 								"duration": {

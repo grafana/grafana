@@ -65,7 +65,7 @@ const getIframeBuilder =
     params.set('panelId', editOrViewPanel);
     params.delete('editPanel');
     params.delete('viewPanel');
-    params.set('__feature.dashboardSceneSolo', 'true');
+    params.set('__feature.dashboardScene', 'true');
 
     const soloUrl = getDashboardUrl({
       absolute: true,

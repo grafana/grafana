@@ -1,5 +1,5 @@
+import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { Stack } from '@grafana/ui';
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
@@ -9,8 +9,10 @@ import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
+import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
+import { type DataSourceLoadState, useDataSourceLoadingStates } from './hooks/useDataSourceLoadingStates';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
@@ -20,7 +22,11 @@ interface GroupedViewProps {
 }
 
 export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
+
+  // Use custom hook for centralized state management
+  const { updateState, loadingDataSources } = useDataSourceLoadingStates();
 
   return (
     <Stack direction="column" gap={1} role="list">
@@ -28,6 +34,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
         <PaginatedGrafanaLoader
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
+          onLoadingStateChange={updateState}
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>
@@ -38,9 +45,11 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
             rulesSourceIdentifier={ruleSource}
             groupFilter={groupFilter}
             namespaceFilter={namespaceFilter}
+            onLoadingStateChange={updateState}
           />
         );
       })}
+      {hasFilters && !isEmpty(loadingDataSources) && <AlertRuleListItemSkeleton />}
     </Stack>
   );
 }
@@ -49,19 +58,28 @@ interface DataSourceLoaderProps {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   groupFilter?: string;
   namespaceFilter?: string;
+  onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
 export function GrafanaDataSourceLoader() {
   return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
 }
 
-function DataSourceLoader({ rulesSourceIdentifier, groupFilter, namespaceFilter }: DataSourceLoaderProps) {
+function DataSourceLoader({
+  rulesSourceIdentifier,
+  groupFilter,
+  namespaceFilter,
+  onLoadingStateChange,
+}: DataSourceLoaderProps) {
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
   const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 
   const { uid, name } = rulesSourceIdentifier;
 
-  if (isLoading) {
-    return <DataSourceSection loader={<Skeleton width={250} height={16} />} uid={uid} name={name} />;
+  // if we are loading and there are filters configured – we shouldn't show any data source headers
+  // dito for errors, we shouldn't show those when we're in filter mode
+  if (hasFilters && (isLoading || Boolean(error))) {
+    return null;
   }
 
   if (error) {
@@ -77,6 +95,7 @@ function DataSourceLoader({ rulesSourceIdentifier, groupFilter, namespaceFilter 
           application={dataSourceInfo.application}
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
+          onLoadingStateChange={onLoadingStateChange}
         />
       </DataSourceErrorBoundary>
     );

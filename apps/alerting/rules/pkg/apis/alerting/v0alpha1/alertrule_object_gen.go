@@ -25,6 +25,13 @@ type AlertRule struct {
 	Status AlertRuleStatus `json:"status" yaml:"status"`
 }
 
+func NewAlertRule() *AlertRule {
+	return &AlertRule{
+		Spec:   *NewAlertRuleSpec(),
+		Status: *NewAlertRuleStatus(),
+	}
+}
+
 func (o *AlertRule) GetSpec() any {
 	return o.Spec
 }

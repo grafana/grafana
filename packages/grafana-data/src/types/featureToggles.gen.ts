@@ -64,11 +64,6 @@ export interface FeatureToggles {
   */
   cloudWatchCrossAccountQuerying?: boolean;
   /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -369,16 +364,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables dashboard rendering using Scenes for viewer roles
-  * @default true
-  */
-  dashboardSceneForViewers?: boolean;
-  /**
-  * Enables rendering dashboards using scenes for solo panels
-  * @default true
-  */
-  dashboardSceneSolo?: boolean;
-  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -643,11 +628,6 @@ export interface FeatureToggles {
   * @default false
   */
   authZGRPCServer?: boolean;
-  /**
-  * Use the new SSO Settings API to configure LDAP
-  * @default true
-  */
-  ssoSettingsLDAP?: boolean;
   /**
   * Use openFGA as authorization engine.
   * @default false
@@ -985,6 +965,11 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
+  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1301,6 +1286,11 @@ export interface FeatureToggles {
   * @default false
   */
   newVizSuggestions?: boolean;
+  /**
+  * Enable style actions (copy/paste) in the panel editor
+  * @default false
+  */
+  panelStyleActions?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false

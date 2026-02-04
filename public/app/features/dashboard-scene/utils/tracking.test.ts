@@ -65,6 +65,34 @@ describe('dashboard tracking', () => {
         },
       });
     });
+
+    it('should include transformation and expression counts when provided', async () => {
+      const scene = buildTestScene();
+      trackDashboardSceneCreatedOrSaved(true, scene, {
+        name: 'new dashboard',
+        url: 'new-url',
+        transformation_counts: { organize: 2, reduce: 1 },
+        expression_counts: { sql: 3, math: 1 },
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', {
+        isDynamicDashboard: true,
+        uid: 'dashboard-test',
+        name: 'new dashboard',
+        url: 'new-url',
+        numPanels: 6,
+        numRows: 6,
+        numTabs: 4,
+        conditionalRenderRules: 3,
+        autoLayoutCount: 3,
+        customGridLayoutCount: 2,
+        panelsByDatasourceType: {
+          cloudwatch: 5,
+          datasource: 1,
+        },
+        transformation_counts: { organize: 2, reduce: 1 },
+        expression_counts: { sql: 3, math: 1 },
+      });
+    });
   });
 
   describe('init v2 dashboard tracking', () => {

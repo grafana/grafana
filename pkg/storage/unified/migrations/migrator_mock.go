@@ -83,6 +83,53 @@ func (_c *MockUnifiedMigrator_Migrate_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// RebuildIndexes provides a mock function with given fields: ctx, opts
+func (_m *MockUnifiedMigrator) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	ret := _m.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RebuildIndexes")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, RebuildIndexOptions) error); ok {
+		r0 = rf(ctx, opts)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUnifiedMigrator_RebuildIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RebuildIndexes'
+type MockUnifiedMigrator_RebuildIndexes_Call struct {
+	*mock.Call
+}
+
+// RebuildIndexes is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts RebuildIndexOptions
+func (_e *MockUnifiedMigrator_Expecter) RebuildIndexes(ctx interface{}, opts interface{}) *MockUnifiedMigrator_RebuildIndexes_Call {
+	return &MockUnifiedMigrator_RebuildIndexes_Call{Call: _e.mock.On("RebuildIndexes", ctx, opts)}
+}
+
+func (_c *MockUnifiedMigrator_RebuildIndexes_Call) Run(run func(ctx context.Context, opts RebuildIndexOptions)) *MockUnifiedMigrator_RebuildIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(RebuildIndexOptions))
+	})
+	return _c
+}
+
+func (_c *MockUnifiedMigrator_RebuildIndexes_Call) Return(_a0 error) *MockUnifiedMigrator_RebuildIndexes_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUnifiedMigrator_RebuildIndexes_Call) RunAndReturn(run func(context.Context, RebuildIndexOptions) error) *MockUnifiedMigrator_RebuildIndexes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockUnifiedMigrator creates a new instance of MockUnifiedMigrator. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockUnifiedMigrator(t interface {
