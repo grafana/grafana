@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from 'test/test-utils';
 
+import { useGetSignedInUserTeamListQuery } from '@grafana/api-clients/rtkq/legacy';
 import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
-import { api as profileApi } from 'app/features/profile/api';
 
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 
@@ -9,15 +9,17 @@ jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   useLazySearchDashboardsAndFoldersQuery: jest.fn(),
 }));
 
-jest.mock('app/features/profile/api', () => ({
-  api: {
-    loadTeams: jest.fn(),
-  },
-}));
+jest.mock('@grafana/api-clients/rtkq/legacy', () => {
+  return {
+    ...jest.requireActual('@grafana/api-clients/rtkq/legacy'),
+    useGetSignedInUserTeamListQuery: jest.fn(),
+  };
+});
 
 describe('useGetTeamFolders', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    (useGetSignedInUserTeamListQuery as jest.Mock).mockReturnValue({ data: [] });
   });
 
   it('returns folders grouped by team', async () => {
@@ -28,7 +30,7 @@ describe('useGetTeamFolders', () => {
 
     const triggerSearch = jest.fn();
     (useLazySearchDashboardsAndFoldersQuery as jest.Mock).mockReturnValue([triggerSearch]);
-    (profileApi.loadTeams as jest.Mock).mockResolvedValue(teams);
+    (useGetSignedInUserTeamListQuery as jest.Mock).mockReturnValue({ data: teams });
 
     const teamARequest = {
       unwrap: jest.fn().mockResolvedValue({ hits: [{ uid: 'folder-a' }] }),
@@ -63,7 +65,7 @@ describe('useGetTeamFolders', () => {
   it('returns a team error and skips folder search when team loading fails', async () => {
     const triggerSearch = jest.fn();
     (useLazySearchDashboardsAndFoldersQuery as jest.Mock).mockReturnValue([triggerSearch]);
-    (profileApi.loadTeams as jest.Mock).mockRejectedValue(new Error('No teams'));
+    (useGetSignedInUserTeamListQuery as jest.Mock).mockReturnValue({ error: new Error('No teams') });
 
     const { result } = renderHook(() => useGetTeamFolders());
 
@@ -81,7 +83,7 @@ describe('useGetTeamFolders', () => {
 
     renderHook(() => useGetTeamFolders({ skip: true }));
 
-    expect(profileApi.loadTeams).not.toHaveBeenCalled();
+    expect(useGetSignedInUserTeamListQuery).toHaveBeenCalledWith(undefined, { skip: true });
     expect(triggerSearch).not.toHaveBeenCalled();
   });
 });

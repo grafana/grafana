@@ -1,11 +1,10 @@
 import { zip } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import type { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { TeamDto } from '@grafana/api-clients/rtkq/legacy';
+import { TeamDto, useGetSignedInUserTeamListQuery } from '@grafana/api-clients/rtkq/legacy';
 import { isFetchError } from '@grafana/runtime';
 import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
-import { api as profileApi } from 'app/features/profile/api';
 
 export const TEAM_FOLDERS_UID = 'teamfolders';
 
@@ -34,7 +33,7 @@ export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFolder
   const [foldersError, setFoldersError] = useState<Error | undefined>(undefined);
 
   useEffect(() => {
-    if (!teams || teamError) {
+    if (!teams || teams.length === 0 || teamError) {
       return;
     }
 
@@ -93,45 +92,30 @@ export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFolder
  * Returns all the teams user is part of.
  */
 function useTeams(options?: { skip: boolean }) {
-  const [teams, setTeams] = useState<TeamDto[] | null>(null);
-  const [teamError, setTeamError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    if (options?.skip) {
-      return;
-    }
-
-    const abortController = new AbortController();
-    profileApi
-      .loadTeams({ abortSignal: abortController.signal })
-      .then((result) => {
-        setTeams(result);
-      })
-      .catch((err: unknown) => {
-        if (!isAbortError(err)) {
-          if (err instanceof Error) {
-            setTeamError(err);
-            return;
-          }
-
-          if (isFetchError(err)) {
-            setTeamError(new Error(err.data?.message ?? err.statusText ?? 'Failed to load teams'));
-            return;
-          }
-
-          setTeamError(new Error('Failed to load teams'));
-        }
-      });
-
-    return () => {
-      abortController.abort();
-    };
-  }, [options?.skip]);
-
+  const { data, error } = useGetSignedInUserTeamListQuery(undefined, { skip: options?.skip });
+  const teamError = useCoercedError(error);
   return {
-    teams,
+    teams: data,
     error: teamError,
   };
+}
+
+function useCoercedError(error: unknown) {
+  return useMemo(() => {
+    if (!error) {
+      return undefined;
+    }
+
+    if (error instanceof Error) {
+      return error;
+    }
+
+    if (isFetchError(error)) {
+      return new Error(error.data?.message ?? error.statusText ?? 'Failed to load teams');
+    }
+
+    return new Error('Failed to load teams');
+  }, [error]);
 }
 
 // TODO maybe there should be a common utility like this
