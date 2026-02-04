@@ -676,7 +676,7 @@ func TestBuildMigrationRegistry(t *testing.T) {
 
 		def, ok := registry.Get("folders-dashboards")
 		require.True(t, ok)
-		require.Len(t, def.ValidatorConfigs, 3)
+		require.Len(t, def.Validators, 3)
 
 		validators := def.CreateValidators(nil, "sqlite3")
 		require.Len(t, validators, 3)

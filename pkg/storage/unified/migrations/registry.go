@@ -17,22 +17,10 @@ type Validator interface {
 	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
 }
 
-// ValidatorType identifies the type of validator to create.
-type ValidatorType string
-
-const (
-	CountValidatorType      ValidatorType = "count"
-	FolderTreeValidatorType ValidatorType = "folder_tree"
-)
-
-// ValidatorConfig holds configuration for creating a validator.
-// Validators are created lazily when the client and driver name are available.
-type ValidatorConfig struct {
-	Type          ValidatorType
-	GroupResource schema.GroupResource
-	Table         string // For count validator
-	WhereClause   string // For count validator
-}
+// ValidatorFactory creates a validator when given the runtime dependencies.
+// This allows validator configuration to be defined at registration time,
+// while actual validator instances are created when dependencies are available.
+type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName string) Validator
 
 // MigratorFunc is the signature for resource migration functions.
 type MigratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
@@ -48,23 +36,18 @@ type ResourceInfo struct {
 // MigrationDefinition defines a resource migration.
 // This is the public API for defining and registering migrations.
 type MigrationDefinition struct {
-	ID               string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
-	MigrationID      string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
-	Resources        []ResourceInfo                        // Resources to migrate together, with their lock tables
-	Migrators        map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
-	ValidatorConfigs []ValidatorConfig                     // Validator configurations (validators created lazily)
+	ID          string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
+	MigrationID string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
+	Resources   []ResourceInfo                        // Resources to migrate together, with their lock tables
+	Migrators   map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
+	Validators  []ValidatorFactory                    // Validator factories (validators created lazily)
 }
 
-// CreateValidators creates validators from the stored configurations.
+// CreateValidators creates validators from the stored factory functions.
 func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
-	validators := make([]Validator, 0, len(d.ValidatorConfigs))
-	for _, cfg := range d.ValidatorConfigs {
-		switch cfg.Type {
-		case CountValidatorType:
-			validators = append(validators, newCountValidator(client, cfg.GroupResource, cfg.Table, cfg.WhereClause, driverName))
-		case FolderTreeValidatorType:
-			validators = append(validators, newFolderTreeValidator(client, cfg.GroupResource, driverName))
-		}
+	validators := make([]Validator, 0, len(d.Validators))
+	for _, factory := range d.Validators {
+		validators = append(validators, factory(client, driverName))
 	}
 	return validators
 }

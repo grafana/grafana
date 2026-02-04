@@ -13,8 +13,8 @@ BuildMigrationRegistry creates a migration registry with all migrations register
 This function should be called from the wire factory where the accessor is available.
 
 The registry is built with direct method references from the accessor, avoiding the need
-for factory functions or global state. Validator configurations are stored and validators
-are created lazily when the client and driver name become available during migration registration.
+for global state. Validator factories are stored and validators are created lazily when
+the client and driver name become available during migration registration.
 */
 func BuildMigrationRegistry(accessor legacy.MigrationDashboardAccessor) *MigrationRegistry {
 	r := NewMigrationRegistry()
@@ -33,10 +33,10 @@ func BuildMigrationRegistry(accessor legacy.MigrationDashboardAccessor) *Migrati
 			folderGR:    accessor.MigrateFolders,
 			dashboardGR: accessor.MigrateDashboards,
 		},
-		ValidatorConfigs: []ValidatorConfig{
-			{Type: CountValidatorType, GroupResource: folderGR, Table: "dashboard", WhereClause: "org_id = ? AND is_folder = true AND deleted IS NULL"},
-			{Type: CountValidatorType, GroupResource: dashboardGR, Table: "dashboard", WhereClause: "org_id = ? AND is_folder = false AND deleted IS NULL"},
-			{Type: FolderTreeValidatorType, GroupResource: folderGR},
+		Validators: []ValidatorFactory{
+			CountValidation(folderGR, "dashboard", "org_id = ? AND is_folder = true AND deleted IS NULL"),
+			CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
+			FolderTreeValidation(folderGR),
 		},
 	})
 
@@ -51,8 +51,8 @@ func BuildMigrationRegistry(accessor legacy.MigrationDashboardAccessor) *Migrati
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			playlistGR: accessor.MigratePlaylists,
 		},
-		ValidatorConfigs: []ValidatorConfig{
-			{Type: CountValidatorType, GroupResource: playlistGR, Table: "playlist", WhereClause: "org_id = ?"},
+		Validators: []ValidatorFactory{
+			CountValidation(playlistGR, "playlist", "org_id = ?"),
 		},
 	})
 
