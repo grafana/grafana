@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
@@ -21,6 +22,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,7 +36,7 @@ import (
 const maxLimit = 100
 
 type SearchHandler struct {
-	log      *slog.Logger
+	log      log.Logger
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
@@ -44,7 +46,7 @@ type SearchHandler struct {
 func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg) *SearchHandler {
 	return &SearchHandler{
 		client:   searchClient,
-		log:      slog.Default().With("logger", "grafana-apiserver.user.search"),
+		log:      log.New("grafana-apiserver.users.search"),
 		tracer:   tracer,
 		features: features,
 		cfg:      cfg,
@@ -257,6 +259,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Offset: int64(offset),
 	}
 
+	span.SetAttributes(attribute.Int("limit", limit),
+		attribute.Int("page", page),
+		attribute.Int("offset", offset),
+		attribute.String("query", searchQuery))
+
 	if !requester.GetIsGrafanaAdmin() {
 		// FIXME: Use the new config service instead of the legacy one
 		hiddenUsers := []string{}
@@ -297,12 +304,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := s.client.Search(ctx, request)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "user search failed")
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
 	result, err := ParseResults(resp)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "user search parse results failed")
 		errhttp.Write(ctx, err, w)
 		return
 	}

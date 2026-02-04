@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Ripristina valori predefiniti",
-      "title-invalid-configuration": "Configurazione non valida",
       "title-more-actions": "Altre azioni",
       "tooltip-more-actions": "Altre azioni"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Raggruppa per",
       "aria-label-group-interval": "Intervallo gruppo",
       "aria-label-group-wait": "Attesa gruppo",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Intervallo di ripetizione",
       "create-a-contact-point": "Crea punto di contatto",
+      "description-unique-routing": "",
       "label-default-contact-point": "Punto di contatto predefinito",
+      "label-name": "",
       "label-timing-options": "Opzioni di orario",
       "message": {
         "required": "Obbligatorio."
       },
-      "or": "oppure"
+      "or": "oppure",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Aggiungi elemento di corrispondenza",
@@ -2136,6 +2139,10 @@
       "new-policy": "Aggiungi nuovo criterio",
       "no-matchers": "Nessuna corrispondenza",
       "reload-policies": "Ricarica i criteri",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Salva criterio",
       "update": {
         "please-wait": "Attendi mentre aggiorniamo i tuoi criteri di notifica.",
@@ -2154,6 +2161,54 @@
       },
       "n-more-policies_one": "{{count}} criterio aggiuntivo",
       "n-more-policies_other": "{{count}} criteri aggiuntivi"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Nuova politica per i bambini",
@@ -2337,6 +2392,13 @@
       "label-override-grouping": "Sovrascrivi raggruppamento",
       "label-override-timings": "Sovrascrivi orari",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Modifica",
@@ -3103,6 +3165,12 @@
       "label-edit": "Modifica",
       "label-export": "Esporta"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Sì, elimina punto di contatto",
       "deleting": "Eliminazione in corso...",
@@ -3120,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Elimina criterio di notifica"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6239,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Annulla",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Cartella"
     },
     "inspect-data-tab": {
@@ -9793,7 +9872,6 @@
       "error-fetching": "Errore durante il recupero delle impostazioni LDAP",
       "error-saving": "Errore durante il salvataggio delle impostazioni LDAP",
       "error-validate-form": "Errore durante la convalida delle impostazioni LDAP",
-      "feature-flag-disabled": "",
       "saved": "Impostazioni LDAP salvate"
     },
     "bind-dn": {
@@ -11290,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Copia",
+      "copy-styles": "",
       "create-library-panel": "Crea pannello della libreria",
       "duplicate": "Duplica",
       "edit": "Modifica",
@@ -11301,11 +11380,13 @@
       "inspect-json": "JSON del pannello",
       "more": "Altro...",
       "new-alert-rule": "Nuova regola di avviso",
+      "paste-styles": "",
       "query": "Query",
       "remove": "Rimuovi",
       "replace-library-panel": "Sostituisci il pannello della libreria",
       "share": "Condividi",
       "show-legend": "Mostra leggenda",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "view": "Visualizza"
@@ -11869,9 +11950,6 @@
       "label-display-name": "Nome visualizzato",
       "placeholder-my-repository-connection": "La mia connessione al repository",
       "text-loading-resource-information": "Caricamento delle informazioni sulle risorse in corso...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
@@ -11926,6 +12004,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11939,6 +12020,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12278,6 +12360,9 @@
         "view-repository": "Visualizza repository"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Verificato:",
       "connection-status": "",
@@ -12471,7 +12556,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "Scegli cosa sincronizzare",
       "step-configure-repo": "",
       "step-connect": "Connetti",
@@ -13624,6 +13708,7 @@
     "name-wrap-header-text": "Testo intestazione a capo",
     "name-wrap-text": "",
     "placeholder-column-width": "automatica",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

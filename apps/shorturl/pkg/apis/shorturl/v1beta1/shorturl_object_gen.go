@@ -25,6 +25,13 @@ type ShortURL struct {
 	Status ShortURLStatus `json:"status" yaml:"status"`
 }
 
+func NewShortURL() *ShortURL {
+	return &ShortURL{
+		Spec:   *NewShortURLSpec(),
+		Status: *NewShortURLStatus(),
+	}
+}
+
 func (o *ShortURL) GetSpec() any {
 	return o.Spec
 }
