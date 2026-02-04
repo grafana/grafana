@@ -213,6 +213,11 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		return fmt.Errorf("error rebuilding index: %w", err)
 	}
 
+	if response.Error != nil {
+		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
+	}
+
 	if opts.UsingDistributor {
 		if !response.ContactedAllPods {
 			m.log.Error("distributor did not contact all pods", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
@@ -247,19 +252,6 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 
 			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt)
 		}
-
-		// Check for errors from the distributor
-		if response.Error != nil {
-			m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-			return fmt.Errorf("rebuild index error: %s", response.Error.Message)
-		}
-
-		return nil
-	}
-
-	if response.Error != nil {
-		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
 	}
 
 	return nil
