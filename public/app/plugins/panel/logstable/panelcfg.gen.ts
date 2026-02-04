@@ -10,17 +10,23 @@
 
 // Generated from public/app/plugins/panel/logstable/panelcfg.cue file.
 
+import * as common from '@grafana/schema';
+
 export interface Options {
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   fieldSelectorWidth?: number;
   setDisplayedFields?: unknown;
+  showControls?: boolean;
   showCopyLogLink?: boolean;
   showInspectLogLine?: boolean;
+  sortOrder?: common.LogsSortOrder;
 }
 
 export const defaultOptions: Partial<Options> = {
   displayedFields: [],
+  showControls: true,
   showCopyLogLink: false,
   showInspectLogLine: true,
+  sortOrder: common.LogsSortOrder.Descending,
 };

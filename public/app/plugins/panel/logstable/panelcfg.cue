@@ -14,6 +14,10 @@
 
 package grafanaplugin
 
+import (
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+)
+
 composableKinds: PanelCfg: {
 	maturity: "experimental"
 	lineage: {
@@ -22,7 +26,9 @@ composableKinds: PanelCfg: {
 			schema: {
 				Options: {
 					showInspectLogLine?: bool | *true
-					showCopyLogLink?: bool | *false
+					showCopyLogLink?:    bool | *false
+					showControls?:       bool | *true
+					sortOrder?:          common.LogsSortOrder | (*"Descending" | _)
 					fieldSelectorWidth?: number
 					displayedFields?: [...string]
 					setDisplayedFields?: _
