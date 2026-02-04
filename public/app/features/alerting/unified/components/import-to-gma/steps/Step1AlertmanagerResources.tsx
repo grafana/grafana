@@ -135,7 +135,7 @@ export function Step1Content({
         >
           {t(
             'alerting.import-to-gma.step1.extra-config-conflict-desc',
-            'There is already an uncommitted imported configuration named "{{identifier}}". You need to commit or discard it before importing a new configuration.',
+            'There is already an uncommitted imported configuration named "{{identifier}}". To proceed, either use "{{identifier}}" as your policy tree name to replace it, or commit/discard the existing configuration first.',
             { identifier: existingIdentifier }
           )}
         </Alert>
