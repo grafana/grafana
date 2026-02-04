@@ -12,8 +12,6 @@ import { LogListControlsOption } from './LogListControlsOption';
 import { LOG_LIST_CONTROLS_WIDTH } from './virtualization';
 
 type Props = {
-  app: CoreApp;
-  eventBus: EventBus;
   controlsExpanded: boolean;
   setControlsExpanded: (expanded: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
@@ -23,8 +21,6 @@ type Props = {
 };
 
 export const LogTableControls = ({
-  app,
-  eventBus,
   controlsExpanded,
   logOptionsStorageKey,
   setControlsExpanded,
@@ -90,7 +86,7 @@ export const LogTableControls = ({
 const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
   return {
     navContainer: css({
-      maxHeight: '100%',
+      height: '100%',
       display: 'flex',
       flex: '1 0 auto',
       gap: theme.spacing(3),

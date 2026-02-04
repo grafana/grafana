@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import {
-  CoreApp,
   FieldConfigSource,
   GrafanaTheme2,
   LogSortOrderChangeEvent,
@@ -18,7 +17,6 @@ import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogL
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 
-import { isCoreApp } from '../logs/types';
 import { TablePanel } from '../table/TablePanel';
 
 import { Options } from './options/types';
@@ -66,8 +64,6 @@ export function TableNGWrap({
   const tableWidth = width;
   const styles = useStyles2(getStyles, sidebarWidth, height, tableWidth, controlsWidth);
 
-  const app = isCoreApp(data.request?.app) ? data.request?.app : CoreApp.Unknown;
-
   // Callbacks
   const onTableOptionsChange = useCallback(
     (options: TableOptions) => {
@@ -100,8 +96,6 @@ export function TableNGWrap({
       {showControls && (
         <div className={styles.listControlsWrapper}>
           <LogTableControls
-            eventBus={eventBus}
-            app={app}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}
             sortOrder={sortOrder}
@@ -141,12 +135,13 @@ const getStyles = (
   tableWidth: number,
   controlsWidth: number
 ) => {
-  const listControlsWrapperTableHeaderOffset = '3px';
+  const listControlsWrapperTableHeaderOffset = '2px';
   return {
     listControlsWrapper: css({
+      height: '100%',
       width: controlsWidth,
       label: 'listControlsWrapper',
-      marginTop: `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px - ${theme.spacing(1)} + ${listControlsWrapperTableHeaderOffset})`,
+      marginTop: `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px + ${listControlsWrapperTableHeaderOffset})`,
       position: 'absolute',
       right: 0,
       top: 0,
