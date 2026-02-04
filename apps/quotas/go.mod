@@ -192,7 +192,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20260129164026-85d7010c64b8 // indirect
+	github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173 // indirect
 	github.com/grafana/authlib v0.0.0-20260203131350-b83e80394acc // indirect
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect

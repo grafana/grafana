@@ -34,4 +34,8 @@ func (o *CreateCheck) DeepCopyInto(dst *CreateCheck) {
 	o.CreateCheckBody.DeepCopyInto(&dst.CreateCheckBody)
 }
 
+func (CreateCheck) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheck"
+}
+
 var _ runtime.Object = NewCreateCheck()

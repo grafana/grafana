@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+
 	v0alpha1 "github.com/grafana/grafana/apps/example/pkg/apis/example/v0alpha1"
 	v1alpha1 "github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 )

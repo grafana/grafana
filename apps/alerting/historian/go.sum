@@ -241,8 +241,8 @@ github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f h1:3bXOyht68qkfvD
 github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f/go.mod h1:Ji0SfJChcwjgq8ljy6Y5CcYfHfAYKXjKYeysOoDS/6s=
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e h1:zP30ZbtnWjy0KJxToqCLARauAtgFD+TAEB/sk4IBb9s=
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e/go.mod h1:Tl9i4F2CPp3cOiXo06JObTh05tENG/NV/ombn2XOY7Y=
-github.com/grafana/grafana-app-sdk v0.50.1 h1:rnNAWuVCJUtQ557aIdcIX4RoLC3XggIGwcbY2VwW3rA=
-github.com/grafana/grafana-app-sdk v0.50.1/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
+github.com/grafana/grafana-app-sdk v0.50.0 h1:r0S2uzhva13NoVmvg9nCG7PZUqBpDOJfnqQSCEOCVnM=
+github.com/grafana/grafana-app-sdk v0.50.0/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
 github.com/grafana/grafana-app-sdk/logging v0.49.0 h1:0X2QmqQk7yK48loxiXWBzi4GrDdgM2LIlCt5M40CVrM=
 github.com/grafana/grafana-app-sdk/logging v0.49.0/go.mod h1:5u3KalezoBAAo2Y3ytDYDAIIPvEqFLLDSxeiK99QxDU=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=

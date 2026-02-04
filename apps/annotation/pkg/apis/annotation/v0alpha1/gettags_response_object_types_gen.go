@@ -34,4 +34,8 @@ func (o *GetTags) DeepCopyInto(dst *GetTags) {
 	o.GetTagsBody.DeepCopyInto(&dst.GetTagsBody)
 }
 
+func (GetTags) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.GetTags"
+}
+
 var _ runtime.Object = NewGetTags()
