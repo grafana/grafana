@@ -511,9 +511,7 @@ export function LogsTableWrap(props: Props) {
           onResize={getOnResize}
         >
           <LogsTableFieldSelector
-            getSuggestedFields={(dataFrame, columns, defaultColumns) => {
-              return getSuggestedFieldsFromTable(dataFrame, columns, defaultColumns);
-            }}
+            getSuggestedFields={getSuggestedFieldsFromTable}
             clear={clearSelection}
             columnsWithMeta={columnsWithMeta}
             dataFrames={[currentDataFrame]}

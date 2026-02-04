@@ -19,18 +19,6 @@ export function getSuggestedFieldsFromTable(
     },
   }));
 
-  // Doesn't currently work? @matyax
-  if (config.featureToggles.otelLogsFormatting) {
-    getSuggestedFieldsForTable(dataFrame).forEach((field) => {
-      suggestedFields.push({
-        name: field,
-        stats: {
-          percentOfLinesWithLabel: 100,
-        },
-      });
-    });
-  }
-
   if (
     !defaultFields.length &&
     displayedFields.length &&
