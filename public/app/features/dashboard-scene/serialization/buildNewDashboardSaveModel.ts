@@ -16,6 +16,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types/dashboard';
 
 import { contextSrv } from '../../../core/services/context_srv';
+import { createDefaultGridLayoutKind } from '../scene/layouts-shared/defaultGridUtils';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
@@ -122,6 +123,7 @@ export async function buildNewDashboardSaveModelV2(
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),
+      layout: createDefaultGridLayoutKind(),
       title: t('dashboard-scene.build-new-dashboard-save-model-v2.data.title.new-dashboard', 'New dashboard'),
       timeSettings: {
         ...defaultTimeSettingsSpec(),
