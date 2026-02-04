@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/grafana/dskit/runtimeconfig"
@@ -118,9 +117,8 @@ func (q *OverridesService) GetQuota(_ context.Context, nsr NamespacedResource) (
 		return ResourceQuota{}, fmt.Errorf("failed to get quota overrides from config manager")
 	}
 
-	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
 	groupResource := nsr.Group + "/" + nsr.Resource
-	if tenantOverrides, ok := overrides.Namespaces[tenantId]; ok {
+	if tenantOverrides, ok := overrides.Namespaces[nsr.Namespace]; ok {
 		if resourceQuota, ok := tenantOverrides.Quotas[groupResource]; ok {
 			return resourceQuota, nil
 		}
