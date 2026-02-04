@@ -5,10 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -598,19 +596,6 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 
 		wg.Wait()
 	})
-}
-
-// mockValidator is a simple test implementation of Validator
-type mockValidator struct {
-	name string
-}
-
-func (m *mockValidator) Name() string {
-	return m.name
-}
-
-func (m *mockValidator) Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, logger log.Logger) error {
-	return nil
 }
 
 func TestBuildMigrationRegistry(t *testing.T) {
