@@ -167,7 +167,7 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndex
 	boff := backoff.New(ctx, backoff.Config{
 		MinBackoff: 500 * time.Millisecond,
 		MaxBackoff: 3 * time.Second,
-		MaxRetries: 3,
+		MaxRetries: 5,
 	})
 
 	var lastErr error

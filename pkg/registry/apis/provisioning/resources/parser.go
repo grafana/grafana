@@ -413,7 +413,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// Preserve the deprecated internal ID from the existing resource (if not already set by DryRun)
 	if f.Existing != nil {
 		existingMeta, metaErr := utils.MetaAccessor(f.Existing)
-		if metaErr == nil { // nolint:staticcheck
+		if metaErr == nil && f.Meta.GetDeprecatedInternalID() == 0 { // nolint:staticcheck
 			f.Meta.SetDeprecatedInternalID(existingMeta.GetDeprecatedInternalID()) // nolint:staticcheck
 		}
 	}
