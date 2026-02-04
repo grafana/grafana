@@ -45,7 +45,6 @@ export const ControlledLogsTable = ({
   const tableWidthExpandedControls = width - (CONTROLS_WIDTH_EXPANDED + 12);
   const tableWidth = width - (LOG_LIST_CONTROLS_WIDTH + 12);
 
-  // Here
   return (
     <div ref={ref} className={styles.logRowsContainer}>
       <LogListControls eventBus={eventBus} visualisationType={visualisationType} />

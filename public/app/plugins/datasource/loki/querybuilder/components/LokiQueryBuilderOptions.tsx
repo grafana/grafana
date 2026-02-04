@@ -94,8 +94,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           sortEvent.payload.order === LogsSortOrder.Ascending
             ? LokiQueryDirection.Forward
             : LokiQueryDirection.Backward;
-
-        console.log('sub', { newDirection });
         if (newDirection !== query.direction) {
           onQueryDirectionChange(newDirection);
         }
