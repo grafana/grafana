@@ -490,8 +490,8 @@ function AnnotationQueryLibraryDropdown({
         <Menu.Item
           icon="book-open"
           label={t(
-            'dashboard-scene.annotation-query-editor-button.menu-actions.label-select-from-query-library',
-            'Select from query library'
+            'dashboard-scene.annotation-query-library-dropdown.menu-overlay.label-use-saved-query',
+            'Use saved query'
           )}
           onClick={onSelectFromQueryLibrary}
         />
@@ -516,6 +516,7 @@ function AnnotationQueryLibraryDropdown({
 }
 
 function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
+  const { queryLibraryEnabled } = useQueryLibraryContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -533,7 +534,9 @@ function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
           >
             <Trans i18nKey="dashboard.edit-pane.annotation.open-query-editor">Open query editor</Trans>
           </Button>
-          <AnnotationQueryLibraryDropdown layer={layer} onQuerySelected={() => setIsModalOpen(true)} />
+          {queryLibraryEnabled && (
+            <AnnotationQueryLibraryDropdown layer={layer} onQuerySelected={() => setIsModalOpen(true)} />
+          )}
         </ButtonGroup>
       </Box>
       <Modal
