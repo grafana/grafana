@@ -6214,6 +6214,9 @@
         "description": {
           "reorder-annotations-list": "Reorder annotations list"
         }
+      },
+      "render-list": {
+        "aria-label-annotation": "Annotation"
       }
     },
     "annotation-query-editor-button": {
