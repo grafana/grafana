@@ -30,6 +30,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
 
   const {
     isHealthy: isRepositoryHealthy,
+    isReconciled: isRepositoryReconciled,
     healthMessage: repositoryHealthMessages,
     checked,
     healthStatusNotReady,
@@ -39,8 +40,8 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   } = useRepositoryStatus(repoName);
 
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
-    enableRepositoryStatus: false,
     isHealthy: isRepositoryHealthy,
+    isReconciled: isRepositoryReconciled,
   });
 
   const { createSyncJob } = useCreateSyncJob({

@@ -109,6 +109,7 @@ describe('BootstrapStep', () => {
       isLoading: false,
       hasError: false,
       isHealthy: true,
+      isReconciled: true,
       refetch: jest.fn(),
       hasTimedOut: false,
       resetTimeout: jest.fn(),
@@ -253,8 +254,8 @@ describe('BootstrapStep', () => {
       setup();
 
       expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
-        enableRepositoryStatus: false,
         isHealthy: true,
+        isReconciled: true,
       });
     });
 
@@ -270,8 +271,8 @@ describe('BootstrapStep', () => {
       });
 
       expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
-        enableRepositoryStatus: false,
         isHealthy: true,
+        isReconciled: true,
       });
     });
   });

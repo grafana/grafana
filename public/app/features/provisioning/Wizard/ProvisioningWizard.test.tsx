@@ -178,7 +178,7 @@ describe('ProvisioningWizard', () => {
       data: {
         items: [
           {
-            metadata: { name: 'test-repo' },
+            metadata: { name: 'test-repo', generation: 1 },
             status: {
               observedGeneration: 1,
               health: {

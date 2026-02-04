@@ -50,6 +50,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     hasError: repositoryStatusError,
     refetch: retryRepositoryStatus,
     isHealthy: isRepositoryHealthy,
+    isReconciled: isRepositoryReconciled,
     hasTimedOut,
     resetTimeout,
   } = useRepositoryStatus(repoName);
@@ -60,8 +61,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     resourceCount,
     isLoading: isResourceStatsLoading,
   } = useResourceStats(repoName, selectedTarget, undefined, {
-    enableRepositoryStatus: false,
     isHealthy: isRepositoryHealthy,
+    isReconciled: isRepositoryReconciled,
   });
 
   const isQuotaExceeded = Boolean(

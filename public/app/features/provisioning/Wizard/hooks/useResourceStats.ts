@@ -13,11 +13,9 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { useRepositoryStatus } from './useRepositoryStatus';
-
 export type UseResourceStatsOptions = {
-  enableRepositoryStatus?: boolean;
   isHealthy?: boolean;
+  isReconciled?: boolean;
 };
 
 function getManagedCount(managed?: ManagerStats[]) {
@@ -115,15 +113,18 @@ export function useResourceStats(
   migrateResources?: boolean,
   options?: UseResourceStatsOptions
 ) {
-  const enableRepositoryStatus = options?.enableRepositoryStatus ?? true; // provide option to skip repo status check
-  const { isHealthy: statusHealthy } = useRepositoryStatus(enableRepositoryStatus ? repoName : undefined);
-  const effectiveHealthy = enableRepositoryStatus ? statusHealthy : options?.isHealthy;
+  const { isHealthy, isReconciled } = options || {};
+  // Wait for both health AND reconciliation before fetching files
+  // This ensures the backend has fully processed the repository configuration (including path)
+  const isReadyForFiles = isHealthy && isReconciled;
 
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  // files endpoint requires healthy repository
-  const filesQuery = useGetRepositoryFilesQuery(repoName && effectiveHealthy ? { name: repoName } : skipToken);
+  // files endpoint requires healthy AND reconciled repository
+  const filesQuery = useGetRepositoryFilesQuery(repoName && isReadyForFiles ? { name: repoName } : skipToken, {
+    refetchOnMountOrArgChange: true,
+  });
 
-  const isFilesQuerySkipped = !repoName || !effectiveHealthy;
+  const isFilesQuerySkipped = !repoName || !isReadyForFiles;
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading || isFilesQuerySkipped;
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(

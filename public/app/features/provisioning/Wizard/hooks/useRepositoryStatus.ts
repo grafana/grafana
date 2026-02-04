@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isResourceReconciled } from '../../utils/repositoryStatus';
+
 export type UseRepositoryStatusOptions = {
   pollIntervalMs?: number;
   stopPollingWhenReady?: boolean;
@@ -23,7 +25,10 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
   const repository = query.data?.items?.[0];
   const { healthy: isHealthy, message: healthMessage, checked } = repository?.status?.health || {};
 
-  const healthStatusNotReady = isHealthy === false && (repository?.status?.observedGeneration === 0 || !checked);
+  const isReconciled = isResourceReconciled(repository);
+  const observedGeneration = repository?.status?.observedGeneration;
+
+  const healthStatusNotReady = isHealthy === false && (observedGeneration === 0 || !checked);
   const isReady = Boolean(repoName) && query.isSuccess && !healthStatusNotReady;
 
   const [hasTimedOut, setHasTimedOut] = useState(false);
@@ -98,6 +103,7 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
   return {
     isReady,
     isHealthy: isReady ? isHealthy : undefined,
+    isReconciled,
     healthMessage,
     checked,
     healthStatusNotReady,
