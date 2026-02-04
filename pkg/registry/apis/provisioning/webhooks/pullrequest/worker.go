@@ -24,7 +24,7 @@ import (
 func ProvidePullRequestWorker(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
-	blobstore resource.ResourceClient,
+	storageClient resource.StorageClient,
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
@@ -36,7 +36,7 @@ func ProvidePullRequestWorker(
 	// multiple connections for webhooks
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
-	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
+	screenshotRenderer := NewScreenshotRenderer(renderer, storageClient)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
 

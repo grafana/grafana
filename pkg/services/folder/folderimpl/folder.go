@@ -89,7 +89,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer trace.Tracer,
-	resourceClient resource.ResourceClient,
+	searchClient resource.SearchClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
 	restConfig apiserver.RestConfigProvider,
@@ -122,7 +122,7 @@ func ProvideService(
 		restConfig.GetRestConfig,
 		dashboardStore,
 		userService,
-		resourceClient,
+		searchClient,
 		sorter,
 		features,
 	)
@@ -139,7 +139,7 @@ func ProvideService(
 		restConfig.GetRestConfig,
 		dashboardStore,
 		userService,
-		resourceClient,
+		searchClient,
 		sorter,
 		features,
 	)

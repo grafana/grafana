@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -40,7 +41,7 @@ func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Sch
 	if err != nil {
 		return nil, err
 	}
-	client := legacy.NewDirectResourceClient(server) // same context
+	client := legacy.NewDirectStorageClient(server) // same context
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil,
 		defaultOpts.StorageConfig.Config, nil,
 	)

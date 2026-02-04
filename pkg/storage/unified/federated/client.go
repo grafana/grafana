@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, disableDashboardsFallback bool, disableFoldersFallback bool) resource.ResourceClient {
+func NewFederatedSearchClient(base resource.SearchClient, sql legacysql.LegacyDatabaseProvider, disableDashboardsFallback bool, disableFoldersFallback bool) resource.SearchClient {
 	return &federatedClient{
-		ResourceClient: base,
+		SearchClient: base,
 		stats: &LegacyStatsGetter{
 			SQL:                          sql,
 			DisableSQLFallbackDashboards: disableDashboardsFallback,
@@ -22,7 +22,7 @@ func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDataba
 }
 
 type federatedClient struct {
-	resource.ResourceClient
+	resource.SearchClient
 
 	// Local DB for folder stats query
 	stats *LegacyStatsGetter
@@ -30,7 +30,7 @@ type federatedClient struct {
 
 // Get the resource stats
 func (s *federatedClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	rsp, err := s.ResourceClient.GetStats(ctx, in, opts...)
+	rsp, err := s.SearchClient.GetStats(ctx, in, opts...)
 	if err != nil {
 		return nil, err
 	}

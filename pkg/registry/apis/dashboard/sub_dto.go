@@ -30,7 +30,7 @@ type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAcce
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
 	getter                 rest.Getter
-	unified                resource.ResourceClient
+	storageClient          resource.StorageClient
 	largeObjects           apistore.LargeObjectSupport
 	accessClient           authlib.AccessClient
 	builder                dtoBuilder
@@ -40,7 +40,7 @@ type DTOConnector struct {
 func NewDTOConnector(
 	getter rest.Getter,
 	largeObjects apistore.LargeObjectSupport,
-	resourceClient resource.ResourceClient,
+	storageClient resource.StorageClient,
 	accessClient authlib.AccessClient,
 	builder dtoBuilder,
 	publicDashboardService publicdashboards.Service,
@@ -48,7 +48,7 @@ func NewDTOConnector(
 	return &DTOConnector{
 		getter:                 getter,
 		accessClient:           accessClient,
-		unified:                resourceClient,
+		storageClient:          storageClient,
 		largeObjects:           largeObjects,
 		builder:                builder,
 		publicDashboardService: publicDashboardService,
@@ -113,7 +113,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			Resource:  gr.Resource,
 			Namespace: obj.GetNamespace(),
 			Name:      obj.GetName(),
-		}, r.unified, obj)
+		}, r.storageClient, obj)
 		if err != nil {
 			return nil, err
 		}

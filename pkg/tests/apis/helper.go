@@ -185,7 +185,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+	rsp, err := c.env.DiagnosticsClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 	require.NoError(t, err, "unable to read resource client health check")
 	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 

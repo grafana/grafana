@@ -1,5 +1,6 @@
 package migrations
 
+// TODO
 import (
 	"context"
 	"fmt"
@@ -46,7 +47,7 @@ func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
 }
 
 type resourceClientStreamProvider struct {
-	client resource.ResourceClient
+	client resource.MigratorClient
 }
 
 func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
@@ -69,7 +70,7 @@ func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts l
 // This can migrate Folders, Dashboards and LibraryPanels
 func ProvideUnifiedMigrator(
 	dashboardAccess legacy.MigrationDashboardAccessor,
-	client resource.ResourceClient,
+	client resource.MigratorClient,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
 		dashboardAccess,

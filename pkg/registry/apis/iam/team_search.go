@@ -32,11 +32,11 @@ type TeamSearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *TeamSearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
+func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, searchClient resource.SearchClient, features featuremgmt.FeatureToggles) *TeamSearchHandler {
+	client := resource.NewSearchWrapperClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), searchClient, legacyTeamSearcher, features)
 
 	return &TeamSearchHandler{
-		client:   searchClient,
+		client:   client,
 		log:      log.New("grafana-apiserver.teams.search"),
 		tracer:   tracer,
 		features: features,
