@@ -48,7 +48,7 @@ This service loads overrides (currently just quotas) from a YAML file with the f
 
 overrides:
 
-	"123":
+	"stacks-123":
 	  quotas:
 	    dashboard.grafana.app/dashboards:
 	      limit: 1500
