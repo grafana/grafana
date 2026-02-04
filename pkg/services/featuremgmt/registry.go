@@ -1520,6 +1520,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "alertingMigrationWizardUI",
+			Description:  "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,
