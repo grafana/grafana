@@ -151,14 +151,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottomLeftRadius: 'unset',
     borderTopLeftRadius: 'unset',
   }),
-  dragHandle: css({
-    cursor: 'grab',
-    display: 'flex',
-    alignItems: 'center',
-    marginRight: theme.spacing(0.5),
-    color: theme.colors.text.secondary,
-    '&:hover': {
-      color: theme.colors.text.primary,
-    },
-  }),
 });

@@ -2,23 +2,20 @@ import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
-import { AnnotationQuery, getDataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataLayerProvider, SceneObject } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
-
-import { newAnnotationName } from './AnnotationSettingsEdit';
 
 function partitionAnnotationLayers(layers: SceneDataLayerProvider[]) {
   const standardLayers: SceneDataLayerProvider[] = [];
@@ -91,28 +88,14 @@ function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet 
   );
 
   const onAddAnnotation = useCallback(() => {
-    const defaultDatasource = getDataSourceSrv().getInstanceSettings(null);
-    const datasourceRef = defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
+    const newAnnotation = dataLayerSet.createDefaultAnnotationLayer();
 
-    const newAnnotationQuery: AnnotationQuery = {
-      name: newAnnotationName,
-      enable: true,
-      datasource: datasourceRef,
-      iconColor: 'red',
-    };
-
-    const newAnnotation = new DashboardAnnotationsDataLayer({
-      query: newAnnotationQuery,
-      name: newAnnotationQuery.name,
-      isEnabled: Boolean(newAnnotationQuery.enable),
-      isHidden: Boolean(newAnnotationQuery.hide),
+    dashboardEditActions.addAnnotation({
+      source: dataLayerSet,
+      addedObject: newAnnotation,
     });
 
-    dataLayerSet.addAnnotationLayer(newAnnotation);
-
-    // Select the newly added annotation
-    const { editPane } = getDashboardSceneFor(dataLayerSet).state;
-    editPane.selectObject(newAnnotation, newAnnotation.state.key!);
+    DashboardInteractions.addAnnotationButtonClicked({ source: 'edit_pane' });
   }, [dataLayerSet]);
 
   const { standardLayers, controlsMenuLayers } = useMemo(
@@ -176,15 +159,25 @@ function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet 
           {list.map((layer, index) => (
             <Draggable key={layer.state.key} draggableId={`${layer.state.key}`} index={index}>
               {(draggableProvided) => (
-                // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
                 <div
-                  className={styles.annotationItem}
                   key={layer.state.key}
-                  onClick={() => onSelectAnnotation(layer)}
+                  className={styles.annotationItem}
                   ref={draggableProvided.innerRef}
                   {...draggableProvided.draggableProps}
                 >
-                  <div className={styles.annotationContent}>
+                  <div
+                    className={styles.annotationContent}
+                    aria-label={t('dashboard-scene.annotation-list.render-list.aria-label-annotation', 'Annotation')}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onSelectAnnotation(layer)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectAnnotation(layer);
+                      }
+                    }}
+                  >
                     <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
                       <Tooltip
                         content={t('dashboard.edit-pane.annotations.reorder', 'Drag to reorder')}
@@ -226,7 +219,14 @@ function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet 
       )}
       {canAdd && (
         <Box paddingBottom={1} paddingTop={1} display={'flex'}>
-          <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddAnnotation}>
+          <Button
+            fullWidth
+            icon="plus"
+            size="sm"
+            variant="secondary"
+            onClick={onAddAnnotation}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.annotations.add-annotation">Add annotation</Trans>
           </Button>
         </Box>

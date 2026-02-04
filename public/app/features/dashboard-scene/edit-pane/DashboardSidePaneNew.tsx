@@ -2,21 +2,20 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
-import { AnnotationQuery, getDataSourceRef, GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneObject } from '@grafana/scenes';
 import { Button, Icon, Sidebar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelImg from 'img/dashboards/add-panel.png';
 
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
-import { newAnnotationName } from '../settings/annotations/AnnotationSettingsEdit';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
+
+import { dashboardEditActions } from './shared';
 
 interface DashboardSidePaneNewProps {
   dashboard: SceneObject;
@@ -29,13 +28,13 @@ export function DashboardSidePaneNew({ onAddPanel, dashboard, selectedElement }:
   const dashboardScene = getDashboardSceneFor(dashboard);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
 
-  const onAddPanelClick = useCallback(() => {
+  const onAddPanelClick = () => {
     onAddPanel();
     DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedElement));
-  }, [onAddPanel, selectedElement]);
+  };
 
   return (
-    <div>
+    <>
       <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} />
       <SidePaneSection
         title={t('dashboard.add.new-panel.title', 'Panel')}
@@ -84,7 +83,7 @@ export function DashboardSidePaneNew({ onAddPanel, dashboard, selectedElement }:
       <SidePaneSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
         <AddAnnotation dashboardScene={dashboardScene} />
       </SidePaneSection>
-    </div>
+    </>
   );
 }
 
@@ -97,8 +96,8 @@ type SidePaneSectionProps = {
 function SidePaneSection({ title, description, children }: SidePaneSectionProps) {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.SidePanesection}>
-      <div className={styles.SidePanesectionHeader}>
+    <div className={styles.SidePaneSection}>
+      <div className={styles.SidePaneSectionHeader}>
         <Text weight="medium">{title}</Text>
         <Text element="p" variant="bodySmall" color="secondary">
           {description || ''}
@@ -113,27 +112,13 @@ function SidePaneSection({ title, description, children }: SidePaneSectionProps)
 
 function AddAnnotation({ dashboardScene }: { dashboardScene: DashboardScene }) {
   const onAddAnnotationClick = useCallback(() => {
-    const defaultDatasource = getDataSourceSrv().getInstanceSettings(null);
-    const datasourceRef = defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
-
-    const newAnnotationQuery: AnnotationQuery = {
-      name: newAnnotationName,
-      enable: true,
-      datasource: datasourceRef,
-      iconColor: 'red',
-    };
-
-    const newAnnotation = new DashboardAnnotationsDataLayer({
-      query: newAnnotationQuery,
-      name: newAnnotationQuery.name,
-      isEnabled: Boolean(newAnnotationQuery.enable),
-      isHidden: Boolean(newAnnotationQuery.hide),
-    });
-
     const dataLayers = dashboardSceneGraph.getDataLayers(dashboardScene);
-    dataLayers.addAnnotationLayer(newAnnotation);
+    const newAnnotation = dataLayers.createDefaultAnnotationLayer();
 
-    dashboardScene.state.editPane.selectObject(newAnnotation, newAnnotation.state.key!);
+    dashboardEditActions.addAnnotation({
+      source: dataLayers,
+      addedObject: newAnnotation,
+    });
   }, [dashboardScene]);
 
   return (
@@ -177,11 +162,11 @@ function AddItem({ icon, label, description, tooltip, onClick }: AddItemProps) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    SidePanesection: css({
+    SidePaneSection: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(2),
     }),
-    SidePanesectionHeader: css({
+    SidePaneSectionHeader: css({
       margin: theme.spacing(0, 0, 3, 0),
     }),
     addItemContainer: css({

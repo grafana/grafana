@@ -33,6 +33,7 @@ import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { NEW_ANNOTATION_NAME } from '../../scene/DashboardDataLayerSet';
 import { getPanelIdForVizPanel } from '../../utils/utils';
 
 type Props = {
@@ -45,7 +46,6 @@ type Props = {
 };
 
 const collator = Intl.Collator();
-export const newAnnotationName = 'New annotation';
 
 enum AnnotationControlsDisplay {
   Hidden,
@@ -216,7 +216,7 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     onBackToList();
   };
 
-  const isNewAnnotation = annotation.name === newAnnotationName;
+  const isNewAnnotation = annotation.name === NEW_ANNOTATION_NAME;
 
   const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
     if (a.label && b.label) {

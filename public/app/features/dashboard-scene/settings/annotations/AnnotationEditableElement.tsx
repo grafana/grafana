@@ -581,7 +581,7 @@ function AnnotationQueryEditor({ layer }: { layer: AnnotationLayer }) {
 
   return (
     <StandardAnnotationQueryEditor
-      disableQueryLibrary
+      disableSavedQueries
       datasource={ds}
       datasourceInstanceSettings={dsi}
       annotation={query}

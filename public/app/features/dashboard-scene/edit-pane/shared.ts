@@ -146,6 +146,11 @@ export interface RemoveVariableActionHelperProps {
   source: SceneVariableSet;
 }
 
+export interface AddAnnotationActionHelperProps {
+  addedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
+  source: DashboardDataLayerSet;
+}
+
 export interface RemoveAnnotationActionHelperProps {
   removedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
   source: DashboardDataLayerSet;
@@ -252,6 +257,20 @@ export const dashboardEditActions = {
       },
       undo() {
         source.setState({ variables: varsBeforeRemoval });
+      },
+    });
+  },
+  addAnnotation({ source, addedObject }: AddAnnotationActionHelperProps) {
+    const layersBeforeAddition = [...source.state.annotationLayers];
+
+    dashboardEditActions.addElement({
+      source,
+      addedObject,
+      perform() {
+        source.setState({ annotationLayers: [...layersBeforeAddition, addedObject] });
+      },
+      undo() {
+        source.setState({ annotationLayers: layersBeforeAddition });
       },
     });
   },

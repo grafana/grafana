@@ -136,8 +136,8 @@ export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props
           </td>
           <td className={styles.valueCell}>
             {value ? (
-              <Tooltip content={String(value)} placement="left">
-                <span>{`${value}`}</span>
+              <Tooltip content={value}>
+                <span>{value}</span>
               </Tooltip>
             ) : (
               ''

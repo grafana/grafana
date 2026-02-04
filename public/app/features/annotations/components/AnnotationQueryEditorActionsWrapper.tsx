@@ -12,7 +12,7 @@ interface Props {
   annotation: AnnotationQuery<DataQuery>;
   datasource: DataSourceApi;
   onQueryReplace: (query: DataQuery) => void;
-  disableQueryLibrary?: boolean;
+  disableSavedQueries?: boolean;
 }
 
 export function AnnotationQueryEditorActionsWrapper({
@@ -20,11 +20,11 @@ export function AnnotationQueryEditorActionsWrapper({
   annotation,
   datasource,
   onQueryReplace,
-  disableQueryLibrary,
+  disableSavedQueries,
 }: Props) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
 
-  const savedQueryButtons = disableQueryLibrary
+  const savedQueryButtons = disableSavedQueries
     ? undefined
     : renderSavedQueryButtons(
         getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
