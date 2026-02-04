@@ -12071,11 +12071,7 @@
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
     },
     "bitbucket": {
-      "branch-description": "The branch to use for provisioning",
-      "branch-label": "Branch",
       "branch-required": "Branch is required",
-      "path-description": "Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.",
-      "path-label": "Path",
       "permissions": {
         "pull-requests-label": "Pull requests",
         "pull-requests-read-write": "Read and write",
@@ -12090,17 +12086,15 @@
       "token-label": "App Password",
       "token-required": "Bitbucket token is required",
       "token-user-description": "The username that will be used to access the repository with the app password",
-      "token-user-label": "Username",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
-      "url-label": "Repository URL",
       "url-pattern": "Must be a valid Bitbucket repository URL",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
-      "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed on the UI",
+      "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
@@ -12341,46 +12335,31 @@
       "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
     "git": {
-      "branch-description": "The branch to use for provisioning",
-      "branch-label": "Branch",
       "branch-required": "Branch is required",
-      "path-description": "Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.",
-      "path-label": "Path",
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
       "token-description": "Git repository access token or password",
       "token-label": "Access Token",
       "token-required": "Git token is required",
       "token-user-description": "The username that will be used to access the repository with the access token",
-      "token-user-label": "Username",
       "token-user-required": "Username is required",
       "url-description": "The Git repository URL",
-      "url-label": "Repository URL",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
     },
     "github": {
-      "branch-description": "The branch to use for provisioning",
-      "branch-label": "Branch",
       "branch-required": "Branch is required",
-      "path-description": "Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.",
-      "path-label": "Path",
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
       "token-description": "GitHub Personal Access Token with repository permissions",
       "token-label": "Personal Access Token",
       "token-required": "GitHub token is required",
       "url-description": "The GitHub repository URL",
-      "url-label": "Repository URL",
       "url-pattern": "Must be a valid GitHub repository URL",
       "url-required": "Repository URL is required"
     },
     "gitlab": {
-      "branch-description": "The branch to use for provisioning",
-      "branch-label": "Branch",
       "branch-required": "Branch is required",
-      "path-description": "Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.",
-      "path-label": "Path",
       "permissions": {
         "api": "API",
         "api-read-write": "Read and write",
@@ -12395,7 +12374,6 @@
       "token-label": "Project Access Token",
       "token-required": "GitLab token is required",
       "url-description": "The GitLab repository URL",
-      "url-label": "Repository URL",
       "url-pattern": "Must be a valid GitLab repository URL",
       "url-required": "Repository URL is required"
     },
@@ -12612,9 +12590,15 @@
       "previous": "Previous"
     },
     "shared": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "path-description": "Path to the subdirectory with the resources you want to sync. Set to grafana/ by default. Update if using a folder different from grafana/.",
+      "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
-      }
+      },
+      "token-user-label": "Username",
+      "url-label": "Repository URL"
     },
     "sidebar-item": {
       "label-completed-step": "Completed step",
