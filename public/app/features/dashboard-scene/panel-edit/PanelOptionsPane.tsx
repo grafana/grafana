@@ -42,6 +42,8 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
   editPreviewRef?: SceneObjectRef<VizPanel>;
+  hasUnappliedPreview?: boolean;
+  applyPreview?: () => void;
 }
 
 interface PluginOptionsCache {
@@ -61,6 +63,8 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({
       isVizPickerOpen: newState,
       hasPickedViz: this.state.hasPickedViz || newState === false,
+      hasUnappliedPreview: false,
+      applyPreview: undefined,
     });
   };
 
@@ -118,6 +122,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
   onSetListMode = (listMode: OptionFilter) => {
     this.setState({ listMode });
+  };
+
+  onPreviewStateChange = (hasPreview: boolean, applyCallback?: () => void) => {
+    this.setState({
+      hasUnappliedPreview: hasPreview,
+      applyPreview: applyCallback,
+    });
   };
 
   onOpenPanelJSON = (vizPanel: VizPanel) => {
@@ -238,6 +249,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
           isNewPanel={isNewPanel}
+          onPreviewStateChange={model.onPreviewStateChange}
         />
       )}
     </>

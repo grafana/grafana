@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -6,6 +7,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { PanelEditor } from '../PanelEditor';
+import { PreviewOverlay } from '../PreviewOverlay';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
@@ -20,7 +22,24 @@ export function VizAndDataPaneNext({
 }: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
   const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
   const styles = useStyles2(getStyles, layout.sidebarSize);
-  const { editPreview } = model.useState();
+  const { editPreview, optionsPane } = model.useState();
+
+  const [applyPreview, setApplyPreview] = useState<(() => void) | undefined>(undefined);
+
+  useEffect(() => {
+    if (!optionsPane) {
+      setApplyPreview(undefined);
+      return;
+    }
+
+    setApplyPreview(() => optionsPane.state.applyPreview);
+
+    const sub = optionsPane.subscribeToState((newState) => {
+      setApplyPreview(() => newState.applyPreview);
+    });
+
+    return () => sub.unsubscribe();
+  }, [optionsPane]);
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
     return null;
@@ -50,6 +69,7 @@ export function VizAndDataPaneNext({
       )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout }, vizSizeClass)}>
         <div className={cx(styles.vizInner, isPreview && styles.previewBorder)}>
+          {isPreview && <PreviewOverlay onApply={applyPreview} />}
           <scene.panelToShow.Component model={scene.panelToShow} />
         </div>
         <div className={styles.vizResizerWrapper}>
@@ -169,8 +189,9 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       width: '100%',
     }),
     previewBorder: css({
-      border: `1px solid ${theme.colors.primary.border}`,
+      border: `2px solid ${theme.colors.primary.border}`,
       borderRadius: theme.shape.radius.default,
+      position: 'relative',
     }),
   };
 }

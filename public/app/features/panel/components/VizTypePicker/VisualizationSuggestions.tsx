@@ -32,6 +32,7 @@ export interface Props {
   panel?: PanelModel;
   searchQuery?: string;
   isNewPanel?: boolean;
+  onPreviewStateChange?: (hasPreview: boolean, applyCallback?: () => void) => void;
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
@@ -64,7 +65,15 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
   return { value: filteredValue, loading, error, retry };
 };
 
-export function VisualizationSuggestions({ onChange, editPreview, data, panel, searchQuery, isNewPanel }: Props) {
+export function VisualizationSuggestions({
+  onChange,
+  editPreview,
+  data,
+  panel,
+  searchQuery,
+  isNewPanel,
+  onPreviewStateChange,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
@@ -133,6 +142,12 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
         });
 
         setSuggestionHash(suggestion.hash);
+
+        // Pass the apply callback so it can be used from the modal or button
+        const applyCallback = () => {
+          applySuggestion(suggestion, false, suggestionIndex);
+        };
+        onPreviewStateChange?.(true, applyCallback);
       } else {
         VizSuggestionsInteractions.suggestionAccepted({
           pluginId: suggestion.pluginId,
@@ -140,6 +155,8 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
           panelState,
           suggestionIndex: suggestionIndex + 1,
         });
+
+        onPreviewStateChange?.(false);
       }
 
       onChange(
@@ -153,7 +170,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
         isPreview ? editPreview : undefined
       );
     },
-    [onChange, editPreview, panelState]
+    [onChange, editPreview, panelState, onPreviewStateChange]
   );
 
   useEffect(() => {

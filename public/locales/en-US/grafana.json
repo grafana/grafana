@@ -6438,9 +6438,11 @@
       "table-view-label-table-view": "Table view"
     },
     "panel-editor": {
+      "preview-label": "Preview",
       "text": {
         "edit-panel": "Edit panel"
-      }
+      },
+      "use-suggestion": "Use this suggestion"
     },
     "panel-editor-renderer": {
       "aria-label-open-options-pane": "Open options pane",
