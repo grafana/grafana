@@ -1377,11 +1377,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/notification-policies/EditDefaultPolicyForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {
     "no-restricted-syntax": {
       "count": 13

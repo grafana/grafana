@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Varsayılan değerlere sıfırla",
-      "title-invalid-configuration": "Geçersiz yapılandırma",
       "title-more-actions": "Daha fazla işlem",
       "tooltip-more-actions": "Daha fazla işlem"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Gruplama ölçütü",
       "aria-label-group-interval": "Grup aralığı",
       "aria-label-group-wait": "Grup bekleme süresi",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Tekrarlama aralığı",
       "create-a-contact-point": "İletişim noktası oluştur",
+      "description-unique-routing": "",
       "label-default-contact-point": "Varsayılan iletişim noktası",
+      "label-name": "",
       "label-timing-options": "Zamanlama seçenekleri",
       "message": {
         "required": "Zorunlu."
       },
-      "or": "veya"
+      "or": "veya",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Eşleşme kuralı ekle",
@@ -2136,6 +2139,10 @@
       "new-policy": "Yeni politika ekle",
       "no-matchers": "Eşleşen yok",
       "reload-policies": "Politikaları yeniden yükle",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Politikayı kaydet",
       "update": {
         "please-wait": "Bildirim politikalarınız güncellenirken lütfen bekleyin.",
@@ -2154,6 +2161,54 @@
       },
       "n-more-policies_one": "{{count}} ek politika",
       "n-more-policies_other": "{{count}} ek politika"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Çocuklara ilişkin yeni politika",
@@ -2337,6 +2392,13 @@
       "label-override-grouping": "Gruplandırmayı geçersiz kıl",
       "label-override-timings": "Zamanlamaları geçersiz kıl",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Düzenle",
@@ -3103,6 +3165,12 @@
       "label-edit": "Düzenle",
       "label-export": "Dışa aktar"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Evet, iletişim noktasını sil",
       "deleting": "Siliniyor...",
@@ -3120,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Bildirim politikasını sil"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6239,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "İptal",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Klasör"
     },
     "inspect-data-tab": {
@@ -9793,7 +9872,6 @@
       "error-fetching": "LDAP ayarları alınırken hata oluştu",
       "error-saving": "LDAP ayarları kaydedilirken hata oluştu",
       "error-validate-form": "LDAP ayarları doğrulanırken hata oluştu",
-      "feature-flag-disabled": "",
       "saved": "LDAP ayarları kaydedildi"
     },
     "bind-dn": {
@@ -11290,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Kopyala",
+      "copy-styles": "",
       "create-library-panel": "Kütüphane paneli oluştur",
       "duplicate": "Çoğalt",
       "edit": "Düzenle",
@@ -11301,11 +11380,13 @@
       "inspect-json": "Panel JSON",
       "more": "Daha fazla...",
       "new-alert-rule": "Yeni uyarı kuralı",
+      "paste-styles": "",
       "query": "Sorgu",
       "remove": "Kaldır",
       "replace-library-panel": "Kütüphane panelini değiştir",
       "share": "Paylaş",
       "show-legend": "Açıklamayı göster",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "view": "Görüntüle"
@@ -11869,9 +11950,6 @@
       "label-display-name": "Görünen ad",
       "placeholder-my-repository-connection": "Depo bağlantım",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
@@ -11926,6 +12004,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11939,6 +12020,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12278,6 +12360,9 @@
         "view-repository": ""
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Kontrol Eden:",
       "connection-status": "",
@@ -12471,7 +12556,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "Nelerin senkronize edileceğini seçin",
       "step-configure-repo": "",
       "step-connect": "Bağlan",
@@ -13624,6 +13708,7 @@
     "name-wrap-header-text": "Başlık metnini kaydır",
     "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "デフォルト値にリセット",
-      "title-invalid-configuration": "無効な設定",
       "title-more-actions": "その他の操作",
       "tooltip-more-actions": "その他の操作"
     },
@@ -661,14 +660,18 @@
       "aria-label-group-by": "グループ化",
       "aria-label-group-interval": "グループ間隔",
       "aria-label-group-wait": "グループ待機",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "繰り返し間隔",
       "create-a-contact-point": "連絡先を作成",
+      "description-unique-routing": "",
       "label-default-contact-point": "デフォルトの連絡先",
+      "label-name": "",
       "label-timing-options": "タイミングオプション",
       "message": {
         "required": "必須項目です。"
       },
-      "or": "もしくは"
+      "or": "もしくは",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "マッチャーを追加",
@@ -2129,6 +2132,10 @@
       "new-policy": "新しいポリシーを追加",
       "no-matchers": "マッチャーなし",
       "reload-policies": "ポリシーを再読み込み",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "ポリシーを保存",
       "update": {
         "please-wait": "通知ポリシーを更新している間、しばらくお待ちください。",
@@ -2146,6 +2153,54 @@
         "title": "通知ポリシーの追加または更新に失敗しました"
       },
       "n-more-policies_other": "{{count}}件の追加のポリシー"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "新しい子ポリシー",
@@ -2329,6 +2384,13 @@
       "label-override-grouping": "グループ化を上書き",
       "label-override-timings": "タイミングを上書き",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "編集",
@@ -3092,6 +3154,12 @@
       "label-edit": "編集",
       "label-export": "エクスポート"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "はい、連絡先を削除する",
       "deleting": "削除中…",
@@ -3109,6 +3177,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "通知ポリシーを削除"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6218,6 +6295,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "キャンセル",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "フォルダ"
     },
     "inspect-data-tab": {
@@ -9755,7 +9834,6 @@
       "error-fetching": "LDAP設定の取得中にエラーが発生しました",
       "error-saving": "LDAP設定の保存中にエラーが発生",
       "error-validate-form": "LDAP設定の検証中にエラーが発生しました",
-      "feature-flag-disabled": "",
       "saved": "LDAP設定を保存しました"
     },
     "bind-dn": {
@@ -11243,6 +11321,7 @@
     },
     "header-menu": {
       "copy": "コピー",
+      "copy-styles": "",
       "create-library-panel": "ライブラリパネルを作成",
       "duplicate": "複製",
       "edit": "編集",
@@ -11254,11 +11333,13 @@
       "inspect-json": "パネルJSON",
       "more": "もっと見る…",
       "new-alert-rule": "新しいアラートルール",
+      "paste-styles": "",
       "query": "クエリ",
       "remove": "削除",
       "replace-library-panel": "ライブラリパネルを置き換える",
       "share": "共有",
       "show-legend": "凡例を表示",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "view": "表示"
@@ -11822,9 +11903,6 @@
       "label-display-name": "表示名",
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "text-loading-resource-information": "リソース情報読み込み中...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
       "files-count_other": "{{count}}個のファイル",
@@ -11876,6 +11954,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11889,6 +11970,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12225,6 +12307,9 @@
         "view-repository": "リポジトリを表示"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "確認済み：",
       "connection-status": "",
@@ -12418,7 +12503,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "同期する内容を選択",
       "step-configure-repo": "",
       "step-connect": "接続",
@@ -13566,6 +13650,7 @@
     "name-wrap-header-text": "ヘッダーテキストの折り返し",
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
