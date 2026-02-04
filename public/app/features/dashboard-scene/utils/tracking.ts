@@ -80,9 +80,10 @@ export function trackDashboardSceneCreatedOrSaved(
   // Extract variable type counts from tracking info and group them
   const variableCountsByType = sceneDashboardTrackingInfo
     ? Object.fromEntries(
-        Object.entries(sceneDashboardTrackingInfo)
-          .filter(([key]) => key.startsWith('variable_type_'))
-          .map(([key, value]) => [key.replace('variable_type_', '').replace('_count', ''), value])
+        Object.entries(sceneDashboardTrackingInfo).flatMap(([key, value]) => {
+          const [, type] = key.match(/^variable_type_(.+)_count$/) || [];
+          return type ? [[type, value]] : [];
+        })
       )
     : {};
 
