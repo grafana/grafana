@@ -37,7 +37,8 @@ import { LogListOptions, LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { LogListModel } from './processing';
 
-export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'unwrappedColumns'> {
+export interface LogListContextData
+  extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'unwrappedColumns'> {
   controlsExpanded: boolean;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
