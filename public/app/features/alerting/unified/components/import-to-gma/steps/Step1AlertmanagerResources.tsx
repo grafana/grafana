@@ -37,6 +37,10 @@ interface Step1ContentProps {
   dryRunResult?: DryRunValidationResult;
   /** Callback to trigger dry-run validation */
   onTriggerDryRun?: () => void;
+  /** State of existing extra config: 'none' | 'same' (will overwrite) | 'different' (blocked) */
+  extraConfigState?: 'none' | 'same' | 'different';
+  /** Identifier of existing extra config, if any */
+  existingIdentifier?: string;
 }
 
 /**
@@ -50,6 +54,8 @@ export function Step1Content({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
+  extraConfigState = 'none',
+  existingIdentifier,
 }: Step1ContentProps) {
   const styles = useStyles2(getStyles);
   const {
@@ -118,6 +124,37 @@ export function Step1Content({
             You do not have permission to import notification resources. You need the{' '}
             <strong>alerting.notifications:write</strong> permission. You can skip this step.
           </Trans>
+        </Alert>
+      )}
+
+      {/* Extra config conflict - blocked */}
+      {extraConfigState === 'different' && existingIdentifier && (
+        <Alert
+          severity="error"
+          title={t('alerting.import-to-gma.step1.extra-config-conflict-title', 'Cannot import notification resources')}
+        >
+          {t(
+            'alerting.import-to-gma.step1.extra-config-conflict-desc',
+            'There is already an uncommitted imported configuration named "{{identifier}}". You need to commit or discard it before importing a new configuration.',
+            { identifier: existingIdentifier }
+          )}
+        </Alert>
+      )}
+
+      {/* Extra config overwrite warning */}
+      {extraConfigState === 'same' && existingIdentifier && (
+        <Alert
+          severity="warning"
+          title={t(
+            'alerting.import-to-gma.step1.extra-config-overwrite-title',
+            'Existing configuration will be replaced'
+          )}
+        >
+          {t(
+            'alerting.import-to-gma.step1.extra-config-overwrite-desc',
+            'An imported configuration named "{{identifier}}" already exists. Importing will replace it with the new configuration.',
+            { identifier: existingIdentifier }
+          )}
         </Alert>
       )}
 
