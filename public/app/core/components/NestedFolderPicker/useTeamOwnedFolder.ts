@@ -12,14 +12,16 @@ type FoldersByTeam = {
   folders: DashboardHit[];
 };
 
-/**
- * Returns folders owned by teams the current user belongs to.
- */
-export function useGetTeamFolders(options?: { skip: boolean }): {
+type UseGetTeamFoldersResult = {
   foldersByTeam: FoldersByTeam[];
   isLoading: boolean;
   error: Error | undefined;
-} {
+};
+
+/**
+ * Returns folders owned by teams the current user belongs to.
+ */
+export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFoldersResult {
   const { teams, error: teamError } = useTeams(options);
 
   // We need the lazy version as we are going to call it for every team in a loop.
@@ -39,8 +41,7 @@ export function useGetTeamFolders(options?: { skip: boolean }): {
 
     // Map each team to a request to get the folders they own.
     const requests = teams.map((team) => {
-      const owner = team.uid ?? team.name;
-      const request = triggerSearch({ ownerReference: `iam.grafana.app/Team/${owner}`, type: 'folder' }, true);
+      const request = triggerSearch({ ownerReference: `iam.grafana.app/Team/${team.uid}`, type: 'folder' }, true);
       return { team, request };
     });
 
@@ -137,9 +138,5 @@ function isAbortError(err: unknown) {
     return true;
   }
 
-  if (isFetchError(err) && (err.cancelled || err.statusText === 'Request was aborted')) {
-    return true;
-  }
-
-  return false;
+  return isFetchError(err) && (err.cancelled || err.statusText === 'Request was aborted');
 }
