@@ -663,14 +663,18 @@
       "aria-label-group-by": "Group by",
       "aria-label-group-interval": "Group interval",
       "aria-label-group-wait": "Group wait",
+      "aria-label-name": "Name",
       "aria-label-repeat-interval": "Repeat interval",
       "create-a-contact-point": "Create a contact point",
+      "description-unique-routing": "A unique name for the routing tree",
       "label-default-contact-point": "Default contact point",
+      "label-name": "Name",
       "label-timing-options": "Timing options",
       "message": {
         "required": "Required."
       },
-      "or": "or"
+      "or": "or",
+      "validate-name": "Name is required"
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",
@@ -859,6 +863,7 @@
     "common": {
       "cancel": "Cancel",
       "clear-filters": "Clear filters",
+      "close": "Close",
       "delete": "Delete",
       "edit": "Edit",
       "export": "Export",
@@ -1581,6 +1586,17 @@
       "action-button": "Import",
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
+      "confirm": {
+        "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
+        "confirm": "Start Import",
+        "error-body": "Failed to import resources. Please check the error details and try again.",
+        "error-title": "Import Failed",
+        "importing-body": "Importing resources to Grafana Alerting. Please wait...",
+        "importing-title": "Importing...",
+        "success-body": "Resources imported successfully. Redirecting...",
+        "success-title": "Import Successful",
+        "title": "Confirm Import"
+      },
       "confirm-modal": {
         "confirm": "Import",
         "loading": "Loading...",
@@ -1607,13 +1623,15 @@
         "label": "Data source",
         "required-message": "Please select a data source"
       },
-      "error": "Failed to import alert rules: {{error}}",
+      "error": "Failed to import resources",
       "group": {
         "description": "Type to search for an existing group",
         "label": "Group"
       },
       "import-location-and-filters": "Import location and filters",
       "import-source": "Import source",
+      "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
+      "info-title": "Import wizard",
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1625,17 +1643,156 @@
       "pause-recording": {
         "label": "Pause imported recording rules"
       },
+      "preview": {
+        "error": "Failed to load content: {{error}}",
+        "loading": "Loading content...",
+        "notifications-title": "Notifications Config Preview",
+        "rules-title": "Alert Rules Preview"
+      },
       "recording-rules": "Recording rules",
+      "review": {
+        "back": "Alert rules",
+        "filter": "Filter",
+        "folder": "Target folder",
+        "heading": "Review Import",
+        "namespace": "Namespace",
+        "nothing": "Nothing to import",
+        "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
+        "notifications-skipped": "Notification resources will not be imported.",
+        "notifications-title": "Notification Resources",
+        "pause": "Pause rules",
+        "pause-alerting": "Alert rules paused",
+        "pause-all": "All rules paused",
+        "pause-none": "No rules paused",
+        "pause-recording": "Recording rules paused",
+        "policy-tree": "Policy tree",
+        "renamed-intervals_one": "Time intervals renamed: {{count}}",
+        "renamed-intervals_other": "Time intervals renamed: {{count}}",
+        "renamed-receivers_one": "Receivers renamed: {{count}}",
+        "renamed-receivers_other": "Receivers renamed: {{count}}",
+        "routing": "Notification routing",
+        "routing-default": "Default Grafana policy",
+        "routing-imported": "Imported policy ({{label}}={{value}})",
+        "routing-manual": "Manual label ({{label}}={{value}})",
+        "rules-skipped": "Alert rules will not be imported.",
+        "rules-title": "Alert Rules",
+        "skipped": "Skipped",
+        "source": "Source",
+        "start": "Start import",
+        "subtitle": "Review each section and once you are happy, start the migration.",
+        "validation-error": "Validation failed.",
+        "validation-ok": "No conflicts found. Ready to import.",
+        "validation-warning": "Some resources will be renamed to avoid conflicts.",
+        "will-import-config": "Will import this configuration",
+        "will-import-rules": "Will import rules",
+        "will-import-rules-count_one": "Will import {{count}} rules",
+        "will-import-rules-count_other": "Will import {{count}} rules"
+      },
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
         "yaml": "Prometheus YAML file",
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
-      "success": "Successfully imported alert rules to Grafana-managed rules.",
+      "step1": {
+        "datasource": "Alertmanager data source",
+        "heading": "Import Notification Resources",
+        "no-datasources": "No Alertmanager data sources found",
+        "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
+        "no-permission-title": "Insufficient permissions",
+        "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
+        "policy-tree-name": "Policy tree name",
+        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-title": "Policy Tree Name",
+        "renamed-intervals_one": "{{count}} time intervals will be renamed",
+        "renamed-intervals_other": "{{count}} time intervals will be renamed",
+        "renamed-receivers_one": "{{count}} contact points will be renamed",
+        "renamed-receivers_other": "{{count}} contact points will be renamed",
+        "select-datasource": "Select data source",
+        "skip": "Skip this step",
+        "source": {
+          "datasource": "Data source",
+          "datasource-desc": "Import from an Alertmanager data source",
+          "yaml": "YAML file",
+          "yaml-desc": "Import from an Alertmanager configuration YAML file"
+        },
+        "source-title": "Import Source",
+        "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "upload": "Upload YAML file",
+        "validating": "Validating configuration...",
+        "validation-error": "Validation failed",
+        "validation-error-desc": "Failed to validate the configuration.",
+        "validation-success": "Validation successful",
+        "validation-success-desc": "No conflicts found. The configuration is ready to import.",
+        "validation-warning": "Some resources will be renamed",
+        "validation-warning-desc": "Some resources will be renamed to avoid conflicts with existing resources.",
+        "yaml-file": "Alertmanager config YAML"
+      },
+      "step2": {
+        "datasource": "Data source",
+        "group": "Group",
+        "group-desc": "Filter by group (optional)",
+        "heading": "Import Alert Rules",
+        "manual-label-name": "Label name",
+        "manual-label-name-placeholder": "team",
+        "manual-label-value": "Label value",
+        "manual-label-value-placeholder": "backend",
+        "namespace": "Namespace",
+        "namespace-desc": "Filter by namespace (optional)",
+        "no-permission-desc": "You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and <strong>alerting.provisioning:write</strong> permissions. You can skip this step.",
+        "no-permission-title": "Insufficient permissions",
+        "pause-alerting": "Pause imported alert rules",
+        "pause-recording": "Pause imported recording rules",
+        "policy": {
+          "default": "Use Grafana default policy",
+          "default-desc": "Alerts will be routed using the default Grafana notification policy",
+          "imported": "Use imported policy",
+          "imported-desc": "Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.",
+          "manual": "Enter label manually",
+          "manual-desc": "Specify a custom label to add to all imported rules"
+        },
+        "policy-desc": "Choose how imported alerts should be routed to contact points.",
+        "policy-title": "Notification Routing",
+        "select-group": "All groups",
+        "select-namespace": "All namespaces",
+        "settings-title": "Additional Settings",
+        "skip": "Skip this step",
+        "skipped-step1": "Step 1 was skipped",
+        "skipped-step1-desc": "You skipped importing Alertmanager resources. You can still import rules and route them using the default Grafana policy or a custom label.",
+        "source": {
+          "datasource": "Data source",
+          "datasource-desc": "Import from a Prometheus, Mimir, or Loki data source",
+          "yaml": "YAML file",
+          "yaml-desc": "Import from a Prometheus rules YAML file"
+        },
+        "source-title": "Import Source",
+        "subtitle": "Import alert rules and recording rules from an external source.",
+        "target-datasource": "Target data source",
+        "target-datasource-desc": "The Prometheus data source to store recording rules in",
+        "target-datasource-required": "Please select a target data source",
+        "target-folder": "Target folder",
+        "target-folder-desc": "Folder where imported rules will be stored",
+        "upload": "Upload YAML file",
+        "yaml-file": "Rules YAML file"
+      },
+      "success": "Successfully imported resources to Grafana Alerting.",
       "target-folder": {
         "description": "The folder to import the rules to",
         "label": "Target folder"
+      },
+      "wizard": {
+        "cancel": "Cancel",
+        "cancel-confirm-body": "Are you sure you want to cancel? All your progress will be lost.",
+        "cancel-confirm-no": "Dismiss",
+        "cancel-confirm-title": "Cancel import?",
+        "cancel-confirm-yes": "Discard changes",
+        "skip": "Skip",
+        "step-notifications": "Notification resources",
+        "step-notifications-desc": "Contact points, policies, templates",
+        "step-review": "Review & import",
+        "step-review-desc": "Preview and confirm import",
+        "step-rules": "Alert rules",
+        "step-rules-desc": "Alert and recording rules"
       },
       "yaml": {
         "description": "Select a Prometheus-compatible YAML file to import",
@@ -1646,6 +1803,9 @@
         "target-datasource-required": "Please select a target data source"
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": "Import to Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
@@ -2137,6 +2297,10 @@
       "new-policy": "Add new policy",
       "no-matchers": "No matchers",
       "reload-policies": "Reload policies",
+      "root-policy": {
+        "description": "All alert instances associated with this Route will be handled by this default policy if no other matching policies are found.",
+        "title": "Default policy for '{{routeName}}'"
+      },
       "save-policy": "Save policy",
       "update": {
         "please-wait": "Please wait while we update your notification policies.",
@@ -2153,6 +2317,54 @@
         "suffix": "Please refresh the page and try again.",
         "title": "Failed to add or update notification policy"
       }
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "add policy",
+        "text": "Create policy"
+      },
+      "delete-reasons": {
+        "no-permissions": "You do not have the required permission to delete this routing tree",
+        "provisioned": "Routing tree is provisioned and cannot be deleted via the UI"
+      },
+      "delete-text": "Routing tree cannot be deleted for the following reasons:",
+      "empty-state": {
+        "message": "No policies found"
+      },
+      "fetch": {
+        "error": "Failed to fetch policies"
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "delete",
+          "delete-label": "Delete",
+          "reset-label": "Reset"
+        },
+        "edit": {
+          "text": "Edit"
+        },
+        "export": {
+          "aria-label": "export",
+          "label": "Export"
+        },
+        "more-actions": {
+          "aria-label": "More actions for routing tree \"{{name}}\""
+        },
+        "view": {
+          "provisioned-tooltip": "Provisioned routing trees cannot be edited in the UI",
+          "text": "View"
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "You do not have the required permission to reset this routing tree",
+        "provisioned": "Routing tree is provisioned and cannot be reset via the UI"
+      },
+      "reset-text": "Routing tree cannot be reset for the following reasons:",
+      "text-loading": "Loading...."
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "Sorry, this routing tree does not seem to exist.",
+      "title-routing-tree-not-found": "Routing tree not found"
     },
     "policy": {
       "label-new-child-policy": "New child policy",
@@ -2336,6 +2548,13 @@
       "label-override-grouping": "Override grouping",
       "label-override-timings": "Override timings",
       "repeat-interval": "Repeat interval: <strong>{{repeatIntervalValue}}</strong>"
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "clear",
+      "aria-label-search-routing-trees": "search routing trees",
+      "clear": "Clear",
+      "label-search-by-name-or-receiver": "Search by name or receiver",
+      "placeholder-search": "Search"
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
@@ -2556,7 +2775,8 @@
       "expand-all": "Expand all"
     },
     "rule-list-v2": {
-      "import-to-gma": "Import alert rules"
+      "import-to-gma": "Import alert rules",
+      "import-to-gma-tool": "Import to GMA"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
@@ -3102,6 +3322,12 @@
       "label-edit": "Edit",
       "label-export": "Export"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "Add routing tree",
+        "title-create-routing-tree": "Create routing tree"
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Yes, delete contact point",
       "deleting": "Deleting...",
@@ -3119,6 +3345,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Delete notification policy"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "Are you sure you want to delete this routing tree?",
+        "delete-yes": "Yes, delete routing tree",
+        "deleting": "Deleting...",
+        "deleting-routing-permanently-remove": "Deleting this routing tree will permanently remove it.",
+        "title-delete-routing-tree": "Delete routing tree"
       }
     },
     "use-edit-configuration-drawer": {
@@ -3387,6 +3622,10 @@
       "hosted-domain-label": "Hosted domain",
       "id-token-attribute-name-description": "The name of the key used to extract the ID token from the returned OAuth2 token.",
       "id-token-attribute-name-label": "ID token attribute name",
+      "jwk-set-url-description": "URL of the JSON Web Key Set (JWKS) endpoint used to verify JWT ID token signatures. Required when ID token validation is enabled. Common locations include: .well-known/jwks.json for OIDC providers.",
+      "jwk-set-url-invalid": "JWK Set URL must be a valid URL.",
+      "jwk-set-url-label": "JWK Set URL",
+      "jwk-set-url-required": "JWK Set URL is required when ID token validation is enabled.",
       "login-attribute-path-description": "JMESPath expression to use for user login lookup from the user ID token.",
       "login-attribute-path-label": "Login attribute path",
       "login-prompt-consent": "Consent",
@@ -3453,6 +3692,8 @@
       "use-refresh-token-label": "Use refresh token",
       "validate-hosted-domain-description": "If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the \"{{ allowedDomainsLabel }}\" list specified by the user.",
       "validate-hosted-domain-label": "Validate hosted domain",
+      "validate-id-token-description": "If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.",
+      "validate-id-token-label": "Validate ID token",
       "workload-identity-token-file-description": "The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to \"workload_identity\". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} token file",
       "workload-identity-token-file-required": "This field must be set when client authentication is set to \"Workload identity\"."
@@ -4791,12 +5032,6 @@
       "message": {
         "edit-dashboard-json": "Edit Dashboard JSON"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Validation is provided for development purposes and should be safe to ignore. If you are a Grafana developer, consider checking and updating the dashboard schema",
-      "title-checking-dashboard-validity": "Checking dashboard validity",
-      "title-dashboard-failed-schema-validation": "Dashboard failed schema validation",
-      "title-error-checking-dashboard-validity": "Error checking dashboard validity"
     },
     "default-layout": {
       "description": "Position and size each panel individually",
@@ -11868,6 +12103,8 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "error-quota-exceeded-message": "The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.",
+      "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
@@ -11877,8 +12114,10 @@
       "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
+      "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
-      "unmanaged-resources-label": "Unmanaged resources"
+      "unmanaged-resources-label": "Unmanaged resources",
+      "upgrade-action": "Upgrade account"
     },
     "check-repository": {
       "check": "Check"
@@ -12503,9 +12742,6 @@
       "push-to-a-new-branch": "Push to a new branch",
       "push-to-existing-branch": "Push to an existing branch"
     }
-  },
-  "provisioning-alert": {
-    "retry": "Retry"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
