@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 
-import { QueryEditorActions } from './QueryEditorContext';
+import { QueryEditorActions, QueryOptionsState } from './QueryEditorContext';
 
 export function setup(jsx: React.ReactElement) {
   return {
@@ -46,4 +46,19 @@ export const mockActions: QueryEditorActions = {
   duplicateQuery: jest.fn(),
   runQueries: jest.fn(),
   changeDataSource: jest.fn(),
+};
+
+export const mockQueryOptionsState: QueryOptionsState = {
+  options: {
+    queries: [],
+    dataSource: { type: undefined, uid: undefined },
+    maxDataPoints: undefined,
+    minInterval: undefined,
+    timeRange: {
+      from: undefined,
+      shift: undefined,
+      hide: undefined,
+    },
+  },
+  onChange: jest.fn(),
 };

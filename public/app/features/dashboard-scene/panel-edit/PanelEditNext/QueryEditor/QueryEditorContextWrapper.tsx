@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { v4 } from 'uuid';
 
 import {
@@ -9,11 +9,12 @@ import {
 } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { QueryEditorProvider } from './QueryEditorContext';
+import { QueryEditorProvider, QueryOptionsState } from './QueryEditorContext';
 import { Transformation } from './types';
 import { isDataTransformerConfig } from './utils';
 
@@ -147,6 +148,23 @@ export function QueryEditorContextWrapper({
     [dataPane]
   );
 
+  const handleQueryOptionsChange = useCallback(
+    (options: QueryGroupOptions) => {
+      dataPane.onQueryOptionsChange(options);
+    },
+    [dataPane]
+  );
+
+  const queryOptionsState: QueryOptionsState = useMemo(
+    () => ({
+      options: dataPane.buildQueryOptions(),
+      onChange: handleQueryOptionsChange,
+    }),
+    // Re-compute when queryRunner state changes (maxDataPoints, minInterval, etc.)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dataPane, queryRunnerState, handleQueryOptionsChange]
+  );
+
   return (
     <QueryEditorProvider
       dsState={dsState}
@@ -154,6 +172,7 @@ export function QueryEditorContextWrapper({
       panelState={panelState}
       uiState={uiState}
       actions={actions}
+      queryOptionsState={queryOptionsState}
     >
       {children}
     </QueryEditorProvider>

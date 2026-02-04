@@ -1,10 +1,20 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef, getNextRefId } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
+import { QueryGroupOptions } from 'app/types/query';
 
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getQueryRunnerFor } from '../../utils/utils';
+import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 
@@ -204,6 +214,93 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     queries[targetIndex] = updatedQuery;
 
     queryRunner.setState({ queries });
+    queryRunner.runQueries();
+  };
+
+  // Query Options Operations
+  public buildQueryOptions = (): QueryGroupOptions => {
+    const panel = this.state.panelRef.resolve();
+    const queryRunner = getQueryRunnerFor(panel);
+    const { dsSettings } = this.state;
+
+    if (!queryRunner) {
+      return {
+        queries: [],
+        dataSource: { type: undefined, uid: undefined },
+      };
+    }
+
+    const timeRangeObj = sceneGraph.getTimeRange(panel);
+
+    let timeRangeOpts: QueryGroupOptions['timeRange'] = {
+      from: undefined,
+      shift: undefined,
+      hide: undefined,
+    };
+
+    if (timeRangeObj instanceof PanelTimeRange) {
+      timeRangeOpts = {
+        from: timeRangeObj.state.timeFrom,
+        shift: timeRangeObj.state.timeShift,
+        hide: timeRangeObj.state.hideTimeOverride,
+      };
+    }
+
+    return {
+      cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? queryRunner.state.cacheTimeout : undefined,
+      queryCachingTTL: dsSettings?.cachingConfig?.enabled ? queryRunner.state.queryCachingTTL : undefined,
+      dataSource: {
+        default: dsSettings?.isDefault,
+        ...(dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined }),
+      },
+      queries: queryRunner.state.queries,
+      maxDataPoints: queryRunner.state.maxDataPoints,
+      minInterval: queryRunner.state.minInterval,
+      timeRange: timeRangeOpts,
+    };
+  };
+
+  public onQueryOptionsChange = (options: QueryGroupOptions) => {
+    const panel = this.state.panelRef.resolve();
+    const queryRunner = getQueryRunnerFor(panel);
+
+    if (!queryRunner) {
+      return;
+    }
+
+    const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
+    const panelStateUpdate: Partial<VizPanel['state']> = {};
+
+    if (options.maxDataPoints !== queryRunner.state.maxDataPoints) {
+      dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
+    }
+
+    if (options.minInterval !== queryRunner.state.minInterval) {
+      dataObjStateUpdate.minInterval = options.minInterval ?? undefined;
+    }
+
+    const timeFrom = options.timeRange?.from ?? undefined;
+    const timeShift = options.timeRange?.shift ?? undefined;
+    const hideTimeOverride = options.timeRange?.hide;
+
+    if (timeFrom || timeShift) {
+      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
+    } else {
+      panelStateUpdate.$timeRange = undefined;
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, undefined);
+    }
+
+    if (options.cacheTimeout !== queryRunner.state.cacheTimeout) {
+      dataObjStateUpdate.cacheTimeout = options.cacheTimeout;
+    }
+
+    if (options.queryCachingTTL !== queryRunner.state.queryCachingTTL) {
+      dataObjStateUpdate.queryCachingTTL = options.queryCachingTTL;
+    }
+
+    panel.setState(panelStateUpdate);
+    queryRunner.setState(dataObjStateUpdate);
     queryRunner.runQueries();
   };
 }

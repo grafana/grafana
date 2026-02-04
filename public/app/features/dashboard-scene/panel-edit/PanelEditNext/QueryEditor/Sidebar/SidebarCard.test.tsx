@@ -4,7 +4,7 @@ import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, setup } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockQueryOptionsState, setup } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryCard } from './QueryCard';
@@ -45,6 +45,7 @@ describe('SidebarCard', () => {
           setSelectedTransformation,
         }}
         actions={mockActions}
+        queryOptionsState={mockQueryOptionsState}
       >
         <QueryCard query={query} />
       </QueryEditorProvider>
@@ -80,6 +81,7 @@ describe('SidebarCard', () => {
           setSelectedTransformation,
         }}
         actions={mockActions}
+        queryOptionsState={mockQueryOptionsState}
       >
         <TransformationCard transformation={transformation} />
       </QueryEditorProvider>
