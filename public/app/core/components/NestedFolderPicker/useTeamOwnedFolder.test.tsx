@@ -74,4 +74,14 @@ describe('useGetTeamFolders', () => {
     expect(result.current.isLoading).toBe(false);
     expect(triggerSearch).not.toHaveBeenCalled();
   });
+
+  it('skips loading teams and folders when skip is true', () => {
+    const triggerSearch = jest.fn();
+    (useLazySearchDashboardsAndFoldersQuery as jest.Mock).mockReturnValue([triggerSearch]);
+
+    renderHook(() => useGetTeamFolders({ skip: true }));
+
+    expect(profileApi.loadTeams).not.toHaveBeenCalled();
+    expect(triggerSearch).not.toHaveBeenCalled();
+  });
 });
