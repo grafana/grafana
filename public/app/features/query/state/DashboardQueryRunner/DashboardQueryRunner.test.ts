@@ -383,7 +383,7 @@ describe('DashboardQueryRunnerImpl', () => {
 function getExpectedForAllResult(): DashboardQueryRunnerResult {
   return {
     alertState: {
-      dashboardUID: 'abc',
+      dashboardUID: '1',
       id: 0,
       panelId: 1,
       state: AlertState.Alerting,
