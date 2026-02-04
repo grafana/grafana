@@ -1,5 +1,5 @@
-import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { css } from '@emotion/css';
+import React, { useEffect, useRef } from 'react';
 import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
 import { FilterType, TableRow, TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
@@ -36,6 +37,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   showTypeIcons,
   selectFirstCell,
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const styles = useStyles2(getStyles, headerCellWrap);
   const displayName = getDisplayName(field);
@@ -57,8 +59,12 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   // a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
-    <div
+    <Stack
+      ref={ref}
       tabIndex={-1}
+      direction="row"
+      gap={0.5}
+      alignItems="center"
       onKeyDown={(ev) => {
         ev.stopPropagation();
 
@@ -73,7 +79,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
           headerCell === row?.lastElementChild;
 
         if (isLastTabKeypressInHeader) {
-          console.log('selecting first cell');
           selectFirstCell();
         }
       }}
@@ -84,14 +89,11 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       )}
       <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
         {displayName}
+        {direction && (
+          <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
+        )}
       </button>
-      {direction && (
-        <Icon
-          className={cx(styles.headerCellIcon, styles.headerSortIcon)}
-          size="lg"
-          name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
-        />
-      )}
+
       {filterable && (
         <Filter
           name={column.key}
@@ -104,7 +106,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
           iconClassName={styles.headerCellIcon}
         />
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -117,6 +119,8 @@ const getStyles = (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+    borderRadius: theme.spacing(0.25),
+    lineHeight: '20px',
     '&:hover': {
       textDecoration: 'underline',
     },
@@ -126,12 +130,7 @@ const getStyles = (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     },
   }),
   headerCellIcon: css({
-    marginBottom: theme.spacing(0.5),
-    alignSelf: 'flex-end',
     color: theme.colors.text.secondary,
-  }),
-  headerSortIcon: css({
-    marginBottom: theme.spacing(0.25),
   }),
 });
 

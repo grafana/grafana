@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dispatch, memo, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Button } from '../../../Button/Button';
-import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
@@ -18,27 +17,37 @@ import { getDisplayName } from '../utils';
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
-export const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
-  Contains: { label: 'Contains', value: 'Contains', description: 'Contains' },
-  '=': { label: '=', value: '=', description: 'Equals' },
-  '!=': { label: '!=', value: '!=', description: 'Not equals' },
-  '>': { label: '>', value: '>', description: 'Greater' },
-  '>=': { label: '>=', value: '>=', description: 'Greater or Equal' },
-  '<': { label: '<', value: '<', description: 'Less' },
-  '<=': { label: '<=', value: '<=', description: 'Less or Equal' },
-  Expression: {
-    label: 'Expression',
-    value: 'Expression',
-    description: 'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
+export const operatorSelectableValues = (): { [key: string]: SelectableValue<string> } => ({
+  Contains: {
+    label: t('grafana-ui.table.filter.operator.contains', 'Contains'),
+    value: t('grafana-ui.table.filter.operator.contains', 'Contains'),
+    description: t('grafana-ui.table.filter.operator.contains', 'Contains'),
   },
-};
-const OPERATORS = Object.values(operatorSelectableValues);
+  '=': { label: '=', value: '=', description: t('grafana-ui.table.filter.operator.equals', 'Equals') },
+  '!=': { label: '!=', value: '!=', description: t('grafana-ui.table.filter.operator.not-equals', 'Not equals') },
+  '>': { label: '>', value: '>', description: t('grafana-ui.table.filter.operator.greater', 'Greater') },
+  '>=': {
+    label: '>=',
+    value: '>=',
+    description: t('grafana-ui.table.filter.operator.greater-or-equal', 'Greater or Equal'),
+  },
+  '<': { label: '<', value: '<', description: t('grafana-ui.table.filter.operator.less', 'Less') },
+  '<=': { label: '<=', value: '<=', description: t('grafana-ui.table.filter.operator.less-or-equal', 'Less or Equal') },
+  Expression: {
+    label: t('grafana-ui.table.filter.operator.expression', 'Expression'),
+    value: t('grafana-ui.table.filter.operator.expression', 'Expression'),
+    description: t(
+      'grafana-ui.table.filter.operator.expression-description',
+      'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")'
+    ),
+  },
+});
 
 interface Props {
   name: string;
   rows: TableRow[];
   filterValue?: Array<SelectableValue<unknown>>;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
+  setFilter: Dispatch<SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -48,53 +57,51 @@ interface Props {
   buttonElement: HTMLButtonElement | null;
 }
 
-export const FilterPopup = ({
-  name,
-  rows,
-  filterValue,
-  setFilter,
-  onClose,
-  field,
-  searchFilter,
-  setSearchFilter,
-  operator,
-  setOperator,
-  buttonElement,
-}: Props) => {
-  const theme = useTheme2();
-  const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
-  const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
-  const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
-  const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
-  const [matchCase, setMatchCase] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+export const FilterPopup = memo(
+  ({
+    name,
+    rows,
+    filterValue,
+    setFilter,
+    onClose,
+    field,
+    searchFilter,
+    setSearchFilter,
+    operator,
+    setOperator,
+    buttonElement,
+  }: Props) => {
+    const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
+    const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
+    const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
+    const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
+    const [matchCase, setMatchCase] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const operators = Object.values(operatorSelectableValues());
 
-  // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
-  const onCancel = useCallback(() => onClose(), [onClose]);
-
-  useEffect(() => {
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onCancel();
-        buttonElement?.focus();
+    // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
+    useEffect(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
       }
-    }
-    document.addEventListener('keyup', handleEscape);
+    }, []);
 
-    return () => {
-      document.removeEventListener('keyup', handleEscape);
-    };
-  }, [onCancel, buttonElement]);
+    useEffect(() => {
+      function handleEscape(e: KeyboardEvent) {
+        if (e.key === 'Escape') {
+          onClose();
+          buttonElement?.focus();
+        }
+      }
+      document.addEventListener('keyup', handleEscape);
 
-  const onFilter = useCallback(
-    (event: React.MouseEvent) => {
+      return () => {
+        document.removeEventListener('keyup', handleEscape);
+      };
+    }, [onClose, buttonElement]);
+
+    const onFilter = useCallback(() => {
       if (values.length !== 0) {
         // create a Set for faster filtering
         const filteredSet = new Set(values.map((item) => item.value));
@@ -111,33 +118,43 @@ export const FilterPopup = ({
         });
       }
       onClose();
-    },
-    [setFilter, values, onClose] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+    }, [name, operator, searchFilter, setFilter, values, onClose]);
 
-  const onClearFilter = useCallback(
-    (event: React.MouseEvent) => {
+    const onClearFilter = useCallback(() => {
       setFilter((filter: FilterType) => {
         const newFilter = { ...filter };
         delete newFilter[name];
         return newFilter;
       });
       onClose();
-    },
-    [setFilter, onClose] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+    }, [name, setFilter, onClose]);
 
-  const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
-  const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
-  const styles = useStyles2(getStyles);
+    // we can't directly use ClickOutsideWrapper here because the click and keyup
+    // events are complex and need to be handled with care to avoid conflicts
+    useEffect(() => {
+      const onOutsideClick = (event: Event) => {
+        const domNode = containerRef.current;
+        if (!domNode) {
+          return;
+        }
+        if (event.target instanceof Node && !domNode.contains(event.target)) {
+          console.log('closing from outside click');
+          onClose();
+        }
+      };
+      window.addEventListener('click', onOutsideClick);
+      return () => {
+        window.removeEventListener('click', onOutsideClick);
+      };
+    }, [onClose]);
 
-  return (
-    <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
-      {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+    const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
+    const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
+    const styles = useStyles2(getStyles);
+
+    return (
       <div
         className={styles.filterContainer}
-        onClick={stopPropagation}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
         ref={containerRef}
       >
@@ -155,7 +172,7 @@ export const FilterPopup = ({
                 suffix={
                   <ButtonSelect
                     className={styles.buttonSelectOverrides}
-                    options={OPERATORS}
+                    options={operators}
                     onChange={setOperator}
                     value={operator}
                     tooltip={operator.description}
@@ -167,11 +184,8 @@ export const FilterPopup = ({
             </div>
             <Button
               tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
-              variant="secondary"
-              style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
-              onClick={() => {
-                setMatchCase((s) => !s);
-              }}
+              variant={matchCase ? 'primary' : 'secondary'}
+              onClick={() => setMatchCase((s) => !s)}
               icon={'text-fields'}
             />
           </Stack>
@@ -189,7 +203,7 @@ export const FilterPopup = ({
             <Button size="sm" onClick={onFilter}>
               <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
             </Button>
-            <Button size="sm" variant="secondary" onClick={onCancel}>
+            <Button size="sm" variant="secondary" onClick={onClose}>
               <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
             </Button>
             {clearFilterVisible && (
@@ -200,9 +214,11 @@ export const FilterPopup = ({
           </Stack>
         </Stack>
       </div>
-    </ClickOutsideWrapper>
-  );
-};
+    );
+  }
+);
+
+FilterPopup.displayName = 'FilterPopup';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   filterContainer: css({
@@ -230,7 +246,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
-
-const stopPropagation = (event: React.MouseEvent) => {
-  event.stopPropagation();
-};

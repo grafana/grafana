@@ -26,8 +26,9 @@ interface Props {
 const ITEM_HEIGHT = 32;
 const MIN_HEIGHT = ITEM_HEIGHT * 4.5; // split an item in the middle to imply there are more items to scroll
 
-export const REGEX_OPERATOR = operatorSelectableValues['Contains'];
-const XPR_OPERATOR = operatorSelectableValues['Expression'];
+const operators = operatorSelectableValues();
+export const REGEX_OPERATOR = operators['Contains'];
+const XPR_OPERATOR = operators['Expression'];
 
 const comparableValue = (value: string): string | number | Date | boolean => {
   value = value.trim().replace(/\\/g, '');
