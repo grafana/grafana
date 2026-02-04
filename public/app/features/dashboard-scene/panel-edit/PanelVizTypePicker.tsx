@@ -187,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   searchField: css({
-    margin: theme.spacing(2, 1.5, 0.1, 1.5), // input glow with the boundary without this
+    margin: theme.spacing(2, 1.5, 0, 1.5), // input glow with the boundary without this
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
   }),
   tabs: css({
