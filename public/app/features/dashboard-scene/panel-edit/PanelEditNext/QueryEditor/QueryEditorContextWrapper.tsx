@@ -145,6 +145,8 @@ export function QueryEditorContextWrapper({
         setSelectedQueryRefId(query?.refId ?? null);
         // Clear transformation selection when selecting a query
         setSelectedTransformationId(null);
+        // Reset datasource help when switching queries
+        setShowingDatasourceHelp(false);
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
