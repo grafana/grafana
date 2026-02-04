@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -77,7 +78,24 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		return nil // not managed
 
 	case utils.ManagerKindRepo:
-		if auth.GetUID() == "access-policy:provisioning" || slices.Contains(auth.GetAudience(), provisioning.GROUP) {
+		uid := auth.GetUID()
+		audience := auth.GetAudience()
+
+		// Debug logging to help diagnose identity issues
+		if uid != "access-policy:provisioning" && !slices.Contains(audience, provisioning.GROUP) {
+			// Log details when the check fails to help debugging
+			// This will be removed once the issue is resolved
+			log := logging.FromContext(context.Background())
+			log.Warn("Provisioning identity check failed",
+				"uid", uid,
+				"expected_uid", "access-policy:provisioning",
+				"audience", audience,
+				"expected_audience_contains", provisioning.GROUP,
+				"resource", obj.GetName(),
+			)
+		}
+
+		if uid == "access-policy:provisioning" || slices.Contains(audience, provisioning.GROUP) {
 			return nil // OK!
 		}
 		// This can fallback to writing the value with a provisioning client
