@@ -76,7 +76,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repoCount:          3,
 			expectedStatus:     metav1.ConditionTrue,
 			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "Within quota: 3/5 repositories",
+			expectedMessageFmt: "within quota: 3/5 repositories",
 			expectError:        false,
 		},
 		{
@@ -86,7 +86,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repoCount:          5,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaReached,
-			expectedMessageFmt: "Repository quota reached: 5/5 repositories",
+			expectedMessageFmt: "namespace quota reached: 5/5 repositories",
 			expectError:        false,
 		},
 		{
@@ -96,7 +96,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repoCount:          7,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaExceeded,
-			expectedMessageFmt: "Repository quota exceeded: 7/5 repositories",
+			expectedMessageFmt: "namespace quota exceeded: 7/5 repositories",
 			expectError:        false,
 		},
 		{
@@ -106,7 +106,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repoCount:          6,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaExceeded,
-			expectedMessageFmt: "Repository quota exceeded: 6/5 repositories",
+			expectedMessageFmt: "namespace quota exceeded: 6/5 repositories",
 			expectError:        false,
 		},
 		{
@@ -116,7 +116,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repoCount:          0,
 			expectedStatus:     metav1.ConditionTrue,
 			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "Within quota: 0/5 repositories",
+			expectedMessageFmt: "within quota: 0/5 repositories",
 			expectError:        false,
 		},
 		{
@@ -126,7 +126,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repoCount:          1,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaReached,
-			expectedMessageFmt: "Repository quota reached: 1/1 repositories",
+			expectedMessageFmt: "namespace quota reached: 1/1 repositories",
 			expectError:        false,
 		},
 	}
@@ -194,7 +194,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			deletingRepos:      5,
 			expectedStatus:     metav1.ConditionTrue,
 			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "Within quota: 3/5 repositories",
+			expectedMessageFmt: "within quota: 3/5 repositories",
 		},
 		{
 			name:               "deleting repos excluded from count - at quota",
@@ -203,7 +203,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			deletingRepos:      2,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaReached,
-			expectedMessageFmt: "Repository quota reached: 5/5 repositories",
+			expectedMessageFmt: "namespace quota reached: 5/5 repositories",
 		},
 		{
 			name:               "deleting repos excluded from count - over quota",
@@ -212,7 +212,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			deletingRepos:      3,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaExceeded,
-			expectedMessageFmt: "Repository quota exceeded: 7/5 repositories",
+			expectedMessageFmt: "namespace quota exceeded: 7/5 repositories",
 		},
 		{
 			name:               "all repos being deleted - not over quota",
@@ -221,7 +221,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			deletingRepos:      10,
 			expectedStatus:     metav1.ConditionTrue,
 			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "Within quota: 0/5 repositories",
+			expectedMessageFmt: "within quota: 0/5 repositories",
 		},
 		{
 			name:               "deletion brings namespace under quota",
@@ -230,7 +230,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			deletingRepos:      2,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonResourceQuotaReached,
-			expectedMessageFmt: "Repository quota reached: 3/3 repositories",
+			expectedMessageFmt: "namespace quota reached: 3/3 repositories",
 		},
 	}
 

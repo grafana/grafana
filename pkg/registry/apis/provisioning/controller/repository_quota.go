@@ -10,6 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+const (
+	withinQuotaMsg            = "within quota"
+	namespaceQuotaReachedMsg  = "namespace quota reached"
+	namespaceQuotaExceededMsg = "namespace quota exceeded"
+)
+
 // RepositoryQuotaChecker checks if a namespace exceeds its repository quota limits.
 type RepositoryQuotaChecker struct {
 	repoLister listers.RepositoryLister
@@ -64,21 +70,21 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonResourceQuotaReached,
-			Message: fmt.Sprintf("Repository quota reached: %d/%d repositories", activeCount, maxRepos),
+			Message: fmt.Sprintf("%s: %d/%d repositories", namespaceQuotaReachedMsg, activeCount, maxRepos),
 		}, nil
 	case activeCount > int(maxRepos):
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonResourceQuotaExceeded,
-			Message: fmt.Sprintf("Repository quota exceeded: %d/%d repositories", activeCount, maxRepos),
+			Message: fmt.Sprintf("%s: %d/%d repositories", namespaceQuotaExceededMsg, activeCount, maxRepos),
 		}, nil
 	default:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
-			Message: fmt.Sprintf("Within quota: %d/%d repositories", activeCount, maxRepos),
+			Message: fmt.Sprintf("%s: %d/%d repositories", withinQuotaMsg, activeCount, maxRepos),
 		}, nil
 	}
 }
