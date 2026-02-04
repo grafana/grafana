@@ -2298,6 +2298,7 @@
         "mute-time": "Muted when",
         "n-instances_one": "instance",
         "n-instances_other": "instance",
+        "subpolicies": "Subpolicies",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",

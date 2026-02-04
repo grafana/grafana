@@ -153,11 +153,7 @@ describe('PoliciesList', () => {
         const routeEl = await getRoute(routeName);
 
         const size = countPolicies(route.spec);
-        if (size === 0) {
-          expect(routeEl).not.toHaveTextContent(new RegExp(`contains \\d+ polic(ies|y)`, 'i'));
-        } else {
-          expect(routeEl).toHaveTextContent(new RegExp(`contains ${size} polic(ies|y)`, 'i'));
-        }
+        expect(routeEl).toHaveTextContent(new RegExp(`${size} Subpolicies`, 'i'));
 
         const groupBy = route?.spec.defaults.group_by ?? [];
         let groupingText = 'Single group';

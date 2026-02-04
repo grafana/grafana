@@ -145,6 +145,7 @@ export const RoutingTree = ({ route, receivers }: RoutingTreeProps) => {
   const matchingAlertGroups: AlertmanagerGroup[] | undefined = []; // Placeholder for matching alert groups logic
   const matchers = normalizeMatchers(route);
 
+  const numberOfPolicies = countPolicies(route);
   return (
     <div className={styles.routingTreeWrapper} data-testid={`routing-tree_${route.name ?? 'default'}`}>
       <Stack direction="column" gap={0}>
@@ -155,6 +156,7 @@ export const RoutingTree = ({ route, receivers }: RoutingTreeProps) => {
             <MetadataRow
               matchingInstancesPreview={matchingInstancesPreview}
               numberOfAlertInstances={numberOfAlertInstances}
+              numberOfSubpolicies={numberOfPolicies}
               contactPoint={route.receiver ?? undefined}
               groupBy={route.group_by ?? []}
               muteTimings={route.mute_time_intervals ?? []}
@@ -188,7 +190,6 @@ export const RoutingTreeHeader = ({ route }: RoutingTreeHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   const routeName = route.name === ROOT_ROUTE_NAME || !route.name ? 'Default Policy' : route.name;
-  const numberOfPolicies = countPolicies(route);
 
   return (
     <div className={styles.headerWrapper}>
@@ -203,7 +204,6 @@ export const RoutingTreeHeader = ({ route }: RoutingTreeHeaderProps) => {
             {routeName}
           </TextLink>
         </Stack>
-        {numberOfPolicies > 0 && <>{`Contains ${numberOfPolicies} polic${numberOfPolicies > 1 ? 'ies' : 'y'}`}</>}
         {provisioned && (
           <ProvisioningBadge
             tooltip
