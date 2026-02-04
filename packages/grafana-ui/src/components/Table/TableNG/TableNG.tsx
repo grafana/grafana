@@ -353,10 +353,6 @@ export function TableNG(props: TableNGProps) {
     ]
   );
 
-  const selectFirstCell = useCallback(() => {
-    gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
-  }, [gridRef]);
-
   const buildNestedTableExpanderColumn = useCallback(
     (
       nestedColumns: TableColumn[],
@@ -716,7 +712,9 @@ export function TableNG(props: TableNGProps) {
               crossFilterRows={crossFilterRows}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
-              selectFirstCell={selectFirstCell}
+              selectFirstCell={() => {
+                gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+              }}
             />
           ),
           renderSummaryCell: () => (
@@ -757,7 +755,6 @@ export function TableNG(props: TableNGProps) {
       crossFilterOrder,
       crossFilterRows,
       showTypeIcons,
-      selectFirstCell,
       sortedRows,
       footers,
       isUniformFooter,
