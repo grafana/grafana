@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -65,6 +66,13 @@ func newRetryResourceInterface(client dynamic.ResourceInterface, backoff wait.Ba
 // isTransientError determines if an error is transient and should be retried
 func isTransientError(err error) bool {
 	if err == nil {
+		return false
+	}
+
+	// Non-transient errors that should never be retried
+	// "this resource is managed by a repository" indicates the request needs to be routed
+	// through the provisioning API, not retried
+	if strings.Contains(err.Error(), "this resource is managed by a repository") {
 		return false
 	}
 
