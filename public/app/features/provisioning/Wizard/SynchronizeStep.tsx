@@ -193,7 +193,8 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
               </Trans>
             ) : (
               <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                Import existing dashboards from all folders into the new provisioned folder
+                Import existing dashboards from connected external storage into the provisioning folder created in the
+                previous step
               </Trans>
             )
           }

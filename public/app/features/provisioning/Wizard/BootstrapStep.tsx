@@ -161,7 +161,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
             description={t(
               'provisioning.bootstrap-step.description-clear-repository-connection',
-              'Add a clear name for this repository connection'
+              'This name will be used for the repository connection and the folder displayed on the UI'
             )}
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}

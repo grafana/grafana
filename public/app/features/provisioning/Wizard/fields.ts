@@ -59,7 +59,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     path: {
       label: t('provisioning.github.path-label', 'Path'),
-      description: t('provisioning.github.path-description', 'Optional subdirectory path within the repository'),
+      description: t(
+        'provisioning.github.path-description',
+        'Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.'
+      ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: 'grafana/',
       required: false,
@@ -112,7 +115,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     path: {
       label: t('provisioning.gitlab.path-label', 'Path'),
-      description: t('provisioning.gitlab.path-description', 'Optional subdirectory path within the repository'),
+      description: t(
+        'provisioning.gitlab.path-description',
+        'Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.'
+      ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: 'grafana/',
       required: false,
@@ -175,7 +181,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     path: {
       label: t('provisioning.bitbucket.path-label', 'Path'),
-      description: t('provisioning.bitbucket.path-description', 'Optional subdirectory path within the repository'),
+      description: t(
+        'provisioning.bitbucket.path-description',
+        'Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.'
+      ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: 'grafana/',
       required: false,
@@ -238,7 +247,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     path: {
       label: t('provisioning.git.path-label', 'Path'),
-      description: t('provisioning.git.path-description', 'Optional subdirectory path within the repository'),
+      description: t(
+        'provisioning.git.path-description',
+        'Path to the subdirectory with the resources you want to sync. Set to Grafana by default. Update if using a folder different from Grafana.'
+      ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: 'grafana/',
       required: false,
