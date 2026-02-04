@@ -99,7 +99,10 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             'The repository did not become healthy within 30 seconds. Please check the repository settings and try again.'
           ),
         },
-        retry: handleRetryWithReset,
+        action: {
+          label: t('provisioning.bootstrap-step.retry-action', 'Retry'),
+          onClick: handleRetryWithReset,
+        },
       });
       return;
     }
