@@ -167,11 +167,10 @@ gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
 	@$(MAKE) -C ./kindsv2 all
 
-# TODO (@radiohead): uncomment once we want to start generating code for all apps.
-# For now, we want to use an explicit list of apps to generate code for.
-#
-#APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
-APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
+
+APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
+# Alternatively use an explicit list of apps:
+# APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
 .PHONY: gen-apps
 gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt

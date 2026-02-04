@@ -1377,11 +1377,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/notification-policies/EditDefaultPolicyForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {
     "no-restricted-syntax": {
       "count": 13
@@ -2171,11 +2166,6 @@
       "count": 2
     },
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/DashboardPageProxy.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },

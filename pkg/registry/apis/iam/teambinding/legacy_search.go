@@ -3,7 +3,7 @@ package teambinding
 import (
 	"context"
 	"fmt"
-	"log/slog"
+
 	"math"
 	"strings"
 
@@ -12,6 +12,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -23,7 +24,7 @@ var _ resourcepb.ResourceIndexClient = (*LegacyTeamBindingSearchClient)(nil)
 
 type LegacyTeamBindingSearchClient struct {
 	store  legacy.LegacyIdentityStore
-	log    *slog.Logger
+	log    log.Logger
 	tracer trace.Tracer
 }
 
@@ -31,12 +32,12 @@ func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer t
 	return &LegacyTeamBindingSearchClient{
 		store:  store,
 		tracer: tracer,
-		log:    slog.Default().With("logger", "legacy-teambinding-search-client"),
+		log:    log.New("grafana-apiserver.teambindings.legacy-search"),
 	}
 }
 
 func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := c.tracer.Start(ctx, "teambinding.legacy.search")
+	ctx, span := c.tracer.Start(ctx, "teambinding.legacysearch")
 	defer span.End()
 
 	if req == nil || req.Options == nil || req.Options.Key == nil {
