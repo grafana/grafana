@@ -134,9 +134,6 @@ describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Allow console.log for the debug statement in useRepositoryStatus
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-
     // Mock useBranchOptions to prevent real API calls
     mockUseBranchOptions.mockReturnValue({
       options: [

@@ -5,14 +5,9 @@ import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { isResourceReconciled } from '../../utils/repositoryStatus';
 
-export type UseRepositoryStatusOptions = {
-  pollIntervalMs?: number;
-  stopPollingWhenReady?: boolean;
-};
+export const TIMEOUT_MS = 30000; // 30 seconds
 
-const TIMEOUT_MS = 30000; // 30 seconds
-
-export function useRepositoryStatus(repoName?: string, options?: UseRepositoryStatusOptions) {
+export function useRepositoryStatus(repoName?: string) {
   const query = useListRepositoryQuery(
     repoName
       ? {
@@ -69,6 +64,8 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
 
     // Only start timeout if we're waiting for health status
     // Don't start if already timed out, already healthy, or if we haven't received data yet
+    // Note: The timeout intentionally restarts when isHealthy or query.isSuccess changes.
+    // This ensures we give a fresh 30s window after any state transition (e.g., reconnection attempts).
     if (!hasTimedOut && isHealthy !== true && query.isSuccess) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

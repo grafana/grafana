@@ -16,7 +16,7 @@ import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
-import { useRepositoryStatus } from './hooks/useRepositoryStatus';
+import { TIMEOUT_MS, useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
@@ -88,6 +88,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   useEffect(() => {
     // Handle timeout error
     if (hasTimedOut) {
+      const timeoutSeconds = TIMEOUT_MS / 1000;
       setStepStatusInfo({
         status: 'error',
         error: {
@@ -97,7 +98,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           ),
           message: t(
             'provisioning.bootstrap-step.error-repository-status-timeout-message',
-            'The repository did not become healthy within 30 seconds. Please check the repository settings and try again.'
+            'The repository did not become healthy within {{timeoutSeconds}} seconds. Please check the repository settings and try again.',
+            { timeoutSeconds }
           ),
         },
         action: {
@@ -145,7 +147,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         },
       });
     } else if (isWaitingForHealth) {
-      // Show running status while waiting for repository to become healthy
+      // Show running status while checking repository health
       setStepStatusInfo({ status: 'running' });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
@@ -183,7 +185,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         <LoadingPlaceholder
           text={t(
             'provisioning.bootstrap-step.text-waiting-for-repository-health',
-            'Waiting for repository to become healthy...'
+            'Checking repository health...'
           )}
         />
       </Box>

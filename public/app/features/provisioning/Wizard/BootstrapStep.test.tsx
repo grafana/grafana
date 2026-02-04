@@ -8,7 +8,7 @@ import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/cl
 import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 import { BootstrapStep, Props } from './BootstrapStep';
-import { StepStatusProvider } from './StepStatusContext';
+import { StepStatusProvider, useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
@@ -35,9 +35,40 @@ jest.mock('../utils/isFreeTierLicense', () => ({
   isFreeTierLicense: jest.fn(),
 }));
 
+const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
+  typeof useGetRepositoryFilesQuery
+>;
+const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<
+  typeof useGetResourceStatsQuery
+>;
+const mockUseRepositoryStatus = useRepositoryStatus as jest.MockedFunction<typeof useRepositoryStatus>;
+const mockUseResourceStats = useResourceStats as jest.MockedFunction<typeof useResourceStats>;
+const mockUseModeOptions = useModeOptions as jest.MockedFunction<typeof useModeOptions>;
+const mockIsFreeTierLicense = isFreeTierLicense as jest.MockedFunction<typeof isFreeTierLicense>;
+
 type WizardFormDefaults = Omit<Partial<WizardFormData>, 'repository'> & {
   repository?: Partial<WizardFormData['repository']>;
 };
+
+// Component to display step status errors for testing
+function StepStatusDisplay() {
+  const { stepStatusInfo } = useStepStatus();
+  if (stepStatusInfo.status === 'error' && 'error' in stepStatusInfo) {
+    const error = stepStatusInfo.error;
+    const title = typeof error === 'string' ? error : error.title;
+    const message = typeof error === 'string' ? error : error.message;
+    return (
+      <div>
+        <div>{title}</div>
+        <div>{typeof message === 'string' ? message : message}</div>
+        {stepStatusInfo.action && (
+          <button onClick={stepStatusInfo.action.onClick}>{stepStatusInfo.action.label}</button>
+        )}
+      </div>
+    );
+  }
+  return null;
+}
 
 // Wrapper component to provide form context
 function FormWrapper({ children, defaultValues }: { children: ReactNode; defaultValues?: WizardFormDefaults }) {
@@ -63,7 +94,10 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
 
   return (
     <FormProvider {...methods}>
-      <StepStatusProvider>{children}</StepStatusProvider>
+      <StepStatusProvider>
+        {children}
+        <StepStatusDisplay />
+      </StepStatusProvider>
     </FormProvider>
   );
 }
@@ -94,62 +128,73 @@ describe('BootstrapStep', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (useGetRepositoryFilesQuery as jest.Mock).mockReturnValue({
+    mockUseGetRepositoryFilesQuery.mockReturnValue({
       data: { items: [] },
       isLoading: false,
-    });
+      refetch: jest.fn(),
+    } as ReturnType<typeof useGetRepositoryFilesQuery>);
 
-    (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
+    mockUseGetResourceStatsQuery.mockReturnValue({
       data: { instance: [] },
       isLoading: false,
-    });
+      refetch: jest.fn(),
+      } as ReturnType<typeof useGetResourceStatsQuery>);
 
-    (useRepositoryStatus as jest.Mock).mockReturnValue({
+    mockUseRepositoryStatus.mockReturnValue({
       isReady: true,
       isLoading: false,
+      isFetching: false,
       hasError: false,
       isHealthy: true,
       isReconciled: true,
+      healthMessage: undefined,
+      checked: undefined,
+      healthStatusNotReady: false,
       refetch: jest.fn(),
       hasTimedOut: false,
       resetTimeout: jest.fn(),
     });
 
-    const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
     mockUseResourceStats.mockReturnValue({
-      fileCount: 0,
+      managedCount: 0,
+      unmanagedCount: 0,
       resourceCount: 0,
       resourceCountString: 'Empty',
+      fileCount: 0,
       fileCountString: 'Empty',
       isLoading: false,
       requiresMigration: false,
       shouldSkipSync: true,
     });
 
-    (useModeOptions as jest.Mock).mockReturnValue({
+    mockUseModeOptions.mockReturnValue({
       enabledOptions: [
         {
           target: 'folder',
           label: 'Sync external storage to a new Grafana folder',
           description: 'A new Grafana folder will be created',
           subtitle: 'Use this option to sync into a new folder',
+          disabled: false,
         },
       ],
+      disabledOptions: [],
     });
 
     // Default to non-free tier (quota not enforced)
-    (isFreeTierLicense as jest.Mock).mockReturnValue(false);
+    mockIsFreeTierLicense.mockReturnValue(false);
   });
 
   describe('rendering', () => {
     it('should render loading state when data is loading', () => {
-      (useGetRepositoryFilesQuery as jest.Mock).mockReturnValue({
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: undefined,
         isLoading: true,
-      });
+        refetch: jest.fn(),
+      } as ReturnType<typeof useGetRepositoryFilesQuery>);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
         fileCount: 0,
         resourceCount: 0,
         resourceCountString: 'Empty',
@@ -171,7 +216,7 @@ describe('BootstrapStep', () => {
     });
 
     it('should render correct info for local file repository type', async () => {
-      (useGetRepositoryFilesQuery as jest.Mock).mockReturnValue({
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: {
           items: [
             { path: 'dashboard1.json' },
@@ -180,10 +225,12 @@ describe('BootstrapStep', () => {
           ],
         },
         isLoading: false,
-      });
+        refetch: jest.fn(),
+      } as ReturnType<typeof useGetRepositoryFilesQuery>);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
         fileCount: 2,
         resourceCount: 0,
         resourceCountString: 'Empty',
@@ -201,7 +248,7 @@ describe('BootstrapStep', () => {
     it('should display resource counts when resources exist', async () => {
       // Note: Resource counts are only shown for instance sync, but instance sync is not available by default
       // This test is kept for when instance sync is explicitly enabled via settings
-      (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
+      mockUseGetResourceStatsQuery.mockReturnValue({
         data: {
           instance: [
             { group: 'dashboard.grafana.app', count: 5 },
@@ -209,10 +256,12 @@ describe('BootstrapStep', () => {
           ],
         },
         isLoading: false,
-      });
+        refetch: jest.fn(),
+      } as any);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 7,
+        unmanagedCount: 0,
         fileCount: 0,
         resourceCount: 7,
         resourceCountString: '7 resources',
@@ -223,13 +272,14 @@ describe('BootstrapStep', () => {
       });
 
       // Mock settings to allow instance sync for this test
-      (useModeOptions as jest.Mock).mockReturnValue({
+      mockUseModeOptions.mockReturnValue({
         enabledOptions: [
           {
             target: 'instance',
             label: 'Sync all resources with external storage',
             description: 'Resources will be synced with external storage',
             subtitle: 'Use this option if you want to sync your entire instance',
+            disabled: false,
           },
         ],
         disabledOptions: [],
@@ -286,13 +336,14 @@ describe('BootstrapStep', () => {
     });
 
     it('should only display instance option when legacy storage exists and hide disabled options', async () => {
-      (useModeOptions as jest.Mock).mockReturnValue({
+      mockUseModeOptions.mockReturnValue({
         enabledOptions: [
           {
             target: 'instance',
             label: 'Sync all resources with external storage',
             description: 'Resources will be synced with external storage',
             subtitle: 'Use this option if you want to sync your entire instance',
+            disabled: false,
           },
         ],
         disabledOptions: [
@@ -300,6 +351,7 @@ describe('BootstrapStep', () => {
             target: 'folder',
             label: 'Sync external storage to a new Grafana folder',
             description: 'A new Grafana folder will be created',
+            disabled: true,
             subtitle: 'Use this option to sync into a new folder',
           },
         ],
@@ -342,10 +394,11 @@ describe('BootstrapStep', () => {
 
   describe('quota exceeded', () => {
     it('should not render content when resource count exceeds free-tier limit on folder sync', () => {
-      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+      mockIsFreeTierLicense.mockReturnValue(true);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
         fileCount: 25,
         resourceCount: 25, // Exceeds free-tier limit of 20
         resourceCountString: '25 resources',
@@ -363,10 +416,11 @@ describe('BootstrapStep', () => {
     });
 
     it('should render content when resource count exceeds free-tier limit but not on free tier', async () => {
-      (isFreeTierLicense as jest.Mock).mockReturnValue(false);
+      mockIsFreeTierLicense.mockReturnValue(false);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
         fileCount: 25,
         resourceCount: 25, // Exceeds limit but not on free tier
         resourceCountString: '25 resources',
@@ -383,10 +437,11 @@ describe('BootstrapStep', () => {
     });
 
     it('should render content when resource count is within quota on free tier', async () => {
-      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+      mockIsFreeTierLicense.mockReturnValue(true);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 15,
+        unmanagedCount: 0,
         fileCount: 15,
         resourceCount: 15, // Within free-tier limit of 20
         resourceCountString: '15 resources',
@@ -402,10 +457,11 @@ describe('BootstrapStep', () => {
     });
 
     it('should render content when resource count equals quota limit on free tier', async () => {
-      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+      mockIsFreeTierLicense.mockReturnValue(true);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 20,
+        unmanagedCount: 0,
         fileCount: 20,
         resourceCount: 20, // Exactly at free-tier limit of 20
         resourceCountString: '20 resources',
@@ -422,22 +478,24 @@ describe('BootstrapStep', () => {
     });
 
     it('should render content when resource count exceeds limit on free tier for instance sync', async () => {
-      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+      mockIsFreeTierLicense.mockReturnValue(true);
 
-      (useModeOptions as jest.Mock).mockReturnValue({
+      mockUseModeOptions.mockReturnValue({
         enabledOptions: [
           {
             target: 'instance',
             label: 'Sync all resources with external storage',
             description: 'Resources will be synced with external storage',
             subtitle: 'Use this option if you want to sync your entire instance',
+            disabled: false,
           },
         ],
         disabledOptions: [],
       });
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
         fileCount: 25,
         resourceCount: 25, // Exceeds limit but instance sync is not restricted
         resourceCountString: '25 resources',
@@ -460,6 +518,93 @@ describe('BootstrapStep', () => {
       );
 
       expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
+    });
+  });
+
+  describe('timeout handling', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+      jest.clearAllTimers();
+    });
+
+    it('should display timeout error when hasTimedOut is true', async () => {
+      jest.useFakeTimers();
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: undefined,
+        isReconciled: false,
+        healthMessage: undefined,
+        checked: undefined,
+        healthStatusNotReady: false,
+        refetch: jest.fn(),
+        hasTimedOut: true,
+        resetTimeout: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Repository health check timed out')).toBeInTheDocument();
+      // Check for timeout message (handles both "30 seconds" and "NaN seconds" if TIMEOUT_MS isn't loaded)
+      expect(await screen.findByText(/The repository did not become healthy within .* seconds/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
+    });
+
+    it('should call resetTimeout when retry button is clicked', async () => {
+      // Use real timers for this test since userEvent needs them
+      jest.useRealTimers();
+      
+      const mockResetTimeout = jest.fn();
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: undefined,
+        isReconciled: false,
+        healthMessage: undefined,
+        checked: undefined,
+        healthStatusNotReady: false,
+        refetch: jest.fn(),
+        hasTimedOut: true,
+        resetTimeout: mockResetTimeout,
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      const { user } = setup();
+
+      // Wait for the error to be displayed
+      await screen.findByText('Repository health check timed out');
+      
+      const retryButton = screen.getByRole('button', { name: /Retry/i });
+      await user.click(retryButton);
+
+      expect(mockResetTimeout).toHaveBeenCalled();
     });
   });
 });
