@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
@@ -36,9 +37,9 @@ type UserTeamREST struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewTeamMemberREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *UserTeamREST {
+func NewUserTeamREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *UserTeamREST {
 	return &UserTeamREST{
-		log:      log.New("grafana-apiserver.user.teams"),
+		log:      log.New("grafana-apiserver.users.teams"),
 		client:   client,
 		tracer:   tracer,
 		features: features,
@@ -103,6 +104,11 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			offset = (page - 1) * limit
 		}
 
+		span.SetAttributes(attribute.Int("limit", limit),
+			attribute.Int("page", page),
+			attribute.Int("offset", offset),
+			attribute.String("name", name))
+
 		searchRequest := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -112,7 +118,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Operator: string(selection.Equals),
 						Values:   []string{name},
 					},
@@ -123,7 +129,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			Page:    int64(page),
 			Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 			},
@@ -135,7 +142,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			return
 		}
 
-		searchResults, err := s.parseResults(result, searchRequest.Offset)
+		searchResults, err := parseResults(result, searchRequest.Offset)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -158,7 +165,7 @@ func (s *UserTeamREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
 	if result == nil {
 		return iamv0alpha1.GetTeamsBody{}, nil
 	}
@@ -169,7 +176,8 @@ func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, o
 		return iamv0alpha1.GetTeamsBody{}, nil
 	}
 
-	teamRefIDX := -1
+	userIDX := -1
+	teamIDX := -1
 	permissionIDX := -1
 	externalIDX := -1
 
@@ -179,8 +187,10 @@ func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, o
 		}
 
 		switch v.Name {
-		case builders.TEAM_BINDING_TEAM_REF:
-			teamRefIDX = i
+		case builders.TEAM_BINDING_SUBJECT:
+			userIDX = i
+		case builders.TEAM_BINDING_TEAM:
+			teamIDX = i
 		case builders.TEAM_BINDING_PERMISSION:
 			permissionIDX = i
 		case builders.TEAM_BINDING_EXTERNAL:
@@ -188,8 +198,11 @@ func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, o
 		}
 	}
 
-	if teamRefIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM_REF)
+	if userIDX < 0 {
+		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
+	}
+	if teamIDX < 0 {
+		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
 	}
 	if permissionIDX < 0 {
 		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
@@ -208,8 +221,9 @@ func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, o
 		}
 
 		body.Items[i] = iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{
-			TeamRef:    iamv0alpha1.TeamRef{Name: string(row.Cells[teamRefIDX])},
-			Permission: iamv0alpha1.TeamPermission(string(row.Cells[permissionIDX])),
+			User:       string(row.Cells[userIDX]),
+			Team:       string(row.Cells[teamIDX]),
+			Permission: string(row.Cells[permissionIDX]),
 			External:   string(row.Cells[externalIDX]) == "true",
 		}
 	}

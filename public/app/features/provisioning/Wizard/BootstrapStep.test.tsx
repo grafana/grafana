@@ -269,7 +269,7 @@ describe('BootstrapStep', () => {
       expect(screen.queryByText('Sync all resources with external storage')).not.toBeInTheDocument();
     });
 
-    it('should only display instance option when legacy storage exists', async () => {
+    it('should only display instance option when legacy storage exists and hide disabled options', async () => {
       (useModeOptions as jest.Mock).mockReturnValue({
         enabledOptions: [
           {
@@ -300,7 +300,8 @@ describe('BootstrapStep', () => {
       });
 
       expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
-      expect(await screen.findByText('Sync external storage to a new Grafana folder')).not.toBeChecked();
+      // Disabled options should not be rendered at all
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
     });
 
     it('should allow selecting different sync targets', async () => {
