@@ -4144,6 +4144,20 @@
     },
     {
       "metadata": {
+        "name": "secretsKeeperUI",
+        "resourceVersion": "1770225479158",
+        "creationTimestamp": "2026-02-04T17:17:59Z"
+      },
+      "spec": {
+        "description": "Enable the Secrets Keeper management UI for configuring external secret storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsManagementAppPlatform",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-03-19T09:25:14Z",
