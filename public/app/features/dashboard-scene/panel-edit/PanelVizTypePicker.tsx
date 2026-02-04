@@ -130,7 +130,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
         <Stack direction="row" gap={1}>
           {showBackButton && (
             <Button
-              aria-label={t('dashboard-scene.panel-viz-type-picker.title-back', 'Back')}
+              aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
               fill="text"
               variant="secondary"
               icon="arrow-left"
