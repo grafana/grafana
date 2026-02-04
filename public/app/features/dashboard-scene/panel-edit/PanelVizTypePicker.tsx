@@ -68,7 +68,7 @@ export function PanelVizTypePicker({
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(editPreview || panel), [editPreview, panel]);
+  const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
   const filterId = useId();
 
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
