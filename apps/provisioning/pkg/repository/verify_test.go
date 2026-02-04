@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 )
 
 // verifyTestStorage implements StorageLister for verify tests
@@ -21,6 +20,15 @@ type verifyTestStorage struct {
 
 func (m *verifyTestStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	return &provisioning.RepositoryList{Items: m.repositories}, nil
+}
+
+// testQuotaProvider implements QuotaLimitsProvider for testing
+type testQuotaProvider struct {
+	status provisioning.QuotaStatus
+}
+
+func (p *testQuotaProvider) GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error) {
+	return p.status, nil
 }
 
 func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
@@ -279,16 +287,17 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
 			// Default quota limits: MaxRepositories = 10
-			quotaLimits := quotas.QuotaLimits{MaxRepositories: 10}
+			quotaLimits := provisioning.QuotaStatus{MaxRepositories: 10}
 			// Set quota limits for tests that expect a different limit
 			switch tt.name {
 			case "allows unlimited repositories when maxRepositories is 0":
 				// 0 means unlimited
-				quotaLimits = quotas.QuotaLimits{MaxRepositories: 0}
+				quotaLimits = provisioning.QuotaStatus{MaxRepositories: 0}
 			case "enforces custom maxRepositories limit":
-				quotaLimits = quotas.QuotaLimits{MaxRepositories: 5}
+				quotaLimits = provisioning.QuotaStatus{MaxRepositories: 5}
 			}
-			validatorRaw := NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister, quotaLimits)
+			quotaProvider := &testQuotaProvider{status: quotaLimits}
+			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister, quotaProvider)
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {

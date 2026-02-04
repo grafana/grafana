@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -205,19 +206,18 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 }
 
 func setupWorkers(
-	cfg *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
+	_ *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
 ) ([]jobs.Worker, error) {
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients)
-
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unified storage client: %w", err)
 	}
 	resourceLister := resources.NewResourceLister(unified)
+	parsers := resources.NewParserFactory(clients, quotas.NewRepositoryQuotaCheckerFactory(resourceLister))
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {

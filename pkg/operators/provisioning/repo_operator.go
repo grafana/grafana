@@ -94,7 +94,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
-	quotaGetter, err := controllerCfg.QuotaGetter()
+	quotaGetter, err := controllerCfg.QuotaLimitsProvider()
 	if err != nil {
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
