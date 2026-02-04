@@ -16,6 +16,7 @@ type alertRule struct {
 	Version                     int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID                         string  `xorm:"uid"`
 	NamespaceUID                string  `xorm:"namespace_uid"`
+	FolderFullpath              string  `xorm:"folder_fullpath"`
 	DashboardUID                *string `xorm:"dashboard_uid"`
 	PanelID                     *int64  `xorm:"panel_id"`
 	RuleGroup                   string

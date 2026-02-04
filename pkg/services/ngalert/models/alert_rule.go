@@ -351,6 +351,7 @@ type AlertRule struct {
 	Version         int64
 	UID             string
 	NamespaceUID    string
+	FolderFullpath  string
 	DashboardUID    *string
 	PanelID         *int64
 	RuleGroup       string
@@ -978,8 +979,8 @@ const (
 )
 
 type GroupCursor struct {
-	NamespaceUID string `json:"n"`
-	RuleGroup    string `json:"g"`
+	FolderFullpath string `json:"f"` // Use fullpath instead of NamespaceUID for stable ordering
+	RuleGroup      string `json:"g"`
 }
 
 func EncodeGroupCursor(c GroupCursor) string {

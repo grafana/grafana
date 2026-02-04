@@ -1157,15 +1157,15 @@ func getGroupedRules(log log.Logger, ruleList ngmodels.RulesGroup, ruleNamesSet 
 		})
 	}
 
-	// Sort the groups first by namespace, then group name
+	// Sort the groups first by namespace (case-insensitive), then group name (case-insensitive)
 	slices.SortFunc(ruleGroups, func(a, b *ruleGroup) int {
-		nsCmp := strings.Compare(a.Folder, b.Folder)
+		nsCmp := strings.Compare(strings.ToLower(a.Folder), strings.ToLower(b.Folder))
 		if nsCmp != 0 {
 			return nsCmp
 		}
 
-		// If Namespaces are equal, check the group names
-		return strings.Compare(a.GroupKey.RuleGroup, b.GroupKey.RuleGroup)
+		// If Namespaces are equal, check the group names (case-insensitive)
+		return strings.Compare(strings.ToLower(a.GroupKey.RuleGroup), strings.ToLower(b.GroupKey.RuleGroup))
 	})
 
 	return ruleGroups

@@ -234,12 +234,13 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 	// < group limit logic >
 
 	// sort rules to ensure order is consistent, pagination depends on this
+	// Use case-insensitive comparison to match real implementation
 	slices.SortFunc(ruleList, func(a, b *models.AlertRule) int {
-		nsCmp := strings.Compare(a.NamespaceUID, b.NamespaceUID)
+		nsCmp := strings.Compare(strings.ToLower(a.FolderFullpath), strings.ToLower(b.FolderFullpath))
 		if nsCmp != 0 {
 			return nsCmp
 		}
-		rgCmp := strings.Compare(a.RuleGroup, b.RuleGroup)
+		rgCmp := strings.Compare(strings.ToLower(a.RuleGroup), strings.ToLower(b.RuleGroup))
 		if rgCmp != 0 {
 			return rgCmp
 		}
@@ -263,24 +264,26 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 	var rulesFetched int64
 	initialCursor := cursor
 	for _, r := range ruleList {
-		// skip rules before the initial cursor
-		if initialCursor.NamespaceUID != "" &&
-			(strings.Compare(r.NamespaceUID, initialCursor.NamespaceUID) < 0 ||
-				(strings.Compare(r.NamespaceUID, initialCursor.NamespaceUID) == 0 && strings.Compare(r.RuleGroup, initialCursor.RuleGroup) <= 0)) {
+		// skip rules before the initial cursor (use case-insensitive comparison and < for rule_group to match real implementation)
+		if initialCursor.FolderFullpath != "" &&
+			(strings.Compare(strings.ToLower(r.FolderFullpath), strings.ToLower(initialCursor.FolderFullpath)) < 0 ||
+				(strings.Compare(strings.ToLower(r.FolderFullpath), strings.ToLower(initialCursor.FolderFullpath)) == 0 && strings.Compare(strings.ToLower(r.RuleGroup), strings.ToLower(initialCursor.RuleGroup)) < 0)) {
 			continue
 		}
 
 		key := models.GroupCursor{
-			NamespaceUID: r.NamespaceUID,
-			RuleGroup:    r.RuleGroup,
+			FolderFullpath: r.FolderFullpath,
+			RuleGroup:      r.RuleGroup,
 		}
 		if key != cursor {
 			if q.Limit > 0 && groupsFetched == q.Limit {
-				nextToken = models.EncodeGroupCursor(cursor)
+				// Use 'key' (the new group) as the cursor, not 'cursor' (the old group)
+				nextToken = models.EncodeGroupCursor(key)
 				break
 			}
 			if q.RuleLimit > 0 && rulesFetched >= q.RuleLimit {
-				nextToken = models.EncodeGroupCursor(cursor)
+				// Use 'key' (the new group) as the cursor, not 'cursor' (the old group)
+				nextToken = models.EncodeGroupCursor(key)
 				break
 			}
 			cursor = key
