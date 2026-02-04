@@ -8277,7 +8277,7 @@
       "bar-shape": "Bar Style",
       "bar-shape-flat": "Flat",
       "bar-shape-rounded": "Rounded",
-      "bar-width": "Bar width",
+      "bar-width": "Bar width factor",
       "effects": {
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
@@ -8305,7 +8305,7 @@
       "text-mode-name": "Name",
       "text-mode-none": "None",
       "text-mode-value": "Value",
-      "text-mode-value-and-name": "Value and Name",
+      "text-mode-value-and-name": "Value and name",
       "threshold-labels": "Show labels",
       "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
