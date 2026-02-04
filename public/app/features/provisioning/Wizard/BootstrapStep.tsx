@@ -9,6 +9,7 @@ import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { UPGRADE_URL } from '../constants';
 import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
@@ -90,7 +91,10 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             'There was an issue connecting to the repository. Please check the repository settings and try again.'
           ),
         },
-        retry: retryRepositoryStatus,
+        action: {
+          label: t('provisioning.bootstrap-step.retry-action', 'Retry'),
+          onClick: retryRepositoryStatus,
+        },
       });
     } else if (isQuotaExceeded) {
       setStepStatusInfo({
@@ -102,6 +106,11 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             'The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.',
             { resourceCount, limit: FREE_TIER_FOLDER_RESOURCE_LIMIT }
           ),
+        },
+        action: {
+          label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
+          href: UPGRADE_URL,
+          external: true,
         },
       });
     } else {

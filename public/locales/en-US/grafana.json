@@ -11957,8 +11957,10 @@
       "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
+      "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
-      "unmanaged-resources-label": "Unmanaged resources"
+      "unmanaged-resources-label": "Unmanaged resources",
+      "upgrade-action": "Upgrade account"
     },
     "check-repository": {
       "check": "Check"
@@ -12583,9 +12585,6 @@
       "push-to-a-new-branch": "Push to a new branch",
       "push-to-existing-branch": "Push to an existing branch"
     }
-  },
-  "provisioning-alert": {
-    "retry": "Retry"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
