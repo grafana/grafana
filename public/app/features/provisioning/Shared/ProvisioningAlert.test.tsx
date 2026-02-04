@@ -42,10 +42,9 @@ describe('ProvisioningAlert', () => {
   describe('action prop', () => {
     it('should render button action with onClick and call handler when clicked', async () => {
       const onClick = jest.fn();
-      const { user } = render(
-        <ProvisioningAlert error="Something went wrong" action={{ label: 'Retry', onClick }} />,
-        { wrapper: EmptyWrapper }
-      );
+      const { user } = render(<ProvisioningAlert error="Something went wrong" action={{ label: 'Retry', onClick }} />, {
+        wrapper: EmptyWrapper,
+      });
 
       // Alert component uses aria-label="Close alert" on the button
       const button = screen.getByRole('button');
