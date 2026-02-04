@@ -6,10 +6,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -23,7 +24,7 @@ type UsageStats struct {
 	accesscontrol ac.AccessControl
 
 	log    log.Logger
-	tracer tracing.Tracer
+	tracer trace.Tracer
 
 	externalMetrics     []usagestats.MetricsFunc
 	sendReportCallbacks []usagestats.SendReportCallbackFunc
@@ -34,7 +35,7 @@ type UsageStats struct {
 func ProvideService(cfg *setting.Cfg,
 	kvStore kvstore.KVStore,
 	routeRegister routing.RouteRegister,
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	accesscontrol ac.AccessControl,
 	bundleRegistry supportbundles.Service,
 ) (*UsageStats, error) {
