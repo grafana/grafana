@@ -194,9 +194,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, err
 	}
 	wrap.URLs = urls
-
 	if r.shouldUpdateGrafanaDB(opts, nil) {
-
 		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
 		if err != nil {
 			return nil, err
