@@ -13,10 +13,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/go-version"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,14 +31,14 @@ type GrafanaService struct {
 	httpClient     httpClient
 	mutex          sync.RWMutex
 	log            log.Logger
-	tracer         tracing.Tracer
+	tracer         trace.Tracer
 }
 
-func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) (*GrafanaService, error) {
+func ProvideGrafanaService(cfg *setting.Cfg, tracer trace.Tracer) (*GrafanaService, error) {
 	logger := log.New("grafana.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
-			httpclientprovider.TracingMiddleware(logger, tracer),
+			httpclientprovider.NewTracingMiddleware(),
 		},
 	})
 	if err != nil {
