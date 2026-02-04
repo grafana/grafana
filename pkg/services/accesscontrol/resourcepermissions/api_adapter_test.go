@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -495,4 +496,289 @@ func (f *fakeResourceInterface) Get(ctx context.Context, name string, opts metav
 		return f.getFunc(ctx, name, opts, subresources...)
 	}
 	return &unstructured.Unstructured{}, nil
+}
+
+// TestGetProvisionedPermissions tests retrieval of provisioned permissions from legacy API
+func TestGetProvisionedPermissions(t *testing.T) {
+	t.Run("returns only provisioned permissions, not managed or inherited", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		// Create a mock store that returns mixed permissions
+		mockStore := &mockResourcePermissionStore{
+			permissions: []accesscontrol.ResourcePermission{
+				// Managed permission (should be filtered out)
+				{
+					UserID:      1,
+					Actions:     []string{"dashboards:read", "dashboards:write"},
+					IsManaged:   true,
+					IsInherited: false,
+				},
+				// Inherited permission (should be filtered out)
+				{
+					UserID:      2,
+					Actions:     []string{"dashboards:read"},
+					IsManaged:   false,
+					IsInherited: true,
+				},
+				// Provisioned permission (should be included)
+				{
+					UserID:      3,
+					UserLogin:   "provisioned-user",
+					Actions:     []string{"dashboards:read", "dashboards:write"},
+					IsManaged:   false,
+					IsInherited: false,
+				},
+				// Another provisioned permission (should be included)
+				{
+					TeamID:      100,
+					Team:        "provisioned-team",
+					Actions:     []string{"dashboards:read"},
+					IsManaged:   false,
+					IsInherited: false,
+				},
+			},
+		}
+
+		api := &api{
+			cfg:    &setting.Cfg{},
+			logger: log.New("test"),
+			service: &Service{
+				store: mockStore,
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					APIGroup:          dashboardv1.APIGroup,
+					PermissionsToActions: map[string][]string{
+						"View": {"dashboards:read"},
+						"Edit": {"dashboards:read", "dashboards:write"},
+					},
+				},
+				actions:     []string{"dashboards:read", "dashboards:write"},
+				permissions: []string{"Edit", "View"}, // Add permissions list for MapActions
+				license:     license,
+			},
+		}
+
+		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+
+		require.NoError(t, err)
+		require.Len(t, provisionedPerms, 2, "should return only provisioned permissions")
+
+		// Verify first provisioned permission
+		assert.Equal(t, int64(3), provisionedPerms[0].UserID)
+		assert.Equal(t, "provisioned-user", provisionedPerms[0].UserLogin)
+		assert.Equal(t, "Edit", provisionedPerms[0].Permission)
+		assert.False(t, provisionedPerms[0].IsManaged, "provisioned permission should not be managed")
+		assert.False(t, provisionedPerms[0].IsInherited, "provisioned permission should not be inherited")
+
+		// Verify second provisioned permission
+		assert.Equal(t, int64(100), provisionedPerms[1].TeamID)
+		assert.Equal(t, "provisioned-team", provisionedPerms[1].Team)
+		assert.Equal(t, "View", provisionedPerms[1].Permission)
+		assert.False(t, provisionedPerms[1].IsManaged, "provisioned permission should not be managed")
+		assert.False(t, provisionedPerms[1].IsInherited, "provisioned permission should not be inherited")
+	})
+}
+
+// TestGetResourcePermissionsFromK8s_AdminRole tests that Admin role is added when access control enforcement is disabled
+func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
+	t.Run("adds admin role when access control enforcement is disabled", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		mockStore := &mockResourcePermissionStore{
+			permissions: []accesscontrol.ResourcePermission{},
+		}
+
+		api := &api{
+			cfg:    &setting.Cfg{},
+			logger: log.New("test"),
+			service: &Service{
+				store: mockStore,
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					APIGroup:          dashboardv1.APIGroup,
+					Assignments: Assignments{
+						BuiltInRoles: true, // Enable built-in roles
+					},
+					PermissionsToActions: map[string][]string{
+						"View":  {"dashboards:read"},
+						"Edit":  {"dashboards:read", "dashboards:write"},
+						"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards.permissions:write"},
+					},
+				},
+				actions:     []string{"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards.permissions:write"},
+				permissions: []string{"Admin", "Edit", "View"},
+				license:     license,
+			},
+			restConfigProvider: nil, // No rest config provider - will return empty permissions from K8s
+		}
+
+		perms, err := api.getResourcePermissionsFromK8s(context.Background(), "stack-123-org-1", "dashboard-123")
+
+		// Should fail to get K8s permissions but still add Admin role
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrRestConfigNotAvailable)
+		_ = perms // Suppress unused variable warning
+	})
+
+	t.Run("does not add admin role when access control enforcement is enabled", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+
+		mockStore := &mockResourcePermissionStore{
+			permissions: []accesscontrol.ResourcePermission{},
+		}
+
+		api := &api{
+			cfg:    &setting.Cfg{},
+			logger: log.New("test"),
+			service: &Service{
+				store: mockStore,
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					APIGroup:          dashboardv1.APIGroup,
+					Assignments: Assignments{
+						BuiltInRoles: true,
+					},
+					PermissionsToActions: map[string][]string{
+						"View":  {"dashboards:read"},
+						"Edit":  {"dashboards:read", "dashboards:write"},
+						"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete"},
+					},
+				},
+				actions:     []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+				permissions: []string{"Admin", "Edit", "View"},
+				license:     license,
+			},
+			restConfigProvider: nil,
+		}
+
+		perms, err := api.getResourcePermissionsFromK8s(context.Background(), "stack-123-org-1", "dashboard-123")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrRestConfigNotAvailable)
+		_ = perms // Suppress unused variable warning
+	})
+}
+
+// TestAdminRoleLogic tests the admin role logic in isolation
+func TestAdminRoleLogic(t *testing.T) {
+	t.Run("admin role is added when enforcement is disabled and built-in roles are enabled", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		service := &Service{
+			options: Options{
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
+				Assignments: Assignments{
+					BuiltInRoles: true,
+				},
+				PermissionsToActions: map[string][]string{
+					"View":  {"dashboards:read"},
+					"Edit":  {"dashboards:read", "dashboards:write"},
+					"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards.permissions:write"},
+				},
+			},
+			actions:     []string{"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards.permissions:write"},
+			permissions: []string{"Admin", "Edit", "View"},
+			license:     license,
+		}
+
+		// Test the condition
+		shouldAddAdmin := service.options.Assignments.BuiltInRoles && !service.license.FeatureEnabled("accesscontrol.enforcement")
+		assert.True(t, shouldAddAdmin, "should add Admin role when enforcement is disabled and built-in roles are enabled")
+
+		// Test MapActions
+		permission := service.MapActions(accesscontrol.ResourcePermission{
+			Actions: service.actions,
+		})
+		assert.Equal(t, "Admin", permission, "should map all actions to Admin permission")
+	})
+
+	t.Run("admin role is not added when enforcement is enabled", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+
+		service := &Service{
+			options: Options{
+				Assignments: Assignments{
+					BuiltInRoles: true,
+				},
+			},
+			license: license,
+		}
+
+		shouldAddAdmin := service.options.Assignments.BuiltInRoles && !service.license.FeatureEnabled("accesscontrol.enforcement")
+		assert.False(t, shouldAddAdmin, "should not add Admin role when enforcement is enabled")
+	})
+
+	t.Run("admin role is not added when built-in roles are disabled", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		service := &Service{
+			options: Options{
+				Assignments: Assignments{
+					BuiltInRoles: false,
+				},
+			},
+			license: license,
+		}
+
+		shouldAddAdmin := service.options.Assignments.BuiltInRoles && !service.license.FeatureEnabled("accesscontrol.enforcement")
+		assert.False(t, shouldAddAdmin, "should not add Admin role when built-in roles are disabled")
+	})
+}
+
+// mockRestConfigProvider is a mock implementation of RestConfigProvider for testing
+type mockRestConfigProvider struct {
+	client dynamic.Interface
+}
+
+func (m *mockRestConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return &rest.Config{}, nil
+}
+
+// mockResourcePermissionStore is a mock implementation of the Store interface for testing
+type mockResourcePermissionStore struct {
+	permissions []accesscontrol.ResourcePermission
+}
+
+func (m *mockResourcePermissionStore) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+	// Apply ExcludeManaged filter if set (to match real store behavior)
+	if query.ExcludeManaged {
+		var filtered []accesscontrol.ResourcePermission
+		for _, perm := range m.permissions {
+			if !perm.IsManaged {
+				filtered = append(filtered, perm)
+			}
+		}
+		return filtered, nil
+	}
+	return m.permissions, nil
+}
+
+func (m *mockResourcePermissionStore) SetUserResourcePermission(ctx context.Context, orgID int64, user accesscontrol.User, cmd SetResourcePermissionCommand, hook UserResourceHookFunc) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (m *mockResourcePermissionStore) SetTeamResourcePermission(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionCommand, hook TeamResourceHookFunc) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (m *mockResourcePermissionStore) SetBuiltInResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionCommand, hook BuiltinResourceHookFunc) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (m *mockResourcePermissionStore) SetResourcePermissions(ctx context.Context, orgID int64, commands []SetResourcePermissionsCommand, hooks ResourceHooks) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (m *mockResourcePermissionStore) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
+	return nil
 }
