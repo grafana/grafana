@@ -468,7 +468,7 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetIntegrationtypeschemasApiResponse = /** status 200 OK */ GetIntegrationtypeschemas;
+export type GetIntegrationtypeschemasApiResponse = /** status 200 OK */ GetIntegrationtypeschemasBody;
 export type GetIntegrationtypeschemasApiArg = void;
 export type ListReceiverApiResponse = /** status 200 OK */ ReceiverList;
 export type ListReceiverApiArg = {
@@ -1221,7 +1221,7 @@ export type GetIntegrationtypeschemasIntegrationTypeSchemaResource = {
   };
   spec: GetIntegrationtypeschemasIntegrationTypeSchema;
 };
-export type GetIntegrationtypeschemas = {
+export type GetIntegrationtypeschemasBody = {
   items: GetIntegrationtypeschemasIntegrationTypeSchemaResource[];
 };
 export type Time = string;

@@ -135,17 +135,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
                 }
               }
             }
@@ -197,12 +197,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
               }
             }
           },
@@ -214,12 +214,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -229,12 +229,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -244,12 +244,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -327,12 +327,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -384,12 +384,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
               }
             }
           },
@@ -401,12 +401,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -416,12 +416,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -601,12 +601,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -616,12 +616,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               }
             }
@@ -669,7 +669,7 @@
   },
   "components": {
     "schemas": {
-      "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences": {
+      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences": {
         "type": "object",
         "required": [
           "metadata",
@@ -697,13 +697,20 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.PreferencesSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
               }
             ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "preferences.grafana.app",
+            "kind": "Preferences",
+            "version": "v1alpha1"
+          }
+        ]
       },
-      "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesList": {
+      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList": {
         "type": "object",
         "required": [
           "metadata",
@@ -720,7 +727,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               ]
             }
@@ -737,9 +744,16 @@
               }
             ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "preferences.grafana.app",
+            "kind": "PreferencesList",
+            "version": "v1alpha1"
+          }
+        ]
       },
-      "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference": {
+      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference": {
         "type": "object",
         "required": [
           "bookmarkUrls"
@@ -754,7 +768,7 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference": {
+      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference": {
         "type": "object",
         "properties": {
           "homeTab": {
@@ -763,7 +777,7 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec": {
+      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec": {
         "type": "object",
         "properties": {
           "homeDashboardUID": {
@@ -778,7 +792,7 @@
             "description": "Navigation preferences",
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.PreferencesNavbarPreference"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
               }
             ]
           },
@@ -786,7 +800,7 @@
             "description": "Explore query history preferences",
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1preferences~1pkg~1apis~1preferences~1v1alpha1.PreferencesQueryHistoryPreference"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
               }
             ]
           },

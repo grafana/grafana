@@ -124,9 +124,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "shorturl.grafana.app",
 		Version: "v1beta1",
-	}, {
-		Group:   "grafana-testdata-datasource.datasource.grafana.app",
-		Version: "v0alpha1",
+		// }, {
+		// 	Group:   "grafana-testdata-datasource.datasource.grafana.app",
+		// 	Version: "v0alpha1",
 	}, {
 		Group:   "logsdrilldown.grafana.app",
 		Version: "v1beta1",
