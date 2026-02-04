@@ -191,7 +191,6 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        // logs={logs}
         reorder={reorder}
         setSidebarWidth={setSidebarWidth}
         sidebarWidth={300}
