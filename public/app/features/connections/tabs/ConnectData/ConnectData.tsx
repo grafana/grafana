@@ -8,12 +8,14 @@ import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useLoadDataSourcePlugins } from 'app/features/datasources/state/hooks';
 import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';
 import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector, StoreState } from 'app/types/store';
 
 import { ROUTES } from '../../constants';
 
@@ -49,6 +51,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function AddNewConnection() {
+  useLoadDataSourcePlugins();
+
   const [queryParams, setQueryParams] = useQueryParams();
   const searchTerm = queryParams.search ? String(queryParams.search) : '';
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
@@ -56,10 +60,17 @@ export function AddNewConnection() {
   const location = useLocation();
   const history = useHistory();
   const locationSearch = locationSearchToObject(location.search);
-  const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const sortBy = (locationSearch.sortBy ?? Sorters.nameAsc) as Sorters;
   const filterBy = locationSearch.filterBy?.toString() || 'all';
+  const categoryFilter = locationSearch.category?.toString() || 'all';
+  const typeFilter = locationSearch.type?.toString() || 'all';
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const styles = useStyles2(getStyles);
+
+  // Get categories from Redux state
+  const dataSourceCategories = useSelector((s: StoreState) => s.dataSources.categories);
+
   const handleSearchChange = (val: string) => {
     setQueryParams({
       search: val,
@@ -118,15 +129,56 @@ export function AddNewConnection() {
   const dataSourcesPlugins = getPluginsByType[PluginType.datasource];
   const appsPlugins = getPluginsByType[PluginType.app];
 
-  const datasourceCardGridItems = useMemo(
-    () =>
-      dataSourcesPlugins.map((plugin) => ({
-        ...plugin,
-        logo: plugin.info.logos.small,
-        url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
+  const datasourceCardGridItems = useMemo(() => {
+    // Get all datasource plugins directly from categories in Redux state
+    // This ensures they match and have proper category information
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allPlugins: Record<string, any> = {};
+    dataSourceCategories.forEach((category) => {
+      category.plugins.forEach((plugin) => {
+        allPlugins[plugin.id] = {
+          ...plugin,
+          logo: plugin.info.logos.small,
+          url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
+          category: category.id,
+          // Add safe defaults for CatalogPlugin properties that don't exist on DataSourcePluginMeta
+          isEnterprise: false,
+          isDeprecated: false,
+          isInstalled: false,
+          isDisabled: false,
+          isProvisioned: false,
+          isCore: false,
+          isPreinstalled: { withVersion: false },
+          isManaged: false,
+          hasUpdate: false,
+        };
+      });
+    });
+
+    // Convert to array and filter by categoryFilter and typeFilter
+    return Object.values(allPlugins).filter((plugin) => {
+      const matchesCategory = categoryFilter === 'all' || plugin.category === categoryFilter;
+      const matchesType = typeFilter === 'all' || plugin.type === typeFilter;
+      return matchesCategory && matchesType;
+    });
+  }, [dataSourceCategories, categoryFilter, typeFilter]);
+
+  const categoryOptions = useMemo(() => {
+    // Use categories from Redux state instead of building them
+    return [
+      { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All categories') },
+      ...dataSourceCategories.map((category) => ({
+        value: category.id,
+        label: category.title,
       })),
-    [dataSourcesPlugins]
-  );
+    ];
+  }, [dataSourceCategories]);
+
+  const typeOptions = [
+    { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All types') },
+    { value: 'datasource', label: t('connections.add-new-connection.label.datasources', 'Data Sources') },
+    { value: 'app', label: t('connections.add-new-connection.label.apps', 'Apps') },
+  ];
 
   const appsCardGridItems = useMemo(
     () =>
@@ -146,6 +198,14 @@ export function AddNewConnection() {
     history.push({ query: { filterBy: value } });
   };
 
+  const onCategoryFilterChange = (option: { value?: string } | null) => {
+    history.push({ query: { category: option?.value || 'all' } });
+  };
+
+  const onTypeFilterChange = (value: string) => {
+    history.push({ query: { type: value } });
+  };
+
   const showNoResults = useMemo(
     () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1,
     [isLoading, error, dataSourcesPlugins, appsPlugins]
@@ -157,13 +217,13 @@ export function AddNewConnection() {
 
       <div className={styles.searchContainer}>
         <HorizontalGroup wrap>
-          <Field label={t('common.search', 'Search')}>
+          <Field label={t('common.search', 'Search')} noMargin>
             <SearchField value={searchTerm} onSearch={handleSearchChange} />
           </Field>
           <HorizontalGroup className={styles.actionBar}>
             {/* Filter by installed / all */}
             {remotePluginsAvailable ? (
-              <Field label={t('plugins.filter.state', 'State')}>
+              <Field label={t('plugins.filter.state', 'State')} noMargin>
                 <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
               </Field>
             ) : (
@@ -175,7 +235,7 @@ export function AddNewConnection() {
                 placement="top"
               >
                 <div>
-                  <Field label={t('plugins.filter.state', 'State')}>
+                  <Field label={t('plugins.filter.state', 'State')} noMargin>
                     <RadioButtonGroup
                       disabled={true}
                       value={filterBy}
@@ -188,7 +248,7 @@ export function AddNewConnection() {
             )}
 
             {/* Sorting */}
-            <Field label={t('plugins.filter.sort', 'Sort')}>
+            <Field label={t('plugins.filter.sort', 'Sort')} noMargin>
               <Combobox
                 aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
                 width={24}
@@ -212,6 +272,24 @@ export function AddNewConnection() {
                 ]}
               />
             </Field>
+
+            {/* Category Filter */}
+            {dataSourcesPlugins.length > 0 && (
+              <Field label={t('connections.add-new-connection.label.category', 'Category')} noMargin>
+                <Combobox
+                  aria-label={t('connections.add-new-connection.label.filter-by-category', 'Filter by Category')}
+                  width={24}
+                  value={categoryFilter}
+                  onChange={onCategoryFilterChange}
+                  options={categoryOptions}
+                />
+              </Field>
+            )}
+
+            {/* Type Filter */}
+            <Field label={t('connections.add-new-connection.label.type', 'Type')} noMargin>
+              <RadioButtonGroup value={typeFilter} onChange={onTypeFilterChange} options={typeOptions} />
+            </Field>
           </HorizontalGroup>
         </HorizontalGroup>
       </div>
@@ -220,12 +298,12 @@ export function AddNewConnection() {
           <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
         ) : !!error ? (
           <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error: error.message }}>
-            Error message: "{{ error: error.message }}"
+            Error message: &quot;{{ error: error.message }}&quot;
           </Trans>
         ) : (
           <>
             {/* Data Sources Section */}
-            {dataSourcesPlugins.length > 0 && (
+            {typeFilter !== 'app' && datasourceCardGridItems.length > 0 && (
               <>
                 <CategoryHeader
                   iconName="database"
@@ -236,7 +314,7 @@ export function AddNewConnection() {
             )}
 
             {/* Apps Section */}
-            {appsPlugins.length > 0 && (
+            {typeFilter !== 'datasource' && appsPlugins.length > 0 && (
               <>
                 <div className={styles.spacer} />
                 <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />

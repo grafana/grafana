@@ -71,6 +71,7 @@ function PluginEnterpriseBadgeWithoutSignature() {
 
 export type CardGridItem = CatalogPlugin & {
   logo?: string;
+  category?: string;
 };
 
 export interface CardGridProps {
