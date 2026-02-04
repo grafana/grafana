@@ -10,12 +10,14 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types/dashboard';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { appEvents } from '../../../core/app_events';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
+import { K8sDashboardAPI } from '../api/v1';
+import { K8sDashboardV2API } from '../api/v2';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -178,6 +180,13 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     return promise;
   }
+
+  setPrefetchedResponse(uid: string, response: DashboardWithAccessInfo<DashboardDataDTO>) {
+    const api = getDashboardAPI('v1');
+    if (api instanceof K8sDashboardAPI) {
+      api.setPrefetchedResponse(uid, response);
+    }
+  }
 }
 
 export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -244,6 +253,13 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     });
 
     return promise;
+  }
+
+  setPrefetchedResponse(uid: string, response: DashboardWithAccessInfo<DashboardV2Spec>) {
+    const api = getDashboardAPI('v2');
+    if (api instanceof K8sDashboardV2API) {
+      api.setPrefetchedResponse(uid, response);
+    }
   }
 }
 

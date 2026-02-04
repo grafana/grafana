@@ -67,17 +67,29 @@ export interface DashboardVersionError extends Error {
     // Currently known versions are: 'v2beta1' | 'v1beta1' | 'v0alpha1'
     storedVersion: string;
     message: string;
+    source?: unknown;
+    access?: DashboardWithAccessInfo<unknown>['access'];
+    kind?: string;
   };
 }
 
 export class DashboardVersionError extends Error {
-  constructor(storedVersion: string | undefined, message = 'Dashboard version mismatch') {
+  constructor(
+    storedVersion: string | undefined,
+    message = 'Dashboard version mismatch',
+    source?: unknown,
+    access?: DashboardWithAccessInfo<unknown>['access'],
+    kind?: string
+  ) {
     super(message);
     this.name = 'DashboardVersionError';
     this.status = 200;
     this.data = {
       storedVersion: storedVersion ?? 'unknown',
       message,
+      source,
+      access,
+      kind,
     };
   }
 }

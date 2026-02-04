@@ -42,19 +42,38 @@ export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
 {
   private client: ResourceClient<DashboardV2Spec, Status>;
+  private prefetchedData: Map<string, DashboardWithAccessInfo<DashboardV2Spec>> = new Map();
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
   }
 
+  setPrefetchedResponse(uid: string, data: DashboardWithAccessInfo<DashboardV2Spec>) {
+    this.prefetchedData.set(uid, data);
+  }
+
   async getDashboardDTO(uid: string) {
     try {
-      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+      const prefetched = this.prefetchedData.get(uid);
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      if (prefetched) {
+        this.prefetchedData.delete(uid);
+        dashboard = prefetched;
+      } else {
+        dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+      }
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       // This could come as conversion error from v0 or v2 to V1.
       if (dashboard.status?.conversion?.failed && isV0V1StoredVersion(dashboard.status.conversion.storedVersion)) {
-        throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
+        throw new DashboardVersionError(
+          dashboard.status.conversion.storedVersion,
+          dashboard.status.conversion.error,
+          dashboard.status.conversion.source,
+          dashboard.access,
+          dashboard.kind
+        );
       }
 
       // load folder info if available
