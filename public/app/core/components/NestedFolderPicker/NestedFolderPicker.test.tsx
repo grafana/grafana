@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -12,20 +12,43 @@ const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA
 setupMockServer();
 setBackendSrv(backendSrv);
 
+jest.mock('./useTeamOwnedFolder', () => ({
+  useGetTeamFolders: (options?: { skip: boolean }) => {
+    if (options?.skip) {
+      return { foldersByTeam: [], isLoading: false, error: undefined };
+    }
+
+    return {
+      foldersByTeam: [
+        {
+          team: { name: 'Team A', avatarUrl: 'https://example.com/avatar.png' },
+          folders: [{ name: 'team-folder-1', title: 'Team Folder One' }],
+        },
+      ],
+      isLoading: false,
+      error: undefined,
+    };
+  },
+}));
+
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+  let featureTogglesBackup: typeof config.featureToggles;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
+    featureTogglesBackup = { ...config.featureToggles };
   });
 
   afterAll(() => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    config.featureToggles = featureTogglesBackup;
   });
 
   afterEach(() => {
     jest.resetAllMocks();
+    config.featureToggles = { ...featureTogglesBackup };
   });
 
   it('renders a button with the correct label when no folder is selected', async () => {
@@ -200,5 +223,23 @@ describe('NestedFolderPicker', () => {
     // Select the first child
     await user.keyboard('{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith(folderA_folderC.item.uid, folderA_folderC.item.title);
+  });
+
+  it('shows team folders when feature toggle is enabled', async () => {
+    config.featureToggles.teamFolders = true;
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    expect(await screen.findByLabelText('Team folders')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
+  });
+
+  it('does not render team folders when feature toggle is disabled', async () => {
+    config.featureToggles.teamFolders = false;
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
   });
 });

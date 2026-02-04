@@ -296,7 +296,7 @@ export function NestedFolderPicker({
   });
 
   let label = getSelectedFolderResult.data?.title;
-  if (!label) {
+  if (value === '') {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
 
