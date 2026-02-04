@@ -1,5 +1,4 @@
 import { DataFrame } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getDistinctLabels } from 'app/features/transformers/utils';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -7,11 +6,7 @@ import { getSuggestedOTelDisplayFormat, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } fr
 
 import { FieldWithStats } from './FieldSelector';
 
-export function getSuggestedFieldsFromTable(
-  dataFrame: DataFrame,
-  displayedFields: string[],
-  defaultFields: string[] = []
-) {
+export function getSuggestedFieldsFromTable(_: DataFrame, displayedFields: string[], defaultFields: string[] = []) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
     name: field,
     stats: {
