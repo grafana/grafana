@@ -10,12 +10,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 )
@@ -555,9 +554,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTest{},
+	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestResponse{},
 
-	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemasBody{},
+	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemasResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

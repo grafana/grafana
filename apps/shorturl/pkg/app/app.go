@@ -105,7 +105,7 @@ func New(cfg app.Config) (app.App, error) {
 
 						url = url + "/" + info.Spec.Path
 						if req.URL.Query().Get("redirect") == "false" { // helpful for testing
-							return json.NewEncoder(w).Encode(shorturlv1beta1.GetGotoBody{
+							return json.NewEncoder(w).Encode(shorturlv1beta1.GetGotoResponse{
 								Url: url,
 							})
 						}

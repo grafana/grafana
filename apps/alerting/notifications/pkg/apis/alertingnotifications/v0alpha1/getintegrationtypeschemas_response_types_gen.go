@@ -110,13 +110,13 @@ func NewGetIntegrationtypeschemasShowWhen() *GetIntegrationtypeschemasShowWhen {
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationtypeschemasBody struct {
+type GetIntegrationtypeschemasResponse struct {
 	Items []GetIntegrationtypeschemasIntegrationTypeSchemaResource `json:"items"`
 }
 
-// NewGetIntegrationtypeschemasBody creates a new GetIntegrationtypeschemasBody object.
-func NewGetIntegrationtypeschemasBody() *GetIntegrationtypeschemasBody {
-	return &GetIntegrationtypeschemasBody{
+// NewGetIntegrationtypeschemasResponse creates a new GetIntegrationtypeschemasResponse object.
+func NewGetIntegrationtypeschemasResponse() *GetIntegrationtypeschemasResponse {
+	return &GetIntegrationtypeschemasResponse{
 		Items: []GetIntegrationtypeschemasIntegrationTypeSchemaResource{},
 	}
 }
@@ -204,8 +204,8 @@ func (GetIntegrationtypeschemasSelectOption) OpenAPIModelName() string {
 func (GetIntegrationtypeschemasShowWhen) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasShowWhen"
 }
-func (GetIntegrationtypeschemasBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasBody"
+func (GetIntegrationtypeschemasResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasResponse"
 }
 func (GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata"

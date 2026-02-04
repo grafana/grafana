@@ -74,13 +74,13 @@ func NewCreateNotificationqueryNotificationEntryAlert() *CreateNotificationquery
 }
 
 // +k8s:openapi-gen=true
-type CreateNotificationqueryBody struct {
+type CreateNotificationqueryResponse struct {
 	Entries []CreateNotificationqueryNotificationEntry `json:"entries"`
 }
 
-// NewCreateNotificationqueryBody creates a new CreateNotificationqueryBody object.
-func NewCreateNotificationqueryBody() *CreateNotificationqueryBody {
-	return &CreateNotificationqueryBody{
+// NewCreateNotificationqueryResponse creates a new CreateNotificationqueryResponse object.
+func NewCreateNotificationqueryResponse() *CreateNotificationqueryResponse {
+	return &CreateNotificationqueryResponse{
 		Entries: []CreateNotificationqueryNotificationEntry{},
 	}
 }
@@ -90,6 +90,6 @@ func (CreateNotificationqueryNotificationEntry) OpenAPIModelName() string {
 func (CreateNotificationqueryNotificationEntryAlert) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert"
 }
-func (CreateNotificationqueryBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryBody"
+func (CreateNotificationqueryResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
 }

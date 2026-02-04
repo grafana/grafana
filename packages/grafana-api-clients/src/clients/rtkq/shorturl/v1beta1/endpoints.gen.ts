@@ -332,7 +332,7 @@ export type UpdateShortUrlApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetShortUrlGotoApiResponse = /** status 200 OK */ GetGotoBody;
+export type GetShortUrlGotoApiResponse = /** status 200 OK */ GetGotoResponse;
 export type GetShortUrlGotoApiArg = {
   /** name of the ResourceCallOptions */
   name: string;
@@ -594,7 +594,7 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GetGotoBody = {
+export type GetGotoResponse = {
   url: string;
 };
 export const {

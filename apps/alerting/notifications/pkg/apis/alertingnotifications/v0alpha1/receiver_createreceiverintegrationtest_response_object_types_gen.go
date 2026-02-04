@@ -9,33 +9,33 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type CreateReceiverIntegrationTest struct {
+type CreateReceiverIntegrationTestResponse struct {
 	metav1.TypeMeta                   `json:",inline"`
 	CreateReceiverIntegrationTestBody `json:",inline"`
 }
 
-func NewCreateReceiverIntegrationTest() *CreateReceiverIntegrationTest {
-	return &CreateReceiverIntegrationTest{}
+func NewCreateReceiverIntegrationTestResponse() *CreateReceiverIntegrationTestResponse {
+	return &CreateReceiverIntegrationTestResponse{}
 }
 
 func (t *CreateReceiverIntegrationTestBody) DeepCopyInto(dst *CreateReceiverIntegrationTestBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *CreateReceiverIntegrationTest) DeepCopyObject() runtime.Object {
-	dst := NewCreateReceiverIntegrationTest()
+func (o *CreateReceiverIntegrationTestResponse) DeepCopyObject() runtime.Object {
+	dst := NewCreateReceiverIntegrationTestResponse()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *CreateReceiverIntegrationTest) DeepCopyInto(dst *CreateReceiverIntegrationTest) {
+func (o *CreateReceiverIntegrationTestResponse) DeepCopyInto(dst *CreateReceiverIntegrationTestResponse) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.CreateReceiverIntegrationTestBody.DeepCopyInto(&dst.CreateReceiverIntegrationTestBody)
 }
 
-func (CreateReceiverIntegrationTest) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTest"
+func (CreateReceiverIntegrationTestResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestResponse"
 }
 
-var _ runtime.Object = NewCreateReceiverIntegrationTest()
+var _ runtime.Object = NewCreateReceiverIntegrationTestResponse()

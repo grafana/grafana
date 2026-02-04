@@ -798,7 +798,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGotoBody"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGotoResponse"
                 }
               }
             }
@@ -1097,7 +1097,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGotoBody": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGotoResponse": {
         "type": "object",
         "required": [
           "url"

@@ -2069,17 +2069,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
                 }
               }
             }
@@ -2525,7 +2525,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister": {
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse": {
         "type": "object",
         "required": [
           "message",

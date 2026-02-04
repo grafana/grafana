@@ -12,7 +12,7 @@ type Query = v0alpha1.CreateNotificationqueryRequestBody
 
 type Matchers = v0alpha1.CreateNotificationqueryRequestMatchers
 
-type QueryResult = v0alpha1.CreateNotificationqueryBody
+type QueryResult = v0alpha1.CreateNotificationqueryResponse
 
 type Status = v0alpha1.CreateNotificationqueryNotificationStatus
 

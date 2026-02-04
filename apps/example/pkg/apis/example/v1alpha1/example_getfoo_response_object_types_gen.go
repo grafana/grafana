@@ -9,33 +9,33 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type GetFoo struct {
+type GetFooResponse struct {
 	metav1.TypeMeta `json:",inline"`
 	GetFooBody      `json:",inline"`
 }
 
-func NewGetFoo() *GetFoo {
-	return &GetFoo{}
+func NewGetFooResponse() *GetFooResponse {
+	return &GetFooResponse{}
 }
 
 func (t *GetFooBody) DeepCopyInto(dst *GetFooBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *GetFoo) DeepCopyObject() runtime.Object {
-	dst := NewGetFoo()
+func (o *GetFooResponse) DeepCopyObject() runtime.Object {
+	dst := NewGetFooResponse()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *GetFoo) DeepCopyInto(dst *GetFoo) {
+func (o *GetFooResponse) DeepCopyInto(dst *GetFooResponse) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.GetFooBody.DeepCopyInto(&dst.GetFooBody)
 }
 
-func (GetFoo) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetFoo"
+func (GetFooResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetFooResponse"
 }
 
-var _ runtime.Object = NewGetFoo()
+var _ runtime.Object = NewGetFooResponse()

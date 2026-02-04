@@ -55,7 +55,7 @@ replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 
 require (
-	github.com/grafana/grafana-app-sdk v0.50.0
+	github.com/grafana/grafana-app-sdk v0.50.1
 	github.com/grafana/grafana-app-sdk/logging v0.50.1
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
