@@ -1981,11 +1981,11 @@ func TestService_BatchCheck(t *testing.T) {
 		s := setupService()
 		ctx := context.Background()
 		_, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check1",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2001,23 +2001,70 @@ func TestService_BatchCheck(t *testing.T) {
 		s := setupService()
 		ctx := types.WithAuthInfo(context.Background(), callingService)
 		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
-			Checks:  []*authzv1.BatchCheckItem{},
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Checks:    []*authzv1.BatchCheckItem{},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, 0, len(resp.Results))
 	})
 
+	t.Run("Invalid namespace", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "", // Empty namespace
+			Subject:   "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, 1, len(resp.Results))
+		require.False(t, resp.Results["check1"].Allowed)
+		require.Contains(t, resp.Results["check1"].Error, "namespace is required")
+	})
+
+	t.Run("Mismatched namespace", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-13", // Different from calling service namespace
+			Subject:   "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, 1, len(resp.Results))
+		require.False(t, resp.Results["check1"].Allowed)
+		require.Contains(t, resp.Results["check1"].Error, "namespace does not match")
+	})
+
 	t.Run("Invalid subject", func(t *testing.T) {
 		s := setupService()
 		ctx := types.WithAuthInfo(context.Background(), callingService)
 		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "", // Empty subject
+			Namespace: "org-12",
+			Subject:   "", // Empty subject
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check1",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2036,11 +2083,11 @@ func TestService_BatchCheck(t *testing.T) {
 		{
 			name: "should handle single check",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2056,13 +2103,13 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "should handle multiple checks with same action and namespace",
+			name: "should handle multiple checks with same action",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2070,7 +2117,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2078,7 +2124,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check3",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2099,11 +2144,11 @@ func TestService_BatchCheck(t *testing.T) {
 		{
 			name: "should handle multiple checks with different actions",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2111,7 +2156,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Namespace:     "org-12",
 						Group:         "folder.grafana.app",
 						Resource:      "folders",
 						Verb:          "get",
@@ -2119,7 +2163,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check3",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "delete",
@@ -2140,11 +2183,11 @@ func TestService_BatchCheck(t *testing.T) {
 		{
 			name: "should handle wildcard permissions",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2152,7 +2195,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2160,7 +2202,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check3",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2180,11 +2221,11 @@ func TestService_BatchCheck(t *testing.T) {
 		{
 			name: "should handle folder inheritance",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2193,7 +2234,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2215,46 +2255,13 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "should handle mixed namespaces",
-			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
-				Checks: []*authzv1.BatchCheckItem{
-					{
-						CorrelationId: "check1",
-						Namespace:     "org-12",
-						Group:         "dashboard.grafana.app",
-						Resource:      "dashboards",
-						Verb:          "get",
-						Name:          "dash1",
-					},
-					{
-						CorrelationId: "check2",
-						Namespace:     "org-13",
-						Group:         "dashboard.grafana.app",
-						Resource:      "dashboards",
-						Verb:          "get",
-						Name:          "dash2",
-					},
-				},
-			},
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
-			},
-			expected: map[string]bool{
-				"check1": true,
-			},
-			expectErr: map[string]bool{
-				"check2": true,
-			},
-		},
-		{
 			name: "should handle invalid group in one check",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2262,7 +2269,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Namespace:     "org-12",
 						Group:         "invalid.grafana.app",
 						Resource:      "invalid",
 						Verb:          "get",
@@ -2283,11 +2289,11 @@ func TestService_BatchCheck(t *testing.T) {
 		{
 			name: "should use action sets",
 			req: &authzv1.BatchCheckRequest{
-				Subject: "user:test-uid",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
 				Checks: []*authzv1.BatchCheckItem{
 					{
 						CorrelationId: "check1",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "get",
@@ -2295,7 +2301,6 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Namespace:     "org-12",
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
 						Verb:          "update",
@@ -2370,14 +2375,14 @@ func TestService_BatchCheck(t *testing.T) {
 		s.folderStore = fStore
 		s.identityStore = &fakeIdentityStore{}
 
-		// Make multiple checks with the same action and namespace
-		// Should only fetch permissions once per (namespace, action) group
+		// Make multiple checks with the same action
+		// Should only fetch permissions once per action group
 		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check1",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2385,7 +2390,6 @@ func TestService_BatchCheck(t *testing.T) {
 				},
 				{
 					CorrelationId: "check2",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2393,7 +2397,6 @@ func TestService_BatchCheck(t *testing.T) {
 				},
 				{
 					CorrelationId: "check3",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2433,11 +2436,11 @@ func TestService_BatchCheck(t *testing.T) {
 
 		// First call to populate cache
 		resp1, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check1",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2452,11 +2455,11 @@ func TestService_BatchCheck(t *testing.T) {
 		// Second call with fresh timestamp (within cache TTL) should skip cache
 		freshTimestamp := time.Now().Add(-10 * time.Second).UnixMilli()
 		resp2, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId:      "check2",
-					Namespace:          "org-12",
 					Group:              "dashboard.grafana.app",
 					Resource:           "dashboards",
 					Verb:               "get",
@@ -2490,11 +2493,11 @@ func TestService_BatchCheck(t *testing.T) {
 
 		// First call to populate cache
 		resp1, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check1",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2509,11 +2512,11 @@ func TestService_BatchCheck(t *testing.T) {
 		// Second call with old timestamp (outside cache TTL) should use cache
 		oldTimestamp := time.Now().Add(-60 * time.Second).UnixMilli()
 		resp2, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId:      "check2",
-					Namespace:          "org-12",
 					Group:              "dashboard.grafana.app",
 					Resource:           "dashboards",
 					Verb:               "get",
@@ -2547,11 +2550,11 @@ func TestService_BatchCheck(t *testing.T) {
 
 		// First call to populate cache
 		resp1, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check1",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2566,11 +2569,11 @@ func TestService_BatchCheck(t *testing.T) {
 		// Second call with multiple items, one with fresh timestamp
 		freshTimestamp := time.Now().Add(-10 * time.Second).UnixMilli()
 		resp2, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
-			Subject: "user:test-uid",
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
 			Checks: []*authzv1.BatchCheckItem{
 				{
 					CorrelationId: "check2",
-					Namespace:     "org-12",
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					Verb:          "get",
@@ -2579,7 +2582,6 @@ func TestService_BatchCheck(t *testing.T) {
 				},
 				{
 					CorrelationId:      "check3",
-					Namespace:          "org-12",
 					Group:              "dashboard.grafana.app",
 					Resource:           "dashboards",
 					Verb:               "get",
