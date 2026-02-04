@@ -134,7 +134,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
               fill="text"
               variant="secondary"
               icon="arrow-left"
-              className={styles.closeButton}
+              className={styles.backButton}
               data-testid={selectors.components.PanelEditor.toggleVizPicker}
               onClick={handleBackButtonClick}
             >
@@ -154,6 +154,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
       <ScrollContainer>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
+            <div className={styles.ghostDiv}></div>
             {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions
                 onChange={onChange}
@@ -187,9 +188,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   searchField: css({
-    margin: theme.spacing(2, 1.5, 1.5, 0), // input glow with the boundary without this
-    borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
+    margin: theme.spacing(2, 1.5, 0.1, 0), // input glow with the boundary without this
     width: '100%', // full size search area
+    borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
+  }),
+  ghostDiv: css({
+    width: '100%',
+    height: theme.spacing(0.5),
   }),
   tabs: css({
     width: '100%',
@@ -202,11 +207,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     paddingInline: theme.spacing(2),
   }),
-  closeButton: css({
+  backButton: css({
     marginLeft: theme.spacing(1), // shift button to the right
-  }),
-  customFieldMargin: css({
-    marginBottom: theme.spacing(1),
   }),
   filter: css({
     minHeight: theme.spacing(4),
