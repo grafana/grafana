@@ -256,6 +256,24 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
+      path: '/alerting/import-to-gma',
+      roles: evaluateAccess([
+        // For rules import
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        // For notifications import (contact points, policies, templates, time intervals)
+        AccessControlAction.AlertingNotificationsWrite,
+      ]),
+      component: config.featureToggles.alertingMigrationWizardUI
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "AlertingImportToGMA"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMA'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),

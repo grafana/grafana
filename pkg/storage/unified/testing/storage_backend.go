@@ -1487,22 +1487,23 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 			{
 				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "dashboards", Resource: "dashboard", Name: "test"},
 				Action: resourcepb.BulkRequest_ADDED,
-				Value:  nil,
+				Value:  []byte(`{ "kind": "Test" }`),
 			},
 			{
 				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "dashboards", Resource: "dashboard", Name: "test2"},
 				Action: resourcepb.BulkRequest_ADDED,
-				Value:  nil,
+				Value:  []byte(`{ "kind": "Test" }`),
 			},
 			{
 				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "folders", Resource: "folder", Name: "test2"},
 				Action: resourcepb.BulkRequest_ADDED,
-				Value:  nil,
+				Value:  []byte(`{ "kind": "Test" }`),
 			},
 		}
 
 		resp := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections}, toBulkIterator(bulkRequests))
 		require.Nil(t, resp.Error)
+		require.Empty(t, resp.Rejected)
 
 		result := collectLastImportedTimes(t, backend, ctx)
 		require.Len(t, result, len(collections))
@@ -1526,19 +1527,20 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		bulkRequests1 := []*resourcepb.BulkRequest{{
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "test"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}, {
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "test2"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}, {
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "folders", Resource: "folder", Name: "test2"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}}
 
 		resp1 := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections1}, toBulkIterator(bulkRequests1))
 		require.Nil(t, resp1.Error)
+		require.Empty(t, resp1.Rejected)
 
 		firstImport := time.Now()
 
@@ -1547,6 +1549,10 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		result1 := collectLastImportedTimes(t, backend, ctx)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
+
+		// Sleep a bit to make sure that the last import time generated for dashboards in ns1 is different from before.
+		// Since we use DATETIME type in SQL, we need to wait at least one second.
+		time.Sleep(1 * time.Second)
 
 		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
 		// and new ns2-folders. ns1-folders is unchanged.
@@ -1558,15 +1564,16 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		bulkRequests2 := []*resourcepb.BulkRequest{{
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "new-test"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}, {
 			Key:    &resourcepb.ResourceKey{Namespace: ns2, Group: "folders", Resource: "folder", Name: "test2"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}}
 
 		resp2 := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections2}, toBulkIterator(bulkRequests2))
 		require.Nil(t, resp2.Error)
+		require.Empty(t, resp2.Rejected)
 
 		secondImport := time.Now()
 
@@ -1580,6 +1587,10 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		// Verify that last import time for ns1 folders are unchanged
 		ns1FoldersKey := resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}
 		require.Equal(t, result1[ns1FoldersKey], result2[ns1FoldersKey])
+
+		// Last import time for ns1 dashboard has been updated
+		ns1DashboardsKey := resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}
+		require.NotEqual(t, result1[ns1DashboardsKey], result2[ns1DashboardsKey])
 	})
 }
 
@@ -1592,24 +1603,22 @@ func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx
 	return result
 }
 
-func toBulkIterator(reqs []*resourcepb.BulkRequest) resource.BulkRequestIterator {
-	it := &sliceBulkRequestIterator{}
-	*it = reqs
-	return it
+type sliceBulkRequestIterator struct {
+	ix    int
+	items []*resourcepb.BulkRequest
 }
 
-type sliceBulkRequestIterator []*resourcepb.BulkRequest
+func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
+	return &sliceBulkRequestIterator{ix: -1, items: items}
+}
 
 func (s *sliceBulkRequestIterator) Next() bool {
-	if len(*s) > 1 {
-		*s = (*s)[1:]
-		return true
-	}
-	return false
+	s.ix++
+	return s.ix < len(s.items)
 }
 
 func (s *sliceBulkRequestIterator) Request() *resourcepb.BulkRequest {
-	return (*s)[0]
+	return s.items[s.ix]
 }
 
 func (s *sliceBulkRequestIterator) RollbackRequested() bool {
