@@ -8,6 +8,7 @@ import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
@@ -53,12 +54,13 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
-  const { editPane } = dashboard.state;
+  const { editPane, i } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
   const isUserActive = useUserActivity(10000);
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -84,7 +86,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
-    isHidden: !isUserActive,
+    isHidden: !isUserActive || (!isEditing && isSmallScreen),
   });
 
   /**
