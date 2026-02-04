@@ -143,6 +143,7 @@ const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number) =
       position: 'absolute',
       height: height,
       width: sidebarWidth,
+      zIndex: 1,
     }),
   };
 };

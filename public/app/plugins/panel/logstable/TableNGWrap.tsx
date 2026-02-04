@@ -135,7 +135,7 @@ const getStyles = (
   tableWidth: number,
   controlsWidth: number
 ) => {
-  const listControlsWrapperTableHeaderOffset = '2px';
+  const listControlsWrapperTableHeaderOffset = '-5px';
   return {
     listControlsWrapper: css({
       height: '100%',
@@ -147,6 +147,7 @@ const getStyles = (
       top: 0,
     }),
     tableWrapper: css({
+      position: 'relative',
       paddingLeft: sidebarWidth,
       paddingRight: controlsWidth,
       height,
