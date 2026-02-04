@@ -50,10 +50,9 @@ export const RadialArcPath = memo(
     const isGradient = 'gradient' in rest;
 
     const { vizWidth, vizHeight, radius, centerX, centerY, barWidth } = dimensions;
-    const pad = Math.ceil(Math.max(2, barWidth / 2)); // pad to cover stroke caps and glow in Safari
-    const boxX = Math.round(centerX - radius - barWidth - pad);
-    const boxY = Math.round(centerY - radius - barWidth - pad);
-    const boxSize = Math.round((radius + barWidth) * 2 + pad * 2);
+    const boxX = Math.round(centerX - radius - barWidth);
+    const boxY = Math.round(centerY - radius - barWidth);
+    const boxSize = Math.round((radius + barWidth * (roundedBars ? Math.PI / 2 : 1)) * 2);
 
     const path = drawRadialArcPath(angle, arcLengthDeg, dimensions);
 
@@ -65,16 +64,9 @@ export const RadialArcPath = memo(
     const xEnd = centerX + radius * Math.cos(endRadians);
     const yEnd = centerY + radius * Math.sin(endRadians);
 
-    let bgDivHeight = vizHeight;
-    if (shape === 'gauge') {
-      // we need to extend the conic gradient below the bottom of the viz area
-      // of get the full circle mapped to the correct position.
-      bgDivHeight = (radius + barWidth * (roundedBars ? 2 : 1)) * 2;
-    }
-
     const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = {
       width: boxSize,
-      height: bgDivHeight,
+      height: boxSize,
       marginLeft: boxX,
       marginTop: Math.max(boxY, 0),
     };
