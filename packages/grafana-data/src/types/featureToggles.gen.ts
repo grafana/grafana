@@ -970,6 +970,11 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
+  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1286,6 +1291,11 @@ export interface FeatureToggles {
   * @default false
   */
   newVizSuggestions?: boolean;
+  /**
+  * Enable style actions (copy/paste) in the panel editor
+  * @default false
+  */
+  panelStyleActions?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false

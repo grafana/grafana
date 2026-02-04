@@ -25,6 +25,13 @@ type Keeper struct {
 	Status KeeperStatus `json:"status" yaml:"status"`
 }
 
+func NewKeeper() *Keeper {
+	return &Keeper{
+		Spec:   *NewKeeperSpec(),
+		Status: *NewKeeperStatus(),
+	}
+}
+
 func (o *Keeper) GetSpec() any {
 	return o.Spec
 }

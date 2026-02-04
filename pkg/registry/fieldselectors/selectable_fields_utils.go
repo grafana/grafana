@@ -1,4 +1,4 @@
-package apiregistry
+package fieldselectors
 
 import (
 	"fmt"
@@ -11,7 +11,8 @@ import (
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
 )
 
-// These helper functions are to be used in InstallSchema() in apis/*/register.go files in order for already existing kinds to use field selectors.
+// These helper functions are to be used in InstallSchema() in apis/*/register.go files
+// in order for already existing kinds to use field selectors.
 
 // AddSelectableFieldLabelConversions registers field selector conversions for kinds that
 // expose selectable fields via the app SDK.
@@ -46,6 +47,9 @@ func BuildGetAttrsFn(k sdkres.Kind) func(obj runtime.Object) (labels.Set, fields
 			return nil, nil, fmt.Errorf("not a resource.Object")
 		} else {
 			fieldsSet := fields.Set{}
+			// Always include metadata.name and metadata.namespace as they are the default selectable fields
+			fieldsSet["metadata.name"] = robj.GetName()
+			fieldsSet["metadata.namespace"] = robj.GetNamespace()
 
 			for _, f := range k.SelectableFields() {
 				v, err := f.FieldValueFunc(robj)

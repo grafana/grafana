@@ -396,6 +396,20 @@
     },
     {
       "metadata": {
+        "name": "alertingMigrationWizardUI",
+        "resourceVersion": "1769514396967",
+        "creationTimestamp": "2026-01-27T11:46:36Z"
+      },
+      "spec": {
+        "description": "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingMultiplePolicies",
         "resourceVersion": "1769532687968",
         "creationTimestamp": "2026-01-27T16:51:27Z"
@@ -3310,6 +3324,20 @@
         "description": "Enables a group by action per panel",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelStyleActions",
+        "resourceVersion": "1769620237787",
+        "creationTimestamp": "2026-01-28T17:10:37Z"
+      },
+      "spec": {
+        "description": "Enable style actions (copy/paste) in the panel editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
       }
