@@ -20,47 +20,11 @@ labels:
 menuTitle: Configure
 title: Configure CloudWatch
 weight: 100
-refs:
-  logs:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  configure-grafana-aws:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  CloudWatch-aws-authentication:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-CloudWatch/aws-authentication/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-CloudWatch/aws-authentication/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-  configure-pdc:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
 ---
 
 # Configure the Amazon CloudWatch data source
 
-This document provides instructions for configuring the Amazon CloudWatch data source and explains available configuration options. For general information on adding and managing data sources, refer to [Data source management](ref:data-source-management).
+This document provides instructions for configuring the Amazon CloudWatch data source and explains available configuration options. For general information on adding and managing data sources, refer to [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
 ## Before you begin
 
@@ -94,7 +58,7 @@ The following are configuration options for the CloudWatch data source.
 Grafana plugin requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+For authentication options and configuration details, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
 | Setting            | Description                                                                                                                                                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -137,15 +101,15 @@ You must use both an access key ID and a secret access key to authenticate.
 | --------------- | ----------------------------------------------------- |
 | **Data source** | Select the X-Ray data source from the drop-down menu. |
 
-Grafana automatically creates a link to a trace in X-Ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-X-Ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
+Grafana automatically creates a link to a trace in X-Ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-X-Ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) to view the log details section.
 
 To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.aws.amazon.com/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
 **Private data source connect** - _Only for Grafana Cloud users._
 
-| Setting                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Private data source connect** | Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure PDC](ref:configure-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
+| Setting                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Private data source connect** | Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
 
 After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
@@ -158,7 +122,7 @@ To troubleshoot issues while setting up the CloudWatch data source, check the `/
 ### IAM policy examples
 
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
-You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](aws-authentication/).
+You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
 **Metrics-only permissions:**
 
@@ -309,7 +273,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 Cross-account observability lets you retrieve metrics and logs across different accounts in a single region, but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
 {{< /admonition >}}
 
-For more information on configuring authentication, refer to [Configure AWS authentication](ref:CloudWatch-aws-authentication).
+For more information on configuring authentication, refer to [Configure AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
 ### CloudWatch Logs data protection
 
@@ -317,7 +281,7 @@ CloudWatch Logs can protect data by applying log group data protection policies.
 
 ### Configure the data source with grafana.ini
 
-The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` section where you can configure data source options:
+The Grafana [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws) includes an `AWS` section where you can configure data source options:
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -328,7 +292,7 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
+For more information about provisioning and available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 **Using AWS SDK (default)**:
 
