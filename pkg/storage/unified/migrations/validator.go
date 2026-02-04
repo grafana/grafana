@@ -404,18 +404,3 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Sessi
 	return parentMap, nil
 }
 
-// CountValidation creates a ValidatorFactory for count-based validation.
-// It compares the count of resources in the legacy table with unified storage.
-func CountValidation(resource schema.GroupResource, table, whereClause string) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newCountValidator(client, resource, table, whereClause, driverName)
-	}
-}
-
-// FolderTreeValidation creates a ValidatorFactory for folder tree structure validation.
-// It validates that folder parent relationships are preserved after migration.
-func FolderTreeValidation(resource schema.GroupResource) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newFolderTreeValidator(client, resource, driverName)
-	}
-}

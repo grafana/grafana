@@ -4,9 +4,6 @@ import (
 	"context"
 	"sync"
 
-	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -20,16 +17,25 @@ type Validator interface {
 	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
 }
 
-// ValidatorFactory creates a validator with the given context.
-type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName string) Validator
+// ValidatorType identifies the type of validator to create.
+type ValidatorType string
+
+const (
+	CountValidatorType      ValidatorType = "count"
+	FolderTreeValidatorType ValidatorType = "folder_tree"
+)
+
+// ValidatorConfig holds configuration for creating a validator.
+// Validators are created lazily when the client and driver name are available.
+type ValidatorConfig struct {
+	Type          ValidatorType
+	GroupResource schema.GroupResource
+	Table         string // For count validator
+	WhereClause   string // For count validator
+}
 
 // MigratorFunc is the signature for resource migration functions.
 type MigratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-
-// MigratorFactory creates a migrator function given an accessor.
-// This allows the registry to store type-safe method references without
-// requiring the accessor at registration time.
-type MigratorFactory func(accessor legacy.MigrationDashboardAccessor) MigratorFunc
 
 // ResourceInfo extends GroupResource with additional metadata needed for migration.
 type ResourceInfo struct {
@@ -42,11 +48,25 @@ type ResourceInfo struct {
 // MigrationDefinition defines a resource migration.
 // This is the public API for defining and registering migrations.
 type MigrationDefinition struct {
-	ID          string                                   // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
-	MigrationID string                                   // ID for the migration log table entry (e.g., "folders and dashboards migration")
-	Resources   []ResourceInfo                           // Resources to migrate together, with their lock tables
-	Migrators   map[schema.GroupResource]MigratorFactory // Type-safe migrator factories per resource
-	Validators  []ValidatorFactory                       // Optional validator factories
+	ID               string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
+	MigrationID      string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
+	Resources        []ResourceInfo                        // Resources to migrate together, with their lock tables
+	Migrators        map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
+	ValidatorConfigs []ValidatorConfig                     // Validator configurations (validators created lazily)
+}
+
+// CreateValidators creates validators from the stored configurations.
+func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
+	validators := make([]Validator, 0, len(d.ValidatorConfigs))
+	for _, cfg := range d.ValidatorConfigs {
+		switch cfg.Type {
+		case CountValidatorType:
+			validators = append(validators, newCountValidator(client, cfg.GroupResource, cfg.Table, cfg.WhereClause, driverName))
+		case FolderTreeValidatorType:
+			validators = append(validators, newFolderTreeValidator(client, cfg.GroupResource, driverName))
+		}
+	}
+	return validators
 }
 
 // ConfigResources returns the resource identifiers in the format used by setting.UnifiedStorage config.
@@ -78,21 +98,9 @@ func (d MigrationDefinition) GetLockTable(gr schema.GroupResource) string {
 	return ""
 }
 
-// CreateValidators instantiates validators with the provided runtime dependencies.
-func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
-	validators := make([]Validator, 0, len(d.Validators))
-	for _, factory := range d.Validators {
-		validators = append(validators, factory(client, driverName))
-	}
-	return validators
-}
-
 // GetMigratorFunc returns the migrator function for a given resource.
-func (d MigrationDefinition) GetMigratorFunc(accessor legacy.MigrationDashboardAccessor, gr schema.GroupResource) MigratorFunc {
-	if factory, ok := d.Migrators[gr]; ok {
-		return factory(accessor)
-	}
-	return nil
+func (d MigrationDefinition) GetMigratorFunc(gr schema.GroupResource) MigratorFunc {
+	return d.Migrators[gr]
 }
 
 // MigrationRegistry is a thread-safe registry of migration definitions.
@@ -144,11 +152,11 @@ func (r *MigrationRegistry) All() []MigrationDefinition {
 }
 
 // GetMigratorFunc searches all definitions for a migrator matching the given resource.
-func (r *MigrationRegistry) GetMigratorFunc(accessor legacy.MigrationDashboardAccessor, gr schema.GroupResource) MigratorFunc {
+func (r *MigrationRegistry) GetMigratorFunc(gr schema.GroupResource) MigratorFunc {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, def := range r.definitions {
-		if fn := def.GetMigratorFunc(accessor, gr); fn != nil {
+		if fn := def.GetMigratorFunc(gr); fn != nil {
 			return fn
 		}
 	}
@@ -165,49 +173,4 @@ func (r *MigrationRegistry) HasResource(gr schema.GroupResource) bool {
 		}
 	}
 	return false
-}
-
-// Registry is the public migration registry containing all migration definitions.
-// It can be used from other packages to access migrations without the SQL migration interface.
-var Registry = NewMigrationRegistry()
-
-func init() {
-	// Register folders and dashboards migration
-	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
-	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
-
-	Registry.Register(MigrationDefinition{
-		ID:          "folders-dashboards",
-		MigrationID: "folders and dashboards migration",
-		Resources: []ResourceInfo{
-			{GroupResource: folderGR, LockTable: "folder"},
-			{GroupResource: dashboardGR, LockTable: "dashboard"},
-		},
-		Migrators: map[schema.GroupResource]MigratorFactory{
-			folderGR:    func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigrateFolders },
-			dashboardGR: func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigrateDashboards },
-		},
-		Validators: []ValidatorFactory{
-			CountValidation(folderGR, "dashboard", "org_id = ? AND is_folder = true AND deleted IS NULL"),
-			CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
-			FolderTreeValidation(folderGR),
-		},
-	})
-
-	// Register playlists migration
-	playlistGR := schema.GroupResource{Group: playlists.APIGroup, Resource: "playlists"}
-
-	Registry.Register(MigrationDefinition{
-		ID:          "playlists",
-		MigrationID: "playlists migration",
-		Resources: []ResourceInfo{
-			{GroupResource: playlistGR, LockTable: "playlist"},
-		},
-		Migrators: map[schema.GroupResource]MigratorFactory{
-			playlistGR: func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigratePlaylists },
-		},
-		Validators: []ValidatorFactory{
-			CountValidation(playlistGR, "playlist", "org_id = ?"),
-		},
-	})
 }

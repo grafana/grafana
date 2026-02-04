@@ -85,15 +85,17 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	)
 
+	registry := migrations.ProvideMigrationRegistry(dashboardAccess)
+
 	if c.Bool("non-interactive") {
-		return runNonInteractiveMigration(ctx, opts, dashboardAccess, grpcClient, start)
+		return runNonInteractiveMigration(ctx, opts, dashboardAccess, grpcClient, registry, start)
 	}
 
-	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start)
+	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, registry, start)
 }
 
-func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
-	migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
+func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, registry *migrations.MigrationRegistry, start time.Time) error {
+	migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient, registry)
 
 	opts.WithHistory = true // always include history in non-interactive mode
 	rsp, err := migrator.Migrate(ctx, opts)
@@ -109,13 +111,13 @@ func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions,
 	return nil
 }
 
-func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
+func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, registry *migrations.MigrationRegistry, start time.Time) error {
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
 		return err
 	}
 	if yes {
-		migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, nil) // no need for grpc client for counting
+		migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, nil, registry) // no need for grpc client for counting
 
 		opts.OnlyCount = true
 		rsp, err := migrator.Migrate(ctx, opts)
@@ -149,7 +151,7 @@ func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.
 		if err != nil {
 			return err
 		}
-		migrator := migrations.ProvideUnifiedMigratorParquet(dashboardAccess, parquetClient)
+		migrator := migrations.ProvideUnifiedMigratorParquet(dashboardAccess, parquetClient, registry)
 		start = time.Now()
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
@@ -192,7 +194,7 @@ func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.
 			return err
 		}
 		if yes {
-			migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
+			migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient, registry)
 			start = time.Now()
 			rsp, err := migrator.Migrate(ctx, opts)
 			if err != nil {
