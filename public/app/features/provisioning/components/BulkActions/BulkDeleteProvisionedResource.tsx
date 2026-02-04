@@ -39,8 +39,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const { handleSubmit, watch } = methods;
-  const workflow = watch('workflow');
+  const { handleSubmit } = methods;
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);

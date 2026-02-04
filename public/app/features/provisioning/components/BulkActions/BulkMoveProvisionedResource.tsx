@@ -48,12 +48,10 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const {
     handleSubmit,
-    watch,
     setError,
     clearErrors,
     formState: { errors },
   } = methods;
-  const workflow = watch('workflow');
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
