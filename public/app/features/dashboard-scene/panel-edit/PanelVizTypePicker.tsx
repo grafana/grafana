@@ -134,6 +134,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
               fill="text"
               variant="secondary"
               icon="arrow-left"
+              className={styles.closeButton}
               data-testid={selectors.components.PanelEditor.toggleVizPicker}
               onClick={handleBackButtonClick}
             >
@@ -184,11 +185,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flexGrow: 1,
     height: '100%',
-    gap: theme.spacing(2),
   }),
   searchField: css({
-    margin: theme.spacing(0.5, 1.5, 1, 1.5), // input glow with the boundary without this
-    padding: theme.spacing(0, 0.5, 2, 0.5), // slight adjustment to align with scroll container
+    margin: theme.spacing(2, 1.5, 0, 1.5), // input glow with the boundary without this
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
   }),
   tabs: css({
@@ -210,5 +209,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   filter: css({
     minHeight: theme.spacing(4),
+    marginBottom: theme.spacing(1),
   }),
 });
