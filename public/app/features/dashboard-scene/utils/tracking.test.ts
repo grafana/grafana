@@ -63,6 +63,14 @@ describe('dashboard tracking', () => {
           cloudwatch: 5,
           datasource: 1,
         },
+        variable_counts: {
+          custom: 3,
+          custom_csv: 2,
+          custom_json: 1,
+          query: 1,
+          datasource: 1,
+          adhoc: 1,
+        },
       });
     });
 
@@ -88,6 +96,14 @@ describe('dashboard tracking', () => {
         panelsByDatasourceType: {
           cloudwatch: 5,
           datasource: 1,
+        },
+        variable_counts: {
+          custom: 3,
+          custom_csv: 2,
+          custom_json: 1,
+          query: 1,
+          datasource: 1,
+          adhoc: 1,
         },
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
