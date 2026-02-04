@@ -216,17 +216,12 @@ export function PanelChrome({
   // Mainly the tricky bit of differentiating between dragging and selecting
   const onPointerUp = React.useCallback(
     (evt: React.PointerEvent) => {
-      if (pointerDistance.check(evt) || !(evt.target instanceof Element)) {
+      if (
+        pointerDistance.check(evt) ||
+        (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
+      ) {
         return;
       }
-      if (dragClassCancel && evt.target.closest(`.${dragClassCancel}`)) {
-        return;
-      }
-      // prevents clicks on panel menu items to select the panel
-      if (evt.target.closest('button')) {
-        return;
-      }
-
       // setTimeout is needed here because onSelect stops the event propagation
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
@@ -438,6 +433,7 @@ export function PanelChrome({
                   placement="bottom-end"
                   menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
                   onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
                 />
               )}
             </div>
