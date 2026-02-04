@@ -21,7 +21,7 @@ interface Props {
   interval: string;
 }
 
-const SetInterval = ({ func, loading, interval: intervalStr }: Props) => {
+export const SetInterval = React.memo(({ func, loading, interval: intervalStr }: Props) => {
   const propsSubjectRef = useRef<Subject<Props> | null>(null);
   const subscriptionRef = useRef<Subscription | null>(null);
   const prevPropsRef = useRef<Props>({ func, loading, interval: intervalStr });
@@ -80,6 +80,6 @@ const SetInterval = ({ func, loading, interval: intervalStr }: Props) => {
     prevPropsRef.current = currentProps;
   }, [func, loading, intervalStr]);
   return null;
-};
+});
 
-export const SetIntervalMemo = React.memo(SetInterval);
+SetInterval.displayName = 'SetInterval';
