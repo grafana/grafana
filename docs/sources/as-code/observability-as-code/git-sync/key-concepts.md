@@ -81,7 +81,7 @@ A repository resource is a Grafana configuration object that defines the connect
 
 Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
 
-### Git Sync connection
+### Git Sync connection resource
 
 If you're setting up Git Sync using a GitHub App, a connection represents the installation of the app so you can connect a group of repositories to your Grafana instance.
 
@@ -89,7 +89,7 @@ It includes:
 
 - The GitHub App: The application registered with GitHub that enables authentication and authorization.
 - The GitHub App installation: An instance of the app you've installed.
-- The Github repositories the installation can access.
+- The GitHub repositories the installation can access.
 
 ## How does Git Sync behave?
 
