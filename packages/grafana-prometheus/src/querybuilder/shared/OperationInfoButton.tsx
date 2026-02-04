@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationInfoButton.tsx
 import { css } from '@emotion/css';
 import { autoUpdate, offset, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { memo, useState } from 'react';
+import React, { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { t } from '@grafana/i18n';

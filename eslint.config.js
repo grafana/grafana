@@ -125,6 +125,7 @@ module.exports = [
   {
     name: 'react/jsx-runtime-rules',
     rules: reactPlugin.configs.flat['jsx-runtime'].rules,
+    ignores: ['packages/grafana-prometheus'],
   },
   {
     name: 'grafana/defaults',

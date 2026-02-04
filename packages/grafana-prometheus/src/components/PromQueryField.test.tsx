@@ -2,6 +2,7 @@
 import { getByTestId, render, screen } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import { CoreApp, DataFrame, dateTime, LoadingState, PanelData } from '@grafana/data';
 

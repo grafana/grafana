@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/NestedQuery.tsx
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';

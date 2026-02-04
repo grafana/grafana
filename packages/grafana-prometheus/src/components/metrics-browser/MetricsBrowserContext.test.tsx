@@ -1,6 +1,6 @@
 import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 

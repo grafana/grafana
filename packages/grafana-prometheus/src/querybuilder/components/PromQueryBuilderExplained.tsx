@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderExplained.tsx
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import { Stack } from '@grafana/ui';
 

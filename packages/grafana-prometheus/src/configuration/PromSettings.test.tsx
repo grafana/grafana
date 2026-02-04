@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/PromSettings.test.tsx
 import { render, screen } from '@testing-library/react';
-import { SyntheticEvent } from 'react';
+import React, { SyntheticEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 

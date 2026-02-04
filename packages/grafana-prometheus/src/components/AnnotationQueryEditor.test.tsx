@@ -1,5 +1,6 @@
 // Core Grafana testing pattern
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

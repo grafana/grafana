@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useState } from 'react';
+import React, { memo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

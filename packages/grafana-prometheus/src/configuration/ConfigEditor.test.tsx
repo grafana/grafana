@@ -1,4 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.test.tsx
+import React from 'react';
+
 import { FieldValidationMessage } from '@grafana/ui';
 
 import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from '../constants';

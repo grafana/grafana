@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';

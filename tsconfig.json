@@ -34,5 +34,5 @@
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"
   ],
-  "exclude": ["public/app/**/webpack.config.ts"]
+  "exclude": ["public/app/**/webpack.config.ts", "packages/**"]
 }

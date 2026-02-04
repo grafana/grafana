@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
+import React, { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
 
 import { TimeRange } from '@grafana/data';
 

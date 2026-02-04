@@ -1,5 +1,5 @@
 import { act, render, renderHook, waitFor } from '@testing-library/react';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 

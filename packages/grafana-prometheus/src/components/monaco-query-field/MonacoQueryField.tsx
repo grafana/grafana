@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
 import { promLanguageDefinition } from 'monaco-promql';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
