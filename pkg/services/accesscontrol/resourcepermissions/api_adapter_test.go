@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -733,15 +732,6 @@ func TestAdminRoleLogic(t *testing.T) {
 		shouldAddAdmin := service.options.Assignments.BuiltInRoles && !service.license.FeatureEnabled("accesscontrol.enforcement")
 		assert.False(t, shouldAddAdmin, "should not add Admin role when built-in roles are disabled")
 	})
-}
-
-// mockRestConfigProvider is a mock implementation of RestConfigProvider for testing
-type mockRestConfigProvider struct {
-	client dynamic.Interface
-}
-
-func (m *mockRestConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
-	return &rest.Config{}, nil
 }
 
 // mockResourcePermissionStore is a mock implementation of the Store interface for testing
