@@ -49,6 +49,7 @@ export const commonGroupByOptions = [
 
 export const emptyRoute: FormAmRoute = {
   id: '',
+  name: '',
   overrideGrouping: false,
   groupBy: defaultGroupBy,
   object_matchers: [],
@@ -63,9 +64,13 @@ export const emptyRoute: FormAmRoute = {
   activeTimeIntervals: [],
 };
 
+export function addUniqueIdentifierToRoutes(routes: Route[]): RouteWithID[] {
+  return routes.map((policy, index) => addUniqueIdentifierToRoute(policy, policy.name ?? index.toString()));
+}
+
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
 // ⚠️ make sure this function uses _stable_ identifiers!
-export function addUniqueIdentifierToRoute(route: Route, position = '0'): RouteWithID {
+export function addUniqueIdentifierToRoute(route: Route, position = route.name ?? '0'): RouteWithID {
   const routeHash = hashRoute(route);
   const routes = route.routes ?? [];
 
@@ -112,6 +117,7 @@ export const amRouteToFormAmRoute = (route: RouteWithID | undefined): FormAmRout
 
   return {
     id,
+    name: route.name ?? '',
     // Frontend migration to use object_matchers instead of matchers, match, and match_re
     object_matchers: [
       ...matchers,
