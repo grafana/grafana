@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 type ctxUserKey struct{}
@@ -103,6 +104,24 @@ func WithProvisioningIdentity(ctx context.Context, namespace string, opts ...Ide
 		return nil, nil, err
 	}
 
+	// Add provisioning audiences to the identity claims.
+	// The token needs to include multiple audiences:
+	// - "provisioning.grafana.app" for managed.go authorization checks (line 98)
+	// - "folder.grafana.app" for folder service authentication
+	// - "dashboard.grafana.app" for dashboard service authentication
+	// JWT tokens support multiple audiences, and each receiving service validates
+	// that its expected audience is present in the list.
+	provisioningOpt := func(sr *StaticRequester) {
+		if sr.AccessTokenClaims != nil {
+			sr.AccessTokenClaims.Audience = []string{
+				provisioning.GROUP,        // "provisioning.grafana.app"
+				"folder.grafana.app",      // for folder service
+				"dashboard.grafana.app",   // for dashboard service
+			}
+		}
+	}
+
+	opts = append([]IdentityOpts{provisioningOpt}, opts...)
 	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID, opts...)
 	return WithRequester(ctx, r), r, nil
 }
