@@ -1,7 +1,7 @@
 package runner
 
 import (
-	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -89,7 +89,7 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			if len(kind.SelectableFields()) == 0 {
 				continue
 			}
-			err := apiregistry.AddSelectableFieldLabelConversions(scheme, gv, kind)
+			err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gv, kind)
 			if err != nil {
 				return err
 			}

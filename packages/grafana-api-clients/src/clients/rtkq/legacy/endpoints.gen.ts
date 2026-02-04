@@ -2073,6 +2073,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}` }),
         providesTags: ['sso_settings'],
       }),
+      patchProviderSettings: build.mutation<PatchProviderSettingsApiResponse, PatchProviderSettingsApiArg>({
+        query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PATCH', body: queryArg.body }),
+        invalidatesTags: ['sso_settings'],
+      }),
       updateProviderSettings: build.mutation<UpdateProviderSettingsApiResponse, UpdateProviderSettingsApiArg>({
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PUT', body: queryArg.body }),
         invalidatesTags: ['sso_settings'],
@@ -3802,6 +3806,16 @@ export type GetProviderSettingsApiResponse = /** status 200 (empty) */ {
 };
 export type GetProviderSettingsApiArg = {
   key: string;
+};
+export type PatchProviderSettingsApiResponse =
+  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type PatchProviderSettingsApiArg = {
+  key: string;
+  body: {
+    settings?: {
+      [key: string]: any;
+    };
+  };
 };
 export type UpdateProviderSettingsApiResponse =
   /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -6898,5 +6912,6 @@ export const {
   useRemoveProviderSettingsMutation,
   useGetProviderSettingsQuery,
   useLazyGetProviderSettingsQuery,
+  usePatchProviderSettingsMutation,
   useUpdateProviderSettingsMutation,
 } = injectedRtkApi;

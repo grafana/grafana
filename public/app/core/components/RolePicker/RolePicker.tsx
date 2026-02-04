@@ -2,7 +2,8 @@ import { FormEvent, useCallback, useEffect, useRef, useState, useSyncExternalSto
 
 import { OrgRole } from '@grafana/data';
 import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
-import { Role } from 'app/types/accessControl';
+import { pickerStateStore } from 'app/core/utils/roles';
+import type { Role } from 'app/types/accessControl';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
@@ -12,7 +13,6 @@ import {
   ROLE_PICKER_MENU_MAX_WIDTH,
   ROLE_PICKER_WIDTH,
 } from './constants';
-import { pickerStateStore } from './utils';
 
 export interface Props {
   basicRole?: OrgRole;

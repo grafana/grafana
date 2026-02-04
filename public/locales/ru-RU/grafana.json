@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Сброс до значений по умолчанию",
-      "title-invalid-configuration": "Недопустимая конфигурация",
       "title-more-actions": "Другие действия",
       "tooltip-more-actions": "Другие действия"
     },
@@ -670,14 +669,18 @@
       "aria-label-group-by": "Группировать по",
       "aria-label-group-interval": "Интервал для группы",
       "aria-label-group-wait": "Время ожидания для группы",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Интервал повторения",
       "create-a-contact-point": "Создать точку контакта",
+      "description-unique-routing": "",
       "label-default-contact-point": "Точка контакта по умолчанию",
+      "label-name": "",
       "label-timing-options": "Параметры времени",
       "message": {
         "required": "Обязательно."
       },
-      "or": "или"
+      "or": "или",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Добавить средство сопоставления",
@@ -2150,6 +2153,10 @@
       "new-policy": "Добавить новую политику",
       "no-matchers": "Нет средств сопоставления",
       "reload-policies": "Перезагрузить политики",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Сохранить политику",
       "update": {
         "please-wait": "Подождите, пока мы обновляем ваши политики уведомления.",
@@ -2170,6 +2177,54 @@
       "n-more-policies_few": "{{count}} дополнительные политики",
       "n-more-policies_many": "{{count}} дополнительных политик",
       "n-more-policies_other": "{{count}} дополнительной политики"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Новая дочерняя политика",
@@ -2353,6 +2408,13 @@
       "label-override-grouping": "Переопределить группировку",
       "label-override-timings": "Переопределить временные рамки",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Редактировать",
@@ -3125,6 +3187,12 @@
       "label-edit": "Редактировать",
       "label-export": "Экспорт"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Да, удалить точку контакта",
       "deleting": "Удаление...",
@@ -3142,6 +3210,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Удаление политики уведомления"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3771,6 +3848,9 @@
       "folder-actions": "Действия с папками",
       "manage-permissions": "Управление разрешениями",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Выбрать папку: в данный момент выбрана {{ label }}",
@@ -4985,6 +5065,7 @@
       },
       "variables": {
         "add-variable": "Добавление переменной",
+        "reorder": "",
         "select-type": "Выберите тип переменной",
         "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
         "select-variable": "Выбрать"
@@ -5852,7 +5933,7 @@
       "load": "Загрузить"
     },
     "gcom-field": {
-      "label": "Найти и импортировать дашборды для распространенных приложений по адресу <1></1>",
+      "label": "",
       "load-button": "Загрузить",
       "placeholder": "URL-адрес или идентификатор дашборда Grafana.com",
       "validation-required": "Требуется URL-адрес или идентификатор дашборда Grafana"
@@ -6277,6 +6358,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Отмена",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Папка"
     },
     "inspect-data-tab": {
@@ -6360,6 +6443,11 @@
       "title": {
         "remove-panel": "Удалить панель"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Оповещение"
@@ -6730,6 +6818,16 @@
         }
       },
       "label": "Скрыть"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Тип переменной"
@@ -9850,7 +9948,6 @@
       "error-fetching": "Ошибка при получении параметров LDAP",
       "error-saving": "Ошибка при сохранении параметров LDAP",
       "error-validate-form": "Ошибка проверки параметров LDAP",
-      "feature-flag-disabled": "",
       "saved": "Параметры LDAP сохранены"
     },
     "bind-dn": {
@@ -10438,9 +10535,15 @@
       "options": "Параметры"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Импорт дашборда с <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Кем опубликовано",
       "updated-on": "Дата обновления"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Действительно удалить «{{snapshotToRemove}}»?",
@@ -11310,6 +11413,9 @@
     "noOptionsMessage-no-organizations-found": "Организации не найдены",
     "select-placeholder": "Выбрать организацию"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Редактировать заголовок"
@@ -11356,6 +11462,7 @@
     },
     "header-menu": {
       "copy": "Копировать",
+      "copy-styles": "",
       "create-library-panel": "Создать панель библиотеки",
       "duplicate": "Дублировать",
       "edit": "Редактировать",
@@ -11367,11 +11474,13 @@
       "inspect-json": "JSON-файл панели",
       "more": "Еще...",
       "new-alert-rule": "Новое правило оповещения",
+      "paste-styles": "",
       "query": "Запрос",
       "remove": "Удалить",
       "replace-library-panel": "Заменить панель библиотеки",
       "share": "Общий доступ",
       "show-legend": "Показать условные обозначения",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "view": "Просмотр"
@@ -11807,6 +11916,7 @@
       "text-installed": "Установлено"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Зависимость Grafana",
       "installed-version": "{{versionNumber}} (установленная версия)",
       "latest-compatible-version": "{{versionNumber}} (последняя совместимая версия)",
@@ -11934,9 +12044,6 @@
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
@@ -11997,6 +12104,13 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -12005,6 +12119,8 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12350,6 +12466,9 @@
         "view-repository": "Просмотр репозитория"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Проверено:",
       "connection-status": "",
@@ -12510,23 +12629,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Конфигурация репозитория будет удалена, и вы потеряете весь прогресс. Действительно отменить изменения?",
         "confirm": "Да, отменить",
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12538,21 +12661,18 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-configure-repo": "",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
-      "step-github-app": "",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Выберите, что синхронизировать",
       "title-configure-repo": "",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
-      "title-github-app": "",
       "title-synchronize": "Синхронизировать с внешним хранилищем"
     },
     "wizard-content": {
@@ -13704,6 +13824,7 @@
     "name-wrap-header-text": "Перенос текста заголовка",
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
