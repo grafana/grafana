@@ -6,6 +6,7 @@ import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dash
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import { LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
@@ -53,12 +54,12 @@ function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
   return 'uid' in query && typeof query['uid'] === 'string';
 }
 
-function getExportLabel(labels?: { exportLabel?: string }): string | undefined {
+function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
   if (!labels) {
     return undefined;
   }
 
-  return labels?.exportLabel;
+  return labels?.[ExportLabel];
 }
 
 /**

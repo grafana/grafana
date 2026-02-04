@@ -27,6 +27,10 @@ import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
 
+// This label is used to store the export label for a datasource when exporting a V2 dashboard for external sharing.
+// E.g. if a dashboard has two datasources with the same type, the export label will be used to distinguish them.
+export const ExportLabel = 'grafana.app/export-label';
+
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
 }
@@ -433,7 +437,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
 
     dataQueryKind.labels = {
       ...(dataQueryKind.labels ?? {}),
-      exportLabel: getLabel(dataQueryKind.group, datasourceUid),
+      [ExportLabel]: getLabel(dataQueryKind.group, datasourceUid),
     };
 
     dataQueryKind.datasource = undefined;
