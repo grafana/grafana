@@ -36,7 +36,15 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		srq.SearchBefore = token.SearchBefore
 	}
 
-	searchResp, err := s.searchClient.Search(ctx, srq)
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.searchClient != nil {
+		// Use remote search service
+		searchResp, err = s.searchClient.Search(ctx, srq)
+	} else {
+		// Use local search service
+		searchResp, err = s.search.Search(ctx, srq)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +110,7 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	if s.searchClient == nil || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
+	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
 
