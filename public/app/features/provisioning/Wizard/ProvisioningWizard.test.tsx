@@ -8,8 +8,8 @@ import {
   useCreateRepositoryJobsMutation,
   useGetFrontendSettingsQuery,
   useGetRepositoryFilesQuery,
-  useGetRepositoryStatusQuery,
   useGetResourceStatsQuery,
+  useListRepositoryQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchOptions } from '../hooks/useBranchOptions';
@@ -33,7 +33,7 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetFrontendSettingsQuery: jest.fn(),
   useGetRepositoryFilesQuery: jest.fn(),
-  useGetRepositoryStatusQuery: jest.fn(),
+  useListRepositoryQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
 }));
@@ -48,9 +48,7 @@ const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.Mock
 const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
   typeof useGetRepositoryFilesQuery
 >;
-const mockUseGetRepositoryStatusQuery = useGetRepositoryStatusQuery as jest.MockedFunction<
-  typeof useGetRepositoryStatusQuery
->;
+const mockUseListRepositoryQuery = useListRepositoryQuery as jest.MockedFunction<typeof useListRepositoryQuery>;
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
   typeof useCreateRepositoryJobsMutation
@@ -136,6 +134,9 @@ describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Allow console.log for the debug statement in useRepositoryStatus
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
     // Mock useBranchOptions to prevent real API calls
     mockUseBranchOptions.mockReturnValue({
       options: [
@@ -173,16 +174,21 @@ describe('ProvisioningWizard', () => {
       refetch: jest.fn(),
     });
 
-    mockUseGetRepositoryStatusQuery.mockReturnValue({
+    mockUseListRepositoryQuery.mockReturnValue({
       data: {
-        status: {
-          observedGeneration: 1,
-          health: {
-            healthy: true,
-            checked: true,
-            message: '',
+        items: [
+          {
+            metadata: { name: 'test-repo' },
+            status: {
+              observedGeneration: 1,
+              health: {
+                healthy: true,
+                checked: Date.now(),
+                message: [],
+              },
+            },
           },
-        },
+        ],
       },
       isLoading: false,
       isFetching: false,
