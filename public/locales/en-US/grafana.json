@@ -1696,6 +1696,10 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
+        "extra-config-conflict-desc": "There is already an uncommitted imported configuration named \"{{identifier}}\". To proceed, either use \"{{identifier}}\" as your policy tree name to replace it, or commit/discard the existing configuration first.",
+        "extra-config-conflict-title": "Cannot import notification resources",
+        "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
+        "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
