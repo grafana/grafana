@@ -64,11 +64,6 @@ export interface FeatureToggles {
   */
   cloudWatchCrossAccountQuerying?: boolean;
   /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -969,6 +964,11 @@ export interface FeatureToggles {
   * @default true
   */
   alertingImportYAMLUI?: boolean;
+  /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
   /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
