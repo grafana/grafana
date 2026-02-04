@@ -52,7 +52,7 @@ export function useAppPluginVersion(pluginId: string) {
 }
 
 /**
- * Hook that checks if an panel plugin is installed.
+ * Hook that checks if a panel plugin is installed.
  * @param pluginId - The ID of the panel plugin.
  * @returns loading, error, value of the panel plugin installed status.
  * The value is true if the panel plugin is installed, false otherwise.
@@ -63,7 +63,7 @@ export function usePanelPluginInstalled(pluginId: string) {
 }
 
 /**
- * Hook that gets the version of an panel plugin.
+ * Hook that gets the version of a panel plugin.
  * @param pluginId - The ID of the panel plugin.
  * @returns loading, error, value of the panel plugin version.
  * The value is the version of the panel plugin, or null if the plugin is not installed.
