@@ -1002,6 +1002,8 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 
 	variables := make([]dashv2alpha1.DashboardVariableKind, 0, len(list))
 
+	dashboardUID := schemaversion.GetStringValue(dashboard, "uid")
+
 	for _, v := range list {
 		varMap, ok := v.(map[string]interface{})
 		if !ok {
@@ -1050,7 +1052,12 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 				variables = append(variables, groupByVar)
 			}
 		default:
-			// Skip unknown variable types
+			// Log and skip unsupported variable type
+			getLogger().Warn("Variable skipped during conversion: unsupported variable type",
+				"dashboardUID", dashboardUID,
+				"variableName", commonProps.Name,
+				"variableType", varType,
+			)
 			continue
 		}
 	}
