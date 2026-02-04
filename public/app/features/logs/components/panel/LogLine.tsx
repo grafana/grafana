@@ -375,7 +375,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
-  const { syntaxHighlighting } = useLogListContext();
+  const { syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -388,32 +388,42 @@ const DisplayedFields = ({
     return searchWords;
   }, [log.searchWords, log.uid, matchingUids, search]);
 
-  return displayedFields.map((field) => {
-    if (field === LOG_LINE_BODY_FIELD_NAME) {
-      return <LogLineBody log={log} key={field} styles={styles} />;
-    }
-    if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+  return displayedFields
+    .map((field) => {
+      if (field === LOG_LINE_BODY_FIELD_NAME) {
+        return <LogLineBody log={log} key={field} styles={styles} />;
+      }
+      if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+        return (
+          <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+            <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
+          </span>
+        );
+      }
+
+      const fieldValue = log.getDisplayedFieldValue(field);
+
+      // With wrapped logs, or without unwrapped columns, we skip empty values so they don't appear as an empty space
+      if ((wrapLogMessage || !unwrappedColumns) && !fieldValue) {
+        return null;
+      }
+
       return (
-        <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
-          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
+        <span className="field" title={getNormalizedFieldName(field)} key={field}>
+          {searchWords ? (
+            <Highlighter
+              textToHighlight={fieldValue}
+              searchWords={searchWords}
+              findChunks={findHighlightChunksInText}
+              highlightClassName={styles.matchHighLight}
+            />
+          ) : (
+            fieldValue
+          )}{' '}
         </span>
       );
-    }
-    return (
-      <span className="field" title={getNormalizedFieldName(field)} key={field}>
-        {searchWords ? (
-          <Highlighter
-            textToHighlight={log.getDisplayedFieldValue(field)}
-            searchWords={searchWords}
-            findChunks={findHighlightChunksInText}
-            highlightClassName={styles.matchHighLight}
-          />
-        ) : (
-          log.getDisplayedFieldValue(field)
-        )}{' '}
-      </span>
-    );
-  });
+    })
+    .filter((field) => field !== null);
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
