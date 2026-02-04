@@ -89,9 +89,11 @@ export const RadialScaleLabels = memo(
         finalAngle += textWidthAngle;
       }
 
-      // For circle gauges we need to shift the last label more
-      if (isLast && endAngle === 360) {
-        finalAngle -= textWidthAngle;
+      // Remove a bit of the angle for the last label to avoid clipping.
+      // for circles, we shift it over the entire width of the label.
+      // for arcs, we shift by half the label width.
+      if (isLast) {
+        finalAngle -= endAngle === 360 ? textWidthAngle : textWidthAngle / 2;
       }
 
       const position = toCartesian(centerX, centerY, radius, finalAngle);
