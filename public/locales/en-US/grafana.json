@@ -5982,6 +5982,12 @@
         }
       }
     },
+    "annotation-query-editor-button": {
+      "aria-label-toggle-menu": "Toggle menu",
+      "menu-actions": {
+        "label-select-from-query-library": "Select from query library"
+      }
+    },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
       "control-display-options": {
