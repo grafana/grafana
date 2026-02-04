@@ -570,9 +570,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
 	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics)
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, registerer, storageMetrics, tracer)
+	if err != nil {
+		return nil, err
+	}
+	resourceClient, err := unified.ProvideUnifiedStorageClient(options, bleveIndexMetrics, storageBackend)
 	if err != nil {
 		return nil, err
 	}
@@ -1252,9 +1256,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
 	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics)
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, registerer, storageMetrics, tracer)
+	if err != nil {
+		return nil, err
+	}
+	resourceClient, err := unified.ProvideUnifiedStorageClient(options, bleveIndexMetrics, storageBackend)
 	if err != nil {
 		return nil, err
 	}
@@ -1795,7 +1803,8 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	moduleRegisterer := ProvideNoopModuleRegisterer()
-	storageBackend, err := sql.ProvideStorageBackend(cfg)
+	db := _wireDBValue
+	storageBackend, err := sql.ProvideStorageBackend(cfg, db, registerer, storageMetrics, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -1805,6 +1814,10 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	}
 	return moduleServer, nil
 }
+
+var (
+	_wireDBValue = (db.DB)(nil)
+)
 
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
