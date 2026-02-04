@@ -314,7 +314,7 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
@@ -326,8 +326,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	}
 
 	bi := buildInfo{
-		BuildTime:    buildTime.Unix(),
-		BuildVersion: buildVersion,
+		BuildTime:        buildTime.Unix(),
+		BuildVersion:     buildVersion,
+		SelectableFields: selectableFields,
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -344,8 +345,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
-	BuildVersion string `json:"build_version"` // Grafana version used when building the index
+	BuildTime        int64    `json:"build_time"`                  // Unix seconds timestamp of time when the index was built
+	BuildVersion     string   `json:"build_version"`               // Grafana version used when building the index
+	SelectableFields []string `json:"selectable_fields,omitempty"` // List of selectable fields used when index was created.
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -450,7 +452,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
+				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -465,7 +467,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
+		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -877,8 +879,9 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	}
 
 	return resource.IndexBuildInfo{
-		BuildTime:    bt,
-		BuildVersion: bv,
+		BuildTime:        bt,
+		BuildVersion:     bv,
+		SelectableFields: bi.SelectableFields,
 	}, nil
 }
 

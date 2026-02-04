@@ -224,6 +224,9 @@ type SearchOptions struct {
 	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
 	// that subsequent search will observe the effect of the writing.
 	IndexMinUpdateInterval time.Duration
+
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	SelectableFieldsForKinds map[string][]string
 }
 
 type ResourceServerOptions struct {
