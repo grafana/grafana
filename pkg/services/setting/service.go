@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -22,12 +23,23 @@ import (
 	"k8s.io/client-go/transport"
 
 	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/semconv"
 )
 
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/setting")
+// settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
+type settingTracer struct {
+	trace.Tracer
+}
+
+// Inject propagates trace context into HTTP headers.
+func (t *settingTracer) Inject(ctx context.Context, header http.Header, _ trace.Span) {
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
+}
+
+var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafana/pkg/services/setting")}
 
 const LogPrefix = "setting.service"
 
@@ -404,9 +416,11 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		}
 	}
 
-	// Wrap with tracing to propagate trace context to all outbound requests
+	// Wrap with tracing middleware to propagate trace context to all outbound requests
+	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
 	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
-		return &tracingRoundTripper{transport: authTransport(rt)}
+		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
+		return authTransport(tracingRT)
 	}
 
 	qps := DefaultQPS
@@ -465,19 +479,6 @@ func (a *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	reqCopy := req.Clone(req.Context())
 	reqCopy.Header.Set("X-Access-Token", fmt.Sprintf("Bearer %s", token.Token))
 	return a.transport.RoundTrip(reqCopy)
-}
-
-// tracingRoundTripper wraps an HTTP transport with trace context propagation.
-type tracingRoundTripper struct {
-	transport http.RoundTripper
-}
-
-var _ http.RoundTripper = (*tracingRoundTripper)(nil)
-
-func (t *tracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	reqCopy := req.Clone(req.Context())
-	otel.GetTextMapPropagator().Inject(req.Context(), propagation.HeaderCarrier(reqCopy.Header))
-	return t.transport.RoundTrip(reqCopy)
 }
 
 func initMetrics() remoteSettingServiceMetrics {
