@@ -265,6 +265,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		"value": fieldErrors,
 	})
 
+	// Update Spec condition based on fieldErrors
+	specCondition := buildSpecCondition(fieldErrors)
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), specCondition); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
+	}
+
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
 		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {

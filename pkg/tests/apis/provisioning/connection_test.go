@@ -1026,6 +1026,11 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
+		// Verify Spec condition is set to Valid when no validation errors
+		specCondition := meta.FindStatusCondition(initial.Status.Conditions, provisioning.ConditionTypeSpec)
+		require.NotNil(t, specCondition, "Spec condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, specCondition.Status, "Spec condition should be True")
+		assert.Equal(t, provisioning.ReasonSpecValid, specCondition.Reason, "Spec condition should have Valid reason")
 	})
 
 	t.Run("health check updates when spec changes", func(t *testing.T) {
@@ -1117,6 +1122,11 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
+		// Verify Spec condition remains Valid after spec change
+		specCondition := meta.FindStatusCondition(final.Status.Conditions, provisioning.ConditionTypeSpec)
+		assert.NotNil(t, specCondition, "Spec condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, specCondition.Status, "Spec condition should be True")
+		assert.Equal(t, provisioning.ReasonSpecValid, specCondition.Reason, "Spec condition should have Valid reason")
 	})
 }
 
@@ -1239,6 +1249,13 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
 			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.Origin)
+
+		// Verify Spec condition is Invalid when there are fieldErrors
+		specCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeSpec)
+		require.NotNil(t, specCondition, "Spec condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, specCondition.Status, "Spec condition should be False when there are validation errors")
+		assert.Equal(t, provisioning.ReasonSpecInvalid, specCondition.Reason, "Spec condition should have Invalid reason")
+		assert.Contains(t, specCondition.Message, "validation error", "Spec condition message should mention validation error")
 	})
 
 	t.Run("connection with invalid app ID becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1343,6 +1360,13 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
 			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.Origin)
+
+		// Verify Spec condition is Invalid when there are fieldErrors
+		specCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeSpec)
+		require.NotNil(t, specCondition, "Spec condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, specCondition.Status, "Spec condition should be False when there are validation errors")
+		assert.Equal(t, provisioning.ReasonSpecInvalid, specCondition.Reason, "Spec condition should have Invalid reason")
+		assert.Contains(t, specCondition.Message, "validation error", "Spec condition message should mention validation error")
 	})
 }
 
@@ -1488,6 +1512,11 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True when connection becomes healthy")
 		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
+		// Verify Spec condition is now Valid when fieldErrors are cleared
+		specCondition := meta.FindStatusCondition(connHealthy.Status.Conditions, provisioning.ConditionTypeSpec)
+		assert.NotNil(t, specCondition, "Spec condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, specCondition.Status, "Spec condition should be True when fieldErrors are cleared")
+		assert.Equal(t, provisioning.ReasonSpecValid, specCondition.Reason, "Spec condition should have Valid reason")
 	})
 }
 
