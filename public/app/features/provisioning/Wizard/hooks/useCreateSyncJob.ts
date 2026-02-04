@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 
 import { StepStatusInfo } from '../types';
 
@@ -49,9 +50,13 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
       // Job status will be tracked by JobStatus component, keep status as 'running'
       return response;
     } catch (error) {
+      const errorMessage = extractErrorMessage(error);
       setStepStatusInfo?.({
         status: 'error',
-        error: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
+        error: {
+          title: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
+          message: errorMessage,
+        },
       });
       return null;
     }
