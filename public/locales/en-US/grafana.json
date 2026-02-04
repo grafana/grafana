@@ -673,7 +673,6 @@
       "message": {
         "required": "Required."
       },
-      "or": "or",
       "validate-name": "Name is required"
     },
     "am-routes-expanded-form": {
