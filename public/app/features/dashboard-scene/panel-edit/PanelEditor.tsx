@@ -424,10 +424,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
    * Toggle between v1 and v2 query editor.
    */
   public onToggleQueryEditorVersion = () => {
+    const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
+    const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
+
     this.setState({
-      useQueryExperienceNext: !this.state.useQueryExperienceNext,
-      dataPane: PanelDataPane.createFor(this.getPanel(), !this.state.useQueryExperienceNext),
+      useQueryExperienceNext: newUseQueryExperienceNext,
+      dataPane,
     });
+
+    // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
+    this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
   };
 
   public static buildEditPreview(panel: VizPanel): VizPanel {
