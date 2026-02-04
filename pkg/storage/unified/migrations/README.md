@@ -12,15 +12,20 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 |----------|-----------|--------------|
 | Folders | `folder.grafana.app` | `dashboard` |
 | Dashboards | `dashboard.grafana.app` | `dashboard` |
-| Library panels | `dashboard.grafana.app` | `library_element` |
 | Playlists | `playlist.grafana.app` | `playlist` |
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ResourceMigration                        │
-│        (Orchestrates per-organization migration)            │
+│                    MigrationRegistry                        │
+│           (Global registry of MigrationDefinitions)         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    MigrationRunner                          │
+│        (Executes per-organization migration logic)          │
 └──────────────────────────┬──────────────────────────────────┘
                            │
        ┌───────────────────┼───────────────────┐
@@ -32,19 +37,20 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 ### Components
 
-- **`service.go`**: Migration service entry point and registration
-- **`migrator.go`**: Core migration logic using streaming BulkProcess API
-- **`resource_migration.go`**: Per-organization migration execution
-- **`validator.go`**: Post-migration validation (CountValidator, FolderTreeValidator)
-- **`resources.go`**: Registry of migratable resource types
+- **`service.go`**: Migration service entry point
+- **`registry.go`**: `MigrationDefinition` and thread-safe `MigrationRegistry`
+- **`resource_migration.go`**: `MigrationRunner` (logic) and `ResourceMigration` (SQL migration wrapper)
+- **`resources.go`**: Migration registration and auto-migrate logic
+- **`validator.go`**: `CountValidator` and `FolderTreeValidator` implementations
+- **`migrator.go`**: `UnifiedMigrator` interface and BulkProcess streaming
 
 ## How migrations work
 
 ### Migration flow
 
 1. Grafana starts and checks migration status in `unifiedstorage_migration_log` table
-2. For each organization, the migrator:
-   - Reads resources from legacy SQL tables
+2. `MigrationRunner` executes for each organization:
+   - Reads resources from legacy SQL tables via `UnifiedMigrator`
    - Streams resources to unified storage via BulkProcess API
    - Runs validators to verify data integrity
 3. Records migration result in `unifiedstorage_migration_log` table
@@ -79,14 +85,14 @@ disable_data_migrations = false
 Successful migration:
 
 ```
-info: storage.unified.resource_migration Starting migration for all organizations
-info: storage.unified.resource_migration Migration completed successfully for all organizations
+info: storage.unified.migration_runner Starting migration for all organizations
+info: storage.unified.migration_runner Migration completed successfully for all organizations
 ```
 
 Failed migration:
 
 ```
-error: storage.unified.resource_migration Migration validation failed
+error: storage.unified.migration_runner Migration validation failed
 ```
 
 ### Migration status
@@ -97,26 +103,23 @@ Query the migration log table to check status:
 SELECT * FROM unifiedstorage_migration_log WHERE migration_id LIKE '%folders-dashboards%';
 ```
 
-The `migration_id` is defined in `service.go` during registration. Ideally, it should be the resource type(s) being migrated.
-
 ## Development
 
 ### Adding a new validator
 
-Implement the `Validator` interface:
+Create a `ValidatorFactory` function:
 
 ```go
-type Validator interface {
-    Name() string
-    Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
+func MyValidation(resource schema.GroupResource) ValidatorFactory {
+    return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
+        return &MyValidator{resource: resource, client: client}
+    }
 }
 ```
 
-Register the validator in `service.go` when creating the `ResourceMigration`.
-
 ### Adding a new resource type
 
-1. Add the resource definition to `registeredResources` in `resources.go`
-2. Implement the migrator function in the `MigrationDashboardAccessor` interface
-3. Register the migration in `service.go`
+1. Create a `MigrationDefinition` with ID, resources, migrators, and validators
+2. Register it with `Registry.Register()` in `registry.go`
+3. Implement the migrator function in `MigrationDashboardAccessor`
 

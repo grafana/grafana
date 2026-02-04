@@ -12,6 +12,8 @@ EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 SCSS_FILES="$(find public packages -name '*.scss' | wc -l)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
+CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
+TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
@@ -24,6 +26,7 @@ echo -e "ClassName in props: $CLASSNAME_PROP"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
 echo -e "Total SCSS files: $SCSS_FILES"
+echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
 ESLINT_STATS=""
 yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
@@ -63,5 +66,6 @@ echo "Metrics: {
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",
-  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\"
+  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\",
+  \"grafana.ci-code.dependencies.circular\": \"${TOTAL_CIRCULAR_DEPENDENCIES}\"
 }"

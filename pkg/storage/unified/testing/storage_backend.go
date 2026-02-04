@@ -1501,10 +1501,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 			},
 		}
 
-		resp := bulk.ProcessBulk(ctx, resource.BulkSettings{
-			Collection:        collections,
-			RebuildCollection: true,
-		}, toBulkIterator(bulkRequests))
+		resp := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections}, toBulkIterator(bulkRequests))
 		require.Nil(t, resp.Error)
 
 		result := collectLastImportedTimes(t, backend, ctx)
@@ -1540,10 +1537,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 			Value:  nil,
 		}}
 
-		resp1 := bulk.ProcessBulk(ctx, resource.BulkSettings{
-			Collection:        collections1,
-			RebuildCollection: true,
-		}, toBulkIterator(bulkRequests1))
+		resp1 := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections1}, toBulkIterator(bulkRequests1))
 		require.Nil(t, resp1.Error)
 
 		firstImport := time.Now()
@@ -1571,10 +1565,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 			Value:  nil,
 		}}
 
-		resp2 := bulk.ProcessBulk(ctx, resource.BulkSettings{
-			Collection:        collections2,
-			RebuildCollection: false,
-		}, toBulkIterator(bulkRequests2))
+		resp2 := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections2}, toBulkIterator(bulkRequests2))
 		require.Nil(t, resp2.Error)
 
 		secondImport := time.Now()

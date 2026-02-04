@@ -91,6 +91,7 @@ export interface VariableOption {
   text: string | string[];
   value: string | string[];
   isNone?: boolean;
+  properties?: Record<string, any>;
 }
 
 export interface IntervalVariableModel extends VariableWithOptions {

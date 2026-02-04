@@ -2438,6 +2438,7 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 						SilenceURL:   "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3DUID_EmailAlert&orgId=1",
 						DashboardURL: "",
 						PanelURL:     "",
+						RuleUID:      "UID_EmailAlert",
 						OrgID:        util.Pointer(int64(1)),
 						Values:       map[string]float64{"A": 1},
 						ValueString:  "[ var='A' labels={} type='math' value=1 ]",
@@ -2603,7 +2604,8 @@ var expNonEmailNotifications = map[string][]string{
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%%3DUID_WebhookAlert&orgId=1",
 			  "dashboardURL": "",
 			  "panelURL": "",
-			  "orgId": 1
+			  "orgId": 1,
+			  "ruleUID": "UID_WebhookAlert"
 			}
 		  ],
 		  "groupLabels": {
