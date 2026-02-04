@@ -217,7 +217,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
       const destinationIndex = mapTabInsertIndex(destinationManager, result.destination.index);
       // When moving a tab into a new tab group, make it the active tab.
-      sourceManager.moveTabToManager(tab, destinationManager, destinationIndex, { selectMovedTab: true });
+      sourceManager.moveTabToManager(tab, destinationManager, destinationIndex);
     }
   };
 
