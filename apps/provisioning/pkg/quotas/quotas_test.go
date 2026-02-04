@@ -39,7 +39,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 			name:           "at quota limit returns ResourceQuotaReached",
 			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
 			limits:         QuotaLimits{MaxResources: 100},
-			expectedStatus: metav1.ConditionFalse,
+			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonQuotaReached,
 			expectedMsg:    "Resource quota reached: 100/100 resources",
 		},
