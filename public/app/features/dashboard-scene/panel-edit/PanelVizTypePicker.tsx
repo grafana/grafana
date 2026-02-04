@@ -130,7 +130,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
         <Stack direction="row" gap={1}>
           {showBackButton && (
             <Button
-              aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+              aria-label={t('dashboard-scene.panel-viz-type-picker.title-back', 'Back')}
               fill="text"
               variant="secondary"
               icon="arrow-left"
@@ -187,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   searchField: css({
-    margin: theme.spacing(2, 1, 0, 0), // input glow with the boundary without this
+    margin: theme.spacing(2, 1.5, 1.5, 0), // input glow with the boundary without this
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
     width: '100%', // full size search area
   }),
