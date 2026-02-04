@@ -52,6 +52,8 @@ replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
+replace github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
+
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 
 require (
@@ -259,6 +261,7 @@ require (
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
