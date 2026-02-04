@@ -175,6 +175,8 @@ export function VisualizationSuggestions({
 
   useEffect(() => {
     if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
+      // clear preview when no suggestions
+      onPreviewStateChange?.(false);
       return;
     }
 
@@ -187,7 +189,22 @@ export function VisualizationSuggestions({
       setFirstCardHash(newFirstCardHash);
       return;
     }
-  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
+  }, [
+    suggestions,
+    suggestionHash,
+    firstCardHash,
+    isNewVizSuggestionsEnabled,
+    isUnconfiguredPanel,
+    applySuggestion,
+    onPreviewStateChange,
+  ]);
+
+  // clear preview on error or no data
+  useEffect(() => {
+    if (error || (isNewVizSuggestionsEnabled && (!data || !hasData(data)))) {
+      onPreviewStateChange?.(false);
+    }
+  }, [error, data, isNewVizSuggestionsEnabled, onPreviewStateChange]);
 
   if (loading || !data) {
     return (
