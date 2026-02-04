@@ -141,13 +141,15 @@ func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func()
 		return false, nil
 	})
 
-	// If wait.ExponentialBackoff returned an error, it means we exhausted retries
+	// If wait.ExponentialBackoff returned an error, check if we actually retried
 	if err != nil {
 		if lastErr != nil {
+			// We had transient errors and exhausted all retry attempts
 			logger.Warn("All retry attempts exhausted", "total_attempts", attempt, "error", lastErr)
 			return lastErr
 		}
-		logger.Warn("All retry attempts exhausted", "total_attempts", attempt, "error", err)
+		// Non-transient error or context cancellation - no retries were attempted
+		// The error was already logged at Debug level in the retry loop
 		return err
 	}
 
