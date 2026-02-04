@@ -245,6 +245,16 @@ func (s *Service) BatchCheck(ctx context.Context, req *authzv1.BatchCheckRequest
 		s.processBatchCheckGroup(ctx, ctxLogger, group, ns, idType, userUID, results)
 	}
 
+	// Verify all checks have a result (defensive check)
+	if len(results) != len(checks) {
+		return nil, status.Errorf(codes.Internal, "batch check failed: expected %d results, got %d", len(checks), len(results))
+	}
+	for _, item := range checks {
+		if _, ok := results[item.GetCorrelationId()]; !ok {
+			return nil, status.Errorf(codes.Internal, "batch check failed: missing result for correlation_id %q", item.GetCorrelationId())
+		}
+	}
+
 	span.SetAttributes(attribute.Int("groups_processed", len(groups)))
 
 	return &authzv1.BatchCheckResponse{Results: results}, nil
