@@ -3,10 +3,13 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"google.golang.org/grpc/metadata"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -19,12 +22,14 @@ import (
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
+	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
 	legacy.MigrationDashboardAccessor
 	streamProvider streamProvider
+	client         resource.SearchClient
 	log            log.Logger
 }
 
@@ -34,10 +39,7 @@ type streamProvider interface {
 }
 
 func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
-	settings := resource.BulkSettings{
-		RebuildCollection: true,
-		SkipValidation:    true,
-	}
+	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
 		key := buildResourceKey(res, opts.Namespace)
 		if key != nil {
@@ -76,6 +78,7 @@ func ProvideUnifiedMigrator(
 	return newUnifiedMigrator(
 		dashboardAccess,
 		&resourceClientStreamProvider{client: client},
+		client,
 		log.New("storage.unified.migrator"),
 	)
 }
@@ -87,6 +90,7 @@ func ProvideUnifiedMigratorParquet(
 	return newUnifiedMigrator(
 		dashboardAccess,
 		&bulkStoreClientStreamProvider{client: client},
+		nil,
 		log.New("storage.unified.migrator.parquet"),
 	)
 }
@@ -94,11 +98,13 @@ func ProvideUnifiedMigratorParquet(
 func newUnifiedMigrator(
 	dashboardAccess legacy.MigrationDashboardAccessor,
 	streamProvider streamProvider,
+	client resource.SearchClient,
 	log log.Logger,
 ) UnifiedMigrator {
 	return &unifiedMigration{
 		MigrationDashboardAccessor: dashboardAccess,
 		streamProvider:             streamProvider,
+		client:                     client,
 		log:                        log,
 	}
 }
@@ -145,4 +151,108 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
+}
+
+type RebuildIndexOptions struct {
+	UsingDistributor    bool
+	NamespaceInfo       authlib.NamespaceInfo
+	Resources           []schema.GroupResource
+	MigrationFinishedAt time.Time
+}
+
+func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	m.log.Info("start rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+	defer m.log.Info("finished rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: 500 * time.Millisecond,
+		MaxBackoff: 3 * time.Second,
+		MaxRetries: 5,
+	})
+
+	var lastErr error
+	for boff.Ongoing() {
+		err := m.rebuildIndexes(ctx, opts)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		m.log.Error("retrying rebuild indexes", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", err, "attempt", boff.NumRetries())
+		boff.Wait()
+	}
+
+	if err := boff.ErrCause(); err != nil {
+		m.log.Error("failed to rebuild indexes after retries", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", lastErr)
+		return lastErr
+	}
+
+	return nil
+}
+
+func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	keys := []*resourcepb.ResourceKey{}
+	for _, res := range opts.Resources {
+		key := buildResourceKey(res, opts.NamespaceInfo.Value)
+		if key != nil {
+			keys = append(keys, key)
+		}
+	}
+
+	if m.client == nil {
+		// skip if no client is available (e.g., parquet migrator)
+		m.log.Warn("skipping rebuilding index as no search client is available", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return nil
+	}
+
+	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
+		Namespace: opts.NamespaceInfo.Value,
+		Keys:      keys,
+	})
+	if err != nil {
+		return fmt.Errorf("error rebuilding index: %w", err)
+	}
+
+	if response.Error != nil {
+		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
+	}
+
+	if opts.UsingDistributor {
+		if !response.ContactedAllInstances {
+			m.log.Error("distributor did not contact all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: distributor did not contact all instances")
+		}
+
+		m.log.Info("distributor contacted all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+
+		buildTimeMap := make(map[string]int64)
+		for _, bt := range response.BuildTimes {
+			key := bt.Group + "/" + bt.Resource
+			buildTimeMap[key] = bt.BuildTimeUnix
+		}
+
+		migrationFinishTime := opts.MigrationFinishedAt.Unix()
+
+		// Only validate resources that have a build time reported.
+		// Resources with no data (and therefore no index) won't have a build time,
+		// and that's fine - we skip validation for those.
+		for _, res := range opts.Resources {
+			key := res.Group + "/" + res.Resource
+			buildTime, found := buildTimeMap[key]
+			if !found {
+				m.log.Info("no build time reported for resource, skipping validation (index may not exist)", "resource", key, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				continue
+			}
+
+			if buildTime < migrationFinishTime {
+				m.log.Error("index build time is before migration finished", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				return fmt.Errorf("rebuild index error: index for %s was built before migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
+			}
+
+			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+		}
+	}
+
+	return nil
 }

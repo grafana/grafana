@@ -10,10 +10,15 @@ import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
   hasRequiredFeatures: boolean;
+  isConnectionLimitExceeded?: boolean;
   onSetupFeatures: () => void;
 }
 
-export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
+export const FeaturesList = ({
+  hasRequiredFeatures,
+  isConnectionLimitExceeded,
+  onSetupFeatures,
+}: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -65,7 +70,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
         </Box>
       ) : (
         <Stack direction="row" alignItems="center" gap={2}>
-          <RepositoryTypeCards />
+          <RepositoryTypeCards disabled={isConnectionLimitExceeded} />
         </Stack>
       )}
     </Stack>

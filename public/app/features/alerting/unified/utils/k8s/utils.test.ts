@@ -1,6 +1,7 @@
 import { KnownProvenance } from '../../types/knownProvenance';
 
-import { encodeFieldSelector, isProvisionedResource } from './utils';
+import { K8sAnnotations } from './constants';
+import { canTestEntity, encodeFieldSelector, isProvisionedResource } from './utils';
 
 describe('encodeFieldSelector', () => {
   it('should escape backslashes', () => {
@@ -51,5 +52,43 @@ describe('isProvisionedResource', () => {
 
   it('should return true for any other non-empty string', () => {
     expect(isProvisionedResource('custom-provenance')).toBe(true);
+  });
+});
+
+describe('canTestEntity', () => {
+  it('should return true when canTest annotation is "true"', () => {
+    const entity = {
+      metadata: {
+        annotations: {
+          [K8sAnnotations.AccessTest]: 'true',
+        },
+      },
+    };
+    expect(canTestEntity(entity)).toBe(true);
+  });
+
+  it('should return false when canTest annotation is "false"', () => {
+    const entity = {
+      metadata: {
+        annotations: {
+          [K8sAnnotations.AccessTest]: 'false',
+        },
+      },
+    };
+    expect(canTestEntity(entity)).toBe(false);
+  });
+
+  it('should return false when canTest annotation is missing', () => {
+    const entity = {
+      metadata: {
+        annotations: {},
+      },
+    };
+    expect(canTestEntity(entity)).toBe(false);
+  });
+
+  it('should return false when metadata is undefined', () => {
+    const entity = {};
+    expect(canTestEntity(entity)).toBe(false);
   });
 });

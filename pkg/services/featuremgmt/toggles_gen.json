@@ -396,6 +396,20 @@
     },
     {
       "metadata": {
+        "name": "alertingMigrationWizardUI",
+        "resourceVersion": "1769514396967",
+        "creationTimestamp": "2026-01-27T11:46:36Z"
+      },
+      "spec": {
+        "description": "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingMultiplePolicies",
         "resourceVersion": "1769532687968",
         "creationTimestamp": "2026-01-27T16:51:27Z"
@@ -1242,7 +1256,8 @@
       "metadata": {
         "name": "dashboardSceneForViewers",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-11-02T19:02:25Z"
+        "creationTimestamp": "2023-11-02T19:02:25Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
@@ -1256,7 +1271,8 @@
       "metadata": {
         "name": "dashboardSceneSolo",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-02-11T08:08:47Z"
+        "creationTimestamp": "2024-02-11T08:08:47Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
@@ -3314,6 +3330,20 @@
     },
     {
       "metadata": {
+        "name": "panelStyleActions",
+        "resourceVersion": "1769620237787",
+        "creationTimestamp": "2026-01-28T17:10:37Z"
+      },
+      "spec": {
+        "description": "Enable style actions (copy/paste) in the panel editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelTimeSettings",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-10-29T08:06:23Z",
@@ -4181,6 +4211,7 @@
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-14T13:51:05Z",
+        "deletionTimestamp": "2026-02-02T11:38:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4262,7 +4293,8 @@
       "metadata": {
         "name": "ssoSettingsLDAP",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "deletionTimestamp": "2026-01-31T01:56:50Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",

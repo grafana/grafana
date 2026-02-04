@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Redefinir para os valores predefinidos",
-      "title-invalid-configuration": "Configuração inválida",
       "title-more-actions": "Mais ações",
       "tooltip-more-actions": "Mais ações"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Agrupar por",
       "aria-label-group-interval": "Intervalo de grupo",
       "aria-label-group-wait": "Espera de grupo",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Intervalo de repetição",
       "create-a-contact-point": "Criar um ponto de contacto",
+      "description-unique-routing": "",
       "label-default-contact-point": "Ponto de contacto predefinido",
+      "label-name": "",
       "label-timing-options": "Opções de tempo",
       "message": {
         "required": "Necessário."
       },
-      "or": "ou"
+      "or": "ou",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Adicionar elemento de correspondência",
@@ -2136,6 +2139,10 @@
       "new-policy": "Adicionar nova política",
       "no-matchers": "Sem correspondências",
       "reload-policies": "Recarregar políticas",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Guardar política",
       "update": {
         "please-wait": "Aguarde enquanto atualizamos as suas políticas de notificação.",
@@ -2154,6 +2161,54 @@
       },
       "n-more-policies_one": "{{count}} políticas adicionais",
       "n-more-policies_other": "{{count}} políticas adicionais"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
@@ -2337,6 +2392,13 @@
       "label-override-grouping": "Substituir agrupamento",
       "label-override-timings": "Substituir tempos",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Editar",
@@ -3103,6 +3165,12 @@
       "label-edit": "Editar",
       "label-export": "Exportar"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Sim, eliminar ponto de contacto",
       "deleting": "A eliminar...",
@@ -3120,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Eliminar política de notificação"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3739,6 +3816,9 @@
       "folder-actions": "Ações da pasta",
       "manage-permissions": "Gerir permissões",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Selecionar a pasta: {{ label }} selecionada atualmente",
@@ -4947,6 +5027,7 @@
       },
       "variables": {
         "add-variable": "Adicionar variável",
+        "reorder": "",
         "select-type": "Escolher tipo de variável",
         "select-type-card-tooltip": "Clique para selecionar o tipo",
         "select-variable": "Selecionar"
@@ -5812,7 +5893,7 @@
       "load": "Carregar"
     },
     "gcom-field": {
-      "label": "Encontre e importe painéis de controlo para aplicações comuns em <1></1>",
+      "label": "",
       "load-button": "Carregar",
       "placeholder": "URL ou ID do painel de controlo de Grafana.com",
       "validation-required": "É necessário um URL ou ID do painel de controlo da Grafana"
@@ -6235,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Cancelar",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Pasta"
     },
     "inspect-data-tab": {
@@ -6316,6 +6399,11 @@
       "title": {
         "remove-panel": "Remover painel"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alertar"
@@ -6684,6 +6772,16 @@
         }
       },
       "label": "Ocultar"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Tipo de variável"
@@ -9774,7 +9872,6 @@
       "error-fetching": "Erro ao obter as definições LDAP",
       "error-saving": "Erro ao guardar as definições LDAP",
       "error-validate-form": "Erro ao validar as definições LDAP",
-      "feature-flag-disabled": "",
       "saved": "Definições LDAP guardadas"
     },
     "bind-dn": {
@@ -10350,9 +10447,15 @@
       "options": "Opções"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "A importar o painel de <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Publicado por",
       "updated-on": "Atualizado a"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Tem a certeza de que pretende eliminar '{{snapshotToRemove}}'?",
@@ -11216,6 +11319,9 @@
     "noOptionsMessage-no-organizations-found": "Nenhuma organização encontrada",
     "select-placeholder": "Selecionar organização"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Editar o título"
@@ -11262,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Copiar",
+      "copy-styles": "",
       "create-library-panel": "Criar painel de biblioteca",
       "duplicate": "Duplicar",
       "edit": "Editar",
@@ -11273,11 +11380,13 @@
       "inspect-json": "Painel JSON",
       "more": "Mais...",
       "new-alert-rule": "Nova regra de alerta",
+      "paste-styles": "",
       "query": "Consulta",
       "remove": "Remover",
       "replace-library-panel": "Substituir painel de biblioteca",
       "share": "Partilhar",
       "show-legend": "Mostrar legenda",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Desassociar painel de biblioteca",
       "view": "Ver"
@@ -11713,6 +11822,7 @@
       "text-installed": "Instalado"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Dependência da Grafana",
       "installed-version": "{{versionNumber}} (versão instalada)",
       "latest-compatible-version": "{{versionNumber}} (última versão compatível)",
@@ -11840,9 +11950,6 @@
       "label-display-name": "Nome do visor",
       "placeholder-my-repository-connection": "A minha ligação de repositório",
       "text-loading-resource-information": "A carregar informações de recursos...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} painéis de controlo",
       "dashboards-count_other": "{{count}} painéis de controlo",
@@ -11897,6 +12004,13 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -11905,6 +12019,8 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12244,6 +12360,9 @@
         "view-repository": "Ver repositório"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Verificado:",
       "connection-status": "",
@@ -12404,23 +12523,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Isto eliminará a configuração do repositório e todo o progresso será perdido. Tem a certeza de que pretende rejeitar as suas alterações?",
         "confirm": "Sim, rejeitar",
         "dismiss": "Continuar a trabalhar",
         "title": "Rejeitar a configuração do repositório?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12432,21 +12555,18 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
       "step-bootstrap": "Escolha o que sincronizar",
       "step-configure-repo": "",
       "step-connect": "Conectar ",
       "step-finish": "Escolha as definições adicionais",
-      "step-github-app": "",
       "step-synchronize": "Sincronizar com armazenamento externo",
       "sync-description": "Sincronize recursos com um armazenamento externo. Após este passo único, todas as atualizações futuras serão guardadas automaticamente no repositório e aprovisionadas novamente para a instância.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Escolha o que sincronizar",
       "title-configure-repo": "",
       "title-connect": "Ligar a um armazenamento externo",
       "title-finish": "Escolha as definições adicionais",
-      "title-github-app": "",
       "title-synchronize": "Sincronizar com armazenamento externo"
     },
     "wizard-content": {
@@ -13588,6 +13708,7 @@
     "name-wrap-header-text": "Encapsular o texto do cabeçalho",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

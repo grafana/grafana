@@ -22,7 +22,7 @@ import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { createLogLine } from '../mocks/logRow';
 
 import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
@@ -31,6 +31,7 @@ import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
 jest.mock('../fieldSelector/FieldSelector');
+jest.mock('../fieldSelector/fieldSelectorUtils');
 
 jest.mocked(getFieldSelectorWidth).mockReturnValue(220);
 

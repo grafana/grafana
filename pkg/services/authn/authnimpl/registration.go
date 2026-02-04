@@ -57,13 +57,9 @@ func ProvideRegistration(
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 
-	// always register LDAP if LDAP is enabled in SSO settings
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if cfg.LDAPAuthEnabled || features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
-		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService, tracer)
-		proxyClients = append(proxyClients, ldap)
-		passwordClients = append(passwordClients, ldap)
-	}
+	ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService, tracer)
+	proxyClients = append(proxyClients, ldap)
+	passwordClients = append(passwordClients, ldap)
 
 	if !cfg.DisableLogin {
 		grafana := clients.ProvideGrafana(cfg, userService, tracer)
