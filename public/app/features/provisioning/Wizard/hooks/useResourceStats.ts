@@ -14,8 +14,7 @@ import {
 import { ManagerKind } from 'app/features/apiserver/types';
 
 export type UseResourceStatsOptions = {
-  isHealthy?: boolean;
-  isReconciled?: boolean;
+  isHealthy?: boolean; // true only when healthy AND reconciled
 };
 
 function getManagedCount(managed?: ManagerStats[]) {
@@ -113,18 +112,15 @@ export function useResourceStats(
   migrateResources?: boolean,
   options?: UseResourceStatsOptions
 ) {
-  const { isHealthy, isReconciled } = options || {};
-  // Wait for both health AND reconciliation before fetching files
-  // This ensures the backend has fully processed the repository configuration (including path)
-  const isReadyForFiles = isHealthy && isReconciled;
+  const { isHealthy } = options || {};
 
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  // files endpoint requires healthy AND reconciled repository
-  const filesQuery = useGetRepositoryFilesQuery(repoName && isReadyForFiles ? { name: repoName } : skipToken, {
+  // isHealthy already includes reconciliation check - safe to fetch files
+  const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken, {
     refetchOnMountOrArgChange: true,
   });
 
-  const isFilesQuerySkipped = !repoName || !isReadyForFiles;
+  const isFilesQuerySkipped = !repoName || !isHealthy;
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading || isFilesQuerySkipped;
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(

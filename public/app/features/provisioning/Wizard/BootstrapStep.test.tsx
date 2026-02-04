@@ -303,7 +303,6 @@ describe('BootstrapStep', () => {
 
       expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
         isHealthy: true,
-        isReconciled: true,
       });
     });
 
@@ -320,7 +319,6 @@ describe('BootstrapStep', () => {
 
       expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
         isHealthy: true,
-        isReconciled: true,
       });
     });
   });

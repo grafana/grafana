@@ -31,7 +31,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   const {
     isHealthy,
     isUnhealthy,
-    isReconciled: isRepositoryReconciled,
     healthMessage: repositoryHealthMessages,
     healthStatusNotReady,
     hasError,
@@ -39,10 +38,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     refetch: refetchRepositoryStatus,
   } = useRepositoryStatus(repoName);
 
-  const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
-    isHealthy,
-    isReconciled: isRepositoryReconciled,
-  });
+  const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, { isHealthy });
 
   const { createSyncJob } = useCreateSyncJob({
     repoName,
