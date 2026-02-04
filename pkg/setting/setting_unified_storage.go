@@ -117,6 +117,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// quotas/limits config
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
+	cfg.EnforceQuotas = section.Key("enforce_quotas").MustBool(false)
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)

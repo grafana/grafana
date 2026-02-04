@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"net/http"
@@ -276,6 +277,8 @@ type ResourceServerOptions struct {
 	QOSConfig QueueConfig
 
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
+
+	EnforceQuotas bool
 }
 
 // NewSearchServer creates a standalone search server.
@@ -381,6 +384,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		overridesService: opts.OverridesService,
 		storageEnabled:   true,
 		searchClient:     opts.SearchClient,
+		enforceQuotas:    opts.EnforceQuotas,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -442,6 +446,7 @@ type server struct {
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
 	overridesService *OverridesService
+	enforceQuotas    bool // Limit tenant resources based on their quotas
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -723,12 +728,25 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
-	// check quotas and log for now
-	s.checkQuota(ctx, NamespacedResource{
+	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	})
+
+	if err != nil {
+		var quotaErr QuotaExceededError
+		msg := err.Error()
+		if errors.As(err, &quotaErr) {
+			msg = quotaErr.Message()
+		}
+		return &resourcepb.CreateResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: msg,
+				Code:    http.StatusForbidden,
+			},
+		}, nil
+	}
 
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
@@ -744,10 +762,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
-	var (
-		res *resourcepb.CreateResponse
-		err error
-	)
+	var res *resourcepb.CreateResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.create(queueCtx, user, req)
 	})
@@ -1647,7 +1662,7 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 	return s.search.RebuildIndexes(ctx, req)
 }
 
-func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
+func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -1657,19 +1672,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 
 	if s.overridesService == nil {
 		s.log.FromContext(ctx).Debug("overrides service not configured, skipping quota check", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
-		return
+		return nil
 	}
 
 	quota, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		return
+		return nil
 	}
 
 	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		return
+		return nil
 	}
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
@@ -1679,5 +1694,14 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+		if s.enforceQuotas {
+			return QuotaExceededError{
+				Resource: nsr.Resource,
+				Used:     stats[0].Count,
+				Limit:    quota.Limit,
+			}
+		}
 	}
+
+	return nil
 }
