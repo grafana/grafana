@@ -34,14 +34,18 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
-  public static createFor(panel: VizPanel) {
+  /**
+   * Create a data pane for the given panel.
+   * @param panel The VizPanel to create the data pane for
+   * @param useQueryEditorNext Optional override for which version to use.
+   *   If undefined, uses the queryEditorNext feature toggle value.
+   *   Only has effect when the feature toggle is enabled (allows toggling back to v1).
+   */
+  public static createFor(panel: VizPanel, useQueryEditorNext: boolean | undefined) {
     const panelRef = panel.getRef();
 
-    const config = getConfig();
-    const queryExperienceNext = config.featureToggles.queryEditorNext;
-
     // Query experience v2
-    if (queryExperienceNext) {
+    if (useQueryEditorNext) {
       return new PanelDataPaneNext({ panelRef });
     }
 

@@ -7,6 +7,7 @@ import { config, locationService } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
+  SceneComponentProps,
   SceneDataTransformer,
   SceneObjectBase,
   SceneObjectRef,
@@ -58,11 +59,17 @@ export interface PanelEditorState extends SceneObjectState {
    * Waiting for library panel or panel plugin to load
    */
   isInitializing?: boolean;
+  /**
+   * Enable the v2 query editor experience
+   */
+  useQueryExperienceNext?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
-  static queryEditorRenderer = config.featureToggles.queryEditorNext;
-  static Component = this.queryEditorRenderer ? PanelEditorRendererNext : PanelEditorRenderer;
+  static Component = ({ model }: SceneComponentProps<PanelEditor>) => {
+    const { useQueryExperienceNext } = model.useState();
+    return useQueryExperienceNext ? <PanelEditorRendererNext model={model} /> : <PanelEditorRenderer model={model} />;
+  };
 
   private _layoutItemState?: SceneObjectState;
   private _layoutItem: DashboardLayoutItem;
@@ -290,7 +297,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        const dataPane = PanelDataPane.createFor(this.getPanel());
+        const dataPane = PanelDataPane.createFor(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
         // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
         this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
@@ -413,6 +420,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     });
   };
 
+  /**
+   * Toggle between v1 and v2 query editor.
+   */
+  public onToggleQueryEditorVersion = () => {
+    this.setState({
+      useQueryExperienceNext: !this.state.useQueryExperienceNext,
+      dataPane: PanelDataPane.createFor(this.getPanel(), !this.state.useQueryExperienceNext),
+    });
+  };
+
   public static buildEditPreview(panel: VizPanel): VizPanel {
     const editPreview = getDefaultVizPanel();
     editPreview.setState({
@@ -426,6 +443,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
+    useQueryExperienceNext: config.featureToggles.queryEditorNext,
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,
