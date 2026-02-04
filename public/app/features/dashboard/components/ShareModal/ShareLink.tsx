@@ -10,7 +10,7 @@ import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl, getTrackingSource } from './utils';
 
-export interface Props extends ShareModalTabProps { }
+export interface Props extends ShareModalTabProps {}
 
 export const ShareLink = memo(({ panel, dashboard }: Props) => {
   const [useCurrentTimeRange, setUseCurrentTimeRange] = useState(true);
