@@ -12712,7 +12712,39 @@
     "action": {
       "inspector": "Query inspector"
     },
+    "details-sidebar": {
+      "cache-timeout": "Cache timeout",
+      "cache-timeout-tooltip": "If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.",
+      "cache-ttl": "Cache TTL",
+      "cache-ttl-tooltip": "Cache time-to-live: How long results from this queries in this panel will be cached, in milliseconds.",
+      "interval": "Interval",
+      "interval-tooltip": "The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.",
+      "max-data-points": "Max data points",
+      "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval.",
+      "min-interval": "Min interval",
+      "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example 1m if your data is written every minute.",
+      "no-limit": "No limit",
+      "relative-time": "Relative time",
+      "relative-time-tooltip": "Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.",
+      "time-shift": "Time shift",
+      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker.",
+      "title": "Query Options"
+    },
     "edit-query-name": "Edit query name",
+    "footer": {
+      "edit-option": "Edit {{label}}",
+      "label": {
+        "interval": "Interval",
+        "max-data-points": "Max data points",
+        "min-interval": "Min interval",
+        "relative-time": "Relative time",
+        "time-shift": "Time shift"
+      },
+      "placeholder": {
+        "no-limit": "No limit"
+      },
+      "query-options": "Query Options"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
