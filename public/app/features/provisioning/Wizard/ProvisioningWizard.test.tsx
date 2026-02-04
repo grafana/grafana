@@ -543,7 +543,6 @@ describe('ProvisioningWizard', () => {
         mockMutationState,
       ]);
 
-      // Delay submission to keep button in "Submitting..." state
       mockSubmitData.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ data: { metadata: { name: 'test-conn' } } }), 100))
       );

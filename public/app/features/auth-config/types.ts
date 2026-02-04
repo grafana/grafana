@@ -64,6 +64,9 @@ export type SSOProviderSettingsBase = {
   loginPrompt?: string;
   // For Google
   validateHd?: boolean;
+  // For JWT ID token validation
+  validateIdToken?: boolean;
+  jwkSetUrl?: string;
 };
 
 // SSO data received from the API and sent to it
