@@ -408,7 +408,10 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	where += `) AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)`
 
 	if query.OnlyManaged {
-		where += `AND r.name LIKE 'managed:%'`
+		where += ` AND r.name LIKE 'managed:%'`
+	} else if query.ExcludeManaged {
+		//Exclude managed roles to only fetch provisioned permissions (custom:*, fixed:*, etc.)
+		where += ` AND r.name NOT LIKE 'managed:%'`
 	}
 
 	for _, a := range query.Actions {
@@ -437,9 +440,15 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		args = append(args, saFilter.Args...)
 	}
 
-	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
-	if err != nil {
-		return nil, err
+	var teamFilter accesscontrol.SQLFilter
+	if query.ExcludeManaged {
+		teamFilter = accesscontrol.SQLFilter{Where: " 1 = 1", Args: nil}
+	} else {
+		var err error
+		teamFilter, err = accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
