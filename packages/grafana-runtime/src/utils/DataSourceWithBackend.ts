@@ -1,3 +1,4 @@
+import { OpenFeature } from '@openfeature/web-sdk';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -135,6 +136,8 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    window.alert(JSON.stringify(OpenFeature.getClient().getObjectDetails('testflag42',{})));
+
     if (config.publicDashboardAccessToken) {
       return publicDashboardQueryHandler(request);
     }
