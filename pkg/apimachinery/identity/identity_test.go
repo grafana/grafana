@@ -13,20 +13,30 @@ import (
 func TestWithProvisioningIdentity_Audience(t *testing.T) {
 	ctx := context.Background()
 	namespace := "default"
-	
+
 	ctx, requester, err := WithProvisioningIdentity(ctx, namespace)
 	require.NoError(t, err)
 	require.NotNil(t, requester)
-	
+
 	audience := requester.GetAudience()
 	t.Logf("Audience: %v", audience)
-	
-	// Check that provisioning audience is set
-	assert.Contains(t, audience, provisioning.GROUP, 
-		"WithProvisioningIdentity should set audience to include provisioning.GROUP")
-	
+
+	// The token must include multiple audiences:
+	// 1. provisioning.grafana.app - for managed.go authorization checks
+	// 2. folder.grafana.app - for folder service authentication
+	// 3. dashboard.grafana.app - for dashboard service authentication
+	assert.Contains(t, audience, provisioning.GROUP,
+		"WithProvisioningIdentity should include provisioning.GROUP")
+	assert.Contains(t, audience, "folder.grafana.app",
+		"WithProvisioningIdentity should include folder.grafana.app for folder service")
+	assert.Contains(t, audience, "dashboard.grafana.app",
+		"WithProvisioningIdentity should include dashboard.grafana.app for dashboard service")
+
 	// Verify it's the correct value
 	assert.Equal(t, "provisioning.grafana.app", provisioning.GROUP)
+
+	// Verify we have exactly 3 audiences
+	assert.Len(t, audience, 3, "Should have exactly 3 audiences")
 }
 
 func TestWithServiceIdentity_NoProvisioningAudience(t *testing.T) {

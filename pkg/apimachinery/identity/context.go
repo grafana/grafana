@@ -104,11 +104,20 @@ func WithProvisioningIdentity(ctx context.Context, namespace string, opts ...Ide
 		return nil, nil, err
 	}
 
-	// Add provisioning audience to the identity claims
-	// This ensures the provisioning identity passes the audience check in managed.go:80
+	// Add provisioning audiences to the identity claims.
+	// The token needs to include multiple audiences:
+	// - "provisioning.grafana.app" for managed.go authorization checks (line 98)
+	// - "folder.grafana.app" for folder service authentication
+	// - "dashboard.grafana.app" for dashboard service authentication
+	// JWT tokens support multiple audiences, and each receiving service validates
+	// that its expected audience is present in the list.
 	provisioningOpt := func(sr *StaticRequester) {
 		if sr.AccessTokenClaims != nil {
-			sr.AccessTokenClaims.Audience = []string{provisioning.GROUP}
+			sr.AccessTokenClaims.Audience = []string{
+				provisioning.GROUP,        // "provisioning.grafana.app"
+				"folder.grafana.app",      // for folder service
+				"dashboard.grafana.app",   // for dashboard service
+			}
 		}
 	}
 
