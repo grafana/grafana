@@ -71,6 +71,7 @@ const contextProps = {
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  unwrappedColumns: false,
 };
 
 const assertExpandedOptionsCopyVisible = () => {

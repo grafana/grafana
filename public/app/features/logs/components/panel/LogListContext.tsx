@@ -99,6 +99,7 @@ export const LogListContext = createContext<LogListContextData>({
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  unwrappedColumns: false,
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
