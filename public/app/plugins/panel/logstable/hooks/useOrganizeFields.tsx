@@ -10,7 +10,7 @@ import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRendere
 import { getFieldWidth } from '../fields/getFieldWidth';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import { getDisplayedFields } from '../options/getDisplayedFields';
-import { defaultOptions } from '../panelcfg.gen';
+import type { Options as LogsTableOptions } from '../panelcfg.gen';
 import { organizeLogsFieldsTransform } from '../transforms/organizeLogsFieldsTransform';
 import { BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
 
@@ -18,12 +18,10 @@ interface Props {
   extractedFrame: DataFrame | null;
   timeFieldName: string;
   bodyFieldName: string;
-  displayedFields: string[];
+  options: LogsTableOptions;
   logsFrame: LogsFrame | null;
   supportsPermalink: boolean;
   onPermalinkClick: BuildLinkToLogLine;
-  showCopyLogLink: boolean;
-  showInspectLogLine: boolean;
 }
 
 export function useOrganizeFields({
@@ -33,9 +31,7 @@ export function useOrganizeFields({
   logsFrame,
   supportsPermalink,
   onPermalinkClick,
-  displayedFields,
-  showCopyLogLink,
-  showInspectLogLine,
+  options,
 }: Props) {
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
   const isMounted = useMountedState();
@@ -50,14 +46,12 @@ export function useOrganizeFields({
 
     organizeFields(
       extractedFrame,
+      options,
       logsFrame,
       timeFieldName,
       bodyFieldName,
       supportsPermalink,
-      onPermalinkClick,
-      getDisplayedFields(displayedFields, timeFieldName, bodyFieldName),
-      showCopyLogLink ?? defaultOptions.showCopyLogLink ?? false,
-      showInspectLogLine ?? defaultOptions.showInspectLogLine ?? false
+      onPermalinkClick
     )
       .then((frame) => {
         if (frame && isMounted()) {
@@ -70,14 +64,12 @@ export function useOrganizeFields({
   }, [
     bodyFieldName,
     extractedFrame,
+    options,
     timeFieldName,
     logsFrame,
     supportsPermalink,
     onPermalinkClick,
     isMounted,
-    displayedFields,
-    showCopyLogLink,
-    showInspectLogLine,
   ]);
 
   return { organizedFrame };
@@ -85,18 +77,18 @@ export function useOrganizeFields({
 
 const organizeFields = async (
   extractedFrame: DataFrame,
+  options: LogsTableOptions,
   logsFrame: LogsFrame,
   timeFieldName: string,
   bodyFieldName: string,
   supportsPermalink: boolean,
-  onPermalinkClick: BuildLinkToLogLine,
-  displayedFields: string[],
-  showCopyLogLink: boolean,
-  showInspectLogLine: boolean
+  onPermalinkClick: BuildLinkToLogLine
 ) => {
   if (!extractedFrame) {
     return Promise.resolve(null);
   }
+
+  const displayedFields = getDisplayedFields(options, timeFieldName, bodyFieldName);
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
@@ -118,17 +110,10 @@ const organizeFields = async (
         filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, timeFieldName, bodyFieldName),
         custom: {
           ...field.config.custom,
-          width: getFieldWidth(
-            field.config.custom?.width,
-            field,
-            fieldIndex,
-            timeFieldName,
-            showCopyLogLink,
-            showInspectLogLine
-          ),
+          width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName, options),
           inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName && (supportsPermalink || showInspectLogLine)
+            isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (
@@ -136,9 +121,10 @@ const organizeFields = async (
                       logsFrame={logsFrame}
                       supportsPermalink={supportsPermalink}
                       cellProps={cellProps}
-                      showInspectLogLine={showInspectLogLine}
-                      showCopyLogLink={showCopyLogLink}
-                      buildLinkToLog={isBuildLinkToLogLine(onPermalinkClick) ? onPermalinkClick : onPermalinkClick}
+                      options={options}
+                      buildLinkToLog={
+                        isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick
+                      }
                     />
                   ),
                 }

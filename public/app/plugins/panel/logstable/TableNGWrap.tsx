@@ -62,11 +62,8 @@ export function TableNGWrap({
   );
 
   const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
-  const getControlsWidth = useCallback(() => {
-    return !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
-  }, [controlsExpanded, showControls]);
-  const controlsWidth = getControlsWidth();
-  const tableWidth = width - controlsWidth;
+  const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
+  const tableWidth = width;
   const styles = useStyles2(getStyles, sidebarWidth, height, tableWidth, controlsWidth);
 
   const app = isCoreApp(data.request?.app) ? data.request?.app : CoreApp.Unknown;
@@ -97,8 +94,6 @@ export function TableNGWrap({
     },
     [onFieldConfigChange]
   );
-
-  console.log('render::TableNGWrap');
 
   return (
     <div className={styles.tableWrapper}>
@@ -152,13 +147,15 @@ const getStyles = (
       width: controlsWidth,
       label: 'listControlsWrapper',
       marginTop: `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px - ${theme.spacing(1)} + ${listControlsWrapperTableHeaderOffset})`,
+      position: 'absolute',
+      right: 0,
+      top: 0,
     }),
     tableWrapper: css({
-      display: 'flex',
-      flexDirection: 'row-reverse',
       paddingLeft: sidebarWidth,
+      paddingRight: controlsWidth,
       height,
-      width: '100%',
+      width: tableWidth,
       // @todo better row selection UI
       '[aria-selected=true]': {
         backgroundColor: theme.colors.background.secondary,

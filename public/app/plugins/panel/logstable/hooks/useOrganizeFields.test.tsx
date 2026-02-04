@@ -66,10 +66,8 @@ describe('useOrganizeFields', () => {
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
+          options: {},
           supportsPermalink: false,
-          showCopyLogLink: false,
-          showInspectLogLine: false,
-          displayedFields: [],
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         })
       );
@@ -88,9 +86,9 @@ describe('useOrganizeFields', () => {
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
-          displayedFields: ['service', 'level'],
-          showInspectLogLine: false,
-          showCopyLogLink: false,
+          options: {
+            displayedFields: ['service', 'level'],
+          },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         })
@@ -112,9 +110,9 @@ describe('useOrganizeFields', () => {
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
-          showInspectLogLine: true,
-          displayedFields: [],
-          showCopyLogLink: false,
+          options: {
+            showInspectLogLine: true,
+          },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         })
@@ -135,9 +133,9 @@ describe('useOrganizeFields', () => {
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
-          showCopyLogLink: true,
-          showInspectLogLine: false,
-          displayedFields: [],
+          options: {
+            showCopyLogLink: true,
+          },
           supportsPermalink: true,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         })
@@ -158,9 +156,7 @@ describe('useOrganizeFields', () => {
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
-          showInspectLogLine: false,
-          displayedFields: [],
-          showCopyLogLink: false,
+          options: {},
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         })

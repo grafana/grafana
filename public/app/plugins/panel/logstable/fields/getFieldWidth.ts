@@ -1,28 +1,27 @@
 import { Field, getFieldDisplayName } from '@grafana/data';
 
 import { DEFAULT_FIRST_FIELD_WIDTH, ROW_ACTION_BUTTON_WIDTH } from '../constants';
+import type { Options as LogsTableOptions } from '../panelcfg.gen';
 
 export function getFieldWidth(
   width: number | undefined,
   field: Field,
   fieldIndex: number,
   timeFieldName: string,
-  showCopyLogLink: boolean,
-  showInspectLogLine: boolean
+  options: LogsTableOptions
 ) {
   if (width !== undefined) {
     return width;
   }
 
-  return getDefaultFieldWidth(field, fieldIndex, timeFieldName, showCopyLogLink, showInspectLogLine);
+  return getDefaultFieldWidth(field, fieldIndex, timeFieldName, options);
 }
 
 function getDefaultFieldWidth(
   field: Field,
   fieldIndex: number,
   timeFieldName: string,
-  showCopyLogLink: boolean,
-  showInspectLogLine: boolean
+  options: LogsTableOptions
 ): number | undefined {
   if (getFieldDisplayName(field) !== timeFieldName) {
     return undefined;
@@ -30,9 +29,9 @@ function getDefaultFieldWidth(
   if (fieldIndex !== 0) {
     return undefined;
   }
-  if (showInspectLogLine && showCopyLogLink) {
+  if (options.showInspectLogLine && options.showCopyLogLink) {
     return DEFAULT_FIRST_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH;
-  } else if (showInspectLogLine || showCopyLogLink) {
+  } else if (options.showInspectLogLine || options.showCopyLogLink) {
     return DEFAULT_FIRST_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH / 2;
   }
   return DEFAULT_FIRST_FIELD_WIDTH;

@@ -41,8 +41,10 @@ describe('LogsTableCustomCellRenderer', () => {
       <LogsTableCustomCellRenderer
         supportsPermalink={true}
         logsFrame={testLogsFrame}
-        showInspectLogLine={false}
-        showCopyLogLink={false}
+        options={{
+          showInspectLogLine: false,
+          showCopyLogLink: false,
+        }}
         cellProps={{
           field: testLogsDataFrame[0].fields[1],
           rowIndex: 0,
@@ -63,8 +65,10 @@ describe('LogsTableCustomCellRenderer', () => {
         <LogsTableCustomCellRenderer
           supportsPermalink={true}
           logsFrame={testLogsFrame}
-          showInspectLogLine={true}
-          showCopyLogLink={false}
+          options={{
+            showInspectLogLine: true,
+            showCopyLogLink: false,
+          }}
           cellProps={{
             field: testLogsDataFrame[0].fields[1],
             rowIndex: 0,
@@ -84,8 +88,10 @@ describe('LogsTableCustomCellRenderer', () => {
         <LogsTableCustomCellRenderer
           supportsPermalink={true}
           logsFrame={testLogsFrame}
-          showInspectLogLine={true}
-          showCopyLogLink={false}
+          options={{
+            showInspectLogLine: true,
+            showCopyLogLink: false,
+          }}
           cellProps={{
             field: testLogsDataFrame[0].fields[1],
             rowIndex: 0,
@@ -106,8 +112,10 @@ describe('LogsTableCustomCellRenderer', () => {
         <LogsTableCustomCellRenderer
           supportsPermalink={true}
           logsFrame={testLogsFrame}
-          showInspectLogLine={true}
-          showCopyLogLink={false}
+          options={{
+            showInspectLogLine: true,
+            showCopyLogLink: false,
+          }}
           cellProps={{
             field: dataFrame.fields[0],
             rowIndex: 0,
@@ -127,8 +135,10 @@ describe('LogsTableCustomCellRenderer', () => {
         <LogsTableCustomCellRenderer
           supportsPermalink={false}
           logsFrame={testLogsFrame}
-          showInspectLogLine={false}
-          showCopyLogLink={true}
+          options={{
+            showInspectLogLine: false,
+            showCopyLogLink: true,
+          }}
           cellProps={{
             field: testLogsDataFrame[0].fields[1],
             rowIndex: 0,
@@ -148,8 +158,10 @@ describe('LogsTableCustomCellRenderer', () => {
         <LogsTableCustomCellRenderer
           supportsPermalink={true}
           logsFrame={testLogsFrame}
-          showInspectLogLine={false}
-          showCopyLogLink={true}
+          options={{
+            showInspectLogLine: false,
+            showCopyLogLink: true,
+          }}
           cellProps={{
             field: testLogsDataFrame[0].fields[1],
             rowIndex: 0,

@@ -1,7 +1,5 @@
-export const getDisplayedFields = (
-  displayedFields: string[] | undefined,
-  timeFieldName: string,
-  bodyFieldName: string
-) => {
-  return displayedFields?.length ? displayedFields : [timeFieldName, bodyFieldName];
+import type { Options as LogsTableOptions } from '../panelcfg.gen';
+
+export const getDisplayedFields = (options: LogsTableOptions, timeFieldName: string, bodyFieldName: string) => {
+  return options?.displayedFields?.length ? options.displayedFields : [timeFieldName, bodyFieldName];
 };

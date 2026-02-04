@@ -131,9 +131,7 @@ export const LogsTable = ({
     logsFrame,
     supportsPermalink: supportsPermalink(),
     onPermalinkClick,
-    displayedFields: getDisplayedFields(options.displayedFields, timeFieldName, bodyFieldName),
-    showInspectLogLine: options.showInspectLogLine ?? defaultOptions.showInspectLogLine ?? false,
-    showCopyLogLink: options.showCopyLogLink ?? defaultOptions.showCopyLogLink ?? false,
+    options,
   });
 
   // Build panel data
@@ -158,8 +156,6 @@ export const LogsTable = ({
   // We're rendering before the hooks have transformed the required data, we return null to prevent the panel data error view from flashing
   const renderTable = timeFieldName && bodyFieldName && logsFrame && organizedFrame && extractedFrame;
 
-  console.log('renderTable', renderTable);
-
   return (
     <div className={styles.wrapper} ref={containerElement}>
       {renderTable && containerElement.current && (
@@ -167,7 +163,7 @@ export const LogsTable = ({
           <LogsTableFields
             tableWidth={width}
             sidebarWidth={options.fieldSelectorWidth}
-            displayedFields={getDisplayedFields(options.displayedFields, timeFieldName, bodyFieldName)}
+            displayedFields={getDisplayedFields(options, timeFieldName, bodyFieldName)}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
