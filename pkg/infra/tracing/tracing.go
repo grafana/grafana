@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"net/url"
 
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
@@ -135,8 +136,11 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 	// Parse address: can be either collector URL or host:port
 	if strings.HasPrefix(ots.cfg.Address, "http://") || strings.HasPrefix(ots.cfg.Address, "https://") {
 		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
-		// Extract endpoint from full URL
-		opts = append(opts, otlptracehttp.WithEndpoint(strings.TrimPrefix(strings.TrimPrefix(ots.cfg.Address, "https://"), "http://")))
+		u, err := url.Parse(ots.cfg.Address)
+		if err != nil {
+			return nil, fmt.Errorf("invalid tracer address: %s", ots.cfg.Address)
+		}
+		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
 		if strings.HasPrefix(ots.cfg.Address, "http://") {
 			opts = append(opts, otlptracehttp.WithInsecure())
 		}
