@@ -91,7 +91,7 @@ func RegisterAPIService(
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
-	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller)
 	registerMetrics(reg)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -133,7 +133,7 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
-		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
+		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features),
 		tracing:    tracing,
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg)
@@ -163,6 +163,7 @@ func NewAPIService(
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
+	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -210,6 +211,10 @@ func NewAPIService(
 				if a.GetResource() == "resourcepermissions" {
 					// Authorization is handled by the backend wrapper
 					return authorizer.DecisionAllow, "", nil
+				}
+
+				if a.GetResource() == "teamlbacrules" {
+					return teamLBACAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
@@ -690,6 +695,54 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				},
 			}},
 	}
+
+	if oas.Paths != nil && oas.Paths.Paths != nil {
+		pathsToUpdate := []string{
+			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/groups",
+			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/members",
+			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams",
+		}
+
+		for _, path := range pathsToUpdate {
+			if p, ok := oas.Paths.Paths[path]; ok {
+				if p.Get != nil {
+					p.Get.Parameters = append(p.Get.Parameters,
+						&spec3.Parameter{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "limit",
+								In:          "query",
+								Description: "number of results to return",
+								Example:     30,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+						},
+						&spec3.Parameter{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "page",
+								In:          "query",
+								Description: "page number (starting from 1)",
+								Example:     1,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+						},
+						&spec3.Parameter{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "offset",
+								In:          "query",
+								Description: "number of results to skip",
+								Example:     0,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+						},
+					)
+				}
+			}
+		}
+	}
+
 	return oas, nil
 }
 
