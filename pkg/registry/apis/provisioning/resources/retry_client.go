@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -69,10 +68,8 @@ func isTransientError(err error) bool {
 		return false
 	}
 
-	// Non-transient errors that should never be retried
-	// "this resource is managed by a repository" indicates the request needs to be routed
-	// through the provisioning API, not retried
-	if strings.Contains(err.Error(), "this resource is managed by a repository") {
+	// Context errors should not be retried - they indicate the caller canceled or timed out
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return false
 	}
 
