@@ -106,7 +106,7 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  const { teamFolderTreeItems, teamFolderOwnersByUid } = useTeamFolders(value, onChange, foldersOpenState);
+  const { teamFolderTreeItems, teamFolderOwnersByUid } = useTeamFolders(foldersOpenState, value, onChange);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -401,9 +401,9 @@ export function NestedFolderPicker({
 }
 
 function useTeamFolders(
-  value: string | undefined,
-  onChange: (folderUID: string | undefined, folderName: string | undefined) => void,
-  foldersOpenState: Record<string, boolean>
+  foldersOpenState: Record<string, boolean>,
+  value?: string,
+  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
 ) {
   const { foldersByTeam } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
   const firstTeamFolder = foldersByTeam[0]?.folders[0];
