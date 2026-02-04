@@ -39,17 +39,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasBody"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasBody"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasBody"
                 }
               }
             }
@@ -3173,7 +3173,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasBody": {
         "type": "object",
         "required": [
           "items"
