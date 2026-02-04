@@ -296,7 +296,6 @@ export function SaveProvisionedDashboardForm({
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
-            workflow={workflow}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}

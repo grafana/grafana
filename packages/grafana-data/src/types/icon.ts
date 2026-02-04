@@ -197,7 +197,6 @@ export const availableIconsIndex = {
   'legend-show': true,
   'library-panel': true,
   'line-alt': true,
-  lightbulb: true,
   link: true,
   'link-broken': true,
   'list-ui-alt': true,

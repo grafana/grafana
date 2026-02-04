@@ -179,7 +179,6 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
-                workflow={workflow}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />

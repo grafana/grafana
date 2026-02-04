@@ -206,7 +206,6 @@ export function DeleteProvisionedDashboardForm({
                 resourceType="dashboard"
                 isNew={isNew}
                 readOnly={readOnly}
-                workflow={workflow}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />

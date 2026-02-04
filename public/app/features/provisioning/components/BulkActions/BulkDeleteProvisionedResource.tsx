@@ -113,7 +113,6 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
-                workflow={workflow}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 hidePath
