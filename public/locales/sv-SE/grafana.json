@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Återställ till standardvärden",
-      "title-invalid-configuration": "Ogiltig konfiguration",
       "title-more-actions": "Fler åtgärder",
       "tooltip-more-actions": "Fler åtgärder"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Gruppera efter",
       "aria-label-group-interval": "Gruppintervall",
       "aria-label-group-wait": "Gruppväntan",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Upprepningsintervall",
       "create-a-contact-point": "Skapa en kontaktpunkt",
+      "description-unique-routing": "",
       "label-default-contact-point": "Standardkontaktpunkt",
+      "label-name": "",
       "label-timing-options": "Tidsalternativ",
       "message": {
         "required": "Krävs."
       },
-      "or": "eller"
+      "or": "eller",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Lägg till matchare",
@@ -2136,6 +2139,10 @@
       "new-policy": "Lägg till ny policy",
       "no-matchers": "Inga matchare",
       "reload-policies": "Ladda om policyer",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Spara policy",
       "update": {
         "please-wait": "Vänta medan vi uppdaterar dina aviseringspolicyer.",
@@ -2154,6 +2161,54 @@
       },
       "n-more-policies_one": "{{count}} ytterligare policyer",
       "n-more-policies_other": "{{count}} ytterligare policyer"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Ny underordnad policy",
@@ -2337,6 +2392,13 @@
       "label-override-grouping": "Åsidosätt gruppering",
       "label-override-timings": "Åsidosätt tidsinställningar",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Redigera",
@@ -3103,6 +3165,12 @@
       "label-edit": "Redigera",
       "label-export": "Exportera"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, radera kontaktpunkt",
       "deleting": "Tar bort ...",
@@ -3120,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Radera aviseringspolicy"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6239,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Avbryt",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Mapp"
     },
     "inspect-data-tab": {
@@ -9793,7 +9872,6 @@
       "error-fetching": "Fel vid hämtning av LDAP-inställningar",
       "error-saving": "Fel vid sparande av LDAP-inställningar",
       "error-validate-form": "Fel vid validering av LDAP-inställningar",
-      "feature-flag-disabled": "",
       "saved": "LDAP-inställningar sparade"
     },
     "bind-dn": {
@@ -11290,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Kopiera",
+      "copy-styles": "",
       "create-library-panel": "Skapa bibliotekspanel",
       "duplicate": "Dubblett",
       "edit": "Redigera",
@@ -11301,11 +11380,13 @@
       "inspect-json": "Panel JSON",
       "more": "Mer ...",
       "new-alert-rule": "Ny varningsregel",
+      "paste-styles": "",
       "query": "Fråga",
       "remove": "Ta bort",
       "replace-library-panel": "Byt ut bibliotekspanel",
       "share": "Dela",
       "show-legend": "Visa förklaring",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "view": "Visa"
@@ -11869,9 +11950,6 @@
       "label-display-name": "Visningsnamn",
       "placeholder-my-repository-connection": "Min lagringsplatsanslutning",
       "text-loading-resource-information": "Läser in resursinformation …",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
       "dashboards-count_other": "{{count}} kontrollpanel",
@@ -11926,6 +12004,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11939,6 +12020,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12278,6 +12360,9 @@
         "view-repository": "Visa lagringsplats"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Kontrollerad:",
       "connection-status": "",
@@ -12471,7 +12556,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "Välj vad du vill synkronisera",
       "step-configure-repo": "",
       "step-connect": "Anslut",
@@ -13624,6 +13708,7 @@
     "name-wrap-header-text": "Radbryt rubriktext",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
