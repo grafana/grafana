@@ -37,7 +37,7 @@ import { LogListOptions, LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { LogListModel } from './processing';
 
-export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
+export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'unwrappedColumns'> {
   controlsExpanded: boolean;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
@@ -64,6 +64,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   timestampResolution: LogLineTimestampResolution;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
+  unwrappedColumns: boolean;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -176,7 +177,7 @@ export interface Props {
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: LogLineTimestampResolution;
-  unwrappedColumns: boolean;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -222,7 +223,7 @@ export const LogListContextProvider = ({
   timestampResolution = logOptionsStorageKey
     ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
     : 'ms',
-  unwrappedColumns: unwrappedColumnsProp,
+  unwrappedColumns: unwrappedColumnsProp = false,
   wrapLogMessage: wrapLogMessageProp,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
