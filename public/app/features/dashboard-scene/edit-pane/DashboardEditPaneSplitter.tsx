@@ -54,7 +54,7 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
-  const { editPane, i } = dashboard.state;
+  const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
