@@ -24,11 +24,5 @@ loki.relabel "faro_logs" {
 		replacement  = "faro"
 	}
 
-	rule {
-		action       = "replace"
-		target_label = "source"
-		replacement  = "faro"
-	}
-
 	forward_to = [loki.relabel.publish_logs.receiver]
 }
