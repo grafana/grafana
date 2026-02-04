@@ -290,11 +290,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
-		// Preserve the deprecated internal ID from the existing resource
-		existingMeta, metaErr := utils.MetaAccessor(f.Existing)
-		if metaErr == nil {
-			f.Meta.SetDeprecatedInternalID(existingMeta.GetDeprecatedInternalID()) // nolint:staticcheck
-		}
+		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -410,12 +407,9 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
 
-	// Preserve the deprecated internal ID from the existing resource (if not already set by DryRun)
+	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
 	if f.Existing != nil {
-		existingMeta, metaErr := utils.MetaAccessor(f.Existing)
-		if metaErr == nil && f.Meta.GetDeprecatedInternalID() == 0 { // nolint:staticcheck
-			f.Meta.SetDeprecatedInternalID(existingMeta.GetDeprecatedInternalID()) // nolint:staticcheck
-		}
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
 	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
