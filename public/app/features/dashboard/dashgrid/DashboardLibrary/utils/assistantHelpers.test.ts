@@ -1,57 +1,10 @@
-import { PluginDashboard } from 'app/types/plugins';
-
-import { GnetDashboard } from '../types';
-
 import {
   isGnetDashboard,
   buildAssistantPrompt,
   buildTemplateContextData,
   buildTemplateContextTitle,
 } from './assistantHelpers';
-
-// Helper functions for creating mock objects
-// These must include ALL fields from the real types to avoid incomplete mock anti-pattern
-const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
-  // Required fields
-  id: 123,
-  name: 'Test Dashboard',
-  description: 'A test dashboard for monitoring',
-  slug: 'test-dashboard',
-  downloads: 1000,
-  datasource: 'prometheus',
-  // Optional fields - included for completeness
-  screenshots: undefined,
-  logos: undefined,
-  json: undefined,
-  createdAt: '2025-01-01T00:00:00.000Z',
-  updatedAt: '2025-01-15T00:00:00.000Z',
-  publishedAt: '2025-01-01T00:00:00.000Z',
-  orgId: 1,
-  orgName: 'Test Org',
-  orgSlug: 'test-org',
-  userId: 100,
-  userName: 'testuser',
-  panelTypeSlugs: ['timeseries', 'stat', 'gauge'],
-  ...overrides,
-});
-
-const createMockPluginDashboard = (overrides: Partial<PluginDashboard> = {}): PluginDashboard => ({
-  // All fields from PluginDashboard interface
-  dashboardId: 1,
-  title: 'Plugin Dashboard',
-  uid: 'plugin-dash-uid',
-  pluginId: 'test-plugin',
-  imported: false,
-  importedRevision: 0,
-  importedUri: '',
-  importedUrl: '',
-  slug: 'plugin-dashboard',
-  revision: 1,
-  description: 'A plugin dashboard',
-  path: '/dashboards/plugin-dashboard.json',
-  removed: false,
-  ...overrides,
-});
+import { createMockGnetDashboard, createMockPluginDashboard } from './test-utils';
 
 describe('assistantHelpers', () => {
   describe('isGnetDashboard', () => {
