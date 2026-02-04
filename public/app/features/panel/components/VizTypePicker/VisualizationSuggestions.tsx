@@ -174,9 +174,21 @@ export function VisualizationSuggestions({
   );
 
   useEffect(() => {
-    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
-      // clear preview when no suggestions
+    // clear if no suggestions or data
+    const shouldClearPreview =
+      error || !suggestions || suggestions.length === 0 || (isNewVizSuggestionsEnabled && (!data || !hasData(data)));
+
+    if (shouldClearPreview) {
       onPreviewStateChange?.(false);
+    }
+  }, [error, data, suggestions, isNewVizSuggestionsEnabled, onPreviewStateChange]);
+
+  useEffect(() => {
+    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
+      return;
+    }
+
+    if (!data || !hasData(data)) {
       return;
     }
 
@@ -196,15 +208,8 @@ export function VisualizationSuggestions({
     isNewVizSuggestionsEnabled,
     isUnconfiguredPanel,
     applySuggestion,
-    onPreviewStateChange,
+    data,
   ]);
-
-  // clear preview on error or no data
-  useEffect(() => {
-    if (error || (isNewVizSuggestionsEnabled && (!data || !hasData(data)))) {
-      onPreviewStateChange?.(false);
-    }
-  }, [error, data, isNewVizSuggestionsEnabled, onPreviewStateChange]);
 
   if (loading || !data) {
     return (
