@@ -23,19 +23,21 @@ interface HeaderCellProps {
   crossFilterRows: { [key: string]: TableRow[] };
   showTypeIcons?: boolean;
   selectFirstCell: () => void;
+  disableKeyboardEvents?: boolean;
 }
 
 const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
-  rows,
-  field,
-  direction,
-  filter,
-  setFilter,
   crossFilterOrder,
   crossFilterRows,
-  showTypeIcons,
+  direction,
+  disableKeyboardEvents,
+  field,
+  filter,
+  rows,
   selectFirstCell,
+  setFilter,
+  showTypeIcons,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -54,9 +56,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
     }
   }, [filterable, displayName, filter, setFilter]);
 
-  // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
-  // to do to make filter and sort keyboard accessible, so we have to implement it ourselves here, including
-  // a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
     <Stack
@@ -65,23 +64,35 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       direction="row"
       gap={0.5}
       alignItems="center"
-      onKeyDown={(ev) => {
-        ev.stopPropagation();
+      onKeyDown={
+        disableKeyboardEvents
+          ? undefined
+          : (ev) => {
+              // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
+              // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
+              // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
+              ev.stopPropagation();
 
-        const tableTabbedElement = ev.target;
-        const headerContent = ev.currentTarget;
-        const headerCell = ev.currentTarget.parentNode;
-        const row = headerCell?.parentNode;
-        const isLastTabKeypressInHeader =
-          ev.key === 'Tab' &&
-          !ev.shiftKey &&
-          tableTabbedElement === headerContent.lastElementChild &&
-          headerCell === row?.lastElementChild;
+              if (!(ev.key === 'Tab' && !ev.shiftKey)) {
+                return;
+              }
 
-        if (isLastTabKeypressInHeader) {
-          selectFirstCell();
-        }
-      }}
+              const tableTabbedElement = ev.target;
+              if (!(tableTabbedElement instanceof HTMLElement)) {
+                return;
+              }
+
+              const headerContent = ref.current;
+              const headerCell = ref.current?.parentNode;
+              const row = headerCell?.parentNode;
+              const isLastElementInHeader =
+                headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+
+              if (isLastElementInHeader) {
+                selectFirstCell();
+              }
+            }
+      }
     >
       {/* eslint-enable jsx-a11y/no-static-element-interactions */}
       {showTypeIcons && (

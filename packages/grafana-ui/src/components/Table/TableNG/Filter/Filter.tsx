@@ -8,10 +8,10 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
-import { FilterType, TableRow } from '../types';
+import { FilterOperator, FilterType, TableRow } from '../types';
 
-import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
+import { operatorSelectableValues } from './utils';
 
 interface Props {
   name: string;
@@ -48,14 +48,18 @@ export const Filter = memo(
     const styles = useStyles2(getStyles);
     const filterEnabled = Boolean(filterValue);
     const [searchFilter, setSearchFilter] = useState(filter[name]?.searchFilter || '');
-    const [operator, setOperator] = useState<SelectableValue<string>>(filter[name]?.operator || REGEX_OPERATOR);
+    const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
+      filter[name]?.operator || operatorSelectableValues()[FilterOperator.CONTAINS]
+    );
 
     return (
       <button
         className={styles.headerFilter}
         ref={ref}
         type="button"
-        aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, { name: field ? getFieldDisplayName(field) : '' })}
+        aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {
+          name: field ? getFieldDisplayName(field) : '',
+        })}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton}
         tabIndex={0}
         onKeyDown={(ev) => {
@@ -91,11 +95,6 @@ export const Filter = memo(
                 buttonElement={ref.current}
               />
             }
-            onKeyDown={(event) => {
-              if (event.key === ' ') {
-                event.stopPropagation();
-              }
-            }}
             placement="bottom-start"
             referenceElement={ref.current}
             show

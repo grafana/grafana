@@ -11,37 +11,11 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { FilterType, TableRow } from '../types';
+import { FilterOperator, FilterType, TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
-import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
-
-export const operatorSelectableValues = (): { [key: string]: SelectableValue<string> } => ({
-  Contains: {
-    label: t('grafana-ui.table.filter.operator.contains', 'Contains'),
-    value: t('grafana-ui.table.filter.operator.contains', 'Contains'),
-    description: t('grafana-ui.table.filter.operator.contains', 'Contains'),
-  },
-  '=': { label: '=', value: '=', description: t('grafana-ui.table.filter.operator.equals', 'Equals') },
-  '!=': { label: '!=', value: '!=', description: t('grafana-ui.table.filter.operator.not-equals', 'Not equals') },
-  '>': { label: '>', value: '>', description: t('grafana-ui.table.filter.operator.greater', 'Greater') },
-  '>=': {
-    label: '>=',
-    value: '>=',
-    description: t('grafana-ui.table.filter.operator.greater-or-equal', 'Greater or Equal'),
-  },
-  '<': { label: '<', value: '<', description: t('grafana-ui.table.filter.operator.less', 'Less') },
-  '<=': { label: '<=', value: '<=', description: t('grafana-ui.table.filter.operator.less-or-equal', 'Less or Equal') },
-  Expression: {
-    label: t('grafana-ui.table.filter.operator.expression', 'Expression'),
-    value: t('grafana-ui.table.filter.operator.expression', 'Expression'),
-    description: t(
-      'grafana-ui.table.filter.operator.expression-description',
-      'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")'
-    ),
-  },
-});
+import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
 
 interface Props {
   name: string;
@@ -52,8 +26,8 @@ interface Props {
   field?: Field;
   searchFilter: string;
   setSearchFilter: (value: string) => void;
-  operator: SelectableValue<string>;
-  setOperator: (item: SelectableValue<string>) => void;
+  operator: SelectableValue<FilterOperator>;
+  setOperator: (item: SelectableValue<FilterOperator>) => void;
   buttonElement: HTMLButtonElement | null;
 }
 

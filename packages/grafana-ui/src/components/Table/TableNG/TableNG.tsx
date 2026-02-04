@@ -711,6 +711,7 @@ export function TableNG(props: TableNGProps) {
               field={field}
               filter={filter}
               setFilter={setFilter}
+              disableKeyboardEvents={disableKeyboardEvents}
               crossFilterOrder={crossFilterOrder}
               crossFilterRows={crossFilterRows}
               direction={sortDirection}
@@ -735,30 +736,31 @@ export function TableNG(props: TableNGProps) {
       return result;
     },
     [
+      theme,
+      onCellFilterAdded,
+      rowHeight,
+      maxRowHeight,
       applyToRowBgFn,
+      data,
+      frozenColumns,
+      numFrozenColsFullyInView,
+      getCellColorInlineStyles,
+      rowHeightFn,
+      timeRange,
+      getCellActions,
+      disableSanitizeHtml,
+      getTextColorForBackground,
+      rows,
+      filter,
+      setFilter,
+      disableKeyboardEvents,
       crossFilterOrder,
       crossFilterRows,
-      data,
-      disableSanitizeHtml,
-      filter,
-      footers,
-      frozenColumns,
-      getCellActions,
-      getCellColorInlineStyles,
-      getTextColorForBackground,
-      isUniformFooter,
-      maxRowHeight,
-      numFrozenColsFullyInView,
-      onCellFilterAdded,
-      rows,
-      rowHeight,
-      rowHeightFn,
-      selectFirstCell,
-      setFilter,
-      sortedRows,
       showTypeIcons,
-      theme,
-      timeRange,
+      selectFirstCell,
+      sortedRows,
+      footers,
+      isUniformFooter,
     ]
   );
 
