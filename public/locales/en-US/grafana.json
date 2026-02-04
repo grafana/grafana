@@ -6434,6 +6434,8 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "Query editor v2",
+      "query-editor-version-toggle": "Toggle between query editor v1 and v2",
       "table-view-aria-label-toggletableview": "Toggle table view",
       "table-view-label-table-view": "Table view"
     },
