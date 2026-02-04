@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { CoreApp, EventBus, GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
+import { GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
