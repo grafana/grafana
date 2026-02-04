@@ -53,8 +53,12 @@ function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
   return 'uid' in query && typeof query['uid'] === 'string';
 }
 
-function getExportLabel(query?: { labels?: Record<string, string> }): string | undefined {
-  return query?.labels?.exportLabel;
+function getExportLabel(labels?: { exportLabel?: string }): string | undefined {
+  if (!labels) {
+    return undefined;
+  }
+
+  return labels?.exportLabel;
 }
 
 /**
@@ -182,7 +186,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
             const dsType = query.spec.query?.group;
-            const exportLabel = getExportLabel(query.spec.query);
+            const exportLabel = getExportLabel(query.spec.query.labels);
             if (dsType && exportLabel) {
               dsTypes[exportLabel] = dsType;
             }
@@ -196,14 +200,15 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
         const dsType = variable.spec.query?.group;
-        const exportLabel = getExportLabel(variable.spec.query);
+        const exportLabel = getExportLabel(variable.spec.query.labels);
         if (dsType && exportLabel) {
           dsTypes[exportLabel] = dsType;
         }
       } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
         const dsType = variable.group;
-        if (dsType && variable.label) {
-          dsTypes[variable.label] = dsType;
+        const exportLabel = getExportLabel(variable.labels);
+        if (dsType && exportLabel) {
+          dsTypes[exportLabel] = dsType;
         }
       }
     }
@@ -217,7 +222,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
       }
 
       const dsType = annotation.spec.query?.group;
-      const exportLabel = getExportLabel(annotation.spec.query);
+      const exportLabel = getExportLabel(annotation.spec.query.labels);
       if (dsType && exportLabel) {
         dsTypes[exportLabel] = dsType;
       }
@@ -230,7 +235,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
             const dsType = query.spec.query?.group;
-            const exportLabel = getExportLabel(query.spec.query);
+            const exportLabel = getExportLabel(query.spec.query.labels);
             if (dsType && exportLabel) {
               dsTypes[exportLabel] = dsType;
             }
@@ -341,7 +346,7 @@ function replaceAnnotationDatasources(
 ): DashboardV2Spec['annotations'] {
   return annotations?.map((annotation: AnnotationQueryKind) => {
     const dsType = annotation.spec.query?.group;
-    const dsLabel = getExportLabel(annotation.spec.query);
+    const dsLabel = getExportLabel(annotation.spec.query.labels);
     const currentDsName = annotation.spec.query?.datasource?.name;
     const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
 
@@ -369,7 +374,7 @@ function replaceVariableDatasources(
   return variables?.map((variable) => {
     if (variable.kind === 'QueryVariable') {
       const dsType = variable.spec.query?.group;
-      const dsLabel = getExportLabel(variable.spec.query);
+      const dsLabel = getExportLabel(variable.spec.query.labels);
       const currentDsName = variable.spec.query?.datasource?.name;
       const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
 
@@ -414,7 +419,7 @@ function replaceVariableDatasources(
 
     if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
       const dsType = variable.group;
-      const dsLabel = variable.label;
+      const dsLabel = getExportLabel(variable.labels);
       const currentDsName = variable.datasource?.name;
       const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
 
@@ -447,7 +452,7 @@ function replaceElementDatasources(
             }
 
             const queryType = query.spec.query?.group;
-            const queryLabel = getExportLabel(query.spec.query);
+            const queryLabel = getExportLabel(query.spec.query.labels);
             const currentDsName = query.spec.query?.datasource?.name;
             const ds = queryLabel ? mappings[queryLabel] : queryType ? mappings[queryType] : undefined;
 
