@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu } from '@grafana/ui';
 
-import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useQueryEditorUIContext } from '../QueryEditorContext';
 
 /**
  * Actions menu for transformations.
@@ -14,7 +14,6 @@ import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContex
  * - Transformation-specific settings
  */
 export function TransformationActionsMenu() {
-  const { deleteQuery } = useActionsContext();
   const { selectedTransformation } = useQueryEditorUIContext();
 
   if (!selectedTransformation) {
@@ -30,7 +29,7 @@ export function TransformationActionsMenu() {
           <Menu.Item
             label={t('query-editor.action.remove-transformation', 'Remove transformation')}
             icon="trash-alt"
-            onClick={() => deleteQuery(selectedTransformation.transformId)}
+            onClick={() => {}} // noop for now
             destructive
           />
         </Menu>
