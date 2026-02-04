@@ -64,6 +64,7 @@ export const Filter = ({
       type="button"
       data-testid={selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton}
       tabIndex={0}
+      aria-label={t('table.header.filter-button', `Filter {{name}}`, { name: field ? getFieldDisplayName(field) : '' })}
       onKeyDown={(ev) => {
         // can't use tabindex alone to handle this, because column sort would intercept the keypress.
         if (ev.key === 'Enter' || ev.key === ' ') {
