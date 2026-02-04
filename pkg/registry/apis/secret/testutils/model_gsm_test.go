@@ -23,7 +23,8 @@ func TestModelGsm(t *testing.T) {
 		k, err := m.CreateKeeper(&secretv1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
 		require.NoError(t, err)
 		require.NoError(t, m.SetKeeperAsActive(k.Namespace, k.Name))
-		m.Create(time.Now(), &secretv1beta1.SecureValue{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "sv1"}})
+		_, err = m.Create(time.Now(), &secretv1beta1.SecureValue{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "sv1"}})
+		require.NoError(t, err)
 		require.ErrorIs(t, m.DeleteKeeper(k.Namespace, k.Name), contracts.ErrKeeperIsBeingUsedBySecureValue)
 	})
 
