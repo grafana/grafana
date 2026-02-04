@@ -561,7 +561,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
-	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get quota status: %w", err)
+	}
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(ctx, namespace, newQuota)
 	if err != nil {
 		return fmt.Errorf("check repository quota: %w", err)
@@ -734,6 +737,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"op":    "replace",
 			"path":  "/status/fieldErrors",
 			"value": fieldErrors,
+		})
+	}
+
+	// Only update if the quota has changed
+	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
 		})
 	}
 
