@@ -22,20 +22,24 @@ export function VizAndDataPaneNext({
 }: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
   const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
   const styles = useStyles2(getStyles, layout.sidebarSize);
-  const { editPreview, optionsPane } = model.useState();
+  const { optionsPane } = model.useState();
 
   const [applyPreview, setApplyPreview] = useState<(() => void) | undefined>(undefined);
+  const [hasUnappliedPreview, setHasUnappliedPreview] = useState(false);
 
   useEffect(() => {
     if (!optionsPane) {
       setApplyPreview(undefined);
+      setHasUnappliedPreview(false);
       return;
     }
 
     setApplyPreview(() => optionsPane.state.applyPreview);
+    setHasUnappliedPreview(!!optionsPane.state.hasUnappliedPreview);
 
     const sub = optionsPane.subscribeToState((newState) => {
       setApplyPreview(() => newState.applyPreview);
+      setHasUnappliedPreview(!!newState.hasUnappliedPreview);
     });
 
     return () => sub.unsubscribe();
@@ -46,7 +50,7 @@ export function VizAndDataPaneNext({
   }
 
   const nextDataPane = scene.dataPane;
-  const isPreview = !!editPreview;
+  const isPreview = hasUnappliedPreview;
 
   const vizSizeClass = css({
     height: layout.vizResize.height,

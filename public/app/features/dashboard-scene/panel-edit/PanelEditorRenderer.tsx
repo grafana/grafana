@@ -92,17 +92,21 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const isScrollingLayout = useScrollReflowLimit();
 
   const [applyPreview, setApplyPreview] = useState<(() => void) | undefined>(undefined);
+  const [hasUnappliedPreview, setHasUnappliedPreview] = useState(false);
 
   useEffect(() => {
     if (!optionsPane) {
       setApplyPreview(undefined);
+      setHasUnappliedPreview(false);
       return;
     }
 
     setApplyPreview(() => optionsPane.state.applyPreview);
+    setHasUnappliedPreview(!!optionsPane.state.hasUnappliedPreview);
 
     const sub = optionsPane.subscribeToState((newState) => {
       setApplyPreview(() => newState.applyPreview);
+      setHasUnappliedPreview(!!newState.hasUnappliedPreview);
     });
 
     return () => sub.unsubscribe();
@@ -135,7 +139,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           <VizWrapper
             panel={editPreview ?? panel}
             tableView={tableView}
-            isPreview={!!editPreview}
+            isPreview={hasUnappliedPreview}
             onApply={applyPreview}
           />
         </div>
