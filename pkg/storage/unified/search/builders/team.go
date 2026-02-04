@@ -14,6 +14,7 @@ const (
 	TEAM_SEARCH_EMAIL        = "email"
 	TEAM_SEARCH_PROVISIONED  = "provisioned"
 	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
+	TEAM_SEARCH_MEMBER_COUNT = "memberCount"
 )
 
 var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
@@ -32,9 +33,17 @@ var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColum
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		Description: "External UID of the team",
 	},
+	TEAM_SEARCH_MEMBER_COUNT: {
+		Name:        TEAM_SEARCH_MEMBER_COUNT,
+		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+		Description: "Number of members in the team",
+		Properties:  &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: false},
+	},
 }
 
-func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
+type TeamMemberCountLookup func(ctx context.Context, namespace, teamUID string) (int64, error)
+
+func GetTeamSearchBuilder(memberCountLookup TeamMemberCountLookup) (resource.DocumentBuilderInfo, error) {
 	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(TeamSearchTableColumnDefinitions))
 	for _, v := range TeamSearchTableColumnDefinitions {
 		values = append(values, v)
@@ -47,13 +56,15 @@ func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
 			Resource: v0alpha1.TeamResourceInfo.GroupResource().Resource,
 		},
 		Fields:  fields,
-		Builder: new(teamSearchBuilder),
+		Builder: &teamSearchBuilder{MemberCountLookup: memberCountLookup},
 	}, err
 }
 
-var _ resource.DocumentBuilder = new(teamSearchBuilder)
+var _ resource.DocumentBuilder = (*teamSearchBuilder)(nil)
 
-type teamSearchBuilder struct{}
+type teamSearchBuilder struct {
+	MemberCountLookup TeamMemberCountLookup
+}
 
 func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	team := &v0alpha1.Team{}
@@ -70,6 +81,13 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 	}
 	if team.Spec.ExternalUID != "" {
 		doc.Fields[TEAM_SEARCH_EXTERNAL_UID] = team.Spec.ExternalUID
+	}
+
+	if t.MemberCountLookup != nil && key != nil && key.Name != "" {
+		count, err := t.MemberCountLookup(ctx, key.Namespace, key.Name)
+		if err == nil {
+			doc.Fields[TEAM_SEARCH_MEMBER_COUNT] = count
+		}
 	}
 
 	return doc, nil

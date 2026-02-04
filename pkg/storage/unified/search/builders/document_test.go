@@ -73,7 +73,7 @@ func TestExternalGroupMappingDocumentBuilder(t *testing.T) {
 }
 
 func TestTeamSearchBuilder(t *testing.T) {
-	info, err := GetTeamSearchBuilder()
+	info, err := GetTeamSearchBuilder(nil)
 	require.NoError(t, err)
 	doSnapshotTests(t, info.Builder, "team", &resourcepb.ResourceKey{
 		Namespace: "default",

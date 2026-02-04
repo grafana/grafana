@@ -126,6 +126,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
+	if std, ok := docBuilders.(*search.StandardDocumentBuilders); ok && searchClient != nil {
+		std.SetTeamMemberCountLookup(search.NewTeamMemberCountLookupFromIndex(searchClient))
+	}
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers

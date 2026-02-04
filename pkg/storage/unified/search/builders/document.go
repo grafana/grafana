@@ -18,7 +18,7 @@ import (
 
 // All returns all document builders from this package.
 // These builders have dependencies on Grafana apps (dashboard and user).
-func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
+func All(sql db.DB, sprinkles DashboardStats, teamMemberCountLookup TeamMemberCountLookup) ([]resource.DocumentBuilderInfo, error) {
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
@@ -73,7 +73,7 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 		return nil, err
 	}
 
-	teams, err := GetTeamSearchBuilder()
+	teams, err := GetTeamSearchBuilder(teamMemberCountLookup)
 	if err != nil {
 		return nil, err
 	}
