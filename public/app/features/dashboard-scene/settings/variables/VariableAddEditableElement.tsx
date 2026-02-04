@@ -63,7 +63,8 @@ export class VariableAddEditableElement implements EditableDashboardElement {
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.variableAdd);
 }
 
-function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
+/** @internal Exported for testing */
+export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
