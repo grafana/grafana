@@ -32,7 +32,7 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
-  useAssistantHelp?: boolean;
+  showAssistantButton?: boolean;
 }
 
 function DashboardCardComponent({
@@ -46,7 +46,7 @@ function DashboardCardComponent({
   showDatasourceProvidedBadge,
   dimThumbnail,
   kind,
-  useAssistantHelp,
+  showAssistantButton,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -122,14 +122,14 @@ function DashboardCardComponent({
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
           {kind === 'template_dashboard' ? (
-            <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+            <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
           ) : (
-            <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Grafana Assistant</Trans>
+            <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
           )}
         </Button>
-        {assistantAvailable && useAssistantHelp && (
-          <Button variant="secondary" fill="outline" onClick={onUseAssistantClick} icon="ai-sparkle">
-            <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Grafana Assistant</Trans>
+        {assistantAvailable && showAssistantButton && (
+          <Button variant="secondary" fill="text" onClick={onUseAssistantClick} icon="ai-sparkle">
+            <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
           </Button>
         )}
         {details && (
@@ -280,6 +280,7 @@ function getStyles(theme: GrafanaTheme2) {
     actionsContainer: css({
       marginTop: 0,
       alignItems: 'stretch',
+      flexWrap: 'nowrap',
     }),
     detailsContainer: css({
       width: '340px',

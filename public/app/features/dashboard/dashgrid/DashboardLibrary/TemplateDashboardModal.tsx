@@ -147,7 +147,7 @@ export const TemplateDashboardModal = () => {
                     onClose={onClose}
                     dashboard={dashboard}
                     kind="template_dashboard"
-                    useAssistantHelp
+                    showAssistantButton
                   />
                 );
               })}

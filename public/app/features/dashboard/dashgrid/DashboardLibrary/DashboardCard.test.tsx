@@ -102,7 +102,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Use template' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View template' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Use dashboard' })).not.toBeInTheDocument();
     });
 
@@ -117,7 +117,7 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.getByRole('button', { name: 'Use dashboard' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Use template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View template' })).not.toBeInTheDocument();
     });
   });
 
