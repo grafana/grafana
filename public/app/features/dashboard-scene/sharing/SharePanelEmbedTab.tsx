@@ -5,7 +5,7 @@ import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEm
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -65,7 +65,7 @@ const getIframeBuilder =
     params.set('panelId', editOrViewPanel);
     params.delete('editPanel');
     params.delete('viewPanel');
-    params.set('__feature.dashboardSceneSolo', 'true');
+    params.set('__feature.dashboardScene', 'true');
 
     const soloUrl = getDashboardUrl({
       absolute: true,

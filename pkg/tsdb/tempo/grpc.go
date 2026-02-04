@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"google.golang.org/grpc/metadata"
 
@@ -89,6 +91,21 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 
 	var dialOps []grpc.DialOption
 
+	// Default max gRPC receive size is 4MB. Tempo responses can exceed this, so we should increase it.
+	// Prefer `GF_LIVE_CLIENT_QUEUE_MAX_SIZE` (set by Grafana for the Tempo plugin) when it's present and valid.
+	const defaultMaxCallRecvMsgSizeBytes = 4 * 1024 * 1024
+	maxCallRecvMsgSizeBytes := defaultMaxCallRecvMsgSizeBytes
+
+	if v := backend.GrafanaConfigFromContext(ctx).Get(backend.LiveClientQueueMaxSize); v != "" {
+		parsed, err := strconv.Atoi(v)
+		if err != nil || parsed <= 0 {
+			logger.Debug("Invalid GF_LIVE_CLIENT_QUEUE_MAX_SIZE; using default gRPC max receive size", "value", v, "default", defaultMaxCallRecvMsgSizeBytes, "error", err)
+		} else {
+			maxCallRecvMsgSizeBytes = parsed
+		}
+	}
+
+	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeBytes)))
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it sets the basic authentication header for each RPC call.

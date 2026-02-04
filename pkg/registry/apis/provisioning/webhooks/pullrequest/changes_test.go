@@ -737,8 +737,78 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					GrafanaURL: "ht tp://bad url/d/the-uid/hello-world", // Malformed URL
-					PreviewURL: "ht tp://bad url/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					Error: "parse \"ht tp://bad url/\": first path segment in URL cannot contain colon",
+				}},
+			},
+		},
+		{
+			name: "path with spaces",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file with spaces.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file with spaces.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file with spaces.json", "ref").Return(finfo, nil)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file with spaces.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file with spaces.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file%20with%20spaces.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "",
+					PreviewScreenshotURL: "",
 				}},
 			},
 		},

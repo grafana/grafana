@@ -8,8 +8,8 @@ describe('generateTimestamp', () => {
     expect(typeof timestamp).toBe('string');
 
     // Check that the timestamp follows the format YYYY-MM-DD-xxxxx
-    // where xxxxx is a random string of 5 alphabetic characters
-    expect(timestamp).toMatch(/^\d{4}-\d{2}-\d{2}-[a-zA-Z]{5}$/);
+    // where xxxxx is a random string of 5 alpha-num characters
+    expect(timestamp).toMatch(/^\d{4}-\d{2}-\d{2}-[a-z\d]{5}$/i);
   });
 
   it('should generate unique timestamps', () => {

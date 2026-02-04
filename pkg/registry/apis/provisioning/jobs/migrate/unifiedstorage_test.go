@@ -134,7 +134,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name: "should only run sync for folder-type repositories",
+			name: "should run export and sync for folder-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -147,9 +147,15 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						},
 					},
 				})
-				// Export should be skipped - no export-related mocks
-				// Cleaner should also be skipped - no cleaner-related mocks
-				// Only sync job should run
+				// Export should run for folder-type repositories
+				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
+				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
+					return job.Spec.Push != nil
+				}), pr).Return(nil)
+				pr.On("ResetResults").Return()
+				// Cleaner should be skipped - no cleaner-related mocks
+				// Sync job should run
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
@@ -171,7 +177,14 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						},
 					},
 				})
-				// Only sync job should run and fail
+				// Export should run first
+				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
+				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
+					return job.Spec.Push != nil
+				}), pr).Return(nil)
+				pr.On("ResetResults").Return()
+				// Sync job should run and fail
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental

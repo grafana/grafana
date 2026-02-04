@@ -3,11 +3,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
-import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
+import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -46,6 +46,17 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     setHasSubmitted(true);
 
     const resources = collectSelectedItems(selectedItems);
+
+    const folderCount = Object.keys(selectedItems.folder || {}).length;
+    const dashboardCount = Object.keys(selectedItems.dashboard || {}).length;
+    reportInteraction('grafana_provisioning_bulk_delete_submitted', {
+      workflow: data.workflow,
+      repositoryName: repository.name ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
+      resourceCount: resources.length,
+      folderCount,
+      dashboardCount,
+    });
 
     // Create the delete job spec
     const jobSpec: DeleteJobSpec = {

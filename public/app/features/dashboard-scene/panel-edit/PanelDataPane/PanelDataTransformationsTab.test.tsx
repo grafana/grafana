@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -165,6 +166,15 @@ describe('PanelDataTransformationsTab', () => {
     const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
     expect(reduce).toBeNull();
   });
+
+  it('renders the new empty transformations message with transformationsEmptyPlaceholder on', async () => {
+    config.featureToggles.transformationsEmptyPlaceholder = true;
+    const modelMock = createModelMock(mockData);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+    // Should show SQL transformation card in empty state
+    expect(screen.getByText('Add a Transformation')).toBeInTheDocument();
+  });
 });
 
 function setupTabScene(panelId: string) {
@@ -178,5 +188,5 @@ function setupTabScene(panelId: string) {
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
 
-  return { transformsTab };
+  return { transformsTab, panel };
 }

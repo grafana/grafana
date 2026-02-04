@@ -534,55 +534,49 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 			legacyFolder               folder.Folder
 			expectedFolder             dtos.Folder
 			expectedFolderServiceError error
-			unifiedStorageEnabled      bool
 			unifiedStorageMode         grafanarest.DualWriterMode
 			expectedCode               int
 		}
 
 		tcs := []testCase{
 			{
-				description:           "General folder - Legacy",
-				expectedCode:          http.StatusOK,
-				legacyFolder:          legacyFolder,
-				folderUID:             legacyFolder.UID,
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: false,
+				description:    "General folder - Legacy",
+				expectedCode:   http.StatusOK,
+				legacyFolder:   legacyFolder,
+				folderUID:      legacyFolder.UID,
+				expectedFolder: expectedFolder,
 			},
 			{
-				description:           "General folder - Unified storage, mode 1",
-				expectedCode:          http.StatusOK,
-				legacyFolder:          legacyFolder,
-				folderUID:             legacyFolder.UID,
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode1,
+				description:        "General folder - Unified storage, mode 1",
+				expectedCode:       http.StatusOK,
+				legacyFolder:       legacyFolder,
+				folderUID:          legacyFolder.UID,
+				expectedFolder:     expectedFolder,
+				unifiedStorageMode: grafanarest.Mode1,
 			},
 			{
-				description:           "General folder - Unified storage, mode 2",
-				expectedCode:          http.StatusOK,
-				legacyFolder:          legacyFolder,
-				folderUID:             legacyFolder.UID,
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode2,
+				description:        "General folder - Unified storage, mode 2",
+				expectedCode:       http.StatusOK,
+				legacyFolder:       legacyFolder,
+				folderUID:          legacyFolder.UID,
+				expectedFolder:     expectedFolder,
+				unifiedStorageMode: grafanarest.Mode2,
 			},
 			{
-				description:           "General folder - Unified storage, mode 3",
-				expectedCode:          http.StatusOK,
-				legacyFolder:          legacyFolder,
-				folderUID:             legacyFolder.UID,
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode3,
+				description:        "General folder - Unified storage, mode 3",
+				expectedCode:       http.StatusOK,
+				legacyFolder:       legacyFolder,
+				folderUID:          legacyFolder.UID,
+				expectedFolder:     expectedFolder,
+				unifiedStorageMode: grafanarest.Mode3,
 			},
 			{
-				description:           "General folder - Unified storage, mode 4",
-				expectedCode:          http.StatusOK,
-				legacyFolder:          legacyFolder,
-				folderUID:             legacyFolder.UID,
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode4,
+				description:        "General folder - Unified storage, mode 4",
+				expectedCode:       http.StatusOK,
+				legacyFolder:       legacyFolder,
+				folderUID:          legacyFolder.UID,
+				expectedFolder:     expectedFolder,
+				unifiedStorageMode: grafanarest.Mode4,
 			},
 		}
 

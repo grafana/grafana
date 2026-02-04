@@ -4,12 +4,12 @@
     "currentVersion": "v1",
     "name": "LINE",
     "heading": "LINE notify settings",
-    "description": "Send notifications to LINE notify",
+    "description": "Send notifications to LINE notify. This integration is deprecated and will be removed in a future release.",
     "versions": [
       {
         "typeAlias": "line",
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -67,7 +67,8 @@
           }
         ]
       }
-    ]
+    ],
+    "deprecated": true
   },
   {
     "type": "dingding",
@@ -93,6 +94,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -225,6 +227,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1300,6 +1303,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1340,6 +1344,42 @@
             "secure": false,
             "dependsOn": "",
             "subformOptions": null
+          },
+          {
+            "element": "checkbox",
+            "inputType": "",
+            "label": "HideOpenButton",
+            "description": "Hide open URL button",
+            "placeholder": "",
+            "propertyName": "hide_open_button",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "checkbox",
+            "inputType": "",
+            "label": "HideVersionInfo",
+            "description": "Hide version info",
+            "placeholder": "",
+            "propertyName": "hide_version_info",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
           }
         ]
       }
@@ -1369,6 +1409,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2440,6 +2481,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2609,6 +2651,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2899,6 +2942,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -3070,7 +3114,7 @@
     "versions": [
       {
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -3103,6 +3147,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -3302,7 +3347,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       },
       {
         "version": "v0mimir1",
@@ -4161,7 +4207,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       }
     ]
   },
@@ -4369,6 +4416,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -5298,6 +5346,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6594,6 +6643,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6892,6 +6942,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "token",
@@ -6910,6 +6961,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6958,6 +7010,24 @@
             "description": "Body of the slack message",
             "placeholder": "{{ template \"slack.default.text\" . }}",
             "propertyName": "text",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Footer",
+            "description": "Templated footer of the slack message",
+            "placeholder": "{{ template \"slack.default.footer\" . }}",
+            "propertyName": "footer",
             "selectOptions": null,
             "showWhen": {
               "field": "",
@@ -9201,6 +9271,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -11479,6 +11550,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -12272,6 +12344,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -12965,6 +13038,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -13407,6 +13481,7 @@
                       "is": ""
                     },
                     "required": true,
+                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",
@@ -13605,6 +13680,7 @@
                           "is": ""
                         },
                         "required": false,
+                        "protected": true,
                         "validationRule": "",
                         "secure": false,
                         "dependsOn": "",
@@ -15036,6 +15112,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "secret",

@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+const maxLastErrorLength = 1000
+
 // jitteredBatch represents a batch of alert instances with associated jitter delay
 type jitteredBatch struct {
 	index     int
@@ -99,6 +101,14 @@ func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance m
 		if err != nil {
 			return err
 		}
+		annotationsJSON, err := alertInstance.Annotations.ToDB()
+		if err != nil {
+			return err
+		}
+		lastResultJSON, err := alertInstance.LastResult.ToDB()
+		if err != nil {
+			return err
+		}
 		params := append(make([]any, 0),
 			alertInstance.RuleOrgID,
 			alertInstance.RuleUID,
@@ -113,12 +123,16 @@ func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance m
 			nullableTimeToUnix(alertInstance.ResolvedAt),
 			nullableTimeToUnix(alertInstance.LastSentAt),
 			alertInstance.ResultFingerprint,
+			annotationsJSON,
+			int64(alertInstance.EvaluationDuration),
+			truncate(alertInstance.LastError, maxLastErrorLength),
+			lastResultJSON,
 		)
 
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time", "fired_at", "resolved_at", "last_sent_at", "result_fingerprint"})
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time", "fired_at", "resolved_at", "last_sent_at", "result_fingerprint", "annotations", "evaluation_duration_ns", "last_error", "last_result"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err
@@ -359,10 +373,10 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 
 	query := strings.Builder{}
 	placeholders := make([]string, 0, len(batch))
-	args := make([]any, 0, len(batch)*12)
+	args := make([]any, 0, len(batch)*17)
 
 	query.WriteString("INSERT INTO alert_instance ")
-	query.WriteString("(rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, fired_at, resolved_at, last_sent_at) VALUES ")
+	query.WriteString("(rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, fired_at, resolved_at, last_sent_at, result_fingerprint, annotations, evaluation_duration_ns, last_error, last_result) VALUES ")
 
 	for _, instance := range batch {
 		if err := models.ValidateAlertInstance(instance); err != nil {
@@ -376,7 +390,19 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 			continue
 		}
 
-		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?,?,?)")
+		annotationsJSON, err := instance.Annotations.ToDB()
+		if err != nil {
+			st.Logger.Warn("Skipping instance with invalid annotations", "err", err, "rule_uid", instance.RuleUID)
+			continue
+		}
+
+		lastResultJSON, err := instance.LastResult.ToDB()
+		if err != nil {
+			st.Logger.Warn("Skipping instance with invalid last result", "err", err, "rule_uid", instance.RuleUID)
+			continue
+		}
+
+		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 		args = append(args,
 			instance.RuleOrgID,
 			instance.RuleUID,
@@ -390,6 +416,11 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 			nullableTimeToUnix(instance.FiredAt),
 			nullableTimeToUnix(instance.ResolvedAt),
 			nullableTimeToUnix(instance.LastSentAt),
+			instance.ResultFingerprint,
+			annotationsJSON,
+			int64(instance.EvaluationDuration),
+			truncate(instance.LastError, maxLastErrorLength),
+			lastResultJSON,
 		)
 	}
 
@@ -418,4 +449,14 @@ func nullableTimeToUnix(t *time.Time) *int64 {
 	}
 	unix := t.Unix()
 	return &unix
+}
+
+func truncate(s string, maxLen int) string {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	const suffix = "... (truncated)"
+	suffixRunes := []rune(suffix)
+	return string(runes[:maxLen-len(suffixRunes)]) + suffix
 }

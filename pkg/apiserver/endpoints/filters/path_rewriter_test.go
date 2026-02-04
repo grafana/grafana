@@ -28,20 +28,20 @@ func Test_WithPathRewriters(t *testing.T) {
 	handler := WithPathRewriters(mockHandler, rewriters)
 
 	t.Run("should rewrite path", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "/apis/scope.grafana.app/namespaces/stack-1234/query/blah", nil)
+		req, err := http.NewRequest("GET", "/apis/scope.grafana.app/namespaces/stacks-1234/query/blah", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.Equal(t, "/apis/scope.grafana.app/namespaces/stack-1234/query", rr.Body.String())
+		assert.Equal(t, "/apis/scope.grafana.app/namespaces/stacks-1234/query", rr.Body.String())
 	})
 
 	t.Run("should ignore requests that don't match", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "/apis/scope.grafana.app/namespaces/stack-1234/scopes/1", nil)
+		req, err := http.NewRequest("GET", "/apis/scope.grafana.app/namespaces/stacks-1234/scopes/1", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.Equal(t, "/apis/scope.grafana.app/namespaces/stack-1234/scopes/1", rr.Body.String())
+		assert.Equal(t, "/apis/scope.grafana.app/namespaces/stacks-1234/scopes/1", rr.Body.String())
 	})
 }

@@ -60,7 +60,7 @@ func (s *LocalInlineSecureValueService) CanReference(ctx context.Context, owner 
 	}
 
 	if owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
-		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
+		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name [CanReference]")
 	}
 
 	if len(names) == 0 {
@@ -142,7 +142,7 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GroupResource().Resource,
 		Namespace: namespace.String(),
 		Name:      name,
-	})
+	}, "")
 	if err != nil {
 		return fmt.Errorf("checking access for secure value %s: %w", name, err)
 	}
@@ -167,7 +167,7 @@ func (s *LocalInlineSecureValueService) verifyOwnerAndAuth(ctx context.Context, 
 	}
 
 	if owner.Namespace == "" || owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
-		return nil, fmt.Errorf("owner reference must have a valid API group, API version, kind, namespace and name")
+		return nil, fmt.Errorf("owner reference must have a valid API group, API version, kind, namespace and name [verifyOwnerAndAuth:%+v]", owner)
 	}
 
 	return authInfo, nil

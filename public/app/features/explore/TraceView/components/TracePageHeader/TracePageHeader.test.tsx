@@ -22,7 +22,7 @@ import {
   PluginExtensionPoints,
   PluginExtensionTypes,
 } from '@grafana/data';
-import { usePluginLinks, usePluginComponents } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TraceViewPluginExtensionContext } from '../types/trace';
@@ -45,13 +45,6 @@ jest.mock('app/core/copy/appNotification', () => ({
     warning: jest.fn(),
     error: jest.fn(),
   })),
-}));
-
-// Mock config
-jest.mock('../../../../../core/config', () => ({
-  config: {
-    feedbackLinksEnabled: false, // Default to false to avoid interference with tests
-  },
 }));
 
 // Mock navigator.clipboard
@@ -89,13 +82,17 @@ const createMockExtension = (
   onClick: options.onClick,
 });
 
-const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false }) => {
+const setup = (
+  pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
+  hideHeaderDetails = false
+) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
 
   const mockUsePluginComponents = usePluginComponents as jest.MockedFunction<typeof usePluginComponents>;
   mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
 
+  const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
     trace,
     timeZone: '',
@@ -103,10 +100,6 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
-    showSpanFilterMatchesOnly: false,
-    setShowSpanFilterMatchesOnly: jest.fn(),
-    showCriticalPathSpansOnly: false,
-    setShowCriticalPathSpansOnly: jest.fn(),
     spanFilterMatches: undefined,
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',
@@ -114,6 +107,10 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     data: new MutableDataFrame(),
     datasourceName: 'test-datasource',
     datasourceUid: 'test-datasource-uid',
+    updateNextViewRangeTime: jest.fn(),
+    updateViewRangeTime: jest.fn(),
+    viewRange: { time: { current: viewRangeTime } },
+    hideHeaderDetails,
   };
 
   return {
@@ -127,22 +124,18 @@ describe('TracePageHeader test', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockWindowOpen.mockClear();
+    config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
   });
 
   it('should render the new trace header', () => {
     setup();
 
     const header = document.querySelector('header');
-    const method = getByText(header!, 'POST');
-    const status = getByText(header!, '200');
-    const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
-    const duration = getByText(header!, '2.36s');
-    const timestampElement = getByText(header!, '2023-02-05 08:50:56.289');
-    expect(method).toBeInTheDocument();
-    expect(status).toBeInTheDocument();
-    expect(url).toBeInTheDocument();
-    expect(duration).toBeInTheDocument();
-    expect(timestampElement).toBeInTheDocument();
+    expect(getByText(header!, 'POST')).toBeInTheDocument();
+    expect(getByText(header!, '200')).toBeInTheDocument();
+    expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
+    expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
+    expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
   });
 
   describe('Plugin Extensions', () => {
@@ -443,9 +436,7 @@ describe('TracePageHeader test', () => {
     });
 
     it('should render feedback button when feedbackLinksEnabled is true', () => {
-      // Mock config with feedbackLinksEnabled = true
-      const mockConfig = require('../../../../../core/config');
-      mockConfig.config.feedbackLinksEnabled = true;
+      config.feedbackLinksEnabled = true;
 
       setup();
 
@@ -458,9 +449,7 @@ describe('TracePageHeader test', () => {
     it('should display tooltip for feedback button', async () => {
       const user = userEvent.setup();
 
-      // Mock config with feedbackLinksEnabled = true
-      const mockConfig = require('../../../../../core/config');
-      mockConfig.config.feedbackLinksEnabled = true;
+      config.feedbackLinksEnabled = true;
 
       setup();
 
@@ -474,9 +463,7 @@ describe('TracePageHeader test', () => {
     });
 
     it('should render feedback button with correct styling and icon', () => {
-      // Mock config with feedbackLinksEnabled = true
-      const mockConfig = require('../../../../../core/config');
-      mockConfig.config.feedbackLinksEnabled = true;
+      config.feedbackLinksEnabled = true;
 
       setup();
 
@@ -488,6 +475,49 @@ describe('TracePageHeader test', () => {
       // Check for icon
       const iconElement = buttonElement?.querySelector('svg');
       expect(iconElement).toBeInTheDocument();
+    });
+  });
+
+  describe('hideHeaderDetails', () => {
+    it('should render all header details by default when hideHeaderDetails is false', () => {
+      config.feedbackLinksEnabled = true;
+      setup({ links: [], isLoading: false }, false);
+
+      expect(screen.getByText('Trace ID')).toBeInTheDocument();
+      expect(screen.getByText('Start time')).toBeInTheDocument();
+      expect(screen.getByText('Duration')).toBeInTheDocument();
+      expect(screen.getByText('Services')).toBeInTheDocument();
+      expect(screen.getByText('URL')).toBeInTheDocument();
+
+      expect(screen.getByText('Share')).toBeInTheDocument();
+      expect(screen.getByText('Feedback')).toBeInTheDocument();
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+    });
+
+    it('should still render trace name and badges when hideHeaderDetails is true', () => {
+      setup({ links: [], isLoading: false }, true);
+
+      const header = document.querySelector('header');
+      expect(getByText(header!, 'POST')).toBeInTheDocument();
+      expect(getByText(header!, '200')).toBeInTheDocument();
+    });
+
+    it('should hide filters section when hideHeaderDetails is true', () => {
+      setup({ links: [], isLoading: false }, true);
+
+      expect(screen.queryByText('Filters')).not.toBeInTheDocument();
+    });
+
+    it('should hide plugin extension buttons when hideHeaderDetails is true', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension 1', 'Test extension description', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false }, true);
+      expect(screen.queryByText('Test Extension 1')).not.toBeInTheDocument();
     });
   });
 });

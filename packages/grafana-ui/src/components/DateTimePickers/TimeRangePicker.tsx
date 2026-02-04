@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, createRef, useState, useEffect } from 'react';
+import { memo, createRef, useState, useEffect, type JSX } from 'react';
 
 import {
   rangeUtil,
@@ -19,6 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFeatureToggle } from '../../utils/featureToggle';
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
@@ -73,6 +74,9 @@ export interface State {
   isOpen: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
+ */
 export function TimeRangePicker(props: TimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
 
@@ -159,6 +163,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         icon="angle-double-left"
         type="button"
         iconSize="xl"
+        data-testid={selectors.components.TimePicker.moveBackwardButton}
         tooltip={
           moveBackwardTooltip ?? t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')
         }
@@ -219,6 +224,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         type="button"
         variant={variant}
         iconSize="xl"
+        data-testid={selectors.components.TimePicker.moveForwardButton}
         tooltip={
           moveForwardTooltip ?? t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')
         }
@@ -231,6 +237,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onZoom}
           icon="search-minus"
           type="button"
+          data-testid={selectors.components.TimePicker.zoomOut}
           variant={variant}
         />
       </Tooltip>
@@ -240,13 +247,22 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
 TimeRangePicker.displayName = 'TimeRangePicker';
 
-const ZoomOutTooltip = () => (
-  <>
-    <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip">
-      Time range zoom out <br /> CTRL+Z
-    </Trans>
-  </>
-);
+const ZoomOutTooltip = () => {
+  const newShortcuts = getFeatureToggle('newTimeRangeZoomShortcuts');
+  return (
+    <>
+      {newShortcuts ? (
+        <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip-new">
+          Time range zoom out <br /> t -
+        </Trans>
+      ) : (
+        <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip">
+          Time range zoom out <br /> CTRL+Z
+        </Trans>
+      )}
+    </>
+  );
+};
 
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);

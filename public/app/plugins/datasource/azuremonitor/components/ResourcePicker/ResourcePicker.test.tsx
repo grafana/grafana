@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
@@ -18,10 +18,8 @@ import {
 import { DeepPartial } from '../../mocks/utils';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
-import { RECENT_RESOURCES_KEY } from './ResourcePicker';
+import ResourcePicker, { RECENT_RESOURCES_KEY } from './ResourcePicker';
 import { ResourceRowGroup, ResourceRowType } from './types';
-
-import ResourcePicker from '.';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -80,7 +78,7 @@ const defaultProps = {
     resourcePickerData,
     getSubscriptions: jest
       .fn()
-      .mockResolvedValue(createMockSubscriptions().map((sub) => ({ label: sub.name, value: sub.id }))),
+      .mockResolvedValue(createMockSubscriptions().map((sub) => ({ text: sub.name, value: sub.id }))),
     getLocations: jest.fn().mockResolvedValue(createMockLocations()),
     getMetricNamespaces: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
   }),
@@ -371,7 +369,7 @@ describe('AzureMonitor ResourcePicker', () => {
     );
     const subscriptionExpand = await screen.findByLabelText('Expand Primary Subscription');
     await userEvent.click(subscriptionExpand);
-    const error = await screen.queryByRole('alert');
+    const error = screen.queryByRole('alert');
     expect(error).toBeNull();
   });
 
@@ -400,9 +398,9 @@ describe('AzureMonitor ResourcePicker', () => {
 
   describe('when rendering resource picker without any selectable entry types', () => {
     it('renders no checkboxes', async () => {
-      await act(async () => {
-        render(<ResourcePicker {...defaultProps} selectableEntryTypes={[]} />);
-      });
+      render(<ResourcePicker {...defaultProps} selectableEntryTypes={[]} />);
+      // wait for search to be visible to allow for async operations
+      await screen.findByLabelText('Resource search');
       const checkboxes = screen.queryAllByRole('checkbox');
       expect(checkboxes.length).toBe(0);
     });
@@ -414,7 +412,10 @@ describe('AzureMonitor ResourcePicker', () => {
     });
     it('should not render filters if feature toggle disabled', async () => {
       config.featureToggles.azureResourcePickerUpdates = false;
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+      render(<ResourcePicker {...defaultProps} queryType="metrics" />);
+
+      // wait for search to be visible to allow for async operations
+      await screen.findByLabelText('Resource search');
 
       expect(
         screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.subscription.input)
@@ -428,31 +429,36 @@ describe('AzureMonitor ResourcePicker', () => {
     });
 
     it('should render subscription filter and load subscription options', async () => {
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
       await waitFor(() => {
         expect(defaultProps.datasource.getSubscriptions).toHaveBeenCalled();
       });
 
-      const subscriptionFilter = screen.getByTestId(
+      const subscriptionFilter = await screen.findByTestId(
         selectors.components.queryEditor.resourcePicker.filters.subscription.input
       );
       expect(subscriptionFilter).toBeInTheDocument();
     });
 
     it('should render resource type filter for metrics query type', async () => {
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+      render(<ResourcePicker {...defaultProps} queryType="metrics" />);
 
       await waitFor(() => {
         expect(defaultProps.datasource.getMetricNamespaces).toHaveBeenCalled();
       });
 
-      const resourceTypeFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      const resourceTypeFilter = await screen.findByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.type.input
+      );
       expect(resourceTypeFilter).toBeInTheDocument();
     });
 
     it('should not render resource type filter for logs query type', async () => {
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
+
+      // wait for search to be visible to allow for async operations
+      await screen.findByLabelText('Resource search');
 
       const resourceTypeFilter = screen.queryByTestId(
         selectors.components.queryEditor.resourcePicker.filters.type.input
@@ -461,39 +467,36 @@ describe('AzureMonitor ResourcePicker', () => {
     });
 
     it('should render location filter and load location options', async () => {
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
       await waitFor(() => {
         expect(defaultProps.datasource.getLocations).toHaveBeenCalled();
       });
 
-      const locationFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input);
+      const locationFilter = await screen.findByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.location.input
+      );
       expect(locationFilter).toBeInTheDocument();
     });
 
-    // Combobox tests seem to be quite finnicky when it comes to selecting options
-    // I've had to add multiple {ArrowDown} key-presses as sometimes the expected option isn't
-    // at the top of the list
     it('should call fetchInitialRows when subscription filter changes', async () => {
       const user = userEvent.setup();
       const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
 
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
-      const subscriptionFilter = await screen.getByTestId(
+      const subscriptionFilter = await screen.findByTestId(
         selectors.components.queryEditor.resourcePicker.filters.subscription.input
       );
-      await act(async () => {
-        await user.click(subscriptionFilter);
-        await user.type(subscriptionFilter, 'Primary Subscription {ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
-      });
+      await user.click(subscriptionFilter);
+      await user.type(subscriptionFilter, 'Primary Subscription{ArrowDown}{Enter}');
 
       await waitFor(() => {
         expect(mockFetchInitialRows).toHaveBeenCalledWith(
           'logs',
           undefined,
           expect.objectContaining({
-            subscriptions: ['def-456'],
+            subscriptions: ['def-123'],
             types: [],
             locations: [],
           })
@@ -505,14 +508,12 @@ describe('AzureMonitor ResourcePicker', () => {
       const user = userEvent.setup();
       const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
 
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
-      const locationFilter = await screen.getByTestId(
+      const locationFilter = await screen.findByTestId(
         selectors.components.queryEditor.resourcePicker.filters.location.input
       );
-      await act(async () => {
-        await user.click(locationFilter);
-      });
+      await user.click(locationFilter);
       await user.type(locationFilter, 'North Europe{ArrowDown}{Enter}');
 
       await waitFor(() => {
@@ -532,12 +533,10 @@ describe('AzureMonitor ResourcePicker', () => {
       const user = userEvent.setup();
       const mockFetchInitialRows = jest.spyOn(resourcePickerData, 'fetchInitialRows');
 
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+      render(<ResourcePicker {...defaultProps} queryType="metrics" />);
 
-      const typeFilter = await screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
-      await act(async () => {
-        await user.click(typeFilter);
-      });
+      const typeFilter = await screen.findByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      await user.click(typeFilter);
 
       await user.type(typeFilter, 'Kubernetes services {ArrowDown}{Enter}');
       await waitFor(() => {
@@ -561,23 +560,26 @@ describe('AzureMonitor ResourcePicker', () => {
     });
     it('should not render tabbed view if feature toggle disabled', async () => {
       config.featureToggles.azureResourcePickerUpdates = false;
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
+
+      // wait for search to be visible to allow for async operations
+      await screen.findByLabelText('Resource search');
 
       expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Browse'))).not.toBeInTheDocument();
       expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Recent'))).not.toBeInTheDocument();
     });
 
     it('should render tabbed view', async () => {
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
-      expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Browse'))).toBeInTheDocument();
-      expect(screen.queryByTestId(e2eSelectors.components.Tab.title('Recent'))).toBeInTheDocument();
+      expect(await screen.findByTestId(e2eSelectors.components.Tab.title('Browse'))).toBeInTheDocument();
+      expect(await screen.findByTestId(e2eSelectors.components.Tab.title('Recent'))).toBeInTheDocument();
     });
 
     it('should render tabbed view with no recent resources', async () => {
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
-      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      const recent = await screen.findByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
 
       expect(screen.getByText('No recent resources found')).toBeInTheDocument();
@@ -612,9 +614,9 @@ describe('AzureMonitor ResourcePicker', () => {
         },
       ];
       window.localStorage.setItem(RECENT_RESOURCES_KEY(defaultProps.queryType), JSON.stringify(recentResources));
-      await act(async () => render(<ResourcePicker {...defaultProps} />));
+      render(<ResourcePicker {...defaultProps} />);
 
-      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      const recent = await screen.findByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
 
       expect(screen.getByText(recentResources[0].name)).toBeInTheDocument();
@@ -653,9 +655,9 @@ describe('AzureMonitor ResourcePicker', () => {
       const queryType = 'metrics';
       window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+      render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />);
 
-      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      const recent = await screen.findByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
 
       const checkbox = await screen.findByLabelText(recentResources[0].name);
@@ -707,9 +709,9 @@ describe('AzureMonitor ResourcePicker', () => {
       const queryType = 'metrics';
       window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+      render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />);
 
-      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      const recent = await screen.findByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
 
       const checkbox = await screen.findByLabelText(recentResources[0].name);
@@ -771,9 +773,9 @@ describe('AzureMonitor ResourcePicker', () => {
       const queryType = 'metrics';
       window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+      render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />);
 
-      const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
+      const recent = await screen.findByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
 
       const checkbox = await screen.findByLabelText(recentResources[0].name);
@@ -816,7 +818,7 @@ describe('AzureMonitor ResourcePicker', () => {
       expect(JSON.parse(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]')).toHaveLength(30);
 
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
+      render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />);
 
       const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
       expect(subscriptionButton).toBeInTheDocument();

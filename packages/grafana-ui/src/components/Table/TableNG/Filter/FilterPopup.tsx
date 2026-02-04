@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,7 +12,7 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { FilterType } from '../types';
+import { FilterType, TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -36,9 +36,9 @@ const OPERATORS = Object.values(operatorSelectableValues);
 
 interface Props {
   name: string;
-  rows: any[];
-  filterValue: any;
-  setFilter: (value: any) => void;
+  rows: TableRow[];
+  filterValue?: Array<SelectableValue<unknown>>;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -65,6 +65,7 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -114,28 +115,31 @@ export const FilterPopup = ({
         className={styles.filterContainer}
         onClick={stopPropagation}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        ref={containerRef}
       >
         <Stack direction="column">
-          <Stack alignItems="center">
-            {field && <Label className={styles.label}>{getDisplayName(field)}</Label>}
-            <ButtonSelect
-              variant="canvas"
-              options={OPERATORS}
-              onChange={setOperator}
-              value={operator}
-              tooltip={operator.description}
-            />
-          </Stack>
-
-          <div className={styles.listDivider} />
+          <Stack alignItems="center">{field && <Label className={styles.label}>{getDisplayName(field)}</Label>}</Stack>
 
           <Stack gap={1}>
-            <FilterInput
-              placeholder={filterInputPlaceholder}
-              title={filterInputPlaceholder}
-              onChange={setSearchFilter}
-              value={searchFilter}
-            />
+            <div className={styles.inputContainer}>
+              <FilterInput
+                placeholder={filterInputPlaceholder}
+                title={filterInputPlaceholder}
+                onChange={setSearchFilter}
+                value={searchFilter}
+                suffix={
+                  <ButtonSelect
+                    className={styles.buttonSelectOverrides}
+                    options={OPERATORS}
+                    onChange={setOperator}
+                    value={operator}
+                    tooltip={operator.description}
+                    narrow
+                    root={containerRef.current ?? undefined}
+                  />
+                }
+              />
+            </div>
             <Button
               tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant="secondary"
@@ -156,21 +160,17 @@ export const FilterPopup = ({
             operator={operator}
           />
 
-          <Stack gap={3}>
-            <Stack>
-              <Button size="sm" onClick={onFilter}>
-                <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
-              </Button>
-              <Button size="sm" variant="secondary" onClick={onCancel}>
-                <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
-              </Button>
-            </Stack>
+          <Stack justifyContent="end" direction="row-reverse">
+            <Button size="sm" onClick={onFilter}>
+              <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
+            </Button>
+            <Button size="sm" variant="secondary" onClick={onCancel}>
+              <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
+            </Button>
             {clearFilterVisible && (
-              <Stack>
-                <Button fill="text" size="sm" onClick={onClearFilter}>
-                  <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
-                </Button>
-              </Stack>
+              <Button fill="text" size="sm" onClick={onClearFilter}>
+                <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
+              </Button>
             )}
           </Stack>
         </Stack>
@@ -183,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   filterContainer: css({
     label: 'filterContainer',
     width: '100%',
-    minWidth: '250px',
+    minWidth: '320px',
     height: '100%',
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
@@ -191,13 +191,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
   }),
-  listDivider: css({
-    label: 'listDivider',
-    width: '100%',
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-  }),
   label: css({
     marginBottom: 0,
+  }),
+  inputContainer: css({
+    width: 300,
+  }),
+  buttonSelectOverrides: css({
+    fontSize: 12,
+    '&:hover, &:focus, &:active': {
+      color: theme.colors.text.primary,
+      background: 'transparent',
+    },
   }),
 });
 

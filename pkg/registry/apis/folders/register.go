@@ -28,6 +28,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -134,6 +135,10 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	//   return err
 	// }
 	metav1.AddToGroupVersion(scheme, gv)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gv, folders.FolderKind())
+	if err != nil {
+		return err
+	}
 	return scheme.SetVersionPriority(gv)
 }
 
@@ -148,7 +153,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		Permissions:                 b.setDefaultFolderPermissions,
 	})
 
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(folders.FolderKind()),
+	}
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, resourceInfo, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
@@ -168,6 +176,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		b.storage = &folderStorage{
 			tableConverter:       resourceInfo.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
+			features:             b.features,
 			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                dw,
@@ -202,11 +211,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 }
 
 var defaultPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
 	{
 		"kind": "BasicRole",
 		"name": "Editor",
@@ -287,6 +291,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
 	log := logging.FromContext(context.Background())
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate
@@ -359,7 +364,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		return validateOnUpdate(ctx, f, old, b.storage, b.parents, folder.MaxNestedFolderDepth)
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, folder.MaxNestedFolderDepth)
 	default:
 		return nil
 	}

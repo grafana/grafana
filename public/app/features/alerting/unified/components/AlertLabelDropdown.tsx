@@ -5,10 +5,12 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Combobox, ComboboxOption, Field, useStyles2 } from '@grafana/ui';
 
+export type AsyncOptionsLoader = (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
+
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
   onOpenMenu?: () => void;
-  options: ComboboxOption[];
+  options: ComboboxOption[] | AsyncOptionsLoader;
   defaultValue?: SelectableValue;
   type: 'key' | 'value';
   isLoading?: boolean;
@@ -38,7 +40,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElemen
 
     return (
       <div ref={ref}>
-        <Field disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
+        <Field noMargin disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
           <Combobox<string>
             placeholder={t('alerting.alert-label-dropdown.placeholder-select', 'Choose {{type}}', { type })}
             width={25}

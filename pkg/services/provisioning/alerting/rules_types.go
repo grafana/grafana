@@ -151,10 +151,6 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		noDataState = models.NoData
 	}
 	alertRule.NoDataState = noDataState
-	alertRule.Condition = rule.Condition.Value()
-	if alertRule.Condition == "" {
-		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
-	}
 	alertRule.Annotations = rule.Annotations.Raw
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
@@ -181,6 +177,10 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
 		alertRule.Record = &record
+	}
+	alertRule.Condition = rule.Condition.Value()
+	if alertRule.Condition == "" && alertRule.Record == nil {
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
 	}
 	return alertRule, nil
 }
@@ -303,13 +303,15 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 }
 
 type RecordV1 struct {
-	Metric values.StringValue `json:"metric" yaml:"metric"`
-	From   values.StringValue `json:"from" yaml:"from"`
+	Metric              values.StringValue `json:"metric" yaml:"metric"`
+	From                values.StringValue `json:"from" yaml:"from"`
+	TargetDatasourceUID values.StringValue `json:"targetDatasourceUid" yaml:"targetDatasourceUid"`
 }
 
 func (record *RecordV1) mapToModel() (models.Record, error) {
 	return models.Record{
-		Metric: record.Metric.Value(),
-		From:   record.From.Value(),
+		Metric:              record.Metric.Value(),
+		From:                record.From.Value(),
+		TargetDatasourceUID: record.TargetDatasourceUID.Value(),
 	}, nil
 }

@@ -5,18 +5,18 @@ import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
-import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
-import { DashboardRow } from '../components/DashboardRow';
+import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget/AddLibraryPanelWidget';
+import { DashboardRow } from '../components/DashboardRow/DashboardRow';
 import { DashboardModel } from '../state/DashboardModel';
 import { GridPos, PanelModel } from '../state/PanelModel';
 
-import DashboardEmpty from './DashboardEmpty';
+import DashboardEmpty from './DashboardEmpty/DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';

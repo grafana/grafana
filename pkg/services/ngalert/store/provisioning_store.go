@@ -62,6 +62,30 @@ func (st DBstore) GetProvenances(ctx context.Context, org int64, resourceType st
 	return resultMap, err
 }
 
+// GetProvenancesByUIDs gets the provenance status for specific UIDs.
+func (st DBstore) GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
+	if len(uids) == 0 {
+		return map[string]models.Provenance{}, nil
+	}
+
+	result := make(map[string]models.Provenance, len(uids))
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		rawData, err := sess.Table(provenanceRecord{}).
+			Where("record_type = ? AND org_id = ?", resourceType, org).
+			In("record_key", uids).
+			Cols("record_key", "provenance").
+			QueryString()
+		if err != nil {
+			return fmt.Errorf("failed to query for existing provenance status: %w", err)
+		}
+		for _, data := range rawData {
+			result[data["record_key"]] = models.Provenance(data["provenance"])
+		}
+		return nil
+	})
+	return result, err
+}
+
 // SetProvenance changes the provenance status for a provisionable object.
 func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error {
 	recordType := o.ResourceType()
@@ -72,6 +96,7 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingProvenanceLockWrites) {
 			return st.setProvenanceWithLocking(sess, recordKey, recordType, org, p)
 		}

@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { combineLatest, filter, map, Observable } from 'rxjs';
+import { combineLatest, from, map, Observable, switchMap } from 'rxjs';
 
 import {
   PluginExtensionTypes,
@@ -13,7 +13,7 @@ import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
-import { pluginExtensionRegistries } from './registry/setup';
+import { getPluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
 import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
 import {
@@ -37,17 +37,26 @@ import {
 export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
-  return combineLatest([
-    pluginExtensionRegistries.addedComponentsRegistry.asObservable(),
-    pluginExtensionRegistries.addedLinksRegistry.asObservable(),
-  ]).pipe(
-    filter(([components, links]) => Boolean(components) && Boolean(links)), // filter out uninitialized registries
-    map(([components, links]) =>
-      getPluginExtensions({
-        ...options,
-        addedComponentsRegistry: components,
-        addedLinksRegistry: links,
-      })
+  const { extensionPointId } = options;
+
+  return from(getPluginExtensionRegistries()).pipe(
+    switchMap((registries) =>
+      combineLatest([
+        registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+        registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+      ]).pipe(
+        map(([components, links]) =>
+          getPluginExtensions({
+            ...options,
+            addedComponentsRegistry: {
+              [extensionPointId]: components,
+            },
+            addedLinksRegistry: {
+              [extensionPointId]: links,
+            },
+          })
+        )
+      )
     )
   );
 };
@@ -135,6 +144,7 @@ export const getPluginExtensions: GetExtensions = ({
         description: overrides?.description || addedLink.description || '',
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
+        openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
       };
 
       extensions.push(extension);

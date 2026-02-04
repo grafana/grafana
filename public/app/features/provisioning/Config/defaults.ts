@@ -11,7 +11,7 @@ export interface GetDefaultValuesOptions {
 
 export function getDefaultValues({
   repository,
-  allowedTargets = ['instance', 'folder'],
+  allowedTargets = ['folder'],
 }: GetDefaultValuesOptions = {}): RepositoryFormData {
   if (!repository) {
     const defaultTarget = allowedTargets.includes('folder') ? 'folder' : 'instance';
@@ -31,6 +31,7 @@ export function getDefaultValues({
         target: defaultTarget,
         intervalSeconds: 60,
       },
+      enablePushToConfiguredBranch: true,
     };
   }
   return specToData(repository);

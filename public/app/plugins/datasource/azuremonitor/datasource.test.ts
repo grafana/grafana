@@ -1,8 +1,8 @@
+import { AzureQueryType } from './dataquery.gen';
 import Datasource from './datasource';
 import { createMockInstanceSetttings } from './mocks/instanceSettings';
 import createMockQuery from './mocks/query';
 import { singleVariable } from './mocks/variables';
-import { AzureQueryType } from './types/query';
 
 jest.mock('@grafana/runtime', () => {
   return {

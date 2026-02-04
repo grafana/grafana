@@ -16,11 +16,11 @@ import {
   SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
-  AnnotationQueryKind,
   ConstantVariableKind,
   CustomVariableKind,
   Spec as DashboardV2Spec,
@@ -28,18 +28,22 @@ import {
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
-  defaultDataQueryKind,
   defaultDatasourceVariableKind,
   defaultGroupByVariableKind,
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  defaultSwitchVariableKind,
+  defaultTimeSettingsSpec,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
+  SwitchVariableKind,
   TextVariableKind,
+  defaultDataQueryKind,
+  AnnotationQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
@@ -53,13 +57,15 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  getDashboardSceneProfilerWithMetadata,
+  enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -92,15 +98,15 @@ export type TypedVariableModelV2 =
   | IntervalVariableKind
   | CustomVariableKind
   | GroupByVariableKind
-  | AdhocVariableKind;
+  | AdhocVariableKind
+  | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  // annotations might not come with the builtIn Grafana annotation, we need to add it
-  const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
-  if (grafanaBuiltAnnotation) {
-    dashboard.annotations.unshift(grafanaBuiltAnnotation);
+  const found = dashboard.annotations.some((item) => item.spec.builtIn);
+  if (!found) {
+    dashboard.annotations.unshift(getGrafanaBuiltInAnnotation());
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
@@ -112,10 +118,20 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
+      placement: annotation.spec.placement,
     };
 
     return new DashboardAnnotationsDataLayer(layerState);
   });
+
+  // Create alert states data layer if unified alerting is enabled
+  let alertStatesLayer: AlertStatesDataLayer | undefined;
+  if (config.unifiedAlertingEnabled) {
+    alertStatesLayer = new AlertStatesDataLayer({
+      key: 'alert-states',
+      name: 'Alert States',
+    });
+  }
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
@@ -142,6 +158,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
+    publicDashboardEnabled: dto.access.isPublic,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -164,22 +181,24 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   //createLayoutManager(dashboard);
 
+  // Create profiler once and reuse to avoid duplicate metadata setting
+  const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
+
+  const enableProfiling =
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+      enableProfiling,
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
     {
-      enableInteractionTracking:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      enableInteractionTracking: enableProfiling,
       onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const dashboardScene = new DashboardScene(
@@ -197,8 +216,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       version: metadata.generation,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
-        from: dashboard.timeSettings.from,
-        to: dashboard.timeSettings.to,
+        // Use defaults when time is empty to match DashboardModel behavior
+        from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
+        to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
         fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
         timeZone: dashboard.timeSettings.timezone,
         weekStart: dashboard.timeSettings.weekStart,
@@ -219,9 +239,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
         }),
+        ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
+        alertStatesLayer,
       }),
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
@@ -240,6 +262,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   );
 
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
+
+  // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
+  enablePanelProfilingForDashboard(dashboardScene, metadata.name);
 
   return dashboardScene;
 }
@@ -270,7 +295,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  if (config.featureToggles.scopeFilters) {
+  // Explicitly disable scopes for public dashboards
+  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
@@ -293,8 +319,9 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       },
       variable.group
     );
-    return new AdHocFiltersVariable({
+    const adhocVariableState: AdHocFiltersVariable['state'] = {
       ...commonProperties,
+      type: 'adhoc',
       description: variable.spec.description,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
@@ -302,18 +329,26 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       applyMode: 'auto',
       filters: variable.spec.filters ?? [],
       baseFilters: variable.spec.baseFilters ?? [],
-      defaultKeys: variable.spec.defaultKeys,
+      defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
-      supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
-    });
+      supportsMultiValueOperators: Boolean(
+        getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
+      ),
+      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+    };
+    if (variable.spec.allowCustomValue !== undefined) {
+      adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
+    }
+    return new AdHocFiltersVariable(adhocVariableState);
   }
+
   if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
-
       query: variable.spec.query,
       isMulti: variable.spec.multi,
       allValue: variable.spec.allValue || undefined,
@@ -321,6 +356,8 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       defaultToAll: Boolean(variable.spec.includeAll),
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
+      ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
@@ -332,6 +369,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
+      regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,
       includeAll: variable.spec.includeAll,
       defaultToAll: Boolean(variable.spec.includeAll),
@@ -339,6 +377,17 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
+      ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      ...(variable.spec.staticOptions?.length
+        ? {
+            staticOptions: variable.spec.staticOptions.map((option) => ({
+              label: String(option.text),
+              value: String(option.value),
+              properties: option.properties,
+            })),
+          }
+        : {}),
+      ...(variable.spec.staticOptionsOrder !== undefined && { staticOptionsOrder: variable.spec.staticOptionsOrder }),
     });
   } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({
@@ -355,9 +404,20 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       defaultOptionEnabled:
         variable.spec.current?.value === DEFAULT_DATASOURCE && variable.spec.current?.text === 'default',
+      ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
     });
   } else if (variable.kind === defaultIntervalVariableKind().kind) {
-    const intervals = getIntervalsFromQueryString(variable.spec.query);
+    // If query is missing/empty, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.spec.query) {
+      intervals = getIntervalsFromQueryString(variable.spec.query);
+    } else if (variable.spec.options && variable.spec.options.length > 0) {
+      // Extract intervals from options when query is missing (matches backend behavior)
+      intervals = variable.spec.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -412,8 +472,19 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
+      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       // @ts-expect-error
       defaultOptions: variable.options,
+    });
+  } else if (variable.kind === defaultSwitchVariableKind().kind) {
+    return new SwitchVariable({
+      ...commonProperties,
+      value: variable.spec.current ?? 'false',
+      enabledValue: variable.spec.enabledValue ?? 'true',
+      disabledValue: variable.spec.disabledValue ?? 'false',
+      skipUrlSync: variable.spec.skipUrlSync,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.kind}`);
@@ -423,16 +494,23 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
 function getDataQueryForVariable(variable: QueryVariableKind) {
   return LEGACY_STRING_VALUE_KEY in variable.spec.query.spec
     ? (variable.spec.query.spec[LEGACY_STRING_VALUE_KEY] ?? '')
-    : {
-        ...variable.spec.query.spec,
-        refId: variable.spec.query.spec.refId ?? 'A',
-      };
+    : variable.spec.query.spec;
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
-  const selectedInterval = Array.isArray(variable.spec.current.value)
-    ? variable.spec.current.value[0]
-    : variable.spec.current.value;
+  // Handle missing current object or value
+  const currentValue = variable.spec.current?.value;
+  const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
+
+  // If no intervals are available, return empty string (will use default from IntervalVariable)
+  if (intervals.length === 0) {
+    return '';
+  }
+
+  // If no selected interval, return the first valid interval
+  if (!selectedInterval) {
+    return intervals[0];
+  }
 
   // If the interval is the old auto format, return the new auto interval from scenes.
   if (selectedInterval.startsWith('$__auto_interval_')) {
@@ -473,11 +551,11 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             applyMode: 'auto',
             filters: v.spec.filters ?? [],
             baseFilters: v.spec.baseFilters ?? [],
-            defaultKeys: v.spec.defaultKeys,
+            defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),
           });
         }
@@ -520,6 +598,11 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
       value: '',
       text: '',
     };
+  } else if (variable.kind === 'SwitchVariable') {
+    current = {
+      value: variable.spec.current ?? 'false',
+      text: variable.spec.current ?? 'false',
+    };
   } else {
     current = {
       value: variable.spec.current?.value ?? '',
@@ -545,12 +628,8 @@ export function getPanelElement(dashboard: DashboardV2Spec, elementName: string)
 export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
 }
-function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
-  const found = dashboard.annotations.some((item) => item.spec.builtIn);
-  if (found) {
-    return;
-  }
 
+function getGrafanaBuiltInAnnotation(): AnnotationQueryKind {
   const grafanaBuiltAnnotation: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {

@@ -57,6 +57,7 @@ type ProtoClientOpts struct {
 type ContainerModeOpts struct {
 	Enabled bool
 	Image   string
+	Tag     string
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
@@ -70,6 +71,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			containerMode: containerModeOpts{
 				enabled: opts.ContainerMode.Enabled,
 				image:   opts.ContainerMode.Image,
+				tag:     opts.ContainerMode.Tag,
 			},
 			skipHostEnvVars: opts.SkipHostEnvVars,
 		},
@@ -114,6 +116,14 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 		return nil, errClientNotAvailable
 	}
 	return c.DataClient.QueryData(ctx, in, opts...)
+}
+
+func (r *protoClient) QueryChunkedData(ctx context.Context, in *pluginv2.QueryChunkedDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse], error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotAvailable
+	}
+	return c.DataClient.QueryChunkedData(ctx, in, opts...)
 }
 
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {

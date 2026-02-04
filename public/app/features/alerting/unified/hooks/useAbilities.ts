@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { config } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
@@ -17,12 +18,13 @@ import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting'
 import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
 import {
-  isPluginProvidedRule,
+  getRulePluginOrigin,
   isProvisionedPromRule,
   isProvisionedRule,
   prometheusRuleType,
@@ -96,6 +98,12 @@ export enum AlertRuleAction {
   DeletePermanently = 'delete-alert-rule-permanently',
 }
 
+// this enum lists all of the available actions we can perform with enrichments
+export enum EnrichmentAction {
+  Read = 'read-enrichment',
+  Write = 'write-enrichment',
+}
+
 // this enum list all of the bulk actions we can perform on a folder
 export enum FolderBulkAction {
   Pause = 'pause-folder', // unpause permissions are the same as pause
@@ -124,7 +132,23 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction | EnrichmentAction;
+
+/**
+ * Represents the ability to perform an action, with two distinct checks:
+ *
+ * @param actionSupported - Whether the action is technically possible in the current context.
+ *   This depends on system capabilities (e.g., API availability), feature availability
+ *   (e.g., Grafana vs external alertmanager), and rule state (e.g., provisioned/immutable rules).
+ *   Examples: Can't edit provisioned rules, can't export from external alertmanagers.
+ *
+ * @param actionAllowed - Whether the user has permission to perform the action.
+ *   This is based on RBAC permissions, folder-specific permissions, and admin status.
+ *   Examples: User lacks AlertingRuleUpdate permission, user can't edit in this folder.
+ *
+ * Both must be true for an action to be available. This separation allows showing appropriate
+ * messages: "Feature not available" vs "You don't have permission".
+ */
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
@@ -170,6 +194,28 @@ export const useAlertingAbilities = (): Abilities<AlertingAction> => {
 
 export const useAlertingAbility = (action: AlertingAction): Ability => {
   const allAbilities = useAlertingAbilities();
+  return allAbilities[action];
+};
+
+/**
+ * This one will check for enrichment abilities
+ */
+export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
+  const userIsAdmin = isAdmin();
+  const hasReadPermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsRead);
+  const hasWritePermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsWrite);
+
+  // Enrichments are only available when the feature toggle is enabled
+  const enrichmentsSupported = Boolean(config.featureToggles.alertEnrichment);
+
+  return {
+    [EnrichmentAction.Read]: [enrichmentsSupported, userIsAdmin || hasReadPermission],
+    [EnrichmentAction.Write]: [enrichmentsSupported, userIsAdmin || hasWritePermission],
+  };
+};
+
+export const useEnrichmentAbility = (action: EnrichmentAction): Ability => {
+  const allAbilities = useEnrichmentAbilities();
   return allAbilities[action];
 };
 
@@ -238,23 +284,38 @@ export function useAllRulerRuleAbilities(
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
   const canSilence = useCanSilence(rule);
 
+  const pluginOrigin = getRulePluginOrigin(rule);
+  // Check plugin installation - use skipToken to prevent query when no pluginId
+  const { data: pluginSettings, isLoading: pluginCheckLoading } = useGetPluginSettingsQuery(
+    pluginOrigin?.pluginId ?? '',
+    {
+      skip: !pluginOrigin?.pluginId,
+    }
+  );
+  const isPluginInstalled = pluginSettings?.enabled ?? false;
+
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedRule(rule) : false;
     // TODO: Add support for federated rules
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
     const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
-    const isPluginProvided = isPluginProvidedRule(rule);
+
+    // Treat as plugin-provided only if:
+    // 1. Rule has origin label (pluginOrigin exists)
+    // 2. Plugin is currently installed (or still loading to be safe)
+    // If no pluginOrigin, short-circuit to false without checking plugin installation
+    const isPluginManaged = pluginOrigin ? pluginCheckLoading || isPluginInstalled : false;
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
-    const immutableRule = isProvisioned || isFederated || isPluginProvided;
+    const immutableRule = isProvisioned || isFederated || isPluginManaged;
 
     // while we gather info, pretend it's not supported
     const MaybeSupported = loading ? NotSupported : isRulerAvailable;
     const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
     // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+    const duplicateSupported = isPluginManaged ? NotSupported : MaybeSupported;
 
     const rulesPermissions = getRulesPermissions(rulesSourceName);
 
@@ -275,7 +336,19 @@ export function useAllRulerRuleAbilities(
     };
 
     return abilities;
-  }, [rule, loading, isRulerAvailable, rulesSourceName, isEditable, isRemovable, canSilence, exportAllowed]);
+  }, [
+    rule,
+    loading,
+    isRulerAvailable,
+    rulesSourceName,
+    isEditable,
+    isRemovable,
+    canSilence,
+    exportAllowed,
+    pluginOrigin,
+    pluginCheckLoading,
+    isPluginInstalled,
+  ]);
 
   return abilities;
 }
@@ -292,6 +365,17 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   const silenceSupported = useGrafanaRulesSilenceSupport();
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
 
+  const promPluginOrigin = getRulePluginOrigin(rule);
+  // Only check plugin installation if rule has a plugin origin label
+  // Skip the query if no pluginId to avoid unnecessary API calls
+  const { data: promPluginSettings, isLoading: promPluginCheckLoading } = useGetPluginSettingsQuery(
+    promPluginOrigin?.pluginId ?? '',
+    {
+      skip: !promPluginOrigin?.pluginId,
+    }
+  );
+  const isPromPluginInstalled = promPluginSettings?.enabled ?? false;
+
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
 
@@ -300,7 +384,9 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     const isFederated = false;
     // All GrafanaPromRuleDTO rules are Grafana-managed by definition
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
-    const isPluginProvided = isPluginProvidedRule(rule);
+    // Treat as plugin-provided only if both: has origin label AND plugin is currently installed
+    // During loading, default to immutable for safety
+    const isPluginProvided = Boolean(promPluginOrigin && (promPluginCheckLoading || isPromPluginInstalled));
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
     const immutableRule = isProvisioned || isFederated || isPluginProvided;
@@ -331,7 +417,18 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     };
 
     return abilities;
-  }, [rule, loading, isEditable, isRemovable, canSilenceInFolder, exportAllowed, silenceSupported]);
+  }, [
+    rule,
+    loading,
+    isEditable,
+    isRemovable,
+    canSilenceInFolder,
+    exportAllowed,
+    silenceSupported,
+    promPluginOrigin,
+    promPluginCheckLoading,
+    isPromPluginInstalled,
+  ]);
 
   return abilities;
 }

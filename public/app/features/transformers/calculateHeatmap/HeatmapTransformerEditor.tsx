@@ -39,7 +39,7 @@ export const HeatmapTransformerEditor = (props: TransformerUIProps<HeatmapTransf
   const pane = getTransformerOptionPane<HeatmapTransformerOptions>(props, supplier);
   return (
     <div>
-      <div>{pane.items.map((v) => v.render())}</div>
+      <div>{pane.items.map((v) => v.renderElement())}</div>
     </div>
   );
 };

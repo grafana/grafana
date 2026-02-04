@@ -11,13 +11,12 @@ export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) =
     <Button
       disabled={playlistSrv.state.isPlaying}
       onClick={() => {
-        trackDashboardSceneEditButtonClicked();
+        trackDashboardSceneEditButtonClicked(dashboard.state.uid);
         dashboard.onEnterEditMode();
-        dashboard.setState({ editable: true, meta: { ...dashboard.state.meta, canEdit: true } });
+        dashboard.setState({ meta: { ...dashboard.state.meta, canEdit: true, canSave: true } });
       }}
       tooltip={t('dashboard.toolbar.new.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
       variant="secondary"
-      size="sm"
       data-testid={selectors.components.NavToolbar.editDashboard.editButton}
     >
       <Trans i18nKey="dashboard.toolbar.new.enter-edit-mode.label">Make editable</Trans>

@@ -1,37 +1,31 @@
 import {
   PluginLoadingStrategy,
   PluginType,
+  type AppPluginConfig,
   type PluginMeta,
   type PluginMetaInfo,
   type AngularMeta,
   type PluginDependencies,
   type PluginExtensions,
   AppPlugin,
+  OrgRole,
 } from '@grafana/data';
-import type { AppPluginConfig } from '@grafana/runtime';
+import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { importAppPlugin } from './pluginLoader';
+import { pluginImporter } from './importer/pluginImporter';
 import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
-
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    user: {
-      orgRole: 'Admin',
-    },
-  },
-}));
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
 
-jest.mock('./pluginLoader', () => ({
-  importAppPlugin: jest.fn(),
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: { importApp: jest.fn() },
 }));
 
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
-const importAppPluginMock = jest.mocked(importAppPlugin);
+const importAppPluginMock = jest.mocked(pluginImporter.importApp);
 
 const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): AppPluginConfig => ({
   id: 'test-plugin',
@@ -81,6 +75,9 @@ const createMockPluginMeta = (overrides: Partial<PluginMeta> = {}): PluginMeta =
 
 describe('pluginPreloader', () => {
   beforeEach(() => {
+    const contextSrv = new ContextSrv();
+    contextSrv.user.orgRole = OrgRole.Admin;
+    setContextSrv(contextSrv);
     jest.clearAllMocks();
     jest.resetModules();
     clearPreloadedPluginsCache();
@@ -271,6 +268,72 @@ describe('pluginPreloader', () => {
       // If there is no cache, these would be called three times
       expect(getPluginSettingsMock).toHaveBeenCalledTimes(2);
       expect(importAppPluginMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should have showErrorAlert set to false for user with no role', async () => {
+      const contextSrv = new ContextSrv();
+      contextSrv.user.orgRole = '';
+      setContextSrv(contextSrv);
+
+      const appConfig = createMockAppPluginConfig({
+        id: 'test-plugin',
+        path: '/path/to/plugin',
+        version: '1.0.0',
+      });
+
+      const mockPluginMeta = createMockPluginMeta({
+        id: 'test-plugin',
+        name: 'Test Plugin',
+        type: PluginType.app,
+      });
+
+      getPluginSettingsMock.mockResolvedValue(mockPluginMeta);
+      importAppPluginMock.mockResolvedValue(new AppPlugin());
+
+      await preloadPlugins([appConfig]);
+
+      expect(getPluginSettingsMock).toHaveBeenCalledWith('test-plugin', {
+        showErrorAlert: false,
+      });
+      expect(importAppPluginMock).toHaveBeenCalledWith(mockPluginMeta);
+    });
+
+    it('should log all errors for user with role', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const appConfig = createMockAppPluginConfig({
+        id: 'test-plugin',
+        path: '/path/to/plugin',
+        version: '1.0.0',
+      });
+      const error = { status: 401, message: 'Unauthorized' };
+
+      getPluginSettingsMock.mockRejectedValue(error);
+
+      await preloadPlugins([appConfig]);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        `[Plugins] Failed to preload plugin: /path/to/plugin (version: 1.0.0)`,
+        error
+      );
+    });
+
+    it('should not log any errors for user without role', async () => {
+      const contextSrv = new ContextSrv();
+      contextSrv.user.orgRole = '';
+      setContextSrv(contextSrv);
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const appConfig = createMockAppPluginConfig({
+        id: 'test-plugin',
+        path: '/path/to/plugin',
+        version: '1.0.0',
+      });
+      const error = { status: 401, message: 'Unauthorized' };
+
+      getPluginSettingsMock.mockRejectedValue(error);
+
+      await preloadPlugins([appConfig]);
+
+      expect(consoleSpy).not.toHaveBeenCalled();
     });
   });
 });

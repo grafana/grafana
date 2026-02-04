@@ -112,6 +112,22 @@ Decide whether or not to enable the TLS (Transport Layer Security) protocol when
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
+### batch_wait_duration
+
+How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m. Defaults to 5s.
+
+Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+
+If the wait duration is very long and the `batch_size_bytes` is very high, events may take a long time to be sent.
+
+### batch_size_bytes
+
+How many events (in bytes) to accumulate in a single batch before sending it to Loki. Defaults to 100 KiB.
+
+Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+
+If you wish to always wait for the `batch_wait_duration`, set this to a very high number.
+
 ## [analytics.summaries]
 
 ### buffer_write_interval
@@ -173,6 +189,10 @@ Name of the TrueType font file with bold style.
 ### font_italic
 
 Name of the TrueType font file with italic style. Default is `DejaVuSansCondensed-Oblique.ttf`.
+
+### font_min_text_size
+
+The minimum pixel size that Grafana uses when rendering fonts. Default is `4`.
 
 ### max_retries_per_panel
 
@@ -245,6 +265,14 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 ### tenant_id
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
+
+### retries
+
+The amount of times the HTTP or gRPC client will retry a failed request to Loki. The default is `10`.
+
+### timeout
+
+The timeout duration of an HTTP request or gRPC call to Loki. The default is `3s`.
 
 ## [auth.saml]
 
@@ -538,10 +566,6 @@ The default is `"grafana"`.
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 
 The default is `"localhost:11211"`.
-
-{{< admonition type="note" >}}
-The following memcached configuration requires the `tlsMemcached` feature toggle.
-{{< /admonition >}}
 
 ### tls_enabled
 

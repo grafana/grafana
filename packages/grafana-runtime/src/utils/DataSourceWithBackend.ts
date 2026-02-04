@@ -17,7 +17,6 @@ import {
   parseLiveChannelAddress,
   ScopedVars,
   AdHocVariableFilter,
-  CoreApp,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
@@ -33,6 +32,7 @@ import {
 } from '../services';
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
+import { isQueryServiceCompatible } from './qscheck';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -145,6 +145,7 @@ class DataSourceWithBackend<
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
+    const datasources: DataSourceInstanceSettings[] = [];
     const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
@@ -164,6 +165,8 @@ class DataSourceWithBackend<
         if (!ds) {
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
+
+        datasources.push(ds);
 
         const dsRef = ds.rawRef ?? getDataSourceRef(ds);
         const dsId = ds.id;
@@ -209,13 +212,8 @@ class DataSourceWithBackend<
 
     let url = '/api/ds/query?ds_type=' + this.type;
 
-    // Use the new query service for explore
-    if (config.featureToggles.queryServiceFromExplore && request.app === CoreApp.Explore) {
-      url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
-    }
-
     // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
+    if (config.featureToggles.queryServiceFromUI && isQueryServiceCompatible(datasources)) {
       url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 

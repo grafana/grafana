@@ -21,7 +21,21 @@ interface RudderstackAPIOptions {
 
 interface Rudderstack {
   identify: (identifier: string, traits: Properties, options?: RudderstackAPIOptions) => void;
-  load: (writeKey: string, dataPlaneURL: string, options: { configUrl?: string; destSDKBaseURL?: string }) => void;
+  // load type set to match Rudderstack v3, for global type compatibility with new version.
+  load: (
+    writeKey: string,
+    dataPlaneURL: string,
+    options: {
+      configUrl?: string;
+      destSDKBaseURL?: string;
+      storage?: {
+        encryption?: {
+          version: 'V3' | 'legacy';
+        };
+        migrate?: boolean;
+      };
+    }
+  ) => void;
   page: () => void;
   track: (eventName: string, properties?: Properties) => void;
 }

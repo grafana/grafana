@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // urlBuilder builds the URL for calling the Azure Monitor API
@@ -35,7 +35,7 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 
 	if metricNamespace == nil || *metricNamespace == "" {
 		if params.MetricDefinition == nil || *params.MetricDefinition == "" {
-			return nil, errorsource.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"))
 		}
 		metricNamespace = params.MetricDefinition
 	}
@@ -47,7 +47,7 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 		provider = metricNamespaceArray[0]
 		metricNamespaceArray = metricNamespaceArray[1:]
 	} else {
-		return nil, errorsource.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"))
 	}
 
 	var resourceNameArray []string
@@ -78,7 +78,7 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 		if i < len(resourceNameArray) {
 			urlArray = append(urlArray, namespace, resourceNameArray[i])
 		} else {
-			return nil, errorsource.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"))
 		}
 	}
 

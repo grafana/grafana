@@ -9,4 +9,16 @@ The `Slider` component is an input element where users can manipulate one value 
 
 `Slider` can be implemented in horizontal or vertical orientation. You can set the default starting value(s) for the slider with the `value` prop.
 
+## Behavior
+
+The slider input itself will only allow values from `min` to `max` in steps of `step`.
+
+The text input behavior depends on whether the step value or min value are integers or decimals/fractional. When the min and step are integers, the text input will only allow numeric characters and leading `-`. When the min or step are decimal/fractional, the input will allow a leading `-`, leading `.`, and valid combinations of those, as well as `.` within the number.
+
+`onChange` will only be called with valid values, clamped to the min, max, and step. If `min - max` isn't evenly divisible by `step`, behavior may be unexpected near the maximum.
+
 <ArgTypes of={SliderProps} />
+
+## Design decisions
+
+The slider state deals with two sources of truth: the value that's passed in, and the text input value. The text input value needs to be synchronized with external value changes, but it can also have its own temporarily invalid values.

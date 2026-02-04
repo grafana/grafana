@@ -34,10 +34,11 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
-export function buildTestScene(isEditing = false) {
+export function buildTestScene(isEditing?: boolean, editable?: boolean) {
   const testScene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    isEditing: isEditing,
+    isEditing: isEditing || false,
+    editable: editable || true,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: [new DashboardGridItem({ body: new VizPanel({ key: 'panel-1', pluginId: 'text' }) })],
@@ -59,7 +60,7 @@ describe('MakeDashboardEditableButton', () => {
     it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
       render(<MakeDashboardEditableButton dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-      expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
+      expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
     });
 
     it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
@@ -75,5 +76,16 @@ describe('MakeDashboardEditableButton', () => {
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
     });
+  });
+
+  it('should set state correctly', async () => {
+    const scene = buildTestScene(false, false);
+
+    render(<MakeDashboardEditableButton dashboard={scene} />);
+    await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+
+    expect(scene.state.editable).toBe(true);
+    expect(scene.state.meta.canEdit).toBe(true);
+    expect(scene.state.meta.canSave).toBe(true);
   });
 });

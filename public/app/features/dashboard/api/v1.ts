@@ -2,31 +2,37 @@ import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
-  ResourceClient,
-  ResourceForCreate,
-  AnnoKeyMessage,
   AnnoKeyFolder,
   AnnoKeyGrantPermissions,
-  Resource,
-  DeprecatedInternalId,
-  AnnoKeyManagerKind,
-  AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
-  ManagerKind,
+  AnnoKeyManagerKind,
+  AnnoKeyMessage,
+  AnnoKeySourcePath,
   AnnoReloadOnParamsChange,
+  DeprecatedInternalId,
+  ManagerKind,
+  Resource,
+  ResourceClient,
+  ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import {
+  DashboardAPI,
+  DashboardVersionError,
+  DashboardWithAccessInfo,
+  ListDashboardHistoryOptions,
+  ListDeletedDashboardsOptions,
+} from './types';
 import { isV2StoredVersion } from './utils';
 
 export const K8S_V1_DASHBOARD_API_CONFIG = {
@@ -79,6 +85,15 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
+      // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
+      const originalUid = options?.k8s?.name;
+      if (originalUid && dashboard.uid !== originalUid) {
+        delete obj.spec.id;
+        if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
+          delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
+        }
+      }
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -87,11 +102,17 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     };
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
     delete obj.metadata.name;
+    // on create, always clear the id to prevent duplicate ids
+    delete obj.spec.id;
+    if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
+      delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
+    }
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
@@ -131,13 +152,20 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const result: DashboardDTO = {
         meta: {
           ...dash.access,
-          slug: kbn.slugifyForUrl(dash.spec.title.trim()),
           isNew: false,
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
           created: dash.metadata.creationTimestamp,
+          publicDashboardEnabled: dash.access.isPublic,
+          conversionStatus: dash.status?.conversion
+            ? {
+                storedVersion: dash.status.conversion.storedVersion,
+                failed: dash.status.conversion.failed,
+                error: dash.status.conversion.error,
+              }
+            : undefined,
         },
         dashboard: {
           ...dash.spec,
@@ -156,8 +184,19 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const managerKind = annotations[AnnoKeyManagerKind];
 
       if (managerKind) {
-        result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
+        // `meta.provisioned` is used by the save/delete UI to decide if a dashboard is locked
+        // (i.e. it can't be saved from the UI). This should match the legacy behavior where
+        // `allowUiUpdates: true` keeps the dashboard editable/savable.
+        const allowsEdits = annotations[AnnoKeyManagerAllowsEdits] === 'true';
+        result.meta.provisioned = !allowsEdits && managerKind !== ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
+
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(annotations);
+      if (sourceLink) {
+        const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
+        result.dashboard.links = [sourceLink, ...linksWithoutSource];
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
@@ -166,7 +205,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       if (dash.metadata.annotations?.[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;
@@ -196,6 +235,54 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       throw e;
     }
+  }
+
+  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
+    return this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+      limit: options?.limit ?? 10,
+      continue: options?.continueToken,
+    });
+  }
+
+  async getDashboardHistoryVersions(uid: string, versions: number[]) {
+    const results: Array<Resource<DashboardDataDTO>> = [];
+    const versionsToFind = new Set(versions);
+    let continueToken: string | undefined;
+
+    do {
+      // using high limit to attempt finding the versions in one request
+      // if not found, pagination will kick in
+      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      for (const item of history.items) {
+        if (versionsToFind.has(item.metadata.generation ?? 0)) {
+          results.push(item);
+          versionsToFind.delete(item.metadata.generation ?? 0);
+        }
+      }
+      continueToken = versionsToFind.size > 0 ? history.metadata.continue : undefined;
+    } while (continueToken);
+
+    if (versionsToFind.size > 0) {
+      throw new Error(`Dashboard version not found: ${[...versionsToFind].join(', ')}`);
+    }
+    return results;
+  }
+
+  async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
+    // get version to restore to, and save as new one
+    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    return await this.saveDashboard({
+      dashboard: {
+        ...historicalVersion.spec,
+        uid,
+      },
+      k8s: {
+        name: uid,
+      },
+      message: `Restored from version ${version}`,
+    });
   }
 
   async listDeletedDashboards(options: ListDeletedDashboardsOptions) {

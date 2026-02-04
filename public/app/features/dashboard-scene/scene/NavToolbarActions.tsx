@@ -19,7 +19,7 @@ import {
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -38,7 +38,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
+import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { LeftActions } from './new-toolbar/LeftActions';
 import { RightActions } from './new-toolbar/RightActions';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
@@ -66,8 +66,18 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanel, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
-
+  const {
+    isEditing,
+    viewPanel,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    editable,
+    title,
+    meta: { isEmbedded, isSnapshot, canEdit, canMakeEditable, canStar, canSave, folderUid },
+  } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -85,11 +95,11 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const folderRepo = useSelector((state) => selectFolderRepository()(state, meta.folderUid));
+  const folderRepo = useSelector((state) => selectFolderRepository()(state, folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
   // Get the repository for the dashboard's folder
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
-    folderName: meta.folderUid,
+    folderName: folderUid,
   });
 
   if (!isEditingPanel) {
@@ -99,14 +109,18 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
     render: () => {
+      if (!uid) {
+        return null;
+      }
       return (
         <StarToolbarButton
           key="star-dashboard-button"
           group="dashboard.grafana.app"
           kind="Dashboard"
-          dashboard={dashboard}
+          title={title}
+          id={uid}
         />
       );
     },
@@ -114,7 +128,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
     render: () => {
       return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
     },
@@ -136,22 +150,20 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (dashboard.isManaged() && meta.canEdit) {
+  if (dashboard.isManaged() && canEdit) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
+        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
       },
     });
   }
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
-    render: () => (
-      <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
-    ),
+    condition: isSnapshot && !isEditing && !isEmbedded,
+    render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
   });
 
   if (!isEditingPanel && !isEditing) {
@@ -313,7 +325,7 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
+  const showShareButton = uid && !isEditing && !isSnapshot && !isPlaying && !isEmbedded;
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -321,7 +333,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
-          trackDashboardSceneEditButtonClicked();
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
         }}
         tooltip={
@@ -347,9 +359,9 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
-          trackDashboardSceneEditButtonClicked();
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
-          dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
+          dashboard.setState({ meta: { ...meta, canEdit: true, canSave: true } });
         }}
         tooltip={t('dashboard.toolbar.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
         key="edit"
@@ -499,7 +511,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
+    condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
       // if we  only can save
       if (isNew) {
@@ -521,7 +533,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
+      if (canSaveAs && !canSave && !canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {

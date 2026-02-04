@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 
 import { TeamPermissionLevel } from 'app/types/acl';
-import { Team, TeamMember, TeamGroup } from 'app/types/teams';
+import { Team, TeamMember } from 'app/types/teams';
 
 function generateShortUid(): string {
   return randomBytes(3).toString('hex'); // Generate a short UID
@@ -43,17 +43,4 @@ export const getMockTeamMember = (): TeamMember => {
     labels: [],
     permission: TeamPermissionLevel.Member,
   };
-};
-
-export const getMockTeamGroups = (amount: number): TeamGroup[] => {
-  const groups: TeamGroup[] = [];
-
-  for (let i = 1; i <= amount; i++) {
-    groups.push({
-      groupId: `group-${i}`,
-      teamId: 1,
-    });
-  }
-
-  return groups;
 };

@@ -2,9 +2,9 @@ import { LogRowModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
-import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/types.spec.gen';
-import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/types.status.gen';
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
+import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
 import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange, buildShortUrl } from './shortLinks';
 
@@ -13,7 +13,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       post: () => {
-        return Promise.resolve({ url: 'www.test.grafana.com/goto/bewyw48durgu8d?orgId=1' });
+        return Promise.resolve({ url: 'https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1' });
       },
     };
   },
@@ -44,6 +44,11 @@ beforeEach(() => {
   document.execCommand = jest.fn();
   config.featureToggles.useKubernetesShortURLsAPI = false;
 
+  // clear memoizeOne function
+  if ('clear' in createShortLink) {
+    (createShortLink as { clear: () => void }).clear();
+  }
+
   // Clear any caches between tests
   jest.clearAllMocks();
 });
@@ -51,7 +56,7 @@ beforeEach(() => {
 describe('createShortLink', () => {
   it('creates short link', async () => {
     const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
-    expect(shortUrl).toBe('www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
+    expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
 });
 
@@ -88,7 +93,9 @@ describe('createAndCopyShortLink', () => {
   it('copies short link to clipboard via navigator.clipboard.writeText when ClipboardItem is undefined', async () => {
     window.isSecureContext = true;
     await createAndCopyShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      'https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1'
+    );
   });
 
   it('copies short link to clipboard via navigator.clipboard.write and ClipboardItem when it is defined', async () => {
@@ -122,7 +129,7 @@ describe('buildShortUrl', () => {
   it('builds short URL with metadata name and namespace', () => {
     const shortUrl: ShortURL = {
       kind: 'ShortURL',
-      apiVersion: 'shorturl.grafana.app/v1alpha1',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
       metadata: {
         name: 'abc123def',
         namespace: 'org-5',
@@ -140,7 +147,7 @@ describe('buildShortUrl', () => {
 
     const shortUrl: ShortURL = {
       kind: 'ShortURL',
-      apiVersion: 'shorturl.grafana.app/v1alpha1',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
       metadata: {
         name: 'xyz789',
         namespace: 'org-1',
@@ -157,7 +164,6 @@ describe('buildShortUrl', () => {
 describe('getLogsPermalinkRange', () => {
   let row: LogRowModel, rows: LogRowModel[];
   beforeEach(() => {
-    config.featureToggles.logsInfiniteScrolling = true;
     row = createLogRow({
       timeEpochMs: 1111112222222,
     });
@@ -167,22 +173,6 @@ describe('getLogsPermalinkRange', () => {
       }),
       row,
     ];
-  });
-  afterAll(() => {
-    config.featureToggles.logsInfiniteScrolling = false;
-  });
-
-  it('returns the original range if infinite scrolling is not enabled', () => {
-    config.featureToggles.logsInfiniteScrolling = false;
-    const range = {
-      from: 1111111111111,
-      to: 1111112222222,
-    };
-    const expectedRange = {
-      from: new Date(1111111111111).toISOString(),
-      to: new Date(1111112222222).toISOString(),
-    };
-    expect(getLogsPermalinkRange(row, [row], range)).toEqual(expectedRange);
   });
 
   it('returns the range relative to the previous log line', () => {

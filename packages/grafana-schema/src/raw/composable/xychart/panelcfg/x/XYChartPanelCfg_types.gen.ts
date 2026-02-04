@@ -8,9 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/xychart/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.3.0-pre";
+export const pluginVersion = "12.4.0-pre";
 
 export enum PointShape {
   Circle = 'circle',

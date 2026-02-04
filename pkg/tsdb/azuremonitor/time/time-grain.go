@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 // TimeGrain handles conversions between
@@ -27,7 +27,7 @@ func CreateISO8601DurationFromIntervalMS(it int64) (string, error) {
 	timeValueString := formatted[0 : len(formatted)-1]
 	timeValue, err := strconv.Atoi(timeValueString)
 	if err != nil {
-		return "", errorsource.DownstreamError(fmt.Errorf("could not parse interval %q to an ISO 8061 duration: %w", it, err), false)
+		return "", backend.DownstreamError(fmt.Errorf("could not parse interval %q to an ISO 8061 duration: %w", it, err))
 	}
 
 	unit := formatted[len(formatted)-1:]

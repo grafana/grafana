@@ -70,7 +70,7 @@ export type ScopeNodeLinkType = 'scope';
 export interface ScopeNodeSpec {
   nodeType: ScopeNodeNodeType;
   title: string;
-
+  subTitle?: string;
   description?: string;
 
   // If true for a scope category/type, it means only single child can be selected at a time.
@@ -83,6 +83,9 @@ export interface ScopeNodeSpec {
 
   // Id of the parent node.
   parentName?: string;
+
+  // Redirect to a specific path when this node is selected.
+  redirectPath?: string;
 }
 
 // TODO: Use Resource from apiserver when we export the types

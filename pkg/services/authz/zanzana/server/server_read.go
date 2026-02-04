@@ -7,6 +7,7 @@ import (
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/codes"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -22,6 +23,8 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 
 	res, err := s.read(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform read request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform read request")
 	}
@@ -53,7 +56,7 @@ func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 		}
 	}
 
-	res, err := s.openfga.Read(ctx, readReq)
+	res, err := s.openFGAClient.Read(ctx, readReq)
 	if err != nil {
 		s.logger.Error("failed to perform openfga Read request", "error", errors.Unwrap(err))
 		return nil, err

@@ -3,24 +3,67 @@ package resource
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var node, _ = snowflake.NewNode(1)
 
+func setupTestBadgerDB(t *testing.T) *badger.DB {
+	// Create a temporary directory for the test database
+	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
+	db, err := badger.Open(opts)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return db
+}
+
+func setupBadgerKV(t *testing.T) KV {
+	db := setupTestBadgerDB(t)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return NewBadgerKV(db)
+}
+
+func setupSqlKV(t *testing.T) kv.KV {
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	require.NoError(t, err)
+	return kv
+}
+
 func setupTestDataStore(t *testing.T) *dataStore {
-	kv := setupTestKV(t)
-	return newDataStore(kv)
+	return newDataStore(setupBadgerKV(t))
 }
 
 func TestNewDataStore(t *testing.T) {
 	ds := setupTestDataStore(t)
 	require.NotNil(t, ds)
+}
+
+func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
+	return newDataStore(setupSqlKV(t))
 }
 
 func TestDataKey_String(t *testing.T) {
@@ -86,11 +129,24 @@ func TestDataKey_Validate(t *testing.T) {
 		key         DataKey
 		expectError bool
 		errorMsg    string
+		errorField  string
 	}{
 		{
 			name: "valid key with created action",
 			key: DataKey{
 				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - underscore in namespace",
+			key: DataKey{
+				Namespace:       "test_namespace",
 				Group:           "test-group",
 				Resource:        "test-resource",
 				Name:            "test-name",
@@ -124,23 +180,23 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid key with dots and dashes",
+			name: "valid - name ends with dash",
 			key: DataKey{
-				Namespace:       "test.namespace-with-dashes",
-				Group:           "test.group-123",
-				Resource:        "test-resource.v1",
-				Name:            "test-name.with.dots",
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name-",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
 			expectError: false,
 		},
 		{
-			name: "valid key with single character names",
+			name: "valid key with minimum character lengths",
 			key: DataKey{
-				Namespace:       "a",
-				Group:           "b",
-				Resource:        "c",
+				Namespace:       "abc",
+				Group:           "bcd",
+				Resource:        "cde",
 				Name:            "d",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
@@ -159,6 +215,54 @@ func TestDataKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "valid - uppercase in name",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "Test-Name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in namespace",
+			key: DataKey{
+				Namespace:       "Test-Namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in group",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "Test-Group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in resource",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "Test-Resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
 		// Invalid cases - empty fields
 		{
 			name: "invalid - empty namespace",
@@ -171,7 +275,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "namespace is required",
+			errorMsg:    ErrNamespaceRequired,
 		},
 		{
 			name: "invalid - empty group",
@@ -184,7 +288,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "group is required",
+			errorField:  "group",
 		},
 		{
 			name: "invalid - empty resource",
@@ -197,7 +301,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "resource is required",
+			errorField:  "resource",
 		},
 		{
 			name: "invalid - empty name",
@@ -210,7 +314,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name is required",
+			errorField:  "name",
 		},
 		{
 			name: "invalid - empty action",
@@ -223,7 +327,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          "",
 			},
 			expectError: true,
-			errorMsg:    "action is required",
+			errorMsg:    ErrActionRequired,
 		},
 		{
 			name: "invalid - all fields empty",
@@ -236,74 +340,21 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          "",
 			},
 			expectError: true,
-			errorMsg:    "group is required",
-		},
-		// Invalid cases - uppercase characters
-		{
-			name: "invalid - uppercase in namespace",
-			key: DataKey{
-				Namespace:       "Test-Namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "namespace 'Test-Namespace' is invalid",
-		},
-		{
-			name: "invalid - uppercase in group",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "Test-Group",
-				Resource:        "test-resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "group 'Test-Group' is invalid",
-		},
-		{
-			name: "invalid - uppercase in resource",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "test-group",
-				Resource:        "Test-Resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "resource 'Test-Resource' is invalid",
-		},
-		{
-			name: "invalid - uppercase in name",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "Test-Name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "name 'Test-Name' is invalid",
+			errorField:  "namespace",
 		},
 		// Invalid cases - invalid characters
 		{
-			name: "invalid - underscore in namespace",
+			name: "invalid - key with dots and dashes",
 			key: DataKey{
-				Namespace:       "test_namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name",
+				Namespace:       "test.namespace-with-dashes",
+				Group:           "test.group-123",
+				Resource:        "test-resource.v1",
+				Name:            "test-name.with.dots",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "namespace 'test_namespace' is invalid",
+			errorField:  "namespace",
 		},
 		{
 			name: "invalid - space in group",
@@ -331,8 +382,154 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "resource 'test@resource' is invalid",
 		},
+		// Name validation tests - K8s qualified name format
 		{
-			name: "invalid - slash in name",
+			name: "valid - K8s format with underscores",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test_name_with_underscores",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - K8s format with dots",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test.name.with.dots",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - K8s format mixed case",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "TestName123",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - Legacy Grafana shortid format",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "a1B2c3D4e5F6g7H8",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - Legacy format with dashes and underscores",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name_with-mixed_chars123",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - Single character name",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "a",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name starts with dash (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "-test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name ends with dash (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name-",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name starts with dot",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            ".test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name ends with dot",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name.",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name starts with underscore (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "_test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - name ends with underscore (legacy format)",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name_",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		// Invalid name cases
+		{
+			name: "invalid - name with slash",
 			key: DataKey{
 				Namespace:       "test-namespace",
 				Group:           "test-group",
@@ -342,7 +539,46 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name 'test/name' is invalid",
+			errorField:  "name",
+		},
+		{
+			name: "invalid - name with spaces",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorField:  "name",
+		},
+		{
+			name: "invalid - name with special characters",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test@name#with$special",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorField:  "name",
+		},
+		{
+			name: "invalid - empty name",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: true,
+			errorField:  "name",
 		},
 		// Invalid cases - start/end with invalid characters
 		{
@@ -384,19 +620,6 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "resource '.test-resource' is invalid",
 		},
-		{
-			name: "invalid - name ends with dash",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name-",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "name 'test-name-' is invalid",
-		},
 		// Invalid cases - invalid action
 		{
 			name: "invalid - unknown action",
@@ -406,7 +629,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          DataAction("unknown"),
+				Action:          kv.DataAction("unknown"),
 			},
 			expectError: true,
 			errorMsg:    "action 'unknown' is invalid",
@@ -415,11 +638,15 @@ func TestDataKey_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.key.Validate()
+			err := validateDataKey(tt.key)
 			if tt.expectError {
 				require.Error(t, err)
 				if tt.errorMsg != "" {
 					require.Contains(t, err.Error(), tt.errorMsg)
+				}
+				var validationErr *ValidationError
+				if errors.Is(err, validationErr) && tt.errorField != "" {
+					require.Equal(t, tt.errorField, validationErr.Field)
 				}
 			} else {
 				require.NoError(t, err)
@@ -494,10 +721,21 @@ func TestParseKey(t *testing.T) {
 	}
 }
 
-func TestDataStore_Save_And_Get(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func runDataStoreTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) *dataStore, testFn func(*testing.T, context.Context, *dataStore)) {
+	t.Run(storeName, func(t *testing.T) {
+		ctx := context.Background()
+		store := newStoreFn(t)
+		testFn(t, ctx, store)
+	})
+}
 
+func TestIntegrationDataStore_Save_And_Get(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreSaveAndGet)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreSaveAndGet)
+}
+
+func testDataStoreSaveAndGet(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	rv := node.Generate()
 
 	testKey := DataKey{
@@ -558,10 +796,13 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 	})
 }
 
-func TestDataStore_Delete(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_Delete(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreDelete)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreDelete)
+}
 
+func testDataStoreDelete(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	rv := node.Generate()
 
 	testKey := DataKey{
@@ -604,15 +845,17 @@ func TestDataStore_Delete(t *testing.T) {
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
-		require.Error(t, err)
-		require.Equal(t, ErrNotFound, err)
+		require.NoError(t, err)
 	})
 }
 
-func TestDataStore_List(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_List(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreList)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreList)
+}
 
+func testDataStoreList(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	resourceKey := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",
@@ -733,10 +976,13 @@ func TestDataStore_List(t *testing.T) {
 	})
 }
 
-func TestDataStore_Integration(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_Integration(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreIntegration)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreIntegration)
+}
 
+func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Run("full lifecycle test", func(t *testing.T) {
 		resourceKey := ListRequestKey{
 			Namespace: "integration-ns",
@@ -821,10 +1067,13 @@ func TestDataStore_Integration(t *testing.T) {
 	})
 }
 
-func TestDataStore_Keys(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_Keys(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreKeys)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreKeys)
+}
 
+func testDataStoreKeys(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	resourceKey := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",
@@ -968,13 +1217,16 @@ func TestDataStore_Keys(t *testing.T) {
 	})
 }
 
-func TestDataStore_ValidationEnforced(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ValidationEnforced(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreValidationEnforced)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreValidationEnforced)
+}
 
+func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create an invalid key
 	invalidKey := DataKey{
-		Namespace:       "Invalid-Namespace", // uppercase is invalid
+		Namespace:       "Invalid-Namespace-$$$",
 		Group:           "test-group",
 		Resource:        "test-resource",
 		Name:            "test-name",
@@ -988,21 +1240,27 @@ func TestDataStore_ValidationEnforced(t *testing.T) {
 		_, err := ds.Get(ctx, invalidKey)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace 'Invalid-Namespace' is invalid")
+		var validationErr ValidationError
+		require.True(t, errors.As(err, &validationErr))
+		require.Equal(t, "namespace", validationErr.Field)
 	})
 
 	t.Run("Save with invalid key returns validation error", func(t *testing.T) {
 		err := ds.Save(ctx, invalidKey, testValue)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace 'Invalid-Namespace' is invalid")
+		var validationErr ValidationError
+		require.True(t, errors.As(err, &validationErr))
+		require.Equal(t, "namespace", validationErr.Field)
 	})
 
 	t.Run("Delete with invalid key returns validation error", func(t *testing.T) {
 		err := ds.Delete(ctx, invalidKey)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace 'Invalid-Namespace' is invalid")
+		var validationErr ValidationError
+		require.True(t, errors.As(err, &validationErr))
+		require.Equal(t, "namespace", validationErr.Field)
 	})
 
 	// Test another type of invalid key
@@ -1043,11 +1301,51 @@ func TestListRequestKey_Validate(t *testing.T) {
 		key         ListRequestKey
 		expectError bool
 		errorMsg    string
+		errorField  string
 	}{
 		{
 			name: "valid - all fields provided",
 			key: ListRequestKey{
 				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in namespace",
+			key: ListRequestKey{
+				Namespace: "Test-Namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in group and resource",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "Test-Group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in resource",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "Test-Resource",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - underscore in namespace",
+			key: ListRequestKey{
+				Namespace: "test_namespace",
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "test-name",
@@ -1075,7 +1373,47 @@ func TestListRequestKey_Validate(t *testing.T) {
 			name:        "invalid - all empty",
 			key:         ListRequestKey{},
 			expectError: true,
-			errorMsg:    "group is required",
+			errorField:  "namespace",
+		},
+		{
+			name: "valid - legacy grafana uid 1",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "_4OV_5Nmz",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - legacy grafana uid 2",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "-Y-tnEDWk",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - legacy grafana uid 3",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "000000005",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in name",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "Test-Name",
+			},
+			expectError: false,
 		},
 		// Invalid hierarchical cases
 		{
@@ -1084,7 +1422,7 @@ func TestListRequestKey_Validate(t *testing.T) {
 				Group: "test-group",
 			},
 			expectError: true,
-			errorMsg:    "resource is required",
+			errorField:  "resource",
 		},
 		{
 			name: "invalid - name without namespace",
@@ -1094,7 +1432,7 @@ func TestListRequestKey_Validate(t *testing.T) {
 				Group:    "test-group",
 			},
 			expectError: true,
-			errorMsg:    "name must be empty when namespace is empty",
+			errorMsg:    ErrNameMustBeEmptyWhenNamespaceEmpty,
 		},
 		{
 			name: "invalid - name without group and resource",
@@ -1103,63 +1441,9 @@ func TestListRequestKey_Validate(t *testing.T) {
 				Name:      "test-name",
 			},
 			expectError: true,
-			errorMsg:    "group is required",
+			errorField:  "group",
 		},
 		// Invalid naming cases
-		{
-			name: "invalid - uppercase in namespace",
-			key: ListRequestKey{
-				Namespace: "Test-Namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: true,
-			errorMsg:    "namespace 'Test-Namespace' is invalid",
-		},
-		{
-			name: "invalid - uppercase in group and resource",
-			key: ListRequestKey{
-				Namespace: "test-namespace",
-				Group:     "Test-Group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: true,
-			errorMsg:    "group 'Test-Group' is invalid",
-		},
-		{
-			name: "invalid - uppercase in resource",
-			key: ListRequestKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "Test-Resource",
-			},
-			expectError: true,
-			errorMsg:    "resource 'Test-Resource' is invalid",
-		},
-		{
-			name: "invalid - uppercase in name",
-			key: ListRequestKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "Test-Name",
-			},
-			expectError: true,
-			errorMsg:    "name 'Test-Name' is invalid",
-		},
-		{
-			name: "invalid - underscore in namespace",
-			key: ListRequestKey{
-				Namespace: "test_namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: true,
-			errorMsg:    "namespace 'test_namespace' is invalid",
-		},
 		{
 			name: "invalid - starts with dash",
 			key: ListRequestKey{
@@ -1181,6 +1465,16 @@ func TestListRequestKey_Validate(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "group 'test-group.' is invalid",
+		},
+		{
+			name: "invalid - name contains invalid char",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group.",
+				Resource:  "test-resource",
+				Name:      "test$name",
+			},
+			expectError: true,
 		},
 	}
 
@@ -1255,10 +1549,13 @@ func TestListRequestKey_Prefix(t *testing.T) {
 	}
 }
 
-func TestDataStore_LastResourceVersion(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_LastResourceVersion(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreLastResourceVersion)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreLastResourceVersion)
+}
 
+func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Run("returns last resource version for existing data", func(t *testing.T) {
 		resourceKey := ListRequestKey{
 			Namespace: "test-namespace",
@@ -1357,10 +1654,13 @@ func TestDataStore_LastResourceVersion(t *testing.T) {
 	})
 }
 
-func TestDataStore_GetLatestResourceKey(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_GetLatestResourceKey(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKey)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKey)
+}
 
+func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1420,10 +1720,13 @@ func TestDataStore_GetLatestResourceKey(t *testing.T) {
 	require.Equal(t, DataActionUpdated, latestKey.Action)
 }
 
-func TestDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyDeleted)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyDeleted)
+}
 
+func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1448,10 +1751,13 @@ func TestDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
 	require.Equal(t, ErrNotFound, err)
 }
 
-func TestDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyNotFound)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyNotFound)
+}
 
+func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1463,10 +1769,13 @@ func TestDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
 	require.Equal(t, ErrNotFound, err)
 }
 
-func TestDataStore_GetResourceKeyAtRevision(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_GetResourceKeyAtRevision(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceKeyAtRevision)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceKeyAtRevision)
+}
 
+func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1538,10 +1847,13 @@ func TestDataStore_GetResourceKeyAtRevision(t *testing.T) {
 	require.Equal(t, DataActionUpdated, dataKey.Action)
 }
 
-func TestDataStore_ListLatestResourceKeys(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListLatestResourceKeys(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeys)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeys)
+}
 
+func testDataStoreListLatestResourceKeys(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1591,10 +1903,13 @@ func TestDataStore_ListLatestResourceKeys(t *testing.T) {
 	require.Equal(t, DataActionUpdated, resultKeys[0].Action)
 }
 
-func TestDataStore_ListLatestResourceKeys_Deleted(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListLatestResourceKeys_Deleted(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeysDeleted)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysDeleted)
+}
 
+func testDataStoreListLatestResourceKeysDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1641,10 +1956,13 @@ func TestDataStore_ListLatestResourceKeys_Deleted(t *testing.T) {
 	require.Len(t, resultKeys, 0) // Should be empty because resource was deleted
 }
 
-func TestDataStore_ListLatestResourceKeys_Multiple(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListLatestResourceKeys_Multiple(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeysMultiple)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysMultiple)
+}
 
+func testDataStoreListLatestResourceKeysMultiple(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1712,10 +2030,13 @@ func TestDataStore_ListLatestResourceKeys_Multiple(t *testing.T) {
 	require.Equal(t, rv2, names["resource-2"])
 }
 
-func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListResourceKeysAtRevision(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevision)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevision)
+}
 
+func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create multiple resources with different versions
 	rv1 := node.Generate().Int64()
 	rv2 := node.Generate().Int64()
@@ -1795,7 +2116,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv1 - should return only resource1 initial version", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 2)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv1) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv1}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -1808,7 +2129,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv2 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 3)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv2) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv2}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -1826,14 +2147,14 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv3 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 3)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv3) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv3}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
 
 		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource4
 		names := make(map[string]int64)
-		actions := make(map[string]DataAction)
+		actions := make(map[string]kv.DataAction)
 		for _, result := range resultKeys {
 			names[result.Name] = result.ResourceVersion
 			actions[result.Name] = result.Action
@@ -1847,7 +2168,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv4 - should return all resources", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 4)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv4) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv4}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -1866,7 +2187,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv5 - should exclude deleted resource4", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 3)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv5) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv5}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -1892,7 +2213,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 		}
 
 		resultKeys := make([]DataKey, 0, 2)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, specificListKey, rv3) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: specificListKey, ResourceVersion: rv3}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -1905,7 +2226,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision 0 should use MaxInt64", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 4)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, 0) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: 0}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -1924,10 +2245,13 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 }
 
-func TestDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionValidationErrors)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionValidationErrors)
+}
 
+func testDataStoreListResourceKeysAtRevisionValidationErrors(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	tests := []struct {
 		name string
 		key  ListRequestKey
@@ -1958,7 +2282,7 @@ func TestDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, err := range ds.ListResourceKeysAtRevision(ctx, tt.key, 0) {
+			for _, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: tt.key, ResourceVersion: 0}) {
 				require.Error(t, err)
 				return
 			}
@@ -1966,10 +2290,13 @@ func TestDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 	}
 }
 
-func TestDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionEmptyResults)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionEmptyResults)
+}
 
+func testDataStoreListResourceKeysAtRevisionEmptyResults(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1977,7 +2304,7 @@ func TestDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	}
 
 	resultKeys := make([]DataKey, 0, 1)
-	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, 0) {
+	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: 0}) {
 		require.NoError(t, err)
 		resultKeys = append(resultKeys, dataKey)
 	}
@@ -1985,10 +2312,13 @@ func TestDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	require.Len(t, resultKeys, 0)
 }
 
-func TestDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
+}
 
+func testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create a resource with a high resource version
 	rv := node.Generate().Int64()
 	key := DataKey{
@@ -2011,7 +2341,7 @@ func TestDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *test
 
 	// List at a revision before the resource was created
 	resultKeys := make([]DataKey, 0, 1)
-	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv-1000) {
+	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv - 1000}) {
 		require.NoError(t, err)
 		resultKeys = append(resultKeys, dataKey)
 	}
@@ -2288,10 +2618,11 @@ func TestDataKey_SameResource(t *testing.T) {
 
 func TestGetRequestKey_Validate(t *testing.T) {
 	tests := []struct {
-		name      string
-		key       GetRequestKey
-		expectErr bool
-		wantError string
+		name       string
+		key        GetRequestKey
+		expectErr  bool
+		wantError  string
+		errorField string
 	}{
 		{
 			name: "valid key",
@@ -2314,14 +2645,24 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name: "valid grafana name - ends with dot",
+			key: GetRequestKey{
+				Group:     "apps",
+				Resource:  "resources",
+				Namespace: "default",
+				Name:      ".123_hello",
+			},
+			expectErr: false,
+		},
+		{
 			name: "missing group",
 			key: GetRequestKey{
 				Resource:  "resources",
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "group is required",
+			expectErr:  true,
+			errorField: "group",
 		},
 		{
 			name: "missing resource",
@@ -2330,8 +2671,8 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "resource is required",
+			expectErr:  true,
+			errorField: "resource",
 		},
 		{
 			name: "missing namespace",
@@ -2340,8 +2681,8 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Resource: "resources",
 				Name:     "test-resource",
 			},
-			expectErr: true,
-			wantError: "namespace is required",
+			expectErr:  true,
+			errorField: "namespace",
 		},
 		{
 			name: "missing name",
@@ -2350,30 +2691,19 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Resource:  "resources",
 				Namespace: "default",
 			},
-			expectErr: true,
-			wantError: "name is required",
+			expectErr:  true,
+			errorField: "name",
 		},
 		{
-			name: "invalid namespace - uppercase",
+			name: "invalid group - underscore at start",
 			key: GetRequestKey{
-				Group:     "apps",
-				Resource:  "resources",
-				Namespace: "Default",
-				Name:      "test-resource",
-			},
-			expectErr: true,
-			wantError: "namespace 'Default' is invalid",
-		},
-		{
-			name: "invalid group - underscore",
-			key: GetRequestKey{
-				Group:     "apps_v1",
+				Group:     "_apps_v1",
 				Resource:  "resources",
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "group 'apps_v1' is invalid",
+			expectErr:  true,
+			errorField: "group",
 		},
 		{
 			name: "invalid resource - starts with dash",
@@ -2383,19 +2713,8 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "resource '-resources' is invalid",
-		},
-		{
-			name: "invalid name - ends with dot",
-			key: GetRequestKey{
-				Group:     "apps",
-				Resource:  "resources",
-				Namespace: "default",
-				Name:      "test-resource.",
-			},
-			expectErr: true,
-			wantError: "name 'test-resource.' is invalid",
+			expectErr:  true,
+			errorField: "resource",
 		},
 	}
 
@@ -2406,6 +2725,10 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				require.Error(t, err)
 				if tt.wantError != "" {
 					require.Contains(t, err.Error(), tt.wantError)
+				}
+				var validationErr *ValidationError
+				if errors.Is(err, validationErr) && tt.errorField != "" {
+					require.Equal(t, tt.errorField, validationErr.Field)
 				}
 			} else {
 				require.NoError(t, err)
@@ -2460,10 +2783,13 @@ func TestGetRequestKey_Prefix(t *testing.T) {
 	}
 }
 
-func TestDataStore_GetResourceStats_Comprehensive(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_GetResourceStats_Comprehensive(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsComprehensive)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsComprehensive)
+}
 
+func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Test setup: 3 namespaces × 3 groups × 3 resources × 3 names × 3 versions = 243 total entries
 	// But each name will have only 1 latest version that counts, so 3 × 3 × 3 × 3 = 81 non-deleted resources
 	namespaces := []string{"ns1", "ns2", "ns3"}
@@ -2481,7 +2807,7 @@ func TestDataStore_GetResourceStats_Comprehensive(t *testing.T) {
 					for version := 1; version <= 3; version++ {
 						rv := node.Generate().Int64()
 
-						var action DataAction
+						var action kv.DataAction
 						switch version {
 						case 1:
 							action = DataActionCreated
@@ -2667,10 +2993,13 @@ func TestDataStore_GetResourceStats_Comprehensive(t *testing.T) {
 	})
 }
 
-func TestDataStore_getGroupResources(t *testing.T) {
-	ds := setupTestDataStore(t)
-	ctx := context.Background()
+func TestIntegrationDataStore_getGroupResources(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetGroupResources)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetGroupResources)
+}
 
+func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create test data with multiple group/resource combinations
 	testData := []struct {
 		group     string
@@ -2728,4 +3057,301 @@ func TestDataStore_getGroupResources(t *testing.T) {
 	for _, expected := range expectedCombinations {
 		require.True(t, foundCombinations[expected], "Expected combination not found: %s", expected)
 	}
+}
+
+func TestIntegrationDataStore_BatchDelete(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchDelete)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchDelete)
+}
+
+func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	keys := make([]DataKey, 95)
+	for i := 0; i < 95; i++ {
+		rv := node.Generate().Int64()
+		keys[i] = DataKey{
+			Namespace:       "test-namespace",
+			Group:           "test-group",
+			Resource:        "test-resource",
+			Name:            fmt.Sprintf("test-name-%d", i),
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+			Folder:          "test-folder",
+		}
+		content := fmt.Sprintf("test-value-%d", i)
+		err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+		require.NoError(t, err)
+	}
+
+	err := ds.batchDelete(ctx, keys)
+	require.NoError(t, err)
+
+	// Verify all events were deleted
+	for i := 0; i < 95; i++ {
+		_, err := ds.Get(ctx, DataKey{
+			Namespace: "test-namespace",
+			Group:     "test-group",
+			Resource:  "test-resource",
+			Name:      fmt.Sprintf("test-name-%d", i),
+		})
+		require.Error(t, err, "Resource should have been deleted")
+	}
+}
+
+func TestIntegrationDataStore_BatchGet(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchGet)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchGet)
+}
+
+func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Run("batch get multiple existing keys", func(t *testing.T) {
+		// Create test data
+		keys := make([]DataKey, 5)
+		expectedContent := make(map[string]string)
+
+		for i := 0; i < 5; i++ {
+			rv := node.Generate().Int64()
+			keys[i] = DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("test-name-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+			content := fmt.Sprintf("test-value-%d", i)
+			expectedContent[keys[i].Name] = content
+			err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+			require.NoError(t, err)
+		}
+
+		// Batch get all keys
+		results := make([]DataObj, 0, 5)
+		for obj, err := range ds.BatchGet(ctx, keys) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Verify all keys were returned
+		require.Len(t, results, 5)
+
+		// Verify content matches
+		for _, result := range results {
+			resultBytes, err := io.ReadAll(result.Value)
+			require.NoError(t, err)
+			expectedValue, ok := expectedContent[result.Key.Name]
+			require.True(t, ok, "Unexpected key in results: %s", result.Key.Name)
+			require.Equal(t, expectedValue, string(resultBytes))
+		}
+	})
+
+	t.Run("batch get with some non-existent keys", func(t *testing.T) {
+		// Create 3 existing keys
+		existingKeys := make([]DataKey, 3)
+		for i := 0; i < 3; i++ {
+			rv := node.Generate().Int64()
+			existingKeys[i] = DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("existing-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+			err := ds.Save(ctx, existingKeys[i], bytes.NewReader([]byte(fmt.Sprintf("value-%d", i))))
+			require.NoError(t, err)
+		}
+
+		// Create 2 non-existent keys (not saved to datastore)
+		nonExistentKeys := make([]DataKey, 2)
+		for i := 0; i < 2; i++ {
+			rv := node.Generate().Int64()
+			nonExistentKeys[i] = DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("non-existent-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+		}
+
+		// Combine existing and non-existent keys
+		allKeys := append(existingKeys, nonExistentKeys...)
+
+		// Batch get all keys
+		results := make([]DataObj, 0, 3)
+		for obj, err := range ds.BatchGet(ctx, allKeys) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Should only return the 3 existing keys
+		require.Len(t, results, 3)
+
+		// Verify only existing keys are returned
+		for _, result := range results {
+			require.Contains(t, result.Key.Name, "existing-")
+			// Verify content
+			resultBytes, err := io.ReadAll(result.Value)
+			require.NoError(t, err)
+			require.NotEmpty(t, resultBytes)
+		}
+	})
+
+	t.Run("batch get with large number of keys to test batching", func(t *testing.T) {
+		numKeys := 150
+		keys := make([]DataKey, numKeys)
+		expectedContent := make(map[string]string)
+
+		for i := 0; i < numKeys; i++ {
+			rv := node.Generate().Int64()
+			keys[i] = DataKey{
+				Namespace:       "batch-test",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("item-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+			content := fmt.Sprintf("content-%d", i)
+			expectedContent[keys[i].Name] = content
+			err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+			require.NoError(t, err)
+		}
+
+		// Batch get all keys
+		results := make([]DataObj, 0, numKeys)
+		for obj, err := range ds.BatchGet(ctx, keys) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Verify all keys were returned
+		require.Len(t, results, numKeys)
+
+		// Verify content matches for all keys
+		for _, result := range results {
+			resultBytes, err := io.ReadAll(result.Value)
+			require.NoError(t, err)
+			expectedValue, ok := expectedContent[result.Key.Name]
+			require.True(t, ok, "Unexpected key in results: %s", result.Key.Name)
+			require.Equal(t, expectedValue, string(resultBytes))
+		}
+	})
+}
+
+func TestIntegrationDataStore_GetLatestAndPredecessor(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestAndPredecessor)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestAndPredecessor)
+}
+
+func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	resourceKey := ListRequestKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+	}
+
+	t.Run("returns latest and predecessor when multiple versions exist", func(t *testing.T) {
+		// Create test data with multiple versions
+		rv1 := node.Generate().Int64()
+		rv2 := node.Generate().Int64()
+		rv3 := node.Generate().Int64()
+
+		versions := []int64{rv1, rv2, rv3}
+
+		// Save all versions
+		for _, version := range versions {
+			dataKey := DataKey{
+				Namespace:       resourceKey.Namespace,
+				Group:           resourceKey.Group,
+				Resource:        resourceKey.Resource,
+				Name:            resourceKey.Name,
+				ResourceVersion: version,
+				Action:          DataActionCreated,
+			}
+
+			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			require.NoError(t, err)
+		}
+
+		// Get latest and predecessor
+		latest, predecessor, err := ds.GetLatestAndPredecessor(ctx, resourceKey)
+		require.NoError(t, err)
+
+		// Verify latest is rv3 (highest)
+		require.Equal(t, rv3, latest.ResourceVersion)
+		require.Equal(t, resourceKey.Namespace, latest.Namespace)
+		require.Equal(t, resourceKey.Group, latest.Group)
+		require.Equal(t, resourceKey.Resource, latest.Resource)
+		require.Equal(t, resourceKey.Name, latest.Name)
+
+		// Verify predecessor is rv2 (second highest)
+		require.Equal(t, rv2, predecessor.ResourceVersion)
+		require.Equal(t, resourceKey.Namespace, predecessor.Namespace)
+		require.Equal(t, resourceKey.Group, predecessor.Group)
+		require.Equal(t, resourceKey.Resource, predecessor.Resource)
+		require.Equal(t, resourceKey.Name, predecessor.Name)
+	})
+
+	t.Run("returns latest with empty predecessor when only one version exists", func(t *testing.T) {
+		singleResourceKey := ListRequestKey{
+			Namespace: "single-namespace",
+			Group:     "single-group",
+			Resource:  "single-resource",
+			Name:      "single-name",
+		}
+
+		rv := node.Generate().Int64()
+		dataKey := DataKey{
+			Namespace:       singleResourceKey.Namespace,
+			Group:           singleResourceKey.Group,
+			Resource:        singleResourceKey.Resource,
+			Name:            singleResourceKey.Name,
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+		}
+
+		err := ds.Save(ctx, dataKey, bytes.NewReader([]byte("single-version")))
+		require.NoError(t, err)
+
+		// Get latest and predecessor
+		latest, predecessor, err := ds.GetLatestAndPredecessor(ctx, singleResourceKey)
+		require.NoError(t, err)
+
+		// Verify latest is correct
+		require.Equal(t, rv, latest.ResourceVersion)
+		require.Equal(t, singleResourceKey.Namespace, latest.Namespace)
+		require.Equal(t, singleResourceKey.Group, latest.Group)
+		require.Equal(t, singleResourceKey.Resource, latest.Resource)
+		require.Equal(t, singleResourceKey.Name, latest.Name)
+
+		// Verify predecessor is empty (ResourceVersion == 0)
+		require.Equal(t, int64(0), predecessor.ResourceVersion)
+		require.Empty(t, predecessor.Namespace)
+		require.Empty(t, predecessor.Group)
+		require.Empty(t, predecessor.Resource)
+		require.Empty(t, predecessor.Name)
+	})
+
+	t.Run("returns error for non-existent resource", func(t *testing.T) {
+		nonExistentKey := ListRequestKey{
+			Namespace: "non-existent-namespace",
+			Group:     "non-existent-group",
+			Resource:  "non-existent-resource",
+			Name:      "non-existent-name",
+		}
+
+		_, _, err := ds.GetLatestAndPredecessor(ctx, nonExistentKey)
+		require.Error(t, err)
+		require.Equal(t, ErrNotFound, err)
+	})
 }

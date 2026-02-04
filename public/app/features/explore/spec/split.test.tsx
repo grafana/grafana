@@ -12,10 +12,10 @@ import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 const testEventBus = new EventBusSrv();
 
-jest.mock('app/core/core', () => {
+jest.mock('app/core/services/context_srv', () => {
   return {
     contextSrv: {
-      ...jest.requireActual('app/core/core').contextSrv,
+      ...jest.requireActual('app/core/services/context_srv').contextSrv,
       hasPermission: () => true,
       getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
     },
@@ -122,7 +122,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
 
     // Make sure we render the logs panel
     await waitFor(() => {
-      const logsPanels = screen.getAllByText(/^Logs$/);
+      const logsPanels = screen.getAllByRole('heading', { name: /^Logs$/ });
       expect(logsPanels.length).toBe(2);
     });
 

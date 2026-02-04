@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
@@ -14,6 +13,7 @@ import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
+import { getRestoreNotificationData } from '../utils/notifications';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -24,44 +24,6 @@ export function RecentlyDeletedActions() {
   const [restoreDashboard] = useRestoreDashboardMutation();
   const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
-
-  const showRestoreNotifications = (successful: string[], failedCount: number) => {
-    const successCount = successful.length;
-
-    if (successCount === 0 && failedCount === 0) {
-      return;
-    }
-
-    let alertType = AppEvents.alertSuccess.name;
-    let message = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
-
-    if (failedCount > 0) {
-      if (successCount > 0) {
-        // Partial success
-        alertType = AppEvents.alertWarning.name;
-        const successMessage = t(
-          'browse-dashboards.restore.success-count',
-          '{{count}} dashboard restored successfully',
-          { count: successCount }
-        );
-        const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
-          count: failedCount,
-        });
-        message = `${successMessage}. ${failedMessage}.`;
-      } else {
-        // All failed
-        alertType = AppEvents.alertError.name;
-        message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard', {
-          count: failedCount,
-        });
-      }
-    }
-
-    appEvents.publish({
-      type: alertType,
-      payload: [message],
-    });
-  };
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -88,11 +50,20 @@ export function RecentlyDeletedActions() {
     return origins;
   }, [selectedDashboards, searchState.result]);
 
-  const onActionComplete = () => {
-    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
-
-    deletedDashboardsCache.clear();
-    stateManager.doSearchWithDebounce();
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    if (error && typeof error === 'object' && 'message' in error) {
+      return String(error.message);
+    }
+    if (error) {
+      return JSON.stringify(error);
+    }
+    return '';
   };
 
   const onRestore = async (restoreTarget: string) => {
@@ -124,20 +95,24 @@ export function RecentlyDeletedActions() {
 
     // Separate successful and failed restores
     const successful: string[] = [];
-    const failed: string[] = [];
+    const failed: Array<{ uid: string; error: string }> = [];
 
     results.forEach((result, index) => {
       const dashboardUid = selectedDashboards[index];
-      if (result.status === 'rejected' || result.value.error) {
-        failed.push(dashboardUid);
+      if (result.status === 'rejected') {
+        const errorMessage = getErrorMessage(result.reason);
+        if (errorMessage) {
+          failed.push({ uid: dashboardUid, error: errorMessage });
+        }
+      } else if (result.value.error) {
+        const errorMessage = getErrorMessage(result.value.error);
+        if (errorMessage) {
+          failed.push({ uid: dashboardUid, error: errorMessage });
+        }
       } else if ('data' in result.value && result.value.data?.name) {
         successful.push(result.value.data.name);
       }
     });
-
-    // Show consolidated notification
-    const failedCount = failed.length;
-    showRestoreNotifications(successful, failedCount);
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {
@@ -151,8 +126,18 @@ export function RecentlyDeletedActions() {
       parentUIDs.add(folderUID);
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    onActionComplete();
+    deletedDashboardsCache.clear();
+    await stateManager.doSearch();
+
+    const notificationData = getRestoreNotificationData(successful, failed);
+    if (notificationData) {
+      appEvents.publish({
+        type: notificationData.alertType,
+        payload: [notificationData.message],
+      });
+    }
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
   };

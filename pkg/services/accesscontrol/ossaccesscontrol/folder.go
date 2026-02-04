@@ -2,12 +2,16 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -21,6 +25,8 @@ import (
 type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
+
+var ErrFolderUnhandledError = errutil.Internal("folder.unhandled-error", errutil.WithPublicMessage("Unhandled folder error"))
 
 var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
 var FolderEditActions = append(FolderViewActions, []string{
@@ -38,7 +44,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
 	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
 		return nil
 	}
@@ -49,7 +55,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 			DisplayName: "Viewer",
 			Description: "View all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(getDashboardViewActions(features), FolderViewActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardViewActions, FolderViewActions...), dashboards.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Viewer"},
@@ -61,7 +67,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 			DisplayName: "Editor",
 			Description: "Edit all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(getDashboardEditActions(features), FolderEditActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardEditActions, FolderEditActions...), dashboards.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Editor"},
@@ -73,7 +79,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 			DisplayName: "Admin",
 			Description: "Administer all folders and dashboards",
 			Group:       "folders",
-			Permissions: accesscontrol.PermissionsForActions(append(getDashboardAdminActions(features), FolderAdminActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardAdminActions, FolderAdminActions...), dashboards.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Admin"},
@@ -86,6 +92,7 @@ func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	restConfigProvider apiserver.RestConfigProvider,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
 		return nil, err
@@ -94,6 +101,7 @@ func ProvideFolderPermissions(
 	options := resourcepermissions.Options{
 		Resource:          "folders",
 		ResourceAttribute: "uid",
+		APIGroup:          folderv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
 			defer span.End()
@@ -106,7 +114,16 @@ func ProvideFolderPermissions(
 			})
 
 			if err != nil {
-				return err
+				switch {
+				case func() bool {
+					var errUtilErr errutil.Error
+					return errors.As(err, &errUtilErr)
+				}():
+					return err
+				case errors.Is(err, dashboards.ErrFolderNotFound):
+					return folder.ErrFolderNotFound.Errorf("folder not found")
+				}
+				return ErrFolderUnhandledError.Errorf("unhandled folder error: %w", err)
 			}
 
 			return nil
@@ -122,13 +139,14 @@ func ProvideFolderPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(getDashboardViewActions(features), FolderViewActions...),
-			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
-			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
+			"View":  append(DashboardViewActions, FolderViewActions...),
+			"Edit":  append(DashboardEditActions, FolderEditActions...),
+			"Admin": append(DashboardAdminActions, FolderAdminActions...),
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Folders",
+		ReaderRoleName:     "Permission reader",
+		WriterRoleName:     "Permission writer",
+		RoleGroup:          "Folders",
+		RestConfigProvider: restConfigProvider,
 	}
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
 	if err != nil {

@@ -11,13 +11,26 @@ const (
 )
 
 type SecretsManagerSettings struct {
+	// Which encryption provider to use to encrypt any new secrets
 	CurrentEncryptionProvider string
+
+	// The time to live for decrypted data keys in memory
+	DataKeysCacheTTL time.Duration
+	// The interval to remove expired data keys from the cache
+	DataKeysCacheCleanupInterval time.Duration
+	// Whether to use a Redis cache for data keys instead of the in-memory cache
+	DataKeysCacheUseRedis bool
+	// DataKeysCacheEncryptionKey is used to encrypt data keys before storing them in the cache.
+	// If empty, a random key will be generated for each Grafana process at startup.
+	// If running in HA mode (i.e. with Redis cache enabled), this value must be set to the same value for all Grafana processes.
+	DataKeysCacheEncryptionKey string
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
 	ConfiguredKMSProviders map[string]map[string]string
 
 	GrpcClientEnable        bool   // Whether to enable the gRPC client. If disabled, it will use the in-process services implementations.
+	GrpcClientLoadBalancing bool   // Whether to enable gRPC client-side load balancing
 	GrpcServerUseTLS        bool   // Whether to use TLS when communicating with the gRPC server
 	GrpcServerTLSSkipVerify bool   // Whether to skip TLS verification when communicating with the gRPC server
 	GrpcServerTLSServerName string // Server name to use for TLS verification
@@ -34,8 +47,17 @@ type SecretsManagerSettings struct {
 	GCWorkerPollInterval time.Duration
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
-	// Whether the secrets management is running in developer mode.
-	IsDeveloperMode bool
+
+	// Whether to register the MT CRUD API
+	RegisterAPIServer bool
+	// Whether to create the MT secrets management database
+	RunSecretsDBMigrations bool
+	// Whether to run the data key id migration. Requires that RunSecretsDBMigrations is also true.
+	RunDataKeyMigration bool
+
+	// AWS Keeper
+	AWSKeeperAccessKeyID     string
+	AWSKeeperSecretAccessKey string
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
@@ -43,6 +65,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.CurrentEncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(MisconfiguredProvider)
 
 	cfg.SecretsManagement.GrpcClientEnable = secretsMgmt.Key("grpc_client_enable").MustBool(false)
+	cfg.SecretsManagement.GrpcClientLoadBalancing = secretsMgmt.Key("grpc_client_load_balancing").MustBool(false)
 	cfg.SecretsManagement.GrpcServerUseTLS = secretsMgmt.Key("grpc_server_use_tls").MustBool(false)
 	cfg.SecretsManagement.GrpcServerTLSSkipVerify = secretsMgmt.Key("grpc_server_tls_skip_verify").MustBool(false)
 	cfg.SecretsManagement.GrpcServerTLSServerName = valueAsString(secretsMgmt, "grpc_server_tls_server_name", "")
@@ -55,7 +78,23 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
 
-	cfg.SecretsManagement.IsDeveloperMode = secretsMgmt.Key("developer_mode").MustBool(false)
+	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
+	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
+	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
+
+	cfg.SecretsManagement.AWSKeeperAccessKeyID = secretsMgmt.Key("aws_access_key_id").MustString("")
+	cfg.SecretsManagement.AWSKeeperSecretAccessKey = secretsMgmt.Key("aws_secret_access_key").MustString("")
+
+	cfg.SecretsManagement.DataKeysCacheUseRedis = secretsMgmt.Key("data_keys_cache_use_redis").MustBool(false)
+	cfg.SecretsManagement.DataKeysCacheTTL = secretsMgmt.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
+	// If empty, a random key will be generated at startup for encrypting cached data keys.
+	cfg.SecretsManagement.DataKeysCacheEncryptionKey = secretsMgmt.Key("data_keys_cache_encryption_key").MustString("")
+
+	if cfg.SecretsManagement.DataKeysCacheUseRedis && cfg.SecretsManagement.DataKeysCacheEncryptionKey == "" {
+		cfg.Logger.Error("DataKeysCacheEncryptionKey must be set when using Redis cache for data keys. Falling back to the OSS cache.")
+		cfg.SecretsManagement.DataKeysCacheUseRedis = false
+	}
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

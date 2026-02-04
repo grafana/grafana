@@ -8,9 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/canvas/panelcfg.cue file.
+
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.3.0-pre";
+export const pluginVersion = "12.4.0-pre";
 
 export enum HorizontalConstraint {
   Center = 'center',

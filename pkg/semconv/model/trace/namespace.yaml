@@ -1,0 +1,7 @@
+groups:
+  - id: trace.grafana.namespace
+    type: span
+    brief: 'Semantic Convention for Grafana app platform namespaces'
+    stability: stable
+    attributes:
+      - ref: grafana.namespace.name

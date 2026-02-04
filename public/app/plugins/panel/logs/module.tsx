@@ -1,10 +1,10 @@
-import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
+import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { LogsPanel } from './LogsPanel';
 import { Options } from './panelcfg.gen';
-import { LogsPanelSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {
@@ -119,6 +119,19 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
+    if (config.featureToggles.otelLogsFormatting) {
+      builder.addBooleanSwitch({
+        path: 'showLogAttributes',
+        name: t('logs.show-log-attributes', 'Display log attributes for OTel logs'),
+        category,
+        description: t(
+          'logs.description-show-log-attributes',
+          'Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.'
+        ),
+        defaultValue: true,
+      });
+    }
+
     if (config.featureToggles.newLogsPanel) {
       builder
         .addBooleanSwitch({
@@ -194,4 +207,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         defaultValue: LogsSortOrder.Descending,
       });
   })
-  .setSuggestionsSupplier(new LogsPanelSuggestionsSupplier());
+  .setSuggestionsSupplier(
+    showDefaultSuggestion((ds) => ds.hasData && ds.hasFieldType(FieldType.time) && ds.hasFieldType(FieldType.string))
+  );

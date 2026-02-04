@@ -24,6 +24,11 @@ export interface RadioButtonGroupProps<T> {
   invalid?: boolean;
 }
 
+/**
+ * RadioButtonGroup is used to select a single value from multiple mutually exclusive options.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-radiobuttongroup--docs
+ */
 export function RadioButtonGroup<T>({
   options,
   value,

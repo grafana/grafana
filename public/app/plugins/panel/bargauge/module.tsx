@@ -8,7 +8,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
 import { Options, defaultOptions } from './panelcfg.gen';
-import { BarGaugeSuggestionsSupplier } from './suggestions';
+import { barGaugeSugggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(BarGaugePanel)
   .useFieldConfig()
@@ -17,7 +17,7 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
     commonOptionsBuilder.addLegendOptions(builder, true, false);
-    commonOptionsBuilder.addTextSizeOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder
       .addRadio({
@@ -151,4 +151,4 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(barGaugePanelMigrationHandler)
-  .setSuggestionsSupplier(new BarGaugeSuggestionsSupplier());
+  .setSuggestionsSupplier(barGaugeSugggestionsSupplier);

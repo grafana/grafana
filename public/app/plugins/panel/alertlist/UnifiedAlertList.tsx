@@ -5,10 +5,11 @@ import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
   BigValue,
+  BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
@@ -16,7 +17,6 @@ import {
   ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -226,6 +226,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         <section>
           {props.options.viewMode === ViewMode.Stat && (
             <BigValue
+              colorMode={BigValueColorMode.None}
               width={props.width}
               height={props.height}
               graphMode={BigValueGraphMode.None}

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -68,10 +69,12 @@ func (s *Service) Checks() []checks.Check {
 		datasourcecheck.New(
 			s.datasourceSvc,
 			s.pluginStore,
-			s.pluginContextProvider,
-			s.pluginClient,
 			s.pluginRepo,
 			s.GrafanaVersion,
+			&checks.HealthCheckerImpl{
+				PluginContextProvider: s.pluginContextProvider,
+				PluginClient:          s.pluginClient,
+			},
 		),
 		plugincheck.New(
 			s.pluginStore,
@@ -91,4 +94,5 @@ type AdvisorAppConfig struct {
 	CheckRegistry CheckService
 	PluginConfig  map[string]string
 	StackID       string
+	OrgService    org.Service
 }

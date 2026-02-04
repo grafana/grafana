@@ -1,5 +1,6 @@
-import { RoutingTree } from '../../api/v0alpha1/api.gen';
-import { LabelMatcherFactory, RouteFactory } from '../../api/v0alpha1/mocks/fakes/Routes';
+import { API_VERSION, RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
+import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/v0alpha1/mocks/fakes/Routes';
 import { Label } from '../../matchers/types';
 
 import { matchInstancesToRouteTrees } from './useMatchPolicies';
@@ -15,6 +16,7 @@ describe('matchInstancesToRouteTrees', () => {
     const trees: RoutingTree[] = [
       {
         kind: 'RoutingTree',
+        apiVersion: API_VERSION,
         metadata: { name: treeName },
         spec: {
           defaults: {
@@ -22,7 +24,6 @@ describe('matchInstancesToRouteTrees', () => {
           },
           routes: [route],
         },
-        status: {},
       },
     ];
 
@@ -49,6 +50,7 @@ describe('matchInstancesToRouteTrees', () => {
     const trees: RoutingTree[] = [
       {
         kind: 'RoutingTree',
+        apiVersion: API_VERSION,
         metadata: { name: treeName },
         spec: {
           defaults: {
@@ -56,7 +58,6 @@ describe('matchInstancesToRouteTrees', () => {
           },
           routes: [route],
         },
-        status: {},
       },
     ];
 

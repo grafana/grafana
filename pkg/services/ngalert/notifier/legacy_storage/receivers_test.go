@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/webhook"
 	"github.com/prometheus/alertmanager/config"
@@ -92,10 +93,8 @@ func TestDeleteReceiver(t *testing.T) {
 }
 
 func TestCreateReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -111,7 +110,7 @@ func TestCreateReceiver(t *testing.T) {
 				UID:  NameToUid("receiver1"),
 				Name: "New receiver name",
 			},
-			expectedError: ErrReceiverExists,
+			expectedError: models.ErrReceiverExists,
 		},
 		{
 			name: "should error if receiver already exists by name",
@@ -119,7 +118,7 @@ func TestCreateReceiver(t *testing.T) {
 				UID:  "some-uid",
 				Name: "receiver1",
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should fail if integration UID is not valid",
@@ -134,7 +133,7 @@ func TestCreateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should fail if integration UID already exists",
@@ -149,7 +148,7 @@ func TestCreateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should add the receiver to configuration and set integrations UID",
@@ -199,10 +198,8 @@ func TestCreateReceiver(t *testing.T) {
 }
 
 func TestUpdateReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -218,7 +215,7 @@ func TestUpdateReceiver(t *testing.T) {
 				UID:  NameToUid("receiver2"),
 				Name: "receiver1",
 			},
-			expectedError: ErrReceiverNotFound,
+			expectedError: models.ErrReceiverNotFound,
 		},
 		{
 			name: "should fail if integration UID is not valid",
@@ -233,7 +230,7 @@ func TestUpdateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should fail if integration UID already exists",
@@ -248,7 +245,7 @@ func TestUpdateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should update the existing receiver",
@@ -300,17 +297,15 @@ func TestUpdateReceiver(t *testing.T) {
 }
 
 func TestGetReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
 	t.Run("should return ErrReceiverNotFound if receiver does not exists", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
 		_, err := rev.GetReceiver("not-found", nil)
-		require.ErrorIs(t, err, ErrReceiverNotFound)
+		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
 	t.Run("should return receiver if exists", func(t *testing.T) {
@@ -323,7 +318,7 @@ func TestGetReceiver(t *testing.T) {
 			Name:       "receiver1",
 			Provenance: models.Provenance("test"),
 			Origin:     models.ResourceOriginGrafana,
-			Version:    "6e2fb0f572bc90f7",
+			Version:    "0d67768f299ef0fe",
 			Integrations: []*models.Integration{
 				{
 					UID:            "integration-uid-1",
@@ -378,9 +373,10 @@ func TestGetReceivers(t *testing.T) {
 
 func TestReceiverNameUsedByRoutes(t *testing.T) {
 	testCases := []struct {
-		name           string
-		receiverName   string
-		expectedResult bool
+		name                 string
+		receiverName         string
+		expectedResult       bool
+		includeManagedRoutes bool
 	}{
 		{
 			name:           "should return true if receiver is used by routes",
@@ -392,11 +388,29 @@ func TestReceiverNameUsedByRoutes(t *testing.T) {
 			receiverName:   "receiver2",
 			expectedResult: false,
 		},
+		{
+			name:                 "should return true if receiver is used by any route",
+			receiverName:         "receiver1",
+			includeManagedRoutes: true,
+			expectedResult:       true,
+		},
+		{
+			name:                 "should return true if receiver is used by just managed routes",
+			receiverName:         "receiver2",
+			includeManagedRoutes: true,
+			expectedResult:       true,
+		},
+		{
+			name:                 "should return false if receiver is not used by any route",
+			receiverName:         "nonexistent",
+			includeManagedRoutes: true,
+			expectedResult:       false,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			rev := getConfigRevisionForTest()
-			result := rev.ReceiverNameUsedByRoutes(tc.receiverName)
+			result := rev.ReceiverNameUsedByRoutes(tc.receiverName, tc.includeManagedRoutes)
 			require.Equal(t, tc.expectedResult, result)
 		})
 	}
@@ -418,68 +432,118 @@ func TestReceiverUseByName(t *testing.T) {
 				},
 			},
 		})
-	expected := map[string]int{
+	require.Equal(t, map[string]int{
 		"":                      1, // some routes do not have receiver set
 		"receiver1":             2,
 		"dupe-receiver":         1,
 		"some-missing-receiver": 1,
-	}
-	require.Equal(t, expected, rev.ReceiverUseByName())
+	}, rev.ReceiverUseByName(false))
+	require.Equal(t, map[string]int{
+		"":                      1,
+		"receiver1":             3,
+		"receiver2":             1,
+		"dupe-receiver":         1,
+		"some-missing-receiver": 1,
+	}, rev.ReceiverUseByName(true))
 }
 
 func TestRenameReceiverInRoutes(t *testing.T) {
+	routeGen := func() *definitions.Route {
+		return &definitions.Route{
+			Receiver: "receiver1",
+			Routes: []*definitions.Route{
+				{
+					Receiver: "receiver1",
+					Routes: []*definitions.Route{
+						{
+							Receiver: "missing-receiver",
+						},
+					},
+				},
+				{
+					Receiver: "dupe-receiver",
+					Routes: []*definitions.Route{
+						{
+							Receiver: "receiver1",
+						},
+					},
+				},
+			},
+		}
+	}
 	rev := getConfigRevisionForTest()
-	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, &definitions.Route{
-		Receiver: "receiver1",
-		Routes: []*definitions.Route{
-			{
-				Receiver: "receiver1",
-				Routes: []*definitions.Route{
-					{
-						Receiver: "missing-receiver",
-					},
-				},
-			},
-			{
-				Receiver: "dupe-receiver",
-				Routes: []*definitions.Route{
-					{
-						Receiver: "receiver1",
-					},
-				},
-			},
-		},
-	})
+	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, routeGen())
+	rev.Config.ManagedRoutes = map[string]*definitions.Route{
+		"named_route": routeGen(),
+	}
 
 	t.Run("should do nothing if receiver is not used by routes ", func(t *testing.T) {
-		result := rev.RenameReceiverInRoutes("not-found", "found")
-		require.Zero(t, result)
+		result := rev.RenameReceiverInRoutes("not-found", "found", false)
+		require.Empty(t, result)
 		expected := map[string]int{
 			"receiver1":        4,
 			"missing-receiver": 1,
 			"dupe-receiver":    1,
 		}
-		require.Equal(t, expected, rev.ReceiverUseByName())
+		require.Equal(t, expected, rev.ReceiverUseByName(false))
 	})
 
 	t.Run("should rename all references", func(t *testing.T) {
-		result := rev.RenameReceiverInRoutes("receiver1", "found")
-		require.Equal(t, result, 4)
+		result := rev.RenameReceiverInRoutes("receiver1", "found", false)
+		require.Equal(t, result[rev.Config.AlertmanagerConfig.Route], 4)
 		expected := map[string]int{
 			"found":            4,
 			"missing-receiver": 1,
 			"dupe-receiver":    1,
 		}
-		require.Equal(t, expected, rev.ReceiverUseByName())
+		require.Equal(t, expected, rev.ReceiverUseByName(false))
+	})
+
+	t.Run("managedRoutesSupported=true", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, routeGen())
+		rev.Config.ManagedRoutes = map[string]*definitions.Route{
+			"named_route": routeGen(),
+		}
+		t.Run("should do nothing if receiver is not used by routes ", func(t *testing.T) {
+			result := rev.RenameReceiverInRoutes("not-found", "found", true)
+			require.Empty(t, result)
+			expected := map[string]int{
+				"receiver1":        7,
+				"missing-receiver": 2,
+				"dupe-receiver":    2,
+			}
+			require.Equal(t, expected, rev.ReceiverUseByName(true))
+		})
+
+		t.Run("should rename all references", func(t *testing.T) {
+			result := rev.RenameReceiverInRoutes("receiver1", "found", true)
+			require.Equal(t, 4, result[rev.Config.AlertmanagerConfig.Route])
+			require.Equal(t, 3, result[rev.Config.ManagedRoutes["named_route"]])
+			expected := map[string]int{
+				"found":            7,
+				"missing-receiver": 2,
+				"dupe-receiver":    2,
+			}
+			require.Equal(t, expected, rev.ReceiverUseByName(true))
+		})
 	})
 }
 
-func getConfigRevisionForTest() *ConfigRevision {
-	return &ConfigRevision{
+type opt func(*ConfigRevision)
+
+func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
+	r := &ConfigRevision{
 		Config: &definitions.PostableUserConfig{
 			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{Receiver: "receiver1"},
+					TimeIntervals: []config.TimeInterval{
+						{Name: "time-interval-1"},
+					},
+					MuteTimeIntervals: []config.MuteTimeInterval{
+						{Name: "mute-interval-1"},
+					},
 				},
 				Receivers: []*definition.PostableApiReceiver{
 					{
@@ -491,7 +555,7 @@ func getConfigRevisionForTest() *ConfigRevision {
 								{
 									UID:      "integration-uid-1",
 									Type:     "webhook",
-									Settings: definitions.RawMessage(notify.AllKnownConfigsForTesting["webhook"].Config),
+									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 								},
 							},
 						},
@@ -503,7 +567,7 @@ func getConfigRevisionForTest() *ConfigRevision {
 								{
 									UID:      "integration-uid-2",
 									Type:     "webhook",
-									Settings: definitions.RawMessage(notify.AllKnownConfigsForTesting["webhook"].Config),
+									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 								},
 							},
 						},
@@ -515,13 +579,21 @@ func getConfigRevisionForTest() *ConfigRevision {
 								{
 									UID:      "integration-uid-3",
 									Type:     "email",
-									Settings: definitions.RawMessage(notify.AllKnownConfigsForTesting["email"].Config),
+									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
 								},
 							},
 						},
 					},
 				},
 			},
+			ManagedRoutes: map[string]*definitions.Route{
+				"named_route": {Receiver: "receiver1"},
+				"other_route": {Receiver: "receiver2"},
+			},
 		},
 	}
+	for _, o := range opts {
+		o(r)
+	}
+	return r
 }

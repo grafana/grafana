@@ -33,31 +33,23 @@ export const VizTooltipColorIndicator = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  if (isHollow) {
+  if (colorIndicator === ColorIndicator.series && !isHollow) {
     return (
-      <div
-        style={{ border: `1px solid ${color}` }}
+      <SeriesIcon
+        color={color}
+        lineStyle={lineStyle}
+        noMargin
         className={cx(
           position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
-          getColorIndicatorClass(colorIndicator, styles)
+          styles.seriesIndicator
         )}
       />
     );
   }
 
-  if (colorIndicator === ColorIndicator.series) {
-    return (
-      <SeriesIcon
-        color={color}
-        lineStyle={lineStyle}
-        className={position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing}
-      />
-    );
-  }
-
   return (
-    <span
-      style={{ backgroundColor: color }}
+    <div
+      style={isHollow ? { border: `1px solid ${color}` } : { backgroundColor: color }}
       className={cx(
         position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
         getColorIndicatorClass(colorIndicator, styles)
@@ -73,6 +65,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   trailing: css({
     marginLeft: theme.spacing(0.5),
+  }),
+  seriesIndicator: css({
+    position: 'relative',
+    top: -2, // half the height of the color indicator, since the top is aligned with flex center.
   }),
   series: css({
     width: '14px',

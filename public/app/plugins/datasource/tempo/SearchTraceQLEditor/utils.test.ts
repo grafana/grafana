@@ -155,4 +155,42 @@ describe('filterToQuerySection returns the correct query section for a filter', 
     const result = filterToQuerySection(filter, [], lp);
     expect(result).toBe('span.foo=~"bar|baz"');
   });
+
+  it('filter with multiple values and != operator', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '!=',
+      value: ['bar', 'baz'],
+      scope: TraceqlSearchScope.Span,
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('(span.foo!=bar && span.foo!=baz)');
+  });
+
+  it('filter with multiple string values and != operator', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '!=',
+      value: ['bar', 'baz'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('(span.foo!="bar" && span.foo!="baz")');
+  });
+
+  it('filter with multiple string values and !~ operator', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '!~',
+      value: ['bar', 'baz'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('span.foo!~"bar|baz"');
+  });
 });

@@ -67,7 +67,7 @@ func convertSQLite3URL(dsn string) (string, error) {
 	newDSN := dsn[:pos]
 
 	q := url.Values{}
-	q.Add("_pragma", "busy_timeout(5000)")
+	q.Add("_pragma", "busy_timeout(7500)") // Default of mattn/go-sqlite3 is 5s but we increase it to 7.5s to try and avoid busy errors.
 
 	for key, values := range params {
 		if alias, ok := dsnAlias[strings.ToLower(key)]; ok {
@@ -110,6 +110,10 @@ func (d *moderncDriver) Open(name string) (driver.Conn, error) {
 
 func init() {
 	sql.Register("sqlite3", &moderncDriver{Driver: &Driver{}})
+}
+
+func DriverType() string {
+	return "modernc.org/sqlite (CGO disabled)"
 }
 
 func IsBusyOrLocked(err error) bool {

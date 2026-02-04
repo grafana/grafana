@@ -15,14 +15,15 @@ import (
 var (
 	// These fields exist at the top-level of DashboardHit
 	standardFields = map[string]string{
-		resource.SEARCH_FIELD_EXPLAIN:      "",
-		resource.SEARCH_FIELD_SCORE:        "",
-		resource.SEARCH_FIELD_TITLE:        "",
-		resource.SEARCH_FIELD_FOLDER:       "",
-		resource.SEARCH_FIELD_TAGS:         "",
-		resource.SEARCH_FIELD_DESCRIPTION:  "",
-		resource.SEARCH_FIELD_MANAGER_ID:   "",
-		resource.SEARCH_FIELD_MANAGER_KIND: "",
+		resource.SEARCH_FIELD_EXPLAIN:          "",
+		resource.SEARCH_FIELD_SCORE:            "",
+		resource.SEARCH_FIELD_TITLE:            "",
+		resource.SEARCH_FIELD_FOLDER:           "",
+		resource.SEARCH_FIELD_TAGS:             "",
+		resource.SEARCH_FIELD_DESCRIPTION:      "",
+		resource.SEARCH_FIELD_MANAGER_ID:       "",
+		resource.SEARCH_FIELD_MANAGER_KIND:     "",
+		resource.SEARCH_FIELD_OWNER_REFERENCES: "",
 	}
 
 	IncludeFields = []string{
@@ -40,6 +41,10 @@ var (
 		resource.SEARCH_FIELD_SOURCE_PATH,
 		resource.SEARCH_FIELD_SOURCE_CHECKSUM,
 		resource.SEARCH_FIELD_SOURCE_TIME,
+		resource.SEARCH_FIELD_OWNER_REFERENCES,
+		// below is needed to determine whether a provisioned dashboard exists or not
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
 )
 
@@ -61,6 +66,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	explainIDX := -1
 	managerKindIDX := -1
 	managerIdIDX := -1
+	ownerRefsIDX := -1
 
 	for i, v := range result.Results.Columns {
 		switch v.Name {
@@ -80,6 +86,8 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 			managerKindIDX = i
 		case resource.SEARCH_FIELD_DESCRIPTION:
 			descriptionIDX = i
+		case resource.SEARCH_FIELD_OWNER_REFERENCES:
+			ownerRefsIDX = i
 		}
 	}
 
@@ -146,6 +154,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		}
 		if scoreIDX >= 0 && row.Cells[scoreIDX] != nil {
 			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
+		}
+		if ownerRefsIDX >= 0 && row.Cells[ownerRefsIDX] != nil {
+			_ = json.Unmarshal(row.Cells[ownerRefsIDX], &hit.OwnerReferences)
 		}
 
 		sr.Hits[i] = *hit

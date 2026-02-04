@@ -56,7 +56,7 @@ const SilencesTable = () => {
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
-      { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
+      { amSourceName: alertManagerSourceName, filter: { silenced: true, active: false, inhibited: false } },
       { ...API_QUERY_OPTIONS, skip: !canPreview }
     );
 

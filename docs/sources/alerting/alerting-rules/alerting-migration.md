@@ -65,6 +65,10 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The rule query offset is taken from the `query_offset` value in the rule group configuration. If empty, it defaults to the [`rule_query_offset` configuration setting](ref:configure-grafana-rule_query_offset), which is `1m` by default.
 
+- **Rule query conversion**
+
+  For alert rules, adds `prometheus_math` and `threshold` expressions to preserve Prometheus no data behavior, ensuring the alert stays in **Normal** state when `query` returns no data.
+
 - **Missing series evaluations to resolve**
 
   The [Missing series evaluations to resolve](ref:missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
@@ -130,7 +134,7 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
    Pausing stops alert rule evaluation behavior for the newly created Grafana-managed alert rules.
 
-9. (Optional) In the **Target data source** of the **Recording rules** section, you can select the data source that the imported recording rules will query. By default, it is the data source selected in the **Data source** dropdown.
+9. (Optional) In the **Target data source** of the **Recording rules** section, you can select the data source to which the imported recording rules will write metrics. By default, it is the data source selected in the **Data source** dropdown.
 
 10. Click **Import**.
 
@@ -238,6 +242,8 @@ Set to `true` to import recording rules in paused state.
 
 The UID of the data source to use for alert rule queries.
 
+If not specified in the header, Grafana uses the configured default from `unified_alerting.prometheus_conversion.default_datasource_uid`. If neither the header nor the configuration option is provided, the request fails.
+
 #### `X-Grafana-Alerting-Target-Datasource-UID`
 
 The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
@@ -258,7 +264,7 @@ When you set `X-Grafana-Alerting-Notification-Settings`, the header value must b
 
 | Field                   | Type       | Required | Example                                    | Description                                                                                             |
 | ----------------------- | ---------- | -------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `receiver`              | `string`   | Yes      | `"grafana-default-email"`                  | Name of the contact point (receiver) to which alerts are routed. Must exist in Grafana before import.   |
+| `receiver`              | `string`   | Yes      | `"grafana-default"`                        | Name of the contact point (receiver) to which alerts are routed. Must exist in Grafana before import.   |
 | `group_by`              | `[]string` | No       | `["alertname","grafana_folder","cluster"]` | Label set used by Alertmanager to aggregate alerts into a single notification.                          |
 | `group_wait`            | `duration` | No       | `"30s"`                                    | How long Alertmanager waits before sending the first notification for a new group.                      |
 | `group_interval`        | `duration` | No       | `"5m"`                                     | Time to wait before adding new alerts to an existing group's next notification.                         |

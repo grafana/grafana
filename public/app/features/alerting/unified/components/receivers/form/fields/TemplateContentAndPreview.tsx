@@ -8,7 +8,7 @@ import { Box, useStyles2 } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { EditorColumnHeader } from '../../../contact-points/templates/EditorColumnHeader';
+import { EditorColumnHeader } from '../../../EditorColumnHeader';
 import { TemplateEditor } from '../../TemplateEditor';
 import { TemplatePreview } from '../../TemplatePreview';
 

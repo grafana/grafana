@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
@@ -29,7 +32,9 @@ const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 func TestMigrate(t *testing.T) {
 	// Reset the migration singleton and use the same datasource provider as the frontend test to ensure consistency
 	ResetForTesting()
-	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := Migrate(context.Background(), map[string]interface{}{
@@ -45,7 +50,9 @@ func TestMigrate(t *testing.T) {
 
 func TestMigrateSingleVersion(t *testing.T) {
 	// Use the same datasource provider as the frontend test to ensure consistency
-	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	runSingleVersionMigrationTests(t, SINGLE_VERSION_OUTPUT_DIR)
 }
@@ -212,7 +219,9 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 // TestSchemaMigrationMetrics tests that schema migration metrics are recorded correctly
 func TestSchemaMigrationMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -296,7 +305,9 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 
 // TestSchemaMigrationLogging tests that schema migration logging works correctly
 func TestSchemaMigrationLogging(t *testing.T) {
-	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	tests := []struct {
 		name           string
@@ -413,7 +424,9 @@ func TestMigrateDevDashboards(t *testing.T) {
 	// Reset the migration singleton and use the dev dashboard datasource provider
 	// to match the frontend devDashboardDataSources configuration
 	ResetForTesting()
-	Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.DevDashboardConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.DevDashboardConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	runDevDashboardMigrationTests(t, schemaversion.LATEST_VERSION, DEV_DASHBOARDS_OUTPUT_DIR)
 }
@@ -438,4 +451,233 @@ func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir st
 			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
 		})
 	}
+}
+
+func TestMigrateWithCache(t *testing.T) {
+	// Reset the migration singleton before each test
+	ResetForTesting()
+	datasources := []schemaversion.DataSourceInfo{
+		{UID: "ds-uid-1", Type: "prometheus", Name: "Prometheus", Default: true, APIVersion: "v1"},
+		{UID: "ds-uid-2", Type: "loki", Name: "Loki", Default: false, APIVersion: "v1"},
+		{UID: "ds-uid-3", Type: "prometheus", Name: "Prometheus 2", Default: false, APIVersion: "v1"},
+	}
+
+	// Create a dashboard at schema version 32 for V33 and V36 migration with datasource references
+	dashboard1 := map[string]interface{}{
+		"schemaVersion": 32,
+		"title":         "Test Dashboard 1",
+		"panels": []interface{}{
+			map[string]interface{}{
+				"id":   1,
+				"type": "timeseries",
+				// String datasource that V33 will migrate to object reference
+				"datasource": "Prometheus",
+				"targets": []interface{}{
+					map[string]interface{}{
+						"refId":      "A",
+						"datasource": "Loki",
+					},
+				},
+			},
+		},
+	}
+
+	// Create a dashboard at schema version 35 for testing V36 migration with datasource references in annotations
+	dashboard2 := map[string]interface{}{
+		"schemaVersion": 35,
+		"title":         "Test Dashboard 2",
+		"annotations": map[string]interface{}{
+			"list": []interface{}{
+				map[string]interface{}{
+					"name":       "Test Annotation",
+					"datasource": "Prometheus 2", // String reference that V36 should convert
+					"enable":     true,
+				},
+			},
+		},
+	}
+
+	t.Run("with datasources", func(t *testing.T) {
+		ResetForTesting()
+		dsProvider := newCountingProvider(datasources)
+		leProvider := newCountingLibraryProvider(nil)
+		// Initialize the migration system with our counting providers
+		Initialize(dsProvider, leProvider, DefaultCacheTTL)
+		// Verify initial call count is zero
+		assert.Equal(t, dsProvider.GetCallCount(), int64(0))
+		// Create a context with namespace (required for caching)
+		ctx := request.WithNamespace(context.Background(), "default")
+
+		// First migration - should invoke the provider once to build the cache
+		dash1 := deepCopyDashboard(dashboard1)
+		err := Migrate(ctx, dash1, schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), dsProvider.GetCallCount())
+
+		// Verify datasource conversion from string to object reference
+		panels := dash1["panels"].([]interface{})
+		panel := panels[0].(map[string]interface{})
+		panelDS, ok := panel["datasource"].(map[string]interface{})
+		require.True(t, ok, "panel datasource should be converted to object")
+		assert.Equal(t, "ds-uid-1", panelDS["uid"])
+		assert.Equal(t, "prometheus", panelDS["type"])
+
+		// Verify target datasource conversion
+		targets := panel["targets"].([]interface{})
+		target := targets[0].(map[string]interface{})
+		targetDS, ok := target["datasource"].(map[string]interface{})
+		require.True(t, ok, "target datasource should be converted to object")
+		assert.Equal(t, "ds-uid-2", targetDS["uid"])
+		assert.Equal(t, "loki", targetDS["type"])
+
+		// Migration with V35 dashboard - should use the cached index from first migration
+		dash2 := deepCopyDashboard(dashboard2)
+		err = Migrate(ctx, dash2, schemaversion.LATEST_VERSION)
+		require.NoError(t, err, "second migration should succeed")
+		assert.Equal(t, int64(1), dsProvider.GetCallCount())
+
+		// Verify the annotation datasource was converted to object reference
+		annotations := dash2["annotations"].(map[string]interface{})
+		list := annotations["list"].([]interface{})
+		var testAnnotation map[string]interface{}
+		for _, a := range list {
+			ann := a.(map[string]interface{})
+			if ann["name"] == "Test Annotation" {
+				testAnnotation = ann
+				break
+			}
+		}
+		require.NotNil(t, testAnnotation, "Test Annotation should exist")
+		annotationDS, ok := testAnnotation["datasource"].(map[string]interface{})
+		require.True(t, ok, "annotation datasource should be converted to object")
+		assert.Equal(t, "ds-uid-3", annotationDS["uid"])
+		assert.Equal(t, "prometheus", annotationDS["type"])
+	})
+
+	// tests that cache isolates data per namespace
+	t.Run("with multiple orgs", func(t *testing.T) {
+		// Reset the migration singleton
+		ResetForTesting()
+		dsProvider := newCountingProvider(datasources)
+		leProvider := newCountingLibraryProvider(nil)
+		Initialize(dsProvider, leProvider, DefaultCacheTTL)
+		// Create contexts for different orgs with proper namespace format (org-ID)
+		ctx1 := request.WithNamespace(context.Background(), "default")  // org 1
+		ctx2 := request.WithNamespace(context.Background(), "stacks-2") // stack 2
+
+		// Migrate for org 1
+		err := Migrate(ctx1, deepCopyDashboard(dashboard1), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg1 := dsProvider.GetCallCount()
+
+		// Migrate for org 2 - should build separate cache
+		err = Migrate(ctx2, deepCopyDashboard(dashboard2), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg2 := dsProvider.GetCallCount()
+
+		assert.Greater(t, callsAfterOrg2, callsAfterOrg1,
+			"org 2 migration should have called provider (separate cache)")
+
+		// Migrate again for org 1 - should use cache
+		err = Migrate(ctx1, deepCopyDashboard(dashboard1), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg1Again := dsProvider.GetCallCount()
+		assert.Equal(t, callsAfterOrg2, callsAfterOrg1Again,
+			"second org 1 migration should use cache")
+
+		// Migrate again for org 2 - should use cache
+		err = Migrate(ctx2, deepCopyDashboard(dashboard1), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg2Again := dsProvider.GetCallCount()
+		assert.Equal(t, callsAfterOrg2, callsAfterOrg2Again,
+			"second org 2 migration should use cache")
+	})
+}
+
+// countingProvider wraps a datasource provider and counts calls to Index()
+type countingProvider struct {
+	datasources []schemaversion.DataSourceInfo
+	callCount   atomic.Int64
+}
+
+func newCountingProvider(datasources []schemaversion.DataSourceInfo) *countingProvider {
+	return &countingProvider{
+		datasources: datasources,
+	}
+}
+
+func (p *countingProvider) Index(_ context.Context) *schemaversion.DatasourceIndex {
+	p.callCount.Add(1)
+	return schemaversion.NewDatasourceIndex(p.datasources)
+}
+
+func (p *countingProvider) GetCallCount() int64 {
+	return p.callCount.Load()
+}
+
+// countingLibraryProvider wraps a library element provider and counts calls
+type countingLibraryProvider struct {
+	elements  []schemaversion.LibraryElementInfo
+	callCount atomic.Int64
+}
+
+func newCountingLibraryProvider(elements []schemaversion.LibraryElementInfo) *countingLibraryProvider {
+	return &countingLibraryProvider{
+		elements: elements,
+	}
+}
+
+func (p *countingLibraryProvider) GetLibraryElementInfo(_ context.Context) []schemaversion.LibraryElementInfo {
+	p.callCount.Add(1)
+	return p.elements
+}
+
+func (p *countingLibraryProvider) GetCallCount() int64 {
+	return p.callCount.Load()
+}
+
+// deepCopyDashboard creates a deep copy of a dashboard map
+func deepCopyDashboard(dash map[string]interface{}) map[string]interface{} {
+	cpy := make(map[string]interface{})
+	for k, v := range dash {
+		switch val := v.(type) {
+		case []interface{}:
+			cpy[k] = deepCopySlice(val)
+		case map[string]interface{}:
+			cpy[k] = deepCopyMapForCache(val)
+		default:
+			cpy[k] = v
+		}
+	}
+	return cpy
+}
+
+func deepCopySlice(s []interface{}) []interface{} {
+	cpy := make([]interface{}, len(s))
+	for i, v := range s {
+		switch val := v.(type) {
+		case []interface{}:
+			cpy[i] = deepCopySlice(val)
+		case map[string]interface{}:
+			cpy[i] = deepCopyMapForCache(val)
+		default:
+			cpy[i] = v
+		}
+	}
+	return cpy
+}
+
+func deepCopyMapForCache(m map[string]interface{}) map[string]interface{} {
+	cpy := make(map[string]interface{})
+	for k, v := range m {
+		switch val := v.(type) {
+		case []interface{}:
+			cpy[k] = deepCopySlice(val)
+		case map[string]interface{}:
+			cpy[k] = deepCopyMapForCache(val)
+		default:
+			cpy[k] = v
+		}
+	}
+	return cpy
 }

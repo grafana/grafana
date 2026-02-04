@@ -211,7 +211,7 @@ For more information, refer to [Export logs of usage insights](../../setup-grafa
 
 ### New audit log events
 
-New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout](../../setup-grafana/configure-security/configure-authentication/saml/#single-logout). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout](../../setup-grafana/configure-access/configure-authentication/saml/#single-logout). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 

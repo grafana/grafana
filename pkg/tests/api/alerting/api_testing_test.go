@@ -150,8 +150,8 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		for i, alert := range result {
 			require.NotEmpty(t, alert.Annotations["values.B"])
 			require.NotEmpty(t, alert.Annotations["values.C"])
-			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Annotations["values.B"])
-			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Annotations["values.C"])
+			valueB := fmt.Sprintf("[ var='B' labels={state=%s} type='reduce' value=%s ]", dynamicLabels[i], alert.Annotations["values.B"])
+			valueC := fmt.Sprintf("[ var='C' labels={state=%s} type='threshold' value=%s ]", dynamicLabels[i], alert.Annotations["values.C"])
 			require.Contains(t, alert.Annotations["value"], valueB)
 			require.Contains(t, alert.Annotations["value"], valueC)
 		}
@@ -172,8 +172,8 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		for i, alert := range result {
 			require.NotEmpty(t, alert.Labels["values.B"])
 			require.NotEmpty(t, alert.Labels["values.C"])
-			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Labels["values.B"])
-			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Labels["values.C"])
+			valueB := fmt.Sprintf("[ var='B' labels={state=%s} type='reduce' value=%s ]", dynamicLabels[i], alert.Labels["values.B"])
+			valueC := fmt.Sprintf("[ var='C' labels={state=%s} type='threshold' value=%s ]", dynamicLabels[i], alert.Labels["values.C"])
 			require.Contains(t, alert.Labels["value"], valueB)
 			require.Contains(t, alert.Labels["value"], valueC)
 		}

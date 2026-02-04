@@ -14,15 +14,14 @@ import {
   ToolbarButtonRow,
   ConfirmModal,
 } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
+import { appEvents } from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
-import { removeNavIndex } from 'app/core/reducers/navModel';
+import { removeNavIndex, updateNavIndex } from 'app/core/reducers/navModel';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -269,7 +268,7 @@ export const DashNav = memo<Props>((props) => {
 
   const renderRightActions = () => {
     const { dashboard, isFullscreen, hideTimePicker } = props;
-    const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
+    const { canSave, canEdit, showSettings, canShare, isEmbedded } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
@@ -330,8 +329,7 @@ export const DashNav = memo<Props>((props) => {
         />
       );
     }
-
-    if (canShare) {
+    if (canShare && !isEmbedded) {
       buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
 

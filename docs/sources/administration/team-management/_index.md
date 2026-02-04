@@ -15,11 +15,11 @@ keywords:
   - microservices
   - architecture
 menuTitle: Grafana Teams
-title: Grafana Teams
-weight: 100
+title: Manage teams with Grafana Teams
+weight: 2000
 ---
 
-# Grafana Teams
+# Manage teams with Grafana Teams
 
 Grafana Teams makes it easy to organize and administer groups of users in your enterprise. Teams allows you to grant permissions to a group of users instead of granting permissions to individual users one at a time.
 

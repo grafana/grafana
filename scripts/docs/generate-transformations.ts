@@ -7,7 +7,7 @@ import {
   ImageRenderType,
 } from '../../public/app/features/transformers/docs/content';
 
-const WRITE_PATH = 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md';
+const WRITE_PATH = 'docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md';
 
 export const readMeContent = `
   To update this Markdown, navigate to the following Typescript files and edit them based on what you need to update:
@@ -20,7 +20,7 @@ export const readMeContent = `
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
@@ -34,19 +34,20 @@ comments: |
 ${readMeContent}
 
 aliases:
-  - ../../panels/reference-transformation-functions/
-  - ../../panels/transform-data/
-  - ../../panels/transform-data/about-transformation/
-  - ../../panels/transform-data/add-transformation-to-data/
-  - ../../panels/transform-data/apply-transformation-to-data/
-  - ../../panels/transform-data/debug-transformation/
-  - ../../panels/transform-data/delete-transformation/
-  - ../../panels/transform-data/transformation-functions/
-  - ../../panels/transformations/
-  - ../../panels/transformations/apply-transformations/
-  - ../../panels/transformations/config-from-query/
-  - ../../panels/transformations/rows-to-fields/
-  - ../../panels/transformations/types-options/
+  - ../../../panels/transform-data/ # /docs/grafana/next/panels/transform-data/
+  - ../../../panels/transform-data/about-transformation/ # /docs/grafana/next/panels/transform-data/about-transformation/
+  - ../../../panels/transform-data/add-transformation-to-data/ # /docs/grafana/next/panels/transform-data/add-transformation-to-data/
+  - ../../../panels/transform-data/apply-transformation-to-data/ # /docs/grafana/next/panels/transform-data/apply-transformation-to-data/
+  - ../../../panels/transform-data/debug-transformation/ # /docs/grafana/next/panels/transform-data/debug-transformation/
+  - ../../../panels/transform-data/delete-transformation/ # /docs/grafana/next/panels/transform-data/delete-transformation/
+  - ../../../panels/transform-data/transformation-functions/ # /docs/grafana/next/panels/transform-data/transformation-functions/
+  - ../../../panels/transformations/ # /docs/grafana/next/panels/transformations/
+  - ../../../panels/transformations/apply-transformations/ # /docs/grafana/next/panels/transformations/apply-transformations/
+  - ../../../panels/transformations/config-from-query/ # /docs/grafana/next/panels/transformations/config-from-query/
+  - ../../../panels/transformations/rows-to-fields/ # /docs/grafana/next/panels/transformations/rows-to-fields/
+  - ../../../panels/transformations/types-options/ # /docs/grafana/next/panels/transformations/types-options/
+  - ../../../panels/reference-transformation-functions/ # /docs/grafana/next/panels/reference-transformation-functions/
+  - ../../../panels-visualizations/query-transform-data/transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/transform-data/
 labels:
   products:
     - cloud
@@ -226,8 +227,15 @@ export function getJavaScriptContent(): string {
   return completeTemplate;
 }
 
-// Build the path to the Markdown file.
-const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+export function generateMarkdown(): void {
+  // Build the path to the Markdown file.
+  const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+  // Write content to the Markdown file.
+  writeFileSync(indexPath, completeTemplate, 'utf-8');
+}
 
-// Write content to the Markdown file.
-writeFileSync(indexPath, completeTemplate, 'utf-8');
+// Only run the generation if this file is executed directly (not imported)
+// This is a Node.js specific way to ensure the file is executed directly.
+if (require.main === module) {
+  generateMarkdown();
+}

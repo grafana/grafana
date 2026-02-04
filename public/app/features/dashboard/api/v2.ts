@@ -2,16 +2,15 @@ import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
-  AnnoKeyMessage,
   AnnoKeyGrantPermissions,
+  AnnoKeyMessage,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -19,12 +18,19 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
-import { isDashboardV2Spec } from './utils';
+import {
+  DashboardAPI,
+  DashboardVersionError,
+  DashboardWithAccessInfo,
+  ListDashboardHistoryOptions,
+  ListDeletedDashboardsOptions,
+} from './types';
+import { isV0V1StoredVersion } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -44,23 +50,17 @@ export class K8sDashboardV2API
   async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
-
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
-      if (
-        !isDashboardV2Spec(dashboard.spec) &&
-        dashboard.status?.conversion?.failed &&
-        (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
-          dashboard.status.conversion.storedVersion === 'v1beta1' ||
-          dashboard.status.conversion.storedVersion === 'v0alpha1')
-      ) {
+      // This could come as conversion error from v0 or v2 to V1.
+      if (dashboard.status?.conversion?.failed && isV0V1StoredVersion(dashboard.status.conversion.storedVersion)) {
         throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
 
       // load folder info if available
       if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
@@ -76,10 +76,11 @@ export class K8sDashboardV2API
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
-      // Ensure a consistent dashboard slug
-      if (!dashboard.access?.slug) {
-        dashboard.access = dashboard.access ?? {};
-        dashboard.access.slug = kbn.slugifyForUrl(dashboard.spec.title.trim());
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
+      if (sourceLink) {
+        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
+        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
       }
 
       return dashboard;
@@ -144,17 +145,28 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
+      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
+      // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
+      const originalUid = options?.k8s?.name;
+      if (originalUid && obj.metadata.name !== originalUid && obj.metadata.labels) {
+        delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
+      }
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
       ...obj.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
+    if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
+      delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
+    }
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
@@ -177,6 +189,51 @@ export class K8sDashboardV2API
       url,
       slug,
     };
+  }
+
+  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
+    return this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+      limit: options?.limit ?? 10,
+      continue: options?.continueToken,
+    });
+  }
+
+  async getDashboardHistoryVersions(uid: string, versions: number[]) {
+    const results: Array<Resource<DashboardV2Spec>> = [];
+    const versionsToFind = new Set(versions);
+    let continueToken: string | undefined;
+
+    do {
+      // using high limit to attempt finding the versions in one request
+      // if not found, pagination will kick in
+      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      for (const item of history.items) {
+        if (versionsToFind.has(item.metadata.generation ?? 0)) {
+          results.push(item);
+          versionsToFind.delete(item.metadata.generation ?? 0);
+        }
+      }
+      continueToken = versionsToFind.size > 0 ? history.metadata.continue : undefined;
+    } while (continueToken);
+
+    if (versionsToFind.size > 0) {
+      throw new Error(`Dashboard version not found: ${[...versionsToFind].join(', ')}`);
+    }
+    return results;
+  }
+
+  async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
+    // get version to restore to, and save as new one
+    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    return await this.saveDashboard({
+      dashboard: historicalVersion.spec,
+      k8s: {
+        name: uid,
+      },
+      message: `Restored from version ${version}`,
+    });
   }
 
   listDeletedDashboards(options: ListDeletedDashboardsOptions) {

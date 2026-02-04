@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaTimeInterval = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &TimeInterval{}, &TimeIntervalList{}, resource.WithKind("TimeInterval"),
+	schemaTimeInterval = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", NewTimeInterval(), &TimeIntervalList{}, resource.WithKind("TimeInterval"),
 		resource.WithPlural("timeintervals"), resource.WithScope(resource.NamespacedScope))
 	kindTimeInterval = resource.Kind{
 		Schema: schemaTimeInterval,

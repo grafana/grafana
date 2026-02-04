@@ -93,7 +93,7 @@ export function normalizeHealth(health?: RuleHealth): NormalizedHealth {
 }
 
 function isValidHealth(health: string): health is NonNullable<NormalizedHealth> {
-  const valid: Array<NonNullable<NormalizedHealth>> = ['nodata', 'error'] as const;
+  const valid: Array<NonNullable<NormalizedHealth>> = ['ok', 'nodata', 'error'] as const;
   return valid.some((v) => v === health);
 }
 

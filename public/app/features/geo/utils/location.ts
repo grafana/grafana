@@ -68,6 +68,16 @@ const defaultMatchers: LocationFieldMatchers = {
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
 
+/**
+ * suggestions needs to run sync, and we just want to use the default matchers in that situation.
+ */
+export function getDefaultLocationMatchers(): LocationFieldMatchers {
+  return {
+    ...defaultMatchers,
+    mode: FrameGeometrySourceMode.Auto,
+  };
+}
+
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
   const info: LocationFieldMatchers = {
     ...defaultMatchers,

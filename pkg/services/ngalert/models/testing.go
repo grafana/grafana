@@ -13,6 +13,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/webex"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -31,9 +32,10 @@ import (
 )
 
 var (
-	RuleMuts = AlertRuleMutators{}
-	NSMuts   = NotificationSettingsMutators{}
-	RuleGen  = &AlertRuleGenerator{
+	RuleMuts     = AlertRuleMutators{}
+	NSMuts       = NotificationSettingsMutators{}
+	InstanceMuts = AlertInstanceMutators{}
+	RuleGen      = &AlertRuleGenerator{
 		mutators: []AlertRuleMutator{
 			RuleMuts.WithUniqueUID(), RuleMuts.WithUniqueTitle(),
 		},
@@ -406,6 +408,22 @@ func (a *AlertRuleMutators) WithDashboardAndPanel(dashboardUID *string, panelID 
 	return func(rule *AlertRule) {
 		rule.DashboardUID = dashboardUID
 		rule.PanelID = panelID
+	}
+}
+
+// WithDataSourceUID takes a list of UIDs. It adds the nth UID to the nth query in the alert (same index).
+// If there are not enough queries, it adds an empty one with the given data source UID.
+func (a *AlertRuleMutators) WithDataSourceUID(dsUIDs ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for i, uid := range dsUIDs {
+			if i >= len(rule.Data) {
+				rule.Data = append(rule.Data, AlertQuery{
+					DatasourceUID: uid,
+				})
+				continue
+			}
+			rule.Data[i].DatasourceUID = uid
+		}
 	}
 }
 
@@ -911,6 +929,68 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 	return instance
 }
 
+type AlertInstanceMutators struct{}
+
+func (a AlertInstanceMutators) WithOrgID(orgID int64) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.RuleOrgID = orgID
+	}
+}
+
+func (a AlertInstanceMutators) WithRuleUID(ruleUID string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.RuleUID = ruleUID
+	}
+}
+
+func (a AlertInstanceMutators) WithLabelsHash(hash string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LabelsHash = hash
+	}
+}
+
+func (a AlertInstanceMutators) WithReason(reason string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.CurrentReason = reason
+	}
+}
+
+func (a AlertInstanceMutators) WithState(state InstanceStateType) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.CurrentState = state
+	}
+}
+
+func (a AlertInstanceMutators) WithLabels(labels InstanceLabels) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.Labels = labels
+	}
+}
+
+func (a AlertInstanceMutators) WithAnnotations(annotations InstanceAnnotations) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.Annotations = annotations
+	}
+}
+
+func (a AlertInstanceMutators) WithResultFingerprint(fp string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.ResultFingerprint = fp
+	}
+}
+
+func (a AlertInstanceMutators) WithLastError(lastError string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastError = lastError
+	}
+}
+
+func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastResult = lastResult
+	}
+}
+
 type Mutator[T any] func(*T)
 
 // CopyNotificationSettings creates a deep copy of NotificationSettings.
@@ -1255,6 +1335,18 @@ func (n ReceiverMutators) WithOrigin(origin ResourceOrigin) Mutator[Receiver] {
 	}
 }
 
+func (n ReceiverMutators) WithEmptyIntegrations() Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Integrations = []*Integration{}
+	}
+}
+
+func (n ReceiverMutators) WithUID(uid string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.UID = uid
+	}
+}
+
 // Integrations
 
 // CopyIntegrationWith creates a deep copy of Integration and then applies mutators to it.
@@ -1270,7 +1362,7 @@ func CopyIntegrationWith(r Integration, mutators ...Mutator[Integration]) Integr
 func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
 	return func() Integration {
 		name := util.GenerateShortUID()
-		randomIntegrationType, _ := randomMapKey(alertingNotify.AllKnownConfigsForTesting)
+		randomIntegrationType, _ := randomMapKey(notifytest.AllKnownV1ConfigsForTesting)
 
 		c := Integration{
 			UID:                   util.GenerateShortUID(),
@@ -1280,7 +1372,7 @@ func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
 			SecureSettings:        make(map[string]string),
 		}
 
-		IntegrationMuts.WithValidConfig(schema.IntegrationType(randomIntegrationType))(&c)
+		IntegrationMuts.WithValidConfig(randomIntegrationType)(&c)
 
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -1317,10 +1409,12 @@ func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
 		// TODO add support for v0 integrations
-		config := alertingNotify.AllKnownConfigsForTesting[string(integrationType)].GetRawNotifierConfig(c.Name)
-		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
-		integrationConfig, _ := IntegrationConfigFromSchema(typeSchema, schema.V1)
-		c.Config = integrationConfig
+		ncfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
+		if !ok {
+			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+		}
+		config := ncfg.GetRawNotifierConfig(c.Name)
+		c.Config, _ = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 
 		var settings map[string]any
 		_ = json.Unmarshal(config.Settings, &settings)
@@ -1337,8 +1431,11 @@ func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationT
 
 func (n IntegrationMutators) WithInvalidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
-		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
-		c.Config, _ = IntegrationConfigFromSchema(typeSchema, schema.V1)
+		var ok bool
+		c.Config, ok = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		if !ok {
+			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+		}
 		c.Settings = map[string]interface{}{}
 		c.SecureSettings = map[string]string{}
 		if integrationType == webex.Type {
@@ -1369,6 +1466,12 @@ func (n IntegrationMutators) WithSecureSettings(secureSettings map[string]string
 func (n IntegrationMutators) AddSecureSetting(key, val string) Mutator[Integration] {
 	return func(r *Integration) {
 		r.SecureSettings[key] = val
+	}
+}
+
+func (n IntegrationMutators) RemoveSetting(key string) Mutator[Integration] {
+	return func(c *Integration) {
+		delete(c.Settings, key)
 	}
 }
 

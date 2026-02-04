@@ -119,6 +119,8 @@ contactPoints:
         - uid: googlechat-uid
           type: googlechat
           settings:
+            hide_open_button: true
+            hide_version_info: true
             http_config:
                 oauth2:
                     client_id: test-client-id
@@ -1039,7 +1041,7 @@ contactPoints:
                     EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
                     -----END EC PRIVATE KEY-----
                 insecureSkipVerify: false
-            url: http://localhost
+            url: grafana://noop
             username: test-user
           disableResolveMessage: false
         - uid: wecom-uid

@@ -36,7 +36,7 @@ jobs:
 
       - name: Check for plugin extension changes
         id: check-changes
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { execSync } = require('child_process');

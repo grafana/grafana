@@ -24,13 +24,19 @@ import { TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
+  root?: HTMLElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
 }
 
-export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
+/**
+ * Hook up a menu or other overlay to any trigger.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-dropdown--docs
+ */
+export const Dropdown = React.memo(({ children, overlay, placement, offset, root, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
   const floatingUIPlacement = getPlacement(placement);
@@ -84,14 +90,20 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
         ...getReferenceProps(),
       })}
       {show && (
-        <Portal>
+        <Portal root={root}>
           <FloatingFocusManager context={context}>
             {/*
               this is handling bubbled events from the inner overlay
               see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
             */}
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-            <div ref={refs.setFloating} style={floatingStyles} onClick={onOverlayClicked} onKeyDown={handleKeys}>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              onClick={onOverlayClicked}
+              onKeyDown={handleKeys}
+              {...getFloatingProps()}
+            >
               <CSSTransition
                 nodeRef={transitionRef}
                 appear={true}
@@ -99,7 +111,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{renderOrCallToRender(overlay, { ...getFloatingProps() })}</div>
+                <div ref={transitionRef}>{renderOrCallToRender(overlay, {})}</div>
               </CSSTransition>
             </div>
           </FloatingFocusManager>

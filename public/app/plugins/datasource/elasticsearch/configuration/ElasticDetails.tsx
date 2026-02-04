@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import type { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
 
-import { ElasticsearchOptions, Interval } from '../types';
+import type { ElasticsearchOptions, Interval, QueryType } from '../types';
+
+import { QUERY_TYPE_SELECTOR_OPTIONS } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
@@ -127,6 +129,29 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
         />
       </InlineField>
+
+      <InlineField
+        label="Default query mode"
+        htmlFor="es_config_defaultQueryMode"
+        labelWidth={29}
+        tooltip="Default query mode to use for the data source. Defaults to 'Metrics'."
+      >
+        <Select
+          inputId="es_config_defaultQueryMode"
+          value={value.jsonData.defaultQueryMode}
+          options={QUERY_TYPE_SELECTOR_OPTIONS}
+          onChange={(selectedMode) => {
+            onChange({
+              ...value,
+              jsonData: {
+                ...value.jsonData,
+                defaultQueryMode: selectedMode.value,
+              },
+            });
+          }}
+          width={24}
+        />
+      </InlineField>
     </ConfigSubSection>
   );
 };
@@ -208,4 +233,7 @@ const intervalHandler =
 
 export function defaultMaxConcurrentShardRequests() {
   return 5;
+}
+export function defaultQueryMode(): QueryType {
+  return 'metrics';
 }

@@ -1,6 +1,6 @@
 import { Column as RTColumn } from 'react-table';
 
-import { ExpanderCell, ExpanderHeader } from './Expander';
+import { EmptyExpanderHeader, ExpanderCell, ExpanderHeader } from './Expander';
 import { Column } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
@@ -18,9 +18,7 @@ export function getColumns<K extends object>(
     {
       id: EXPANDER_CELL_ID,
       Cell: ExpanderCell,
-      ...(showExpandAll && {
-        Header: ExpanderHeader,
-      }),
+      Header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
       disableSortBy: true,
       width: 0,
     },
@@ -35,6 +33,7 @@ export function getColumns<K extends object>(
       disableSortBy: !Boolean(column.sortType),
       width: column.disableGrow ? 0 : undefined,
       visible: column.visible,
+      ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
       ...(column.cell && { Cell: column.cell }),
     })),
   ];

@@ -20,13 +20,16 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   narrow?: boolean;
   variant?: ToolbarButtonVariant;
   tooltip?: string;
+  root?: HTMLElement;
 }
 
 /**
  * @deprecated Use Combobox or Dropdown instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-buttonselect--docs
  */
 const ButtonSelectComponent = <T,>(props: Props<T>) => {
-  const { className, options, value, onChange, narrow, variant, ...restProps } = props;
+  const { className, options, value, onChange, narrow, variant, root, ...restProps } = props;
   const [isOpen, setIsOpen] = useState(false);
 
   const renderMenu = () => (
@@ -50,7 +53,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
   );
 
   return (
-    <Dropdown overlay={renderMenu} placement="bottom-end">
+    <Dropdown root={root} overlay={renderMenu} placement="bottom-end">
       <ToolbarButton className={className} isOpen={isOpen} narrow={narrow} variant={variant} {...restProps}>
         {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>

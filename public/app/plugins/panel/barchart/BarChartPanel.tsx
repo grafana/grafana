@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { PanelProps, VizOrientation } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AdHocFilterItem,
   TooltipDisplayMode,
@@ -174,11 +174,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
-                if (
-                  config.featureToggles.adhocFiltersInTooltips &&
-                  xField.config.filterable &&
-                  onAddAdHocFilter != null
-                ) {
+                if (xField.config.filterable && onAddAdHocFilter != null) {
                   const adHocFilterItem: AdHocFilterItem = {
                     key: xField.name,
                     operator: FILTER_FOR_OPERATOR,

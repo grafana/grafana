@@ -27,7 +27,6 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 		enabled:  make(map[string]bool),
 		startup:  make(map[string]bool),
 		warnings: make(map[string]string),
-		Settings: cfg.FeatureManagement,
 		log:      log.New("featuremgmt"),
 	}
 
@@ -48,7 +47,8 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 			}
 			mgmt.warnings[key] = "unknown flag in config"
 		}
-		mgmt.startup[key] = val
+
+		mgmt.startup[key] = val.Variants[val.DefaultVariant] == true
 	}
 
 	// update the values

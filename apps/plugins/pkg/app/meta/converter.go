@@ -1,0 +1,885 @@
+package meta
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"path"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+)
+
+// jsonDataToMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.MetaJSONData.
+// nolint:gocyclo
+func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSONData {
+	meta := pluginsv0alpha1.MetaJSONData{
+		Id:   jsonData.ID,
+		Name: jsonData.Name,
+	}
+
+	// Map plugin type
+	switch jsonData.Type {
+	case plugins.TypeApp:
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypeApp
+	case plugins.TypeDataSource:
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypeDatasource
+	case plugins.TypePanel:
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypePanel
+	case plugins.TypeRenderer:
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypeRenderer
+	}
+
+	// Map Info
+	meta.Info = pluginsv0alpha1.MetaInfo{
+		Keywords: jsonData.Info.Keywords,
+		Logos: pluginsv0alpha1.MetaV0alpha1InfoLogos{
+			Small: jsonData.Info.Logos.Small,
+			Large: jsonData.Info.Logos.Large,
+		},
+		Updated: jsonData.Info.Updated,
+		Version: jsonData.Info.Version,
+	}
+
+	if jsonData.Info.Description != "" {
+		meta.Info.Description = &jsonData.Info.Description
+	}
+
+	// Map Build info
+	if jsonData.Info.Build.Time != 0 {
+		buildInfo := &pluginsv0alpha1.MetaV0alpha1InfoBuild{}
+		timeFloat := float64(jsonData.Info.Build.Time)
+		buildInfo.Time = &timeFloat
+		meta.Info.Build = buildInfo
+	}
+
+	if jsonData.Info.Author.Name != "" || jsonData.Info.Author.URL != "" {
+		author := &pluginsv0alpha1.MetaV0alpha1InfoAuthor{}
+		if jsonData.Info.Author.Name != "" {
+			author.Name = &jsonData.Info.Author.Name
+		}
+		if jsonData.Info.Author.URL != "" {
+			author.Url = &jsonData.Info.Author.URL
+		}
+		meta.Info.Author = author
+	}
+
+	if len(jsonData.Info.Links) > 0 {
+		meta.Info.Links = make([]pluginsv0alpha1.MetaV0alpha1InfoLinks, 0, len(jsonData.Info.Links))
+		for _, link := range jsonData.Info.Links {
+			v0Link := pluginsv0alpha1.MetaV0alpha1InfoLinks{}
+			if link.Name != "" {
+				v0Link.Name = &link.Name
+			}
+			if link.URL != "" {
+				v0Link.Url = &link.URL
+			}
+			meta.Info.Links = append(meta.Info.Links, v0Link)
+		}
+	}
+
+	if len(jsonData.Info.Screenshots) > 0 {
+		meta.Info.Screenshots = make([]pluginsv0alpha1.MetaV0alpha1InfoScreenshots, 0, len(jsonData.Info.Screenshots))
+		for _, screenshot := range jsonData.Info.Screenshots {
+			v0Screenshot := pluginsv0alpha1.MetaV0alpha1InfoScreenshots{}
+			if screenshot.Name != "" {
+				v0Screenshot.Name = &screenshot.Name
+			}
+			if screenshot.Path != "" {
+				v0Screenshot.Path = &screenshot.Path
+			}
+			meta.Info.Screenshots = append(meta.Info.Screenshots, v0Screenshot)
+		}
+	}
+
+	// Map Dependencies
+	meta.Dependencies = pluginsv0alpha1.MetaDependencies{
+		GrafanaDependency: jsonData.Dependencies.GrafanaDependency,
+	}
+
+	if jsonData.Dependencies.GrafanaVersion != "" {
+		meta.Dependencies.GrafanaVersion = &jsonData.Dependencies.GrafanaVersion
+	}
+
+	if len(jsonData.Dependencies.Plugins) > 0 {
+		meta.Dependencies.Plugins = make([]pluginsv0alpha1.MetaV0alpha1DependenciesPlugins, 0, len(jsonData.Dependencies.Plugins))
+		for _, dep := range jsonData.Dependencies.Plugins {
+			var depType pluginsv0alpha1.MetaV0alpha1DependenciesPluginsType
+			switch dep.Type {
+			case "app":
+				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeApp
+			case "datasource":
+				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeDatasource
+			case "panel":
+				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypePanel
+			}
+			meta.Dependencies.Plugins = append(meta.Dependencies.Plugins, pluginsv0alpha1.MetaV0alpha1DependenciesPlugins{
+				Id:   dep.ID,
+				Type: depType,
+				Name: dep.Name,
+			})
+		}
+	}
+
+	if len(jsonData.Dependencies.Extensions.ExposedComponents) > 0 {
+		meta.Dependencies.Extensions = &pluginsv0alpha1.MetaV0alpha1DependenciesExtensions{
+			ExposedComponents: jsonData.Dependencies.Extensions.ExposedComponents,
+		}
+	}
+
+	// Map optional boolean fields
+	if jsonData.Alerting {
+		meta.Alerting = &jsonData.Alerting
+	}
+	if jsonData.Annotations {
+		meta.Annotations = &jsonData.Annotations
+	}
+	if jsonData.AutoEnabled {
+		meta.AutoEnabled = &jsonData.AutoEnabled
+	}
+	if jsonData.Backend {
+		meta.Backend = &jsonData.Backend
+	}
+	if jsonData.BuiltIn {
+		meta.BuiltIn = &jsonData.BuiltIn
+	}
+	if jsonData.HideFromList {
+		meta.HideFromList = &jsonData.HideFromList
+	}
+	if jsonData.Logs {
+		meta.Logs = &jsonData.Logs
+	}
+	if jsonData.Metrics {
+		meta.Metrics = &jsonData.Metrics
+	}
+	if jsonData.MultiValueFilterOperators {
+		meta.MultiValueFilterOperators = &jsonData.MultiValueFilterOperators
+	}
+	if jsonData.Preload {
+		meta.Preload = &jsonData.Preload
+	}
+	if jsonData.SkipDataQuery {
+		meta.SkipDataQuery = &jsonData.SkipDataQuery
+	}
+	if jsonData.Streaming {
+		meta.Streaming = &jsonData.Streaming
+	}
+	if jsonData.Tracing {
+		meta.Tracing = &jsonData.Tracing
+	}
+	if jsonData.Suggestions {
+		meta.Suggestions = &jsonData.Suggestions
+	}
+
+	// Map category
+	if jsonData.Category != "" {
+		var category pluginsv0alpha1.MetaJSONDataCategory
+		switch jsonData.Category {
+		case "tsdb":
+			category = pluginsv0alpha1.MetaJSONDataCategoryTsdb
+		case "logging":
+			category = pluginsv0alpha1.MetaJSONDataCategoryLogging
+		case "cloud":
+			category = pluginsv0alpha1.MetaJSONDataCategoryCloud
+		case "tracing":
+			category = pluginsv0alpha1.MetaJSONDataCategoryTracing
+		case "profiling":
+			category = pluginsv0alpha1.MetaJSONDataCategoryProfiling
+		case "sql":
+			category = pluginsv0alpha1.MetaJSONDataCategorySql
+		case "enterprise":
+			category = pluginsv0alpha1.MetaJSONDataCategoryEnterprise
+		case "iot":
+			category = pluginsv0alpha1.MetaJSONDataCategoryIot
+		case "other":
+			category = pluginsv0alpha1.MetaJSONDataCategoryOther
+		default:
+			category = pluginsv0alpha1.MetaJSONDataCategoryOther
+		}
+		meta.Category = &category
+	}
+
+	// Map state
+	if jsonData.State != "" {
+		var state pluginsv0alpha1.MetaJSONDataState
+		switch jsonData.State {
+		case plugins.ReleaseStateAlpha:
+			state = pluginsv0alpha1.MetaJSONDataStateAlpha
+		case plugins.ReleaseStateBeta:
+			state = pluginsv0alpha1.MetaJSONDataStateBeta
+		case "stable":
+			state = pluginsv0alpha1.MetaJSONDataStateStable
+		case "deprecated":
+			state = pluginsv0alpha1.MetaJSONDataStateDeprecated
+		}
+		if state != "" {
+			meta.State = &state
+		}
+	}
+
+	// Map executable
+	if jsonData.Executable != "" {
+		meta.Executable = &jsonData.Executable
+	}
+
+	// Map buildMode
+	if jsonData.BuildMode != "" {
+		meta.BuildMode = &jsonData.BuildMode
+	}
+
+	// Map QueryOptions
+	if len(jsonData.QueryOptions) > 0 {
+		queryOptions := &pluginsv0alpha1.MetaQueryOptions{}
+		if val, ok := jsonData.QueryOptions["maxDataPoints"]; ok {
+			queryOptions.MaxDataPoints = &val
+		}
+		if val, ok := jsonData.QueryOptions["minInterval"]; ok {
+			queryOptions.MinInterval = &val
+		}
+		if val, ok := jsonData.QueryOptions["cacheTimeout"]; ok {
+			queryOptions.CacheTimeout = &val
+		}
+		meta.QueryOptions = queryOptions
+	}
+
+	// Map Includes
+	if len(jsonData.Includes) > 0 {
+		meta.Includes = make([]pluginsv0alpha1.MetaInclude, 0, len(jsonData.Includes))
+		for _, include := range jsonData.Includes {
+			v0Include := pluginsv0alpha1.MetaInclude{}
+			if include.UID != "" {
+				v0Include.Uid = &include.UID
+			}
+			if include.Type != "" {
+				var includeType pluginsv0alpha1.MetaIncludeType
+				switch include.Type {
+				case "dashboard":
+					includeType = pluginsv0alpha1.MetaIncludeTypeDashboard
+				case "page":
+					includeType = pluginsv0alpha1.MetaIncludeTypePage
+				case "panel":
+					includeType = pluginsv0alpha1.MetaIncludeTypePanel
+				case "datasource":
+					includeType = pluginsv0alpha1.MetaIncludeTypeDatasource
+				}
+				v0Include.Type = &includeType
+			}
+			if include.Name != "" {
+				v0Include.Name = &include.Name
+			}
+			if include.Component != "" {
+				v0Include.Component = &include.Component
+			}
+			if include.Role != "" {
+				var role pluginsv0alpha1.MetaIncludeRole
+				switch include.Role {
+				case identity.RoleAdmin:
+					role = pluginsv0alpha1.MetaIncludeRoleAdmin
+				case identity.RoleEditor:
+					role = pluginsv0alpha1.MetaIncludeRoleEditor
+				case identity.RoleViewer:
+					role = pluginsv0alpha1.MetaIncludeRoleViewer
+				case identity.RoleNone:
+					role = pluginsv0alpha1.MetaIncludeRoleNone
+				}
+				v0Include.Role = &role
+			}
+			if include.Action != "" {
+				v0Include.Action = &include.Action
+			}
+			if include.Path != "" {
+				v0Include.Path = &include.Path
+			}
+			if include.AddToNav {
+				v0Include.AddToNav = &include.AddToNav
+			}
+			if include.DefaultNav {
+				v0Include.DefaultNav = &include.DefaultNav
+			}
+			if include.Icon != "" {
+				v0Include.Icon = &include.Icon
+			}
+			meta.Includes = append(meta.Includes, v0Include)
+		}
+	}
+
+	// Map Routes
+	if len(jsonData.Routes) > 0 {
+		meta.Routes = make([]pluginsv0alpha1.MetaRoute, 0, len(jsonData.Routes))
+		for _, route := range jsonData.Routes {
+			v0Route := pluginsv0alpha1.MetaRoute{}
+			if route.Path != "" {
+				v0Route.Path = &route.Path
+			}
+			if route.Method != "" {
+				v0Route.Method = &route.Method
+			}
+			if route.URL != "" {
+				v0Route.Url = &route.URL
+			}
+			if route.ReqRole != "" {
+				reqRole := string(route.ReqRole)
+				v0Route.ReqRole = &reqRole
+			}
+			if route.ReqAction != "" {
+				v0Route.ReqAction = &route.ReqAction
+			}
+			if len(route.Headers) > 0 {
+				headers := make([]pluginsv0alpha1.MetaV0alpha1RouteHeaders, 0, len(route.Headers))
+				for _, header := range route.Headers {
+					headers = append(headers, pluginsv0alpha1.MetaV0alpha1RouteHeaders{
+						Name:    header.Name,
+						Content: header.Content,
+					})
+				}
+				v0Route.Headers = headers
+			}
+			if len(route.URLParams) > 0 {
+				v0Route.UrlParams = make([]pluginsv0alpha1.MetaV0alpha1RouteUrlParams, 0, len(route.URLParams))
+				for _, param := range route.URLParams {
+					v0Param := pluginsv0alpha1.MetaV0alpha1RouteUrlParams{}
+					if param.Name != "" {
+						v0Param.Name = &param.Name
+					}
+					if param.Content != "" {
+						v0Param.Content = &param.Content
+					}
+					v0Route.UrlParams = append(v0Route.UrlParams, v0Param)
+				}
+			}
+			if route.TokenAuth != nil {
+				v0Route.TokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteTokenAuth{}
+				if route.TokenAuth.Url != "" {
+					v0Route.TokenAuth.Url = &route.TokenAuth.Url
+				}
+				if len(route.TokenAuth.Scopes) > 0 {
+					v0Route.TokenAuth.Scopes = route.TokenAuth.Scopes
+				}
+				if len(route.TokenAuth.Params) > 0 {
+					params := &pluginsv0alpha1.MetaV0alpha1RouteTokenAuthParams{}
+					if grantType, ok := route.TokenAuth.Params["grant_type"]; ok {
+						params.GrantType = &grantType
+					}
+					if clientId, ok := route.TokenAuth.Params["client_id"]; ok {
+						params.ClientId = &clientId
+					}
+					if clientSecret, ok := route.TokenAuth.Params["client_secret"]; ok {
+						params.ClientSecret = &clientSecret
+					}
+					if resource, ok := route.TokenAuth.Params["resource"]; ok {
+						params.Resource = &resource
+					}
+					v0Route.TokenAuth.Params = params
+				}
+			}
+			if route.JwtTokenAuth != nil {
+				v0Route.JwtTokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteJwtTokenAuth{}
+				if route.JwtTokenAuth.Url != "" {
+					v0Route.JwtTokenAuth.Url = &route.JwtTokenAuth.Url
+				}
+				if len(route.JwtTokenAuth.Scopes) > 0 {
+					v0Route.JwtTokenAuth.Scopes = route.JwtTokenAuth.Scopes
+				}
+				if len(route.JwtTokenAuth.Params) > 0 {
+					params := &pluginsv0alpha1.MetaV0alpha1RouteJwtTokenAuthParams{}
+					if tokenUri, ok := route.JwtTokenAuth.Params["token_uri"]; ok {
+						params.TokenUri = &tokenUri
+					}
+					if clientEmail, ok := route.JwtTokenAuth.Params["client_email"]; ok {
+						params.ClientEmail = &clientEmail
+					}
+					if privateKey, ok := route.JwtTokenAuth.Params["private_key"]; ok {
+						params.PrivateKey = &privateKey
+					}
+					v0Route.JwtTokenAuth.Params = params
+				}
+			}
+			if len(route.Body) > 0 {
+				var bodyMap map[string]interface{}
+				if err := json.Unmarshal(route.Body, &bodyMap); err == nil {
+					v0Route.Body = bodyMap
+				}
+			}
+			meta.Routes = append(meta.Routes, v0Route)
+		}
+	}
+
+	// Map Extensions
+	if len(jsonData.Extensions.AddedLinks) > 0 || len(jsonData.Extensions.AddedComponents) > 0 ||
+		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 ||
+		len(jsonData.Extensions.AddedFunctions) > 0 {
+		extensions := &pluginsv0alpha1.MetaExtensions{}
+
+		if len(jsonData.Extensions.AddedLinks) > 0 {
+			extensions.AddedLinks = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks, 0, len(jsonData.Extensions.AddedLinks))
+			for _, link := range jsonData.Extensions.AddedLinks {
+				v0Link := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks{
+					Targets: link.Targets,
+					Title:   link.Title,
+				}
+				if link.Description != "" {
+					v0Link.Description = &link.Description
+				}
+				extensions.AddedLinks = append(extensions.AddedLinks, v0Link)
+			}
+		}
+
+		if len(jsonData.Extensions.AddedComponents) > 0 {
+			extensions.AddedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedComponents, 0, len(jsonData.Extensions.AddedComponents))
+			for _, comp := range jsonData.Extensions.AddedComponents {
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedComponents{
+					Targets: comp.Targets,
+					Title:   comp.Title,
+				}
+				if comp.Description != "" {
+					v0Comp.Description = &comp.Description
+				}
+				extensions.AddedComponents = append(extensions.AddedComponents, v0Comp)
+			}
+		}
+
+		if len(jsonData.Extensions.AddedFunctions) > 0 {
+			extensions.AddedFunctions = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedFunctions, 0, len(jsonData.Extensions.AddedFunctions))
+			for _, comp := range jsonData.Extensions.AddedFunctions {
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedFunctions{
+					Targets: comp.Targets,
+					Title:   comp.Title,
+				}
+				if comp.Description != "" {
+					v0Comp.Description = &comp.Description
+				}
+				extensions.AddedFunctions = append(extensions.AddedFunctions, v0Comp)
+			}
+		}
+
+		if len(jsonData.Extensions.ExposedComponents) > 0 {
+			extensions.ExposedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents, 0, len(jsonData.Extensions.ExposedComponents))
+			for _, comp := range jsonData.Extensions.ExposedComponents {
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents{
+					Id: comp.Id,
+				}
+				if comp.Title != "" {
+					v0Comp.Title = &comp.Title
+				}
+				if comp.Description != "" {
+					v0Comp.Description = &comp.Description
+				}
+				extensions.ExposedComponents = append(extensions.ExposedComponents, v0Comp)
+			}
+		}
+
+		if len(jsonData.Extensions.ExtensionPoints) > 0 {
+			extensions.ExtensionPoints = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints, 0, len(jsonData.Extensions.ExtensionPoints))
+			for _, point := range jsonData.Extensions.ExtensionPoints {
+				v0Point := pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints{
+					Id: point.Id,
+				}
+				if point.Title != "" {
+					v0Point.Title = &point.Title
+				}
+				if point.Description != "" {
+					v0Point.Description = &point.Description
+				}
+				extensions.ExtensionPoints = append(extensions.ExtensionPoints, v0Point)
+			}
+		}
+
+		meta.Extensions = extensions
+	}
+
+	// Map Roles
+	if len(jsonData.Roles) > 0 {
+		meta.Roles = make([]pluginsv0alpha1.MetaRole, 0, len(jsonData.Roles))
+		for _, role := range jsonData.Roles {
+			v0Role := pluginsv0alpha1.MetaRole{
+				Grants: role.Grants,
+			}
+			if role.Role.Name != "" || role.Role.Description != "" || len(role.Role.Permissions) > 0 {
+				v0RoleRole := &pluginsv0alpha1.MetaV0alpha1RoleRole{}
+				if role.Role.Name != "" {
+					v0RoleRole.Name = &role.Role.Name
+				}
+				if role.Role.Description != "" {
+					v0RoleRole.Description = &role.Role.Description
+				}
+				if len(role.Role.Permissions) > 0 {
+					v0RoleRole.Permissions = make([]pluginsv0alpha1.MetaV0alpha1RoleRolePermissions, 0, len(role.Role.Permissions))
+					for _, perm := range role.Role.Permissions {
+						v0Perm := pluginsv0alpha1.MetaV0alpha1RoleRolePermissions{}
+						if perm.Action != "" {
+							v0Perm.Action = &perm.Action
+						}
+						if perm.Scope != "" {
+							v0Perm.Scope = &perm.Scope
+						}
+						v0RoleRole.Permissions = append(v0RoleRole.Permissions, v0Perm)
+					}
+				}
+				v0Role.Role = v0RoleRole
+			}
+			meta.Roles = append(meta.Roles, v0Role)
+		}
+	}
+
+	// Map IAM
+	if jsonData.IAM != nil && len(jsonData.IAM.Permissions) > 0 {
+		iam := &pluginsv0alpha1.MetaIAM{
+			Permissions: make([]pluginsv0alpha1.MetaV0alpha1IAMPermissions, 0, len(jsonData.IAM.Permissions)),
+		}
+		for _, perm := range jsonData.IAM.Permissions {
+			v0Perm := pluginsv0alpha1.MetaV0alpha1IAMPermissions{}
+			if perm.Action != "" {
+				v0Perm.Action = &perm.Action
+			}
+			if perm.Scope != "" {
+				v0Perm.Scope = &perm.Scope
+			}
+			iam.Permissions = append(iam.Permissions, v0Perm)
+		}
+		meta.Iam = iam
+	}
+
+	// Map Languages
+	if len(jsonData.Languages) > 0 {
+		meta.Languages = jsonData.Languages
+	}
+
+	return meta
+}
+
+// pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.
+// This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
+// loadingStrategy and moduleHash are optional calculated values that can be provided.
+func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) pluginsv0alpha1.MetaSpec {
+	metaSpec := pluginsv0alpha1.MetaSpec{
+		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
+	}
+
+	// Set Class - default to External if not specified
+	var c pluginsv0alpha1.MetaSpecClass
+	if plugin.Class == plugins.ClassCore {
+		c = pluginsv0alpha1.MetaSpecClassCore
+	} else {
+		c = pluginsv0alpha1.MetaSpecClassExternal
+	}
+	metaSpec.Class = c
+
+	if plugin.Module != "" {
+		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
+			Path: plugin.Module,
+		}
+		if moduleHash != "" {
+			module.Hash = &moduleHash
+		}
+		if plugin.LoadingStrategy != "" {
+			var ls pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy
+			switch plugin.LoadingStrategy {
+			case plugins.LoadingStrategyFetch:
+				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch
+			case plugins.LoadingStrategyScript:
+				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+			}
+			module.LoadingStrategy = ls
+		}
+		metaSpec.Module = module
+	}
+
+	if plugin.BaseURL != "" {
+		metaSpec.BaseURL = plugin.BaseURL
+	}
+
+	if plugin.Signature != "" {
+		signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
+			Status: convertSignatureStatus(plugin.Signature),
+		}
+
+		if plugin.SignatureType != "" {
+			sigType := convertSignatureType(plugin.SignatureType)
+			signature.Type = &sigType
+		}
+
+		if plugin.SignatureOrg != "" {
+			signature.Org = &plugin.SignatureOrg
+		}
+
+		metaSpec.Signature = signature
+	}
+
+	if len(plugin.Children) > 0 {
+		metaSpec.Children = plugin.Children
+	}
+
+	if len(plugin.Translations) > 0 {
+		metaSpec.Translations = plugin.Translations
+	}
+
+	return metaSpec
+}
+
+// convertSignatureStatus converts plugins.SignatureStatus to pluginsv0alpha1.MetaV0alpha1SpecSignatureStatus.
+func convertSignatureStatus(status plugins.SignatureStatus) pluginsv0alpha1.MetaV0alpha1SpecSignatureStatus {
+	switch status {
+	case plugins.SignatureStatusInternal:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusInternal
+	case plugins.SignatureStatusValid:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid
+	case plugins.SignatureStatusInvalid:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusInvalid
+	case plugins.SignatureStatusModified:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusModified
+	case plugins.SignatureStatusUnsigned:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusUnsigned
+	default:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusUnsigned
+	}
+}
+
+// convertSignatureType converts plugins.SignatureType to pluginsv0alpha1.MetaV0alpha1SpecSignatureType.
+func convertSignatureType(sigType plugins.SignatureType) pluginsv0alpha1.MetaV0alpha1SpecSignatureType {
+	switch sigType {
+	case plugins.SignatureTypeGrafana:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
+	case plugins.SignatureTypeCommercial:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial
+	case plugins.SignatureTypeCommunity:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity
+	case plugins.SignatureTypePrivate:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate
+	case plugins.SignatureTypePrivateGlob:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob
+	default:
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
+	}
+}
+
+// pluginToMetaSpec converts a fully loaded *plugins.Plugin to a pluginsv0alpha1.MetaSpec.
+func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
+	metaSpec := pluginsv0alpha1.MetaSpec{
+		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
+	}
+
+	// Set Class - default to External if not specified
+	var c pluginsv0alpha1.MetaSpecClass
+	if plugin.Class == plugins.ClassCore {
+		c = pluginsv0alpha1.MetaSpecClassCore
+	} else {
+		c = pluginsv0alpha1.MetaSpecClassExternal
+	}
+	metaSpec.Class = c
+
+	// Set module information
+	if plugin.Module != "" {
+		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
+			Path: plugin.Module,
+		}
+
+		loadingStrategy := pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+		module.LoadingStrategy = loadingStrategy
+
+		metaSpec.Module = module
+	}
+
+	// Set BaseURL
+	if plugin.BaseURL != "" {
+		metaSpec.BaseURL = plugin.BaseURL
+	}
+
+	// Set signature information
+	signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		Status: convertSignatureStatus(plugin.Signature),
+	}
+
+	if plugin.SignatureType != "" {
+		sigType := convertSignatureType(plugin.SignatureType)
+		signature.Type = &sigType
+	}
+
+	if plugin.SignatureOrg != "" {
+		signature.Org = &plugin.SignatureOrg
+	}
+
+	metaSpec.Signature = signature
+
+	if len(plugin.Children) > 0 {
+		children := make([]string, 0, len(plugin.Children))
+		for _, child := range plugin.Children {
+			children = append(children, child.ID)
+		}
+		metaSpec.Children = children
+	}
+
+	if len(plugin.Translations) > 0 {
+		metaSpec.Translations = plugin.Translations
+	}
+
+	return metaSpec
+}
+
+// grafanaComPluginVersionMeta represents the response from grafana.com API
+// GET /api/plugins/{pluginId}/versions/{version}
+type grafanaComPluginVersionMeta struct {
+	PluginSlug          string                         `json:"pluginSlug"`
+	Version             string                         `json:"version"`
+	JSON                pluginsv0alpha1.MetaJSONData   `json:"json"`
+	SignatureType       string                         `json:"signatureType"`
+	SignedByOrg         string                         `json:"signedByOrg"`
+	SignedByOrgName     string                         `json:"signedByOrgName"`
+	Manifest            grafanaComPluginManifest       `json:"manifest"`
+	AngularDetected     bool                           `json:"angularDetected"`
+	CDNURL              string                         `json:"cdnUrl"`
+	CreatePluginVersion string                         `json:"createPluginVersion"`
+	Children            []grafanaComChildPluginVersion `json:"children,omitempty"`
+}
+
+// grafanaComChildPluginVersion represents a child plugin in the parent's version response.
+type grafanaComChildPluginVersion struct {
+	ID              int                          `json:"id"`
+	PluginID        int                          `json:"pluginId"`
+	PluginVersionID int                          `json:"pluginVersionId"`
+	Path            string                       `json:"path"`
+	Slug            string                       `json:"slug"`
+	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
+}
+
+type grafanaComPluginManifest struct {
+	Plugin          string                `json:"plugin"`
+	Version         string                `json:"version"`
+	KeyID           string                `json:"keyId"`
+	Time            int64                 `json:"time"`
+	Files           map[string]string     `json:"files"`
+	ManifestVersion string                `json:"manifestVersion"`
+	SignatureType   plugins.SignatureType `json:"signatureType"`
+	SignedByOrg     string                `json:"signedByOrg"`
+	SignedByOrgName string                `json:"signedByOrgName"`
+	RootURLs        []string              `json:"rootUrls"`
+}
+
+// grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
+// It inherits most information from the parent plugin.
+func grafanaComChildPluginVersionToMetaSpec(ctx context.Context, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
+	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
+	if err != nil {
+		logging.FromContext(ctx).Error("Error getting cdn URL for catalog child meta", "child", child.Slug, "parent", parent.PluginSlug, "err", err)
+	}
+
+	// Create a synthetic meta with both parent and child info
+	childMeta := grafanaComPluginVersionMeta{
+		PluginSlug:          child.Slug,
+		Version:             parent.Version,
+		JSON:                child.JSON,
+		SignatureType:       parent.SignatureType,
+		SignedByOrg:         parent.SignedByOrg,
+		SignedByOrgName:     parent.SignedByOrgName,
+		Manifest:            parent.Manifest,
+		AngularDetected:     parent.AngularDetected,
+		CDNURL:              cdnURL,
+		CreatePluginVersion: parent.CreatePluginVersion,
+	}
+	return grafanaComPluginVersionMetaToMetaSpec(ctx, childMeta, child.Path)
+}
+
+// grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
+func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) pluginsv0alpha1.MetaSpec {
+	metaSpec := pluginsv0alpha1.MetaSpec{
+		PluginJson: gcomMeta.JSON,
+		Class:      pluginsv0alpha1.MetaSpecClassExternal,
+	}
+
+	if gcomMeta.SignatureType != "" {
+		signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
+			Status: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
+		}
+
+		switch gcomMeta.SignatureType {
+		case "grafana":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
+			signature.Type = &sigType
+		case "commercial":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial
+			signature.Type = &sigType
+		case "community":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity
+			signature.Type = &sigType
+		case "private":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate
+			signature.Type = &sigType
+		case "private-glob":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob
+			signature.Type = &sigType
+		}
+
+		if gcomMeta.SignedByOrg != "" {
+			signature.Org = &gcomMeta.SignedByOrg
+		}
+
+		metaSpec.Signature = signature
+	}
+
+	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")
+	if err != nil {
+		logging.FromContext(ctx).Error("Error getting module.js URL for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version)
+	}
+
+	modulePath := path.Join(pluginRelBasePath, "module.js")
+	moduleHash, ok := gcomMeta.Manifest.Files[modulePath]
+	if !ok {
+		logging.FromContext(ctx).Error("Error getting module hash for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "path", pluginRelBasePath)
+	}
+
+	loadingStrategy := calculateLoadingStrategyFromGcomMeta(gcomMeta.CreatePluginVersion)
+	metaSpec.Module = pluginsv0alpha1.MetaV0alpha1SpecModule{
+		Path:            moduleURL,
+		Hash:            &moduleHash,
+		LoadingStrategy: loadingStrategy,
+	}
+	metaSpec.BaseURL = gcomMeta.CDNURL
+
+	children := make([]string, 0, len(gcomMeta.Children))
+	for _, c := range gcomMeta.Children {
+		children = append(children, c.Slug)
+	}
+	metaSpec.Children = children
+
+	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON)
+	if err != nil {
+		logging.FromContext(ctx).Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
+	}
+	metaSpec.Translations = translations
+
+	return metaSpec
+}
+
+func translationsFromManifest(cdnURL string, manifestFiles map[string]string, pluginRelBasePath string, jsonData pluginsv0alpha1.MetaJSONData) (map[string]string, error) {
+	translations := make(map[string]string)
+
+	if len(jsonData.Languages) == 0 {
+		return translations, nil
+	}
+
+	for _, language := range jsonData.Languages {
+		translationPath := path.Join(pluginRelBasePath, "locales", language, jsonData.Id+".json")
+		if _, exists := manifestFiles[translationPath]; exists {
+			translationURL, err := url.JoinPath(cdnURL, translationPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to build translation URL for language %s: %w", language, err)
+			}
+			translations[language] = translationURL
+		}
+	}
+
+	return translations, nil
+}
+
+func calculateLoadingStrategyFromGcomMeta(createPluginVersion string) pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy {
+	if pluginassets.ScriptLoadingCompatible(createPluginVersion) {
+		return pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+	}
+
+	return pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch
+}

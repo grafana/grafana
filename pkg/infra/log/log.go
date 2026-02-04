@@ -54,7 +54,8 @@ func init() {
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
-	initAppSDKLogger(logger)
+	// Use default Info level during package initialization before config is loaded
+	initAppSDKLogger(logger, slog.LevelInfo)
 
 	RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		pFromCtx := ctx.Value(logParamsContextKey{})
@@ -80,7 +81,7 @@ func newManager(logger gokitlog.Logger) *logManager {
 	}
 }
 
-func (lm *logManager) initialize(loggers []logWithFilters) {
+func (lm *logManager) initialize(loggers []logWithFilters, levelStr string) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -113,7 +114,7 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 		lm.loggersByName[name].Swap(&compositeLogger{loggers: ctxLoggers})
 	}
 
-	initAppSDKLogger(lm.ConcreteLogger)
+	initAppSDKLogger(lm.ConcreteLogger, stringToSlogLevel(levelStr))
 }
 
 func (lm *logManager) New(ctx ...any) *ConcreteLogger {
@@ -514,7 +515,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		configLoggers = append(configLoggers, handler)
 	}
 	if len(configLoggers) > 0 {
-		root.initialize(configLoggers)
+		root.initialize(configLoggers, defaultLevelName)
 	}
 
 	return nil
@@ -551,8 +552,22 @@ func SetupConsoleLogger(level string) error {
 	return nil
 }
 
-func initAppSDKLogger(gkl gokitlog.Logger) {
-	// We need to allow Debug logs here. go-kit/log does not support sharing the level we're using.
-	// TODO: Refactor such that we can pass in a level in a more appropriate manner.
-	logging.DefaultLogger = logging.NewSLogLogger(sloggokit.NewGoKitHandler(gkl, slog.LevelDebug))
+// stringToSlogLevel converts a log level string to slog.Level
+func stringToSlogLevel(levelStr string) slog.Level {
+	switch strings.ToLower(levelStr) {
+	case "trace", "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error", "critical":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
+
+func initAppSDKLogger(gkl gokitlog.Logger, level slog.Level) {
+	logging.DefaultLogger = logging.NewSLogLogger(sloggokit.NewGoKitHandler(gkl, level))
 }

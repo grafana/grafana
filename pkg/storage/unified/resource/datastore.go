@@ -2,35 +2,67 @@ package resource
 
 import (
 	"context"
+	"embed"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	gocache "github.com/patrickmn/go-cache"
 )
 
+// Templates setup for backward-compatibility queries
+var (
+	//go:embed data/*.sql
+	sqlTemplatesFS embed.FS
+
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
+)
+
+func mustTemplate(filename string) *template.Template {
+	if t := sqlTemplates.Lookup(filename); t != nil {
+		return t
+	}
+	panic(fmt.Sprintf("template file not found: %s", filename))
+}
+
 const (
-	dataSection = "unified/data"
+	dataSection = kvpkg.DataSection
 	// cache
 	groupResourcesCacheKey = "group-resources"
+	// batch operations
+	dataBatchSize = 50 // default batch size for BatchGet operations
 )
 
 // dataStore is a data store that uses a KV store to store data.
 type dataStore struct {
-	kv    KV
-	cache *gocache.Cache
+	kv            KV
+	cache         *gocache.Cache
+	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
 func newDataStore(kv KV) *dataStore {
-	return &dataStore{
+	ds := &dataStore{
 		kv:    kv,
 		cache: gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
 	}
+
+	if sqlkv, ok := kv.(*kvpkg.SqlKV); ok {
+		ds.legacyDialect = sqltemplate.DialectForDriver(sqlkv.DriverName)
+	}
+
+	return ds
 }
 
 type DataObj struct {
@@ -38,15 +70,8 @@ type DataObj struct {
 	Value io.ReadCloser
 }
 
-type DataKey struct {
-	Namespace       string
-	Group           string
-	Resource        string
-	Name            string
-	ResourceVersion int64
-	Action          DataAction
-	Folder          string
-}
+// TODO: pull DataKey from kv/sqlkv into here once we don't need sql/backend backwards compatibility
+type DataKey = kvpkg.DataKey
 
 // GroupResource represents a unique group/resource combination
 type GroupResource struct {
@@ -54,65 +79,47 @@ type GroupResource struct {
 	Resource string
 }
 
-var (
-	// validNameRegex validates that a name contains only lowercase alphanumeric characters, '-' or '.'
-	// and starts and ends with an alphanumeric character
-	validNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
-)
-
-func (k DataKey) String() string {
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
-}
-
-func (k DataKey) Equals(other DataKey) bool {
-	return k.Group == other.Group && k.Resource == other.Resource && k.Namespace == other.Namespace && k.Name == other.Name && k.ResourceVersion == other.ResourceVersion && k.Action == other.Action && k.Folder == other.Folder
-}
-
-func (k DataKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
+// TODO transform this into Validate() method on DataKey once we pull that struct back here
+func validateDataKey(dataKey DataKey) error {
+	if dataKey.Namespace == "" {
+		return NewValidationError("namespace", dataKey.Namespace, ErrNamespaceRequired)
 	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
+	if dataKey.ResourceVersion <= 0 {
+		return NewValidationError("resourceVersion", fmt.Sprintf("%d", dataKey.ResourceVersion), ErrResourceVersionInvalid)
 	}
-	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
-	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
-	}
-	if k.ResourceVersion <= 0 {
-		return fmt.Errorf("resource version must be positive")
-	}
-	if k.Action == "" {
-		return fmt.Errorf("action is required")
+	if dataKey.Action == "" {
+		return NewValidationError("action", string(dataKey.Action), ErrActionRequired)
 	}
 
 	// Validate naming conventions for all required fields
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if dataKey.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(dataKey.Namespace); err != nil {
+			return NewValidationError("namespace", dataKey.Namespace, err[0])
+		}
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(dataKey.Group); err != nil {
+		return NewValidationError("group", dataKey.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(dataKey.Resource); err != nil {
+		return NewValidationError("resource", dataKey.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(dataKey.Name); err != nil {
+		return NewValidationError("name", dataKey.Name, err[0])
 	}
 
 	// Validate folder field if provided (optional field)
-	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	if dataKey.Folder != "" {
+		if err := validation.IsValidGrafanaName(dataKey.Folder); err != nil {
+			return NewValidationError("folder", dataKey.Folder, err[0])
+		}
 	}
 
 	// Validate action is one of the valid values
-	switch k.Action {
+	switch dataKey.Action {
 	case DataActionCreated, DataActionUpdated, DataActionDeleted:
 		return nil
 	default:
-		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", k.Action)
+		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", dataKey.Action)
 	}
 }
 
@@ -124,27 +131,21 @@ type ListRequestKey struct {
 }
 
 func (k ListRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" && k.Name != "" {
-		return fmt.Errorf("name must be empty when namespace is empty")
+		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
 	}
-	if k.Namespace != "" && !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
-	}
+
 	return nil
 }
 
@@ -168,31 +169,22 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
+		return errors.New(ErrNamespaceRequired)
 	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
-
-	// Validate naming conventions
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
 
 	return nil
@@ -203,12 +195,10 @@ func (k GetRequestKey) Prefix() string {
 	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
-type DataAction string
-
 const (
-	DataActionCreated DataAction = "created"
-	DataActionUpdated DataAction = "updated"
-	DataActionDeleted DataAction = "deleted"
+	DataActionCreated = kvpkg.DataActionCreated
+	DataActionUpdated = kvpkg.DataActionUpdated
+	DataActionDeleted = kvpkg.DataActionDeleted
 )
 
 // Keys returns all keys for a given key by iterating through the KV store
@@ -264,6 +254,49 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	return DataKey{}, ErrNotFound
 }
 
+// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
+// in a single atomic operation. Returns (latest, predecessor, error).
+// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
+func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	var latest, predecessor DataKey
+	count := 0
+	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    2, // Get latest and predecessor
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		parsedKey, err := ParseKey(k)
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		switch count {
+		case 0:
+			latest = parsedKey
+		case 1:
+			predecessor = parsedKey
+		}
+		count++
+	}
+	if count == 0 {
+		return DataKey{}, DataKey{}, ErrNotFound
+	}
+	if count == 1 {
+		return latest, DataKey{}, nil
+	}
+	return latest, predecessor, nil
+}
+
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
 func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {
@@ -277,13 +310,9 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
 
-	if rv == 0 {
-		rv = math.MaxInt64
-	}
-
 	listKey := ListRequestKey(key)
 
-	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
+	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv})
 	for dataKey, err := range iter {
 		if err != nil {
 			return DataKey{}, err
@@ -293,32 +322,77 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 	return DataKey{}, ErrNotFound
 }
 
+type ListRequestOptions struct {
+	// Key defines the range to query (Group/Resource/Namespace/Name prefix).
+	Key ListRequestKey
+	// ContinueNamespace is the namespace to continue from.
+	// Only used when Key.Namespace is empty (cross-namespace query).
+	ContinueNamespace string
+	// ContinueName is the name to continue from.
+	ContinueName    string
+	ResourceVersion int64
+}
+
+// Validate checks that the ListRequestOptions are valid.
+func (o ListRequestOptions) Validate() error {
+	if err := o.Key.Validate(); err != nil {
+		return fmt.Errorf("invalid list request key: %w", err)
+	}
+	// ContinueNamespace is only valid for cross-namespace queries
+	if o.ContinueNamespace != "" && o.Key.Namespace != "" {
+		return fmt.Errorf("continue namespace %q not allowed when request namespace is set to %q", o.ContinueNamespace, o.Key.Namespace)
+	}
+	return nil
+}
+
 // ListLatestResourceKeys returns an iterator over the data keys for the latest versions of resources.
 // Only returns keys for resources that are not deleted.
 func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
-	return d.ListResourceKeysAtRevision(ctx, key, 0)
+	return d.ListResourceKeysAtRevision(ctx, ListRequestOptions{
+		Key: key,
+	})
 }
 
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
-func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[DataKey, error] {
-	if err := key.Validate(); err != nil {
+func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
+	if err := options.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
-			yield(DataKey{}, fmt.Errorf("invalid list request key: %w", err))
+			yield(DataKey{}, err)
 		}
+	}
+
+	rv := options.ResourceVersion
+	prefix := options.Key.Prefix()
+
+	startKey := prefix
+	if options.ContinueName != "" {
+		// Build the start key from the continue position
+		continueKey := ListRequestKey{
+			Group:     options.Key.Group,
+			Resource:  options.Key.Resource,
+			Namespace: options.Key.Namespace,
+			Name:      options.ContinueName,
+		}
+		// For cross-namespace queries, use the continue namespace
+		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
+			continueKey.Namespace = options.ContinueNamespace
+		}
+		startKey = continueKey.Prefix()
+	}
+
+	listOptions := ListOptions{
+		StartKey: startKey,
+		EndKey:   PrefixRangeEnd(prefix),
+		Sort:     SortOrderAsc,
 	}
 
 	if rv == 0 {
 		rv = math.MaxInt64
 	}
 
-	prefix := key.Prefix()
 	// List all keys in the prefix.
-	iter := d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Sort:     SortOrderAsc,
-	})
+	iter := d.kv.Keys(ctx, dataSection, listOptions)
 
 	return func(yield func(DataKey, error) bool) {
 		var candidateKey *DataKey // The current candidate key we are iterating over
@@ -382,19 +456,82 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, key ListRequ
 }
 
 func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error) {
-	if err := key.Validate(); err != nil {
+	if err := validateDataKey(key); err != nil {
 		return nil, fmt.Errorf("invalid data key: %w", err)
 	}
 
 	return d.kv.Get(ctx, dataSection, key.String())
 }
 
+// BatchGet retrieves multiple data objects in batches.
+// It returns an iterator that yields DataObj results for the given keys.
+// Keys are processed in batches (default 50).
+// Non-existent entries will not appear in the result.
+func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		// Validate all keys first
+		for _, key := range keys {
+			if err := validateDataKey(key); err != nil {
+				yield(DataObj{}, fmt.Errorf("invalid data key %s: %w", key.String(), err))
+				return
+			}
+		}
+
+		// Process keys in batches
+		for i := 0; i < len(keys); i += dataBatchSize {
+			end := i + dataBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batch := keys[i:end]
+
+			// Convert DataKeys to string keys and create a mapping
+			stringKeys := make([]string, len(batch))
+			keyMap := make(map[string]DataKey) // map string key back to DataKey
+			for j, key := range batch {
+				strKey := key.String()
+				stringKeys[j] = strKey
+				keyMap[strKey] = key
+			}
+
+			// Call kv.BatchGet for this batch
+			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
+				if err != nil {
+					yield(DataObj{}, err)
+					return
+				}
+
+				// Look up the original DataKey
+				dataKey, ok := keyMap[kv.Key]
+				if !ok {
+					yield(DataObj{}, fmt.Errorf("unexpected key in batch response: %s", kv.Key))
+					return
+				}
+
+				// Yield the DataObj
+				if !yield(DataObj{
+					Key:   dataKey,
+					Value: kv.Value,
+				}, nil) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {
-	if err := key.Validate(); err != nil {
+	if err := validateDataKey(key); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
-	writer, err := d.kv.Save(ctx, dataSection, key.String())
+	var writer io.WriteCloser
+	var err error
+	if key.GUID != "" {
+		writer, err = d.kv.Save(ctx, dataSection, key.StringWithGUID())
+	} else {
+		writer, err = d.kv.Save(ctx, dataSection, key.String())
+	}
 	if err != nil {
 		return err
 	}
@@ -408,11 +545,32 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
-	if err := key.Validate(); err != nil {
+	if err := validateDataKey(key); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
 	return d.kv.Delete(ctx, dataSection, key.String())
+}
+
+func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
+	for len(keys) > 0 {
+		batch := keys
+		if len(batch) > dataBatchSize {
+			batch = batch[:dataBatchSize]
+		}
+
+		keys = keys[len(batch):]
+		stringKeys := make([]string, len(batch))
+		for _, dataKey := range batch {
+			stringKeys = append(stringKeys, dataKey.String())
+		}
+
+		if err := n.kv.BatchDelete(ctx, dataSection, stringKeys); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ParseKey parses a string key into a DataKey struct
@@ -435,19 +593,9 @@ func ParseKey(key string) (DataKey, error) {
 		Namespace:       parts[2],
 		Name:            parts[3],
 		ResourceVersion: rv,
-		Action:          DataAction(rvActionFolderParts[1]),
+		Action:          kvpkg.DataAction(rvActionFolderParts[1]),
 		Folder:          rvActionFolderParts[2],
 	}, nil
-}
-
-// SameResource checks if this key represents the same resource as another key.
-// It compares the identifying fields: Group, Resource, Namespace, and Name.
-// ResourceVersion, Action, and Folder are ignored as they don't identify the resource itself.
-func (k DataKey) SameResource(other DataKey) bool {
-	return k.Group == other.Group &&
-		k.Resource == other.Resource &&
-		k.Namespace == other.Namespace &&
-		k.Name == other.Name
 }
 
 // GetResourceStats returns resource stats within the data store by first discovering
@@ -629,4 +777,150 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 	d.cache.Set(groupResourcesCacheKey, results, gocache.DefaultExpiration)
 
 	return results, nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+var (
+	sqlKVUpdateLegacyResourceHistory = mustTemplate("sqlkv_update_legacy_resource_history.sql")
+	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
+	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
+	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
+)
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacySaveRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	Group      string
+	Resource   string
+	Namespace  string
+	Name       string
+	Action     int64
+	Folder     string
+	PreviousRV int64
+}
+
+func (req sqlKVLegacySaveRequest) Validate() error {
+	return nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacyUpdateHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	PreviousRV int64
+	Generation int64
+}
+
+func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
+	return nil
+}
+
+// applyBackwardsCompatibleChanges updates the `resource` and `resource_history` tables
+// to make sure the sqlkv implementation is backwards-compatible with the existing sql backend.
+// Specifically, it will update the `resource_history` table to include the previous resource version
+// and generation, which come from the `WriteEvent`, and also make the corresponding change on the
+// `resource` table, no longer used in the storage backend.
+//
+// TODO: remove when backwards compatibility is no longer needed.
+func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.Tx, event WriteEvent, key DataKey) error {
+	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
+	if !isSQLKV {
+		return nil
+	}
+
+	generation := event.Object.GetGeneration()
+	if key.Action == DataActionDeleted {
+		generation = 0
+	}
+
+	// In compatibility mode, the previous RV, when available, is saved as a microsecond
+	// timestamp, as is done in the SQL backend.
+	previousRV := event.PreviousRV
+	if event.PreviousRV > 0 && isSnowflake(event.PreviousRV) {
+		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
+	}
+
+	// fill in remaining required fields for backwards compatibility: previous_resource_version and generation
+	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		GUID:        key.GUID,
+		PreviousRV:  previousRV,
+		Generation:  generation,
+	})
+
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
+	}
+
+	var action int64
+	switch key.Action {
+	case DataActionCreated:
+		action = 1
+	case DataActionUpdated:
+		action = 2
+	case DataActionDeleted:
+		action = 3
+	}
+
+	switch key.Action {
+	case DataActionCreated:
+		_, err := dbutil.Exec(ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			GUID:        key.GUID,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+			Action:      action,
+			Folder:      key.Folder,
+			PreviousRV:  previousRV,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
+		}
+	case DataActionUpdated:
+		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			GUID:        key.GUID,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+			Action:      action,
+			Folder:      key.Folder,
+			PreviousRV:  previousRV,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
+		}
+	case DataActionDeleted:
+		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
+// We try to interpret the number as a microsecond timestamp first. If it represents a time in the past,
+// it is considered a microsecond timestamp. Snowflake IDs are much larger integers and would lead
+// to dates in the future if interpreted as a microsecond timestamp.
+func isSnowflake(rv int64) bool {
+	ts := time.UnixMicro(rv)
+	oneHourFromNow := time.Now().Add(time.Hour)
+	isMicroSecRV := ts.Before(oneHourFromNow)
+
+	return !isMicroSecRV
 }

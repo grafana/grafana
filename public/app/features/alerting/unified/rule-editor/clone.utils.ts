@@ -4,6 +4,7 @@ import { RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { generateCopiedName } from '../utils/duplicate';
+import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';
 import { getRuleName, rulerRuleType } from '../utils/rules';
 
 export function changeRuleName(rule: RulerRuleDTO, newName: string) {
@@ -34,6 +35,9 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
       ruleClone.group = { name: '', rules: ruleClone.group.rules };
     }
   }
+
+  // Remove the origin label when cloning plugin-provided rules
+  delete ruleClone.rule.labels?.[GRAFANA_ORIGIN_LABEL];
 
   return ruleClone;
 }

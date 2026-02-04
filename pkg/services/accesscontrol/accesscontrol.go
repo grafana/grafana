@@ -244,10 +244,67 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	))
 	defer span.End()
 
-	m := make(map[string][]string)
-	for i := range permissions {
-		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+	// Optimized for both memory efficiency and speed.
+	// Uses index caching to avoid map lookups in hot path, plus a single
+	// contiguous backing array to reduce allocations and GC pressure.
+	// Pre-sized for ~256 actions (typical max is ~500, uint16 supports up to 65535).
+
+	if len(permissions) == 0 {
+		return make(map[string][]string)
 	}
+
+	// First pass: assign indices and cache them to avoid repeated map lookups
+	// Using uint16 for indices (2 bytes vs 8) - supports up to 65535 unique actions
+	actionIndex := make(map[string]uint16, 256)
+	indices := make([]uint16, len(permissions))
+
+	for i := range permissions {
+		action := permissions[i].Action
+		if idx, ok := actionIndex[action]; ok {
+			indices[i] = idx
+		} else {
+			idx := uint16(len(actionIndex))
+			actionIndex[action] = idx
+			indices[i] = idx
+		}
+	}
+
+	numActions := len(actionIndex)
+
+	// Count scopes per action using cached indices (fast slice access, no map lookups)
+	actionCounts := make([]int, numActions)
+	for _, idx := range indices {
+		actionCounts[idx]++
+	}
+
+	// Single contiguous backing array - much more memory-efficient than many small allocations
+	backingArray := make([]string, len(permissions))
+
+	// Create slices pointing into the backing array with exact capacities
+	scopes := make([][]string, numActions)
+	offset := 0
+	for i, count := range actionCounts {
+		scopes[i] = backingArray[offset : offset : offset+count]
+		offset += count
+	}
+
+	// Second pass: append scopes using cached indices (no map lookups in hot path!)
+	for i := range permissions {
+		idx := indices[i]
+		scopes[idx] = append(scopes[idx], permissions[i].Scope)
+	}
+
+	// Build result map
+	m := make(map[string][]string, numActions)
+	for action, idx := range actionIndex {
+		m[action] = scopes[idx]
+	}
+
+	span.SetAttributes(
+		attribute.Int("unique_actions", numActions),
+		attribute.Float64("avg_scopes_per_action", float64(len(permissions))/float64(numActions)),
+	)
+
 	return m
 }
 

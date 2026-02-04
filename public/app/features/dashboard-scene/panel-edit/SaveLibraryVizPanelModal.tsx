@@ -20,8 +20,8 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(libraryPanel.state.uid);
-    if (searchHits.length > 0) {
-      return searchHits.map((dash) => dash.title);
+    if (searchHits && searchHits.length > 0) {
+      return searchHits.map((dash) => dash.name);
     }
 
     return [];
@@ -50,7 +50,7 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
+    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           <Trans

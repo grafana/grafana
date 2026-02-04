@@ -1,11 +1,24 @@
-import { logMeasurement, reportInteraction } from '@grafana/runtime';
-import { SceneInteractionProfileEvent, SceneRenderProfiler } from '@grafana/scenes';
+import { logMeasurement, reportInteraction, config } from '@grafana/runtime';
+import { performanceUtils, type SceneObject } from '@grafana/scenes';
 
-let dashboardSceneProfiler: SceneRenderProfiler | undefined;
+interface SceneInteractionProfileEvent {
+  origin: string;
+  duration: number;
+  networkDuration: number;
+  startTs: number;
+  endTs: number;
+}
+
+let dashboardSceneProfiler: performanceUtils.SceneRenderProfiler | undefined;
 
 export function getDashboardSceneProfiler() {
   if (!dashboardSceneProfiler) {
-    dashboardSceneProfiler = new SceneRenderProfiler();
+    // Create panel profiling configuration
+    const panelProfilingConfig = {
+      watchStateKey: 'body', // Watch dashboard body changes for panel structure changes
+    };
+
+    dashboardSceneProfiler = new performanceUtils.SceneRenderProfiler(panelProfilingConfig);
   }
   return dashboardSceneProfiler;
 }
@@ -30,28 +43,31 @@ export function getDashboardComponentInteractionCallback(uid: string, title: str
   };
 }
 
-export function getDashboardInteractionCallback(uid: string, title: string) {
-  return (e: SceneInteractionProfileEvent) => {
-    const payload = {
-      duration: e.duration,
-      networkDuration: e.networkDuration,
-      processingTime: e.duration - e.networkDuration,
-      startTs: e.startTs,
-      endTs: e.endTs,
-      totalJSHeapSize: e.totalJSHeapSize,
-      usedJSHeapSize: e.usedJSHeapSize,
-      jsHeapSizeLimit: e.jsHeapSizeLimit,
-      longFramesCount: e.longFramesCount,
-      longFramesTotalTime: e.longFramesTotalTime,
-      timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
-    };
+// Enhanced function to create profiler with dashboard metadata
+export function getDashboardSceneProfilerWithMetadata(uid: string, title: string) {
+  const profiler = getDashboardSceneProfiler();
 
-    reportInteraction('dashboard_render', {
-      interactionType: e.origin,
-      uid,
-      ...payload,
-    });
+  // Set metadata for observer notifications
+  profiler.setMetadata({
+    dashboardUID: uid,
+    dashboardTitle: title,
+  });
 
-    logMeasurement(`dashboard_render`, payload, { interactionType: e.origin, dashboard: uid, title: title });
-  };
+  // Note: Analytics aggregator initialization and observer registration
+  // is now handled by DashboardAnalyticsInitializerBehavior
+
+  return profiler;
+}
+
+// Function to enable panel profiling for a specific dashboard
+export function enablePanelProfilingForDashboard(dashboard: SceneObject, uid: string) {
+  // Check if panel profiling should be enabled for this dashboard
+  const shouldEnablePanelProfiling =
+    config.dashboardPerformanceMetrics.findIndex((configUid) => configUid === '*' || configUid === uid) !== -1;
+
+  if (shouldEnablePanelProfiling) {
+    const profiler = getDashboardSceneProfiler();
+    // Attach panel profiling to this dashboard
+    profiler.attachPanelProfiling(dashboard);
+  }
 }

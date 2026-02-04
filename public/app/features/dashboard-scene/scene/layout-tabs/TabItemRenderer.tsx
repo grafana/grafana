@@ -4,13 +4,15 @@ import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { useDashboardState } from '../../utils/utils';
+import { getDashboardSceneFor, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
 
@@ -19,17 +21,17 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const parentLayout = model.getParentLayout();
   const { currentTabSlug } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
-  const myIndex = parentLayout.state.tabs.findIndex((tab) => tab === model);
+  const myIndex = parentLayout.getTabsIncludingRepeats().findIndex((tab) => tab === model);
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
-  const [isConditionallyHidden] = useIsConditionallyHidden(model);
+  const [isConditionallyHidden] = useIsConditionallyHidden(model.state.conditionalRendering);
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
 
@@ -56,7 +58,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
-          ref={(ref) => dragProvided.innerRef(ref)}
+          ref={(ref) => {
+            dragProvided.innerRef(ref);
+          }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
@@ -75,6 +79,26 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
             href={href}
             aria-selected={isActive}
+            onChangeTab={(evt) => {
+              evt.preventDefault();
+
+              const dashboard = getDashboardSceneFor(model);
+              dashboard.rememberScrollPos();
+
+              // When switching tabs, React unmounts old content and mounts new content.
+              // This causes the browser to adjust scroll position if we're at the bottom of the page.
+              // We use MutationObserver to detect when React has committed the DOM changes,
+              // then restore scroll after the browser has completed its layout adjustments.
+              const observer = new MutationObserver(() => {
+                observer.disconnect();
+                requestAnimationFrame(() => {
+                  dashboard.restoreScrollPos();
+                });
+              });
+              observer.observe(document.body, { childList: true, subtree: true });
+
+              locationService.partial({ [urlKey]: mySlug });
+            }}
             onPointerDown={(evt) => {
               evt.stopPropagation();
               pointerDistance.set(evt);
@@ -86,10 +110,15 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
                 return;
               }
 
+              if (!isActive) {
+                onClearSelection?.();
+                return;
+              }
+
               onSelect?.(evt);
             }}
             label={titleInterpolated}
-            data-dashboard-drop-target-key={model.state.key}
+            data-tab-activation-key={key}
             {...titleCollisionProps}
           />
         </div>
@@ -101,12 +130,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 function IsHiddenSuffix() {
   return (
     <Box paddingLeft={1} display={'inline'}>
-      <Tooltip
-        content={t(
-          'dashboard.conditional-rendering.overlay.tooltip',
-          'Element is hidden due to conditional rendering.'
-        )}
-      >
+      <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
         <Icon name="eye-slash" />
       </Tooltip>
     </Box>
@@ -119,12 +143,17 @@ interface TabItemLayoutRendererProps {
 }
 
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
-  const { layout } = tab.useState();
+  const { layout, key } = tab.useState();
   const styles = useStyles2(getStyles);
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(tab);
+  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+    tab.state.conditionalRendering
+  );
 
   return (
-    <TabContent className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}>
+    <TabContent
+      className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
+      {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
+    >
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

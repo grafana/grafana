@@ -16,7 +16,7 @@ weight: 5
 
 [Grafana open source software](/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
 
-After you have [installed Grafana](../setup-grafana/installation/) and set up your first dashboard using instructions in [Getting started with Grafana](../getting-started/build-first-dashboard/), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist](../dashboards/create-manage-playlists/). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning](../administration/provisioning/) and [authentication](../setup-grafana/configure-security/configure-authentication/).
+After you have [installed Grafana](../setup-grafana/installation/) and set up your first dashboard using instructions in [Getting started with Grafana](../getting-started/build-first-dashboard/), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist](../dashboards/create-manage-playlists/). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning](../administration/provisioning/) and [authentication](../setup-grafana/configure-access/configure-authentication/).
 
 The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
@@ -54,7 +54,7 @@ Discover hundreds of [dashboards](/grafana/dashboards) and [plugins](/grafana/pl
 
 ## Authentication
 
-Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview](../setup-grafana/configure-security/configure-authentication/) for more information.
+Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview](../setup-grafana/configure-access/configure-authentication/) for more information.
 
 In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise](grafana-enterprise/) for more information.
 

@@ -15,7 +15,7 @@ func TestConfigurableDataSourceProvider(t *testing.T) {
 		provider := NewDataSourceProvider(StandardTestConfig)
 		dataSources := provider.GetDataSourceInfo(ctx)
 
-		require.Len(t, dataSources, 6)
+		require.Len(t, dataSources, 9)
 
 		// Verify standard test configuration
 		defaultDS := dataSources[0]
@@ -58,8 +58,8 @@ func TestConfigurableDataSourceProvider(t *testing.T) {
 		devDS1 := devProvider1.GetDataSourceInfo(ctx)
 		devDS2 := devProvider2.GetDataSourceInfo(ctx)
 
-		require.Len(t, standardDS1, 6)
-		require.Len(t, standardDS2, 6)
+		require.Len(t, standardDS1, 9)
+		require.Len(t, standardDS2, 9)
 		require.Len(t, devDS1, 6)
 		require.Len(t, devDS2, 6)
 
@@ -74,7 +74,7 @@ func TestConfigurableDataSourceProvider(t *testing.T) {
 		provider := NewDataSourceProvider("unknown-config")
 		dataSources := provider.GetDataSourceInfo(ctx)
 
-		require.Len(t, dataSources, 6)
+		require.Len(t, dataSources, 9)
 
 		// Should default to standard configuration
 		defaultDS := dataSources[0]

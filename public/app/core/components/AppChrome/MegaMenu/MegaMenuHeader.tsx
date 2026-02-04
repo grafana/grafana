@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { IconButton, Stack, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
 export interface Props {
-  handleMegaMenu: () => void;
   handleDockedMenu: () => void;
   onClose: () => void;
 }
@@ -18,26 +19,20 @@ export interface Props {
 export const DOCK_MENU_BUTTON_ID = 'dock-menu-button';
 export const MEGA_MENU_HEADER_TOGGLE_ID = 'mega-menu-header-toggle';
 
-export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Props) {
+export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = getStyles(theme);
 
   return (
     <div className={styles.header}>
-      <Stack alignItems="center" minWidth={0} gap={0.25}>
-        <ToolbarButton
-          narrow
-          id={MEGA_MENU_HEADER_TOGGLE_ID}
-          onClick={handleMegaMenu}
-          tooltip={t('navigation.megamenu.close', 'Close menu')}
-        >
-          <Branding.MenuLogo className={styles.img} />
-        </ToolbarButton>
+      <Stack alignItems="center" minWidth={0} gap={1}>
+        <HomeLink homeNav={homeNav} inMegaMenuOverlay={!state.megaMenuDocked} />
         <OrganizationSwitcher />
       </Stack>
+      <div className={styles.flexGrow} />
       <IconButton
         id={DOCK_MENU_BUTTON_ID}
         className={styles.dockMenuButton}
@@ -51,11 +46,10 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
         variant="secondary"
       />
       <IconButton
-        className={styles.mobileCloseButton}
         tooltip={t('navigation.megamenu.close', 'Close menu')}
         name="times"
         onClick={onClose}
-        size="xl"
+        size="lg"
         variant="secondary"
       />
     </div>
@@ -78,18 +72,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',
-    padding: theme.spacing(0, 1, 0, 0.75),
+    padding: theme.spacing(0, 1, 0, 1),
     height: getChromeHeaderLevelHeight(),
     flexShrink: 0,
   }),
-  img: css({
-    alignSelf: 'center',
-    height: theme.spacing(3),
-    width: theme.spacing(3),
-  }),
-  mobileCloseButton: css({
-    [theme.breakpoints.up('md')]: {
-      display: 'none',
-    },
-  }),
+  flexGrow: css({ flexGrow: 1 }),
 });

@@ -7,16 +7,17 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
+import { AzureQueryType } from '../../dataquery.gen';
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 import { AzureMonitorDataSourceJsonData, AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor';
-import LogsQueryEditor from '../LogsQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
+import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import TracesQueryEditor from '../TracesQueryEditor';
+import TracesQueryEditor from '../TracesQueryEditor/TracesQueryEditor';
 
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';

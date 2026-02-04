@@ -11,10 +11,11 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;
   gradient?: string;
   lineStyle?: LineStyle;
+  noMargin?: boolean;
 }
 
 export const SeriesIcon = React.memo(
-  React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, lineStyle, ...restProps }, ref) => {
+  React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, lineStyle, noMargin, ...restProps }, ref) => {
     const theme = useTheme2();
     const styles = useStyles2(getStyles);
 
@@ -59,7 +60,7 @@ export const SeriesIcon = React.memo(
       <div
         data-testid="series-icon"
         ref={ref}
-        className={cx(className, styles.forcedColors, styles.container)}
+        className={cx(className, styles.forcedColors, styles.container, noMargin ? null : styles.margin)}
         style={customStyle}
         {...restProps}
       />
@@ -68,8 +69,10 @@ export const SeriesIcon = React.memo(
 );
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
+  margin: css({
     marginRight: '8px',
+  }),
+  container: css({
     display: 'inline-block',
     width: '14px',
     height: '4px',

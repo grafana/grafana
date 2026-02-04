@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 
-import { AlertLabel, RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
+import { AlertLabel, RouteMatchResult, RouteWithID } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
 import { Button, Drawer, Text, TextLink } from '@grafana/ui';
 
@@ -97,7 +97,11 @@ export function NotificationPolicyDrawer({
               )}
             </Stack>
 
-            <TextLink href={createRelativeUrl('/alerting/routes')} external inline={false}>
+            <TextLink
+              href={createRelativeUrl(`/alerting/routes/policy/${encodeURIComponent(policyName ?? '')}/edit`)}
+              external
+              inline={false}
+            >
               <Trans i18nKey="alerting.notification-policy-drawer.view-notification-policy-tree">
                 View notification policy tree
               </Trans>

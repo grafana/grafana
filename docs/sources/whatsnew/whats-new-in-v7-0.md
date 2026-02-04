@@ -225,11 +225,11 @@ This release includes a series of features that build on our new usage analytics
 
 ### SAML Role and Team Sync
 
-SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation](../../setup-grafana/configure-security/configure-authentication/saml/#configure-team-sync).
+SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation](../../setup-grafana/configure-access/configure-authentication/saml/#configure-team-sync).
 
 ### Okta OAuth Team Sync
 
-Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation](../../setup-grafana/configure-security/configure-authentication/okta/).
+Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation](../../setup-grafana/configure-access/configure-authentication/okta/).
 
 ## Changelog
 

@@ -13,16 +13,20 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
+import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
+  const { layout, collapse, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
+  const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
-    useIsConditionallyHidden(model);
-  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+    model.state.conditionalRendering
+  );
+  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
@@ -51,6 +55,29 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     return <layout.Component model={layout} />;
   }
 
+  const titleElement = (
+    <span
+      className={cx(
+        styles.rowTitle,
+        isHeaderHidden && styles.rowTitleHidden,
+        !isTopLevel && styles.rowTitleNested,
+        isCollapsed && styles.rowTitleCollapsed
+      )}
+    >
+      {!model.hasUniqueTitle() && (
+        <Tooltip content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}>
+          <Icon name="exclamation-triangle" />
+        </Tooltip>
+      )}
+      {title}
+      {isHeaderHidden && (
+        <Tooltip content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}>
+          <Icon name="eye-slash" />
+        </Tooltip>
+      )}
+    </span>
+  );
+
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
@@ -59,7 +86,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          data-dashboard-drop-target-key={model.state.key}
+          {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
           className={cx(
             styles.wrapper,
             !isCollapsed && styles.wrapperNotCollapsed,
@@ -77,7 +104,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           }}
           onPointerUp={(evt) => {
             // If we selected and are clicking a button inside row header then don't de-select row
-            if (isSelected && evt.target instanceof Element && evt.target.closest('button')) {
+            if (evt.target instanceof Element && evt.target.closest('button')) {
               // Stop propagation otherwise dashboaed level onPointerDown will de-select row
               evt.stopPropagation();
               return;
@@ -100,7 +127,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {...dragProvided.dragHandleProps}
             >
               <button
-                onClick={() => model.onCollapseToggle()}
+                onClick={(evt) => {
+                  model.onCollapseToggle();
+                  onClearSelection?.();
+                }}
                 className={cx(clearStyles, styles.rowTitleButton)}
                 aria-label={
                   isCollapsed
@@ -110,31 +140,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 data-testid={selectors.components.DashboardRow.title(title!)}
               >
                 <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-                <span
-                  className={cx(
-                    styles.rowTitle,
-                    isHeaderHidden && styles.rowTitleHidden,
-                    !isTopLevel && styles.rowTitleNested,
-                    isCollapsed && styles.rowTitleCollapsed
-                  )}
-                >
-                  {!model.hasUniqueTitle() && (
-                    <Tooltip
-                      content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}
-                    >
-                      <Icon name="exclamation-triangle" />
-                    </Tooltip>
-                  )}
-                  {title}
-                  {isHeaderHidden && (
-                    <Tooltip
-                      content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}
-                    >
-                      <Icon name="eye-slash" />
-                    </Tooltip>
-                  )}
-                </span>
+                {!isEditing && titleElement}
               </button>
+              {isEditing && titleElement}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
@@ -234,6 +242,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dragging: css({
       cursor: 'move',
+      backgroundColor: theme.colors.background.canvas,
     }),
     wrapperGrow: css({
       flexGrow: 1,

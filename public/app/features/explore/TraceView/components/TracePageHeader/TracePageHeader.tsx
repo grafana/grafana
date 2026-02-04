@@ -26,15 +26,24 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction, renderLimitedComponents, usePluginComponents, usePluginLinks } from '@grafana/runtime';
+import {
+  reportInteraction,
+  renderLimitedComponents,
+  usePluginComponents,
+  usePluginLinks,
+  config,
+} from '@grafana/runtime';
+import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Badge,
   BadgeColor,
   Button,
   ButtonGroup,
+  CollapsableSection,
   Dropdown,
   Icon,
+  Label,
   LinkButton,
   Menu,
   Tooltip,
@@ -43,13 +52,16 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { config } from '../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
+import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
-import { SpanFilters } from './SpanFilters/SpanFilters';
+import TracePageSearchBar from './SearchBar/TracePageSearchBar';
+import SpanGraph from './SpanGraph';
+import { TraceFilterPills } from './TraceFilterPills';
+import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -66,6 +78,10 @@ export type TracePageHeaderProps = {
   datasourceName: string;
   datasourceUid: string;
   setHeaderHeight: (height: number) => void;
+  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
+  updateViewRangeTime: TUpdateViewRangeTimeFunction;
+  viewRange: ViewRange;
+  hideHeaderDetails?: boolean;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -77,19 +93,27 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     search,
     setSearch,
     showSpanFilters,
-    setShowSpanFilters,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
     datasourceName,
     datasourceUid,
     setHeaderHeight,
+    updateNextViewRangeTime,
+    updateViewRangeTime,
+    viewRange,
+    hideHeaderDetails = false,
   } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const notifyApp = useAppNotification();
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
+  const [isOverviewOpen, setIsOverviewOpen] = useState(true);
+  const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  // Create controller for adhoc filters
+  const controller = useTraceAdHocFiltersController(trace, search, setSearch);
 
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
@@ -117,6 +141,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  // Memoize service count to avoid recomputing on every render
+  const serviceCount = useMemo(() => {
+    return new Set(trace?.spans.map((span) => span.process?.serviceName)).size;
+  }, [trace?.spans]);
+
   if (!trace) {
     return null;
   }
@@ -126,11 +155,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
-
-  // Memoize service count to avoid recomputing on every render
-  const serviceCount = useMemo(() => {
-    return new Set(trace.spans.map((span) => span.process?.serviceName)).size;
-  }, [trace.spans]);
 
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
@@ -193,174 +217,211 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         </div>
 
         {/* Action buttons */}
-        <div className={styles.actions}>
-          {/* Plugin extension actions */}
-          {extensionLinks.length > 0 && (
-            <div className={styles.actions}>
-              {extensionLinks.map((link) => (
-                <Tooltip key={link.id} content={link.description || link.title}>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    fill="outline"
-                    icon={link.icon}
-                    onClick={(event) => {
-                      if (link.path) {
-                        window.open(link.path, '_blank');
-                      }
-                      link.onClick?.(event);
-                    }}
-                  >
-                    {link.title}
-                  </Button>
-                </Tooltip>
-              ))}
-            </div>
-          )}
-
+        {!hideHeaderDetails && (
           <div className={styles.actions}>
-            {traceContext
-              ? renderLimitedComponents<TraceViewPluginExtensionContext>({
-                  props: traceContext,
-                  components: extensionComponents,
-                  limit: 2,
-                })
-              : null}
-          </div>
-
-          {config.feedbackLinksEnabled && (
-            <Tooltip
-              content={t(
-                'explore.trace-page-header.title-share-thoughts-about-tracing-grafana',
-                'Share your thoughts about tracing in Grafana.'
-              )}
-            >
-              <LinkButton
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="comment-alt-message"
-                href="https://forms.gle/RZDEx8ScyZNguDoC8"
-                target="_blank"
-              >
-                <Trans i18nKey="explore.trace-page-header.give-feedback">Feedback</Trans>
-              </LinkButton>
-            </Tooltip>
-          )}
-
-          <ButtonGroup>
-            <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
-              <Button
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="share-alt"
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
-                }}
-              >
-                {t('explore.trace-page-header.share', 'Share')}
-              </Button>
-            </Tooltip>
-
-            <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
-              <Button
-                aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share trace options menu')}
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="angle-down"
-              />
-            </Dropdown>
-          </ButtonGroup>
-        </div>
-      </div>
-
-      {/* Metadata row */}
-      <div className={styles.metadataRow}>
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.trace-id', 'Trace ID')}</span>
-          <span className={styles.metadataValue}>
-            <button className={styles.traceIdButton} onClick={copyTraceId}>
-              {trace.traceID}
-              <Icon name={copyTraceIdClicked ? 'check' : 'copy'} size="sm" className={styles.copyIcon} />
-            </button>
-          </span>
-        </div>
-
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
-          <span
-            className={cx(
-              styles.metadataValue,
-              css({
-                gap: theme.spacing(0.5),
-              })
+            {/* Plugin extension actions */}
+            {extensionLinks.length > 0 && (
+              <div className={styles.actions}>
+                {extensionLinks.map((link) => (
+                  <Tooltip key={link.id} content={link.description || link.title}>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      fill="outline"
+                      icon={link.icon}
+                      onClick={(event) => {
+                        if (link.path) {
+                          window.open(link.path, '_blank');
+                        }
+                        link.onClick?.(event);
+                      }}
+                    >
+                      {link.title}
+                    </Button>
+                  </Tooltip>
+                ))}
+              </div>
             )}
-          >
-            <span>{formattedTimestamp}</span>
-            <span className={styles.timestampDetail}>({dateTimeFormatTimeAgo(trace.startTime / 1000)})</span>
-          </span>
-        </div>
 
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
-          <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
-        </div>
+            <div className={styles.actions}>
+              {traceContext
+                ? renderLimitedComponents<TraceViewPluginExtensionContext>({
+                    props: traceContext,
+                    components: extensionComponents,
+                    limit: 2,
+                  })
+                : null}
+            </div>
 
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
-          <span className={styles.metadataValue}>{serviceCount}</span>
-        </div>
-
-        {url && url.length > 0 && (
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>
-              {url[0].key === 'http.route' && t('explore.trace-page-header.route', 'Route')}
-              {url[0].key === 'http.url' && t('explore.trace-page-header.url', 'URL')}
-              {url[0].key === 'http.target' && t('explore.trace-page-header.target', 'Target')}
-              {url[0].key === 'http.path' && t('explore.trace-page-header.path', 'Path')}
-            </span>
-            <span className={styles.metadataValue}>
+            {config.feedbackLinksEnabled && (
               <Tooltip
-                content={
-                  <div>
-                    <div>
-                      <Trans
-                        i18nKey="explore.trace-page-header.tooltip-url"
-                        values={{
-                          route: 'http.route',
-                          url: 'http.url',
-                          target: 'http.target',
-                          path: 'http.path',
-                        }}
-                      >
-                        {'{{route}}'} or {'{{url}}'} or {'{{target}}'} or {'{{path}}'}
-                      </Trans>
-                    </div>
-                    <div>({url[0].value})</div>
-                  </div>
-                }
-                interactive={true}
+                content={t(
+                  'explore.trace-page-header.title-share-thoughts-about-tracing-grafana',
+                  'Share your thoughts about tracing in Grafana.'
+                )}
               >
-                <span className={styles.url}>{url[0].value}</span>
+                <LinkButton
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="comment-alt-message"
+                  href="https://forms.gle/RZDEx8ScyZNguDoC8"
+                  target="_blank"
+                >
+                  <Trans i18nKey="explore.trace-page-header.give-feedback">Feedback</Trans>
+                </LinkButton>
               </Tooltip>
-            </span>
+            )}
+
+            <ButtonGroup>
+              <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="share-alt"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+                  }}
+                >
+                  {t('explore.trace-page-header.share', 'Share')}
+                </Button>
+              </Tooltip>
+
+              <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
+                <Button
+                  aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share trace options menu')}
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="angle-down"
+                />
+              </Dropdown>
+            </ButtonGroup>
           </div>
         )}
       </div>
 
-      <SpanFilters
-        trace={trace}
-        showSpanFilters={showSpanFilters}
-        setShowSpanFilters={setShowSpanFilters}
-        search={search}
-        setSearch={setSearch}
-        spanFilterMatches={spanFilterMatches}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        datasourceType={datasourceType}
-      />
+      {/* Metadata row */}
+      {!hideHeaderDetails && (
+        <>
+          <div className={styles.metadataRow}>
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.trace-id', 'Trace ID')}</span>
+              <span className={styles.metadataValue}>
+                <button className={styles.traceIdButton} onClick={copyTraceId}>
+                  {trace.traceID}
+                  <Icon name={copyTraceIdClicked ? 'check' : 'copy'} size="sm" className={styles.copyIcon} />
+                </button>
+              </span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              <span
+                className={cx(
+                  styles.metadataValue,
+                  css({
+                    gap: theme.spacing(0.5),
+                  })
+                )}
+              >
+                <span>{formattedTimestamp}</span>
+                <span className={styles.timestampDetail}>({dateTimeFormatTimeAgo(trace.startTime / 1000)})</span>
+              </span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
+              <span className={styles.metadataValue}>{serviceCount}</span>
+            </div>
+
+            {url && url.length > 0 && (
+              <div className={styles.metadataItem}>
+                <span className={styles.metadataLabel}>
+                  {url[0].key === 'http.route' && t('explore.trace-page-header.route', 'Route')}
+                  {url[0].key === 'http.url' && t('explore.trace-page-header.url', 'URL')}
+                  {url[0].key === 'http.target' && t('explore.trace-page-header.target', 'Target')}
+                  {url[0].key === 'http.path' && t('explore.trace-page-header.path', 'Path')}
+                </span>
+                <span className={styles.metadataValue}>
+                  <Tooltip
+                    content={
+                      <div>
+                        <div>
+                          <Trans
+                            i18nKey="explore.trace-page-header.tooltip-url"
+                            values={{
+                              route: 'http.route',
+                              url: 'http.url',
+                              target: 'http.target',
+                              path: 'http.path',
+                            }}
+                          >
+                            {'{{route}}'} or {'{{url}}'} or {'{{target}}'} or {'{{path}}'}
+                          </Trans>
+                        </div>
+                        <div>({url[0].value})</div>
+                      </div>
+                    }
+                    interactive={true}
+                  >
+                    <span className={styles.url}>{url[0].value}</span>
+                  </Tooltip>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <CollapsableSection
+            label={<span className={styles.overviewLabel}>{t('explore.trace-page-header.overview', 'Overview')}</span>}
+            isOpen={isOverviewOpen}
+            onToggle={setIsOverviewOpen}
+            className={styles.overviewCollapsableSection}
+            contentClassName={styles.overviewCollapsableSectionContent}
+          >
+            <SpanGraph
+              trace={trace}
+              viewRange={viewRange}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+            />
+          </CollapsableSection>
+        </>
+      )}
+
+      {!hideHeaderDetails && (
+        <div className={styles.filtersContainer}>
+          <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
+          <div className={styles.adhocFiltersRow}>
+            {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
+          </div>
+          {trace && (
+            <div className={styles.searchAndPillsRow}>
+              <TraceFilterPills trace={trace} search={search} setSearch={setSearch} />
+              <TracePageSearchBar
+                trace={trace}
+                search={search}
+                spanFilterMatches={spanFilterMatches}
+                setShowSpanFilterMatchesOnly={(showMatchesOnly: boolean) =>
+                  setSearch({ ...search, matchesOnly: showMatchesOnly })
+                }
+                focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+                setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
+                setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+                datasourceType={datasourceType}
+                showSpanFilters={showSpanFilters}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 });
@@ -425,7 +486,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       columnGap: theme.spacing(3),
-      marginBottom: theme.spacing(1),
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       flexWrap: 'wrap',
@@ -487,6 +547,39 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       display: 'inline-block',
       color: theme.colors.text.primary,
+    }),
+    overviewLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    overviewCollapsableSection: css({
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      gap: theme.spacing(0.5),
+    }),
+    overviewCollapsableSectionContent: css({
+      padding: theme.spacing(0, 1, 2, 1),
+    }),
+    filtersContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+    }),
+    adhocFiltersRow: css({
+      display: 'flex',
+      width: '100%',
+    }),
+    searchAndPillsRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
+      width: '100%',
+      marginTop: theme.spacing(0.5),
     }),
   };
 };

@@ -1,11 +1,16 @@
+import { configureStore } from '@reduxjs/toolkit';
 import { advanceBy } from 'jest-date-mock';
+import { UnknownAction } from 'redux';
+import { of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
+import { store } from '@grafana/data';
 import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import store from 'app/core/store';
+import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
@@ -26,18 +31,26 @@ import {
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
 } from './DashboardScenePageStateManager';
+const fetchMock = jest.fn();
 
-// Mock the config module
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
+  const originalGetBackendSrv = original.getBackendSrv;
   return {
     ...original,
+    getBackendSrv: () => {
+      const originalSrv = originalGetBackendSrv();
+      return {
+        ...originalSrv,
+        fetch: fetchMock,
+      };
+    },
     config: {
       ...original.config,
       featureToggles: {
         ...original.config.featureToggles,
-        dashboardNewLayouts: false, // Default value
-        reloadDashboardsOnParamsChange: false, // Default value
+        dashboardNewLayouts: false,
+        reloadDashboardsOnParamsChange: false,
       },
       datasources: {
         'gdev-testdata': {
@@ -80,6 +93,29 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     },
   },
 }));
+
+const createTestStore = () =>
+  configureStore({
+    reducer: {
+      [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
+    },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(provisioningAPIv0alpha1.middleware),
+  });
+
+let testStore: ReturnType<typeof createTestStore>;
+
+jest.mock('app/store/store', () => {
+  const actual = jest.requireActual('app/store/store');
+  return {
+    ...actual,
+    dispatch: jest.fn((action: UnknownAction) => {
+      if (testStore) {
+        return testStore.dispatch(action);
+      }
+      return action;
+    }),
+  };
+});
 
 const setupDashboardAPI = (
   d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
@@ -161,10 +197,13 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDashboardLoader.loadDashboard.mockReset();
   mockDashboardLoader.loadSnapshot.mockReset();
+  fetchMock.mockReset();
 
   // Reset locationService mocks
   locationService.getSearch = jest.fn().mockReturnValue(new URLSearchParams());
   locationService.getSearchObject = jest.fn().mockReturnValue({});
+
+  testStore = createTestStore();
 });
 
 describe('DashboardScenePageStateManager v1', () => {
@@ -1558,10 +1597,9 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('Provisioned dashboard', () => {
     it('should load a provisioned v1 dashboard', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v1ProvisionedDashboardResource)));
+
       const loader = new UnifiedDashboardScenePageStateManager({});
-      setBackendSrv({
-        get: () => Promise.resolve(v1ProvisionedDashboardResource),
-      } as unknown as BackendSrv);
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();
@@ -1572,10 +1610,9 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should load a provisioned v2 dashboard', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v2ProvisionedDashboardResource)));
+
       const loader = new UnifiedDashboardScenePageStateManager({});
-      setBackendSrv({
-        get: () => Promise.resolve(v2ProvisionedDashboardResource),
-      } as unknown as BackendSrv);
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();
@@ -1634,6 +1671,123 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       manager2.setActiveManager('v1');
       await manager2.loadDashboard({ uid: '', route: DashboardRoutes.New });
       expect(manager2['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+    });
+  });
+
+  describe('Template dashboards', () => {
+    let originalGetLocation: typeof locationService.getLocation;
+
+    beforeEach(() => {
+      originalGetLocation = locationService.getLocation;
+
+      // Mock window.location.search for loadDashboardLibrary
+      Object.defineProperty(window, 'location', {
+        value: {
+          search: '?gnetId=969&datasource=xpyRJd9Mz&mappings=%5B%5D',
+        },
+        writable: true,
+      });
+    });
+
+    afterEach(() => {
+      locationService.getLocation = originalGetLocation;
+    });
+
+    it('should always use v1 manager for template dashboards even when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+      config.featureToggles.suggestedDashboards = true;
+
+      // Mock location service with gnetId and mappings parameters
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/dashboard/template',
+        search: '?gnetId=969&datasource=xpyRJd9Mz&mappings=%5B%5D',
+      });
+
+      // Mock the backend to return a community dashboard from grafana.com
+      setBackendSrv({
+        get: jest.fn((url: string) => {
+          if (url.includes('/api/gnet/dashboards/')) {
+            return Promise.resolve({
+              json: {
+                title: 'AWS ElastiCache Redis',
+                uid: '',
+                panels: [],
+                schemaVersion: 40,
+              },
+            });
+          }
+          return Promise.reject(new Error('Not found'));
+        }),
+        post: jest.fn((url: string) => {
+          if (url === '/api/dashboards/interpolate') {
+            return Promise.resolve({
+              title: 'AWS ElastiCache Redis',
+              uid: '',
+              panels: [],
+              schemaVersion: 40,
+            });
+          }
+          return Promise.reject(new Error('Not found'));
+        }),
+      } as unknown as BackendSrv);
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.Template });
+
+      // Should switch to V1 manager for template dashboards
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+    });
+
+    it('should reset to V2 manager when loading a new dashboard after template', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+      config.featureToggles.suggestedDashboards = true;
+
+      // Mock locationService for this test too
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/dashboard/template',
+        search: '?gnetId=969&datasource=xpyRJd9Mz&mappings=%5B%5D',
+      });
+
+      // Mock the backend for template load
+      setBackendSrv({
+        get: jest.fn((url: string) => {
+          if (url.includes('/api/gnet/dashboards/')) {
+            return Promise.resolve({
+              json: {
+                title: 'Template Dashboard',
+                uid: '',
+                panels: [],
+                schemaVersion: 40,
+              },
+            });
+          }
+          return Promise.reject(new Error('Not found'));
+        }),
+        post: jest.fn((url: string) => {
+          if (url === '/api/dashboards/interpolate') {
+            return Promise.resolve({
+              title: 'Template Dashboard',
+              uid: '',
+              panels: [],
+              schemaVersion: 40,
+            });
+          }
+          return Promise.reject(new Error('Not found'));
+        }),
+      } as unknown as BackendSrv);
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      // Load template - forces V1
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.Template });
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      // Load new dashboard - should reset to V2 based on shouldForceV2API()
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      // Should be back to V2 manager
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
   });
 });

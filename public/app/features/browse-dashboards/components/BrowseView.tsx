@@ -6,46 +6,47 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
+import { canSelectItems } from '../permissions';
 import { fetchNextChildrenPage } from '../state/actions';
 import {
-  useFlatTreeState,
+  rootItemsSelector,
+  useBrowseLoadingStatus,
   useCheckboxSelectionState,
   useChildrenByParentUIDState,
-  useBrowseLoadingStatus,
+  useFlatTreeState,
   useLoadNextChildrenPage,
-  rootItemsSelector,
 } from '../state/hooks';
-import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
-import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
+import { setAllSelection, setFolderOpenState, setItemSelectionState } from '../state/slice';
+import { BrowseDashboardsPermissions, BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
-import { canSelectItems } from './utils';
 
 interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
   permissions: BrowseDashboardsPermissions;
+  isReadOnlyRepo?: boolean;
 }
 
-export function BrowseView({ folderUID, width, height, permissions }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRepo }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
-  const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningEnabled = config.featureToggles.provisioning;
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
+  const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
   const [, stateManager] = useSearchStateManager();
@@ -163,6 +164,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
                 href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
                 icon="plus"
                 size="lg"
+                disabled={isReadOnlyRepo}
               >
                 <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
               </LinkButton>
@@ -173,7 +175,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
                 : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
             }
           >
-            {folderUID && (
+            {folderUID && !isReadOnlyRepo && (
               <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
                 Add/move dashboards to your folder at{' '}
                 <TextLink external={false} href="/dashboards">

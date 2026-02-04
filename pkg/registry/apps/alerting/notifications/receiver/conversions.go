@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"maps"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
@@ -64,11 +66,11 @@ func convertToK8sResource(
 	for _, integration := range receiver.Integrations {
 		spec.Integrations = append(spec.Integrations, model.ReceiverIntegration{
 			Uid:                   &integration.UID,
-			Type:                  integration.Config.Type,
+			Type:                  string(integration.Config.Type()),
+			Version:               string(integration.Config.Version),
 			DisableResolveMessage: &integration.DisableResolveMessage,
 			Settings:              maps.Clone(integration.Settings),
 			SecureFields:          integration.SecureFields(),
-			Version:               integration.Config.Version,
 		})
 	}
 
@@ -108,10 +110,12 @@ func convertToK8sResource(
 }
 
 var permissionMapper = map[ngmodels.ReceiverPermission]string{
-	ngmodels.ReceiverPermissionReadSecret: "canReadSecrets",
-	ngmodels.ReceiverPermissionAdmin:      "canAdmin",
-	ngmodels.ReceiverPermissionWrite:      "canWrite",
-	ngmodels.ReceiverPermissionDelete:     "canDelete",
+	ngmodels.ReceiverPermissionReadSecret:      "canReadSecrets",
+	ngmodels.ReceiverPermissionAdmin:           "canAdmin",
+	ngmodels.ReceiverPermissionWrite:           "canWrite",
+	ngmodels.ReceiverPermissionDelete:          "canDelete",
+	ngmodels.ReceiverPermissionModifyProtected: "canModifyProtected",
+	ngmodels.ReceiverPermissionTest:            "canTest",
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
@@ -125,40 +129,56 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
-		version := &integration.Version
-		if *version == "" {
-			version = nil
-		}
-		config, err := ngmodels.IntegrationConfigFromType(integration.Type, version)
+		grafanaIntegration, secureFields, err := convertReceiverIntegrationToIntegration(receiver.Spec.Title, integration)
 		if err != nil {
 			return nil, nil, err
 		}
-		grafanaIntegration := ngmodels.Integration{
-			Name:           receiver.Spec.Title,
-			Config:         config,
-			Settings:       maps.Clone(integration.Settings),
-			SecureSettings: make(map[string]string),
-		}
-		if integration.Uid != nil {
-			grafanaIntegration.UID = *integration.Uid
-		}
-		if integration.DisableResolveMessage != nil {
-			grafanaIntegration.DisableResolveMessage = *integration.DisableResolveMessage
-		}
-
 		domain.Integrations = append(domain.Integrations, &grafanaIntegration)
-
-		if grafanaIntegration.UID != "" {
-			// This is an existing integration, so we track the secure fields being requested to copy over from existing values.
-			secureFields := make([]string, 0, len(integration.SecureFields))
-			for k, isSecure := range integration.SecureFields {
-				if isSecure {
-					secureFields = append(secureFields, k)
-				}
-			}
-			storedSecureFields[grafanaIntegration.UID] = secureFields
-		}
+		storedSecureFields[grafanaIntegration.UID] = secureFields
 	}
 
 	return domain, storedSecureFields, nil
+}
+
+func convertReceiverIntegrationToIntegration(receiverTitle string, integration model.ReceiverIntegration) (ngmodels.Integration, []string, error) {
+	t, err := alertingNotify.IntegrationTypeFromString(integration.Type)
+	if err != nil {
+		return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(err)
+	}
+	var config schema.IntegrationSchemaVersion
+	typeSchema, _ := alertingNotify.GetSchemaForIntegration(t)
+	// TODO:yuri make version required when UI is updated
+	if integration.Version != "" {
+		var ok bool
+		config, ok = typeSchema.GetVersion(schema.Version(integration.Version))
+		if !ok {
+			return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(fmt.Errorf("invalid version %s for integration type %s", integration.Version, integration.Type))
+		}
+	} else {
+		config = typeSchema.GetCurrentVersion()
+	}
+	grafanaIntegration := ngmodels.Integration{
+		Name:           receiverTitle,
+		Config:         config,
+		Settings:       maps.Clone(integration.Settings),
+		SecureSettings: make(map[string]string),
+	}
+	if integration.Uid != nil {
+		grafanaIntegration.UID = *integration.Uid
+	}
+	if integration.DisableResolveMessage != nil {
+		grafanaIntegration.DisableResolveMessage = *integration.DisableResolveMessage
+	}
+
+	var secureFields []string
+	if grafanaIntegration.UID != "" {
+		// This is an existing integration, so we track the secure fields being requested to copy over from existing values.
+		secureFields = make([]string, 0, len(integration.SecureFields))
+		for k, isSecure := range integration.SecureFields {
+			if isSecure {
+				secureFields = append(secureFields, k)
+			}
+		}
+	}
+	return grafanaIntegration, secureFields, nil
 }

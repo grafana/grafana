@@ -216,7 +216,309 @@ func TestCacheMetrics(t *testing.T) {
 	})
 }
 
-func randomSate(ruleKey models.AlertRuleKey) State {
+func TestCacheMetricsDebounce(t *testing.T) {
+	t.Run("updates after debounce window", func(t *testing.T) {
+		orgID := int64(1)
+
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+
+		// Add initial state: 1 alerting
+		cache.set(&State{
+			OrgID:        orgID,
+			AlertRuleUID: "rule1",
+			CacheID:      data.Fingerprint(rand.Int63()),
+			State:        eval.Alerting,
+		})
+
+		cache.RegisterMetrics(reg)
+
+		// First gather should reflect the single alerting instance
+		expectedInitial := `
+				# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+				# TYPE grafana_alerting_alerts gauge
+				grafana_alerting_alerts{state="alerting"} 1
+				grafana_alerting_alerts{state="error"} 0
+				grafana_alerting_alerts{state="nodata"} 0
+				grafana_alerting_alerts{state="normal"} 0
+				grafana_alerting_alerts{state="pending"} 0
+				grafana_alerting_alerts{state="recovering"} 0
+			`
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Modify cache immediately: add 2 more alerting and 1 error state.
+		// Due to debounce (1s), next gather should still return the initial values.
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Error})
+
+		// Immediate gather should still show the initial counts because of debounce.
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Bypass debounce by setting lastUpdate in the past (>1s) under lock.
+		cache.metrics.mtx.Lock()
+		cache.metrics.lastUpdate = time.Now().Add(-2 * time.Second)
+		cache.metrics.mtx.Unlock()
+
+		expectedAfter := `
+				# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+				# TYPE grafana_alerting_alerts gauge
+				grafana_alerting_alerts{state="alerting"} 3
+				grafana_alerting_alerts{state="error"} 1
+				grafana_alerting_alerts{state="nodata"} 0
+				grafana_alerting_alerts{state="normal"} 0
+				grafana_alerting_alerts{state="pending"} 0
+				grafana_alerting_alerts{state="recovering"} 0
+			`
+
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedAfter), "grafana_alerting_alerts")
+		require.NoError(t, err)
+	})
+
+	t.Run("no update within debounce window", func(t *testing.T) {
+		orgID := int64(1)
+
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+
+		// Seed with one alerting state
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+
+		cache.RegisterMetrics(reg)
+
+		// Initial gather populates metrics (1 alerting)
+		expectedInitial := `
+				# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+				# TYPE grafana_alerting_alerts gauge
+				grafana_alerting_alerts{state="alerting"} 1
+				grafana_alerting_alerts{state="error"} 0
+				grafana_alerting_alerts{state="nodata"} 0
+				grafana_alerting_alerts{state="normal"} 0
+				grafana_alerting_alerts{state="pending"} 0
+				grafana_alerting_alerts{state="recovering"} 0
+			`
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Add more states that would change counts if recalculated
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Error})
+
+		// Force debounce window by setting lastUpdate to now, capture it
+		cache.metrics.mtx.Lock()
+		ts := time.Now()
+		cache.metrics.lastUpdate = ts
+		cache.metrics.mtx.Unlock()
+
+		// Gather should NOT update metrics due to debounce; counts should remain initial
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Confirm lastUpdate did not change (no metrics refresh happened)
+		cache.metrics.mtx.RLock()
+		tsAfter := cache.metrics.lastUpdate
+		cache.metrics.mtx.RUnlock()
+		require.True(t, tsAfter.Equal(ts), "expected lastUpdate to remain unchanged within debounce window")
+	})
+}
+
+func TestCache_GetAlertInstances(t *testing.T) {
+	ruleKey := models.AlertRuleKey{
+		OrgID: 1,
+		UID:   "rule-uid",
+	}
+
+	testCases := []struct {
+		name   string
+		states []*State
+	}{
+		{
+			name:   "returns empty slice when cache is empty",
+			states: nil,
+		},
+		{
+			name:   "returns alert instances",
+			states: []*State{util.Pointer(randomState(ruleKey)), util.Pointer(randomState(ruleKey))},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newCache()
+			for _, state := range tc.states {
+				cache.set(state)
+			}
+
+			instances := cache.GetAlertInstances()
+
+			require.Len(t, instances, len(tc.states))
+
+			expected := make([]models.AlertInstance, 0, len(tc.states))
+			for _, state := range tc.states {
+				key, err := state.GetAlertInstanceKey()
+				require.NoError(t, err)
+				var lastError string
+				if state.Error != nil {
+					lastError = state.Error.Error()
+				}
+				var lastResult models.LastResult
+				if state.LatestResult != nil {
+					lastResult = models.LastResult{
+						Values:    state.LatestResult.Values,
+						Condition: state.LatestResult.Condition,
+					}
+				}
+				expected = append(expected, models.AlertInstance{
+					AlertInstanceKey:   key,
+					Labels:             models.InstanceLabels(state.Labels),
+					Annotations:        state.Annotations,
+					CurrentState:       models.InstanceStateType(state.State.String()),
+					CurrentReason:      state.StateReason,
+					LastEvalTime:       state.LastEvaluationTime,
+					CurrentStateSince:  state.StartsAt,
+					CurrentStateEnd:    state.EndsAt,
+					FiredAt:            state.FiredAt,
+					ResolvedAt:         state.ResolvedAt,
+					LastSentAt:         state.LastSentAt,
+					ResultFingerprint:  state.ResultFingerprint.String(),
+					EvaluationDuration: state.EvaluationDuration,
+					LastError:          lastError,
+					LastResult:         lastResult,
+				})
+			}
+
+			require.ElementsMatch(t, expected, instances)
+		})
+	}
+}
+
+func TestCache_reset(t *testing.T) {
+	orgID := int64(1)
+
+	testCases := []struct {
+		name          string
+		setup         func(c *cache)
+		expectedOrg1  int
+		expectedOrg2  int
+		expectedTotal int
+	}{
+		{
+			name:          "clears empty cache",
+			setup:         func(c *cache) {},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+		{
+			name: "clears single org states",
+			setup: func(c *cache) {
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(2), State: eval.Pending})
+			},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+		{
+			name: "clears multiple org states",
+			setup: func(c *cache) {
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Normal})
+				c.set(&State{OrgID: 2, AlertRuleUID: "rule3", CacheID: data.Fingerprint(3), State: eval.Error})
+			},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newCache()
+			tc.setup(cache)
+
+			cache.reset()
+
+			require.Len(t, cache.getAll(orgID), tc.expectedOrg1)
+			require.Len(t, cache.getAll(2), tc.expectedOrg2)
+			require.Len(t, cache.GetAlertInstances(), tc.expectedTotal)
+		})
+	}
+
+	t.Run("resets metrics state counts and lastUpdate", func(t *testing.T) {
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+		cache.updateMetrics()
+
+		cache.metrics.mtx.RLock()
+		require.NotNil(t, cache.metrics.stateCounts)
+		require.False(t, cache.metrics.lastUpdate.IsZero())
+		cache.metrics.mtx.RUnlock()
+
+		cache.reset()
+
+		cache.metrics.mtx.RLock()
+		require.Nil(t, cache.metrics.stateCounts)
+		require.True(t, cache.metrics.lastUpdate.IsZero())
+		cache.metrics.mtx.RUnlock()
+	})
+
+	t.Run("cache is usable after reset", func(t *testing.T) {
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+
+		cache.reset()
+
+		newState := &State{OrgID: orgID, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Pending}
+		cache.set(newState)
+
+		states := cache.getAll(orgID)
+		require.Len(t, states, 1)
+		require.Equal(t, newState, states[0])
+	})
+
+	t.Run("metrics can be recalculated after reset", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(2), State: eval.Alerting})
+		cache.RegisterMetrics(reg)
+
+		expectedBefore := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 2
+			grafana_alerting_alerts{state="error"} 0
+			grafana_alerting_alerts{state="nodata"} 0
+			grafana_alerting_alerts{state="normal"} 0
+			grafana_alerting_alerts{state="pending"} 0
+			grafana_alerting_alerts{state="recovering"} 0
+		`
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedBefore), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		cache.reset()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(3), State: eval.Pending})
+
+		expectedAfter := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 0
+			grafana_alerting_alerts{state="error"} 0
+			grafana_alerting_alerts{state="nodata"} 0
+			grafana_alerting_alerts{state="normal"} 0
+			grafana_alerting_alerts{state="pending"} 1
+			grafana_alerting_alerts{state="recovering"} 0
+		`
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedAfter), "grafana_alerting_alerts")
+		require.NoError(t, err)
+	})
+}
+
+func randomState(ruleKey models.AlertRuleKey) State {
 	return State{
 		OrgID:             ruleKey.OrgID,
 		AlertRuleUID:      ruleKey.UID,

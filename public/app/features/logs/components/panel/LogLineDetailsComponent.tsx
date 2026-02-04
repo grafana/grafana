@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  DataSourceWithLogsLabelTypesSupport,
+  GrafanaTheme2,
+  hasLogsLabelTypesSupport,
+  store,
+  TimeRange,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
-import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
@@ -18,6 +24,7 @@ import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
+import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
 import { LogListModel } from './processing';
 
@@ -34,6 +41,7 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
+    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -50,12 +58,15 @@ export const LogLineDetailsComponent = memo(
       };
     }, [log.entryFieldIndex, log.fields]);
 
-    const fieldsWithoutLinks =
-      log.dataFrame.meta?.type === DataFrameType.LogLines
-        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-          []
-        : // for other frames, do not show the log message unless there is a link attached
-          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
+    const fieldsWithoutLinks = useMemo(
+      () =>
+        log.dataFrame.meta?.type === DataFrameType.LogLines
+          ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+            []
+          : // for other frames, do not show the log message unless there is a link attached
+            log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
+      [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
+    );
 
     const labelsWithLinks: LabelWithLinks[] = useMemo(
       () =>
@@ -71,10 +82,16 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const groupedLabels = useMemo(
-      () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
-      [labelsWithLinks, log]
-    );
+    const groupedLabels = useMemo(() => {
+      if (!ds) {
+        return {};
+      }
+      return groupBy(
+        labelsWithLinks,
+        (label) => ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? ''
+      );
+    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex]);
+
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
@@ -124,6 +141,32 @@ export const LogLineDetailsComponent = memo(
       [fieldsWithLinks.links, fieldsWithLinks.linksFromVariableMap]
     );
 
+    useEffect(() => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteractionOnce('logs_log_line_details_fields_displayed', {
+        links: allLinks.length,
+        trace: trace !== undefined,
+        fields: fieldsWithoutLinks.length,
+        labels: labelsWithLinks.length,
+        labelGroups: labelGroups.join(', '),
+      });
+      // Once
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+      const setDatasource = async () => {
+        const datasource = await getDataSourceSrv().get(log.datasourceUid);
+        if (datasource && hasLogsLabelTypesSupport(datasource)) {
+          setDs(datasource);
+        }
+      };
+
+      setDatasource();
+    }, [log.datasourceUid]);
+
     return (
       <>
         <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
@@ -131,7 +174,6 @@ export const LogLineDetailsComponent = memo(
           <ControlledCollapse
             className={styles.collapsable}
             label={t('logs.log-line-details.log-line-section', 'Log line')}
-            collapsible
             isOpen={logLineOpen}
             onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
           >
@@ -140,7 +182,6 @@ export const LogLineDetailsComponent = memo(
           {displayedFields.length > 0 && setDisplayedFields && (
             <ControlledCollapse
               label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
-              collapsible
               isOpen={displayedFieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
             >
@@ -151,7 +192,6 @@ export const LogLineDetailsComponent = memo(
             <ControlledCollapse
               className={styles.collapsable}
               label={t('logs.log-line-details.links-section', 'Links')}
-              collapsible
               isOpen={linksOpen}
               onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
             >
@@ -161,7 +201,6 @@ export const LogLineDetailsComponent = memo(
           {trace && (
             <ControlledCollapse
               label={t('logs.log-line-details.trace-section', 'Trace')}
-              collapsible
               isOpen={traceOpen}
               onToggle={(isOpen: boolean) => handleToggle('traceOpen', isOpen)}
             >
@@ -174,7 +213,6 @@ export const LogLineDetailsComponent = memo(
                 className={styles.collapsable}
                 key={'fields'}
                 label={t('logs.log-line-details.fields-section', 'Fields')}
-                collapsible
                 isOpen={fieldsOpen}
                 onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
               >
@@ -186,7 +224,6 @@ export const LogLineDetailsComponent = memo(
                 className={styles.collapsable}
                 key={group}
                 label={group}
-                collapsible
                 isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
                 onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
               >
@@ -199,7 +236,6 @@ export const LogLineDetailsComponent = memo(
               className={styles.collapsable}
               key={'fields'}
               label={t('logs.log-line-details.fields-section', 'Fields')}
-              collapsible
               isOpen={fieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
             >

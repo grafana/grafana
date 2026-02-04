@@ -13,7 +13,8 @@ import {
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
-import { AzureMonitorQuery, AzureMonitorResource } from '../types/query';
+import { AzureMonitorResource } from '../dataquery.gen';
+import { AzureMonitorQuery } from '../types/query';
 import {
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,

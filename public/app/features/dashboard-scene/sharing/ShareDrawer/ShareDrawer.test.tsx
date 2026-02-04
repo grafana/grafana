@@ -38,7 +38,7 @@ describe('ShareDrawer', () => {
     expect(locationService.getSearch().get('shareView')).toBe('link');
     expect(await screen.findByText('Share externally')).toBeInTheDocument();
     const closeButton = await screen.findByTestId(selectors.components.Drawer.General.close);
-    await act(() => userEvent.click(closeButton));
+    await userEvent.click(closeButton);
 
     expect(locationService.getSearch().get('shareView')).toBe(null);
   });

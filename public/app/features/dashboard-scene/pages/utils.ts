@@ -1,13 +1,13 @@
 import { UrlQueryMap, getTimeZone, getDefaultTimeRange, dateMath } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { updateNavIndex } from 'app/core/actions';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { updateNavIndex } from 'app/core/reducers/navModel';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 
 export async function updateNavModel(folderUid: string) {
   try {
-    const folder = await backendSrv.getFolderByUid(folderUid);
+    const folder = await getFolderByUidFacade(folderUid);
     store.dispatch(updateNavIndex(buildNavModel(folder)));
   } catch (err) {
     console.warn('Error fetching parent folder', folderUid, 'for dashboard', err);
@@ -58,4 +58,22 @@ export function processQueryParamsForDashboardLoad(): UrlQueryMap {
   });
 
   return queryParamsObject;
+}
+
+export function shouldHideDashboardKioskFooter(hideLogo?: string | true): boolean {
+  if (hideLogo === undefined) {
+    return false;
+  }
+
+  if (hideLogo === true || hideLogo === '1') {
+    return true;
+  }
+
+  const normalized = String(hideLogo).trim().toLowerCase();
+  if (normalized === '') {
+    return true;
+  }
+
+  // Only treat explicit values as enabling hideLogo. Anything else is treated as "not enabled" for predictability.
+  return false;
 }

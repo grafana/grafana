@@ -4,13 +4,13 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
-import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
+import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -86,6 +86,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       setHasSubmitted(false);
       return;
     }
+
+    reportInteraction('grafana_provisioning_bulk_move_submitted', {
+      workflow: data.workflow,
+      repositoryName: repository.name ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
+      resourceCount: resources.length,
+    });
 
     // Create the move job spec
     const jobSpec: MoveJobSpec = {
@@ -195,11 +202,12 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
+  const defaultWorkflow = getDefaultWorkflow(repository);
 
   const initialValues = {
     comment: '',
-    ref: `bulk-move/${timestamp}`,
-    workflow: getDefaultWorkflow(repository),
+    ref: defaultWorkflow === 'branch' ? `bulk-move/${timestamp}` : (repository?.branch ?? ''),
+    workflow: defaultWorkflow,
   };
 
   if (!repository || isReadOnlyRepo) {

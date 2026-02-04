@@ -62,11 +62,13 @@ describe('QueryEditorRows', () => {
   it('Should call onQueriesChange with skipAutoImport when replacing query', () => {
     const onQueriesChangeMock = jest.fn();
     const onUpdateDatasourcesMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
 
     const testProps = {
       ...props,
       onQueriesChange: onQueriesChangeMock,
       onUpdateDatasources: onUpdateDatasourcesMock,
+      onRunQueries: onRunQueriesMock,
     };
 
     const component = new QueryEditorRows(testProps);
@@ -90,6 +92,7 @@ describe('QueryEditorRows', () => {
   it('Should call onUpdateDatasources when replacing query with different datasource creates mixed scenario', () => {
     const onQueriesChangeMock = jest.fn();
     const onUpdateDatasourcesMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
 
     const testProps = {
       ...props,
@@ -100,6 +103,7 @@ describe('QueryEditorRows', () => {
         { datasource: { uid: 'current-datasource', type: 'alertmanager' }, refId: 'A' },
         { datasource: { uid: 'current-datasource', type: 'alertmanager' }, refId: 'B' },
       ],
+      onRunQueries: onRunQueriesMock,
     };
 
     const component = new QueryEditorRows(testProps);
@@ -119,11 +123,13 @@ describe('QueryEditorRows', () => {
   it('Should call onUpdateDatasources when replacing query results in single different datasource', () => {
     const onQueriesChangeMock = jest.fn();
     const onUpdateDatasourcesMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
 
     const testProps = {
       ...props,
       onQueriesChange: onQueriesChangeMock,
       onUpdateDatasources: onUpdateDatasourcesMock,
+      onRunQueries: onRunQueriesMock,
       dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
       queries: [{ datasource: { uid: 'current-datasource', type: 'alertmanager' }, refId: 'A' }],
     };
@@ -145,11 +151,13 @@ describe('QueryEditorRows', () => {
   it('Should not call onUpdateDatasources when replacing query with same datasource', () => {
     const onQueriesChangeMock = jest.fn();
     const onUpdateDatasourcesMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
 
     const testProps = {
       ...props,
       onQueriesChange: onQueriesChangeMock,
       onUpdateDatasources: onUpdateDatasourcesMock,
+      onRunQueries: onRunQueriesMock,
       dsSettings: { ...props.dsSettings, uid: 'same-datasource' },
       queries: [
         { datasource: { uid: 'same-datasource', type: 'prometheus' }, refId: 'A' },
@@ -172,11 +180,13 @@ describe('QueryEditorRows', () => {
   it('Should call onUpdateDatasources with mixed datasource when replacing creates mixed scenario', () => {
     const onQueriesChangeMock = jest.fn();
     const onUpdateDatasourcesMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
 
     const testProps = {
       ...props,
       onQueriesChange: onQueriesChangeMock,
       onUpdateDatasources: onUpdateDatasourcesMock,
+      onRunQueries: onRunQueriesMock,
       dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
       queries: [
         { datasource: { uid: 'datasource-1', type: 'loki' }, refId: 'A' },

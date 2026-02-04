@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+
+	glog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -27,6 +32,47 @@ const (
 	PromQueryFormatTable      PromQueryFormat = "table"
 	PromQueryFormatHeatmap    PromQueryFormat = "heatmap"
 )
+
+// UnmarshalJSON implements custom unmarshaling to handle both string and numeric format values.
+// This provides a failsafe to prevent unmarshaling errors when clients incorrectly send
+// numeric values instead of strings for the format field.
+func (f *PromQueryFormat) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as string first (the expected type)
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		// Validate that the string is one of the valid enum values
+		switch s {
+		case string(PromQueryFormatTimeSeries), string(PromQueryFormatTable), string(PromQueryFormatHeatmap):
+			*f = PromQueryFormat(s)
+		default:
+			// Invalid string value, fall back to default
+			*f = PromQueryFormatTimeSeries
+		}
+		return nil
+	}
+
+	// If that fails, try as number and convert to the default format
+	// This handles cases where clients incorrectly send numeric values
+	var n uint32
+	if err := json.Unmarshal(data, &n); err == nil {
+		// Map numbers to format strings for backwards compatibility
+		switch int(n) {
+		case 0, 1:
+			*f = PromQueryFormatTimeSeries
+		case 2:
+			*f = PromQueryFormatTable
+		case 3:
+			*f = PromQueryFormatHeatmap
+		default:
+			*f = PromQueryFormatTimeSeries // default fallback
+		}
+		return nil
+	}
+
+	// If both fail, use default and don't error out (failsafe behavior)
+	*f = PromQueryFormatTimeSeries
+	return nil
+}
 
 // QueryEditorMode defines model for QueryEditorMode.
 // +enum
@@ -66,46 +112,14 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// A set of filters applied to apply to the query
-	Scopes []ScopeSpec `json:"scopes,omitempty"`
+	Scopes []scope.ScopeSpec `json:"scopes,omitempty"`
 
 	// Additional Ad-hoc filters that take precedence over Scope on conflict.
-	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
+	AdhocFilters []scope.ScopeFilter `json:"adhocFilters,omitempty"`
 
 	// Group By parameters to apply to aggregate expressions in the query
 	GroupByKeys []string `json:"groupByKeys,omitempty"`
 }
-
-// ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix). This also has metadata.name inlined.
-type ScopeSpec struct {
-	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
-	Title       string        `json:"title"`
-	DefaultPath []string      `json:"defaultPath,omitempty"`
-	Filters     []ScopeFilter `json:"filters,omitempty"`
-}
-
-// ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix)
-type ScopeFilter struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
-	Values   []string       `json:"values,omitempty"`
-	Operator FilterOperator `json:"operator"`
-}
-
-// FilterOperator is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
-type FilterOperator string
-
-// Hand copy of enum from pkg/apis/scope/v0alpha1/types.go
-const (
-	FilterOperatorEquals        FilterOperator = "equals"
-	FilterOperatorNotEquals     FilterOperator = "not-equals"
-	FilterOperatorRegexMatch    FilterOperator = "regex-match"
-	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
-	FilterOperatorOneOf         FilterOperator = "one-of"
-	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
-)
 
 // Internal interval and range variables
 const (
@@ -173,7 +187,7 @@ type Query struct {
 	ExemplarQuery bool
 	UtcOffsetSec  int64
 
-	Scopes []ScopeSpec
+	Scopes []scope.ScopeSpec
 }
 
 // This internal query struct is just like QueryModel, except it does not include:
@@ -190,10 +204,10 @@ type internalQueryModel struct {
 	Interval     string `json:"interval,omitempty"`
 }
 
-func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
+func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
 	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
-		return nil, err
+		return nil, backend.DownstreamErrorf("error unmarshaling query: %w", err)
 	}
 	span.SetAttributes(attribute.String("rawExpr", model.Expr))
 
@@ -214,37 +228,36 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 		timeRange,
 	)
 
-	if enableScope {
-		var scopeFilters []ScopeFilter
-		for _, scope := range model.Scopes {
-			scopeFilters = append(scopeFilters, scope.Filters...)
-		}
+	var scopeFilters []scope.ScopeFilter
+	for _, scope := range model.Scopes {
+		scopeFilters = append(scopeFilters, scope.Filters...)
+	}
 
-		if len(scopeFilters) > 0 {
-			span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
-				var filters []string
-				for _, f := range scopeFilters {
-					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
-				}
-				return filters
-			}()))
-		}
-
-		if len(model.AdhocFilters) > 0 {
-			span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
-				var filters []string
-				for _, f := range model.AdhocFilters {
-					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
-				}
-				return filters
-			}()))
-		}
-
-		if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
-			expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
-			if err != nil {
-				return nil, err
+	if len(scopeFilters) > 0 {
+		span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
+			var filters []string
+			for _, f := range scopeFilters {
+				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}
+			return filters
+		}()))
+	}
+
+	if len(model.AdhocFilters) > 0 {
+		span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
+			var filters []string
+			for _, f := range model.AdhocFilters {
+				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+			}
+			return filters
+		}()))
+	}
+
+	if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
+		log.Info("Applying scope filters", "scopeFiltersCount", len(scopeFilters), "adhocFiltersCount", len(model.AdhocFilters), "groupByKeysCount", len(model.GroupByKeys))
+		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
+		if err != nil {
+			return nil, err
 		}
 	}
 

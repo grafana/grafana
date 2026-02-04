@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -358,7 +358,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
-				require.Equal(t, util.Pointer(int64(1)), grafanaRule.MissingSeriesEvalsToResolve)
+
+				if promRule.Record != "" {
+					require.Nil(t, grafanaRule.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, util.Pointer(int64(1)), grafanaRule.MissingSeriesEvalsToResolve)
+				}
 
 				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
 				require.Equal(t, models.OK, grafanaRule.NoDataState)

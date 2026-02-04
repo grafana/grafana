@@ -8,6 +8,7 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--grouping=group \
 		--defencoding=none \
 		--noschemasinmanifest \
+		--genoperatorstate=false \
 		--postprocess
 
 .PHONY: deps

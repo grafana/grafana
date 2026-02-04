@@ -30,9 +30,11 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
   }
 
   googlechat {
-    url     = "http://localhost"
-    title   = "test-title"
-    message = "test-message"
+    url               = "http://localhost"
+    title             = "test-title"
+    message           = "test-message"
+    hide_open_button  = true
+    hide_version_info = true
   }
 
   jira {
@@ -231,7 +233,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
   }
 
   webhook {
-    url                  = "http://localhost"
+    url                  = "grafana://noop"
     http_method          = "PUT"
     max_alerts           = 2
     authorization_scheme = "basic"

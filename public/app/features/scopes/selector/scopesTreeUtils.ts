@@ -109,3 +109,46 @@ export function treeNodeAtPath(tree: TreeNode, path: string[]) {
 
   return treeNode;
 }
+
+// Path starts with root node and goes down
+export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
+  const stringPath = path.map((n) => n.metadata.name);
+  stringPath.unshift('');
+
+  let newTree = tree;
+
+  // Go down the tree, don't iterate over the last node
+  for (let index = 0; index < stringPath.length - 1; index++) {
+    const childNodeName = stringPath[index + 1];
+    // Path up to iteration point
+    const pathSlice = stringPath.slice(0, index + 1);
+    newTree = modifyTreeNodeAtPath(newTree, pathSlice, (treeNode) => {
+      treeNode.children = { ...treeNode.children };
+      if (!childNodeName) {
+        console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
+        treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
+        return;
+      }
+      // Create node if it doesn't exist
+      if (!treeNode.children[childNodeName]) {
+        treeNode.children[childNodeName] = {
+          expanded: false,
+          scopeNodeId: childNodeName,
+          query: '',
+          children: {},
+          childrenLoaded: false,
+        };
+      } else {
+        // Node exists, ensure it has children object for nested insertion
+        if (treeNode.children[childNodeName].children === undefined) {
+          treeNode.children[childNodeName] = {
+            ...treeNode.children[childNodeName],
+            children: {},
+          };
+        }
+      }
+      treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
+    });
+  }
+  return newTree;
+};

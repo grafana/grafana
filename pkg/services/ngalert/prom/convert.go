@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -272,16 +272,16 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		RuleGroup:     promGroup.Name,
 		IsPaused:      isPaused,
 		Record:        record,
+	}
+
+	if !isRecordingRule {
+		result.NotificationSettings = p.cfg.NotificationSettings
 
 		// MissingSeriesEvalsToResolve is set to 1 to match the Prometheus behaviour.
 		// Prometheus resolves alerts as soon as the series disappears.
 		// By setting this value to 1 we ensure that the alert is resolved on the first evaluation
 		// that doesn't have the series.
-		MissingSeriesEvalsToResolve: util.Pointer[int64](1),
-	}
-
-	if !isRecordingRule {
-		result.NotificationSettings = p.cfg.NotificationSettings
+		result.MissingSeriesEvalsToResolve = util.Pointer[int64](1)
 	}
 
 	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {

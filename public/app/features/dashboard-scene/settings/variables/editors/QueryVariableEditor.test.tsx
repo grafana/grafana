@@ -33,6 +33,12 @@ const promDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      multiPropsVariables: true,
+    },
+  },
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -73,6 +79,7 @@ describe('QueryVariableEditor', () => {
       },
       query: 'my-query',
       regex: '.*',
+      regexApplyTo: 'value',
       sort: VariableSort.alphabeticalAsc,
       refresh: VariableRefresh.onDashboardLoad,
       isMulti: true,
@@ -146,6 +153,22 @@ describe('QueryVariableEditor', () => {
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
     expect(staticOptionsToggle).toBeInTheDocument();
+  });
+
+  it('should update the variable with default datasource when opening editor', async () => {
+    const onRunQueryMock = jest.fn();
+    const variable = new QueryVariable({ datasource: undefined, query: '' });
+
+    await act(() =>
+      setup({
+        variable,
+        onRunQuery: onRunQueryMock,
+      })
+    );
+
+    await waitFor(async () => {
+      expect(variable.state.datasource).not.toBe(undefined);
+    });
   });
 
   it('should update the variable with default query for the selected DS', async () => {
@@ -370,7 +393,7 @@ describe('QueryVariableEditor', () => {
   it('should update the variable state when adding two static options', async () => {
     const {
       variable,
-      renderer: { getByTestId, getAllByTestId },
+      renderer: { getByTestId, getAllByPlaceholderText },
       user,
     } = await setup();
 
@@ -384,50 +407,37 @@ describe('QueryVariableEditor', () => {
     await userEvent.click(staticOptionsToggle);
 
     // Add first static option
-    const addButton = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton
-    );
+    const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);
     await user.click(addButton);
 
     // Enter label and value for first option
-    const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
-    );
-    const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
-    );
-
-    await user.type(labelInputs[0], 'First Option');
-    await user.type(valueInputs[0], 'first-value');
-
-    await waitFor(async () => {
-      await lastValueFrom(variable.validateAndUpdate());
-    });
-
-    expect(variable.state.staticOptions).toEqual([{ label: 'First Option', value: 'first-value' }]);
-
-    // Add second static option
-    await user.click(addButton);
-
-    // Get updated inputs (now there should be 2 sets)
-    const updatedLabelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
-    );
-    const updatedValueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
-    );
-
-    // Enter label and value for second option
-    await user.type(updatedLabelInputs[1], 'Second Option');
-    await user.type(updatedValueInputs[1], 'second-value');
+    await user.type(getAllByPlaceholderText('text')[0], 'First Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[0], 'first-value[Tab]');
+    await screen.findByDisplayValue('first-value');
 
     await waitFor(async () => {
       await lastValueFrom(variable.validateAndUpdate());
     });
 
     expect(variable.state.staticOptions).toEqual([
-      { label: 'First Option', value: 'first-value' },
-      { label: 'Second Option', value: 'second-value' },
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+    ]);
+
+    // Add second static option
+    await user.click(addButton);
+
+    // Enter label and value for second option
+    await user.type(getAllByPlaceholderText('text')[1], 'Second Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[1], 'second-value[Tab]');
+    await screen.findByDisplayValue('second-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+      { label: 'Second Option', value: 'second-value', properties: { text: 'Second Option', value: 'second-value' } },
     ]);
   });
 
@@ -459,7 +469,7 @@ describe('QueryVariableEditor', () => {
       title: 'Mock Parent',
     });
 
-    const { queryByRole } = render(descriptor.render());
+    const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
 
     // 1. Initial state: "Open variable editor" button is visible, Modal is not.

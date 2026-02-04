@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -66,6 +68,15 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	start := time.Now()
 	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
 	defer func() {
+		// If at this point the identity is still empty, try to get it from the auth info in context.
+		if decrypterIdentity == "" {
+			if authInfo, ok := claims.AuthInfoFrom(ctx); authInfo != nil && ok {
+				if serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]; ok && len(serviceIdentityList) > 0 {
+					decrypterIdentity = strings.TrimSpace(serviceIdentityList[0])
+				}
+			}
+		}
+
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
 
 		args := []any{
@@ -98,7 +109,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
-		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel).Observe(time.Since(start).Seconds())
+		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel, cmp.Or(decrypterIdentity, "unknown")).Observe(time.Since(start).Seconds())
 
 		// Do not leak error details to caller, return only the wrapped domain errors.
 		if decryptErr != nil {
@@ -116,6 +127,10 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	// function call happens after this.
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", fmt.Errorf("operation canceled while reading secure value metadata storage: %v (%w)", err, context.Canceled)
+		}
+
 		return "", fmt.Errorf("failed to read secure value metadata storage: %v (%w)", err, contracts.ErrDecryptNotFound)
 	}
 
@@ -124,8 +139,12 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to authorize decryption with reason %v (%w)", reason, contracts.ErrDecryptNotAuthorized)
 	}
 
-	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Spec.Keeper, contracts.ReadOpts{})
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", fmt.Errorf("operation canceled while reading keeper config metadata storage: %v (%w)", err, context.Canceled)
+		}
+
 		return "", fmt.Errorf("failed to read keeper config metadata storage: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
@@ -134,8 +153,25 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to get keeper for config: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
-	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), name, sv.Status.Version)
+	if sv.Spec.Ref != nil {
+		exposedValue, err := keeper.RetrieveReference(ctx, keeperConfig, *sv.Spec.Ref)
+		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return "", fmt.Errorf("operation canceled while exposing secret using reference: %v (%w)", err, context.Canceled)
+			}
+
+			return "", fmt.Errorf("failed to expose secret using reference: %v (%w)", err, contracts.ErrDecryptFailed)
+		}
+
+		return exposedValue, nil
+	}
+
+	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace, name, sv.Status.Version)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", fmt.Errorf("operation canceled while exposing secret: %v (%w)", err, context.Canceled)
+		}
+
 		return "", fmt.Errorf("failed to expose secret: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 

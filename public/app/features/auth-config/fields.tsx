@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
@@ -121,6 +121,8 @@ export const getSectionFields = (): Section => {
           { name: 'teamIds', dependsOn: 'defineAllowedTeamsIds' },
           { name: 'teamsUrl', dependsOn: 'defineAllowedTeamsIds' },
           { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -142,7 +144,14 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
-          'loginPrompt',
+          {
+            name: 'loginPrompt',
+            disabledWhen: {
+              field: 'useRefreshToken',
+              is: true,
+              disabledValue: { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+            },
+          },
         ],
       },
       {
@@ -164,6 +173,8 @@ export const getSectionFields = (): Section => {
           'hostedDomain',
           'allowedDomains',
           'allowedGroups',
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -247,6 +258,8 @@ export const getSectionFields = (): Section => {
         fields: [
           'allowedDomains',
           'allowedGroups',
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -291,6 +304,8 @@ export const getSectionFields = (): Section => {
         fields: [
           'allowedDomains',
           'allowedGroups',
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -729,11 +744,47 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     useRefreshToken: {
       label: t('auth-config.fields.use-refresh-token-label', 'Use refresh token'),
+      description:
+        provider === 'google'
+          ? t(
+              'auth-config.fields.use-refresh-token-description-google',
+              'If enabled, Grafana will fetch a new access token using the refresh token provided by Google. This forces the login prompt to "Consent" to ensure Google returns a refresh token.'
+            )
+          : t(
+              'auth-config.fields.use-refresh-token-description',
+              'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
+            ),
+      type: 'checkbox',
+    },
+    validateIdToken: {
+      label: t('auth-config.fields.validate-id-token-label', 'Validate ID token'),
       description: t(
-        'auth-config.fields.use-refresh-token-description',
-        'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
+        'auth-config.fields.validate-id-token-description',
+        'If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.'
       ),
       type: 'checkbox',
+    },
+    jwkSetUrl: {
+      label: t('auth-config.fields.jwk-set-url-label', 'JWK Set URL'),
+      description: t(
+        'auth-config.fields.jwk-set-url-description',
+        'URL of the JSON Web Key Set (JWKS) endpoint used to verify JWT ID token signatures. Required when ID token validation is enabled. Common locations include: .well-known/jwks.json for OIDC providers.'
+      ),
+      type: 'text',
+      validation: {
+        validate: (value, formValues) => {
+          if (formValues.validateIdToken && !value) {
+            return t(
+              'auth-config.fields.jwk-set-url-required',
+              'JWK Set URL is required when ID token validation is enabled.'
+            );
+          }
+          if (value && !isUrlValid(value)) {
+            return t('auth-config.fields.jwk-set-url-invalid', 'JWK Set URL must be a valid URL.');
+          }
+          return true;
+        },
+      },
     },
     tlsClientCa: {
       label: t('auth-config.fields.tls-client-ca-label', 'TLS client CA'),
@@ -906,7 +957,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
       description: t(
         'auth-config.fields.domain-hint-description',
-        'Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.'
+        'Parameter to indicate the realm of the user in the Entra ID tenant and streamline the login process.'
       ),
       type: 'text',
       validation: {
@@ -922,10 +973,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     loginPrompt: {
       label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
       type: 'select',
-      description: t(
-        'auth-config.fields.login-prompt-description',
-        'Indicates the type of user interaction when the user logs in with the IdP.'
-      ),
+      description:
+        provider === 'google'
+          ? t(
+              'auth-config.fields.login-prompt-description-google',
+              'Indicates the type of user interaction when the user logs in with Google. This is forced to "Consent" when "Use refresh token" is enabled.'
+            )
+          : t(
+              'auth-config.fields.login-prompt-description',
+              'Indicates the type of user interaction when the user logs in with the IdP.'
+            ),
       multi: false,
       options: [
         { value: '', label: '' },

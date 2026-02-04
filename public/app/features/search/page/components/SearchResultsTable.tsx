@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
@@ -30,6 +31,7 @@ export type SearchResultsProps = {
   onDatasourceChange?: (datasource?: string) => void;
   onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
+  trackingSource?: string;
 };
 
 export type TableColumn = Column & {
@@ -50,6 +52,7 @@ export const SearchResultsTable = React.memo(
     onDatasourceChange,
     onClickItem,
     keyboardEvents,
+    trackingSource,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
@@ -141,6 +144,35 @@ export const SearchResultsTable = React.memo(
         return (
           <div key={key} {...rowProps} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
+              const href = onClickItem ? url : undefined;
+
+              let userProps = {
+                href,
+                onClick: onClickItem,
+              };
+
+              if (cell.column.id === 'column-name' && href) {
+                const item = response.view.get(rowIndex);
+                const itemKind = item.kind;
+                const parent = item.location || 'general';
+                const parentType = parent === 'general' ? 'general' : 'folder';
+
+                userProps.onClick = (evt: React.MouseEvent<HTMLElement>) => {
+                  try {
+                    reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+                      itemKind: itemKind,
+                      parent: parentType,
+                      source: trackingSource,
+                    });
+                  } catch (e) {
+                    // ignore analytics errors
+                  }
+                  if (onClickItem) {
+                    onClickItem(evt);
+                  }
+                };
+              }
+
               return (
                 <TableCell
                   key={index}
@@ -148,7 +180,7 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   columnIndex={index}
                   columnCount={row.cells.length}
-                  userProps={{ href: onClickItem ? url : undefined, onClick: onClickItem }}
+                  userProps={userProps}
                   frame={response.view.dataFrame}
                 />
               );
@@ -156,16 +188,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [
-        rows,
-        prepareRow,
-        response.view.fields.url?.values,
-        highlightIndex,
-        styles,
-        tableStyles,
-        onClickItem,
-        response.view.dataFrame,
-      ]
+      [rows, prepareRow, highlightIndex, styles, tableStyles, onClickItem, response.view, trackingSource]
     );
 
     if (!rows.length) {

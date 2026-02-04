@@ -10,7 +10,9 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
+import { FeatureToggles } from '@grafana/data';
 import {
+  config,
   HistoryWrapper,
   LocationServiceProvider,
   setChromeHeaderHeightHook,
@@ -119,6 +121,50 @@ const customRender = (
     user,
     store,
   };
+};
+
+/**
+ * Enables and disables feature toggles `beforeEach` test, and sets back to empty object `afterEach` test
+ */
+export const testWithFeatureToggles = ({
+  enable,
+  disable,
+}: {
+  enable?: Array<keyof FeatureToggles>;
+  disable?: Array<keyof FeatureToggles>;
+}) => {
+  beforeEach(() => {
+    for (const featureToggle of enable || []) {
+      config.featureToggles[featureToggle] = true;
+    }
+    for (const featureToggle of disable || []) {
+      config.featureToggles[featureToggle] = false;
+    }
+  });
+
+  afterEach(() => {
+    config.featureToggles = {};
+  });
+};
+
+/**
+ * Enables license features `beforeEach` test, and sets back to empty object `afterEach` test
+ */
+export const testWithLicenseFeatures = ({ enable, disable }: { enable?: string[]; disable?: string[] }) => {
+  beforeEach(() => {
+    config.licenseInfo.enabledFeatures = config.licenseInfo.enabledFeatures || {};
+
+    for (const feature of enable || []) {
+      config.licenseInfo.enabledFeatures[feature] = true;
+    }
+    for (const feature of disable || []) {
+      config.licenseInfo.enabledFeatures[feature] = false;
+    }
+  });
+
+  afterEach(() => {
+    config.licenseInfo.enabledFeatures = {};
+  });
 };
 
 export * from '@testing-library/react';

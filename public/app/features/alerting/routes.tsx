@@ -1,9 +1,8 @@
 import { Navigate } from 'react-router-dom-v5-compat';
 
+import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
-import { AlertingPageWrapper } from 'app/features/alerting/unified/components/AlertingPageWrapper';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
@@ -85,6 +84,22 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "EditMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
           )
       ),
+    },
+    {
+      path: '/alerting/routes/policy/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        ...PERMISSIONS_NOTIFICATION_POLICIES_READ,
+        ...PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
+      ]),
+      component: config.featureToggles.alertingMultiplePolicies
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting/routes" />,
     },
     {
       path: '/alerting/silences',
@@ -241,6 +256,24 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
+      path: '/alerting/import-to-gma',
+      roles: evaluateAccess([
+        // For rules import
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        // For notifications import (contact points, policies, templates, time intervals)
+        AccessControlAction.AlertingNotificationsWrite,
+      ]),
+      component: config.featureToggles.alertingMigrationWizardUI
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "AlertingImportToGMA"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMA'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
@@ -336,9 +369,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 
   if (cfg.featureToggles.alertingTriage) {
     routes.push({
-      path: '/alerting/triage',
+      path: '/alerting/alerts',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
-      component: () => <AlertingPageWrapper />,
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')
+      ),
     });
   }
 

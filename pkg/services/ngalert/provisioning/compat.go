@@ -3,19 +3,19 @@ package provisioning
 import (
 	"strings"
 
-	alertingNotify "github.com/grafana/alerting/notify"
+	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func EmbeddedContactPointToGrafanaIntegrationConfig(e definitions.EmbeddedContactPoint) (alertingNotify.GrafanaIntegrationConfig, error) {
+func EmbeddedContactPointToGrafanaIntegrationConfig(e *definitions.EmbeddedContactPoint) (alertingModels.IntegrationConfig, error) {
 	data, err := e.Settings.MarshalJSON()
 	if err != nil {
-		return alertingNotify.GrafanaIntegrationConfig{}, err
+		return alertingModels.IntegrationConfig{}, err
 	}
-	return alertingNotify.GrafanaIntegrationConfig{
+	return alertingModels.IntegrationConfig{
 		UID:                   e.UID,
 		Name:                  e.Name,
 		Type:                  e.Type,
@@ -61,7 +61,7 @@ func GrafanaIntegrationConfigToEmbeddedContactPoint(r *models.Integration, prove
 	return definitions.EmbeddedContactPoint{
 		UID:                   r.UID,
 		Name:                  r.Name,
-		Type:                  r.Config.Type,
+		Type:                  string(r.Config.Type()),
 		DisableResolveMessage: r.DisableResolveMessage,
 		Settings:              settingJson,
 		Provenance:            string(provenance),

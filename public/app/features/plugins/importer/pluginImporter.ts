@@ -16,12 +16,7 @@ import { config } from '@grafana/runtime';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
-import {
-  addedComponentsRegistry,
-  addedFunctionsRegistry,
-  addedLinksRegistry,
-  exposedComponentsRegistry,
-} from '../extensions/registry/setup';
+import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
@@ -48,7 +43,8 @@ const panelPluginPostImport: PostImportStrategy<PanelPlugin, PanelPluginMeta> = 
     const pluginExports = await module;
 
     if (pluginExports.plugin) {
-      const plugin: PanelPlugin = pluginExports.plugin;
+      // pluginExports.plugin can either be a Promise<PanelPlugin> or a PanelPlugin
+      const plugin: PanelPlugin = await pluginExports.plugin;
       plugin.meta = meta;
       pluginsCache.set(meta.id, plugin);
       return plugin;
@@ -97,6 +93,8 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   plugin.meta = meta;
   plugin.setComponentsFromLegacyExports(pluginExports);
 
+  const { exposedComponentsRegistry, addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry } =
+    await getPluginExtensionRegistries();
   exposedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.exposedComponentConfigs || [] });
   addedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.addedComponentConfigs || [] });
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });
@@ -146,7 +144,6 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
       expectedHash: meta.moduleHash ?? '',
       loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
       sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
     });
     return Promise.resolve(cached);
   }
@@ -159,7 +156,6 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
       expectedHash: meta.moduleHash ?? '',
       loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
       sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
     });
     return getPromiseFromCache(meta);
   }

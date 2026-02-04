@@ -3,17 +3,25 @@ package kinds
 correlationsv0alpha1: {
 	kind:       "Correlation"  // note: must be uppercase
 	pluralName: "Correlations"
+	mutation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		spec: {
-			source_ds_ref:  DataSourceRef
-			target_ds_ref?:  DataSourceRef
-			label:       string
+			type:         CorrelationType
+			source:       DataSourceRef
+			target?:      DataSourceRef
 			description?: string
-			config:      ConfigSpec
-			provisioned: bool
-			type:        CorrelationType
+			label:        string
+			config:       ConfigSpec
 		}
 	}
+	selectableFields: [
+		"spec.datasource.name"
+	]
 }
 
 DataSourceRef: {
@@ -29,10 +37,12 @@ ConfigSpec: {
 	transformations?: [...TransformationSpec]
 }
 
-TargetSpec:  [string]: _
+TargetSpec: {
+	...
+}
 
 TransformationSpec: {
-	type: string
+	type: "regex" | "logfmt"
 	expression: string
 	field: string
 	mapValue: string

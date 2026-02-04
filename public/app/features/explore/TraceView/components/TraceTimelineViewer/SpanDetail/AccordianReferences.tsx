@@ -37,20 +37,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   AccordianReferences: css({
     label: 'AccordianReferences',
     position: 'relative',
-    marginBottom: '0.25rem',
   }),
   AccordianReferencesHeader: css({
     label: 'AccordianReferencesHeader',
     color: 'inherit',
     display: 'block',
     padding: '0.25rem 0',
-    '&:hover': {
-      background: autoColor(theme, '#dadada'),
-    },
   }),
   AccordianReferencesContent: css({
     label: 'AccordianReferencesContent',
-    background: autoColor(theme, '#f0f0f0'),
     borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
     padding: '0.5rem 0.5rem 0.25rem 0.5rem',
   }),
@@ -96,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   debugLabel: css({
     margin: '0 5px 0 5px',
     '&::before': {
-      color: '#bbb',
+      color: autoColor(theme, '#666'),
       content: 'attr(data-label)',
     },
   }),

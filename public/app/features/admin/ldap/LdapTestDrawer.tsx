@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { useDispatch, useSelector } from 'app/types/store';

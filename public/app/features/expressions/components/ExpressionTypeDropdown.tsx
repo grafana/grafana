@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import { ReactElement, useCallback, useMemo, memo } from 'react';
+import { css, cx } from '@emotion/css';
+import { memo, ReactElement, useCallback, useMemo } from 'react';
 
 import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
@@ -15,31 +15,40 @@ const EXPRESSION_ICON_MAP = {
 } as const satisfies Record<ExpressionQueryType, string>;
 
 interface ExpressionTypeDropdownProps {
-  children: ReactElement;
+  children: ReactElement<Record<string, unknown>>;
   handleOnSelect: (value: ExpressionQueryType) => void;
+  disabledExpressions?: Partial<Record<ExpressionQueryType, string>>;
 }
 
 interface ExpressionMenuItemProps {
   item: SelectableValue<ExpressionQueryType>;
   onSelect: (value: ExpressionQueryType) => void;
+  disabled?: string;
 }
 
-const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) => {
+const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disabled }) => {
   const { value, label, description } = item;
   const styles = useStyles2(getStyles);
 
-  const handleClick = useCallback(() => onSelect(value!), [value, onSelect]);
+  const handleClick = useCallback(() => {
+    onSelect(value!);
+  }, [value, onSelect]);
+
+  const tooltipContent = disabled || description;
 
   return (
     <Menu.Item
       component={() => (
-        <div className={styles.expressionTypeItem} role="menuitem">
-          <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
+        <div className={styles.expressionTypeItem} role="menuitem" aria-disabled={!!disabled}>
+          <div
+            className={cx(styles.expressionTypeItemContent, { [styles.expressionTypeItemDisabled]: !!disabled })}
+            data-testid={`expression-type-${value}`}
+          >
             <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
             {label}
-            {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.new} />}
+            {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>
-          <Tooltip placement="right" content={description!}>
+          <Tooltip placement="right" content={tooltipContent!}>
             <Icon className={styles.infoIcon} name="info-circle" />
           </Tooltip>
         </div>
@@ -47,26 +56,36 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
       key={value}
       label=""
       onClick={handleClick}
+      disabled={!!disabled}
     />
   );
 });
 
 ExpressionMenuItem.displayName = 'ExpressionMenuItem';
 
-export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(({ handleOnSelect, children }) => {
-  const menuItems = useMemo(
-    () => expressionTypes.map((item) => <ExpressionMenuItem key={item.value} item={item} onSelect={handleOnSelect} />),
-    [handleOnSelect]
-  );
+export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(
+  ({ handleOnSelect, children, disabledExpressions = {} }) => {
+    const menuItems = useMemo(
+      () =>
+        expressionTypes.map((item) => {
+          const disabledReason = item.value ? disabledExpressions[item.value] : undefined;
 
-  const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
+          return (
+            <ExpressionMenuItem key={item.value} item={item} onSelect={handleOnSelect} disabled={disabledReason} />
+          );
+        }),
+      [handleOnSelect, disabledExpressions]
+    );
 
-  return (
-    <Dropdown placement="bottom-start" overlay={menuOverlay}>
-      {children}
-    </Dropdown>
-  );
-});
+    const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
+
+    return (
+      <Dropdown placement="bottom-start" overlay={menuOverlay}>
+        {children}
+      </Dropdown>
+    );
+  }
+);
 
 ExpressionTypeDropdown.displayName = 'ExpressionTypeDropdown';
 
@@ -84,6 +103,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+    }),
+
+    expressionTypeItemDisabled: css({
+      opacity: 0.5,
+      cursor: 'not-allowed',
     }),
 
     icon: css({

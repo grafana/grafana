@@ -8,9 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/trend/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.3.0-pre";
+export const pluginVersion = "12.4.0-pre";
 
 /**
  * Identical to timeseries... except it does not have timezone settings

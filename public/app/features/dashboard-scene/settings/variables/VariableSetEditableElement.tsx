@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useId, useMemo } from 'react';
-import { useToggle } from 'react-use';
+import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { useCallback, useId, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
+import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -16,7 +16,8 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../../sc
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import { openAddVariablePane } from './VariableAddEditableElement';
+import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -33,6 +34,22 @@ function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariable
 
   return [options];
 }
+
+function partitionVariables(variables: SceneVariable[]) {
+  const standardVariables: SceneVariable[] = [];
+  const controlsMenuVariables: SceneVariable[] = [];
+
+  variables.forEach((variable) => {
+    if (variable.state.hide === VariableHide.inControlsMenu) {
+      controlsMenuVariables.push(variable);
+    } else {
+      standardVariables.push(variable);
+    }
+  });
+
+  return { standardVariables, controlsMenuVariables };
+}
+
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Variable';
@@ -48,100 +65,178 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    return this.set.state.variables;
+    const { standardVariables, controlsMenuVariables } = partitionVariables(
+      this.set.state.variables
+        // filter out system and snapshot variables
+        .filter((variable) => isEditableVariableType(variable.state.type))
+    );
+    return [...standardVariables, ...controlsMenuVariables];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
 }
 
 export function VariableList({ set }: { set: SceneVariableSet }) {
-  const { variables } = set.useState();
   const styles = useStyles2(getStyles);
-  const [isAdding, setIsAdding] = useToggle(false);
+  const { variables } = set.useState();
+
   const canAdd = set.parent instanceof DashboardScene;
+  const onAddVariable = useCallback(() => {
+    openAddVariablePane(getDashboardSceneFor(set));
+    DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+  }, [set]);
 
-  const onEditVariable = (variable: SceneVariable) => {
-    const { editPane } = getDashboardSceneFor(set).state;
-    editPane.selectObject(variable, variable.state.key!);
-  };
+  const onEditVariable = useCallback(
+    (variable: SceneVariable) => {
+      const { editPane } = getDashboardSceneFor(set).state;
+      editPane.selectObject(variable, variable.state.key!);
+    },
+    [set]
+  );
 
-  const onAddVariable = (type: EditableVariableType) => {
-    const { variables } = set.state;
-    const nextName = getNextAvailableId(type, variables);
-    const newVar = getVariableScene(type, { name: nextName });
-
-    dashboardEditActions.addVariable({
-      source: set,
-      addedObject: newVar,
+  const { editableVariables, nonEditableVariables } = useMemo(() => {
+    const editableVariables: SceneVariable[] = [];
+    const nonEditableVariables: SceneVariable[] = [];
+    variables.forEach((variable) => {
+      if (isEditableVariableType(variable.state.type)) {
+        editableVariables.push(variable);
+      } else {
+        nonEditableVariables.push(variable);
+      }
     });
+    return {
+      editableVariables,
+      nonEditableVariables,
+    };
+  }, [variables]);
 
-    setIsAdding(false);
-  };
+  const { standardVariables, controlsMenuVariables } = useMemo(
+    () => partitionVariables(editableVariables),
+    [editableVariables]
+  );
 
-  if (isAdding) {
-    return <VariableTypeSelection onAddVariable={onAddVariable} />;
-  }
+  const createDragEndHandler = useCallback(
+    (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
+      return (result: DropResult) => {
+        const currentList = set.state.variables;
+
+        dashboardEditActions.edit({
+          source: set,
+          description: t(
+            'dashboard-scene.variable-list.create-drag-end-handler.description.reorder-variables-list',
+            'Reorder variables list'
+          ),
+          perform: () => {
+            if (!result.destination || result.destination.index === result.source.index) {
+              return;
+            }
+
+            DashboardInteractions.variablesReordered({ source: 'edit_pane' });
+
+            const updatedList = [...sourceList];
+            const [movedVariable] = updatedList.splice(result.source.index, 1);
+            updatedList.splice(result.destination.index, 0, movedVariable);
+
+            set.setState({
+              variables: [...nonEditableVariables, ...mergeLists(updatedList)],
+            });
+          },
+          undo: () => {
+            set.setState({ variables: currentList });
+          },
+        });
+      };
+    },
+    [nonEditableVariables, set]
+  );
+
+  const onStandardDragEnd = useMemo(
+    () => createDragEndHandler(standardVariables, (updatedList) => [...updatedList, ...controlsMenuVariables]),
+    [controlsMenuVariables, createDragEndHandler, standardVariables]
+  );
+
+  const onControlsDragEnd = useMemo(
+    () => createDragEndHandler(controlsMenuVariables, (updatedList) => [...standardVariables, ...updatedList]),
+    [controlsMenuVariables, createDragEndHandler, standardVariables]
+  );
+
+  const onPointerDown = useCallback((event: React.PointerEvent) => {
+    event.stopPropagation();
+  }, []);
+
+  const renderList = (list: SceneVariable[], droppableId: string) => (
+    <Droppable droppableId={droppableId} direction="vertical">
+      {(provided) => (
+        <Stack ref={provided.innerRef} {...provided.droppableProps} direction="column" gap={0}>
+          {list.map((variable, index) => (
+            <Draggable
+              key={variable.state.key ?? variable.state.name}
+              draggableId={`${variable.state.key ?? variable.state.name}`}
+              index={index}
+            >
+              {(draggableProvided) => (
+                // TODO fix keyboard a11y here
+                // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
+                <div
+                  className={styles.variableItem}
+                  key={variable.state.name}
+                  onClick={() => onEditVariable(variable)}
+                  ref={draggableProvided.innerRef}
+                  {...draggableProvided.draggableProps}
+                >
+                  <div className={styles.variableContent}>
+                    <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
+                      <Tooltip content={t('dashboard.edit-pane.variables.reorder', 'Drag to reorder')} placement="top">
+                        <Icon name="draggabledots" size="md" className={styles.dragHandle} />
+                      </Tooltip>
+                    </div>
+                    <Text>${variable.state.name}</Text>
+                    {variable.state.hide === VariableHide.hideVariable && (
+                      <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />
+                    )}
+                    {variable.state.hide === VariableHide.inControlsMenu && (
+                      <Icon name="sliders-v-alt" size="sm" className={styles.hiddenIcon} />
+                    )}
+                  </div>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <Button variant="primary" size="sm" fill="outline">
+                      <Trans i18nKey="dashboard.edit-pane.variables.select-variable">Select</Trans>
+                    </Button>
+                  </Stack>
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </Stack>
+      )}
+    </Droppable>
+  );
 
   return (
-    <Stack direction="column" gap={0}>
-      {variables.map((variable) => (
-        // TODO fix keyboard a11y here
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
-        <div className={styles.variableItem} key={variable.state.name} onClick={() => onEditVariable(variable)}>
-          <Text>${variable.state.name}</Text>
-          <Stack direction="row" gap={1} alignItems="center">
-            <Button variant="primary" size="sm" fill="outline">
-              <Trans i18nKey="dashboard.edit-pane.variables.select-variable">Select</Trans>
-            </Button>
-          </Stack>
-        </div>
-      ))}
+    <Stack direction="column" gap={1}>
+      <DragDropContext onDragEnd={onStandardDragEnd}>
+        {renderList(standardVariables, 'variables-outline-standard')}
+      </DragDropContext>
+      {controlsMenuVariables.length > 0 && (
+        <DragDropContext onDragEnd={onControlsDragEnd}>
+          {renderList(controlsMenuVariables, 'variables-outline-controls')}
+        </DragDropContext>
+      )}
       {canAdd && (
-        <Box paddingBottom={1} display={'flex'}>
+        <Box paddingBottom={1} paddingTop={1} display={'flex'}>
           <Button
             fullWidth
             icon="plus"
             size="sm"
             variant="secondary"
-            onClick={() => {
-              DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
-              setIsAdding();
-            }}
+            onClick={onAddVariable}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
           >
             <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
           </Button>
         </Box>
       )}
-    </Stack>
-  );
-}
-
-interface VariableTypeSelectionProps {
-  onAddVariable: (type: EditableVariableType) => void;
-}
-
-function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
-  const options = getVariableTypeSelectOptions();
-  const styles = useStyles2(getStyles);
-
-  return (
-    <Stack direction={'column'} gap={0}>
-      <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
-      </Box>
-      {options.map((option) => (
-        <Card
-          isCompact
-          onClick={() => onAddVariable(option.value!)}
-          key={option.value}
-          title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
-        >
-          <Card.Heading>{option.label}</Card.Heading>
-          <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
-        </Card>
-      ))}
     </Stack>
   );
 }
@@ -161,9 +256,6 @@ function getStyles(theme: GrafanaTheme2) {
           duration: theme.transitions.duration.short,
         }),
       },
-      '&:last-child': {
-        marginBottom: theme.spacing(2),
-      },
       button: {
         visibility: 'hidden',
       },
@@ -174,9 +266,23 @@ function getStyles(theme: GrafanaTheme2) {
         },
       },
     }),
-    cardDescription: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      marginTop: theme.spacing(0),
+    variableContent: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    dragHandle: css({
+      display: 'flex',
+      alignItems: 'center',
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      '&:active': {
+        cursor: 'grabbing',
+      },
+    }),
+    hiddenIcon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(1),
     }),
   };
 }

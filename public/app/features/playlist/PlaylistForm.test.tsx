@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Playlist } from '../../api/clients/playlist/v0alpha1';
@@ -12,6 +12,8 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 }));
 
 const mockPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v0alpha1',
+  kind: 'Playlist',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -28,6 +30,8 @@ const mockPlaylist: Playlist = {
 };
 
 const mockEmptyPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v0alpha1',
+  kind: 'Playlist',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -89,7 +93,9 @@ describe('PlaylistForm', () => {
 
       expect(rows()).toHaveLength(3);
       await userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
-      expect(rows()).toHaveLength(2);
+      await waitFor(() => {
+        expect(rows()).toHaveLength(2);
+      });
       expectCorrectRow({ index: 0, type: 'dashboard_by_uid', value: 'uid_1' });
       expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_2' });
     });
@@ -102,6 +108,8 @@ describe('PlaylistForm', () => {
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock).toHaveBeenCalledTimes(1);
       expect(onSubmitMock).toHaveBeenCalledWith({
+        apiVersion: 'playlist.grafana.app/v0alpha1',
+        kind: 'Playlist',
         spec: {
           title: 'A test playlist',
           interval: '10m',

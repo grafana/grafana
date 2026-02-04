@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,12 +14,12 @@ import (
 func NewSearchOptions(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
-	tracer trace.Tracer,
 	docs resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 ) (resource.SearchOptions, error) {
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
@@ -41,28 +40,34 @@ func NewSearchOptions(
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:            root,
-			FileThreshold:   int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			BatchSize:       cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-			IndexCacheTTL:   cfg.IndexCacheTTL,             // How long to keep the index cache in memory
-			BuildVersion:    cfg.BuildVersion,
-			MaxFileIndexAge: cfg.MaxFileIndexAge,
-			MinBuildVersion: minVersion,
-			UseFullNgram:    features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
-			OwnsIndex:       ownsIndexFn,
-		}, tracer, indexMetrics)
+			Root:                     root,
+			FileThreshold:            int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			IndexCacheTTL:            cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:             cfg.BuildVersion,
+			OwnsIndex:                ownsIndexFn,
+			IndexMinUpdateInterval:   cfg.IndexMinUpdateInterval,
+			SelectableFieldsForKinds: resource.SelectableFields(),
+		}, indexMetrics)
 
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
 
 		return resource.SearchOptions{
-			Backend:         bleve,
-			Resources:       docs,
-			WorkerThreads:   cfg.IndexWorkers,
-			InitMinCount:    cfg.IndexMinCount,
-			RebuildInterval: cfg.IndexRebuildInterval,
+			Backend:                bleve,
+			Resources:              docs,
+			InitWorkerThreads:      cfg.IndexWorkers,
+			IndexRebuildWorkers:    cfg.IndexRebuildWorkers,
+			InitMinCount:           cfg.IndexMinCount,
+			DashboardIndexMaxAge:   cfg.IndexRebuildInterval,
+			MaxIndexAge:            cfg.MaxFileIndexAge,
+			MinBuildVersion:        minVersion,
+			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, nil
 	}
-	return resource.SearchOptions{}, nil
+	return resource.SearchOptions{
+		// it is used for search after write and throttles index updates
+		IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+		MaxIndexAge:            cfg.MaxFileIndexAge,
+	}, nil
 }

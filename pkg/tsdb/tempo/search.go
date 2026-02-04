@@ -43,24 +43,27 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamErrorf("failed to get datasource information: %w", err)
 	}
 
 	err = json.Unmarshal(query.JSON, model)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	req, err := createSearchRequest(ctx, dsInfo, model, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
 		ctxLogger.Error("Failed to create search request", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamErrorf("failed to create search request: %w", err)
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(req)
 	if err != nil {
 		ctxLogger.Error("Failed to send request to Tempo", "error", err, "function", logEntrypoint())
+		if backend.IsDownstreamHTTPError(err) {
+			return nil, backend.DownstreamError(err)
+		}
 		return nil, err
 	}
 
@@ -78,6 +81,16 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		ctxLogger.Error("Failed to execute search query", "error", err, "function", logEntrypoint())
+		err := fmt.Errorf("failed to execute search query status: %s", resp.Status)
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+
+		return nil, err
+	}
+
 	var response tempopb.SearchResponse
 	err = jsonpb.Unmarshal(bytes.NewReader(body), &response)
 
@@ -86,34 +99,31 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
-	if *model.TableType == dataquery.SearchTableTypeTraces {
-		frames, err := transformTraceSearchResponse(pCtx, &response)
-		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
-			return nil, err
-		}
-		result.Frames = frames
-		return result, nil
+	// Match frontend behavior: when tableType isn't set, default to the "table" view (traces).
+	tableType := dataquery.SearchTableTypeTraces
+	if model.TableType != nil {
+		tableType = *model.TableType
 	}
 
-	if *model.TableType == dataquery.SearchTableTypeSpans {
+	switch tableType {
+	case dataquery.SearchTableTypeSpans:
 		frames, err := transformSpanSearchResponse(pCtx, &response)
 		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
 		result.Frames = frames
-		return result, nil
-	}
-
-	if *model.TableType == dataquery.SearchTableTypeRaw {
+	case dataquery.SearchTableTypeRaw:
 		frames, err := transformRawSearchResponse(&response)
 		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
 		result.Frames = frames
-		return result, nil
+	default:
+		frames, err := transformTraceSearchResponse(pCtx, &response)
+		if err != nil {
+			return nil, err
+		}
+		result.Frames = frames
 	}
 
 	return result, nil

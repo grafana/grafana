@@ -13,8 +13,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -149,29 +149,33 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: check if lister could list too many repositories or resources
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
+	ns := u.GetNamespace()
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, ns)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	ctx = request.WithNamespace(ctx, ns)
+
+	// TODO: check if lister could list too many repositories or resources
+	all, err := b.repoLister.List(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	legacyStorage := false
-	if b.storageStatus != nil {
-		legacyStorage = dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus)
-	}
-
 	settings := provisioning.RepositoryViewList{
-		Items:          make([]provisioning.RepositoryView, len(all)),
-		AllowedTargets: b.allowedTargets,
-		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage:            legacyStorage,
+		Items:                    make([]provisioning.RepositoryView, len(all)),
+		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
+		MaxRepositories:          b.quotaLimits.MaxRepositories,
 	}
 
 	for i, val := range all {
 		branch := val.Branch()
+		url := val.URL()
+		path := val.Path()
 
 		settings.Items[i] = provisioning.RepositoryView{
 			Name:      val.Name,
@@ -179,6 +183,8 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Type:      val.Spec.Type,
 			Target:    val.Spec.Sync.Target,
 			Branch:    branch,
+			URL:       url,
+			Path:      path,
 			Workflows: val.Spec.Workflows,
 		}
 	}

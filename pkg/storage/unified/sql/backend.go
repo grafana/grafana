@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"iter"
 	"math"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -14,27 +15,47 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/grafana/grafana/pkg/util/sqlite"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
-const tracePrefix = "sql.resource."
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
+
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
+
+type GarbageCollectionConfig struct {
+	Enabled          bool
+	Interval         time.Duration // how often the process runs
+	BatchSize        int           // max number of candidates to delete (unique NGR)
+	MaxAge           time.Duration // retention period
+	DashboardsMaxAge time.Duration // dashboard retention
+}
+
+func ProvideStorageBackend(
+	cfg *setting.Cfg,
+) (resource.StorageBackend, error) {
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
+	return nil, nil
+}
 
 type Backend interface {
 	resource.StorageBackend
@@ -43,28 +64,26 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider      db.DBProvider
-	Tracer          trace.Tracer
-	Reg             prometheus.Registerer
-	PollingInterval time.Duration
-	WatchBufferSize int
-	IsHA            bool
-	storageMetrics  *resource.StorageMetrics
+	DBProvider        db.DBProvider
+	Reg               prometheus.Registerer
+	PollingInterval   time.Duration
+	WatchBufferSize   int
+	IsHA              bool
+	storageMetrics    *resource.StorageMetrics
+	GarbageCollection GarbageCollectionConfig
 
-	// If true, the backend will prune history on write events.
-	// Will be removed once fully rolled out.
-	withPruner bool
+	DisableStorageServices bool
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
+
+	// If not zero, the backend will regularly remove times from resource_last_import_time table older than this.
+	LastImportTimeMaxAge time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.DBProvider == nil {
 		return nil, errors.New("no db provider")
-	}
-	if opts.Tracer == nil {
-		opts.Tracer = noop.NewTracerProvider().Tracer("sql-backend")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -76,10 +95,10 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	return &backend{
 		isHA:                    opts.IsHA,
+		disableStorageServices:  opts.DisableStorageServices,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
-		tracer:                  opts.Tracer,
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
 		pollingInterval:         opts.PollingInterval,
@@ -87,13 +106,15 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
-		withPruner:              opts.withPruner,
+		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
+		garbageCollection:       opts.GarbageCollection,
 	}, nil
 }
 
 type backend struct {
 	//general
-	isHA bool
+	isHA                   bool
+	disableStorageServices bool
 
 	// server lifecycle
 	done     <-chan struct{}
@@ -103,7 +124,6 @@ type backend struct {
 
 	// o11y
 	log            logging.Logger
-	tracer         trace.Tracer
 	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
 
@@ -113,6 +133,8 @@ type backend struct {
 	dialect    sqltemplate.Dialect
 	bulkLock   *bulkLock
 
+	// -- Storage Services
+
 	// watch streaming
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
@@ -120,13 +142,18 @@ type backend struct {
 	notifier        eventNotifier
 
 	// resource version manager
-	rvManager *resourceVersionManager
+	rvManager *rvmanager.ResourceVersionManager
 
 	// testing
 	simulatedNetworkLatency time.Duration
 
 	historyPruner resource.Pruner
-	withPruner    bool
+
+	garbageCollection GarbageCollectionConfig
+
+	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
+	lastImportTimeMaxAge       time.Duration
+	lastImportTimeDeletionTime atomic.Time
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -154,11 +181,14 @@ func (b *backend) initLocked(ctx context.Context) error {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
+	if b.disableStorageServices {
+		return nil
+	}
+
 	// Initialize ResourceVersionManager
-	rvManager, err := NewResourceVersionManager(ResourceManagerOptions{
+	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 		Dialect: b.dialect,
 		DB:      b.db,
-		Tracer:  b.tracer,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
@@ -166,7 +196,18 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.rvManager = rvManager
 
 	// Initialize notifier after dialect is set up
-	notifier, err := newNotifier(b)
+	notifier, err := newNotifier(&notifierConfig{
+		isHA:            b.isHA,
+		pollingInterval: b.pollingInterval,
+		watchBufferSize: b.watchBufferSize,
+		log:             b.log,
+		bulkLock:        b.bulkLock,
+		listLatestRVs:   b.listLatestRVs,
+		storageMetrics:  b.storageMetrics,
+		done:            b.done,
+		db:              b.db,
+		dialect:         b.dialect,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
 	}
@@ -175,16 +216,16 @@ func (b *backend) initLocked(ctx context.Context) error {
 	if err := b.initPruner(ctx); err != nil {
 		return fmt.Errorf("failed to create pruner: %w", err)
 	}
+	if b.garbageCollection.Enabled {
+		if err := b.initGarbageCollection(ctx); err != nil {
+			return fmt.Errorf("failed to initialize garbage collection: %w", err)
+		}
+	}
 
 	return nil
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
-	if !b.withPruner {
-		b.log.Debug("using noop history pruner")
-		b.historyPruner = &resource.NoopPruner{}
-		return nil
-	}
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
@@ -239,6 +280,141 @@ func (b *backend) initPruner(ctx context.Context) error {
 	return nil
 }
 
+func (b *backend) initGarbageCollection(ctx context.Context) error {
+	b.log.Info("starting garbage collection loop")
+
+	go func() {
+		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
+		if b.garbageCollection.Interval > 0 {
+			jitter := time.Duration(rand.Int63n(b.garbageCollection.Interval.Nanoseconds()))
+			select {
+			case <-b.done:
+				return
+			case <-time.After(jitter):
+			}
+		}
+
+		ticker := time.NewTicker(b.garbageCollection.Interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-b.done:
+				return
+			case <-ticker.C:
+				_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
+	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
+	defer span.End()
+	start := time.Now()
+
+	deletedByKey := map[string]int64{}
+
+	groupResources, err := b.listLatestRVs(ctx)
+	if err != nil {
+		b.log.Error("failed to list group resources for garbage collection", "error", err)
+		return deletedByKey
+	}
+
+	for group, resources := range groupResources {
+		for resourceName := range resources {
+			resourceKey := group + "/" + resourceName
+			resourceCutoff := b.garbageCollectionCutoffTimestamp(group, resourceName, cutoffTimeStamp)
+			totalDeleted := int64(0)
+			for {
+				deleted, err := b.garbageCollectBatch(ctx, group, resourceName, resourceCutoff, b.garbageCollection.BatchSize)
+				if err != nil {
+					b.log.Error("garbage collection failed",
+						"group", group,
+						"resource", resourceName,
+						"error", err)
+					break
+				}
+				if deleted == 0 {
+					break
+				}
+				totalDeleted += deleted
+				if deleted < int64(b.garbageCollection.BatchSize) {
+					break
+				}
+				select {
+				case <-b.done:
+					return deletedByKey
+				case <-time.After(time.Second):
+				}
+			}
+			if totalDeleted > 0 {
+				b.log.Info("garbage collection deleted history",
+					"group", group,
+					"resource", resourceName,
+					"rows", totalDeleted,
+					"seconds", time.Since(start).Seconds(),
+				)
+				deletedByKey[resourceKey] += totalDeleted
+			}
+		}
+	}
+
+	return deletedByKey
+}
+
+func (b *backend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
+	if group == "dashboard.grafana.app" && resourceName == "dashboards" {
+		return time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
+	}
+	return defaultCutoff
+}
+
+func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int) (int64, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
+	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
+	defer span.End()
+
+	var rowsAffected int64
+	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		// query will return at most batchSize candidates
+		candidates, err := dbutil.Query(ctx, tx, sqlResourceHistoryGarbageGetCandidates, &sqlGarbageCollectCandidatesRequest{
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			Group:           group,
+			Resource:        resourceName,
+			CutoffTimestamp: cutoffTimestamp,
+			BatchSize:       batchSize,
+			Response:        new(gcCandidateName),
+		})
+		if err != nil {
+			return err
+		}
+		if len(candidates) == 0 {
+			return nil
+		}
+		span.AddEvent("candidates", trace.WithAttributes(attribute.Int("candidates", len(candidates))))
+		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Group:       group,
+			Resource:    resourceName,
+			Candidates:  candidates,
+		})
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		rowsAffected = rows
+		span.AddEvent("rows deleted", trace.WithAttributes(attribute.Int64("rowsDeleted", rowsAffected)))
+		return nil
+	})
+	return rowsAffected, err
+}
+
 func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
@@ -255,13 +431,19 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
+func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceStats", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
 	defer span.End()
 
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		Namespace:   namespace,
+		Namespace:   nsr.Namespace,
+		Group:       nsr.Group,
+		Resource:    nsr.Resource,
 		MinCount:    minCount, // not used in query... yet?
 	}
 
@@ -290,7 +472,10 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
+	if b.disableStorageServices {
+		return 0, fmt.Errorf("storage backend is not enabled")
+	}
+	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
@@ -306,7 +491,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 }
 
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
+	ctx, span := tracer.Start(ctx, "sql.backend.create")
 	defer span.End()
 
 	folder := ""
@@ -394,7 +579,7 @@ func IsRowAlreadyExistsError(err error) bool {
 }
 
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
+	ctx, span := tracer.Start(ctx, "sql.backend.update")
 	defer span.End()
 
 	folder := ""
@@ -405,14 +590,17 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	// Use rvManager.ExecWithRV instead of direct transaction
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. Update resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
+			WriteEvent:  event, // includes the RV
 			Folder:      folder,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Insert into resource history
@@ -451,7 +639,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
+	ctx, span := tracer.Start(ctx, "sql.backend.delete")
 	defer span.End()
 
 	folder := ""
@@ -460,13 +648,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. delete from resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("delete resource: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Add event to resource history
@@ -504,8 +695,30 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
+func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
+	if rv == 0 {
+		return nil
+	}
+
+	// The RV is part of the update request, and it may no longer be the most recent
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("unable to verify RV: %w", err)
+	}
+	if rows == 1 {
+		return nil // expected one result
+	}
+	if rows > 0 {
+		return fmt.Errorf("multiple rows effected (%d)", rows)
+	}
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
+}
+
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
+	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
 	defer span.End()
 
 	// TODO: validate key ?
@@ -538,7 +751,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
+	ctx, span := tracer.Start(ctx, "sql.backend.ListIterator")
 	defer span.End()
 
 	if err := resource.MigrateListRequestVersionMatch(req, b.log); err != nil {
@@ -560,7 +773,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 }
 
 func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"ListHistory")
+	ctx, span := tracer.Start(ctx, "sql.backend.ListHistory")
 	defer span.End()
 
 	return b.getHistory(ctx, req, cb)
@@ -568,7 +781,7 @@ func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, 
 
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatest")
+	ctx, span := tracer.Start(ctx, "sql.backend.listLatest")
 	defer span.End()
 
 	if req.NextPageToken != "" {
@@ -624,14 +837,12 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 		}
 	}
 
-	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
-	if latestRv == sinceRv {
+	// If latest RV equal or older than request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv <= sinceRv {
 		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
-	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
-	lastSeen := ""
-
+	seen := make(map[string]struct{})
 	seq := func(yield func(*resource.ModifiedResource, error) bool) {
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -665,12 +876,11 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 			}
 
 			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if mr.Key.Name == lastSeen {
+			if _, ok := seen[mr.Key.Name]; ok {
 				continue
 			}
 
-			lastSeen = mr.Key.Name
-
+			seen[mr.Key.Name] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}
@@ -682,13 +892,13 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
+	ctx, span := tracer.Start(ctx, "sql.backend.listAtRevision")
 	defer span.End()
 
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -696,7 +906,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 		iter.offset = continueToken.StartOffset
 
 		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {
-			return 0, apierrors.NewBadRequest("request resource version does not math token")
+			return 0, apierrors.NewBadRequest("request resource version does not match token")
 		}
 	}
 	if iter.listRV < 1 {
@@ -742,7 +952,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 
 // readHistory fetches the resource history from the resource_history table.
 func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, rv int64) *resource.BackendReadResponse {
-	_, span := b.tracer.Start(ctx, tracePrefix+".ReadHistory")
+	_, span := tracer.Start(ctx, "sql.backend.readHistory")
 	defer span.End()
 
 	readReq := &sqlResourceHistoryReadRequest{
@@ -773,7 +983,7 @@ func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, 
 
 // getHistory fetches the resource history from the resource_history table.
 func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
+	ctx, span := tracer.Start(ctx, "sql.backend.getHistory")
 	defer span.End()
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
@@ -790,7 +1000,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
 	}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -856,12 +1066,15 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
+	if b.disableStorageServices {
+		return nil, fmt.Errorf("watcher is not enabled")
+	}
 	return b.notifier.notify(ctx)
 }
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.
 func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatestRVs")
+	ctx, span := tracer.Start(ctx, "sql.backend.listLatestRVs")
 	defer span.End()
 	var grvs []*groupResourceVersion
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
@@ -890,14 +1103,14 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 
 // fetchLatestRV returns the current maximum RV in the resource table
 func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestRV")
+	ctx, span := tracer.Start(ctx, "sql.backend.fetchLatestRV")
 	defer span.End()
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+	res, err := dbutil.QueryRow(ctx, x, rvmanager.SqlResourceVersionGet, rvmanager.SqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
 		Resource:    resource,
 		ReadOnly:    true,
-		Response:    new(resourceVersionResponse),
+		Response:    new(rvmanager.ResourceVersionResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
@@ -909,7 +1122,7 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 
 // fetchLatestHistoryRV returns the current maximum RV in the resource_history table
 func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resourcepb.ResourceKey, eventType resourcepb.WatchEvent_Type) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestHistoryRV")
+	ctx, span := tracer.Start(ctx, "sql.backend.fetchLatestHistoryRV")
 	defer span.End()
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryReadLatestRV, sqlResourceHistoryReadLatestRVRequest{
 		SQLTemplate: sqltemplate.New(d),
@@ -925,4 +1138,80 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
 	return res.ResourceVersion, nil
+}
+
+// Don't run deletion of "last import times" more often than this duration.
+const limitLastImportTimesDeletion = 1 * time.Hour
+
+func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceLastImportTimes")
+	defer span.End()
+
+	// Delete old entries, if configured, and if enough time has passed since last deletion.
+	if b.lastImportTimeMaxAge > 0 && time.Since(b.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
+		now := time.Now()
+
+		res, err := dbutil.Exec(ctx, b.db, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Threshold:   now.Add(-b.lastImportTimeMaxAge),
+		})
+
+		if err != nil {
+			return func(yield func(resource.ResourceLastImportTime, error) bool) {
+				yield(resource.ResourceLastImportTime{}, err)
+			}
+		}
+
+		aff, err := res.RowsAffected()
+		if err == nil && aff > 0 {
+			b.log.Info("Deleted old last import times", "rows", aff)
+		}
+
+		b.lastImportTimeDeletionTime.Store(now)
+	}
+
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+	})
+	if err != nil {
+		return func(yield func(resource.ResourceLastImportTime, error) bool) {
+			yield(resource.ResourceLastImportTime{}, err)
+		}
+	}
+
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		closeOnDefer := true
+		defer func() {
+			if closeOnDefer {
+				_ = rows.Close() // Close while ignoring errors.
+			}
+		}()
+
+		for rows.Next() {
+			// If context has finished, return early.
+			if ctx.Err() != nil {
+				yield(resource.ResourceLastImportTime{}, ctx.Err())
+				return
+			}
+
+			row := resource.ResourceLastImportTime{}
+			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.LastImportTime)
+			if err != nil {
+				yield(resource.ResourceLastImportTime{}, err)
+				return
+			}
+
+			if !yield(row, nil) {
+				return
+			}
+		}
+
+		closeOnDefer = false
+
+		// Close and report error, if any.
+		err := rows.Close()
+		if err != nil {
+			yield(resource.ResourceLastImportTime{}, err)
+		}
+	}
 }

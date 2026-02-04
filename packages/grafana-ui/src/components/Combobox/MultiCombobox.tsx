@@ -35,6 +35,11 @@ interface MultiComboboxBaseProps<T extends string | number>
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
+/**
+ * The behavior of the MultiCombobox is similar to that of the Combobox, but it allows you to select multiple options. For all non-multi behaviors, see the Combobox documentation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-multicombobox--docs
+ */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
     placeholder,
@@ -48,9 +53,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    customValueDescription,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
     portalContainer,
+    prefixIcon,
+    id,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -73,7 +81,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     updateOptions,
     asyncLoading,
     asyncError,
-  } = useOptions(props.options, createCustomValue);
+  } = useOptions(props.options, createCustomValue, customValueDescription);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
@@ -146,17 +154,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       },
     });
 
-  const {
-    getToggleButtonProps,
-    //getLabelProps,
-    isOpen,
-    highlightedIndex,
-    getMenuProps,
-    getInputProps,
-    getItemProps,
-  } = useCombobox({
+  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps } = useCombobox({
     items: options,
     itemToString,
+    inputId: id,
     inputValue,
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
@@ -267,6 +268,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   return (
     <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
+        {prefixIcon && (
+          <Box marginLeft={0.5}>
+            <Text color="secondary">
+              <Icon name={prefixIcon} />
+            </Text>
+          </Box>
+        )}
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
@@ -312,7 +320,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             })}
           />
 
-          <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
+          <div className={multiStyles.suffix} ref={suffixMeasureRef}>
             {isClearable && selectedItems.length > 0 && (
               <Icon
                 name="times"
@@ -347,6 +355,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         >
           {isOpen && (
             <ComboboxList
+              loading={loading}
               options={options}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItems}

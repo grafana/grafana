@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	stopTimeout = 30 * time.Second
+	stopTimeout = 5 * time.Second
 )
 
 type ManagerAdapter struct {
@@ -63,6 +63,7 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 		// skip disabled services
 		if s, ok := bgSvc.(registry.CanBeDisabled); ok && s.IsDisabled() {
 			logger.Debug("Skipping disabled service", "service", namedService.ServiceName())
+			manager.RegisterInvisibleModule(namedService.ServiceName(), nil)
 			continue
 		}
 

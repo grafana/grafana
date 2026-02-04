@@ -1,8 +1,7 @@
-import { locationUtil, TimeRange } from '@grafana/data';
+import { locationUtil, store, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
-import store from 'app/core/store';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types/dashboard';
 
@@ -26,6 +25,9 @@ interface AddPanelToDashboardOptions {
   dashboardUid?: string;
   openInNewTab?: boolean;
   timeRange?: TimeRange;
+  options?: {
+    useAbsolutePath?: boolean;
+  };
 }
 
 export function addToDashboard({
@@ -33,6 +35,7 @@ export function addToDashboard({
   dashboardUid,
   openInNewTab,
   timeRange,
+  options,
 }: AddPanelToDashboardOptions): SubmissionError | undefined {
   let dto: DashboardDTO = {
     meta: {},
@@ -83,7 +86,18 @@ export function addToDashboard({
     return;
   }
 
-  locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+  let navigateToDashboardUrl = locationUtil.stripBaseFromUrl(dashboardURL);
+
+  // External apps need absolute paths to navigate to dashboards correctly.
+  // Without the leading '/', paths like "dashboard/new" are treated as relative to the current location.
+  // For example, from "/a/grafana-metricsdrilldown-app", this would incorrectly navigate to
+  // "/a/grafana-metricsdrilldown-app/dashboard/new" instead of "/dashboard/new".
+  if (options?.useAbsolutePath) {
+    navigateToDashboardUrl = '/' + navigateToDashboardUrl;
+  }
+
+  locationService.push(navigateToDashboardUrl);
+
   return;
 }
 

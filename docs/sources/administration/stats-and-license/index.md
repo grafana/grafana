@@ -16,7 +16,8 @@ labels:
     - cloud
     - enterprise
 title: View server statistics and license
-weight: 400
+menutitle: Server stats and license
+weight: 5000
 ---
 
 # View server statistics and license

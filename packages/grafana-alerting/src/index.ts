@@ -11,5 +11,32 @@ export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
 export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
 // keep label utils internal to the app for now
 
-// This is a dummy export so typescript doesn't error importing an "empty module"
-export const index = {};
+/**
+ * Notification policies and label matching
+ */
+export {
+  useMatchInstancesToRouteTrees,
+  matchInstancesToRouteTrees,
+  type RouteMatch,
+  type InstanceMatchResult,
+} from './grafana/notificationPolicies/hooks/useMatchPolicies';
+
+export {
+  type TreeMatch,
+  type RouteMatchResult,
+  matchInstancesToRoute,
+  findMatchingRoutes,
+  getInheritedProperties,
+  computeInheritedTree,
+} from './grafana/notificationPolicies/utils';
+
+export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
+export * from './grafana/notificationPolicies/types';
+
+/**
+ * Labels and matchers
+ */
+export { type LabelMatcher, type Label } from './grafana/matchers/types';
+
+// Utilities
+export { base64UrlEncode } from './grafana/api/util';

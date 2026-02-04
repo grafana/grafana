@@ -5,13 +5,26 @@
 package v0alpha1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaReceiver = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &Receiver{}, &ReceiverList{}, resource.WithKind("Receiver"),
-		resource.WithPlural("receivers"), resource.WithScope(resource.NamespacedScope))
+	schemaReceiver = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", NewReceiver(), &ReceiverList{}, resource.WithKind("Receiver"),
+		resource.WithPlural("receivers"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.title",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*Receiver)
+				if !ok {
+					return "", errors.New("provided object must be of type *Receiver")
+				}
+
+				return cast.Spec.Title, nil
+			},
+		},
+		}))
 	kindReceiver = resource.Kind{
 		Schema: schemaReceiver,
 		Codecs: map[resource.KindEncoding]resource.Codec{

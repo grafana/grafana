@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
+import { CorrelationData, CorrelationsData, FetchError, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -20,18 +21,34 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import type { Correlation, RemoveCorrelationParams } from './types';
-import { useCorrelations } from './useCorrelations';
+import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
+
+type CorrelationsPageProps = {
+  fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData> | CorrelationsData;
+  correlations?: CorrelationsData;
+  isLoading: boolean;
+  changePageFn?: (page: number) => void;
+  removeFn?: (params: RemoveCorrelationParams) => Promise<
+    | {
+        message: string;
+      }
+    | Status
+  >;
+  error?: Error | FetchError;
+  hasNextPage?: boolean;
+};
+
+const collator = new Intl.Collator();
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
-  a.values[column].name.localeCompare(b.values[column].name);
+  collator.compare(a.values[column].name, b.values[column].name);
 
 const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 
@@ -40,7 +57,8 @@ const loaderWrapper = css({
   justifyContent: 'center',
 });
 
-export default function CorrelationsPage() {
+export default function CorrelationsPage(props: CorrelationsPageProps) {
+  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn, hasNextPage } = props;
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
@@ -51,11 +69,6 @@ export default function CorrelationsPage() {
       reportInteraction('grafana_correlations_adding_started');
     }
   };
-
-  const {
-    remove,
-    get: { execute: fetchCorrelations, ...get },
-  } = useCorrelations();
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
@@ -72,15 +85,17 @@ export default function CorrelationsPage() {
 
   const handleDelete = useCallback(
     async (params: RemoveCorrelationParams, isLastRow: boolean) => {
-      await remove.execute(params);
-      reportInteraction('grafana_correlations_deleted');
+      if (removeFn) {
+        await removeFn(params);
+        reportInteraction('grafana_correlations_deleted');
 
-      if (isLastRow) {
-        page.current--;
+        if (isLastRow) {
+          page.current--;
+        }
+        fetchCorrelations({ page: page.current });
       }
-      fetchCorrelations({ page: page.current });
     },
-    [remove, fetchCorrelations]
+    [removeFn, fetchCorrelations]
   );
 
   useEffect(() => {
@@ -102,9 +117,7 @@ export default function CorrelationsPage() {
         !provisioned && (
           <DeleteButton
             aria-label={t('correlations.list.delete', 'delete correlation')}
-            onConfirm={() =>
-              handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && data?.correlations.length === 1)
-            }
+            onConfirm={() => handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && corrData.length === 1)}
             closeOnConfirm
           />
         )
@@ -145,9 +158,9 @@ export default function CorrelationsPage() {
     [RowActions, canWriteCorrelations]
   );
 
-  const data = useMemo(() => get.value, [get.value]);
-  const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !get.error;
-  const addButton = canWriteCorrelations && data?.correlations?.length !== 0 && data !== undefined && !isAdding && (
+  const corrData = correlations?.correlations ?? [];
+  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
+  const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       <Trans i18nKey="correlations.add-new">Add new</Trans>
     </Button>
@@ -170,25 +183,23 @@ export default function CorrelationsPage() {
     >
       <Page.Contents>
         <div>
-          {!data && get.loading && (
+          {isLoading && (
             <div className={loaderWrapper}>
               <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
           )}
-
           {showEmptyListCTA && (
             <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
           )}
-
           {
             // This error is not actionable, it'd be nice to have a recovery button
-            get.error && (
+            error && (
               <Alert
                 severity="error"
                 title={t('correlations.alert.title', 'Error fetching correlation data')}
                 topSpacing={2}
               >
-                {(isFetchError(get.error) && get.error.data?.message) ||
+                {(isFetchError(error) && error.data?.message) ||
                   t(
                     'correlations.alert.error-message',
                     'An unknown error occurred while fetching correlation data. Please try again.'
@@ -196,10 +207,9 @@ export default function CorrelationsPage() {
               </Alert>
             )
           }
-
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
-          {data && data.correlations.length >= 1 && (
+          {correlations && corrData.length >= 1 && (
             <>
               <InteractiveTable
                 renderExpandedRow={(correlation) => (
@@ -210,15 +220,19 @@ export default function CorrelationsPage() {
                   />
                 )}
                 columns={columns}
-                data={data.correlations}
+                data={corrData}
                 getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
               />
               <Pagination
                 currentPage={page.current}
-                numberOfPages={Math.ceil(data.totalCount / data.limit)}
+                numberOfPages={Math.ceil(correlations?.totalCount / correlations?.limit)}
                 onNavigate={(toPage: number) => {
+                  if (changePageFn) {
+                    changePageFn(toPage);
+                  }
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}
+                hasNextPage={hasNextPage}
               />
             </>
           )}

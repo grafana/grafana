@@ -55,7 +55,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slice"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Slice"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,

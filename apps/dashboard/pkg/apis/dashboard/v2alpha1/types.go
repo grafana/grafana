@@ -123,8 +123,9 @@ type DashboardWithAccessInfo struct {
 // +k8s:deepcopy-gen=true
 type DashboardAccess struct {
 	// Metadata fields
-	Slug string `json:"slug,omitempty"`
-	Url  string `json:"url,omitempty"`
+	Slug     string `json:"slug,omitempty"`
+	Url      string `json:"url,omitempty"`
+	IsPublic bool   `json:"isPublic"`
 
 	// The permissions part
 	CanSave                bool                  `json:"canSave"`

@@ -16,7 +16,7 @@ const components = {
 
 A few things to keep in mind:
 
-- Strive to use e2e selector for all components in grafana/ui.
+- Strive to use e2e selectors for all components in grafana/ui.
 - Don't ever delete selectors. Even though a selector may not be used in the Grafana repository, it can still be used in external plugins.
 - Only create new selector in case you're creating a new piece of UI. If you're changing an existing piece of UI that already has a selector defined, you need to keep using that selector. Otherwise you might break plugin end-to-end tests.
 - Prefer using string selectors in favour of function selectors. The purpose of the selectors is to provide a canonical way to select elements.

@@ -1,10 +1,14 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ReceiverClient struct {
@@ -76,24 +80,33 @@ func (c *ReceiverClient) Patch(ctx context.Context, identifier resource.Identifi
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *ReceiverClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus ReceiverStatus, opts resource.UpdateOptions) (*Receiver, error) {
-	return c.client.Update(ctx, &Receiver{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ReceiverKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
-}
-
 func (c *ReceiverClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type CreateReceiverIntegrationTestRequest struct {
+	Body    CreateReceiverIntegrationTestRequestBody
+	Headers http.Header
+}
+
+func (c *ReceiverClient) CreateReceiverIntegrationTest(ctx context.Context, identifier resource.Identifier, request CreateReceiverIntegrationTestRequest) (*CreateReceiverIntegrationTest, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "test",
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateReceiverIntegrationTest{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateReceiverIntegrationTest: %w", err)
+	}
+	return &cast, nil
 }

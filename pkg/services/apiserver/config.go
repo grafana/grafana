@@ -40,10 +40,17 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	runtimeConfig := apiserverCfg.Key("runtime_config").String()
+
 	if runtimeConfig != "" {
 		if err := o.APIEnablementOptions.RuntimeConfig.Set(runtimeConfig); err != nil {
 			return fmt.Errorf("failed to set runtime config: %w", err)
 		}
+	}
+
+	// equivalent to --request-timeout flag from k8s apiserver
+	requestTimeout := apiserverCfg.Key("request_timeout").MustDuration(0)
+	if requestTimeout > 0 {
+		o.ExtraOptions.RequestTimeout = requestTimeout
 	}
 
 	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = apiserverCfg.Key("etcd_servers").Strings(",")
@@ -69,6 +76,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL

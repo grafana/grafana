@@ -2,13 +2,13 @@ package libraryelements
 
 import (
 	"context"
-	"encoding/json"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
@@ -155,26 +154,22 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Equal(t, testUser.Login, result.Meta.UpdatedBy.Name)
 	require.Equal(t, dtos.GetGravatarUrl(cfg, testUser.Email), result.Meta.UpdatedBy.AvatarUrl)
 
-	var modelMap map[string]interface{}
-	err = json.Unmarshal(result.Model, &modelMap)
-	require.NoError(t, err)
-	require.Equal(t, "testdata", modelMap["datasource"].(map[string]interface{})["type"])
-	require.Equal(t, "test-datasource", modelMap["datasource"].(map[string]interface{})["uid"])
-	require.Equal(t, "Test description", modelMap["description"])
-	require.Equal(t, float64(123), modelMap["id"])
-	require.Equal(t, "text", modelMap["type"])
-	require.Equal(t, "Test Panel Title", modelMap["title"])
-	require.Equal(t, "Test content", modelMap["options"].(map[string]interface{})["content"])
-	require.Equal(t, true, modelMap["transparent"])
-	require.Equal(t, "Test Library Panel", modelMap["libraryPanel"].(map[string]interface{})["name"])
-	require.Equal(t, "test-panel-uid", modelMap["libraryPanel"].(map[string]interface{})["uid"])
-	links := modelMap["links"].([]interface{})
-	require.Len(t, links, 1)
-	require.Equal(t, "Test Link", links[0].(map[string]interface{})["title"])
-
-	targets := modelMap["targets"].([]interface{})
-	require.Len(t, targets, 1)
-	require.Equal(t, "A", targets[0].(map[string]interface{})["refId"])
+	// fmt.Printf("%s\n", result.Model)
+	require.JSONEq(t, `{
+		"datasource": { "type": "testdata", "uid": "test-datasource" },
+		"description": "Test description",
+		"fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+		"gridPos": { "w": 12, "h": 8, "x": 0, "y": 0 },
+		"id": 123,
+		"libraryPanel": { "name": "Test Library Panel", "uid": "test-panel-uid" },
+		"links": [{ "title": "Test Link", "url": "https://example.com" }],
+		"options": { "content": "Test content" },
+		"pluginVersion": "1.0.0",
+		"targets": [{ "refId": "A", "expr": "test_query" }],
+		"title": "Test Panel Title",
+		"transparent": true,
+		"type": "text"
+	}`, string(result.Model))
 
 	dashboardsSvc.AssertExpectations(t)
 }

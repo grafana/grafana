@@ -4,17 +4,16 @@ package publicdashboards
 
 import (
 	context "context"
-
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
-
-	dtos "github.com/grafana/grafana/pkg/api/dtos"
+	"fmt"
 
 	mock "github.com/stretchr/testify/mock"
 
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
+	dtos "github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
 	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-
 	user "github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -585,6 +584,10 @@ func (_m *FakePublicDashboardService) Update(ctx context.Context, u *user.Signed
 	}
 
 	return r0, r1
+}
+
+func (_m *FakePublicDashboardService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryV0.SQLSchemas, error) {
+	return nil, fmt.Errorf("not implemented in public dashboards")
 }
 
 // NewFakePublicDashboardService creates a new instance of FakePublicDashboardService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

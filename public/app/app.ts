@@ -1,7 +1,6 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
-import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
@@ -37,12 +36,14 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -56,9 +57,10 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
-import appEvents from './core/app_events';
+import { appEvents } from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
+import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
@@ -81,7 +83,6 @@ import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
-import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
@@ -93,12 +94,14 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
+import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
@@ -113,6 +116,7 @@ import { getVariablesUrlParams } from './features/variables/getAllVariableValues
 import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
+import { createSwitchVariableAdapter } from './features/variables/switch/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
@@ -129,8 +133,22 @@ export class GrafanaApp {
   async init() {
     try {
       await preInitTasks();
+
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+
+      initSystemJSHooks();
+
+      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
+      // on the login page.
+      if (contextSrv.user.isSignedIn) {
+        try {
+          await initOpenFeature();
+        } catch (err) {
+          console.error('Failed to initialize OpenFeature provider', err);
+        }
+      }
+
       const regionalFormat = config.featureToggles.localeFormatPreference
         ? config.regionalFormat
         : contextSrv.user.language;
@@ -172,8 +190,6 @@ export class GrafanaApp {
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 
-      initAuthConfig();
-
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
 
@@ -199,6 +215,7 @@ export class GrafanaApp {
         createIntervalVariableAdapter(),
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
+        createSwitchVariableAdapter(),
       ]);
 
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
@@ -240,13 +257,12 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
+        preloadPlugins(await getAppPluginsToPreload());
       }
 
+      getPluginExtensionRegistries();
+
+      setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
@@ -294,11 +310,7 @@ export class GrafanaApp {
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);
-      root.render(
-        createElement(AppWrapper, {
-          app: this,
-        })
-      );
+      root.render(createElement(AppWrapper, { context: this.context }));
 
       await postInitTasks();
     } catch (error) {

@@ -1,13 +1,18 @@
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
+import { LibraryPanel } from '@grafana/schema';
 import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import {
+  gridItemToPanel,
+  transformSceneToSaveModel,
+  vizPanelToPanel,
+} from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
@@ -35,9 +40,10 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
   const panel = panelRef.resolve();
   const parent = panel.parent;
 
-  if (parent instanceof DashboardGridItem) {
+  if (parent instanceof DashboardGridItem || parent instanceof AutoGridItem) {
     const dashboardScene = getDashboardSceneFor(model);
-    const panelJson = gridItemToPanel(parent);
+    const panelJson =
+      parent instanceof DashboardGridItem ? gridItemToPanel(parent) : autoGridItemToLibraryPanel(parent);
     const panelModel = new PanelModel(panelJson);
 
     const dashboardJson = transformSceneToSaveModel(dashboardScene);
@@ -57,4 +63,13 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
   }
 
   return null;
+}
+
+function autoGridItemToLibraryPanel(autoGridItem: AutoGridItem) {
+  const vizPanel = autoGridItem.state.body;
+  if (!(vizPanel instanceof VizPanel)) {
+    throw new Error('AutoGridItem body expected to be VizPanel');
+  }
+
+  return vizPanelToPanel(vizPanel, { x: 0, y: 0, w: 6, h: 3 }, false, autoGridItem);
 }

@@ -26,7 +26,7 @@ const rowLimit = 1_000_000
 type recordReader interface {
 	Next() bool
 	Schema() *arrow.Schema
-	Record() arrow.Record
+	Record() arrow.RecordBatch
 	Err() error
 }
 

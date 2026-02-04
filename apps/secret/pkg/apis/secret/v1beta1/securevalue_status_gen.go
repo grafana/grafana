@@ -25,12 +25,14 @@ type SecureValueStatus struct {
 	// Version of the secure value. Cannot be set.
 	// +optional
 	Version int64 `json:"version"`
-	// operatorStates is a map of operator ID to operator state evaluations.
-	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
-	OperatorStates map[string]SecureValuestatusOperatorState `json:"operatorStates,omitempty"`
 	// External ID where the secret is stored. Cannot be set.
 	// +optional
 	ExternalID string `json:"externalID"`
+	// operatorStates is a map of operator ID to operator state evaluations.
+	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+	OperatorStates map[string]SecureValuestatusOperatorState `json:"operatorStates,omitempty"`
+	// The name of the keeper used to create the secure value. Cannot be set.
+	Keeper string `json:"keeper"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }

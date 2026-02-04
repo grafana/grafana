@@ -24,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ServiceImpl struct {
@@ -59,7 +57,8 @@ type NavigationAppConfig struct {
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service,
+) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -85,7 +84,6 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
-	ctx := c.Req.Context()
 
 	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
@@ -187,8 +185,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	enabled := openfeature.GetApiInstance().GetClient().Boolean(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
-	if enabled && c.IsSignedIn {
+	if c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
@@ -243,9 +240,9 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
+// addHelpLinks adds a help menu item to the navigation bar.
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if s.cfg.HelpEnabled {
-		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
 			Id:         "help",
@@ -256,6 +253,16 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 		}
 
 		treeRoot.AddSection(helpNode)
+
+		ctx := c.Req.Context()
+		// The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+		// Support both until that migration is complete.
+		_, oldInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
+		_, newInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
+		if oldInteractiveLearningPluginInstalled || newInteractiveLearningPluginInstalled {
+			// Add a custom property to indicate this should open the interactive learning plugin if available.
+			helpNode.HideFromTabs = true
+		}
 
 		hasAccess := ac.HasAccess(s.accessControl, c)
 		supportBundleAccess := ac.EvalAny(
@@ -400,7 +407,8 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && (c.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
@@ -428,18 +436,32 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Triage", SubTitle: "Triage alerts", Id: "alert-triage", Url: s.cfg.AppSubURL + "/alerting/triage", Icon: "medkit",
+				Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
 			})
 		}
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-		})
+		navLink := &navtree.NavLink{
+			Text:     "Alert rules",
+			SubTitle: "Rules that determine whether an alert will fire",
+			Url:      s.cfg.AppSubURL + "/alerting/list",
+			Icon:     "list-ul",
+		}
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		// Since we're changing the navigation structure we have to assign different nav IDs
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			navLink.Id = "alert-rules" // New navigation: Alert rules (tabs managed on frontend)
+		} else {
+			navLink.Id = "alert-list" // Legacy navigation
+		}
+
+		alertChildNavs = append(alertChildNavs, navLink)
 	}
 
 	contactPointsPerms := []ac.Evaluator{
@@ -485,6 +507,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
@@ -496,13 +519,18 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			})
 		}
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text:     "Recently deleted",
-			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-			Id:       "alerts/recently-deleted",
-			Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
-		})
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Recently deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "alerts/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
+			})
+		}
 	}
 
 	if c.GetOrgRole() == org.RoleAdmin {

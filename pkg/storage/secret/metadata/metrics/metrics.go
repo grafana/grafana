@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -12,8 +13,9 @@ const (
 	namespace = "grafana_secrets_manager"
 	subsystem = "storage"
 	// labels
-	successLabel = "success"
-	resultLabel  = "result"
+	successLabel   = "success"
+	resultLabel    = "result"
+	decrypterLabel = "decrypter"
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
@@ -132,7 +134,7 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "decrypt_duration_seconds",
 			Help:      "Duration of decrypt operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{resultLabel}),
+		}, []string{resultLabel, decrypterLabel}),
 	}
 }
 
@@ -184,6 +186,8 @@ func DecryptResultLabel(err error) string {
 		return "error_not_found"
 	} else if errors.Is(err, contracts.ErrDecryptNotAuthorized) {
 		return "error_unauthorized"
+	} else if errors.Is(err, context.Canceled) {
+		return "error_context_canceled"
 	}
 
 	return "error_generic_failure"

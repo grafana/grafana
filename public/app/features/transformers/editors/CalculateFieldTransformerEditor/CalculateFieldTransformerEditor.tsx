@@ -23,7 +23,7 @@ import {
   defaultWindowOptions,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { getTemplateSrv, config as cfg } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../../docs/getTransformationContent';
@@ -74,20 +74,15 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       value: CalculateFieldMode.Index,
       label: t('transformers.calculate-field-transformer-editor.calculation-modes.label.row-index', 'Row index'),
     },
+    {
+      value: CalculateFieldMode.CumulativeFunctions,
+      label: t('transformers.calculate-field-transformer-editor.label.cumulative-functions', 'Cumulative functions'),
+    },
+    {
+      value: CalculateFieldMode.WindowFunctions,
+      label: t('transformers.calculate-field-transformer-editor.label.window-functions', 'Window functions'),
+    },
   ];
-
-  if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
-    calculationModes.push(
-      {
-        value: CalculateFieldMode.CumulativeFunctions,
-        label: t('transformers.calculate-field-transformer-editor.label.cumulative-functions', 'Cumulative functions'),
-      },
-      {
-        value: CalculateFieldMode.WindowFunctions,
-        label: t('transformers.calculate-field-transformer-editor.label.window-functions', 'Window functions'),
-      }
-    );
-  }
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };

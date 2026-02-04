@@ -56,7 +56,8 @@ spec:
     spec:
       containers:
         - command:
-            - grafana-server
+            - grafana
+            - server
             - target
             - --config=/etc/grafana-config/operator.ini
             - --homepath=/usr/share/grafana
@@ -78,7 +79,7 @@ spec:
                 secretKeyRef:
                   name: iam-operator-secrets
                   key: grpc_auth_token
-          image: grafana/grafana-dev:12.3.0-17863745596
+          image: iam-folder-reconciler
           imagePullPolicy: IfNotPresent
           name: iam-folder-reconciler
           volumeMounts:

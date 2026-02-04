@@ -1,28 +1,18 @@
 import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 
-import { isGitProvider } from '../../utils/repositoryTypes';
-import { RepoType, StepStatusInfo } from '../types';
+import { StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;
-  requiresMigration: boolean;
-  repoType: RepoType;
-  isLegacyStorage?: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({
-  repoName,
-  requiresMigration,
-  repoType,
-  isLegacyStorage,
-  setStepStatusInfo,
-}: UseCreateSyncJobParams) {
+export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
-  const supportsHistory = isGitProvider(repoType) && isLegacyStorage;
 
-  const createSyncJob = async (options?: { history?: boolean }) => {
+  const createSyncJob = async (requiresMigration: boolean) => {
     if (!repoName) {
       setStepStatusInfo?.({
         status: 'error',
@@ -36,9 +26,7 @@ export function useCreateSyncJob({
 
       const jobSpec = requiresMigration
         ? {
-            migrate: {
-              history: (options?.history || false) && supportsHistory,
-            },
+            migrate: {},
           }
         : {
             pull: {
@@ -59,12 +47,16 @@ export function useCreateSyncJob({
         return null;
       }
 
-      setStepStatusInfo?.({ status: 'success' });
+      // Job status will be tracked by JobStatus component, keep status as 'running'
       return response;
     } catch (error) {
+      const errorMessage = extractErrorMessage(error);
       setStepStatusInfo?.({
         status: 'error',
-        error: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
+        error: {
+          title: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
+          message: errorMessage,
+        },
       });
       return null;
     }
@@ -73,6 +65,5 @@ export function useCreateSyncJob({
   return {
     createSyncJob,
     isLoading,
-    supportsHistory,
   };
 }

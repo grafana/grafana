@@ -14,7 +14,10 @@
         "type": "dashboard"
       },
       {
-        "datasource": "grafana",
+        "datasource": {
+          "type": "grafana",
+          "uid": "grafana"
+        },
         "enable": true,
         "name": "Annotations \u0026 Alerts"
       }
@@ -55,7 +58,9 @@
   "templating": {
     "list": [
       {
-        "datasource": "prometheus",
+        "datasource": {
+          "type": "prometheus"
+        },
         "name": "server",
         "options": [],
         "query": "label_values(server)",

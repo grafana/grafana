@@ -19,9 +19,23 @@ type BuildOpts struct {
 	GoCacheProg       string
 	Static            bool
 	Enterprise        bool
+	CGOEnabled        bool
 }
 
-func distroOptsFunc(log *slog.Logger, distro Distribution) (DistroBuildOptsFunc, error) {
+func distroOptsFunc(log *slog.Logger, distro Distribution, opts *BuildOpts) (DistroBuildOptsFunc, error) {
+	if !opts.CGOEnabled {
+		return func(distro Distribution, experiments, tags []string) *GoBuildOpts {
+			os, arch := OSAndArch(distro)
+			archv := ArchVersion(distro)
+			return &GoBuildOpts{
+				OS:         os,
+				Arch:       arch,
+				GoARM:      GoARM(archv),
+				CGOEnabled: false,
+			}
+		}, nil
+	}
+
 	if val, ok := DistributionGoOpts[distro]; ok {
 		return DistroOptsLogger(log, val), nil
 	}
@@ -29,7 +43,7 @@ func distroOptsFunc(log *slog.Logger, distro Distribution) (DistroBuildOptsFunc,
 }
 
 func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {
-	fn, err := distroOptsFunc(log, distro)
+	fn, err := distroOptsFunc(log, distro, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +53,7 @@ func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distributio
 }
 
 func WithViceroyEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {
-	fn, err := distroOptsFunc(log, distro)
+	fn, err := distroOptsFunc(log, distro, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -91,25 +105,30 @@ func GolangContainer(
 	opts *BuildOpts,
 ) (*dagger.Container, error) {
 	os, _ := OSAndArch(distro)
-	// Only use viceroy for all darwin and only windows/amd64
-	if os == "darwin" || distro == DistWindowsAMD64 {
+	// Only use viceroy for all darwin builds
+	if opts.CGOEnabled && os == "darwin" {
 		return ViceroyContainer(d, log, distro, goVersion, viceroyVersion, opts)
 	}
 
-	container := golang.Container(d, platform, goVersion).
-		WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
-		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/zig-linux-x86_64-0.11.0.tar.xz"}).
-		WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
-		WithExec([]string{"mv", "/zig", "/bin/zig"}).
-		// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
-		WithExec([]string{"mkdir", "/toolchain"}).
-		WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
-		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
-		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/riscv64-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xf", "/toolchain/riscv64-linux-musl-cross.tgz", "-C", "/toolchain"})
+	container := golang.Container(d, platform, goVersion)
 
+	if opts.CGOEnabled {
+		container = container.
+			WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
+			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/zig-linux-x86_64-0.11.0.tar.xz"}).
+			WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
+			WithExec([]string{"mv", "/zig", "/bin/zig"}).
+			// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
+			WithExec([]string{"mkdir", "/toolchain"}).
+			WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
+			WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
+			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
+			WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
+			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/riscv64-linux-musl-cross.tgz", "-P", "/toolchain"}).
+			WithExec([]string{"tar", "-xf", "/toolchain/riscv64-linux-musl-cross.tgz", "-C", "/toolchain"}).
+			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/x86_64-w64-mingw32-cross.tgz", "-P", "/toolchain"}).
+			WithExec([]string{"tar", "-xf", "/toolchain/x86_64-w64-mingw32-cross.tgz", "-C", "/toolchain"})
+	}
 	return WithGoEnv(log, container, distro, opts)
 }
 
@@ -141,53 +160,11 @@ func Builder(
 	distro Distribution,
 	opts *BuildOpts,
 	platform dagger.Platform,
-	src *dagger.Directory,
 	goVersion string,
 	viceroyVersion string,
-	goBuildCache *dagger.CacheVolume,
-	goModCache *dagger.CacheVolume,
 ) (*dagger.Container, error) {
-	var (
-		version = opts.Version
-	)
-
 	// for some distros we use the golang official iamge. For others, we use viceroy.
-	builder, err := GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	builder = builder.
-		WithMountedCache("/root/.cache/go", goBuildCache).
-		WithEnvVariable("GOCACHE", "/root/.cache/go")
-
-	if prog := opts.GoCacheProg; prog != "" {
-		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
-	}
-
-	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
-
-	builder = withCue(builder, src).
-		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
-		}).
-		WithDirectory("/src/pkg", src.WithoutDirectory("pkg/build").Directory("pkg")).
-		WithDirectory("/src/apps", src.Directory("apps")).
-		WithDirectory("/src/emails", src.Directory("emails")).
-		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
-		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
-		WithWorkdir("/src")
-
-	if opts.Enterprise {
-		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
-	}
-
-	builder = golang.WithCachedGoDependencies(
-		builder,
-		goModCache,
-	)
-
-	return builder, nil
+	return GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
 }
 
 func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {

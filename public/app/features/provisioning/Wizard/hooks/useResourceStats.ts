@@ -11,24 +11,34 @@ import {
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { ManagerKind } from 'app/features/apiserver/types';
+
+import { useRepositoryStatus } from './useRepositoryStatus';
+
+export type UseResourceStatsOptions = {
+  enableRepositoryStatus?: boolean;
+  isHealthy?: boolean;
+};
 
 function getManagedCount(managed?: ManagerStats[]) {
   let totalCount = 0;
 
   // Loop through each managed repository
   managed?.forEach((manager) => {
-    // Loop through stats inside each manager and sum up the counts
-    manager.stats.forEach((stat) => {
-      if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
-        totalCount += stat.count;
-      }
-    });
+    if (manager.kind === ManagerKind.Repo) {
+      // Loop through stats inside each manager and sum up the counts
+      manager.stats.forEach((stat) => {
+        if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
+          totalCount += stat.count;
+        }
+      });
+    }
   });
 
   return totalCount;
 }
 
-function getResourceCount(stats?: ResourceCount[]) {
+function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
   let counts: string[] = [];
   let resourceCount = 0;
 
@@ -43,6 +53,26 @@ function getResourceCount(stats?: ResourceCount[]) {
         resourceCount += stat.count;
         counts.push(t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count }));
         break;
+    }
+  });
+
+  managed?.forEach((manager) => {
+    if (manager.kind !== ManagerKind.Repo) {
+      manager.stats.forEach((stat) => {
+        switch (stat.group) {
+          case 'folders':
+          case 'folder.grafana.app':
+            resourceCount += stat.count;
+            counts.push(t('provisioning.bootstrap-step.folders-count', '{{count}} folder', { count: stat.count }));
+            break;
+          case 'dashboard.grafana.app':
+            resourceCount += stat.count;
+            counts.push(
+              t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count })
+            );
+            break;
+        }
+      });
     }
   });
 
@@ -77,9 +107,21 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, syncTarget?: RepositoryView['target']) {
+
+// TODO: update params to be object
+export function useResourceStats(
+  repoName?: string,
+  syncTarget?: RepositoryView['target'],
+  migrateResources?: boolean,
+  options?: UseResourceStatsOptions
+) {
+  const enableRepositoryStatus = options?.enableRepositoryStatus ?? true; // provide option to skip repo status check
+  const { isHealthy: statusHealthy } = useRepositoryStatus(enableRepositoryStatus ? repoName : undefined);
+  const effectiveHealthy = enableRepositoryStatus ? statusHealthy : options?.isHealthy;
+
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
+  // files endpoint requires healthy repository
+  const filesQuery = useGetRepositoryFilesQuery(repoName && effectiveHealthy ? { name: repoName } : skipToken);
 
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
 
@@ -92,12 +134,17 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, s
     return {
       // managed does not exist in response when first time connecting to a repo
       managedCount: getManagedCount(resourceStatsQuery.data?.managed),
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged).resourceCount,
+      // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
+      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed)
+        .resourceCount,
     };
   }, [resourceStatsQuery.data]);
 
-  const requiresMigration = isLegacyStorage || resourceCount > 0;
-  const shouldSkipSync = !isLegacyStorage && (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
+  // Calculate requiresMigration based on sync target and user selection
+  // For instance sync: migrate if there are resources (checkbox is disabled and always true)
+  // For folder sync: only migrate if user explicitly opts in via checkbox
+  const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
+  const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =

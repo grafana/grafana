@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -12,7 +13,12 @@ import { getGitProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
-  const { register, watch, setValue } = useFormContext<WizardFormData>();
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
@@ -42,6 +48,8 @@ export const FinishStep = memo(function FinishStep() {
             'How often to sync changes from the repository'
           )}
           required
+          error={errors?.repository?.sync?.intervalSeconds?.message}
+          invalid={!!errors?.repository?.sync?.intervalSeconds?.message}
         >
           <Input
             {...register('repository.sync.intervalSeconds', {
@@ -61,6 +69,7 @@ export const FinishStep = memo(function FinishStep() {
             onChange: (e) => {
               if (e.target.checked) {
                 setValue('repository.prWorkflow', false);
+                setValue('repository.enablePushToConfiguredBranch', false);
               }
             },
           })}
@@ -81,6 +90,14 @@ export const FinishStep = memo(function FinishStep() {
             description={gitFields.prWorkflowConfig.description}
           />
         </Field>
+      )}
+
+      {isGitBased && (
+        <EnablePushToConfiguredBranchOption<WizardFormData>
+          register={register}
+          readOnly={readOnly}
+          registerName="repository.enablePushToConfiguredBranch"
+        />
       )}
 
       {isGithub && imageRenderingAllowed && (

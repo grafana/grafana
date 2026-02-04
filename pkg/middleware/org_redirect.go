@@ -3,7 +3,6 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"path"
 	"regexp"
 	"strconv"
 
@@ -13,8 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Only allow redirects that start with a slash followed by an alphanumerical character, a dash or an underscore.
-var redirectRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_].*`)
+var redirectAllowRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_./]*$`)
+
+// Do not allow redirect URLs that contain "//" or ".."
+var redirectDenyRe = regexp.MustCompile(`(//|\.\.)`)
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
@@ -66,9 +67,9 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 }
 
 func validRedirectPath(p string) bool {
-	if p != "" && p != "/" && !redirectRe.MatchString(p) {
+	if redirectDenyRe.MatchString(p) {
 		return false
 	}
-	cleanPath := path.Clean(p)
-	return cleanPath == "." || cleanPath == "/" || redirectRe.MatchString(cleanPath)
+
+	return p == "" || p == "/" || redirectAllowRe.MatchString(p)
 }

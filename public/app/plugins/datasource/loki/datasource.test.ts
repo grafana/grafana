@@ -33,11 +33,12 @@ import {
 } from '@grafana/runtime';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
+import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { createMetadataRequest } from './mocks/metadataRequest';
 import { runSplitQuery } from './querySplitting';
-import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiVariableQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -52,7 +53,7 @@ const templateSrvStub = {
   replace: jest.fn((a: string, ...rest: unknown[]) => a),
 } as unknown as TemplateSrv;
 
-const testFrame: DataFrame = {
+const legacyTestFrame: DataFrame = {
   refId: 'A',
   fields: [
     {
@@ -98,12 +99,68 @@ const testFrame: DataFrame = {
   ],
   length: 2,
 };
+const dataplaneTestFrame = {
+  refId: 'A',
+  fields: [
+    {
+      name: 'timestamp',
+      type: FieldType.time,
+      config: {},
+      values: [1, 2],
+    },
+    {
+      name: 'body',
+      type: FieldType.string,
+      config: {},
+      values: ['hello', 'hello 2'],
+    },
+    {
+      name: 'labels',
+      type: FieldType.other,
+      config: {},
+      values: [
+        {
+          label: 'value',
+          label2: 'value ',
+        },
+        {
+          label: '',
+          label2: 'value2',
+          label3: ' ',
+        },
+      ],
+    },
+    {
+      name: 'id',
+      type: FieldType.string,
+      config: {},
+      values: ['id1', 'id2'],
+    },
+    {
+      name: 'labelTypes',
+      type: FieldType.other,
+      config: {},
+      values: [
+        {
+          label: 'I',
+          label2: 'S',
+        },
+        {
+          label: 'I',
+          label2: 'S',
+          label3: 'P',
+        },
+      ],
+    },
+  ],
+  length: 2,
+};
 
 const testLogsResponse: FetchResponse = {
   data: {
     results: {
       A: {
-        frames: [dataFrameToJSON(testFrame)],
+        frames: [dataFrameToJSON(legacyTestFrame)],
       },
     },
   },
@@ -335,6 +392,12 @@ describe('LokiDatasource', () => {
       expect(ds.interpolateQueryExpr("!~ `abc'$^*{}[]+?.()|`", variable)).toEqual("!~ `abc'$^*{}[]+?.()|`");
     });
 
+    it('should return label type', () => {
+      expect(ds.getLabelDisplayTypeFromFrame('label', dataplaneTestFrame, 0)).toEqual('Indexed labels');
+      expect(ds.getLabelDisplayTypeFromFrame('label2', dataplaneTestFrame, 0)).toEqual('Structured metadata');
+      expect(ds.getLabelDisplayTypeFromFrame('label3', dataplaneTestFrame, 1)).toEqual('Parsed fields');
+    });
+
     it('should return a number', () => {
       expect(ds.interpolateQueryExpr(1000, variable)).toEqual(1000);
     });
@@ -458,53 +521,7 @@ describe('LokiDatasource', () => {
     it('should transform the loki dataplane data to annotation response', async () => {
       const originalDataplaneState = config.featureToggles.lokiLogsDataplane;
       config.featureToggles.lokiLogsDataplane = true;
-      const testFrame: DataFrame = {
-        refId: 'A',
-        fields: [
-          {
-            name: 'timestamp',
-            type: FieldType.time,
-            config: {},
-            values: [1, 2],
-          },
-          {
-            name: 'body',
-            type: FieldType.string,
-            config: {},
-            values: ['hello', 'hello 2'],
-          },
-          {
-            name: 'labels',
-            type: FieldType.other,
-            config: {},
-            values: [
-              {
-                label: 'value',
-                label2: 'value ',
-              },
-              {
-                label: '',
-                label2: 'value2',
-                label3: ' ',
-              },
-            ],
-          },
-          {
-            name: 'tsNs',
-            type: FieldType.string,
-            config: {},
-            values: ['1000000', '2000000'],
-          },
-          {
-            name: 'id',
-            type: FieldType.string,
-            config: {},
-            values: ['id1', 'id2'],
-          },
-        ],
-        length: 2,
-      };
-      const res = await getTestContext(testFrame, { stepInterval: '15s' });
+      const res = await getTestContext(dataplaneTestFrame, { stepInterval: '15s' });
 
       expect(res.length).toBe(2);
       expect(res[0].text).toBe('hello');

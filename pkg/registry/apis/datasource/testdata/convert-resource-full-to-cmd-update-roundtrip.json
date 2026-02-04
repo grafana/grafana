@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "name": "cejobd88i85j4d",
+    "namespace": "org-0",
+    "uid": "boDNh7zU3nXj46rOXIJI7r44qaxjs8yy9I9dOj1MyBoX",
+    "generation": 2
+  },
+  "spec": {
+    "access": "proxy",
+    "basicAuth": true,
+    "basicAuthUser": "xxx",
+    "database": "db",
+    "isDefault": true,
+    "jsonData": {
+      "aaa": "bbb",
+      "bbb": true,
+      "ccc": 1.234
+    },
+    "title": "Hello testdata",
+    "url": "http://something/",
+    "withCredentials": true
+  },
+  "secure": {
+    "extra": {
+      "name": "lds-sv-6ed1b76e5d"
+    },
+    "password": {
+      "name": "lds-sv-edc8fde0ac"
+    }
+  }
+}

@@ -13,6 +13,7 @@ import catchpointSvg from 'img/plugins/catchpoint.svg';
 import cloudflareJpg from 'img/plugins/cloudflare.jpg';
 import cockroachdbJpg from 'img/plugins/cockroachdb.jpg';
 import datadogPng from 'img/plugins/datadog.png';
+import db2Svg from 'img/plugins/db2.svg';
 import droneSvg from 'img/plugins/drone.svg';
 import dynatracePng from 'img/plugins/dynatrace.png';
 import gitlabSvg from 'img/plugins/gitlab.svg';
@@ -29,6 +30,7 @@ import sapHanaPng from 'img/plugins/sap_hana.png';
 import servicenowSvg from 'img/plugins/servicenow.svg';
 import signalfxLogoSvg from 'img/plugins/signalfx-logo.svg';
 import snowflakeSvg from 'img/plugins/snowflake.svg';
+import solarWindsSvg from 'img/plugins/solarWinds.svg';
 import splunkLogo128Png from 'img/plugins/splunk_logo_128.png';
 import sumoSvg from 'img/plugins/sumo.svg';
 import wavefrontSvg from 'img/plugins/wavefront.svg';
@@ -407,6 +409,21 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       ),
       name: 'LogicMonitor Devices',
       imgUrl: logicMonitorSvg,
+    }),
+    getPhantomPlugin({
+      id: 'grafana-solarwinds-datasource',
+      description: t(
+        'datasources.get-enterprise-phantom-plugins.description.solarwinds-datasource',
+        'SolarWinds datasource'
+      ),
+      name: 'SolarWinds',
+      imgUrl: solarWindsSvg,
+    }),
+    getPhantomPlugin({
+      id: 'grafana-ibmdb2-datasource',
+      description: t('datasources.get-enterprise-phantom-plugins.description.ibmdb2-datasource', 'IBM Db2 data source'),
+      name: 'IBM Db2',
+      imgUrl: db2Svg,
     }),
   ];
 }

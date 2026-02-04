@@ -28,11 +28,10 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		config.Features{
-			SkipHostEnvVarsEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
-			SriChecksEnabled:       features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
-			TempoAlertingEnabled:   features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
-			PluginAssetProvider:    features.IsEnabledGlobally(featuremgmt.FlagPluginAssetProvider),
+			SriChecksEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
@@ -49,14 +48,15 @@ type PluginInstanceCfg struct {
 
 	Tracing config.Tracing
 
-	PluginSettings setting.PluginSettings
+	PluginSettings config.PluginSettings
 
-	AWSAllowedAuthProviders   []string
-	AWSAssumeRoleEnabled      bool
-	AWSExternalId             string
-	AWSSessionDuration        string
-	AWSListMetricsPageLimit   string
-	AWSForwardSettingsPlugins []string
+	AWSAllowedAuthProviders          []string
+	AWSAssumeRoleEnabled             bool
+	AWSPerDatasourceHTTPProxyEnabled bool
+	AWSExternalId                    string
+	AWSSessionDuration               string
+	AWSListMetricsPageLimit          string
+	AWSForwardSettingsPlugins        []string
 
 	Azure            *azsettings.AzureSettings
 	AzureAuthEnabled bool
@@ -78,6 +78,8 @@ type PluginInstanceCfg struct {
 
 	SigV4AuthEnabled    bool
 	SigV4VerboseLogging bool
+
+	LiveClientQueueMaxSize int
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
@@ -108,6 +110,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
+		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
 		AWSExternalId:                       aws.KeyValue("external_id").Value(),
 		AWSSessionDuration:                  aws.KeyValue("session_duration").Value(),
 		AWSListMetricsPageLimit:             aws.KeyValue("list_metrics_page_limit").Value(),
@@ -125,11 +128,12 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		ResponseLimit:                       cfg.ResponseLimit,
 		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
 		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
+		LiveClientQueueMaxSize:              cfg.LiveClientQueueMaxSize,
 	}, nil
 }
 
-func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
-	ps := setting.PluginSettings{}
+func extractPluginSettings(settingProvider setting.Provider) config.PluginSettings {
+	ps := config.PluginSettings{}
 	for sectionName, sectionCopy := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue

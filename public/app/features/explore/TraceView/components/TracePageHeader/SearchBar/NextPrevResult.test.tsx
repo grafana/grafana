@@ -64,8 +64,8 @@ describe('<NextPrevResult>', () => {
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
-    expect(nextResButton as HTMLDivElement).toHaveStyle('pointer-events: none');
-    expect(prevResButton as HTMLDivElement).toHaveStyle('pointer-events: none');
+    expect(nextResButton).toBeDisabled();
+    expect(prevResButton).toBeDisabled();
     expect(screen.getByText('0 matches')).toBeDefined();
   });
 
@@ -80,8 +80,8 @@ describe('<NextPrevResult>', () => {
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
-    expect(nextResButton as HTMLDivElement).not.toHaveStyle('pointer-events: none');
-    expect(prevResButton as HTMLDivElement).not.toHaveStyle('pointer-events: none');
+    expect(nextResButton).not.toBeDisabled();
+    expect(prevResButton).not.toBeDisabled();
     expect(screen.getByText('1 match')).toBeDefined();
   });
 

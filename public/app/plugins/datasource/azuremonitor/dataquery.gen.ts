@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/azuremonitor/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export interface AzureMonitorQuery extends common.DataQuery {
@@ -327,8 +329,17 @@ export enum BuilderQueryEditorOrderByOptions {
   Desc = 'desc',
 }
 
+export enum BuilderQueryEditorReduceParameterTypes {
+  Generic = 'generic',
+  Numeric = 'numeric',
+}
+
 export interface BuilderQueryEditorProperty {
   name: string;
+  /**
+   * Optional parameter type for function properties
+   */
+  parameterType?: BuilderQueryEditorReduceParameterTypes;
   type: BuilderQueryEditorPropertyType;
 }
 

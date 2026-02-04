@@ -19,8 +19,14 @@ export interface Props<T = string> extends Omit<FieldProps, 'children'> {
   /** Custom error message to display on saving */
   saveErrorMessage?: string;
   /** Input that will save its value on change  */
-  children: (onChange: (newValue: T) => void) => React.ReactElement;
+  children: (onChange: (newValue: T) => void) => React.ReactElement<Record<string, unknown>>;
 }
+
+/**
+ * Used for form inputs that should save its content automatically.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-autosavefield--docs
+ */
 export function AutoSaveField<T = string>(props: Props<T>) {
   const {
     invalid,

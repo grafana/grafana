@@ -5,12 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
-import {
-  SortOrder,
-  RichHistorySearchFilters,
-  RichHistorySettings,
-  createDatasourcesList,
-} from 'app/core/utils/richHistory';
+import { createDatasourcesList } from 'app/core/utils/richHistory';
+import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { RichHistoryQuery } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 

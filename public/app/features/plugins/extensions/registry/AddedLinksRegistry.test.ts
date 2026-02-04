@@ -1,10 +1,10 @@
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { AppPluginConfig } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
+import { basicApp } from '../test-fixtures/config.apps';
 import { isGrafanaDevMode } from '../utils';
 
 import { AddedLinksRegistry } from './AddedLinksRegistry';
@@ -29,55 +29,24 @@ jest.mock('../logs/log', () => {
 });
 
 describe('AddedLinksRegistry', () => {
-  const originalApps = config.apps;
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedLinksRegistry(override);
 
-  beforeEach(() => {
+  beforeEach(async () => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
-  });
-
-  afterEach(() => {
-    config.apps = originalApps;
   });
 
   it('should return empty registry when no extensions registered', async () => {
-    const addedLinksRegistry = new AddedLinksRegistry();
+    const addedLinksRegistry = await createRegistry();
     const observable = addedLinksRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
   });
 
   it('should be possible to register link extensions in the registry', async () => {
-    const addedLinksRegistry = new AddedLinksRegistry();
+    const addedLinksRegistry = await createRegistry();
 
     addedLinksRegistry.register({
       pluginId,
@@ -95,6 +64,7 @@ describe('AddedLinksRegistry', () => {
           path: `/a/${pluginId}/declare-incident`,
           targets: 'plugins/myorg-basic-app/start',
           configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
+          openInNewTab: true,
         },
       ],
     });
@@ -120,6 +90,7 @@ describe('AddedLinksRegistry', () => {
           path: `/a/${pluginId}/declare-incident`,
           extensionPointId: 'plugins/myorg-basic-app/start',
           configure: expect.any(Function),
+          openInNewTab: true,
         },
       ],
     });
@@ -127,7 +98,7 @@ describe('AddedLinksRegistry', () => {
   it('should be possible to asynchronously register link extensions for the same placement (different plugins)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -199,7 +170,7 @@ describe('AddedLinksRegistry', () => {
   it('should be possible to asynchronously register link extensions for a different placement (different plugin)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -273,7 +244,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should be possible to asynchronously register link extensions for the same placement (same plugin)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first extension point
     reactiveRegistry.register({
@@ -331,7 +302,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should be possible to asynchronously register link extensions for a different placement (same plugin)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first extension point
     reactiveRegistry.register({
@@ -391,7 +362,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should notify subscribers when the registry changes', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -457,7 +428,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should give the last version of the registry for new subscribers', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -494,9 +465,9 @@ describe('AddedLinksRegistry', () => {
     });
   });
 
-  it('should not register a link extension if it has an invalid configure() function', () => {
+  it('should not register a link extension if it has an invalid configure() function', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -523,9 +494,9 @@ describe('AddedLinksRegistry', () => {
     expect(registry).toEqual({});
   });
 
-  it('should not register a link extension if it has invalid properties (empty title / description)', () => {
+  it('should not register a link extension if it has invalid properties (empty title / description)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -551,37 +522,9 @@ describe('AddedLinksRegistry', () => {
     expect(registry).toEqual({});
   });
 
-  it('should not register link extensions with invalid path configured', () => {
-    const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
-    const observable = reactiveRegistry.asObservable();
-    const subscribeCallback = jest.fn();
-
-    reactiveRegistry.register({
-      pluginId: pluginId,
-      configs: [
-        {
-          title: 'Title 1',
-          description: 'Description 1',
-          path: `/a/another-plugin/declare-incident`,
-          targets: 'grafana/dashboard/panel/menu',
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
-
-    expect(log.error).toHaveBeenCalled();
-
-    observable.subscribe(subscribeCallback);
-    expect(subscribeCallback).toHaveBeenCalledTimes(1);
-
-    const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
-  });
-
   it('should not be possible to register a link on a read-only registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new AddedLinksRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
 
     expect(() => {
@@ -605,7 +548,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should pass down fresh registrations to the read-only version of the registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new AddedLinksRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
     const subscribeCallback = jest.fn();
     let readOnlyState;
@@ -642,7 +585,7 @@ describe('AddedLinksRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = new AddedLinksRegistry();
+    const registry = await createRegistry();
     const linkConfig = {
       title: 'Link 1',
       description: 'Link 1 description',
@@ -650,9 +593,6 @@ describe('AddedLinksRegistry', () => {
       targets: 'grafana/dashboard/panel/menu',
       configure: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedLinks = [];
 
     registry.register({
       pluginId,
@@ -669,7 +609,7 @@ describe('AddedLinksRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = new AddedLinksRegistry();
+    const registry = await createRegistry();
     const linkConfig = {
       title: 'Link 1',
       description: 'Link 1 description',
@@ -693,7 +633,7 @@ describe('AddedLinksRegistry', () => {
     // Production mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
 
-    const registry = new AddedLinksRegistry();
+    const registry = await createRegistry();
     const linkConfig = {
       title: 'Link 1',
       description: 'Link 1 description',
@@ -701,9 +641,6 @@ describe('AddedLinksRegistry', () => {
       targets: 'grafana/dashboard/panel/menu',
       configure: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedLinks = [];
 
     registry.register({
       pluginId,
@@ -720,7 +657,6 @@ describe('AddedLinksRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = new AddedLinksRegistry();
     const linkConfig = {
       title: 'Link 1',
       description: 'Link 1 description',
@@ -728,9 +664,12 @@ describe('AddedLinksRegistry', () => {
       targets: ['grafana/dashboard/panel/menu'],
       configure: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+    const { description, targets, title } = linkConfig;
+    const app = {
+      ...basicApp,
+      extensions: { ...basicApp.extensions, addedLinks: [{ description, targets, title }] },
+    };
+    const registry = await createRegistry([app]);
 
     registry.register({
       pluginId,
@@ -741,5 +680,199 @@ describe('AddedLinksRegistry', () => {
 
     expect(Object.keys(currentState)).toHaveLength(1);
     expect(log.error).not.toHaveBeenCalled();
+  });
+
+  describe('asObservableSlice', () => {
+    it('should return the selected slice from the registry', async () => {
+      const registry = await createRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Link',
+            description: 'Test description',
+            path: '/test-path',
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Link');
+      });
+    });
+
+    it('should return undefined when the selected key does not exist', async () => {
+      const registry = await createRegistry();
+      const observable = registry.asObservableSlice((state) => state['non-existent-key']).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+        expect(slice).toBeUndefined();
+      });
+    });
+
+    it('should only emit when the selected slice changes (distinctUntilChanged)', async () => {
+      const registry = await createRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+      const subscribeCallback = jest.fn();
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      observable.subscribe(subscribeCallback);
+
+      // Initial empty state
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]).toBeUndefined();
+
+      // Register first link
+      registry.register({
+        pluginId: 'test-plugin-1',
+        configs: [
+          {
+            title: 'Link 1',
+            description: 'Description 1',
+            path: '/path1',
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      // Should emit because the slice changed
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+      expect(subscribeCallback.mock.calls[1][0]?.length).toBe(1);
+
+      // Register another link to the same extension point
+      registry.register({
+        pluginId: 'test-plugin-2',
+        configs: [
+          {
+            title: 'Link 2',
+            description: 'Description 2',
+            path: '/path2',
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      // Should emit because the slice changed (array reference changed)
+      expect(subscribeCallback).toHaveBeenCalledTimes(3);
+      expect(subscribeCallback.mock.calls[2][0]?.length).toBe(2);
+
+      // Register a link to a different extension point
+      registry.register({
+        pluginId: 'test-plugin-3',
+        configs: [
+          {
+            title: 'Link 3',
+            description: 'Description 3',
+            path: '/path3',
+            targets: 'grafana/other/point',
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      // Should NOT emit because the selected slice (for extensionPointId) didn't change
+      expect(subscribeCallback).toHaveBeenCalledTimes(3);
+    });
+
+    it('should deep freeze the selected slice', async () => {
+      const registry = await createRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Link',
+            description: 'Test description',
+            path: '/test-path',
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        // @ts-expect-error - Testing that frozen objects cannot be modified
+        expect(() => slice.push({})).toThrow();
+        expect(() => (slice[0].title = 'Modified')).toThrow();
+      });
+    });
+
+    it('should work with read-only registries', async () => {
+      const registry = await createRegistry();
+      const readOnlyRegistry = registry.readOnly();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Link',
+            description: 'Test description',
+            path: '/test-path',
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Link');
+      });
+    });
+
+    it('should emit immediately to new subscribers with the current slice value', async () => {
+      const registry = await createRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Link',
+            description: 'Test description',
+            path: '/test-path',
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+
+      // Subscribe after registration
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      const subscribeCallback = jest.fn();
+      observable.subscribe(subscribeCallback);
+
+      // Should have been called immediately with the current value
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]?.length).toBe(1);
+      expect(subscribeCallback.mock.calls[0][0]?.[0].title).toBe('Test Link');
+    });
   });
 });

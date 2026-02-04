@@ -7,9 +7,11 @@ import { Stack } from './Stack';
 
 The Stack component is a simple wrapper around the flexbox layout model that allows to easily create responsive and flexible layouts. It provides a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
 
-### Usage
+The Stack component intentionally does not allow you to pass in a className, and if you need to customize the styles beyond what the props allow, you should instead copy the styles needed from Stack into your own custom styled div (or relevant semantic component).
 
-#### When to use
+## Usage
+
+### When to use
 
 - For creating responsive and flexible layouts that can adapt to different screen sizes and orientations.
 - When needing a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
@@ -17,11 +19,17 @@ The Stack component is a simple wrapper around the flexbox layout model that all
 - When aiming to create equal height columns.
 - To create a grid-like structure with automatic wrapping and sizing of items based on the available space.
 
-#### When not to use
+### When not to use
 
 - For complex multi-dimensional layouts with intricate requirements that are better suited for CSS frameworks or grid systems.
-- When precise control over spacing and positioning of elements is necessary.
+- When precise control over spacing and positioning of elements is necessary. If you need more than the simple controls that Stack offers, you should use custom styles on a plain element.
 
-### Props
+## Props
 
 <ArgTypes of={Stack} />
+
+## Design decisions
+
+Stack is designed for the common simple cases where it's faster to write `<Stack direction="column">...</Stack>` than it is to set up the styles hooks. If you are writing custom styles anyway, you should add the flex styles there instead of using a Stack. You can use `theme.spacing(number)` in your styles to match how numbers are used in props like `gap` and `width`.
+
+The style-related props that Stack supports are intentionally limited to the flex and sizing props. It's not expected that there would be changes needed to Stack unless browsers add new css properties related to flex.

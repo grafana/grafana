@@ -22,6 +22,7 @@ import (
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
+	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
@@ -220,10 +221,11 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 			return nil, schema.GroupVersionResource{}, err
 		}
 	}
+	baseClient := dynamic.Resource(gvr).Namespace(c.namespace)
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: dynamic.Resource(gvr).Namespace(c.namespace),
+		client: newRetryResourceInterface(baseClient, defaultRetryBackoff()),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
@@ -273,10 +275,11 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 			return nil, schema.GroupVersionKind{}, fmt.Errorf("getting kind for resource for %s: %w", gvr.String(), err)
 		}
 	}
+	baseClient := dynamic.Resource(gvr).Namespace(c.namespace)
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: dynamic.Resource(gvr).Namespace(c.namespace),
+		client: newRetryResourceInterface(baseClient, defaultRetryBackoff()),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info

@@ -23,3 +23,16 @@ export const MOCK_TEAMS = [
     status: {},
   },
 ];
+
+export const MOCK_TEAM_GROUPS = [{ groupId: 'cn=users,ou=groups,dc=grafana,dc=org' }, { groupId: 'another-group' }];
+
+export const setupMockTeams = () => {
+  mockTeamsMap.clear();
+  MOCK_TEAMS.forEach((team) => {
+    mockTeamsMap.set(team.metadata.name, { team, groups: [...MOCK_TEAM_GROUPS] });
+  });
+};
+
+export const mockTeamsMap = new Map<string, { team: (typeof MOCK_TEAMS)[number]; groups: Array<{ groupId: string }> }>(
+  MOCK_TEAMS.map((team) => [team.metadata.name, { team, groups: [...MOCK_TEAM_GROUPS] }])
+);

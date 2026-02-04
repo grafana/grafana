@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -65,7 +66,8 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger log.Logger
+	Logger  log.Logger
+	Timeout time.Duration
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -98,6 +100,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 
 	c := &http.Client{
 		Transport: rt,
+		Timeout:   cfg.Timeout,
 	}
 	tc := alertingInstrument.NewTimedClient(c, metrics.RequestLatency)
 	trc := alertingInstrument.NewTracedClient(tc, tracer, "remote.alertmanager.client")

@@ -40,25 +40,44 @@ interface ShowMoreInstancesProps {
   stats: ShowMoreStats;
   onClick?: React.ComponentProps<typeof LinkButton>['onClick'];
   href?: React.ComponentProps<typeof LinkButton>['href'];
+  enableFiltering?: boolean;
+  alertState?: InstanceStateFilter;
 }
 
-function ShowMoreInstances({ stats, onClick, href }: ShowMoreInstancesProps) {
+function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }: ShowMoreInstancesProps) {
   const styles = useStyles2(getStyles);
+  const { visibleItemsCount, totalItemsCount } = stats;
 
   return (
     <div className={styles.footerRow}>
       <div>
-        <Trans
-          i18nKey="alerting.rule-details-matching-instances.showing-count"
-          values={{ visibleItems: stats.visibleItemsCount, totalItems: stats.totalItemsCount }}
-        >
-          Showing {'{{visibleItems}}'} out of {'{{totalItems}}'} instances
-        </Trans>
+        {enableFiltering && alertState ? (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count-with-state"
+            values={{ visibleItemsCount, alertState, totalItemsCount }}
+          >
+            Showing {{ visibleItemsCount }} {{ alertState }} out of {{ totalItemsCount }} instances
+          </Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count"
+            values={{ visibleItemsCount, totalItemsCount }}
+          >
+            Showing {{ visibleItemsCount }} out of {{ totalItemsCount }} instances
+          </Trans>
+        )}
       </div>
       <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
-        <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all" count={stats.totalItemsCount}>
-          Show all {'{{totalItems}}'} alert instances
-        </Trans>
+        {enableFiltering ? (
+          <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all">Show all</Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.button-show-all-instances"
+            values={{ totalItemsCount }}
+          >
+            Show all {{ totalItemsCount }} alert instances
+          </Trans>
+        )}
       </LinkButton>
     </div>
   );
@@ -127,6 +146,8 @@ export function RuleDetailsMatchingInstances(props: Props) {
       stats={stats}
       onClick={enableFiltering ? resetFilter : undefined}
       href={!enableFiltering ? ruleViewPageLink : undefined}
+      enableFiltering={enableFiltering}
+      alertState={alertState}
     />
   ) : undefined;
 

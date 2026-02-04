@@ -2,13 +2,19 @@ import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
+import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import {
+  CONTENT_KINDS,
+  DashboardLibraryInteractions,
+  SOURCE_ENTRY_POINTS,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
 import { CommandPaletteAction } from '../types';
@@ -25,7 +31,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   for (let navItem of navTree) {
     // help node needs enriching with the frontend links
     if (navItem.id === 'help') {
-      navItem = enrichHelpItem({ ...navItem });
+      navItem = getEnrichedHelpItem({ ...navItem });
       delete navItem.url;
     }
     const { url, target, text, isCreateAction, children, onClick, keywords } = navItem;
@@ -140,7 +146,31 @@ function getGlobalActions(): CommandPaletteAction[] {
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   return useMemo(() => {
-    const navBarActions = navTreeToActions(navBarTree);
+    let navBarActions = navTreeToActions(navBarTree);
+
+    if (config.featureToggles.dashboardTemplates) {
+      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+      if (testDataSources.length > 0) {
+        const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
+        const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
+
+        navBarActionsWithActions.splice(1, 0, {
+          id: 'browse-template-dashboard',
+          name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+          section: t('command-palette.section.actions', 'Actions'),
+          priority: ACTIONS_PRIORITY,
+          perform: () => {
+            DashboardLibraryInteractions.entryPointClicked({
+              entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+              contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+            });
+            locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+          },
+        });
+
+        navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
+      }
+    }
 
     if (shouldRenderInviteUserButton()) {
       navBarActions.push({

@@ -1,5 +1,6 @@
 import { String } from '@grafana/lezer-logql';
 
+import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import {
   getHighlighterExpressionsFromQuery,
   getLokiQueryType,
@@ -20,7 +21,7 @@ import {
   interpolateShardingSelector,
   requestSupportsSharding,
 } from './queryUtils';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiQuery } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {

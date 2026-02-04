@@ -3,19 +3,26 @@ package resourcepermissions
 import (
 	"context"
 
+	"k8s.io/client-go/dynamic"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
 type InheritedScopesSolver func(ctx context.Context, orgID int64, resourceID string) ([]string, error)
 type ResourceTranslator func(ctx context.Context, orgID int64, resourceID string) (string, error)
+type ParentFolderResolver func(ctx context.Context, namespace string, resourceID string, dynamicClient dynamic.Interface) (string, error)
 type Options struct {
 	// Resource is the action and scope prefix that is generated
 	Resource string
 	// ResourceAttribute is the attribute the scope should be based on (e.g. id or uid)
 	ResourceAttribute string
+	// APIGroup is the Kubernetes API group for the resource (e.g. "folder.grafana.app")
+	// If not set, defaults to "{Resource}.grafana.app"
+	APIGroup string
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
 	// ResourceTranslator is a translator function that will be called before each action, it can be used to translate a resource id to a different format.
@@ -43,6 +50,11 @@ type Options struct {
 	OnSetBuiltInRole func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
+	// GetParentFolder if configured returns the parent folder UID for a resource
+	// Used for inherited permissions in K8s API. If not set, only direct permissions are returned
+	GetParentFolder ParentFolderResolver
 	// LicenseMV if configured is applied to endpoints that can modify permissions
 	LicenseMW web.Handler
+	// RestConfigProvider if configured enables K8s API redirect for resource permissions
+	RestConfigProvider apiserver.RestConfigProvider
 }

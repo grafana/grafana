@@ -15,6 +15,7 @@ func TestRegisterAuthorizers(t *testing.T) {
 		name              string
 		appInstallers     []appsdkapiserver.AppInstaller
 		expectedRegisters int
+		expectedPanic     bool
 	}{
 		{
 			name:              "empty installers list",
@@ -30,7 +31,7 @@ func TestRegisterAuthorizers(t *testing.T) {
 					},
 				},
 			},
-			expectedRegisters: 0,
+			expectedPanic: true,
 		},
 		{
 			name: "single installer with authorizer provider",
@@ -45,6 +46,20 @@ func TestRegisterAuthorizers(t *testing.T) {
 				},
 			},
 			expectedRegisters: 1,
+		},
+		{
+			name: "single installer with invalid authorizer provider",
+			appInstallers: []appsdkapiserver.AppInstaller{
+				&mockAppInstallerWithAuth{
+					mockAppInstaller: &mockAppInstaller{
+						groupVersions: []schema.GroupVersion{
+							{Group: "test.example.com", Version: "v1"},
+						},
+					},
+					mockAuthorizer: nil,
+				},
+			},
+			expectedPanic: true,
 		},
 		{
 			name: "installer with multiple group versions",
@@ -63,7 +78,7 @@ func TestRegisterAuthorizers(t *testing.T) {
 			expectedRegisters: 3,
 		},
 		{
-			name: "multiple installers with mixed authorizer support",
+			name: "multiple installers with authorizer support",
 			appInstallers: []appsdkapiserver.AppInstaller{
 				&mockAppInstallerWithAuth{
 					mockAppInstaller: &mockAppInstaller{
@@ -72,11 +87,6 @@ func TestRegisterAuthorizers(t *testing.T) {
 						},
 					},
 					mockAuthorizer: &mockAuthorizer{},
-				},
-				&mockAppInstaller{
-					groupVersions: []schema.GroupVersion{
-						{Group: "other.example.com", Version: "v1"},
-					},
 				},
 				&mockAppInstallerWithAuth{
 					mockAppInstaller: &mockAppInstaller{
@@ -88,7 +98,7 @@ func TestRegisterAuthorizers(t *testing.T) {
 					mockAuthorizer: &mockAuthorizer{},
 				},
 			},
-			expectedRegisters: 3, // 1 from first installer + 2 from third installer
+			expectedRegisters: 3, // 1 from first installer + 2 from second installer
 		},
 	}
 
@@ -96,6 +106,13 @@ func TestRegisterAuthorizers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			registrar := &mockAuthorizerRegistrar{}
+			if tt.expectedPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("%s case did not panic as expected", t.Name())
+					}
+				}()
+			}
 			RegisterAuthorizers(ctx, tt.appInstallers, registrar)
 			require.Equal(t, tt.expectedRegisters, len(registrar.registrations))
 		})

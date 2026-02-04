@@ -58,6 +58,7 @@ export function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
       });
     } catch (error) {
       console.error('Error in onCacheEntryAdded:', error);
+      return;
     }
 
     await cacheEntryRemoved;

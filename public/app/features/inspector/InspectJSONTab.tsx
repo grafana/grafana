@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
@@ -125,7 +125,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1" noMargin>
           <Select
             inputId="select-source-dropdown"
             options={jsonOptions}

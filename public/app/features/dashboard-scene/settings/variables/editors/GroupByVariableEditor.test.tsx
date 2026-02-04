@@ -106,7 +106,7 @@ describe('GroupByVariableEditor', () => {
       title: 'Mock Parent',
     });
 
-    render(descriptor.render());
+    render(descriptor.renderElement());
 
     await waitFor(() => {
       // Check that some part of the component renders

@@ -16,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 
@@ -248,6 +249,9 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 
 	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
+	if ss.dbCfg.Type == migrator.SQLite {
+		ss.log.Info("Using SQLite driver", "driver", sqlite.DriverType())
+	}
 	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(ss.dbCfg.ConnectionString, "file:") &&
 		!strings.HasPrefix(ss.dbCfg.ConnectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
@@ -577,10 +581,16 @@ func TestMain(m *testing.M) {
 	// nolint:staticcheck
 	testSQLStore.cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
-	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
-		return nil, err
+	skipTruncate := false
+	if skip, present := os.LookupEnv("SKIP_DB_TRUNCATE"); present {
+		skipTruncate = strings.ToLower(skip) == "true"
 	}
-	testSQLStore.engine.ResetSequenceGenerator()
+	if !skipTruncate {
+		if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
+			return nil, err
+		}
+		testSQLStore.engine.ResetSequenceGenerator()
+	}
 
 	if err := testSQLStore.Reset(); err != nil {
 		return nil, err

@@ -197,7 +197,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
   }
 
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
-  let options = panel.options as any;
+  let options: any = panel.options;
 
   if (previousVersion < 6.2) {
     options = migrateFromValueOptions(options);

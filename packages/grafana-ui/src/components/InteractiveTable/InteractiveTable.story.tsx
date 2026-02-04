@@ -3,8 +3,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { CellProps } from 'react-table';
 
 import { LinkButton } from '../Button/Button';
+import { Checkbox } from '../Forms/Checkbox';
 import { Field } from '../Forms/Field';
+import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
+import { Text } from '../Text/Text';
 
 import { FetchDataArgs, InteractiveTable, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
@@ -112,8 +115,6 @@ const meta: Meta<typeof InteractiveTable<CarData>> = {
     controls: {
       exclude: EXCLUDED_PROPS,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     columns: [
@@ -299,4 +300,40 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   return <InteractiveTable {...args} data={data} pageSize={15} fetchData={fetchData} />;
 };
 
+export const WithCustomHeader: TableStoryObj = {
+  args: {
+    columns: [
+      // React element header
+      {
+        id: 'checkbox',
+        header: (
+          <>
+            <label htmlFor="select-all" className="sr-only">
+              Select all rows
+            </label>
+            <Checkbox id="select-all" />
+          </>
+        ),
+        cell: () => <Checkbox aria-label="Select row" />,
+      },
+      // Function renderer header
+      {
+        id: 'firstName',
+        header: () => (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <Icon name="user" size="sm" />
+            <Text element="span">First Name</Text>
+          </span>
+        ),
+        sortType: 'string',
+      },
+      // String header
+      { id: 'lastName', header: 'Last name', sortType: 'string' },
+      { id: 'car', header: 'Car', sortType: 'string' },
+      { id: 'age', header: 'Age', sortType: 'number' },
+    ],
+    data: pageableData.slice(0, 10),
+    getRowId: (r) => r.id,
+  },
+};
 export default meta;

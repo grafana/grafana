@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -95,6 +97,12 @@ func ProvideOSSService(
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
 		permRegistry:   permRegistry,
+		sql:            db,
+		serverLock:     lock,
+	}
+
+	if backend, ok := store.(*database.AccessControlStore); ok {
+		s.seeder = seeding.New(log.New("accesscontrol.seeder"), backend, backend)
 	}
 
 	return s
@@ -108,9 +116,14 @@ type Service struct {
 	features       featuremgmt.FeatureToggles
 	log            log.Logger
 	registrations  accesscontrol.RegistrationList
+	rolesMu        sync.RWMutex
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
+	seeder         *seeding.Seeder
 	permRegistry   permreg.PermissionRegistry
+	isInitialized  bool
+	sql            db.DB
+	serverLock     *serverlock.ServerLockService
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -139,11 +152,13 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	defer span.End()
 
 	permissions := make([]accesscontrol.Permission, 0)
+	s.rolesMu.RLock()
 	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := s.roles[builtin]; ok {
 			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
+	s.rolesMu.RUnlock()
 	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	// we don't care about the error here, if this fails we get 0 and no
@@ -170,9 +185,11 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	defer span.End()
 
 	var permissions []accesscontrol.Permission
+	s.rolesMu.RLock()
 	if basicRole, ok := s.roles[role]; ok {
 		permissions = basicRole.Permissions
 	}
+	s.rolesMu.RUnlock()
 
 	// Fetch managed role permissions assigned to basic roles
 	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -423,31 +440,78 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	_, span := tracer.Start(ctx, "accesscontrol.acimpl.RegisterFixedRoles")
 	defer span.End()
 
+	s.rolesMu.Lock()
+	registrations := s.registrations.Slice()
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
-		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
-			if basicRole, ok := s.roles[br]; ok {
-				for _, p := range registration.Role.Permissions {
-					if registration.Role.IsPlugin() && p.Action == pluginaccesscontrol.ActionAppAccess {
-						s.log.Debug("Plugin is attempting to grant access permission, but this permission is already granted by default and will be ignored",
-							"role", registration.Role.Name, "permission", p.Action, "scope", p.Scope)
-						continue
-					}
-					perm := accesscontrol.Permission{
-						Action: p.Action,
-						Scope:  p.Scope,
-					}
-
-					perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
-					basicRole.Permissions = append(basicRole.Permissions, perm)
-				}
-			} else {
-				s.log.Error("Unknown builtin role", "builtInRole", br)
-			}
-		}
+		s.registerRolesLocked(registration)
 		return true
 	})
 
+	s.isInitialized = true
+
+	rolesSnapshot := s.getBasicRolePermissionsLocked()
+	s.rolesMu.Unlock()
+
+	if s.seeder != nil {
+		if err := s.seeder.SeedRoles(ctx, registrations); err != nil {
+			return err
+		}
+		if err := s.seeder.RemoveAbsentRoles(ctx); err != nil {
+			return err
+		}
+	}
+
+	if err := s.refreshBasicRolePermissionsInDB(ctx, rolesSnapshot); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// getBasicRolePermissionsSnapshotFromRegistrationsLocked computes the desired basic role permissions from the
+// current registration list, using the shared seeding registration logic.
+//
+// it has to be called while holding the roles lock
+func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Permission {
+	desired := map[accesscontrol.SeedPermission]struct{}{}
+	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		seeding.AppendDesiredPermissions(desired, s.log, &registration.Role, registration.Grants, registration.Exclude)
+		return true
+	})
+
+	out := make(map[string][]accesscontrol.Permission)
+	for sp := range desired {
+		out[sp.BuiltInRole] = append(out[sp.BuiltInRole], accesscontrol.Permission{
+			Action: sp.Action,
+			Scope:  sp.Scope,
+		})
+	}
+	return out
+}
+
+// registerRolesLocked processes a single role registration and adds permissions to basic roles.
+// Must be called with s.rolesMu locked.
+func (s *Service) registerRolesLocked(registration accesscontrol.RoleRegistration) {
+	for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
+		if basicRole, ok := s.roles[br]; ok {
+			for _, p := range registration.Role.Permissions {
+				if registration.Role.IsPlugin() && p.Action == pluginaccesscontrol.ActionAppAccess {
+					s.log.Debug("Plugin is attempting to grant access permission, but this permission is already granted by default and will be ignored",
+						"role", registration.Role.Name, "permission", p.Action, "scope", p.Scope)
+					continue
+				}
+				perm := accesscontrol.Permission{
+					Action: p.Action,
+					Scope:  p.Scope,
+				}
+
+				perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+				basicRole.Permissions = append(basicRole.Permissions, perm)
+			}
+		} else {
+			s.log.Error("Unknown builtin role", "builtInRole", br)
+		}
+	}
 }
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
@@ -457,6 +521,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	defer span.End()
 
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
+	updatedBasicRoles := false
 	for _, r := range acRegs {
 		if err := pluginutils.ValidatePluginRole(ID, r.Role); err != nil {
 			return err
@@ -476,6 +541,28 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 
 		s.log.Debug("Registering plugin role", "role", r.Role.Name)
 		s.registrations.Append(r)
+
+		s.rolesMu.RLock()
+		initialized := s.isInitialized
+		s.rolesMu.RUnlock()
+		if initialized {
+			s.rolesMu.Lock()
+			s.registerRolesLocked(r)
+			updatedBasicRoles = true
+			s.rolesMu.Unlock()
+			s.cache.Flush()
+		}
+	}
+
+	if updatedBasicRoles {
+		s.rolesMu.RLock()
+		rolesSnapshot := s.getBasicRolePermissionsLocked()
+		s.rolesMu.RUnlock()
+
+		// plugin roles can be declared after startup - keep DB in sync
+		if err := s.refreshBasicRolePermissionsInDB(ctx, rolesSnapshot); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -513,6 +600,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
+	s.rolesMu.RLock()
 	for role, basicRole := range s.roles {
 		for i := range basicRole.Permissions {
 			if PermissionMatchesSearchOptions(basicRole.Permissions[i], &options) {
@@ -520,6 +608,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 			}
 		}
 	}
+	s.rolesMu.RUnlock()
 
 	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
 	if err != nil {
@@ -630,6 +719,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", searchOptions.UserID, orgID)
 	}
 	permissions := make([]accesscontrol.Permission, 0)
+	s.rolesMu.RLock()
 	for _, builtin := range roles {
 		if basicRole, ok := s.roles[builtin]; ok {
 			for _, permission := range basicRole.Permissions {
@@ -639,6 +729,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 			}
 		}
 	}
+	s.rolesMu.RUnlock()
 
 	searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
 	searchOptions.ActionSets = append(searchOptions.ActionSets,
@@ -710,6 +801,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SaveExternalServiceRole")
 	defer span.End()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
@@ -726,6 +818,7 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeleteExternalServiceRole")
 	defer span.End()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
@@ -741,7 +834,15 @@ func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscont
 }
 
 func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {
-	return s.roles
+	s.rolesMu.RLock()
+	defer s.rolesMu.RUnlock()
+
+	// Return a copy to avoid external modifications
+	rolesCopy := make(map[string]*accesscontrol.RoleDTO, len(s.roles))
+	for k, v := range s.roles {
+		rolesCopy[k] = v
+	}
+	return rolesCopy
 }
 
 func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
@@ -749,7 +850,10 @@ func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName strin
 	defer span.End()
 
 	err := accesscontrol.ErrRoleNotFound
-	if _, ok := s.roles[roleName]; ok {
+	s.rolesMu.RLock()
+	_, isBasicRole := s.roles[roleName]
+	s.rolesMu.RUnlock()
+	if isBasicRole {
 		return nil, err
 	}
 

@@ -44,6 +44,11 @@ type DashboardService interface {
 	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
 }
 
+type DashboardAccessService interface {
+	// The user as access to {VERB} the requested dashboard
+	HasDashboardAccess(ctx context.Context, user identity.Requester, verb string, namespace string, name string) (bool, error)
+}
+
 type PermissionsRegistrationService interface {
 	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
 
@@ -87,6 +92,7 @@ type Store interface {
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioningSearchResults, error)
 	GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*DashboardProvisioningSearchResults, error)
 	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*Dashboard, error)
+	GetDuplicateProvisionedDashboards(ctx context.Context) ([]*DashboardProvisioningSearchResults, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error

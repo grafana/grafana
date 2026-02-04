@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,20 +34,21 @@ var (
 	_ rest.Updater              = (*LegacyStore)(nil)
 )
 
-var resource = iamv0alpha1.TeamResourceInfo
+var teamResource = iamv0alpha1.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
+	tracer              trace.Tracer
 }
 
 func (s *LegacyStore) New() runtime.Object {
-	return resource.NewFunc()
+	return teamResource.NewFunc()
 }
 
 func (s *LegacyStore) Destroy() {}
@@ -57,25 +59,28 @@ func (s *LegacyStore) NamespaceScoped() bool {
 }
 
 func (s *LegacyStore) GetSingularName() string {
-	return resource.GetSingularName()
+	return teamResource.GetSingularName()
 }
 
 func (s *LegacyStore) NewList() runtime.Object {
-	return resource.NewListFunc()
+	return teamResource.NewListFunc()
 }
 
 func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+	return teamResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	return nil, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "delete")
 }
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "team.Delete")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+		return nil, false, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "delete")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -112,13 +117,64 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	ctx, span := s.tracer.Start(ctx, "team.Update")
+	defer span.End()
+
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "update")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	teamObj, ok := obj.(*iamv0alpha1.Team)
+	if !ok {
+		return nil, false, fmt.Errorf("expected Team object, got %T", obj)
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, oldObj); err != nil {
+			return oldObj, false, err
+		}
+	}
+
+	updateCmd := legacy.UpdateTeamCommand{
+		UID:           teamObj.Name,
+		Name:          teamObj.Spec.Title,
+		Email:         teamObj.Spec.Email,
+		IsProvisioned: teamObj.Spec.Provisioned,
+		ExternalUID:   teamObj.Spec.ExternalUID,
+	}
+
+	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	iamTeam := toTeamObject(result.Team, ns)
+
+	return &iamTeam, false, nil
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "team.List")
+	defer span.End()
+
 	res, err := common.List(
-		ctx, resource, s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.Team], error) {
+		ctx, teamResource, s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.Team], error) {
 			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
 				Pagination: p,
 			})
@@ -127,12 +183,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			teams := make([]iamv0alpha1.Team, 0, len(found.Teams))
+			teams := make([]*iamv0alpha1.Team, 0, len(found.Teams))
 			for _, t := range found.Teams {
-				teams = append(teams, toTeamObject(t, ns))
+				team := toTeamObject(t, ns)
+				teams = append(teams, &team)
 			}
 
-			return &common.ListResponse[iamv0alpha1.Team]{
+			return &common.ListResponse[*iamv0alpha1.Team]{
 				Items:    teams,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -144,7 +201,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, fmt.Errorf("failed to list teams: %w", err)
 	}
 
-	list := &iamv0alpha1.TeamList{Items: res.Items}
+	items := make([]iamv0alpha1.Team, len(res.Items))
+	for i, t := range res.Items {
+		items[i] = *t
+	}
+
+	list := &iamv0alpha1.TeamList{Items: items}
 	list.Continue = common.OptionalFormatInt(res.Continue)
 	list.ResourceVersion = common.OptionalFormatInt(res.RV)
 
@@ -152,6 +214,9 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "team.Get")
+	defer span.End()
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -163,10 +228,10 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if found == nil || err != nil {
-		return nil, resource.NewNotFound(name)
+		return nil, teamResource.NewNotFound(name)
 	}
 	if len(found.Teams) < 1 {
-		return nil, resource.NewNotFound(name)
+		return nil, teamResource.NewNotFound(name)
 	}
 
 	obj := toTeamObject(found.Teams[0], ns)
@@ -174,8 +239,11 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 }
 
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "team.Create")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+		return nil, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "create")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)

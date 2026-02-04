@@ -5,6 +5,7 @@ import {
   PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
+  store,
   toDataFrame,
   urlUtil,
 } from '@grafana/data';
@@ -18,6 +19,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
@@ -26,6 +28,7 @@ import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
@@ -197,6 +200,47 @@ describe('panelMenuBehavior', () => {
           expect.objectContaining({
             text: 'Declare incident when...',
             href: '/a/grafana-basic-app/declare-incident',
+          }),
+        ])
+      );
+    });
+
+    it('should show icons for link extensions (if they provide it)', async () => {
+      getPluginExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            icon: 'external-link-alt',
+          },
+        ],
+      });
+
+      const { menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(7);
+
+      const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            href: '/a/grafana-basic-app/declare-incident',
+            iconClassName: 'external-link-alt',
           }),
         ])
       );
@@ -806,6 +850,75 @@ describe('panelMenuBehavior', () => {
 
     afterEach(() => {
       jest.restoreAllMocks();
+    });
+  });
+
+  describe('Panel styles menu', () => {
+    async function buildTimeseriesTestScene() {
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({
+        title: 'Timeseries Panel',
+        pluginId: 'timeseries',
+        key: 'panel-ts',
+        menu,
+      });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      return { menu, panel };
+    }
+
+    beforeEach(() => {
+      config.featureToggles.panelStyleActions = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.panelStyleActions = false;
+      store.delete(LS_STYLES_COPY_KEY);
+    });
+
+    it('should call analytics when copy styles is clicked', async () => {
+      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+      const { menu } = await buildTimeseriesTestScene();
+
+      const copyItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[0];
+      copyItem?.onClick?.({} as never);
+
+      expect(spy).toHaveBeenCalledWith('copy', 'timeseries', expect.any(Number));
+    });
+
+    it('should call analytics when paste styles is clicked', async () => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+      const { menu } = await buildTimeseriesTestScene();
+
+      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
+      pasteItem?.onClick?.({} as never);
+
+      expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
+    });
+
+    it('should not show styles menu when feature flag is disabled', async () => {
+      config.featureToggles.panelStyleActions = false;
+      const { menu } = await buildTimeseriesTestScene();
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
+    });
+
+    it('should not show styles menu for non-timeseries panels', async () => {
+      const { menu } = await buildTestScene({});
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
   });
 });

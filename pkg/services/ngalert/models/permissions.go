@@ -9,10 +9,12 @@ import (
 type ReceiverPermission string
 
 const (
-	ReceiverPermissionReadSecret ReceiverPermission = "secrets"
-	ReceiverPermissionAdmin      ReceiverPermission = "admin"
-	ReceiverPermissionWrite      ReceiverPermission = "write"
-	ReceiverPermissionDelete     ReceiverPermission = "delete"
+	ReceiverPermissionReadSecret      ReceiverPermission = "secrets"
+	ReceiverPermissionAdmin           ReceiverPermission = "admin"
+	ReceiverPermissionWrite           ReceiverPermission = "write"
+	ReceiverPermissionDelete          ReceiverPermission = "delete"
+	ReceiverPermissionModifyProtected ReceiverPermission = "modify-protected"
+	ReceiverPermissionTest            ReceiverPermission = "test"
 )
 
 // ReceiverPermissions returns all possible silence permissions.
@@ -22,6 +24,8 @@ func ReceiverPermissions() []ReceiverPermission {
 		ReceiverPermissionAdmin,
 		ReceiverPermissionWrite,
 		ReceiverPermissionDelete,
+		ReceiverPermissionModifyProtected,
+		ReceiverPermissionTest,
 	}
 }
 

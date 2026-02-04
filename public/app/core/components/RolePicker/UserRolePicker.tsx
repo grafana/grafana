@@ -1,12 +1,12 @@
-import { useEffect } from 'react';
-import { useAsyncFn } from 'react-use';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useMemo } from 'react';
 
 import { OrgRole } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
-import { Role, AccessControlAction } from 'app/types/accessControl';
+import { useListUserRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
-import { fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
   basicRole: OrgRole;
@@ -54,38 +54,46 @@ export const UserRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = roles || [] }, getUserRoles] = useAsyncFn(async () => {
-    try {
-      if (roles) {
-        return roles;
-      }
-      if (apply && Boolean(pendingRoles?.length)) {
-        return pendingRoles;
-      }
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0 && orgId;
 
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0) {
-        return await fetchUserRoles(userId, orgId);
+  // Determine when to fetch:
+  // - In apply mode: only fetch if we don't have roles prop AND no pendingRoles (prevents flicker)
+  // - In non-apply mode: always fetch to get fresh data after mutations
+  const shouldFetch = apply ? !roles && !Boolean(pendingRoles?.length) && hasPermission : hasPermission;
+
+  const { data: fetchedRoles, isLoading: isFetching } = useListUserRolesQuery(
+    shouldFetch ? { userId, includeHidden: true, includeMapped: true, targetOrgId: orgId } : skipToken
+  );
+
+  const [updateUserRoles, { isLoading: isUpdating }] = useSetUserRolesMutation();
+
+  const appliedRoles =
+    useMemo(() => {
+      // In apply mode: prioritize pendingRoles, then roles prop (never use fetched data to prevent flicker)
+      if (apply) {
+        return pendingRoles || roles || [];
       }
-    } catch (e) {
-      // TODO handle error
-      console.error('Error loading options');
-    }
-    return [];
-  }, [orgId, userId, pendingRoles, roles]);
+      // In non-apply mode: prefer fetched data (fresh from cache) over roles prop
+      return fetchedRoles || roles || [];
+    }, [roles, pendingRoles, fetchedRoles, apply]) || [];
 
-  useEffect(() => {
-    // only load roles when there is an Org selected
-    if (orgId) {
-      getUserRoles();
-    }
-  }, [getUserRoles, orgId]);
-
-  const onRolesChange = async (roles: Role[]) => {
+  const onRolesChange = async (newRoles: Role[]) => {
     if (!apply) {
-      await updateUserRoles(roles, userId, orgId);
-      await getUserRoles();
+      try {
+        const filteredRoles = newRoles.filter((role) => !role.mapped);
+        const roleUids = filteredRoles.map((role) => role.uid);
+        await updateUserRoles({
+          userId,
+          targetOrgId: orgId,
+          setUserRolesCommand: {
+            roleUids,
+          },
+        }).unwrap();
+      } catch (error) {
+        console.error('Error updating user roles', error);
+      }
     } else if (onApplyRoles) {
-      onApplyRoles(roles, userId, orgId);
+      onApplyRoles(newRoles, userId, orgId);
     }
   };
 
@@ -95,12 +103,13 @@ export const UserRolePicker = ({
 
   return (
     <RolePicker
+      pickerId={`user-picker-${userId}-${orgId}`}
       appliedRoles={appliedRoles}
       basicRole={basicRole}
       onRolesChange={onRolesChange}
       onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
-      isLoading={loading || isLoading}
+      isLoading={isFetching || isUpdating || isLoading}
       disabled={disabled}
       basicRoleDisabled={basicRoleDisabled}
       basicRoleDisabledMessage={basicRoleDisabledMessage}

@@ -8,19 +8,19 @@ import {
   EventBusSrv,
   ExploreLogsPanelState,
   LogLevel,
+  LogRowModel,
   LogsMetaItem,
   LogsSortOrder,
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LogsVisualisationType } from '../../explore/Logs/Logs';
 
 import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
-import { LogListControlOptions } from './panel/LogList';
+import { LogListOptions } from './panel/LogList';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
@@ -30,7 +30,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
-  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
   filterLevels?: LogLevel[];
 
@@ -42,6 +42,10 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   datasourceType?: string;
   width?: number;
   logsTableFrames?: DataFrame[];
+  displayedFields?: string[];
+  exploreId?: string;
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 export type LogRowsComponentProps = Omit<
@@ -79,7 +83,6 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
-        enableLogDetails={false}
         filterLevels={filterLevels}
         fontSize="default"
         logOptionsStorageKey={logOptionsStorageKey}
@@ -151,7 +154,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       if (ref) {
         return styles.forwardedScrollableLogRows;
       }
-      return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
+      return styles.scrollableLogRows;
     }, [ref]);
 
     const scrollIntoView = useCallback(

@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 
-import { SceneObject, useSceneObjectState } from '@grafana/scenes';
+import { useSceneObjectState } from '@grafana/scenes';
 
 import { ConditionalRenderingGroup } from '../group/ConditionalRenderingGroup';
 
 import { ConditionalRenderingOverlay } from './ConditionalRenderingOverlay';
 
 let placeholderConditionalRendering: ConditionalRenderingGroup | undefined;
+
 function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
   if (!placeholderConditionalRendering) {
     placeholderConditionalRendering = ConditionalRenderingGroup.createEmpty();
@@ -14,13 +15,10 @@ function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
   return placeholderConditionalRendering;
 }
 
-export function useIsConditionallyHidden(scene: SceneObject): [boolean, string | undefined, ReactNode | null, boolean] {
-  const conditionalRenderingToRender =
-    'conditionalRendering' in scene.state && scene.state.conditionalRendering instanceof ConditionalRenderingGroup
-      ? scene.state.conditionalRendering
-      : getPlaceholderConditionalRendering();
-
-  const { result, renderHidden } = useSceneObjectState(conditionalRenderingToRender, {
+export function useIsConditionallyHidden(
+  conditionalRendering: ConditionalRenderingGroup = getPlaceholderConditionalRendering()
+): [boolean, string | undefined, ReactNode | null, boolean] {
+  const { result, renderHidden } = useSceneObjectState(conditionalRendering, {
     shouldActivateOrKeepAlive: true,
   });
 

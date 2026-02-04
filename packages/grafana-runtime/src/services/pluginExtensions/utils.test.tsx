@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import React from 'react';
+import React, { type JSX } from 'react';
 
 import {
   ComponentTypeWithExtensionMeta,
@@ -108,11 +108,15 @@ describe('Plugin Extensions / Utils', () => {
 
     test('should work when using class components', () => {
       const props = {};
+      // this specifically needs to be a class component
+      // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
       const Component1 = class extends React.Component<{}> {
         render() {
           return <div>Test 1</div>;
         }
       };
+      // this specifically needs to be a class component
+      // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
       const Component2 = class extends React.Component<{}> {
         render() {
           return <div>Test 2</div>;
@@ -258,24 +262,18 @@ function createComponent<Props extends JSX.IntrinsicAttributes>(
   pluginId?: string,
   id?: string
 ): ComponentTypeWithExtensionMeta<Props> {
-  function ComponentWithMeta(props: Props) {
-    if (Implementation) {
-      return <Implementation {...props} />;
+  const ComponentWithMeta: ComponentTypeWithExtensionMeta<Props> = Object.assign(
+    Implementation || (() => <div>Test</div>),
+    {
+      meta: {
+        id: id ?? '',
+        pluginId: pluginId ?? '',
+        title: '',
+        description: '',
+        type: PluginExtensionTypes.component,
+      } satisfies PluginExtensionComponentMeta,
     }
-
-    return <div>Test</div>;
-  }
-
-  ComponentWithMeta.displayName = '';
-  ComponentWithMeta.propTypes = {};
-  ComponentWithMeta.contextTypes = {};
-  ComponentWithMeta.meta = {
-    id: id ?? '',
-    pluginId: pluginId ?? '',
-    title: '',
-    description: '',
-    type: PluginExtensionTypes.component,
-  } satisfies PluginExtensionComponentMeta;
+  );
 
   return ComponentWithMeta;
 }

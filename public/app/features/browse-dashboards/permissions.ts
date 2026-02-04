@@ -1,6 +1,8 @@
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { FolderDTO } from 'app/types/folders';
+
+import { BrowseDashboardsPermissions } from './types';
 
 function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDTO) {
   return folderDTO ? contextSrv.hasPermissionInMetadata(action, folderDTO) : contextSrv.hasPermission(action);
@@ -30,4 +32,19 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
     canViewPermissions,
     canDeleteDashboards,
   };
+}
+
+export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  return itemKind === 'folder'
+    ? Boolean(canEditFolders || canDeleteFolders)
+    : Boolean(canEditDashboards || canDeleteDashboards);
+}
+
+export function canSelectItems(permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  // Users can select items only if they have both edit and delete permissions for at least one item type
+  const canSelectFolders = canEditFolders || canDeleteFolders;
+  const canSelectDashboards = canEditDashboards || canDeleteDashboards;
+  return Boolean(canSelectFolders || canSelectDashboards);
 }

@@ -45,8 +45,9 @@ type gPRCServerService struct {
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:         cfg.GRPCServer,
-		logger:      log.New("grpc-server"),
+		cfg:    cfg.GRPCServer,
+		logger: log.New("grpc-server"),
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
 		startedChan: make(chan struct{}),
 	}
@@ -151,25 +152,38 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	s.address = listener.Addr().String()
 	close(s.startedChan)
 
-	serveErr := make(chan error, 1)
+	serveErrCh := make(chan error, 1)
 	go func() {
 		s.logger.Info("GRPC server: starting")
-		err := s.server.Serve(listener)
-		if err != nil {
+		if err := s.server.Serve(listener); err != nil {
 			s.logger.Error("GRPC server: failed to serve", "err", err)
-			serveErr <- err
+			serveErrCh <- err
 		}
 	}()
 
 	select {
-	case err := <-serveErr:
-		s.logger.Error("GRPC server: failed to serve", "err", err)
+	case err := <-serveErrCh:
 		return err
 	case <-ctx.Done():
+		// Context cancelled, proceed with graceful shutdown
 	}
-	s.logger.Warn("GRPC server: shutting down")
-	s.server.Stop()
-	return ctx.Err()
+
+	s.logger.Info("GRPC server: initiating graceful shutdown")
+	gracefulStopDone := make(chan struct{})
+	go func() {
+		s.server.GracefulStop()
+		close(gracefulStopDone)
+	}()
+
+	select {
+	case <-gracefulStopDone:
+		s.logger.Info("GRPC server: graceful shutdown complete")
+	case <-time.After(s.cfg.GracefulShutdownTimeout):
+		s.logger.Warn("GRPC server: graceful shutdown timed out, forcing stop")
+		s.server.Stop()
+	}
+
+	return nil
 }
 
 func (s *gPRCServerService) IsDisabled() bool {

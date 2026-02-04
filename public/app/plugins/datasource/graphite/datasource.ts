@@ -268,7 +268,7 @@ export class GraphiteDatasource
   ): GraphiteQuery[] {
     const referenceTargets: Record<string, string> = {};
     const finalTargets: GraphiteQuery[] = [];
-    let target: GraphiteQuery, targetValue, i;
+    let target: GraphiteQuery, targetValue, i, targetFullValue;
 
     for (i = 0; i < options.targets.length; i++) {
       target = options.targets[i];
@@ -306,8 +306,13 @@ export class GraphiteDatasource
         referenceTargets[target.refId].replace(seriesReferenceRegex, nestedSeriesRegexReplacer),
         options.scopedVars
       );
+      targetFullValue = this.templateSrv.replace(
+        referenceTargets[target.refId].replace(seriesReferenceRegex, nestedSeriesRegexReplacer),
+        options.scopedVars
+      );
 
       targetClone.target = targetValue;
+      targetClone.targetFull = targetFullValue;
       if (this.isMetricTank) {
         targetClone.isMetricTank = true;
       }
@@ -1029,9 +1034,15 @@ export class GraphiteDatasource
     };
 
     if (config.featureToggles.graphiteBackendMode) {
-      const functions = await this.getResource<string>('functions');
-      this.funcDefs = gfunc.parseFuncDefs(functions);
-      return this.funcDefs;
+      try {
+        const functions = await this.getResource<string>('functions');
+        this.funcDefs = gfunc.parseFuncDefs(functions);
+        return this.funcDefs;
+      } catch (error) {
+        console.error('Fetching graphite functions error', error);
+        this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+        return this.funcDefs;
+      }
     }
 
     return lastValueFrom(

@@ -10,7 +10,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-func Mutate(ctx context.Context, obj runtime.Object) error {
+func Mutate(_ context.Context, obj runtime.Object) error {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil

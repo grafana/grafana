@@ -66,6 +66,36 @@ func (_m *MockService) GetForProvider(ctx context.Context, provider string) (*mo
 	return r0, r1
 }
 
+// GetForProviderFromCache provides a mock function with given fields: ctx, provider
+func (_m *MockService) GetForProviderFromCache(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	ret := _m.Called(ctx, provider)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetForProviderFromCache")
+	}
+
+	var r0 *models.SSOSettings
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.SSOSettings, error)); ok {
+		return rf(ctx, provider)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.SSOSettings); ok {
+		r0 = rf(ctx, provider)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SSOSettings)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, provider)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetForProviderWithRedactedSecrets provides a mock function with given fields: ctx, provider
 func (_m *MockService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	ret := _m.Called(ctx, provider)
@@ -156,17 +186,17 @@ func (_m *MockService) ListWithRedactedSecrets(ctx context.Context) ([]*models.S
 	return r0, r1
 }
 
-// Patch provides a mock function with given fields: ctx, provider, data
-func (_m *MockService) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
-	ret := _m.Called(ctx, provider, data)
+// Patch provides a mock function with given fields: ctx, provider, data, requester
+func (_m *MockService) Patch(ctx context.Context, provider string, data map[string]interface{}, requester identity.Requester) error {
+	ret := _m.Called(ctx, provider, data, requester)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Patch")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}) error); ok {
-		r0 = rf(ctx, provider, data)
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}, identity.Requester) error); ok {
+		r0 = rf(ctx, provider, data, requester)
 	} else {
 		r0 = ret.Error(0)
 	}

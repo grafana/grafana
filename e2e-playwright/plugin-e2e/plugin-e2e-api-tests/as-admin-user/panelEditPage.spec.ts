@@ -77,7 +77,7 @@ test.describe(
       }) => {
         await panelEditPage.setVisualization(TABLE_VIZ_NAME);
         await expect(
-          panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker),
+          panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header),
           formatExpectError('Expected panel visualization to be set to table')
         ).toHaveText(TABLE_VIZ_NAME);
         await panelEditPage.setPanelTitle(PANEL_TITLE);

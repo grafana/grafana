@@ -195,7 +195,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 			tb.Fatalf("failed to truncate DB tables after migrations: %v", err)
 			panic("unreachable")
 		}
-		testSQLStore.engine.ResetSequenceGenerator()
+		store.engine.ResetSequenceGenerator()
 	}
 
 	return store
@@ -226,6 +226,7 @@ func newTestCfg(
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	sec, err := cfg.Raw.NewSection("database")
@@ -342,7 +343,7 @@ func newPostgresConnString(dbname string) (driver, connString string) {
 func newMySQLConnString(dbname string) (driver, connString string) {
 	// The parseTime=true parameter is required for MySQL to parse time.Time values correctly.
 	// It converts the timezone of the time.Time to the configured timezone of the connection.
-	return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true",
+	return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true",
 		env("MYSQL_USER", "root"),
 		env("MYSQL_PASSWORD", "rootpass"),
 		env("MYSQL_HOST", "localhost"),

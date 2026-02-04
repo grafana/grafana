@@ -8,9 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/elasticsearch/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.3.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
@@ -388,6 +390,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   bucketAggs?: Array<BucketAggregation>;
   /**
+   * Editor type
+   */
+  editorType?: string;
+  /**
    * List of metric aggregations
    */
   metrics?: Array<MetricAggregation>;
@@ -395,6 +401,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Lucene query
    */
   query?: string;
+  /**
+   * Raw DSL query
+   */
+  rawDSLQuery?: string;
   /**
    * Name of time field
    */

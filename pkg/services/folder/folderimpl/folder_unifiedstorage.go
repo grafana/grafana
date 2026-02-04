@@ -14,6 +14,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -202,6 +203,11 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	if query.Title != "" {
 		// allow wildcard search
 		request.Query = "*" + strings.ToLower(query.Title) + "*"
+		// or perform exact match if requested
+		if query.TitleExactMatch {
+			request.Query = query.Title
+		}
+
 		// if using query, you need to specify the fields you want
 		request.Fields = dashboardsearch.IncludeFields
 	}
@@ -277,6 +283,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
+}
+
+func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
@@ -342,22 +352,12 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, err
 	}
 
-	if len(hits.Hits) == 0 {
-		return nil, dashboards.ErrFolderNotFound
+	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
+	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+		hits.Hits = hits.Hits[1:]
 	}
 
-	uid := hits.Hits[0].Name
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -618,12 +618,14 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	if err != nil {
 		return err
 	}
+	descFolders = folder.SortByPostorder(descFolders)
 
 	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
 	// must delete children first, then the parent folder
+	s.log.InfoContext(ctx, "deleting folder with descendants", "org_id", cmd.OrgID, "uid", cmd.UID, "folderUIDs", strings.Join(folders, ","))
 	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
@@ -644,6 +646,21 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
+		libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+		if !ok {
+			return folder.ErrInternal.Errorf("no library panel service found in registry")
+		}
+		//	/* TODO: after a decision regarding folder deletion permissions has been made
+		//	(https://github.com/grafana/grafana-enterprise/issues/5144),
+		//	remove the following call to DeleteInFolders
+		//	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+		//	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+		//	*/
+		// Obs: DeleteInFolders only deletes dangling library panels (not linked to any dashboard) and throws errors if there are connections
+		if err := libraryPanelSrv.DeleteInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
+			s.log.Error("failed to delete dangling library panels in folders", "error", err, "folders", strings.Join(folders, ","))
+			return err
+		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
 		request := &resourcepb.ResourceSearchRequest{
@@ -704,19 +721,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
-	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
-		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
-	}
-
 	// Check that the user is allowed to move the folder to the destination folder
 	hasAccess, evalErr := s.canMoveViaApiServer(ctx, cmd)
 	if evalErr != nil {
@@ -726,30 +730,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	// here we get the folder, we need to get the height of current folder
-	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.unifiedStore.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
-	if err != nil {
-		return nil, err
-	}
-	parents, err := s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
-	if err != nil {
-		return nil, err
-	}
-
-	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
-	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
-	}
-
-	for _, parent := range parents {
-		// if the current folder is already a parent of newparent, we should return error
-		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
-		}
-	}
-
-	f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		NewParentUID: &cmd.NewParentUID,
@@ -881,6 +862,7 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
 		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 	}

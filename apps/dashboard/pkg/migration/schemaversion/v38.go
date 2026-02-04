@@ -112,26 +112,22 @@ func processPanelsV38(panels []interface{}) {
 			continue
 		}
 
-		defaults, ok := fieldConfig["defaults"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		custom, ok := defaults["custom"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// Migrate displayMode to cellOptions
-		if displayMode, exists := custom["displayMode"]; exists {
-			if displayModeStr, ok := displayMode.(string); ok {
-				custom["cellOptions"] = migrateTableDisplayModeToCellOptions(displayModeStr)
+		// Process defaults.custom if it exists
+		if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+			if custom, ok := defaults["custom"].(map[string]interface{}); ok {
+				// Migrate displayMode to cellOptions in defaults
+				if displayMode, exists := custom["displayMode"]; exists {
+					if displayModeStr, ok := displayMode.(string); ok {
+						custom["cellOptions"] = migrateTableDisplayModeToCellOptions(displayModeStr)
+					}
+					// Delete the legacy field
+					delete(custom, "displayMode")
+				}
 			}
-			// Delete the legacy field
-			delete(custom, "displayMode")
 		}
 
 		// Update any overrides referencing the cell display mode
+		// This must be called regardless of whether defaults.custom exists
 		migrateOverrides(fieldConfig)
 	}
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -38,11 +39,11 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	tracerProvider *tracing.TracingService,
+	tracerProvider *tracing.TracingService, features featuremgmt.FeatureToggles,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, tracerProvider, promReg)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, tracerProvider, features, promReg)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	tracerProvider *tracing.TracingService,
+	tracerProvider *tracing.TracingService, features featuremgmt.FeatureToggles,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	rootCtx := context.Background()
@@ -75,6 +76,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		buildBranch:               opts.BuildBranch,
 		backgroundServiceRegistry: backgroundServiceProvider,
 		tracerProvider:            tracerProvider,
+		features:                  features,
 		managerAdapter:            adapter.NewManagerAdapter(backgroundServiceProvider),
 	}
 
@@ -99,6 +101,7 @@ type Server struct {
 
 	backgroundServiceRegistry registry.BackgroundServiceRegistry
 	tracerProvider            *tracing.TracingService
+	features                  featuremgmt.FeatureToggles
 
 	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
@@ -125,8 +128,11 @@ func (s *Server) Init() error {
 		return err
 	}
 
-	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-		return err
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
+		if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
+			return err
+		}
 	}
 
 	return s.provisioningService.RunInitProvisioners(s.context)

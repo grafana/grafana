@@ -1,29 +1,25 @@
-import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { defaultsDeep } from 'lodash';
 
-export class TracesSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<{}, {}>({
-      name: SuggestionName.Trace,
-      pluginId: 'traces',
-    });
+import { VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+
+import { TracesPanelOptions } from './TracesPanel';
+
+const withDefaults = (
+  suggestion: VisualizationSuggestion<TracesPanelOptions>
+): VisualizationSuggestion<TracesPanelOptions> =>
+  defaultsDeep(suggestion, {
+    cardOptions: {
+      previewModifier: (s) => {
+        s.options = s.options ?? {};
+        s.options.hideHeaderDetails = true;
+      },
+    },
+  } satisfies VisualizationSuggestion<TracesPanelOptions>);
+
+export const tracesSuggestionsSupplier: VisualizationSuggestionsSupplier<TracesPanelOptions> = (dataSummary) => {
+  if (!dataSummary.hasPreferredVisualisationType('trace')) {
+    return;
   }
 
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    if (!builder.data) {
-      return;
-    }
-
-    const dataFrame = builder.data.series[0];
-    if (!dataFrame) {
-      return;
-    }
-
-    if (builder.data.series[0].meta?.preferredVisualisationType === 'trace') {
-      this.getListWithDefaults(builder).append({
-        name: SuggestionName.Trace,
-        score: VisualizationSuggestionScore.Best,
-      });
-    }
-  }
-}
+  return [withDefaults({})];
+};

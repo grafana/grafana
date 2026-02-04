@@ -13,7 +13,7 @@ export const FIELD_GAP_MULTIPLIER = 1.5;
 
 export const DEFAULT_LINE_HEIGHT = 22;
 
-export const LOG_LIST_CONTROLS_WIDTH = 32;
+export const LOG_LIST_CONTROLS_WIDTH = 35;
 
 export class LogLineVirtualization {
   private ctx: CanvasRenderingContext2D | null = null;

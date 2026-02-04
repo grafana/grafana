@@ -97,17 +97,19 @@ async function initFaroBackend() {
 
   registerEchoBackend(
     new GrafanaJavascriptAgentBackend({
-      ...config.grafanaJavascriptAgent,
-      app: {
-        version: config.buildInfo.version,
-        environment: config.buildInfo.env,
-      },
       buildInfo: config.buildInfo,
-      user: {
-        id: String(contextSrv.user?.id),
-        email: contextSrv.user?.email,
-      },
+      userIdentifier: contextSrv.user.analytics.identifier,
       ignoreUrls: rudderstackUrls,
+
+      apiKey: config.grafanaJavascriptAgent.apiKey,
+      customEndpoint: config.grafanaJavascriptAgent.customEndpoint,
+      consoleInstrumentalizationEnabled: config.grafanaJavascriptAgent.consoleInstrumentalizationEnabled,
+      performanceInstrumentalizationEnabled: config.grafanaJavascriptAgent.performanceInstrumentalizationEnabled,
+      cspInstrumentalizationEnabled: config.grafanaJavascriptAgent.cspInstrumentalizationEnabled,
+      tracingInstrumentalizationEnabled: config.grafanaJavascriptAgent.tracingInstrumentalizationEnabled,
+      webVitalsAttribution: config.grafanaJavascriptAgent.webVitalsAttribution,
+      internalLoggerLevel: config.grafanaJavascriptAgent.internalLoggerLevel,
+      botFilterEnabled: config.grafanaJavascriptAgent.botFilterEnabled,
     })
   );
 }
@@ -144,13 +146,27 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const { RudderstackBackend } = await import('./backends/analytics/RudderstackBackend');
+  // Logic: if only one of the sdk urls is provided, use respective code
+  // otherwise defer to the feature toggle.
+
+  const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
+  const hasNewSdkUrl = Boolean(config.rudderstackV3SdkUrl);
+  const onlyOneSdkUrlSet = hasOldSdkUrl !== hasNewSdkUrl;
+  const useNewRudderstack = onlyOneSdkUrlSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+
+  const sdkUrl = useNewRudderstack ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
+
+  const modulePromise = useNewRudderstack
+    ? import('./backends/analytics/RudderstackV3Backend')
+    : import('./backends/analytics/RudderstackBackend');
+
+  const { RudderstackBackend } = await modulePromise;
   registerEchoBackend(
     new RudderstackBackend({
       writeKey: config.rudderstackWriteKey,
       dataPlaneUrl: config.rudderstackDataPlaneUrl,
       user: contextSrv.user,
-      sdkUrl: config.rudderstackSdkUrl,
+      sdkUrl,
       configUrl: config.rudderstackConfigUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,
@@ -168,6 +184,7 @@ async function initAzureAppInsightsBackend() {
     new ApplicationInsightsBackend({
       connectionString: config.applicationInsightsConnectionString,
       endpointUrl: config.applicationInsightsEndpointUrl,
+      autoRouteTracking: config.applicationInsightsAutoRouteTracking,
     })
   );
 }

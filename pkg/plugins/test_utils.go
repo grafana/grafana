@@ -47,7 +47,7 @@ func (f inMemoryFS) Open(fn string) (fs.File, error) {
 	return &inMemoryFile{path: fn, reader: bytes.NewReader(f.files[fn])}, nil
 }
 
-func (f inMemoryFS) Type() string {
+func (f inMemoryFS) Type() FSType {
 	return "in-memory"
 }
 

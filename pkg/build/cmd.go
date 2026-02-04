@@ -18,6 +18,7 @@ import (
 const (
 	GoOSWindows = "windows"
 	GoOSLinux   = "linux"
+	GoOSDarwin  = "darwin"
 
 	BackendBinary = "grafana"
 	ServerBinary  = "grafana-server"
@@ -101,7 +102,7 @@ func RunCmd() int {
 			}
 
 		case "build":
-			//clean()
+			// clean()
 			for _, binary := range binaries {
 				log.Println("building binaries", cmd)
 				// Can't use filepath.Join here because filepath.Join calls filepath.Clean, which removes the `./` from this path, which upsets `go build`
@@ -153,6 +154,10 @@ func setup(goos string) {
 }
 
 func doBuild(binaryName, pkg string, opts BuildOpts) error {
+	if opts.binarySuffix != "" {
+		binaryName += "-" + opts.binarySuffix
+	}
+
 	log.Println("building", binaryName, pkg)
 
 	if err := setBuildEnv(opts); err != nil {
@@ -165,7 +170,7 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	}
 	binary := fmt.Sprintf("./bin/%s", binaryName)
 
-	//don't include os/arch/libc in output path in dev environment
+	// don't include os/arch/libc in output path in dev environment
 	if !opts.isDev {
 		binary = fmt.Sprintf("./bin/%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
 	}
@@ -288,8 +293,8 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
-	if opts.goarch != "amd64" || opts.goos != GoOSLinux {
-		// needed for all other archs
+	if opts.goos != GoOSLinux && opts.goos != GoOSDarwin {
+		// needed for archs other than linux/amd64, linux/arm64, darwin/arm64 and darwin/amd64
 		opts.cgo = true
 	}
 
@@ -307,10 +312,12 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
+	cgoEnabled := "0"
 	if opts.cgo {
-		if err := os.Setenv("CGO_ENABLED", "1"); err != nil {
-			return err
-		}
+		cgoEnabled = "1"
+	}
+	if err := os.Setenv("CGO_ENABLED", cgoEnabled); err != nil {
+		return err
 	}
 
 	if opts.gocc == "" {

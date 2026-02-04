@@ -7,20 +7,27 @@ import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
-import appEvents from '../../../app_events';
+import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 
-export const enrichHelpItem = (helpItem: NavModelItem) => {
+const emitOpenShortcutsModal = () => {
+  appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+};
+
+export const getEnrichedHelpItem = (helpItem: NavModelItem): NavModelItem => {
   let menuItems = helpItem.children || [];
 
-  if (helpItem.id === 'help') {
-    const onOpenShortcuts = () => {
-      appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
-    };
-    helpItem.children = [
+  if (helpItem.id !== 'help') {
+    return helpItem;
+  }
+
+  return {
+    ...helpItem,
+    subTitle: config.buildInfo.versionString,
+    children: [
       ...menuItems,
       ...getFooterLinks(),
       ...getEditionAndUpdateLinks(),
@@ -28,11 +35,10 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
         id: 'keyboard-shortcuts',
         text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
         icon: 'keyboard',
-        onClick: onOpenShortcuts,
+        onClick: emitOpenShortcutsModal,
       },
-    ];
-  }
-  return helpItem;
+    ],
+  };
 };
 
 export const enrichWithInteractionTracking = (
@@ -55,8 +61,7 @@ export const enrichWithInteractionTracking = (
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
-      itemIsBookmarked: Boolean(config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks'),
-      bookmarkToggleOn: Boolean(config.featureToggles.pinNavItems),
+      itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
       isNew,
     });
     onClick?.();

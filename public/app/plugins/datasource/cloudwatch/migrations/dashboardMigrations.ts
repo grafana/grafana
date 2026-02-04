@@ -5,7 +5,8 @@
 import { AnnotationQuery, getNextRefId } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { CloudWatchMetricsQuery, LegacyAnnotationQuery, MetricQueryType, MetricEditorMode } from '../types';
+import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
+import { LegacyAnnotationQuery } from '../types';
 
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsMetricsQuery(

@@ -10,6 +10,9 @@ import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
+import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
+import { useLastBranch } from '../../hooks/useLastBranch';
+import { usePRBranch } from '../../hooks/usePRBranch';
 import { generateNewBranchName } from '../utils/newBranchName';
 
 interface DashboardEditFormSharedFieldsProps {
@@ -40,34 +43,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       !repository?.name || !isGitProvider(repository.type) ? skipToken : { name: repository.name }
     );
 
-    const branchOptions = useMemo(() => {
-      const options: Array<{ label: string; value: string; description?: string }> = [];
+    const { getLastBranch } = useLastBranch();
+    const prBranch = usePRBranch();
+    const lastBranch = getLastBranch(repository?.name);
 
-      const configuredBranch = repository?.branch;
-      const prefix = t(
-        'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
-        'Configured branch'
-      );
-      // Show the configured branch first in the list
-      if (configuredBranch) {
-        options.push({
-          label: `${configuredBranch}`,
-          value: configuredBranch,
-          description: prefix,
-        });
-      }
-
-      // Create combobox options
-      if (branchData?.items) {
-        for (const ref of branchData.items) {
-          if (ref.name !== configuredBranch) {
-            options.push({ label: ref.name, value: ref.name });
-          }
-        }
-      }
-
-      return options;
-    }, [branchData?.items, repository?.branch]);
+    const branchOptions = useBranchDropdownOptions({
+      repository,
+      prBranch,
+      lastBranch,
+      branchData,
+    });
 
     const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
 

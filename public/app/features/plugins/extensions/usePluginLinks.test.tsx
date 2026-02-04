@@ -1,13 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
+import type { JSX } from 'react';
 
-import {
-  PluginContextProvider,
-  PluginExtensionPoints,
-  PluginLoadingStrategy,
-  PluginMeta,
-  PluginType,
-} from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { AppPluginConfig, PluginContextProvider, PluginExtensionPoints, PluginMeta, PluginType } from '@grafana/data';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
@@ -18,6 +12,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginLinks } from './usePluginLinks';
 import { isGrafanaDevMode } from './utils';
@@ -56,17 +51,20 @@ describe('usePluginLinks()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  const pluginId = 'myorg-extensions-app';
+  const pluginId = basicApp.id;
   const extensionPointId = `${pluginId}/extension-point/v1`;
+  let apps: AppPluginConfig[];
 
   beforeEach(() => {
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+
+    apps = [basicApp];
     registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      addedComponentsRegistry: new AddedComponentsRegistry(apps),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(apps),
+      addedLinksRegistry: new AddedLinksRegistry(apps),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(apps),
     };
     resetLogMock(log);
 
@@ -106,32 +104,6 @@ describe('usePluginLinks()', () => {
       },
     };
 
-    config.apps[pluginId] = {
-      id: pluginId,
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        addedFunctions: [],
-        exposedComponents: [],
-        extensionPoints: [],
-      },
-    };
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider meta={pluginMeta}>
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
@@ -166,6 +138,7 @@ describe('usePluginLinks()', () => {
           title: '2',
           description: '2',
           path: `/a/${pluginId}/2`,
+          openInNewTab: true,
         },
         {
           targets: 'plugins/another-extension/v1',
@@ -180,7 +153,9 @@ describe('usePluginLinks()', () => {
 
     expect(result.current.links.length).toBe(2);
     expect(result.current.links[0].title).toBe('1');
+    expect(result.current.links[0].openInNewTab).toBeUndefined();
     expect(result.current.links[1].title).toBe('2');
+    expect(result.current.links[1].openInNewTab).toBe(true);
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
@@ -264,8 +239,9 @@ describe('usePluginLinks()', () => {
       path: `/a/${pluginId}/2`,
     };
 
-    // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+    registries.addedLinksRegistry = new AddedLinksRegistry([
+      { ...apps[0], extensions: { ...apps[0].extensions!, addedLinks: [linkConfig] } },
+    ]);
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

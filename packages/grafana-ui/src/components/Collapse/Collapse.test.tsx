@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 
 import { Collapse } from './Collapse';
 
@@ -42,7 +43,7 @@ describe('Collapse', () => {
     const onToggle = jest.fn();
 
     const { user } = setup(
-      <Collapse label={TEST_LABEL} onToggle={onToggle} collapsible>
+      <Collapse label={TEST_LABEL} onToggle={onToggle}>
         <div>{contentText}</div>
       </Collapse>
     );

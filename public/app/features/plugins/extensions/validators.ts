@@ -8,9 +8,10 @@ import {
   type PluginExtensionAddedFunctionConfig,
   PluginExtensionPoints,
   PluginExtensionPointPatterns,
+  AppPluginConfig,
 } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
-import { config, isPluginExtensionLink } from '@grafana/runtime';
+import { isPluginExtensionLink } from '@grafana/runtime';
 
 import * as errors from './errors';
 import { ExtensionsLog } from './logs/log';
@@ -21,14 +22,6 @@ export function assertPluginExtensionLink(
 ): asserts extension is PluginExtensionLink {
   if (!isPluginExtensionLink(extension)) {
     throw new Error(errorMessage);
-  }
-}
-
-export function assertLinkPathIsValid(pluginId: string, path: string) {
-  if (!isLinkPathValid(pluginId, path)) {
-    throw new Error(
-      `Invalid link extension. The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
-    );
   }
 }
 
@@ -60,10 +53,6 @@ export function assertIsNotPromise(value: unknown, errorMessage = 'The provided 
   if (isPromise(value)) {
     throw new Error(errorMessage);
   }
-}
-
-export function isLinkPathValid(pluginId: string, path: string) {
-  return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
 export function isExtensionPointIdValid({
@@ -160,10 +149,11 @@ export const isExposedComponentDependencyMissing = (id: string, pluginContext: P
 export const isAddedLinkMetaInfoMissing = (
   pluginId: string,
   metaInfo: PluginExtensionAddedLinkConfig,
-  log: ExtensionsLog
+  log: ExtensionsLog,
+  apps: AppPluginConfig[]
 ) => {
   const logPrefix = 'Could not register link extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = apps.find((a) => a.id === pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.addedLinks.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
@@ -192,10 +182,11 @@ export const isAddedLinkMetaInfoMissing = (
 export const isAddedFunctionMetaInfoMissing = (
   pluginId: string,
   metaInfo: PluginExtensionAddedFunctionConfig,
-  log: ExtensionsLog
+  log: ExtensionsLog,
+  apps: AppPluginConfig[]
 ) => {
   const logPrefix = 'Could not register function extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = apps.find((a) => a.id === pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
@@ -224,10 +215,11 @@ export const isAddedFunctionMetaInfoMissing = (
 export const isAddedComponentMetaInfoMissing = (
   pluginId: string,
   metaInfo: PluginExtensionAddedComponentConfig,
-  log: ExtensionsLog
+  log: ExtensionsLog,
+  apps: AppPluginConfig[]
 ) => {
   const logPrefix = 'Could not register component extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = apps.find((a) => a.id === pluginId);
   const pluginJsonMetaInfo = app
     ? app.extensions.addedComponents.filter(({ title }) => title === metaInfo.title)
     : null;
@@ -258,10 +250,11 @@ export const isAddedComponentMetaInfoMissing = (
 export const isExposedComponentMetaInfoMissing = (
   pluginId: string,
   metaInfo: PluginExtensionExposedComponentConfig,
-  log: ExtensionsLog
+  log: ExtensionsLog,
+  apps: AppPluginConfig[]
 ) => {
   const logPrefix = 'Could not register exposed component extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = apps.find((a) => a.id === pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.filter(({ id }) => id === metaInfo.id) : null;
 
   if (!app) {

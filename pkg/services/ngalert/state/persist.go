@@ -8,6 +8,10 @@ import (
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
+type AlertInstancesProvider interface {
+	GetAlertInstances() []models.AlertInstance
+}
+
 // InstanceStore represents the ability to fetch and write alert instances.
 type InstanceStore interface {
 	InstanceReader

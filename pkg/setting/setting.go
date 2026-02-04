@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
@@ -134,19 +135,28 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
+	// Grafana API Server
+	DisableControllers bool
 	// Provisioning config
-	ProvisioningDisableControllers  bool
-	ProvisioningAllowedTargets      []string
-	ProvisioningAllowImageRendering bool
-	ProvisioningRepositoryTypes     []string
-	ProvisioningLokiURL             string
-	ProvisioningLokiUser            string
-	ProvisioningLokiPassword        string
-	ProvisioningLokiTenantID        string
-	DataPath                        string
-	LogsPath                        string
-	PluginsPath                     string
-	EnterpriseLicensePath           string
+	ProvisioningAllowedTargets            []string
+	ProvisioningAllowImageRendering       bool
+	ProvisioningMinSyncInterval           time.Duration
+	ProvisioningRepositoryTypes           []string
+	ProvisioningLokiURL                   string
+	ProvisioningLokiUser                  string
+	ProvisioningLokiPassword              string
+	ProvisioningLokiTenantID              string
+	ProvisioningMaxResourcesPerRepository int64 // 0 = unlimited
+	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
+	DataPath                              string
+	LogsPath                              string
+	PluginsPath                           string
+	EnterpriseLicensePath                 string
+
+	// Classic Provisioning settings
+	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
+	ClassicProvisioningDashboardsServerLockMinWaitMs          int64
+	ClassicProvisioningDashboardsServerLockMaxWaitMs          int64
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -201,7 +211,7 @@ type Cfg struct {
 	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
+	PluginSettings                   config.PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
 	PluginCatalogHiddenPlugins       []string
@@ -213,6 +223,7 @@ type Cfg struct {
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
+	PreinstallAutoUpdate             bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -236,14 +247,16 @@ type Cfg struct {
 	// use this setting.
 	MetricsIncludeTeamLabel          bool
 	MetricsTotalStatsIntervalSeconds int
+	ClassicHTTPHistogramEnabled      bool
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep     int
-	MinRefreshInterval          string
-	DefaultHomeDashboardPath    string
-	DashboardPerformanceMetrics []string
-	PanelSeriesLimit            int
+	DashboardVersionsToKeep          int
+	MinRefreshInterval               string
+	DefaultHomeDashboardPath         string
+	DashboardPerformanceMetrics      []string
+	PanelSeriesLimit                 int
+	DashboardSchemaMigrationCacheTTL time.Duration
 
 	// Auth
 	LoginCookieName               string
@@ -268,12 +281,13 @@ type Cfg struct {
 	ManagedServiceAccountsEnabled bool
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders   []string
-	AWSAssumeRoleEnabled      bool
-	AWSSessionDuration        string
-	AWSExternalId             string
-	AWSListMetricsPageLimit   int
-	AWSForwardSettingsPlugins []string
+	AWSAllowedAuthProviders          []string
+	AWSAssumeRoleEnabled             bool
+	AWSPerDatasourceHTTPProxyEnabled bool
+	AWSSessionDuration               string
+	AWSExternalId                    string
+	AWSListMetricsPageLimit          int
+	AWSForwardSettingsPlugins        []string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -387,14 +401,15 @@ type Cfg struct {
 	LocalFileSystemAvailable bool
 
 	// Analytics
-	CheckForGrafanaUpdates              bool
-	CheckForPluginUpdates               bool
-	ReportingDistributor                string
-	ReportingEnabled                    bool
-	ApplicationInsightsConnectionString string
-	ApplicationInsightsEndpointUrl      string
-	FeedbackLinksEnabled                bool
-	ReportingStaticContext              map[string]string
+	CheckForGrafanaUpdates               bool
+	CheckForPluginUpdates                bool
+	ReportingDistributor                 string
+	ReportingEnabled                     bool
+	ApplicationInsightsConnectionString  string
+	ApplicationInsightsEndpointUrl       string
+	ApplicationInsightsAutoRouteTracking bool
+	FeedbackLinksEnabled                 bool
+	ReportingStaticContext               map[string]string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -404,6 +419,7 @@ type Cfg struct {
 	RudderstackDataPlaneURL             string
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
+	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
@@ -435,6 +451,7 @@ type Cfg struct {
 	ExternalUserMngInfo            string
 	ExternalUserMngAnalytics       bool
 	ExternalUserMngAnalyticsParams string
+	ExternalUserUpgradeLinkUrl     string
 	AutoAssignOrg                  bool
 	AutoAssignOrgId                int
 	AutoAssignOrgRole              string
@@ -476,6 +493,9 @@ type Cfg struct {
 	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
 	// from clients. Defaults to 64KB.
 	LiveMessageSizeLimit int
+	// LiveClientQueueMaxSize is the maximum size in bytes of the client queue
+	// for Live connections. Defaults to 4MB.
+	LiveClientQueueMaxSize int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -543,9 +563,6 @@ type Cfg struct {
 	// Cloud Migration
 	CloudMigration CloudMigrationSettings
 
-	// Feature Management Settings
-	FeatureManagement FeatureMgmtSettings
-
 	// Alerting
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
@@ -574,17 +591,22 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                             map[string]UnifiedStorageConfig
-	MaxPageSizeBytes                           int
+	UnifiedStorage map[string]UnifiedStorageConfig
+	// DisableDataMigrations will disable resources data migration to unified storage at startup
+	DisableDataMigrations bool
+	MaxPageSizeBytes      int
+	// IndexPath the directory where index files are stored.
+	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
 	IndexWorkers                               int
-	IndexMaxBatchSize                          int
+	IndexRebuildWorkers                        int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
-	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will not be reused between restarts.
-	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will not be reused between restarts.
+	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
+	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -601,19 +623,30 @@ type Cfg struct {
 	SprinklesApiServerPageLimit                int
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
+	ResourceServerJoinRingTimeout              time.Duration
+	EnableSearch                               bool
+	EnableSearchClient                         bool
+	OverridesFilePath                          string
+	OverridesReloadInterval                    time.Duration
+	EnableSQLKVBackend                         bool
+	EnableSQLKVCompatibilityMode               bool
+	EnableGarbageCollection                    bool
+	GarbageCollectionInterval                  time.Duration
+	GarbageCollectionBatchSize                 int
+	GarbageCollectionMaxAge                    time.Duration
+	DashboardsGarbageCollectionMaxAge          time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode                       rest.DualWriterMode
-	DualWriterPeriodicDataSyncJobEnabled bool
-	DualWriterMigrationDataSyncDisabled  bool
-	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
-	DataSyncerInterval time.Duration
-	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
-	DataSyncerRecordsLimit int
+	DualWriterMode rest.DualWriterMode
+	// EnableMigration indicates whether migration is enabled for the resource.
+	// If not set, will use the default from MigratedUnifiedResources.
+	EnableMigration bool
+	// AutoMigrationThreshold is the threshold below which a resource is automatically migrated.
+	AutoMigrationThreshold int
 }
 
 type InstallPlugin struct {
@@ -1212,6 +1245,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	cfg.readClassicProvisioningSettings(iniFile)
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -1219,6 +1254,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
+	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1245,6 +1281,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
 	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
+	cfg.ClassicHTTPHistogramEnabled = iniFile.Section("metrics").Key("classic_http_histogram_enabled").MustBool(true)
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
@@ -1257,6 +1294,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
@@ -1271,6 +1309,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.ApplicationInsightsAutoRouteTracking = analytics.Key("application_insights_connection_string").MustBool(true)
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	// parse reporting static context string of key=value, key=value pairs into an object
@@ -1311,7 +1350,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	shortLinks := iniFile.Section("short_links")
-	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(-1)
 
 	if cfg.ShortLinkExpiration > 365 {
 		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
@@ -1429,7 +1468,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
-	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
 	cfg.readSecretsManagerSettings()
@@ -1474,6 +1512,7 @@ func (cfg *Cfg) readLDAPConfig() {
 func (cfg *Cfg) handleAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
 	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
@@ -1818,6 +1857,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
+	cfg.ExternalUserUpgradeLinkUrl = valueAsString(users, "external_upgrade_link_url", "")
 
 	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
@@ -2062,6 +2102,11 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	if cfg.LiveMessageSizeLimit < -1 {
 		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
 	}
+	cfg.LiveClientQueueMaxSize = section.Key("client_queue_max_size").MustInt(4194304)
+	if cfg.LiveClientQueueMaxSize <= 0 {
+		return fmt.Errorf("unexpected value %d for [live] client_queue_max_size", cfg.LiveMaxConnections)
+	}
+
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {
 	case "", "redis":
@@ -2093,6 +2138,12 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	return nil
 }
 
+func (cfg *Cfg) readClassicProvisioningSettings(iniFile *ini.File) {
+	cfg.ClassicProvisioningDashboardsServerLockMinWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_min_wait_ms").MustInt64(100)
+	cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_interval_seconds").MustInt64(15)
+}
+
 func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
@@ -2122,12 +2173,20 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		}
 	}
 
-	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	cfg.DisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	// if disable_controllers is not set, check if grafana-apiserver.disable_controllers is set
+	// TODO: consolidate to just [grafana-apiserver]disable_controllers
+	if !cfg.DisableControllers {
+		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
+	}
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
-		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+		cfg.ProvisioningAllowedTargets = []string{"folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
+	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
+	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

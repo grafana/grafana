@@ -118,7 +118,9 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
       />
     )),
     getStyles: getPillStyles,
-    testField: (field: Field) => field.type === FieldType.string,
+    testField: (field: Field) =>
+      field.type === FieldType.string ||
+      (field.type === FieldType.other && field.values.some((val) => Array.isArray(val))),
   },
   [TableCellDisplayMode.Markdown]: {
     // eslint-disable-next-line react/display-name

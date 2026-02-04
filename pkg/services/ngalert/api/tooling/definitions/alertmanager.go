@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
@@ -272,20 +272,20 @@ type (
 type MergeResult definition.MergeResult
 
 func (m MergeResult) LogContext() []any {
-	if len(m.RenamedReceivers) == 0 && len(m.RenamedTimeIntervals) == 0 {
+	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
 		return nil
 	}
 	logCtx := make([]any, 0, 4)
-	if len(m.RenamedReceivers) > 0 {
+	if len(m.Receivers) > 0 {
 		rcvBuilder := strings.Builder{}
-		for from, to := range m.RenamedReceivers {
+		for from, to := range m.Receivers {
 			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
 		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
 	}
-	if len(m.RenamedTimeIntervals) > 0 {
+	if len(m.TimeIntervals) > 0 {
 		intervalBuilder := strings.Builder{}
-		for from, to := range m.RenamedTimeIntervals {
+		for from, to := range m.TimeIntervals {
 			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
 		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
@@ -485,10 +485,12 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 
 	s.Cluster = amStatus.Cluster
 	s.Config = &PostableApiAlertingConfig{Config: Config{
-		Global:       c.Global,
-		Route:        AsGrafanaRoute(c.Route),
-		InhibitRules: c.InhibitRules,
-		Templates:    c.Templates,
+		Global:            c.Global,
+		Route:             AsGrafanaRoute(c.Route),
+		InhibitRules:      c.InhibitRules,
+		Templates:         c.Templates,
+		MuteTimeIntervals: c.MuteTimeIntervals,
+		TimeIntervals:     c.TimeIntervals,
 	}}
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
@@ -603,15 +605,15 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.Receiver
+type Receiver = alertingmodels.ReceiverStatus
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
-	Body []alertingmodels.Receiver
+	Body []alertingmodels.ReceiverStatus
 }
 
-type Integration = alertingmodels.Integration
+type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -771,11 +773,30 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 	return config
 }
 
+// ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
+// GroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to
+// definitions.Route explicit.
+type ManagedRoutes map[string]*definition.Route
+
+func (mr *ManagedRoutes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain ManagedRoutes
+	if err := unmarshal((*plain)(mr)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
+	// Divert to the yaml unmarshaller as downstream Routes only define UnmarshalYAML.
+	return yaml.Unmarshal(b, &mr)
+}
+
 // swagger:model
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes      ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"` // TODO: Move to ConfigRevision?
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
 

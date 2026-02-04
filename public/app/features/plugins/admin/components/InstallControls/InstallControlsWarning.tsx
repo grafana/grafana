@@ -4,7 +4,7 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, featureEnabled } from '@grafana/runtime';
 import { LinkButton, useStyles2, Alert, TextLink, Stack } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 import { AccessControlAction } from 'app/types/accessControl';
 

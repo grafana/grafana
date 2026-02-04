@@ -132,9 +132,9 @@ func TestRenderLimitImage(t *testing.T) {
 			HomePath:          path,
 			RendererServerUrl: "http://localhost:8081/render",
 		},
-		inProgressCount: 2,
-		log:             log.New("test"),
+		log: log.New("test"),
 	}
+	rs.inProgressCount.Store(2)
 
 	tests := []struct {
 		name     string
@@ -173,9 +173,10 @@ func TestRenderLimitImageError(t *testing.T) {
 		Cfg: &setting.Cfg{
 			RendererServerUrl: "http://localhost:8081/render",
 		},
-		inProgressCount: 2,
-		log:             log.New("test"),
+		log: log.New("test"),
 	}
+	rs.inProgressCount.Store(2)
+
 	opts := Opts{
 		CommonOpts: CommonOpts{ConcurrentLimit: 1},
 		ErrorOpts:  ErrorOpts{ErrorConcurrentLimitReached: true},

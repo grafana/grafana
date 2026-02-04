@@ -39,9 +39,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: '0.25em 0.1em',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      '&:hover': {
-        background: autoColor(theme, '#e8e8e8'),
-      },
     }),
     headerLabel: css({
       width: '120px',

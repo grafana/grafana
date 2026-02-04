@@ -9,12 +9,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	grpcmetadata "google.golang.org/grpc/metadata"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -43,12 +45,60 @@ func TestIntegrationDecrypt(t *testing.T) {
 		t.Cleanup(cancel)
 
 		// Create auth context with proper permissions
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, "svc", types.TypeUser)
+		svcIdentity := "svc"
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, svcIdentity, types.TypeUser)
+
+		fakeLogger := &mockLogger{}
+		loggerCtx := logging.Context(authCtx, fakeLogger)
 
 		sut := testutils.Setup(t)
 
-		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "non-existent-value")
+		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "non-existent-value")
 		require.Equal(t, err.Error(), contracts.ErrDecryptNotFound.Error()) // make sure we are stripping the error details
+		require.Empty(t, exposed)
+
+		require.Len(t, fakeLogger.InfoArgs, 2)
+		// we only want to check the audit log args
+		args := fakeLogger.InfoArgs[1]
+		require.Contains(t, args, "decrypter_identity")
+		for i, arg := range args {
+			if arg == "decrypter_identity" {
+				require.Equal(t, svcIdentity, args[i+1].(string))
+			}
+		}
+	})
+
+	t.Run("when the context is cancelled, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		svcIdentity := "svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, svcIdentity, types.TypeUser)
+
+		// Setup service
+		sut := testutils.Setup(t)
+
+		// Create a secure value
+		spec := secretv1beta1.SecureValueSpec{
+			Description: "description",
+			Decrypters:  []string{svcIdentity},
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+		}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv.Name = "sv-test"
+		sv.Namespace = "default"
+
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+
+		// Cancel immediately!
+		cancel()
+
+		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
+		require.ErrorIs(t, err, context.Canceled)
 		require.Empty(t, exposed)
 	})
 
@@ -309,6 +359,66 @@ func TestIntegrationDecrypt(t *testing.T) {
 				require.Equal(t, tokenSvcIdentity, args[i+1].(string))
 			}
 		}
+	})
+
+	t.Run("happy path, referencing a secret in a 3rd party store", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		tokenSvcIdentity := "svc"
+		stSvcIdentity := "st-svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, tokenSvcIdentity, types.TypeUser)
+
+		// Needs to be incoming because we are pretending we received the metadata from a gRPC request
+		ctx = grpcmetadata.NewIncomingContext(authCtx, grpcmetadata.New(map[string]string{
+			contracts.HeaderGrafanaServiceIdentityName: stSvcIdentity,
+		}))
+
+		// Setup service
+		sut := testutils.Setup(t)
+
+		// Create a secret on the 3rd party secret store
+		sut.ModelSecretsManager.Create("ref1", "value")
+
+		// Create a 3rd party keeper
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "k1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Aws: &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		// Create a secure value
+		sv := &secretv1beta1.SecureValue{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sv-test",
+			},
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: "description",
+				Decrypters:  []string{tokenSvcIdentity},
+				Ref:         ptr.To("ref1"),
+			}}
+
+		_, err = sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+
+		fakeLogger := &mockLogger{}
+
+		loggerCtx := logging.Context(ctx, fakeLogger)
+
+		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "sv-test")
+		require.NoError(t, err)
+		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
 	})
 }
 

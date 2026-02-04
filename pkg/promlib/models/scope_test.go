@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -10,8 +11,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 	tests := []struct {
 		name         string
 		query        string
-		adhocFilters []ScopeFilter
-		scopeFilters []ScopeFilter
+		adhocFilters []scope.ScopeFilter
+		scopeFilters []scope.ScopeFilter
 		expected     string
 		expectErr    bool
 	}{
@@ -30,8 +31,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "Adhoc filter with existing filter",
 			query: `http_requests_total{job="prometheus"}`,
-			adhocFilters: []ScopeFilter{
-				{Key: "method", Value: "get", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "method", Value: "get", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{job="prometheus",method="get"}`,
 			expectErr: false,
@@ -39,9 +40,9 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "Adhoc filter with no existing filter",
 			query: `http_requests_total`,
-			adhocFilters: []ScopeFilter{
-				{Key: "method", Value: "get", Operator: FilterOperatorEquals},
-				{Key: "job", Value: "prometheus", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "method", Value: "get", Operator: scope.FilterOperatorEquals},
+				{Key: "job", Value: "prometheus", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{job="prometheus",method="get"}`,
 			expectErr: false,
@@ -49,8 +50,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "Scope filter",
 			query: `http_requests_total{job="prometheus"}`,
-			scopeFilters: []ScopeFilter{
-				{Key: "status", Value: "200", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "status", Value: "200", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{job="prometheus",status="200"}`,
 			expectErr: false,
@@ -58,11 +59,11 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "Adhoc and Scope filter no existing filter",
 			query: `http_requests_total`,
-			scopeFilters: []ScopeFilter{
-				{Key: "status", Value: "200", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "status", Value: "200", Operator: scope.FilterOperatorEquals},
 			},
-			adhocFilters: []ScopeFilter{
-				{Key: "job", Value: "prometheus", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "job", Value: "prometheus", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{job="prometheus",status="200"}`,
 			expectErr: false,
@@ -70,11 +71,11 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "Adhoc and Scope filter conflict - adhoc wins (if not oneOf or notOneOf)",
 			query: `http_requests_total{job="prometheus"}`,
-			scopeFilters: []ScopeFilter{
-				{Key: "status", Value: "404", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "status", Value: "404", Operator: scope.FilterOperatorEquals},
 			},
-			adhocFilters: []ScopeFilter{
-				{Key: "status", Value: "200", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "status", Value: "200", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{job="prometheus",status="200"}`,
 			expectErr: false,
@@ -82,8 +83,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "Adhoc filters with more complex expression",
 			query: `capacity_bytes{job="prometheus"} + available_bytes{job="grafana"} / 1024`,
-			adhocFilters: []ScopeFilter{
-				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `capacity_bytes{job="alloy"} + available_bytes{job="alloy"} / 1024`,
 			expectErr: false,
@@ -91,8 +92,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "OneOf Operator is combined into a single regex filter",
 			query: `http_requests_total{job="prometheus"}`,
-			scopeFilters: []ScopeFilter{
-				{Key: "status", Values: []string{"404", "400"}, Operator: FilterOperatorOneOf},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "status", Values: []string{"404", "400"}, Operator: scope.FilterOperatorOneOf},
 			},
 			expected:  `http_requests_total{job="prometheus",status=~"404|400"}`,
 			expectErr: false,
@@ -100,8 +101,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "using __name__ as part of the query",
 			query: `{__name__="http_requests_total"}`,
-			scopeFilters: []ScopeFilter{
-				{Key: "namespace", Value: "istio", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "namespace", Value: "istio", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `{__name__="http_requests_total",namespace="istio"}`,
 			expectErr: false,
@@ -109,9 +110,9 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "merge scopes filters into using OR if they share filter key",
 			query: `http_requests_total{}`,
-			scopeFilters: []ScopeFilter{
-				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
-				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: scope.FilterOperatorEquals},
+				{Key: "namespace", Value: "kube-system", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{namespace=~"default|kube-system"}`,
 			expectErr: false,
@@ -119,12 +120,12 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 		{
 			name:  "adhoc filters win over scope filters if they share filter key",
 			query: `http_requests_total{}`,
-			scopeFilters: []ScopeFilter{
-				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
-				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: scope.FilterOperatorEquals},
+				{Key: "namespace", Value: "kube-system", Operator: scope.FilterOperatorEquals},
 			},
-			adhocFilters: []ScopeFilter{
-				{Key: "namespace", Value: "adhoc-wins", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "namespace", Value: "adhoc-wins", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{namespace="adhoc-wins"}`,
 			expectErr: false,
@@ -149,8 +150,8 @@ func TestApplyQueryFiltersAndGroupBy_Filters_utf8(t *testing.T) {
 	tests := []struct {
 		name         string
 		query        string
-		adhocFilters []ScopeFilter
-		scopeFilters []ScopeFilter
+		adhocFilters []scope.ScopeFilter
+		scopeFilters []scope.ScopeFilter
 		expected     string
 		expectErr    bool
 	}{
@@ -276,8 +277,8 @@ func TestApplyQueryFiltersAndGroupBy(t *testing.T) {
 	tests := []struct {
 		name         string
 		query        string
-		adhocFilters []ScopeFilter
-		scopeFilters []ScopeFilter
+		adhocFilters []scope.ScopeFilter
+		scopeFilters []scope.ScopeFilter
 		groupby      []string
 		expected     string
 		expectErr    bool
@@ -286,11 +287,11 @@ func TestApplyQueryFiltersAndGroupBy(t *testing.T) {
 		{
 			name:  "Adhoc filters with more complex expression",
 			query: `sum(capacity_bytes{job="prometheus"} + available_bytes{job="grafana"}) / 1024`,
-			adhocFilters: []ScopeFilter{
-				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: scope.FilterOperatorEquals},
 			},
-			scopeFilters: []ScopeFilter{
-				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "vol", Value: "/", Operator: scope.FilterOperatorEquals},
 			},
 			groupby:   []string{"job"},
 			expected:  `sum by (job) (capacity_bytes{job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
@@ -316,8 +317,8 @@ func TestApplyQueryFiltersAndGroupBy_utf8(t *testing.T) {
 	tests := []struct {
 		name         string
 		query        string
-		adhocFilters []ScopeFilter
-		scopeFilters []ScopeFilter
+		adhocFilters []scope.ScopeFilter
+		scopeFilters []scope.ScopeFilter
 		groupby      []string
 		expected     string
 		expectErr    bool
@@ -325,11 +326,11 @@ func TestApplyQueryFiltersAndGroupBy_utf8(t *testing.T) {
 		{
 			name:  "Adhoc filters with more complex expression and utf8 metric name",
 			query: `sum({"capacity_bytes", job="prometheus"} + {"available_bytes", job="grafana"}) / 1024`,
-			adhocFilters: []ScopeFilter{
-				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: scope.FilterOperatorEquals},
 			},
-			scopeFilters: []ScopeFilter{
-				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "vol", Value: "/", Operator: scope.FilterOperatorEquals},
 			},
 			groupby:   []string{"job"},
 			expected:  `sum by (job) ({__name__="capacity_bytes",job="alloy",vol="/"} + {__name__="available_bytes",job="alloy",vol="/"}) / 1024`,
@@ -338,11 +339,11 @@ func TestApplyQueryFiltersAndGroupBy_utf8(t *testing.T) {
 		{
 			name:  "Adhoc filters with more complex expression with utf8 label",
 			query: `sum(capacity_bytes{job="prometheus", "utf8.label"="value"} + available_bytes{job="grafana"}) / 1024`,
-			adhocFilters: []ScopeFilter{
-				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: scope.FilterOperatorEquals},
 			},
-			scopeFilters: []ScopeFilter{
-				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "vol", Value: "/", Operator: scope.FilterOperatorEquals},
 			},
 			groupby:   []string{"job"},
 			expected:  `sum by (job) (capacity_bytes{"utf8.label"="value",job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
@@ -351,11 +352,11 @@ func TestApplyQueryFiltersAndGroupBy_utf8(t *testing.T) {
 		{
 			name:  "Adhoc filters with more complex expression with utf8 metric and label",
 			query: `sum({"capacity_bytes", job="prometheus", "utf8.label"="value"} + available_bytes{job="grafana"}) / 1024`,
-			adhocFilters: []ScopeFilter{
-				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			adhocFilters: []scope.ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: scope.FilterOperatorEquals},
 			},
-			scopeFilters: []ScopeFilter{
-				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "vol", Value: "/", Operator: scope.FilterOperatorEquals},
 			},
 			groupby:   []string{"job"},
 			expected:  `sum by (job) ({"utf8.label"="value",__name__="capacity_bytes",job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,

@@ -133,7 +133,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.
 		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, true)
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, LogInvalidReceivers, moa.featureManager)
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}
@@ -324,7 +324,16 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 	}
 	cleanPermissionsErr := err
 
-	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if previousConfig != nil {
+		// If there is a previous configuration, we need to copy its extra configs to the new one.
+		extraConfigs, err := extractExtraConfigs(previousConfig.AlertmanagerConfiguration)
+		if err != nil {
+			return fmt.Errorf("failed to extract extra configs from previous configuration: %w", err)
+		}
+		config.ExtraConfigs = extraConfigs
+	}
+
+	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers, nil); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
@@ -476,6 +485,7 @@ func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
 type provisioningStore interface {
 	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
@@ -571,4 +581,19 @@ func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
 	}
 
 	return receiverNames, nil
+}
+
+// extractExtraConfigs extracts encrypted (does not decrypt) extra configurations from the raw Alertmanager config.
+func extractExtraConfigs(rawConfig string) ([]definitions.ExtraConfiguration, error) {
+	// Slimmed down version of the Alertmanager configuration to extract extra configs.
+	type extraConfigUserConfig struct {
+		ExtraConfigs []definitions.ExtraConfiguration `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	}
+
+	cfg := &extraConfigUserConfig{}
+	if err := json.Unmarshal([]byte(rawConfig), cfg); err != nil {
+		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
+	}
+
+	return cfg.ExtraConfigs, nil
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	prom_model "github.com/prometheus/common/model"
 )
 
@@ -26,9 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -124,9 +123,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 // TestIntegrationAccessControl tests basic access control functionality
 // Access control is primarily handled in the service layer, so this test focuses on basic CRUD operations
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -208,9 +205,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationCRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -466,15 +461,13 @@ func TestIntegrationCRUD(t *testing.T) {
 		}
 
 		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
-		require.ErrorContains(t, err, "invalid alert rule")
+		require.ErrorContains(t, err, "trigger interval must be a multiple of base evaluation interval")
 		require.Nil(t, created)
 	})
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -551,9 +544,7 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationBasicAPI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -571,5 +562,150 @@ func TestIntegrationBasicAPI(t *testing.T) {
 		// The API might return different error types, so just check that it's an error
 		require.Error(t, err)
 		t.Logf("Got error: %s", err)
+	})
+}
+
+func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	// Prepare two folders for label sync update scenario
+	common.CreateTestFolder(t, helper, "test-folder-a")
+	common.CreateTestFolder(t, helper, "test-folder-b")
+
+	baseGen := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder-a"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	)
+
+	t.Run("should keep folder label in sync with folder annotation on create and update", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					v0alpha1.FolderAnnotationKey: "test-folder-a",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  string(rule.NoDataState),
+				ExecErrState: string(rule.ExecErrState),
+			},
+		}
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() { _ = client.Delete(ctx, created.Name, v1.DeleteOptions{}) }()
+
+		// On create, metadata.labels[v0alpha1.FolderLabelKey] should mirror annotation
+		require.Equal(t, "test-folder-a", created.Labels[v0alpha1.FolderLabelKey])
+
+		// Update annotation to point to a different folder and ensure label follows
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		if updated.Annotations == nil {
+			updated.Annotations = map[string]string{}
+		}
+		updated.Annotations[v0alpha1.FolderAnnotationKey] = "test-folder-b"
+
+		after, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "test-folder-b", after.Annotations[v0alpha1.FolderAnnotationKey])
+		require.Equal(t, "test-folder-b", after.Labels[v0alpha1.FolderLabelKey])
+	})
+
+	t.Run("should fail to create rule without folder annotation", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace:   "default",
+				Annotations: map[string]string{}, // missing grafana.app/folder
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration("10s"),
+				},
+				NoDataState:  "NoData",
+				ExecErrState: "Error",
+			},
+		}
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, created)
+	})
+
+	t.Run("should fail to create rule with group labels preset", func(t *testing.T) {
+		rule := baseGen.Generate()
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					v0alpha1.FolderAnnotationKey: "test-folder-a",
+				},
+				Labels: map[string]string{
+					v0alpha1.GroupLabelKey:      "some-group",
+					v0alpha1.GroupIndexLabelKey: "0",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger:      v0alpha1.AlertRuleIntervalTrigger{Interval: v0alpha1.AlertRulePromDuration("10s")},
+				NoDataState:  "NoData",
+				ExecErrState: "Error",
+			},
+		}
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, created)
 	})
 }

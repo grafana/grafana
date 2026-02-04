@@ -1,7 +1,9 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Slider, { SliderProps } from 'rc-slider';
+import Slider, { SliderProps } from '@rc-component/slider';
 import { useCallback } from 'react';
+
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -13,6 +15,8 @@ import { RangeSliderProps } from './types';
  * @public
  *
  * RichHistoryQueriesTab uses this Range Component
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-rangeslider--docs
  */
 export const RangeSlider = ({
   min,
@@ -44,6 +48,7 @@ export const RangeSlider = ({
 
   const isHorizontal = orientation === 'horizontal';
   const styles = useStyles2(getStyles, isHorizontal);
+  const dragHandleAriaLabel = t('grafana-ui.range-slider.drag-handle-aria-label', 'Use arrow keys to change the value');
 
   const tipHandleRender: SliderProps['handleRender'] = (node, handleProps) => {
     return (
@@ -73,6 +78,7 @@ export const RangeSlider = ({
         vertical={!isHorizontal}
         reverse={reverse}
         handleRender={tipHandleRender}
+        ariaLabelForHandle={dragHandleAriaLabel}
       />
     </div>
   );

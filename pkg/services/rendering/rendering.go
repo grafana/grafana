@@ -32,7 +32,7 @@ type RenderingService struct {
 	renderAction        renderFunc
 	renderCSVAction     renderCSVFunc
 	domain              string
-	inProgressCount     int32
+	inProgressCount     atomic.Int32
 	version             string
 	versionMutex        sync.RWMutex
 	capabilities        []Capability
@@ -104,6 +104,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	}
 
 	var renderKeyProvider renderKeyProvider
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
 			log:       logger,
@@ -199,7 +200,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	rs.log.Debug("No image renderer found/installed. " +
-		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"For image rendering support please use the Grafana Image Renderer remote rendering service. " +
 		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 
 	<-ctx.Done()
@@ -271,7 +272,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 
 	if !rs.IsAvailable(ctx) {
 		logger.Warn("Could not render image, no image renderer found/installed. " +
-			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"For image rendering support please use the Grafana Image Renderer remote rendering service. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		if opts.ErrorRenderUnavailable {
 			return nil, ErrRenderUnavailable
@@ -279,7 +280,14 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return rs.renderUnavailableImage(), nil
 	}
 
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	newInProgressCount := rs.inProgressCount.Add(1)
+
+	defer func() {
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount.Add(-1)))
+	}()
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
+
+	if opts.ConcurrentLimit > 0 && int(newInProgressCount) > opts.ConcurrentLimit {
 		logger.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
 			return nil, ErrConcurrentLimitReached
@@ -295,16 +303,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}, nil
 	}
 
-	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
-	}()
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
-
 	if renderType == RenderPDF {
-		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
-			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
-		}
-
 		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
 			return nil, err
 		}
@@ -353,7 +352,14 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 		return nil, ErrRenderUnavailable
 	}
 
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	newInProgressCount := rs.inProgressCount.Add(1)
+
+	defer func() {
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount.Add(-1)))
+	}()
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
+
+	if opts.ConcurrentLimit > 0 && int(newInProgressCount) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
 
@@ -365,11 +371,6 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 
 	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
-	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
-	}()
-
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 

@@ -8,7 +8,9 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "12.3.0-pre";
+// Generated from public/app/plugins/panel/dashboardlist/panelcfg.cue file.
+
+export const pluginVersion = "12.4.0-pre";
 
 export interface Options {
   /**

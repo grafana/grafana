@@ -1,16 +1,65 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
+import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+
 let isScenesContextSet = false;
+
+type DashboardLibraryTrackingInfo = {
+  pluginId?: string;
+  sourceEntryPoint?: string;
+  libraryItemId?: string;
+  creationOrigin?: string;
+};
 
 export const DashboardInteractions = {
   // Dashboard interactions:
-  dashboardInitialized: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('init_dashboard_completed', { ...properties });
+  dashboardInitialized: (
+    properties: {
+      theme: undefined;
+      duration: number | undefined;
+      isScene: boolean;
+      hasEditPermissions?: boolean;
+      hasSavePermissions?: boolean;
+    } & Partial<DashboardTrackingInfo> &
+      Partial<DynamicDashboardsTrackingInformation> &
+      Partial<{ version_before_migration: number | undefined }>
+  ) => {
+    reportDashboardInteraction('init_dashboard_completed', properties);
+  },
+
+  dashboardCopied: (properties: { name: string; url: string }) => {
+    reportInteraction('grafana_dashboard_copied', properties);
+  },
+
+  dashboardCreatedOrSaved: (
+    isNew: boolean | undefined,
+    properties:
+      | ({
+          name: string;
+          url: string;
+          uid: string;
+          numPanels: number;
+          numRows: number;
+        } & DashboardLibraryTrackingInfo)
+      | ({
+          name: string;
+          url: string;
+          numPanels: number;
+          numTabs: number;
+          numRows: number;
+          uid: string;
+          conditionalRenderRules: number;
+          autoLayoutCount: number;
+          customGridLayoutCount: number;
+          panelsByDatasourceType: Record<string, number>;
+        } & DashboardLibraryTrackingInfo)
+  ) => {
+    reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
 
   // grafana_dashboards_edit_button_clicked
   // when a user clicks the ‘edit’ or ‘make editable’ button in a dashboard view mode
-  editButtonClicked: (properties: { outlineExpanded: boolean }) => {
+  editButtonClicked: (properties: { outlineExpanded: boolean; dashboardUid?: string }) => {
     reportDashboardInteraction('edit_button_clicked', properties);
   },
 
@@ -34,15 +83,38 @@ export const DashboardInteractions = {
 
   // dashboards_add_variable_button_clicked
   // when a user clicks on ‘Add Variable’ or ‘New Variable’
-  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' }) => {
+  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_variable_button_clicked', properties);
+  },
+
+  // dashboards_variables_reordered
+  // when a user drags and drops a variable in the content outline
+  variablesReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('variables_reordered', properties);
+  },
+
+  panelActionClicked(
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    id: number,
+    source: 'panel' | 'edit_pane'
+  ) {
+    reportDashboardInteraction('panel_action_clicked', { item, id, source });
+  },
+
+  // Panel styles copy/paste interactions
+  panelStylesMenuClicked(action: 'copy' | 'paste', panelType: string, panelId: number, error?: boolean) {
+    reportDashboardInteraction('panel_styles_menu_clicked', { action, panelType, panelId, error });
   },
 
   // Dashboard edit item actions
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
-  trackAddPanelClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'add_panel' });
+  trackAddPanelClick(
+    source: 'sidebar' | 'canvas' = 'canvas',
+    target?: 'row' | 'tab' | 'dashboard',
+    action: 'drop' | 'click' = 'click'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: 'add_panel', source, target, action });
   },
   trackGroupRowClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
@@ -190,16 +262,26 @@ export const DashboardInteractions = {
   copyImageUrlClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_url_copied', properties);
   },
+
+  // move item interactions
+  trackMoveItem: (item: 'panel' | 'row' | 'tab', action: 'drag' | 'drop', context: { isCrossLayout: boolean }) => {
+    const properties = { item, action, context };
+    reportDashboardInteraction('move_item', properties);
+  },
 };
 
-const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {
+const reportDashboardInteraction = (
+  name: string,
+  properties?: Record<string, unknown>,
+  interactionPrefix = 'dashboards'
+) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
   const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 
   if (properties) {
-    reportInteraction(`dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
-    reportInteraction(`dashboards_${name}`, { isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { isDynamicDashboard });
   }
 };
 

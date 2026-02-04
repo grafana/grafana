@@ -369,24 +369,28 @@ This transformation is very useful if your data source does not natively filter 
 
 The available conditions for all fields are:
 
-- **Regex** - Match a regex expression.
 - **Is Null** - Match if the value is null.
 - **Is Not Null** - Match if the value is not null.
 - **Equal** - Match if the value is equal to the specified value.
-- **Different** - Match if the value is different than the specified value.
+- **Not Equal** - Match if the value is not equal to the specified value.
+- **Regex** - Match a regex expression.
 
 The available conditions for string fields are:
 
 - **Contains substring** - Match if the value contains the specified substring (case insensitive).
 - **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
-The available conditions for number and time fields are:
+The available conditions for number fields are:
 
 - **Greater** - Match if the value is greater than the specified value.
 - **Lower** - Match if the value is lower than the specified value.
 - **Greater or equal** - Match if the value is greater or equal.
 - **Lower or equal** - Match if the value is lower or equal.
-- **Range** - Match a range between a specified minimum and maximum, min and max included. A time field will pre-populate with variables to filter by selected time.
+- **In between** - Match a range between a specified minimum and maximum, min and max included.
+
+The available conditions for time fields are:
+
+- **In between** - Match a range between a specified minimum and maximum. The min and max values will pre-populate with variables to filter by selected time.
 
 Consider the following dataset:
 
@@ -1605,6 +1609,53 @@ ${buildImageContent(
 )}
 
 > **Note:** This transformation was previously called regression analysis.
+  `;
+    },
+  },
+  smoothing: {
+    name: 'Smoothing',
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+Use this transformation to reduce noise in time series data through adaptive smoothing. This transformation creates smoother, cleaner visualizations while preserving all original time points and important trends and patterns in your data.
+
+The smoothing transformation uses the ASAP (Automatic Smoothing for Attention Prioritization) algorithm internally to generate a smoothed curve, which is then interpolated back onto all original time points. This ensures your visualization maintains continuous lines without gaps while reducing noise.
+
+#### Available options
+
+- **Resolution** - Controls smoothing intensity (1-1000). Lower values create more aggressive smoothing, while higher values preserve more detail. The output preserves all original time points.
+
+#### When to use smoothing
+
+This transformation is useful for:
+
+- Noisy time series data that obscures underlying trends
+- Clearer trend analysis and pattern recognition
+
+#### Example
+
+Consider noisy sensor data with thousands of points:
+
+**Before smoothing:**
+
+| Time                | Temperature |
+| ------------------- | ----------- |
+| 2020-07-07 10:00:00 | 23.1        |
+| 2020-07-07 10:00:01 | 23.3        |
+| 2020-07-07 10:00:02 | 22.9        |
+| 2020-07-07 10:00:03 | 23.2        |
+| ... (thousands more) | ...         |
+
+**After smoothing (Resolution: 100):**
+
+| Time                | Temperature (smoothed) |
+| ------------------- | ---------------------- |
+| 2020-07-07 10:00:00 | 23.1                   |
+| 2020-07-07 10:00:01 | 23.1                   |
+| 2020-07-07 10:00:02 | 23.0                   |
+| 2020-07-07 10:00:03 | 23.0                   |
+| ... (same count)    | ...                    |
+
+The transformation preserves all original time points while reducing noise, resulting in smoother curves that maintain continuous lines without gaps.
   `;
     },
   },

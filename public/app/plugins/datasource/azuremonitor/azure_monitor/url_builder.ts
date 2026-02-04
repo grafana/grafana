@@ -1,6 +1,6 @@
 import { TemplateSrv } from '@grafana/runtime';
 
-import { AzureMonitorResource } from '../types/query';
+import { AzureMonitorResource } from '../dataquery.gen';
 import { GetMetricNamespacesQuery, GetMetricNamesQuery } from '../types/types';
 
 export default class UrlBuilder {

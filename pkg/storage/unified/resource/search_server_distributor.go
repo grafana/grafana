@@ -2,8 +2,13 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"hash/fnv"
+	"maps"
 	"math/rand"
+	"slices"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/ring"
@@ -112,6 +117,128 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 	}
 
 	return client.GetStats(ctx, r)
+}
+
+func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
+	defer span.End()
+
+	// validate input
+	for _, key := range r.Keys {
+		if r.Namespace != key.Namespace {
+			return &resourcepb.RebuildIndexesResponse{
+				Error: NewBadRequestError("key namespace does not match request namespace"),
+			}, nil
+		}
+	}
+
+	// distribute the request to all search pods to minimize risk of stale index
+	// it will not rebuild on those which don't have the index open
+	rs, err := ds.ring.GetAllHealthy(searchRingRead)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all healthy instances from the ring")
+	}
+
+	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", "all"))
+	if err != nil {
+		ds.log.Debug("error setting grpc header", "err", err)
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+	rCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), r.Namespace)
+
+	expectedInstances := ds.ring.InstancesCount()
+	var wg sync.WaitGroup
+	responseCh := make(chan *resourcepb.RebuildIndexesResponse, expectedInstances)
+	errorCh := make(chan error, expectedInstances)
+
+	for _, inst := range rs.Instances {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			client, err := ds.clientPool.GetClientForInstance(inst)
+			if err != nil {
+				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
+				return
+			}
+
+			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
+			if err != nil {
+				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
+				return
+			}
+
+			if rsp.Error != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+				return
+			}
+
+			// Add instance ID to details if present
+			if rsp.Details != "" {
+				rsp.Details = fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
+			}
+
+			responseCh <- rsp
+		}()
+	}
+
+	wg.Wait()
+	close(errorCh)
+	close(responseCh)
+
+	// Collect errors
+	errs := make([]error, 0, len(errorCh))
+	for err := range errorCh {
+		ds.log.Error("rebuild indexes call failed", "error", err)
+		errs = append(errs, err)
+	}
+
+	// Aggregate responses
+	var totalRebuildCount int64
+	var details string
+	minBuildTimes := make(map[string]*resourcepb.RebuildIndexesResponse_IndexBuildTime)
+	contactedInstances := len(responseCh)
+
+	for rsp := range responseCh {
+		totalRebuildCount += rsp.RebuildCount
+
+		if rsp.Details != "" {
+			if len(details) > 0 {
+				details += ", "
+			}
+			details += rsp.Details
+		}
+
+		// Compute MIN(build time) for each resource type
+		for _, bt := range rsp.BuildTimes {
+			key := bt.Group + "/" + bt.Resource
+			existing, found := minBuildTimes[key]
+			if !found || bt.BuildTimeUnix < existing.BuildTimeUnix {
+				minBuildTimes[key] = bt
+			}
+		}
+	}
+
+	// Convert map to slice
+	buildTimes := slices.Collect(maps.Values(minBuildTimes))
+
+	// Determine if all instances were contacted
+	contactedAllInstances := contactedInstances == expectedInstances && expectedInstances > 0
+
+	response := &resourcepb.RebuildIndexesResponse{
+		RebuildCount:          totalRebuildCount,
+		Details:               details,
+		BuildTimes:            buildTimes,
+		ContactedAllInstances: contactedAllInstances,
+	}
+	if len(errs) > 0 {
+		response.Error = AsErrorResult(errors.Join(errs...))
+	}
+	return response, nil
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {

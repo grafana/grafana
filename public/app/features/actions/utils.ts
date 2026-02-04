@@ -17,12 +17,14 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getNextRequestId } from '../query/state/PanelQueryRunner';
+
+import { reportActionTrigger } from './analytics';
 
 /** @internal */
 export const isInfinityActionWithAuth = (action: Action): boolean => {
@@ -59,7 +61,8 @@ export const getActions = (
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
   actions: Action[],
-  config: ValueLinkConfig
+  config: ValueLinkConfig,
+  visualizationType?: string
 ): Array<ActionModel<Field>> => {
   if (!actions || actions.length === 0) {
     return [];
@@ -89,6 +92,7 @@ export const getActions = (
 
       const actionModel: ActionModel<Field> = {
         title: replaceVariables(action.title, actionScopedVars),
+        type: action.type,
         confirmation: (actionVars?: ActionVariableInput) =>
           genReplaceActionVars(
             boundReplaceVariables,
@@ -96,6 +100,10 @@ export const getActions = (
             actionVars
           )(action.confirmation || `Are you sure you want to ${action.title}?`),
         onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
+          if (visualizationType) {
+            reportActionTrigger(action.type, action.oneClick ?? false, visualizationType);
+          }
+
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let request = {} as BackendSrvRequest;
           if (isInfinityActionWithAuth(action)) {

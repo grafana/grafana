@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -18,13 +22,11 @@ import (
 )
 
 const grpcMetaKeyCollection = "x-gf-batch-collection"
-const grpcMetaKeyRebuildCollection = "x-gf-batch-rebuild-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
 
 // Logged in trace.
 var metadataKeys = []string{
 	grpcMetaKeyCollection,
-	grpcMetaKeyRebuildCollection,
 	grpcMetaKeySkipValidation,
 }
 
@@ -33,12 +35,13 @@ func grpcMetaValueIsTrue(vals []string) bool {
 }
 
 type BulkRequestIterator interface {
+	// Next advances the iterator to the next element if one exists.
 	Next() bool
 
-	// The next event we should process
+	// Request returns the current element. Only valid after Next() returns true.
 	Request() *resourcepb.BulkRequest
 
-	// Rollback requested
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after Next() returns true.
 	RollbackRequested() bool
 }
 
@@ -59,10 +62,6 @@ type BulkSettings struct {
 	// All requests will be within this namespace/group/resource
 	Collection []*resourcepb.ResourceKey
 
-	// The batch will include everything from the collection
-	// - all existing values will be removed/replaced if the batch completes successfully
-	RebuildCollection bool
-
 	// The byte[] payload and folder has already been validated - no need to decode and verify
 	SkipValidation bool
 }
@@ -73,9 +72,6 @@ func (x *BulkSettings) ToMD() metadata.MD {
 		for _, v := range x.Collection {
 			md[grpcMetaKeyCollection] = append(md[grpcMetaKeyCollection], SearchID(v))
 		}
-	}
-	if x.RebuildCollection {
-		md[grpcMetaKeyRebuildCollection] = []string{"true"}
 	}
 	if x.SkipValidation {
 		md[grpcMetaKeySkipValidation] = []string{"true"}
@@ -96,8 +92,6 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 				}
 				settings.Collection = append(settings.Collection, key)
 			}
-		case grpcMetaKeyRebuildCollection:
-			settings.RebuildCollection = grpcMetaValueIsTrue(v)
 		case grpcMetaKeySkipValidation:
 			settings.SkipValidation = grpcMetaValueIsTrue(v)
 		}
@@ -109,7 +103,7 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
 func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
 	ctx := stream.Context()
-	ctx, span := s.tracer.Start(ctx, "resource.server.BulkProcess")
+	ctx, span := tracer.Start(ctx, "resource.server.BulkProcess")
 	defer span.End()
 
 	sendAndClose := func(rsp *resourcepb.BulkResponse) error {
@@ -170,9 +164,9 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
-	// Verify all request keys are valid
+	// Verify all collection request keys are valid
 	for _, k := range settings.Collection {
-		if r := verifyRequestKey(k); r != nil {
+		if r := verifyRequestKeyCollection(k); r != nil {
 			return sendAndClose(&resourcepb.BulkResponse{
 				Error: &resourcepb.ErrorResult{
 					Message: fmt.Sprintf("invalid request key: %s", r.Message),
@@ -182,47 +176,39 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		}
 	}
 
-	if settings.RebuildCollection {
-		for _, k := range settings.Collection {
-			// Can we delete the whole collection
-			rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
-				Namespace: k.Namespace,
-				Group:     k.Group,
-				Resource:  k.Resource,
-				Verb:      utils.VerbDeleteCollection,
+	for _, k := range settings.Collection {
+		// Can we delete the whole collection
+		rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
+			Namespace: k.Namespace,
+			Group:     k.Group,
+			Resource:  k.Resource,
+			Verb:      utils.VerbDeleteCollection,
+		}, "")
+		if err != nil || !rsp.Allowed {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
+					Code:    http.StatusForbidden,
+				},
 			})
-			if err != nil || !rsp.Allowed {
-				return sendAndClose(&resourcepb.BulkResponse{
-					Error: &resourcepb.ErrorResult{
-						Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
-						Code:    http.StatusForbidden,
-					},
-				})
-			}
-
-			// This will be called for each request -- with the folder ID
-			runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
-				Namespace: k.Namespace,
-				Group:     k.Group,
-				Resource:  k.Resource,
-				Verb:      utils.VerbCreate,
-			})
-			if err != nil {
-				return sendAndClose(&resourcepb.BulkResponse{
-					Error: &resourcepb.ErrorResult{
-						Message: "Unable to check `create` permission",
-						Code:    http.StatusForbidden,
-					},
-				})
-			}
 		}
-	} else {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "Bulk currently only supports RebuildCollection",
-				Code:    http.StatusBadRequest,
-			},
+
+		// This will be called for each request -- with the folder ID
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+		runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
+			Namespace: k.Namespace,
+			Group:     k.Group,
+			Resource:  k.Resource,
+			Verb:      utils.VerbCreate,
 		})
+		if err != nil {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "Unable to check `create` permission",
+					Code:    http.StatusForbidden,
+				},
+			})
+		}
 	}
 
 	backend, ok := s.backend.(BulkProcessingBackend)
@@ -249,24 +235,6 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		rsp.Error = AsErrorResult(runner.err)
 	}
 
-	if rsp.Error == nil && s.search != nil {
-		// Rebuild any changed indexes
-		for _, summary := range rsp.Summary {
-			_, err := s.search.build(ctx, NamespacedResource{
-				Namespace: summary.Namespace,
-				Group:     summary.Group,
-				Resource:  summary.Resource,
-			}, summary.Count, "rebuildAfterBatchLoad", true)
-			if err != nil {
-				s.log.Warn("error building search index after batch load", "err", err)
-				rsp.Error = &resourcepb.ErrorResult{
-					Code:    http.StatusInternalServerError,
-					Message: "err building search index: " + summary.Resource,
-					Reason:  err.Error(),
-				}
-			}
-		}
-	}
 	return sendAndClose(rsp)
 }
 
@@ -344,4 +312,85 @@ func (b *batchRunner) RollbackRequested() bool {
 		return true
 	}
 	return false
+}
+
+type bulkRV struct {
+	max     int64
+	counter int64
+}
+
+// Used when executing a bulk import so that we can generate snowflake RVs in the past
+func newBulkRV() *bulkRV {
+	t := snowflakeFromTime(time.Now())
+	return &bulkRV{
+		max:     t,
+		counter: 0,
+	}
+}
+
+func (x *bulkRV) next(obj metav1.Object) int64 {
+	ts := snowflakeFromTime(obj.GetCreationTimestamp().Time)
+	anno := obj.GetAnnotations()
+	if anno != nil {
+		v := anno[utils.AnnoKeyUpdatedTimestamp]
+		t, err := time.Parse(time.RFC3339, v)
+		if err == nil {
+			ts = snowflakeFromTime(t)
+		}
+	}
+	if ts > x.max || ts < 0 {
+		ts = x.max
+	}
+
+	x.counter++
+	return ts + x.counter
+}
+
+type BulkLock struct {
+	running map[string]bool
+	mu      sync.Mutex
+}
+
+func NewBulkLock() *BulkLock {
+	return &BulkLock{
+		running: make(map[string]bool),
+	}
+}
+
+func (x *BulkLock) Start(keys []*resourcepb.ResourceKey) error {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+
+	// First verify that it is not already running
+	ids := make([]string, len(keys))
+	for i, k := range keys {
+		id := NSGR(k)
+		if x.running[id] {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusPreconditionFailed,
+				Message: "bulk export is already running",
+			}}
+		}
+		ids[i] = id
+	}
+
+	// Then add the keys to the lock
+	for _, k := range ids {
+		x.running[k] = true
+	}
+	return nil
+}
+
+func (x *BulkLock) Finish(keys []*resourcepb.ResourceKey) {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	for _, k := range keys {
+		delete(x.running, NSGR(k))
+	}
+}
+
+func (x *BulkLock) Active() bool {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	return len(x.running) > 0
 }
