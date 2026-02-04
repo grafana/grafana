@@ -12105,7 +12105,7 @@
       "error-field-required": "This field is required.",
       "error-quota-exceeded-message": "The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.",
       "error-quota-exceeded-title": "Resource quota exceeded",
-      "error-repository-status-timeout-message": "The repository did not become healthy within 30 seconds. Please check the repository settings and try again.",
+      "error-repository-status-timeout-message": "The repository did not become healthy within {{timeoutSeconds}} seconds. Please check the repository settings and try again.",
       "error-repository-status-timeout-title": "Repository health check timed out",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -12118,7 +12118,7 @@
       "placeholder-my-repository-connection": "My repository connection",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
-      "text-waiting-for-repository-health": "Waiting for repository to become healthy...",
+      "text-waiting-for-repository-health": "Checking repository health...",
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
     },
