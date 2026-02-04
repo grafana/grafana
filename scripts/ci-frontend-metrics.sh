@@ -66,6 +66,6 @@ echo "Metrics: {
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",
-  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\"
+  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\",
   \"grafana.ci-code.dependencies.circular\": \"${TOTAL_CIRCULAR_DEPENDENCIES}\"
 }"
