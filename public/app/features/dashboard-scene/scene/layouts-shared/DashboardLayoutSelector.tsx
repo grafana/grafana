@@ -45,7 +45,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     return undefined;
   }, [layoutManager]);
 
-  const onChangeLayout = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
+  const promptLayoutChange = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
 
   const switchLayout = useCallback(
     (layoutItem: LayoutRegistryItem) => {
@@ -101,7 +101,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           fullWidth
           value={layoutManager.descriptor}
           options={radioOptions}
-          onChange={!isGridLayout ? switchLayout : onChangeLayout}
+          onChange={!isGridLayout ? switchLayout : promptLayoutChange}
           disabledOptions={disabledOptions}
         />
       </Box>
