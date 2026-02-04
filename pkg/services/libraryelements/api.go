@@ -198,7 +198,13 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		FolderFilter:     c.Query("folderFilter"),
 		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
-	elementsResult, err := l.getAllLibraryElements(c.Req.Context(), c.SignedInUser, query)
+
+	// Wrap context with ancestors cache to avoid repeated GetParents calls
+	// during permission filtering of library panels
+	ctx := dashboards.WithAncestorsCache(c.Req.Context())
+	c.Req = c.Req.WithContext(ctx)
+
+	elementsResult, err := l.getAllLibraryElements(ctx, c.SignedInUser, query)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library elements")
 	}

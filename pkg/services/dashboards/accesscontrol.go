@@ -3,6 +3,7 @@ package dashboards
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -10,6 +11,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"go.opentelemetry.io/otel"
 )
+
+type ancestorsCacheKey struct{}
+
+// GetAncestorsCache returns the ancestors cache from context if it exists.
+// The cache maps "orgID:folderUID" to the slice of inherited scopes.
+func GetAncestorsCache(ctx context.Context) map[string][]string {
+	if cache, ok := ctx.Value(ancestorsCacheKey{}).(map[string][]string); ok {
+		return cache
+	}
+	return nil
+}
+
+// WithAncestorsCache adds an ancestors cache to the context.
+func WithAncestorsCache(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ancestorsCacheKey{}, make(map[string][]string))
+}
 
 const (
 	ScopeFoldersRoot   = "folders"
@@ -197,6 +214,16 @@ func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, fold
 	if folderUID == ac.GeneralFolderUID {
 		return nil, nil
 	}
+
+	// Check cache first - this avoids repeated GetParents calls during batch operations
+	cacheKey := fmt.Sprintf("%d:%s", orgID, folderUID)
+	cache := GetAncestorsCache(ctx)
+	if cache != nil {
+		if scopes, ok := cache[cacheKey]; ok {
+			return scopes, nil
+		}
+	}
+
 	ancestors, err := folderSvc.GetParents(ctx, folder.GetParentsQuery{
 		UID:   folderUID,
 		OrgID: orgID,
@@ -212,6 +239,24 @@ func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, fold
 	result := make([]string, 0, len(ancestors))
 	for _, ff := range ancestors {
 		result = append(result, ScopeFoldersProvider.GetResourceScopeUID(ff.UID))
+	}
+
+	// Store in cache for subsequent calls.
+	// Also populate cache for all intermediate folders in the hierarchy.
+	// If ancestors are [parent1, parent2, grandparent], then:
+	// - folderUID's ancestors: [parent1, parent2, grandparent]
+	// - parent1's ancestors: [parent2, grandparent]
+	// - parent2's ancestors: [grandparent]
+	// - grandparent's ancestors: []
+	if cache != nil {
+		cache[cacheKey] = result
+		for i, ancestor := range ancestors {
+			ancestorKey := fmt.Sprintf("%d:%s", orgID, ancestor.UID)
+			if _, exists := cache[ancestorKey]; !exists {
+				// Ancestors of this folder are all folders after it in the list
+				cache[ancestorKey] = result[i+1:]
+			}
+		}
 	}
 
 	return result, nil
