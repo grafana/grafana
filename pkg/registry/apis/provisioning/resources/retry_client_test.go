@@ -40,9 +40,9 @@ func TestIsTransientError(t *testing.T) {
 			isTransient: true,
 		},
 		{
-			name:        "InternalError (500)",
+			name:        "InternalError (500) - not transient",
 			err:         apierrors.NewInternalError(errors.New("internal error")),
-			isTransient: true,
+			isTransient: false,
 		},
 		{
 			name:        "Timeout",
