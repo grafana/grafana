@@ -257,13 +257,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-to-gma',
-      roles: evaluateAccess([
-        // For rules import
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-        // For notifications import (contact points, policies, templates, time intervals)
-        AccessControlAction.AlertingNotificationsWrite,
-      ]),
+      roles: () => ['Admin'],
       component: config.featureToggles.alertingMigrationWizardUI
         ? importAlertingComponent(
             () =>
