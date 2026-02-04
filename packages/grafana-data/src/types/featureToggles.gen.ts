@@ -680,6 +680,11 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Enables logic that will stop live panels shortly after dashboard load
+  * @default false
+  */
+  stopLivePanelsAfterLoad?: boolean;
+  /**
   * Allows authenticated API calls in actions
   * @default false
   */

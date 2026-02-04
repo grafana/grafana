@@ -39,6 +39,12 @@ export function stopLivePanelsAfterLoadBehavior(dashboard: DashboardScene) {
     // need to gather all query runners at the start to account for lazy loading
     const allQueryRunners = sceneGraph.findAllObjects(dashboard, (obj) => obj instanceof SceneQueryRunner);
 
+    // early return if no query runners
+    if (!allQueryRunners.length) {
+      rootQueryRunnerSub?.unsubscribe();
+      return;
+    }
+
     for (const runner of allQueryRunners) {
       if (runner instanceof SceneQueryRunner) {
         // tick to track number of state updates

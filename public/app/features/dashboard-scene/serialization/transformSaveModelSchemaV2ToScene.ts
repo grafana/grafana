@@ -241,7 +241,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           uid: dashboardId?.toString(),
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
-        stopLivePanelsAfterLoadBehavior,
+        ...(config.featureToggles.stopLivePanelsAfterLoad ? [stopLivePanelsAfterLoadBehavior] : []),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,

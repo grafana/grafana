@@ -1062,6 +1062,15 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:        "stopLivePanelsAfterLoad",
+			Description: "Enables logic that will stop live panels shortly after dashboard load",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			HideFromDocs: true,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
 			Stage:        FeatureStagePublicPreview,

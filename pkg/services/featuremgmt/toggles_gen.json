@@ -4296,6 +4296,21 @@
     },
     {
       "metadata": {
+        "name": "stopLivePanelsAfterLoad",
+        "resourceVersion": "1770163620998",
+        "creationTimestamp": "2026-02-04T00:07:00Z"
+      },
+      "spec": {
+        "description": "Enables logic that will stop live panels shortly after dashboard load",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "storage",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-03-17T17:19:23Z",

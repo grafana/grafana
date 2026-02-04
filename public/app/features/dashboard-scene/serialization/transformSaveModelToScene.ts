@@ -387,8 +387,11 @@ export function createDashboardSceneFromDashboardModel(
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
     }),
-    stopLivePanelsAfterLoadBehavior,
   ];
+
+  if (config.featureToggles.stopLivePanelsAfterLoad) {
+    behaviorList.push(stopLivePanelsAfterLoadBehavior);
+  }
 
   if (enableProfiling) {
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
