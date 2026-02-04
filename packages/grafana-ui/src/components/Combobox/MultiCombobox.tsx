@@ -53,6 +53,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    customValueDescription,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
     portalContainer,
@@ -80,7 +81,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     updateOptions,
     asyncLoading,
     asyncError,
-  } = useOptions(props.options, createCustomValue);
+  } = useOptions(props.options, createCustomValue, customValueDescription);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;

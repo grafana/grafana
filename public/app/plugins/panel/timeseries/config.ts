@@ -44,6 +44,54 @@ export const defaultGraphConfig: GraphFieldConfig = {
   showValues: false,
 };
 
+/**
+ * Defines graph style configuration properties. Properties from GraphFieldConfig.
+ * Temporary config - PoC.
+ */
+export const defaultGraphStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    defaults: [
+      // Line config
+      'lineColor',
+      'lineInterpolation',
+      'lineStyle',
+      'lineWidth',
+      'spanNulls',
+      // Fill config
+      'fillBelowTo',
+      'fillColor',
+      'fillOpacity',
+      // Points config
+      'pointColor',
+      'pointSize',
+      'pointSymbol',
+      'showPoints',
+      // Axis config
+      'axisBorderShow',
+      'axisCenteredZero',
+      'axisColorMode',
+      'axisGridShow',
+      'axisLabel',
+      'axisPlacement',
+      'axisSoftMax',
+      'axisSoftMin',
+      'axisWidth',
+      // Graph field config
+      'drawStyle',
+      'gradientMode',
+      'insertNulls',
+      'showValues',
+      // Stacking
+      'stacking',
+      // Bar config
+      'barAlignment',
+      'barWidthFactor',
+      'barMaxWidth',
+    ],
+  },
+} as const;
+
 export type NullEditorSettings = { isTime: boolean };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFieldConfigOptionsArgs<GraphFieldConfig> {
