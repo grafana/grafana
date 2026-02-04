@@ -21,11 +21,9 @@ import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
-import { useGetTeamFolders } from './useTeamOwnedFolder';
+import { TEAM_FOLDERS_UID, useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
-
-const TEAM_FOLDERS_UID = 'teamfolders';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -429,6 +427,7 @@ function useTeamFolders(
     const parentItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
       isOpen: teamFoldersIsOpen,
       level: baseLevel,
+      disabled: true,
       item: {
         kind: 'folder' as const,
         title: t('browse-dashboards.folder-picker.team-folders', 'Team folders'),

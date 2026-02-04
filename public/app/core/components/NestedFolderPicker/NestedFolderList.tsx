@@ -16,10 +16,10 @@ import { useSelector } from 'app/types/store';
 
 import { FolderParent } from './FolderParent';
 import { FolderRepo } from './FolderRepo';
+import { TEAM_FOLDERS_UID } from './useTeamOwnedFolder';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
-const TEAM_FOLDERS_UID = 'teamfolders';
 
 export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id || 'root'}`;
 
@@ -147,7 +147,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     emptyFolders,
     teamFolderOwnersByUid,
   } = data;
-  const { item, isOpen, level, parentUID } = items[index];
+  const { item, isOpen, level, parentUID, disabled } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
@@ -173,14 +173,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   const handleSelect = useCallback(() => {
-    if (item.kind === 'folder') {
-      // Virtual container folder
-      if (item.uid === TEAM_FOLDERS_UID) {
-        return;
-      }
+    if (item.kind === 'folder' && !disabled) {
       onFolderSelect(item);
     }
-  }, [item, onFolderSelect]);
+  }, [item, onFolderSelect, disabled]);
 
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (
@@ -249,6 +245,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-labelledby={labelId}
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
+      aria-disabled={disabled}
       aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child.uid)).join(' ') : undefined}
       aria-setsize={children.length}
       aria-posinset={siblings.findIndex((i) => i.uid === item.uid) + 1}

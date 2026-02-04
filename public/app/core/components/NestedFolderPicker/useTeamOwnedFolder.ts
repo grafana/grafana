@@ -7,6 +7,8 @@ import { isFetchError } from '@grafana/runtime';
 import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { api as profileApi } from 'app/features/profile/api';
 
+export const TEAM_FOLDERS_UID = 'teamfolders';
+
 type FoldersByTeam = {
   team: TeamDto;
   folders: DashboardHit[];
