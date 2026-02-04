@@ -187,6 +187,11 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('scopes1', jest.fn());
     });
 
+    // Wait for the async search to be initiated
+    await waitFor(() => {
+      expect(mockScopeServicesState.searchAllNodes).toHaveBeenCalledWith('scopes1', 10);
+    });
+
     const actions = [
       rootScopeAction,
       {
@@ -213,6 +218,11 @@ describe('useRegisterScopesActions', () => {
 
     renderHook(() => {
       return useRegisterScopesActions('scopes1', jest.fn(), 'scopes');
+    });
+
+    // Wait for the async search to be initiated
+    await waitFor(() => {
+      expect(mockScopeServicesState.searchAllNodes).toHaveBeenCalledWith('scopes1', 10);
     });
 
     const actions = [
