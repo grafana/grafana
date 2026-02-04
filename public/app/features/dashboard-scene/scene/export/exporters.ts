@@ -456,7 +456,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
 
     variable.labels = {
       ...(variable.labels ?? {}),
-      exportLabel: getLabel(variable.group, datasourceUid),
+      [ExportLabel]: getLabel(variable.group, datasourceUid),
     };
     variable.datasource = undefined;
   };

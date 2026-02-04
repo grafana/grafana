@@ -7,6 +7,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
+import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
@@ -232,7 +233,7 @@ describe('extractV2Inputs', () => {
         variables: [
           {
             kind: 'QueryVariable',
-            spec: { name: 'myvar', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } },
+            spec: { name: 'myvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
           },
         ],
       },
@@ -244,7 +245,7 @@ describe('extractV2Inputs', () => {
         annotations: [
           {
             kind: 'AnnotationQuery',
-            spec: { name: 'Deployments', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } },
+            spec: { name: 'Deployments', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
           },
         ],
       },
@@ -260,7 +261,10 @@ describe('extractV2Inputs', () => {
                 kind: 'QueryGroup',
                 spec: {
                   queries: [
-                    { kind: 'PanelQuery', spec: { query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } } },
+                    {
+                      kind: 'PanelQuery',
+                      spec: { query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+                    },
                   ],
                 },
               },
@@ -286,15 +290,15 @@ describe('extractV2Inputs', () => {
       variables: [
         {
           kind: 'QueryVariable',
-          spec: { name: 'var1', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } },
+          spec: { name: 'var1', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
         },
         {
           kind: 'QueryVariable',
-          spec: { name: 'var2', query: { group: 'prometheus', labels: { exportLabel: 'prom-2' } } },
+          spec: { name: 'var2', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-2' } } },
         },
       ],
       annotations: [
-        { spec: { name: 'Deployments', query: { group: 'prometheus', labels: { exportLabel: 'prom-3' } } } },
+        { spec: { name: 'Deployments', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-3' } } } },
       ],
     };
 
@@ -311,11 +315,11 @@ describe('extractV2Inputs', () => {
       variables: [
         {
           kind: 'QueryVariable',
-          spec: { name: 'promvar', query: { group: 'prometheus', labels: { exportLabel: 'prom-1' } } },
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
         },
         {
           kind: 'QueryVariable',
-          spec: { name: 'lokivar', query: { group: 'loki', labels: { exportLabel: 'loki-1' } } },
+          spec: { name: 'lokivar', query: { group: 'loki', labels: { [ExportLabel]: 'loki-1' } } },
         },
       ],
     };
@@ -423,7 +427,7 @@ describe('applyV2Inputs', () => {
                     spec: {
                       query: {
                         group: 'prometheus',
-                        labels: { exportLabel: 'prometheus-1' },
+                        labels: { [ExportLabel]: 'prometheus-1' },
                         datasource: { name: 'old-ds' },
                       },
                     },
@@ -440,7 +444,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { exportLabel: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -452,7 +456,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { exportLabel: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -499,7 +503,7 @@ describe('applyV2Inputs', () => {
                     spec: {
                       query: {
                         group: 'prometheus',
-                        labels: { exportLabel: 'prometheus-1' },
+                        labels: { [ExportLabel]: 'prometheus-1' },
                         datasource: { name: 'old-ds' },
                       },
                     },
@@ -509,7 +513,7 @@ describe('applyV2Inputs', () => {
                     spec: {
                       query: {
                         group: 'prometheus',
-                        labels: { exportLabel: 'prometheus-2' },
+                        labels: { [ExportLabel]: 'prometheus-2' },
                         datasource: { name: 'old-ds' },
                       },
                     },
@@ -556,7 +560,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { exportLabel: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1' },
               datasource: { name: '${ds}' },
             },
           },
