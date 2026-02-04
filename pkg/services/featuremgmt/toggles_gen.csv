@@ -37,7 +37,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 2023-08-30,dashgpt,GA,@grafana/dashboards-squad,false,false,true
 2024-03-05,aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
-2023-08-31,reportingRetries,preview,@grafana/grafana-operator-experience-squad,false,true,false
 2026-01-08,reportingCsvEncodingOptions,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
@@ -223,7 +222,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-01,alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 2025-08-01,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
-2025-07-31,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
+2025-08-01,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
+2026-01-26,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-24,tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
@@ -252,8 +252,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-24,pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-10-20,newGauge,preview,@grafana/dataviz-squad,false,false,true
 2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
-2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2026-01-28,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
+2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false

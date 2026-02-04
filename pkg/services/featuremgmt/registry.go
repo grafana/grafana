@@ -313,15 +313,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "reportingRetries",
-			Description:     "Enables rendering retries for the reporting feature",
-			Stage:           FeatureStagePublicPreview,
-			FrontendOnly:    false,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
 			Name:         "reportingCsvEncodingOptions",
 			Description:  "Enables CSV encoding options in the reporting feature",
 			Stage:        FeatureStageExperimental,

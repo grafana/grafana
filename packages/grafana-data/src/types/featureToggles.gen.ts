@@ -209,11 +209,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables rendering retries for the reporting feature
-  * @default false
-  */
-  reportingRetries?: boolean;
-  /**
   * Enables CSV encoding options in the reporting feature
   * @default false
   */

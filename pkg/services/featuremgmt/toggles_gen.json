@@ -3995,6 +3995,7 @@
         "name": "reportingRetries",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-08-31T07:47:47Z",
+        "deletionTimestamp": "2026-02-04T09:25:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
