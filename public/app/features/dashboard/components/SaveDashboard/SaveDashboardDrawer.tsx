@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
-import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 import { proxyHandlesError, SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
@@ -134,8 +133,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       }
     >
       {renderSaveBody()}
-
-      {config.featureToggles.showDashboardValidationWarnings && <DashboardValidation dashboard={dashboard} />}
     </Drawer>
   );
 };

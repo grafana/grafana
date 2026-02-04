@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Visszaállítás az alapértelmezett értékekre",
-      "title-invalid-configuration": "Érvénytelen konfiguráció",
       "title-more-actions": "További műveletek",
       "tooltip-more-actions": "További műveletek"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Csoportosítási szempont",
       "aria-label-group-interval": "Csoportintervallum",
       "aria-label-group-wait": "Csoportvárakozás",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Ismétlési intervallum",
       "create-a-contact-point": "Kapcsolattartási pont létrehozása",
+      "description-unique-routing": "",
       "label-default-contact-point": "Alapértelmezett kapcsolattartási pont",
+      "label-name": "",
       "label-timing-options": "Időzítési beállítások",
       "message": {
         "required": "Szükséges."
       },
-      "or": "vagy"
+      "or": "vagy",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Egyezés hozzáadása",
@@ -2136,6 +2139,10 @@
       "new-policy": "Új házirend hozzáadása",
       "no-matchers": "Nincs egyezés",
       "reload-policies": "Irányelvek újratöltése",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Házirend mentése",
       "update": {
         "please-wait": "Kérjük, várjon, amíg frissítjük az értesítési házirendjeit.",
@@ -2154,6 +2161,54 @@
       },
       "n-more-policies_one": "{{count}} további házirend",
       "n-more-policies_other": "{{count}} további házirend"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Új gyermekházirend",
@@ -2337,6 +2392,13 @@
       "label-override-grouping": "Csoportosítás felülbírálása",
       "label-override-timings": "Felülbírálási időzítések",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Szerkesztés",
@@ -3103,6 +3165,12 @@
       "label-edit": "Szerkesztés",
       "label-export": "Exportálás"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Igen, törölje a kapcsolattartási pontot",
       "deleting": "Törlés...",
@@ -3120,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Értesítési házirend törlése"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6239,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Mégse",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Mappa"
     },
     "inspect-data-tab": {
@@ -9793,7 +9872,6 @@
       "error-fetching": "Hiba történt az LDAP-beállítások lekérése során",
       "error-saving": "Hiba az LDAP-beállítások mentésekor",
       "error-validate-form": "Hiba történt az LDAP-beállítások érvényesítése során",
-      "feature-flag-disabled": "",
       "saved": "LDAP-beállítások mentve"
     },
     "bind-dn": {
@@ -11290,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Másolás",
+      "copy-styles": "",
       "create-library-panel": "Könyvtárpanel létrehozása",
       "duplicate": "Duplikálás",
       "edit": "Szerkesztés",
@@ -11301,11 +11380,13 @@
       "inspect-json": "Panel-JSON",
       "more": "Továbbiak...",
       "new-alert-rule": "Új riasztási szabály",
+      "paste-styles": "",
       "query": "Lekérdezés",
       "remove": "Eltávolítás",
       "replace-library-panel": "Könyvtárpanel cseréje",
       "share": "Megosztás",
       "show-legend": "Jelmagyarázat megjelenítése",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "view": "Nézet"
@@ -11869,9 +11950,6 @@
       "label-display-name": "Megjelenített név",
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
@@ -11926,6 +12004,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11939,6 +12020,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12278,6 +12360,9 @@
         "view-repository": "Adattár megtekintése"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Ellenőrzés:",
       "connection-status": "",
@@ -12471,7 +12556,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "Válassza ki, mit szeretne szinkronizálni",
       "step-configure-repo": "",
       "step-connect": "Kapcsolódás",
@@ -13624,6 +13708,7 @@
     "name-wrap-header-text": "Fejléc szövegének tördelése",
     "name-wrap-text": "",
     "placeholder-column-width": "automatikus",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

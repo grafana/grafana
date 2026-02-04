@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Obnovit výchozí hodnoty",
-      "title-invalid-configuration": "Neplatná konfigurace",
       "title-more-actions": "Další akce",
       "tooltip-more-actions": "Další akce"
     },
@@ -670,14 +669,18 @@
       "aria-label-group-by": "Seřadit podle",
       "aria-label-group-interval": "Interval skupiny",
       "aria-label-group-wait": "Interval skupiny",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Opakovat interval",
       "create-a-contact-point": "Vytvořit kontaktní bod",
+      "description-unique-routing": "",
       "label-default-contact-point": "Výchozí kontaktní bod",
+      "label-name": "",
       "label-timing-options": "Možnosti časování",
       "message": {
         "required": "Povinné."
       },
-      "or": "nebo"
+      "or": "nebo",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Přidat modul pro porovnávání",
@@ -2150,6 +2153,10 @@
       "new-policy": "Přidat novou zásadu",
       "no-matchers": "Žádné shody",
       "reload-policies": "Znovu načíst zásady",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Uložit zásadu",
       "update": {
         "please-wait": "Počkejte prosím, aktualizujeme vaše zásady oznamování.",
@@ -2170,6 +2177,54 @@
       "n-more-policies_few": "{{count}} další zásady",
       "n-more-policies_many": "{{count}} další zásady",
       "n-more-policies_other": "{{count}} další zásady"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Nová podřízená zásada",
@@ -2353,6 +2408,13 @@
       "label-override-grouping": "Přepsat seskupení",
       "label-override-timings": "Přepsat časování",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Upravit",
@@ -3125,6 +3187,12 @@
       "label-edit": "Upravit",
       "label-export": "Exportovat"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ano, odstranit kontaktní bod",
       "deleting": "Probíhá odstranění…",
@@ -3142,6 +3210,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Odstranit zásadu oznamování"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6281,6 +6358,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Zrušit",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Složka"
     },
     "inspect-data-tab": {
@@ -9869,7 +9948,6 @@
       "error-fetching": "Chyba při načítání nastavení LDAP",
       "error-saving": "Chyba při ukládání nastavení LDAP",
       "error-validate-form": "Chyba při ověřování nastavení LDAP",
-      "feature-flag-disabled": "",
       "saved": "Nastavení LDAP bylo uloženo"
     },
     "bind-dn": {
@@ -11384,6 +11462,7 @@
     },
     "header-menu": {
       "copy": "Kopírovat",
+      "copy-styles": "",
       "create-library-panel": "Vytvořit panel knihovny",
       "duplicate": "Duplikovat",
       "edit": "Upravit",
@@ -11395,11 +11474,13 @@
       "inspect-json": "Panel JSON",
       "more": "Další…",
       "new-alert-rule": "Nové pravidlo výstrahy",
+      "paste-styles": "",
       "query": "Dotaz",
       "remove": "Odebrat",
       "replace-library-panel": "Vyměnit panel knihovny",
       "share": "Sdílet",
       "show-legend": "Zobrazit legendu",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "view": "Zobrazit"
@@ -11963,9 +12044,6 @@
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "text-loading-resource-information": "Načítání informací o zdroji…",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} nástěnka",
       "dashboards-count_few": "{{count}} nástěnka",
@@ -12026,6 +12104,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -12039,6 +12120,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12384,6 +12466,9 @@
         "view-repository": "Zobrazit úložiště"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Zkontrolováno:",
       "connection-status": "",
@@ -12577,7 +12662,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
       "step-configure-repo": "",
       "step-connect": "Připojit",
@@ -13740,6 +13824,7 @@
     "name-wrap-header-text": "Zalomit text záhlaví",
     "name-wrap-text": "",
     "placeholder-column-width": "auto.",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
