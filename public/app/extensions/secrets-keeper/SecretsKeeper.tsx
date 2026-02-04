@@ -10,7 +10,7 @@ import { SECRETS_KEEPER_NEW_URL } from './constants';
 import { useKeepers } from './hooks/useKeepers';
 import { KeeperListItem } from './types';
 
-export default function HomePage() {
+export default function SecretsKeeper() {
   const { keepers, isLoading, error, activeKeeper } = useKeepers();
   const styles = useStyles2(getStyles);
 
