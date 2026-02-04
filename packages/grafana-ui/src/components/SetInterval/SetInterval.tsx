@@ -61,7 +61,7 @@ export const SetInterval = ({ func, loading, interval: intervalStr }: Props) => 
         subscriptionRef.current = null;
       }
       if (propsSubjectRef.current) {
-        propsSubjectRef.current.unsubscribe();
+        propsSubjectRef.current.complete();
         propsSubjectRef.current = null;
       }
     };
