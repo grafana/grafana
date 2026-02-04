@@ -14,6 +14,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { PanelEditor } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { getAllPanelPluginMeta } from '../../state/util';
@@ -27,7 +28,7 @@ import { VizTypeChangeDetails } from './types';
 
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
-  editPreview?: VizPanel;
+  panelEditor?: PanelEditor;
   data?: PanelData;
   panel?: PanelModel;
   searchQuery?: string;
@@ -64,7 +65,15 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
   return { value: filteredValue, loading, error, retry };
 };
 
-export function VisualizationSuggestions({ onChange, editPreview, data, panel, searchQuery, isNewPanel }: Props) {
+function VisualizationSuggestionsCore({
+  onChange,
+  data,
+  panel,
+  searchQuery,
+  isNewPanel,
+  panelEditor,
+  editPreview,
+}: Props & { editPreview?: VizPanel }) {
   const styles = useStyles2(getStyles);
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
@@ -124,7 +133,13 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
       suggestionIndex: number,
       isAutoSelected = false
     ) => {
+      let ep = editPreview;
       if (isPreview) {
+        if (!ep && panelEditor) {
+          ep = PanelEditor.buildEditPreview(panelEditor.state.panelRef.resolve());
+          panelEditor.setState({ editPreview: ep });
+        }
+
         VizSuggestionsInteractions.suggestionPreviewed({
           pluginId: suggestion.pluginId,
           suggestionName: suggestion.name,
@@ -150,10 +165,10 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
           withModKey: isPreview,
           fromSuggestions: true,
         },
-        isPreview ? editPreview : undefined
+        isPreview ? ep : undefined
       );
     },
-    [onChange, editPreview, panelState]
+    [onChange, editPreview, panelState, panelEditor]
   );
 
   useEffect(() => {
@@ -293,6 +308,20 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
       </div>
     </>
   );
+}
+
+function VisualizationSuggestionsWithPanelEditor(props: Props & { panelEditor: PanelEditor }) {
+  const { editPreview } = props.panelEditor.useState();
+  return <VisualizationSuggestionsCore {...props} editPreview={editPreview} />;
+}
+
+export function VisualizationSuggestions(props: Props) {
+  const { panelEditor } = props;
+  if (panelEditor) {
+    return <VisualizationSuggestionsWithPanelEditor {...props} panelEditor={panelEditor} />;
+  } else {
+    return <VisualizationSuggestionsCore {...props} />;
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

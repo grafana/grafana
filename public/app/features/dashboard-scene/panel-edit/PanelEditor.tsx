@@ -232,7 +232,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       // Setup options pane
       const optionsPane = new PanelOptionsPane({
         panelRef: this.state.panelRef,
-        editPreviewRef: this.state.editPreview?.getRef(),
         searchQuery: '',
         listMode: OptionFilter.All,
         isVizPickerOpen: this.state.isNewPanel,
@@ -245,22 +244,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       });
 
       this._subs.add(
-        this.subscribeToState((newState, oldState) => {
-          if (newState.editPreview !== oldState.editPreview) {
-            optionsPane.setState({ editPreviewRef: newState.editPreview?.getRef() });
-          }
-        })
-      );
-      this._subs.add(
-        optionsPane.subscribeToState((newState, oldState) => {
-          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
-            if (newState.isVizPickerOpen) {
-              const panel = this.state.panelRef.resolve();
-              const editPreview = PanelEditor.buildEditPreview(panel);
-              this.setState({ editPreview });
-            } else {
-              this.setState({ editPreview: undefined });
-            }
+        optionsPane.subscribeToState((newState) => {
+          if (this.state.editPreview && !newState.isVizPickerOpen) {
+            this.setState({ editPreview: undefined });
           }
         })
       );
