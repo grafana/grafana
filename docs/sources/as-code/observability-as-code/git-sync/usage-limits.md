@@ -43,13 +43,13 @@ When Git Sync is enabled, the database load might increase, especially if your G
 
 At the moment Git Sync is available for GitHub only. Support for native Git and other providers, such as GitLab or Bitbucket, is on the roadmap.
 
-## Git Sync account limits
+## Usage tiers
 
 The following Git Sync per-tier limits apply:
 
-| Tier                       | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
-| -------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
-| Amount of repositories      | 1                | 10                | 10              | 10                     |
+| Tier                                      | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
+| ----------------------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
+| Amount of repositories                    | 1                | 10                | 10              | 10                     |
 | Amount of synced resources per repository | 20               | Grafana limit     | No limit        | No limit               |
 
 ## Authentication

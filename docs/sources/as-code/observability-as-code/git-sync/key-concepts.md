@@ -36,6 +36,7 @@ Before you start using Git Sync, understand how the key Git Sync components rela
 - [Grafana instance](#grafana-instance)
 - [Git repository](#git-repository)
 - [Git Sync repository resource](#git-sync-repository-resource)
+- [Git Sync connection](#git-sync-connection)
 
 ### Grafana instance
 
@@ -48,24 +49,11 @@ A Grafana instance is a running Grafana server. Multiple instances can:
 
 ### Git repository
 
-The Git repository is the external storage you want to sync your Grafana instance with.
-
-You can organize your Git repository in several ways:
+A Git repository is the external storage you want to sync your Grafana instance with. You can organize your Git repository in several ways:
 
 - Single branch, multiple paths: Use different directories for different purposes. For example, `dev/`, `prod/`, or `team-a/`.
 - Multiple branches: Use different branches for different environments or teams. For example, `main`, `develop`, or `team-a`.
 - Multiple repositories: Use separate repositories for different teams or environments.
-
-### Git Sync repository resource
-
-A repository resource is a Grafana configuration object that defines:
-
-- Which Git repository to sync with your Grafana instance.
-- Which branch to use.
-- Which directory path to synchronize.
-- Sync behavior and workflows.
-
-Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
 
 #### Flexible configuration for your Git Sync repositories
 
@@ -81,6 +69,27 @@ Git Sync repositories support different combinations of repository URL, branch, 
   - Instance A: `repository: your-org/grafana-manifests, branch: main, path: production/`.
   - Instance B: `repository: your-org/grafana-manifests, branch: main, path: development/`.
 - Any combination: Mix and match based on your workflow requirements.
+
+### Git Sync repository resource
+
+A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync.
+
+- Which Git repository to sync with your Grafana instance.
+- Which branch to use.
+- Which directory path to synchronize.
+- Sync behavior and workflows.
+
+Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
+
+### Git Sync connection
+
+If you're setting up Git Sync using a GitHub App, a connection represents the installation of the app so you can connect a group of repositories to your Grafana instance.
+
+It includes:
+
+- The GitHub App: The application registered with GitHub that enables authentication and authorization.
+- The GitHub App installation: An instance of the app you've installed.
+- The Github repositories the installation can access.
 
 ## How does Git Sync behave?
 
@@ -105,7 +114,7 @@ Your Grafana instance can be in one of the following Git Sync states:
 
 ## Example: Relationship between repository, branch, and path
 
-Here's an example showing how the three concepts work together:
+Here's an example showing how the repository, branch, and path concepts work together:
 
 **Configuration:**
 

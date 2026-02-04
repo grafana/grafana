@@ -163,7 +163,7 @@ If you want to configure your connection with a Personal Access Token, select th
 1. Paste your GitHub personal access token into **Enter your access token**.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
 1. Enter a branch to use for provisioning. The default value is `main`.
-1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
+1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored.
 
 Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
 
@@ -181,7 +181,7 @@ If you already have an existing GitHub App connected:
 1. Click on the existing connection you want to use, and click on **Configure repository** to proceed.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
 1. Enter a branch to use for provisioning. The default value is `main`.
-1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
+1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored.
 
 If you want to connect using a new GitHub App:
 
@@ -193,7 +193,7 @@ If you want to connect using a new GitHub App:
 1. Click on **Configure repository** to proceed.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
 1. Enter a branch to use for provisioning. The default value is `main`.
-1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
+1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored.
 
 Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
 
