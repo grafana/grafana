@@ -40,7 +40,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
 			limits:         QuotaLimits{MaxResources: 100},
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonResourceQuotaReached,
+			expectedReason: provisioning.ReasonQuotaReached,
 			expectedMsg:    "Resource quota reached: 100/100 resources",
 		},
 		{
@@ -48,7 +48,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 150}},
 			limits:         QuotaLimits{MaxResources: 100},
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonResourceQuotaExceeded,
+			expectedReason: provisioning.ReasonQuotaExceeded,
 			expectedMsg:    "Resource quota exceeded: 150/100 resources",
 		},
 		{
@@ -59,7 +59,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 			},
 			limits:         QuotaLimits{MaxResources: 100},
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonResourceQuotaExceeded,
+			expectedReason: provisioning.ReasonQuotaExceeded,
 			expectedMsg:    "Resource quota exceeded: 110/100 resources",
 		},
 		{

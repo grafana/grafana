@@ -95,7 +95,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
-			expectedQuotaReason: provisioning.ReasonResourceQuotaExceeded,
+			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
 			expectedQuotaStatus: false,
 		},
 		{
@@ -106,7 +106,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
-			expectedQuotaReason: provisioning.ReasonResourceQuotaReached,
+			expectedQuotaReason: provisioning.ReasonQuotaReached,
 			expectedQuotaStatus: false,
 		},
 		{

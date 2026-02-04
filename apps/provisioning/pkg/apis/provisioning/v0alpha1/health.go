@@ -57,10 +57,10 @@ const (
 	ReasonWithinQuota = "WithinQuota"
 	// ReasonQuotaUnlimited indicates no quota limits are configured.
 	ReasonQuotaUnlimited = "QuotaUnlimited"
-	// ReasonResourceQuotaReached indicates the resource count is exactly at the limit.
-	ReasonResourceQuotaReached = "ResourceQuotaReached"
-	// ReasonResourceQuotaExceeded indicates the resource count exceeds the limit.
-	ReasonResourceQuotaExceeded = "ResourceQuotaExceeded"
+	// ReasonQuotaReached indicates the resource count is exactly at the limit.
+	ReasonQuotaReached = "QuotaReached"
+	// ReasonQuotaExceeded indicates the resource count exceeds the limit.
+	ReasonQuotaExceeded = "QuotaExceeded"
 )
 
 type HealthStatus struct {

@@ -369,7 +369,7 @@ func isQuotaExceeded(conditions []v1.Condition) bool {
 	for _, condition := range conditions {
 		if condition.Type == provisioning.ConditionTypeNamespaceQuota {
 			return condition.Status == v1.ConditionFalse &&
-				condition.Reason == provisioning.ReasonResourceQuotaExceeded
+				condition.Reason == provisioning.ReasonQuotaExceeded
 		}
 	}
 	return false
