@@ -45,6 +45,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     hasError: repositoryStatusError,
     refetch: retryRepositoryStatus,
     isHealthy: isRepositoryHealthy,
+    hasTimedOut,
+    resetTimeout,
   } = useRepositoryStatus(repoName);
 
   const {
@@ -58,6 +60,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
+  const isWaitingForHealth = isRepositoryReady && isRepositoryHealthy === undefined && !repositoryStatusError;
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -67,6 +70,28 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }, [getValues, setValue]);
 
   useEffect(() => {
+    // Handle timeout error
+    if (hasTimedOut) {
+      setStepStatusInfo({
+        status: 'error',
+        error: {
+          title: t(
+            'provisioning.bootstrap-step.error-repository-status-timeout-title',
+            'Repository health check timed out'
+          ),
+          message: t(
+            'provisioning.bootstrap-step.error-repository-status-timeout-message',
+            'The repository did not become healthy within 30 seconds. Please check the repository settings and try again.'
+          ),
+        },
+        retry: () => {
+          resetTimeout();
+          retryRepositoryStatus();
+        },
+      });
+      return;
+    }
+
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
     if (repositoryStatusError || isRepositoryHealthy === false) {
       setStepStatusInfo({
@@ -83,10 +108,22 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         },
         retry: retryRepositoryStatus,
       });
+    } else if (isWaitingForHealth) {
+      // Show running status while waiting for repository to become healthy
+      setStepStatusInfo({ status: 'running' });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }
-  }, [isLoading, setStepStatusInfo, repositoryStatusError, retryRepositoryStatus, isRepositoryHealthy]);
+  }, [
+    isLoading,
+    setStepStatusInfo,
+    repositoryStatusError,
+    retryRepositoryStatus,
+    isRepositoryHealthy,
+    hasTimedOut,
+    resetTimeout,
+    isWaitingForHealth,
+  ]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);
@@ -102,7 +139,20 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     );
   }
 
-  if (repositoryStatusError || isRepositoryHealthy === false) {
+  if (isWaitingForHealth && !hasTimedOut) {
+    return (
+      <Box padding={4}>
+        <LoadingPlaceholder
+          text={t(
+            'provisioning.bootstrap-step.text-waiting-for-repository-health',
+            'Waiting for repository to become healthy...'
+          )}
+        />
+      </Box>
+    );
+  }
+
+  if (repositoryStatusError || isRepositoryHealthy === false || hasTimedOut) {
     // error message and retry will be set in above step status
     return null;
   }

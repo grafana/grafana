@@ -100,6 +100,8 @@ describe('BootstrapStep', () => {
       hasError: false,
       isHealthy: true,
       refetch: jest.fn(),
+      hasTimedOut: false,
+      resetTimeout: jest.fn(),
     });
 
     const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
