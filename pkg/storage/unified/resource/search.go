@@ -104,11 +104,6 @@ type SearchBackend interface {
 	// GetIndex returns existing index, or nil.
 	GetIndex(key NamespacedResource) ResourceIndex
 
-	// GetFileBuildInfo returns the build info of a file-based index if it exists.
-	// This is used to determine if an index needs to be rebuilt before opening it.
-	// Returns nil if no file-based index exists for the given key.
-	GetFileBuildInfo(key NamespacedResource, size int64) (*IndexBuildInfo, error)
-
 	// BuildIndex builds an index from scratch.
 	// Depending on the size, the backend may choose different options (eg: memory vs disk).
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.

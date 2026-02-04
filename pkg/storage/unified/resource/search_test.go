@@ -146,10 +146,6 @@ type mockSearchBackend struct {
 	mu              sync.Mutex
 	buildIndexCalls []buildIndexCall
 	cache           map[NamespacedResource]ResourceIndex
-
-	// Configurable GetFileBuildInfo response
-	fileBuildInfo    *IndexBuildInfo
-	fileBuildInfoErr error
 }
 
 type buildIndexCall struct {
@@ -200,12 +196,6 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
 	return m.openIndexes
-}
-
-func (m *mockSearchBackend) GetFileBuildInfo(key NamespacedResource, size int64) (*IndexBuildInfo, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.fileBuildInfo, m.fileBuildInfoErr
 }
 
 func TestSearchGetOrCreateIndex(t *testing.T) {

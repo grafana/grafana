@@ -186,52 +186,6 @@ func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
 	return result
 }
 
-// GetFileBuildInfo returns the build info of a file-based index if it exists.
-// This is used to determine if an index needs to be rebuilt before opening it.
-// Returns nil if no file-based index exists for the given key, or if size indicates in-memory index should be used.
-func (b *bleveBackend) GetFileBuildInfo(key resource.NamespacedResource, size int64) (*resource.IndexBuildInfo, error) {
-	// Only check for file-based index if size is above threshold
-	if size < b.opts.FileThreshold {
-		return nil, nil
-	}
-
-	resourceDir := b.getResourceDir(key)
-	entries, err := os.ReadDir(resourceDir)
-	if err != nil {
-		// Directory doesn't exist means no file-based index
-		return nil, nil
-	}
-
-	for _, ent := range entries {
-		if !ent.IsDir() {
-			continue
-		}
-
-		indexName := ent.Name()
-		indexDir := filepath.Join(resourceDir, indexName)
-		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
-		if err != nil {
-			continue
-		}
-
-		bi, err := getBuildInfo(idx)
-		_ = idx.Close() // Always close after reading build info
-		if err != nil {
-			continue
-		}
-
-		result := &resource.IndexBuildInfo{
-			BuildTime: time.Unix(bi.BuildTime, 0),
-		}
-		if bi.BuildVersion != "" {
-			result.BuildVersion, _ = semver.NewVersion(bi.BuildVersion)
-		}
-		return result, nil
-	}
-
-	return nil, nil
-}
-
 func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource, now time.Time) *bleveIndex {
 	// Check index with read-lock first.
 	b.cacheMx.RLock()
