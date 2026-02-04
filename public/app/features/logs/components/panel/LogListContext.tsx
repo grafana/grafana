@@ -175,7 +175,7 @@ export interface Props {
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: LogLineTimestampResolution;
-  unwrappedColumns?: boolean;
+  unwrappedColumns: boolean;
   wrapLogMessage: boolean;
 }
 

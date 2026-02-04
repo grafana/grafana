@@ -459,9 +459,15 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   );
 };
 
-export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
+export function getGridTemplateColumns(
+  dimensions: LogFieldDimension[],
+  displayedFields: string[],
+  unwrappedColumns: boolean
+) {
   const columns = dimensions
-    .map((dimension) => (dimension.width > 0 ? `${dimension.width}px` : 'max-content'))
+    .map((dimension) =>
+      dimension.width > 0 && (unwrappedColumns || dimension.internal) ? `${dimension.width}px` : 'max-content'
+    )
     .join(' ');
   const logLineWidth = displayedFields.length > 0 ? '' : ' 1fr';
   return `${columns}${logLineWidth}`;

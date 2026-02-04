@@ -281,6 +281,7 @@ const LogListComponent = ({
     showUniqueLabels,
     sortOrder,
     timestampResolution,
+    unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
   const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
@@ -300,12 +301,12 @@ const LogListComponent = ({
         : virtualization.calculateFieldDimensions(
             processedLogs,
             displayedFields,
-            timestampResolution,
+            showTime ? timestampResolution : undefined,
             showUniqueLabels
           ),
-    [displayedFields, processedLogs, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
+    [displayedFields, processedLogs, showTime, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -567,14 +568,13 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[] = [],
-  { showTime }: { showTime: boolean }
+  { unwrappedColumns }: { unwrappedColumns: boolean }
 ) {
-  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
+        gridTemplateColumns: getGridTemplateColumns(dimensions, displayedFields, unwrappedColumns),
         '& .field': {
           overflow: 'hidden',
         },
