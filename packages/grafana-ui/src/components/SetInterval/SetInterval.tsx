@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 import { useEffect, useRef } from 'react';
+import * as React from 'react';
 import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 
@@ -20,7 +21,7 @@ interface Props {
   interval: string;
 }
 
-export const SetInterval = ({ func, loading, interval: intervalStr }: Props) => {
+const SetInterval = ({ func, loading, interval: intervalStr }: Props) => {
   const propsSubjectRef = useRef<Subject<Props> | null>(null);
   const subscriptionRef = useRef<Subscription | null>(null);
   const prevPropsRef = useRef<Props>({ func, loading, interval: intervalStr });
@@ -37,7 +38,6 @@ export const SetInterval = ({ func, loading, interval: intervalStr }: Props) => 
           if (RefreshPicker.isLive(props.interval)) {
             return of({});
           }
-
           // When query is loading, a new stream is merged. But it's a stream that emits no values(NEVER),
           // hence next call of this function will happen when query changes, and new props are passed into this component
           // When query is NOT loading, a new value is emitted, this time it's an interval value,
@@ -58,11 +58,9 @@ export const SetInterval = ({ func, loading, interval: intervalStr }: Props) => 
     return () => {
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
       }
       if (propsSubjectRef.current) {
         propsSubjectRef.current.complete();
-        propsSubjectRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,14 +68,18 @@ export const SetInterval = ({ func, loading, interval: intervalStr }: Props) => 
 
   useEffect(() => {
     const prev = prevPropsRef.current;
-    const current: Props = { func, loading, interval: intervalStr };
-
-    if ((RefreshPicker.isLive(prev.interval) && RefreshPicker.isLive(current.interval)) || isEqual(prev, current)) {
+    const currentProps: Props = { func, loading, interval: intervalStr };
+    if (
+      (RefreshPicker.isLive(prev.interval) && RefreshPicker.isLive(currentProps.interval)) ||
+      isEqual(prev, currentProps)
+    ) {
       return;
     }
 
-    propsSubjectRef.current && propsSubjectRef.current.next(current);
-    prevPropsRef.current = current;
+    propsSubjectRef.current && propsSubjectRef.current.next(currentProps);
+    prevPropsRef.current = currentProps;
   }, [func, loading, intervalStr]);
   return null;
 };
+
+export const SetIntervalMemo = React.memo(SetInterval);
