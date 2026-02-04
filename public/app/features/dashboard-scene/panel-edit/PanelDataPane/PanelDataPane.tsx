@@ -37,11 +37,9 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   /**
    * Create a data pane for the given panel.
    * @param panel The VizPanel to create the data pane for
-   * @param useQueryEditorNext Optional override for which version to use.
-   *   If undefined, uses the queryEditorNext feature toggle value.
-   *   Only has effect when the feature toggle is enabled (allows toggling back to v1).
+   * @param useQueryEditorNext Signals whether to use the query editor v2 experience or the original (v1) experience.
    */
-  public static createFor(panel: VizPanel, useQueryEditorNext: boolean | undefined) {
+  public static createFor(panel: VizPanel, useQueryEditorNext: boolean) {
     const panelRef = panel.getRef();
 
     // Query experience v2
