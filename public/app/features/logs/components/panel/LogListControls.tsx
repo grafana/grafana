@@ -428,8 +428,8 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   onClick={onSetUnwrappedColumnsClick}
                   tooltip={
                     unwrappedColumns
-                      ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns for displayed fields')
-                      : t('logs.logs-controls.unwrapped-columns.enable', 'Enable columns for displayed fields')
+                      ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns')
+                      : t('logs.logs-controls.unwrapped-columns.enable', 'Enable columns')
                   }
                   size="lg"
                 />
