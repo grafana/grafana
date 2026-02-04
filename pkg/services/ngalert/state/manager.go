@@ -488,7 +488,7 @@ func (st *Manager) Put(states []*State) {
 // findAndResolveMissingSeriesStates finds cached states missing from the current evaluation,
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
 func (st *Manager) findAndResolveMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
-	var missingTransitions []StateTransition
+	missingTransitions := []StateTransition{}
 	toDeleteStates := map[data.Fingerprint]struct{}{}
 
 	for _, s := range st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
