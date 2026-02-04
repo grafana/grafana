@@ -242,7 +242,7 @@ export function NestedFolderPicker({
         })) ?? [];
     }
 
-    if (teamFolderTreeItems.length) {
+    if (teamFolderTreeItems.length && isBrowsing) {
       // Make "Team folders" a sibling root to the "Dashboards" root.
       flatTree = [...teamFolderTreeItems, ...flatTree];
     }
