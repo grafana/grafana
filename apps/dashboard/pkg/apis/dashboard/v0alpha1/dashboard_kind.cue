@@ -801,6 +801,11 @@ lineage: schemas: [{
 			// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 			max?: number @grafanamaturity(NeedsExpertReview)
 
+      // By default, the calculated Min and Max are based on the minimum and maximum of all series and fields. 
+			// When you enable Field min/max, Grafana calculates the min or max of each field individually, 
+			// based on the minimum or maximum value of the field.
+			fieldMinMax: bool @grafanamaturity(NeedsExpertReview)
+
 			// Convert input values into a display string
 			mappings?: [...#ValueMapping] @grafanamaturity(NeedsExpertReview)
 

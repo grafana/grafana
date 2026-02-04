@@ -426,6 +426,10 @@ type FieldConfig struct {
 	Min *float64 `json:"min,omitempty"`
 	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 	Max *float64 `json:"max,omitempty"`
+	// By default, the calculated Min and Max are based on the minimum and maximum of all series and fields.
+	// When you enable Field min/max, Grafana calculates the min or max of each field individually,
+	// based on the minimum or maximum value of the field.
+	FieldMinMax bool `json:"fieldMinMax"`
 	// Convert input values into a display string
 	Mappings []ValueMapping `json:"mappings,omitempty"`
 	// Map numeric values to states

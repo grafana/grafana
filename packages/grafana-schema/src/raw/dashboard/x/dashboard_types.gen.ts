@@ -1077,6 +1077,12 @@ export interface FieldConfig {
    */
   displayNameFromDS?: string;
   /**
+   * By default, the calculated Min and Max are based on the minimum and maximum of all series and fields.
+   * When you enable Field min/max, Grafana calculates the min or max of each field individually,
+   * based on the minimum or maximum value of the field.
+   */
+  fieldMinMax: boolean;
+  /**
    * True if data source field supports ad-hoc filters
    */
   filterable?: boolean;
