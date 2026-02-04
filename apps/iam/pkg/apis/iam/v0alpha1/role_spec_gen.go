@@ -26,7 +26,12 @@ type RoleSpec struct {
 	// delegatable?: bool
 	// created?
 	// updated?
+	// Permissions for custom roles
 	Permissions []RolespecPermission `json:"permissions"`
+	// Permissions that exist in actual role but NOT in seed (added/excess permissions) - used for basic roles
+	PermissionsAdded *[]RolespecPermission `json:"permissionsAdded,omitempty"`
+	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles
+	PermissionsOmitted *[]RolespecPermission `json:"permissionsOmitted,omitempty"`
 }
 
 // NewRoleSpec creates a new RoleSpec object.
