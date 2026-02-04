@@ -552,19 +552,19 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		{
 			name: "not all pods contacted retries and returns error",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: false,
+				ContactedAllInstances: false,
 			},
 			resources: []schema.GroupResource{
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			},
 			expectErr:    true,
-			expectErrMsg: "distributor did not contact all pods",
+			expectErrMsg: "distributor did not contact all instances",
 			numRetries:   3, // MaxRetries: 3 means 3 total attempts
 		},
 		{
 			name: "missing build time for resource succeeds (index may not exist)",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: true,
+				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 					{
 						Group:         "dashboard.grafana.app",
@@ -583,7 +583,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		{
 			name: "build time before migration finished retries and returns error",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: true,
+				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 					{
 						Group:         "dashboard.grafana.app",
@@ -602,7 +602,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		{
 			name: "build time exactly at migration time succeeds",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: true,
+				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 					{
 						Group:         "dashboard.grafana.app",
@@ -620,7 +620,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		{
 			name: "build time after migration time succeeds",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: true,
+				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 					{
 						Group:         "dashboard.grafana.app",
@@ -638,7 +638,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		{
 			name: "response error retries and returns error even with valid build times",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: true,
+				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 					{
 						Group:         "dashboard.grafana.app",
@@ -661,7 +661,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		{
 			name: "multiple resources with valid build times succeeds",
 			response: &resourcepb.RebuildIndexesResponse{
-				ContactedAllPods: true,
+				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 					{
 						Group:         "dashboard.grafana.app",
@@ -737,7 +737,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{
-			ContactedAllPods: true,
+			ContactedAllInstances: true,
 			BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 				{
 					Group:         "dashboard.grafana.app",
@@ -752,7 +752,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{
-			ContactedAllPods: true,
+			ContactedAllInstances: true,
 			BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
 				{
 					Group:         "dashboard.grafana.app",

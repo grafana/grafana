@@ -196,7 +196,7 @@ func TestIntegrationDistributor(t *testing.T) {
 		// assert all instances got the response by looking at the merged details
 		count := strings.Count(distributorRes.Details, "{instance:")
 		require.Equal(t, len(testServers), count)
-		require.True(t, distributorRes.ContactedAllPods, "should have contacted all pods")
+		require.True(t, distributorRes.ContactedAllInstances, "should have contacted all instances")
 	})
 
 	var wg sync.WaitGroup

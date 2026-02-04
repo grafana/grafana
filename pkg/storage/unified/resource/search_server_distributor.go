@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"math/rand"
+	"slices"
 	"sync"
 	"time"
 
@@ -148,10 +150,10 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	}
 	rCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), r.Namespace)
 
-	expectedPods := len(rs.Instances)
+	expectedInstances := ds.ring.InstancesCount()
 	var wg sync.WaitGroup
-	responseCh := make(chan *resourcepb.RebuildIndexesResponse, expectedPods)
-	errorCh := make(chan error, expectedPods)
+	responseCh := make(chan *resourcepb.RebuildIndexesResponse, expectedInstances)
+	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
 		wg.Add(1)
@@ -199,10 +201,9 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	var totalRebuildCount int64
 	var details string
 	minBuildTimes := make(map[string]*resourcepb.RebuildIndexesResponse_IndexBuildTime)
-	contactedPods := 0
+	contactedInstances := len(responseCh)
 
 	for rsp := range responseCh {
-		contactedPods++
 		totalRebuildCount += rsp.RebuildCount
 
 		if rsp.Details != "" {
@@ -223,19 +224,16 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	}
 
 	// Convert map to slice
-	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0, len(minBuildTimes))
-	for _, bt := range minBuildTimes {
-		buildTimes = append(buildTimes, bt)
-	}
+	buildTimes := slices.Collect(maps.Values(minBuildTimes))
 
-	// Determine if all pods were contacted
-	contactedAllPods := contactedPods == expectedPods && expectedPods > 0
+	// Determine if all instances were contacted
+	contactedAllInstances := contactedInstances == expectedInstances && expectedInstances > 0
 
 	response := &resourcepb.RebuildIndexesResponse{
-		RebuildCount:     totalRebuildCount,
-		Details:          details,
-		BuildTimes:       buildTimes,
-		ContactedAllPods: contactedAllPods,
+		RebuildCount:          totalRebuildCount,
+		Details:               details,
+		BuildTimes:            buildTimes,
+		ContactedAllInstances: contactedAllInstances,
 	}
 	if len(errs) > 0 {
 		response.Error = AsErrorResult(errors.Join(errs...))

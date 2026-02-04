@@ -209,6 +209,6 @@ message RebuildIndexesResponse {
   repeated IndexBuildTime buildTimes = 4;
 
   // Whether all pods in the ring were contacted (only set by distributor)
-  bool contactedAllPods = 5;
+  bool ContactedAllInstances = 5;
 }
 

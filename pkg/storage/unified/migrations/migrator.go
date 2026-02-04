@@ -219,12 +219,12 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 	}
 
 	if opts.UsingDistributor {
-		if !response.ContactedAllPods {
-			m.log.Error("distributor did not contact all pods", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-			return fmt.Errorf("rebuild index error: distributor did not contact all pods")
+		if !response.ContactedAllInstances {
+			m.log.Error("distributor did not contact all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: distributor did not contact all instances")
 		}
 
-		m.log.Info("distributor contacted all pods", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+		m.log.Info("distributor contacted all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
 
 		buildTimeMap := make(map[string]int64)
 		for _, bt := range response.BuildTimes {
@@ -250,7 +250,7 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 				return fmt.Errorf("rebuild index error: index for %s was built before migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
 			}
 
-			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt)
+			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
 		}
 	}
 
