@@ -36,25 +36,25 @@ const (
 // about the application.
 func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
 	// Create the OTLP HTTP exporter for Jaeger (Jaeger supports OTLP natively)
-var opts []otlptracehttp.Option
+	var opts []otlptracehttp.Option
 
-// Extract host:port from URL and handle secure/insecure
-if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
-    u, err := stdurl.Parse(url)
-    if err != nil {
-        return nil, fmt.Errorf("invalid tracer URL: %s", url)
-    }
-    opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
-    if strings.HasPrefix(url, "http://") {
-        opts = append(opts, otlptracehttp.WithInsecure())
-    }
-} else {
-    // Assume host:port format, default to insecure
-    opts = append(opts, otlptracehttp.WithEndpoint(url), otlptracehttp.WithInsecure())
-}
+	// Extract host:port from URL and handle secure/insecure
+	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+		u, err := stdurl.Parse(url)
+		if err != nil {
+			return nil, fmt.Errorf("invalid tracer URL: %s", url)
+		}
+		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
+		if strings.HasPrefix(url, "http://") {
+			opts = append(opts, otlptracehttp.WithInsecure())
+		}
+	} else {
+		// Assume host:port format, default to insecure
+		opts = append(opts, otlptracehttp.WithEndpoint(url), otlptracehttp.WithInsecure())
+	}
 
-client := otlptracehttp.NewClient(opts...)
-exp, err := otlptrace.New(context.Background(), client)
+	client := otlptracehttp.NewClient(opts...)
+	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
 	}
