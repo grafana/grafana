@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -21,8 +20,10 @@ import (
 //
 // Retry attempts will happen when:
 //   - The Kubernetes API returns transient errors: ServiceUnavailable (503), ServerTimeout (504),
-//     TooManyRequests (429), InternalError (500), or Timeout errors
+//     TooManyRequests (429), or Timeout errors
 //   - Network errors occur: connection timeouts, temporary network failures, or connection errors
+//   - Note: InternalError (500) is NOT retried as these errors are too vague and often indicate
+//     non-transient issues like bugs, logic errors, or permission problems
 //
 // The retry behavior:
 //   - Total attempts: 8 (1 initial attempt + 7 retries)
@@ -38,7 +39,7 @@ import (
 //   - The API server returns transient errors consistently for the entire retry duration
 //   - Context cancellation occurs before retries complete
 //
-// Non-transient errors (e.g., NotFound, BadRequest, Forbidden) are not retried and returned immediately.
+// Non-transient errors (e.g., NotFound, BadRequest, Forbidden, InternalError) are not retried and returned immediately.
 func defaultRetryBackoff() wait.Backoff {
 	return wait.Backoff{
 		Duration: 100 * time.Millisecond,
@@ -75,6 +76,9 @@ func isTransientError(err error) bool {
 	}
 
 	// Check for Kubernetes API transient errors
+	// Note: We do NOT retry InternalError (500) because these are too vague and could
+	// indicate bugs, logic errors, or non-transient permission issues that won't be
+	// fixed by retrying.
 	if apierrors.IsServiceUnavailable(err) {
 		return true
 	}
@@ -82,15 +86,6 @@ func isTransientError(err error) bool {
 		return true
 	}
 	if apierrors.IsTooManyRequests(err) {
-		return true
-	}
-	if apierrors.IsInternalError(err) {
-		// InternalError (500) is usually transient, BUT there's a specific case:
-		// The "managed by repository" error gets wrapped as InternalError by the storage layer.
-		// This is NOT transient - it's a deterministic ownership error that should not be retried.
-		if strings.Contains(err.Error(), "this resource is managed by a repository") {
-			return false
-		}
 		return true
 	}
 	if apierrors.IsTimeout(err) {
