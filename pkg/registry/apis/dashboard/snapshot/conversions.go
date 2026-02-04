@@ -142,7 +142,10 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 	}
 
 	if cmd.Expires > 0 {
-		snap.Spec.Expires = &cmd.Expires
+		// Convert duration (seconds) to absolute timestamp (milliseconds)
+		// This matches the cleanup expectations and other conversion functions
+		expiresTimestamp := time.Now().Add(time.Second * time.Duration(cmd.Expires)).UnixMilli()
+		snap.Spec.Expires = &expiresTimestamp
 	}
 
 	if cmd.External {
