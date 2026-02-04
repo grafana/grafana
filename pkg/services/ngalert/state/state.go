@@ -429,17 +429,6 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				"next_ends_at",
 				nextEndsAt)
 			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
-		} else {
-			// Still pending, maintain EndsAt.
-			prevEndsAt := state.EndsAt
-			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
-			logger.Debug("Keeping state",
-				"state",
-				state.State,
-				"previous_ends_at",
-				prevEndsAt,
-				"next_ends_at",
-				state.EndsAt)
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
