@@ -173,6 +173,61 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	return keys, err
 }
 
+// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules
+// in the specified folders using the K8s folder service.
+func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	if len(folderUIDs) == 0 {
+		return nil
+	}
+
+	logger := st.Logger.New("org_id", orgID, "folder_uids", folderUIDs)
+
+	// Fetch folders using K8s folder service with fullpath enabled
+	// Create a background user with folder read permissions
+	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
+		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+	})
+
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		UIDs:         folderUIDs,
+		WithFullpath: true, // Critical: Request fullpath to be computed
+		SignedInUser: bgUser,
+	})
+	if err != nil {
+		logger.Error("Failed to fetch folders from folder service", "error", err)
+		return err
+	}
+
+	// Build map of folder UID -> fullpath
+	folderPaths := make(map[string]string, len(folders))
+	for _, f := range folders {
+		folderPaths[f.UID] = f.Fullpath
+	}
+
+	// Update alert rules in batches
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		for _, folderUID := range folderUIDs {
+			fullpath, ok := folderPaths[folderUID]
+			if !ok {
+				logger.Warn("Folder not found, skipping fullpath update", "folder_uid", folderUID)
+				continue
+			}
+
+			// Update all rules in this folder
+			_, err := sess.Exec(
+				"UPDATE alert_rule SET folder_fullpath = ? WHERE org_id = ? AND namespace_uid = ?",
+				fullpath, orgID, folderUID,
+			)
+			if err != nil {
+				logger.Error("Failed to update folder_fullpath for folder", "error", err, "folder_uid", folderUID)
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
 // It returns ngmodels.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
 func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (result *ngmodels.AlertRule, err error) {
@@ -383,6 +438,28 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return err
 			}
 
+			// Fetch folder to populate fullpath for the new rule
+			if r.NamespaceUID != "" {
+				bgUser := accesscontrol.BackgroundUser("ngalert", r.OrgID, org.RoleAdmin, []accesscontrol.Permission{
+					{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				})
+				folder, folderErr := st.FolderService.Get(ctx, &folder.GetFolderQuery{
+					UID:          &r.NamespaceUID,
+					OrgID:        r.OrgID,
+					WithFullpath: true,
+					SignedInUser: bgUser,
+				})
+				if folderErr == nil && folder != nil {
+					r.FolderFullpath = folder.Fullpath
+				} else if folderErr != nil {
+					st.Logger.Warn("Failed to fetch folder for new alert rule, fullpath will be empty which may affect sorting",
+						"rule_title", r.Title,
+						"folder_uid", r.NamespaceUID,
+						"org_id", r.OrgID,
+						"error", folderErr)
+				}
+			}
+
 			converted, err := alertRuleFromModelsAlertRule(r.AlertRule)
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %q to storage model: %w", r.Title, err)
@@ -453,6 +530,25 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if err := (&r.New).PreSave(TimeNow, user); err != nil {
 				return err
 			}
+
+			// Fetch folder to populate fullpath for the updated rule
+			if r.New.NamespaceUID != "" {
+				bgUser := accesscontrol.BackgroundUser("ngalert", r.New.OrgID, org.RoleAdmin, []accesscontrol.Permission{
+					{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				})
+				folder, folderErr := st.FolderService.Get(ctx, &folder.GetFolderQuery{
+					UID:          &r.New.NamespaceUID,
+					OrgID:        r.New.OrgID,
+					WithFullpath: true,
+					SignedInUser: bgUser,
+				})
+				if folderErr == nil && folder != nil {
+					r.New.FolderFullpath = folder.Fullpath
+				} else if folderErr != nil {
+					st.Logger.Warn("Failed to fetch folder for updated alert rule, fullpath will be NULL", "folder_uid", r.New.NamespaceUID, "error", folderErr)
+				}
+			}
+
 			converted, err := alertRuleFromModelsAlertRule(r.New)
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)

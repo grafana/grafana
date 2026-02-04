@@ -1040,9 +1040,10 @@ func TestAlertRuleCopy(t *testing.T) {
 // This test makes sure the default generator
 func TestGeneratorFillsAllFields(t *testing.T) {
 	ignoredFields := map[string]struct{}{
-		"ID":       {},
-		"IsPaused": {},
-		"Record":   {},
+		"ID":             {},
+		"IsPaused":       {},
+		"Record":         {},
+		"FolderFullpath": {},
 	}
 
 	tpe := reflect.TypeOf(AlertRule{})
@@ -1085,6 +1086,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"MissingSeriesEvalsToResolve": {},
 		"For":                         {},
 		"NotificationSettings":        {},
+		"FolderFullpath":              {},
 	}
 
 	tpe := reflect.TypeOf(AlertRule{})
