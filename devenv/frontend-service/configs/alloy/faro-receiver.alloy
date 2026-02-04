@@ -26,12 +26,6 @@ loki.relabel "faro_logs" {
 
 	rule {
 		action       = "replace"
-		target_label = "service_name"
-		replacement  = "frontend-service"
-	}
-
-	rule {
-		action       = "replace"
 		target_label = "source"
 		replacement  = "faro"
 	}
