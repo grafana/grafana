@@ -173,6 +173,41 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	return keys, err
 }
 
+// getFolderFullpath fetches the fullpath for a single folder using a background user.
+// Returns empty string if folder not found, on error, or if FolderService is not configured.
+func (st DBstore) getFolderFullpath(ctx context.Context, orgID int64, folderUID string) string {
+	paths, err := st.getFolderFullpaths(ctx, orgID, []string{folderUID})
+	if err != nil {
+		return ""
+	}
+	return paths[folderUID]
+}
+
+// getFolderFullpaths fetches fullpaths for multiple folders using a background user.
+// Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
+func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
+	if st.FolderService == nil {
+		return nil, nil
+	}
+	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
+		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+	})
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		UIDs:         folderUIDs,
+		WithFullpath: true,
+		SignedInUser: bgUser,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, len(folders))
+	for _, f := range folders {
+		result[f.UID] = f.Fullpath
+	}
+	return result, nil
+}
+
 // UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules
 // in the specified folders using the K8s folder service.
 func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
@@ -182,27 +217,10 @@ func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int
 
 	logger := st.Logger.New("org_id", orgID, "folder_uids", folderUIDs)
 
-	// Fetch folders using K8s folder service with fullpath enabled
-	// Create a background user with folder read permissions
-	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
-		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-	})
-
-	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
-		OrgID:        orgID,
-		UIDs:         folderUIDs,
-		WithFullpath: true, // Critical: Request fullpath to be computed
-		SignedInUser: bgUser,
-	})
+	folderPaths, err := st.getFolderFullpaths(ctx, orgID, folderUIDs)
 	if err != nil {
 		logger.Error("Failed to fetch folders from folder service", "error", err)
 		return err
-	}
-
-	// Build map of folder UID -> fullpath
-	folderPaths := make(map[string]string, len(folders))
-	for _, f := range folders {
-		folderPaths[f.UID] = f.Fullpath
 	}
 
 	// Update alert rules in batches
@@ -440,24 +458,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 			// Fetch folder to populate fullpath for the new rule
 			if r.NamespaceUID != "" {
-				bgUser := accesscontrol.BackgroundUser("ngalert", r.OrgID, org.RoleAdmin, []accesscontrol.Permission{
-					{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				})
-				folder, folderErr := st.FolderService.Get(ctx, &folder.GetFolderQuery{
-					UID:          &r.NamespaceUID,
-					OrgID:        r.OrgID,
-					WithFullpath: true,
-					SignedInUser: bgUser,
-				})
-				if folderErr == nil && folder != nil {
-					r.FolderFullpath = folder.Fullpath
-				} else if folderErr != nil {
-					st.Logger.Warn("Failed to fetch folder for new alert rule, fullpath will be empty which may affect sorting",
-						"rule_title", r.Title,
-						"folder_uid", r.NamespaceUID,
-						"org_id", r.OrgID,
-						"error", folderErr)
-				}
+				r.FolderFullpath = st.getFolderFullpath(ctx, r.OrgID, r.NamespaceUID)
 			}
 
 			converted, err := alertRuleFromModelsAlertRule(r.AlertRule)
@@ -533,20 +534,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 			// Fetch folder to populate fullpath for the updated rule
 			if r.New.NamespaceUID != "" {
-				bgUser := accesscontrol.BackgroundUser("ngalert", r.New.OrgID, org.RoleAdmin, []accesscontrol.Permission{
-					{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				})
-				folder, folderErr := st.FolderService.Get(ctx, &folder.GetFolderQuery{
-					UID:          &r.New.NamespaceUID,
-					OrgID:        r.New.OrgID,
-					WithFullpath: true,
-					SignedInUser: bgUser,
-				})
-				if folderErr == nil && folder != nil {
-					r.New.FolderFullpath = folder.Fullpath
-				} else if folderErr != nil {
-					st.Logger.Warn("Failed to fetch folder for updated alert rule, fullpath will be NULL", "folder_uid", r.New.NamespaceUID, "error", folderErr)
-				}
+				r.New.FolderFullpath = st.getFolderFullpath(ctx, r.New.OrgID, r.New.NamespaceUID)
 			}
 
 			converted, err := alertRuleFromModelsAlertRule(r.New)
