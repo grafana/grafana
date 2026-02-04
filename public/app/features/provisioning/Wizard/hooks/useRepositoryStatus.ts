@@ -66,9 +66,6 @@ export function useRepositoryStatus(repoName?: string) {
     }
 
     // Only start timeout if we're waiting for health status
-    // Don't start if already timed out, already healthy, or if we haven't received data yet
-    // Note: The timeout intentionally restarts when rawIsHealthy or query.isSuccess changes.
-    // This ensures we give a fresh 30s window after any state transition (e.g., reconnection attempts).
     if (!hasTimedOut && rawIsHealthy !== true && query.isSuccess) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -102,9 +99,9 @@ export function useRepositoryStatus(repoName?: string) {
 
   return {
     isReady,
-    isHealthy, // true only when healthy AND reconciled (safe to show success UI)
-    isUnhealthy, // true only when unhealthy AND reconciled (safe to show error UI)
-    isReconciled, // keep for useResourceStats
+    isHealthy, // true only when healthy AND reconciled
+    isUnhealthy, // true only when unhealthy AND reconciled
+    isReconciled,
     healthMessage,
     healthStatusNotReady, // true when waiting for reconciliation
     isLoading: query.isLoading,
