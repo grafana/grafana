@@ -8,19 +8,26 @@ RoleSpec: {
 		scope: string
 	}
 
+	#RoleRef: {
+		// Kind of role being referenced (for now only GlobalRole is supported)
+		kind: string
+		// Name of the role being referenced
+		name: string
+	}
+
 	// Display name of the role
 	title: string
 	description: string
 	group: string
 
-	// Permissions for custom roles
+	// Permissions: For custom roles, this contains all permissions. For basic roles, this contains permissions that were added (drift from seed).
 	permissions: [...#Permission]
 
-	// Permissions that exist in actual role but NOT in seed (added/excess permissions) - used for basic roles
-	permissionsAdded?: [...#Permission]
-
-	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles
+	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
 	permissionsOmitted?: [...#Permission]
+
+	// Roles to take permissions from (for now the list should be of size 1)
+	roleRefs?: [...#RoleRef]
 
 	// TODO:
 	// delegatable?: bool
