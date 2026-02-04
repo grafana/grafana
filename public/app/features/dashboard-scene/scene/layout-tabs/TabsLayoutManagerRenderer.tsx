@@ -95,7 +95,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                     <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
                   </Button>
                 )}
-                <Button icon="layers-slash" variant="secondary" size="sm" onClick={() => model.ungroupTabs()}>
+                <Button
+                  icon="layers-slash"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => model.ungroupTabs()}
+                  data-testid={selectors.components.CanvasGridAddActions.ungroup}
+                >
                   <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
                 </Button>
               </div>
