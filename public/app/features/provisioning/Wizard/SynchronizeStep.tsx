@@ -29,10 +29,10 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   ]);
 
   const {
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    isUnhealthy,
     isReconciled: isRepositoryReconciled,
     healthMessage: repositoryHealthMessages,
-    checked,
     healthStatusNotReady,
     hasError,
     isLoading,
@@ -40,7 +40,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   } = useRepositoryStatus(repoName);
 
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
     isReconciled: isRepositoryReconciled,
   });
 
@@ -50,7 +50,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   });
   const [job, setJob] = useState<Job>();
 
-  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
+  const isButtonDisabled = hasError || !isHealthy;
 
   const startSynchronization = async () => {
     const response = await createSyncJob(requiresMigration);
@@ -85,7 +85,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           }}
         />
       )}
-      {repositoryHealthMessages && !isRepositoryHealthy && !hasError && (
+      {repositoryHealthMessages && isUnhealthy && !hasError && (
         <ProvisioningAlert
           error={{
             title: t(
@@ -96,7 +96,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           }}
         />
       )}
-      {isRepositoryHealthy && (
+      {isHealthy && (
         <Alert
           title={t('provisioning.wizard.alert-title', 'Important: Review Git Sync limitations before proceeding')}
           severity={'warning'}
@@ -217,7 +217,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
         </>
       ) : (
         <Field noMargin>
-          {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
+          {hasError || isUnhealthy ? (
             <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
               {isCancelling ? (
                 <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>

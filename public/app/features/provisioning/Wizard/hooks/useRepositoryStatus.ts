@@ -18,38 +18,41 @@ export function useRepositoryStatus(repoName?: string) {
   );
 
   const repository = query.data?.items?.[0];
-  const { healthy: isHealthy, message: healthMessage, checked } = repository?.status?.health || {};
+  const { healthy: rawIsHealthy, message: healthMessage } = repository?.status?.health || {};
 
   const isReconciled = isResourceReconciled(repository);
-  const observedGeneration = repository?.status?.observedGeneration;
+  const isReady = Boolean(repoName) && query.isSuccess;
 
-  const healthStatusNotReady = isHealthy === false && (observedGeneration === 0 || !checked);
-  const isReady = Boolean(repoName) && query.isSuccess && !healthStatusNotReady;
+  // Only trust health status after reconciliation completes - K8s may report unreliable values during reconciliation
+  const isHealthy = isReady && rawIsHealthy === true && isReconciled;
+  const isUnhealthy = isReady && rawIsHealthy === false && isReconciled;
+  // True when health status is not yet determined (waiting for reconciliation)
+  const healthStatusNotReady = isReady && !isHealthy && !isUnhealthy;
 
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Store current values in refs for use in resetTimeout callback
-  const isHealthyRef = useRef(isHealthy);
+  const rawIsHealthyRef = useRef(rawIsHealthy);
   const isSuccessRef = useRef(query.isSuccess);
   const repoNameRef = useRef(repoName);
 
   useEffect(() => {
-    isHealthyRef.current = isHealthy;
+    rawIsHealthyRef.current = rawIsHealthy;
     isSuccessRef.current = query.isSuccess;
     repoNameRef.current = repoName;
-  }, [isHealthy, query.isSuccess, repoName]);
+  }, [rawIsHealthy, query.isSuccess, repoName]);
 
-  // Reset timeout when repository becomes healthy
+  // Reset timeout when repository becomes healthy (use raw value for timeout logic)
   useEffect(() => {
-    if (isHealthy === true) {
+    if (rawIsHealthy === true) {
       setHasTimedOut(false);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = undefined;
       }
     }
-  }, [isHealthy]);
+  }, [rawIsHealthy]);
 
   // Start timeout when repoName is provided and repository is not healthy
   useEffect(() => {
@@ -64,9 +67,9 @@ export function useRepositoryStatus(repoName?: string) {
 
     // Only start timeout if we're waiting for health status
     // Don't start if already timed out, already healthy, or if we haven't received data yet
-    // Note: The timeout intentionally restarts when isHealthy or query.isSuccess changes.
+    // Note: The timeout intentionally restarts when rawIsHealthy or query.isSuccess changes.
     // This ensures we give a fresh 30s window after any state transition (e.g., reconnection attempts).
-    if (!hasTimedOut && isHealthy !== true && query.isSuccess) {
+    if (!hasTimedOut && rawIsHealthy !== true && query.isSuccess) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -81,7 +84,7 @@ export function useRepositoryStatus(repoName?: string) {
         timeoutRef.current = undefined;
       }
     };
-  }, [repoName, hasTimedOut, isHealthy, query.isSuccess]);
+  }, [repoName, hasTimedOut, rawIsHealthy, query.isSuccess]);
 
   const resetTimeout = useCallback(() => {
     setHasTimedOut(false);
@@ -90,7 +93,7 @@ export function useRepositoryStatus(repoName?: string) {
       timeoutRef.current = undefined;
     }
     // Restart timeout if still not healthy
-    if (repoNameRef.current && isHealthyRef.current !== true && isSuccessRef.current) {
+    if (repoNameRef.current && rawIsHealthyRef.current !== true && isSuccessRef.current) {
       timeoutRef.current = setTimeout(() => {
         setHasTimedOut(true);
       }, TIMEOUT_MS);
@@ -99,11 +102,11 @@ export function useRepositoryStatus(repoName?: string) {
 
   return {
     isReady,
-    isHealthy: isReady ? isHealthy : undefined,
-    isReconciled,
+    isHealthy, // true only when healthy AND reconciled (safe to show success UI)
+    isUnhealthy, // true only when unhealthy AND reconciled (safe to show error UI)
+    isReconciled, // keep for useResourceStats
     healthMessage,
-    checked,
-    healthStatusNotReady,
+    healthStatusNotReady, // true when waiting for reconciliation
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     hasError: query.isError,

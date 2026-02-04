@@ -49,7 +49,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isLoading: isRepositoryStatusLoading,
     hasError: repositoryStatusError,
     refetch: retryRepositoryStatus,
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    isUnhealthy,
     isReconciled: isRepositoryReconciled,
     hasTimedOut,
     resetTimeout,
@@ -61,7 +62,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     resourceCount,
     isLoading: isResourceStatsLoading,
   } = useResourceStats(repoName, selectedTarget, undefined, {
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
     isReconciled: isRepositoryReconciled,
   });
 
@@ -71,7 +72,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
-  const isWaitingForHealth = isRepositoryReady && isRepositoryHealthy === undefined && !repositoryStatusError;
+  // Wait for health if: ready but neither healthy nor unhealthy (still reconciling)
+  const isWaitingForHealth = isRepositoryReady && !repositoryStatusError && !isHealthy && !isUnhealthy;
 
   const handleRetryWithReset = useCallback(() => {
     resetTimeout();
@@ -111,7 +113,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     }
 
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
-    if (repositoryStatusError || isRepositoryHealthy === false) {
+    // Only show error if: query error, OR unhealthy (already reconciled)
+    if (repositoryStatusError || isUnhealthy) {
       setStepStatusInfo({
         status: 'error',
         error: {
@@ -157,12 +160,12 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setStepStatusInfo,
     repositoryStatusError,
     retryRepositoryStatus,
-    isRepositoryHealthy,
     hasTimedOut,
     handleRetryWithReset,
     isWaitingForHealth,
     isQuotaExceeded,
     resourceCount,
+    isUnhealthy,
   ]);
 
   useEffect(() => {
@@ -183,16 +186,14 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     return (
       <Box padding={4}>
         <LoadingPlaceholder
-          text={t(
-            'provisioning.bootstrap-step.text-waiting-for-repository-health',
-            'Checking repository health...'
-          )}
+          text={t('provisioning.bootstrap-step.text-waiting-for-repository-health', 'Checking repository health...')}
         />
       </Box>
     );
   }
 
-  if (repositoryStatusError || isRepositoryHealthy === false || isQuotaExceeded || hasTimedOut) {
+  // Only show error state if: query error, OR unhealthy (already reconciled), OR quota exceeded, OR timed out
+  if (repositoryStatusError || isUnhealthy || isQuotaExceeded || hasTimedOut) {
     // error message and retry will be set in above step status
     return null;
   }

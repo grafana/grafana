@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -38,9 +38,7 @@ jest.mock('../utils/isFreeTierLicense', () => ({
 const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
   typeof useGetRepositoryFilesQuery
 >;
-const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<
-  typeof useGetResourceStatsQuery
->;
+const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 const mockUseRepositoryStatus = useRepositoryStatus as jest.MockedFunction<typeof useRepositoryStatus>;
 const mockUseResourceStats = useResourceStats as jest.MockedFunction<typeof useResourceStats>;
 const mockUseModeOptions = useModeOptions as jest.MockedFunction<typeof useModeOptions>;
@@ -138,17 +136,17 @@ describe('BootstrapStep', () => {
       data: { instance: [] },
       isLoading: false,
       refetch: jest.fn(),
-      } as ReturnType<typeof useGetResourceStatsQuery>);
+    } as ReturnType<typeof useGetResourceStatsQuery>);
 
     mockUseRepositoryStatus.mockReturnValue({
       isReady: true,
       isLoading: false,
       isFetching: false,
       hasError: false,
-      isHealthy: true,
+      isHealthy: true, // healthy AND reconciled
+      isUnhealthy: false,
       isReconciled: true,
       healthMessage: undefined,
-      checked: undefined,
       healthStatusNotReady: false,
       refetch: jest.fn(),
       hasTimedOut: false,
@@ -257,7 +255,7 @@ describe('BootstrapStep', () => {
         },
         isLoading: false,
         refetch: jest.fn(),
-      } as any);
+      });
 
       mockUseResourceStats.mockReturnValue({
         managedCount: 7,
@@ -521,6 +519,114 @@ describe('BootstrapStep', () => {
     });
   });
 
+  describe('repository health and reconciliation', () => {
+    it('should show loading state when repository is unhealthy but not yet reconciled', async () => {
+      // K8s may report unhealthy during reconciliation - we should wait, not show error
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: false, // not healthy yet
+        isUnhealthy: false, // but not confirmed unhealthy (not reconciled)
+        isReconciled: false, // Not yet reconciled
+        healthMessage: ['Some temporary error'],
+        healthStatusNotReady: true,
+        refetch: jest.fn(),
+        hasTimedOut: false,
+        resetTimeout: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Should show loading/waiting state, not error
+      expect(screen.getByText('Checking repository health...')).toBeInTheDocument();
+      expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
+    });
+
+    it('should show error when repository is unhealthy and fully reconciled', async () => {
+      // When reconciliation is complete and still unhealthy, show the error
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: false, // not healthy
+        isUnhealthy: true, // confirmed unhealthy (reconciled)
+        isReconciled: true, // Fully reconciled
+        healthMessage: ['Connection failed'],
+        healthStatusNotReady: false,
+        refetch: jest.fn(),
+        hasTimedOut: false,
+        resetTimeout: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Should show error state
+      expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
+      expect(screen.queryByText('Checking repository health...')).not.toBeInTheDocument();
+    });
+
+    it('should show content when repository is healthy and reconciled', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true, // healthy AND reconciled
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        refetch: jest.fn(),
+        hasTimedOut: false,
+        resetTimeout: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Should show normal content
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+  });
+
   describe('timeout handling', () => {
     afterEach(() => {
       jest.useRealTimers();
@@ -534,10 +640,10 @@ describe('BootstrapStep', () => {
         isLoading: false,
         isFetching: false,
         hasError: false,
-        isHealthy: undefined,
+        isHealthy: false, // not healthy (or still reconciling)
+        isUnhealthy: false, // not unhealthy yet (still reconciling)
         isReconciled: false,
         healthMessage: undefined,
-        checked: undefined,
         healthStatusNotReady: false,
         refetch: jest.fn(),
         hasTimedOut: true,
@@ -567,17 +673,17 @@ describe('BootstrapStep', () => {
     it('should call resetTimeout when retry button is clicked', async () => {
       // Use real timers for this test since userEvent needs them
       jest.useRealTimers();
-      
+
       const mockResetTimeout = jest.fn();
       mockUseRepositoryStatus.mockReturnValue({
         isReady: true,
         isLoading: false,
         isFetching: false,
         hasError: false,
-        isHealthy: undefined,
+        isHealthy: false, // not healthy (or still reconciling)
+        isUnhealthy: false, // not unhealthy yet (still reconciling)
         isReconciled: false,
         healthMessage: undefined,
-        checked: undefined,
         healthStatusNotReady: false,
         refetch: jest.fn(),
         hasTimedOut: true,
@@ -600,7 +706,7 @@ describe('BootstrapStep', () => {
 
       // Wait for the error to be displayed
       await screen.findByText('Repository health check timed out');
-      
+
       const retryButton = screen.getByRole('button', { name: /Retry/i });
       await user.click(retryButton);
 
