@@ -441,7 +441,7 @@ func (b *bleveBackend) BuildIndex(
 				if err != nil {
 					logWithDetails.Warn("failed to get build info from existing index", "error", err)
 					// Continue with existing index despite error
-				} else {
+				} else if bi.BuildTime > 0 {
 					indexBuildTime := time.Unix(bi.BuildTime, 0)
 					if indexBuildTime.Before(lastImportTime) {
 						logWithDetails.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
