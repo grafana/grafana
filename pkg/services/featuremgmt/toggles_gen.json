@@ -2697,6 +2697,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesTeamsHandlerRedirect",
+        "resourceVersion": "1770222039889",
+        "creationTimestamp": "2026-02-04T16:20:39Z"
+      },
+      "spec": {
+        "description": "Redirects the request to teams related endpoints to the app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUnifiedStorageQuotas",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-12-09T15:40:34Z",
