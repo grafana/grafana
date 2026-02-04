@@ -107,7 +107,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaReached,
-			expectedQuotaStatus: false,
+			expectedQuotaStatus: true,
 		},
 		{
 			name:                      "within quota when under limit",
