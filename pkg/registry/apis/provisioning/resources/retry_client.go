@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -84,6 +85,12 @@ func isTransientError(err error) bool {
 		return true
 	}
 	if apierrors.IsInternalError(err) {
+		// InternalError (500) is usually transient, BUT there's a specific case:
+		// The "managed by repository" error gets wrapped as InternalError by the storage layer.
+		// This is NOT transient - it's a deterministic ownership error that should not be retried.
+		if strings.Contains(err.Error(), "this resource is managed by a repository") {
+			return false
+		}
 		return true
 	}
 	if apierrors.IsTimeout(err) {
