@@ -187,8 +187,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   searchField: css({
-    margin: theme.spacing(2, 1.5, 0, 1.5), // input glow with the boundary without this
+    margin: theme.spacing(2, 1, 0, 0), // input glow with the boundary without this
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
+    width: '100%', // full size search area
   }),
   tabs: css({
     width: '100%',
@@ -202,7 +203,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingInline: theme.spacing(2),
   }),
   closeButton: css({
-    marginLeft: 'auto',
+    marginLeft: theme.spacing(1), // shift button to the right
   }),
   customFieldMargin: css({
     marginBottom: theme.spacing(1),
@@ -210,5 +211,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   filter: css({
     minHeight: theme.spacing(4),
     marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    marginLeft: theme.spacing(1),
   }),
 });
