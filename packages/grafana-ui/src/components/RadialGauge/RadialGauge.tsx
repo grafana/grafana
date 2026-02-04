@@ -292,7 +292,13 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   const body = (
     <>
-      <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width={width}
+        height={height}
+        role="img"
+        aria-label={t('gauge.category-gauge', 'Gauge')}
+      >
         {defs.length > 0 && <defs>{defs}</defs>}
         {graphics}
       </svg>

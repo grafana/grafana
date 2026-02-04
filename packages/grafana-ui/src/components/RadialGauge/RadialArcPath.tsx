@@ -67,8 +67,6 @@ export const RadialArcPath = memo(
     const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = {
       width: boxSize,
       height: boxSize,
-      marginLeft: boxX,
-      marginTop: Math.max(boxY, 0),
     };
     const pathProps: SVGProps<SVGPathElement> = {};
     if (isGradient) {
@@ -105,7 +103,7 @@ export const RadialArcPath = memo(
 
         <g filter={glowFilter} {...omit(rest, 'color', 'gradient')}>
           {isGradient ? (
-            <foreignObject x={0} y={0} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
+            <foreignObject x={boxX} y={Math.max(boxY, 0)} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
               <div style={bgDivStyle} />
             </foreignObject>
           ) : (
