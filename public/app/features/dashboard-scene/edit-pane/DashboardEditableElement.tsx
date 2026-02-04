@@ -1,8 +1,8 @@
 import { ReactNode, useId, useMemo, useRef } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Button, Input, TextArea } from '@grafana/ui';
+import { Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -10,6 +10,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
+import { DashboardSettingsButton } from './DashboardSettingsButton';
 import { dashboardEditActions } from './shared';
 
 function useEditPaneOptions(
@@ -70,18 +71,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
 
   public renderActions(): ReactNode {
-    return (
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => this.dashboard.onOpenSettings()}
-        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-        icon="sliders-v-alt"
-        iconPlacement="right"
-      >
-        <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-      </Button>
-    );
+    return <DashboardSettingsButton onClickGoToLegacySettingsPage={() => this.dashboard.onOpenSettings()} />;
   }
 }
 

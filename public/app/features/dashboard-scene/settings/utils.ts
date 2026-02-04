@@ -18,7 +18,9 @@ import { PermissionsEditView } from './PermissionsEditView';
 import { VariablesEditView } from './VariablesEditView';
 import { VersionsEditView } from './VersionsEditView';
 
-export interface DashboardEditViewState extends SceneObjectState {}
+export interface DashboardEditViewState extends SceneObjectState {
+  isModalSettings?: boolean;
+}
 
 export interface DashboardEditListViewState extends DashboardEditViewState {
   /** Index of the list item to edit */
