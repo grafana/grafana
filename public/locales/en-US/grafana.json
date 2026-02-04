@@ -10514,8 +10514,8 @@
       },
       "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
-        "disable": "Disable columns for displayed fields",
-        "enable": "Enable columns for displayed fields"
+        "disable": "Disable columns",
+        "enable": "Enable columns"
       },
       "wrap-lines": "Wrap lines"
     },
