@@ -151,19 +151,6 @@ export const LdapSettingsPage = () => {
   }, [reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
-   * Display warning if the feature flag is disabled
-   */
-  if (!config.featureToggles.ssoSettingsLDAP) {
-    return (
-      <Alert title={t('admin.ldap-settings-page.title-invalid-configuration', 'Invalid configuration')}>
-        <Trans i18nKey="ldap-settings-page.alert.feature-flag-disabled">
-          This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
-        </Trans>
-      </Alert>
-    );
-  }
-
-  /**
    * Fetches the settings from the backend
    * @returns Promise<LdapPayload>
    */

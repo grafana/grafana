@@ -118,7 +118,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+						Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 						Operator: string(selection.Equals),
 						Values:   []string{name},
 					},
@@ -129,8 +129,8 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			Page:    int64(page),
 			Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 			},
@@ -187,9 +187,9 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 		}
 
 		switch v.Name {
-		case builders.TEAM_BINDING_SUBJECT_NAME:
+		case builders.TEAM_BINDING_SUBJECT:
 			subjectNameIDX = i
-		case builders.TEAM_BINDING_TEAM_REF:
+		case builders.TEAM_BINDING_TEAM:
 			teamRefIDX = i
 		case builders.TEAM_BINDING_PERMISSION:
 			permissionIDX = i
@@ -199,10 +199,10 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	if subjectNameIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT_NAME)
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
 	}
 	if teamRefIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM_REF)
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
 	}
 	if permissionIDX < 0 {
 		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
