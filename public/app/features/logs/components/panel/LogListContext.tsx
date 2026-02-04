@@ -341,6 +341,11 @@ export const LogListContextProvider = ({
     }
   }, [prettifyJSONProp]);
 
+  // Sync unwrappedColumns
+  useEffect(() => {
+    setUnwrappedColumnsState(unwrappedColumnsProp);
+  }, [unwrappedColumnsProp]);
+
   // Sync wrapLogMessage
   useEffect(() => {
     setWrapLogMessageState(wrapLogMessageProp);
