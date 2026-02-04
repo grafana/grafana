@@ -644,7 +644,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		// Create a temporary overrides config file
 		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 		content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       dashboard.grafana.app/dashboards:
         limit: 500
