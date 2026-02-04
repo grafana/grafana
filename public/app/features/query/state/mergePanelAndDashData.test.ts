@@ -70,7 +70,7 @@ describe('mergePanelAndDashboardData', () => {
             state: LoadingState.Done,
             series: [],
             annotations: [toAnnotationFrame([{ id: 'panelData' }]), toAnnotationFrame([])],
-            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
+            alertState: { id: 1, state: AlertState.OK, dashboardUID: 'aaa', panelId: 1, newStateDate: '' },
             timeRange,
           },
         });
