@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "重設為預設值",
-      "title-invalid-configuration": "無效設定",
       "title-more-actions": "更多動作",
       "tooltip-more-actions": "更多動作"
     },
@@ -661,14 +660,18 @@
       "aria-label-group-by": "分組依據",
       "aria-label-group-interval": "群組間隔",
       "aria-label-group-wait": "群組等待",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "重複間隔",
       "create-a-contact-point": "建立聯絡點",
+      "description-unique-routing": "",
       "label-default-contact-point": "預設聯絡點",
+      "label-name": "",
       "label-timing-options": "計時選項",
       "message": {
         "required": "必填。"
       },
-      "or": "或"
+      "or": "或",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "新增匹配器",
@@ -2129,6 +2132,10 @@
       "new-policy": "新增政策",
       "no-matchers": "沒有匹配條件",
       "reload-policies": "重新載入政策",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "儲存政策",
       "update": {
         "please-wait": "請稍候，我們正在更新您的通知政策。",
@@ -2146,6 +2153,54 @@
         "title": "無法新增或更新通知政策"
       },
       "n-more-policies_other": "{{count}} 個其他政策"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "新的子級政策",
@@ -2329,6 +2384,13 @@
       "label-override-grouping": "覆寫分組",
       "label-override-timings": "覆寫時間",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "編輯",
@@ -3092,6 +3154,12 @@
       "label-edit": "編輯",
       "label-export": "匯出"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "是，刪除聯絡點",
       "deleting": "正在刪除…",
@@ -3109,6 +3177,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "刪除通知政策"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6218,6 +6295,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "取消",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "資料夾"
     },
     "inspect-data-tab": {
@@ -9755,7 +9834,6 @@
       "error-fetching": "擷取 LDAP 設定時發生錯誤",
       "error-saving": "儲存 LDAP 設定時發生錯誤",
       "error-validate-form": "驗證 LDAP 設定時發生錯誤",
-      "feature-flag-disabled": "",
       "saved": "LDAP 設定已儲存"
     },
     "bind-dn": {
@@ -11243,6 +11321,7 @@
     },
     "header-menu": {
       "copy": "複製",
+      "copy-styles": "",
       "create-library-panel": "建立資料庫面板",
       "duplicate": "重複",
       "edit": "編輯",
@@ -11254,11 +11333,13 @@
       "inspect-json": "面板 JSON",
       "more": "更多…",
       "new-alert-rule": "新的警報規則",
+      "paste-styles": "",
       "query": "查詢",
       "remove": "移除",
       "replace-library-panel": "取代資料庫面板",
       "share": "分享",
       "show-legend": "顯示圖例",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "取消連結資料庫面板",
       "view": "檢視"
@@ -11822,9 +11903,6 @@
       "label-display-name": "顯示名稱",
       "placeholder-my-repository-connection": "我的儲存庫連線",
       "text-loading-resource-information": "正在載入資源資訊…",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
@@ -11876,6 +11954,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11889,6 +11970,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12225,6 +12307,9 @@
         "view-repository": "檢視儲存庫"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "已選取：",
       "connection-status": "",
@@ -12418,7 +12503,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "選擇要同步的內容",
       "step-configure-repo": "",
       "step-connect": "連接",
@@ -13566,6 +13650,7 @@
     "name-wrap-header-text": "換行標題文字",
     "name-wrap-text": "",
     "placeholder-column-width": "自動",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
