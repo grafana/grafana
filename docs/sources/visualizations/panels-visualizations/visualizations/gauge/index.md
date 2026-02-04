@@ -139,13 +139,6 @@ Use the following options to refine how your visualization displays the value:
 
 <!-- prettier-ignore-end -->
 
-### Text size options {#text-size}
-
-Adjust the sizes of the gauge text.
-
-- **Title** - Enter a numeric value for the gauge title size.
-- **Value** - Enter a numeric value for the gauge value size.
-
 ### Gauge options
 
 Adjust how the gauge is displayed.
@@ -197,6 +190,13 @@ Each gauge displays the sparkline inside the circle or arc:
 Control whether a threshold band is shown around the inner gauge value band.
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
+
+### Text size options {#text-size}
+
+Adjust the sizes of the gauge text.
+
+- **Title** - Enter a numeric value for the gauge title size.
+- **Value** - Enter a numeric value for the gauge value size.
 
 ### Standard options
 
