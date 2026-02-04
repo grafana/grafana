@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -206,6 +207,7 @@ type DSKitService struct {
 	*services.BasicService
 	Provider
 	readyChan chan struct{}
+	readyOnce sync.Once
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
@@ -230,5 +232,7 @@ func (s *DSKitService) starting(ctx context.Context) error {
 // StartListening signals that all gRPC services have been registered
 // and the server can start accepting connections.
 func (s *DSKitService) StartListening() {
-	close(s.readyChan)
+	s.readyOnce.Do(func() {
+		close(s.readyChan)
+	})
 }

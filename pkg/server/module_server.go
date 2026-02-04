@@ -200,9 +200,6 @@ func (s *ModuleServer) Run() error {
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
 		tracer := otel.Tracer("grpc-server")
 		switch {
-		case m.IsModuleEnabled(modules.SearchServerDistributor):
-			// Distributor forwards to search, no authentication needed
-			return s.initGRPCServer(nil, tracer)
 		case m.IsModuleEnabled(modules.StorageServer), m.IsModuleEnabled(modules.SearchServer):
 			// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 			// grpcutils.NewGrpcAuthenticator should be used instead.
@@ -211,6 +208,9 @@ func (s *ModuleServer) Run() error {
 				return auth.Authenticate(ctx)
 			}))
 			return s.initGRPCServer(authn, tracer)
+		case m.IsModuleEnabled(modules.SearchServerDistributor):
+			// Distributor forwards to search, no authentication needed
+			return s.initGRPCServer(nil, tracer)
 		default:
 			return services.NewBasicService(nil, nil, nil).WithName(modules.GRPCServer), nil
 		}
