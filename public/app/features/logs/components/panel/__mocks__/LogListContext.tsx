@@ -123,6 +123,7 @@ export const defaultProps: Props = {
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
   timestampResolution: 'ms',
+  unwrappedColumns: false,
   wrapLogMessage: true,
 };
 
@@ -147,6 +148,7 @@ export const LogListContextProvider = ({
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   timestampResolution = 'ms',
+  unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
@@ -189,6 +191,7 @@ export const LogListContextProvider = ({
         sortOrder,
         syntaxHighlighting,
         timestampResolution,
+        unwrappedColumns,
         wrapLogMessage,
       }}
     >
