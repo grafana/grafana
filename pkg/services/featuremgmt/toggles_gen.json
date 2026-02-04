@@ -4211,6 +4211,7 @@
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-14T13:51:05Z",
+        "deletionTimestamp": "2026-02-02T11:38:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
