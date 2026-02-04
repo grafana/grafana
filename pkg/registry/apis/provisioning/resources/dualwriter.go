@@ -119,6 +119,12 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 
 	parsed.Action = provisioning.ResourceActionDelete
 
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
 	// Use the parser's DryRun method like create/update operations
 	if !opts.SkipDryRun {
 		if err := parsed.DryRun(ctx); err != nil {
@@ -163,6 +169,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	}
 
 	cfg := r.repo.Config()
+
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
 	wrap := &provisioning.ResourceWrapper{
 		Path: opts.Path,
 		Ref:  opts.Ref,
@@ -184,6 +196,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	wrap.URLs = urls
 
 	if r.shouldUpdateGrafanaDB(opts, nil) {
+
 		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
 		if err != nil {
 			return nil, err
