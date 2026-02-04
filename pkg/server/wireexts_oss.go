@@ -195,6 +195,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
 	// Tracing
+	withOTelSet,
 	tracing.ProvideTracingConfig,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
