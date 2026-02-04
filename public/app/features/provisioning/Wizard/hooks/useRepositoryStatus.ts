@@ -22,9 +22,8 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
 
   const repository = query.data?.items?.[0];
   const { healthy: isHealthy, message: healthMessage, checked } = repository?.status?.health || {};
-  console.log('stat', repository?.status);
 
-  const healthStatusNotReady = isHealthy === false && repository?.status?.observedGeneration === 0;
+  const healthStatusNotReady = isHealthy === false && (repository?.status?.observedGeneration === 0 || !checked);
   const isReady = Boolean(repoName) && query.isSuccess && !healthStatusNotReady;
 
   const [hasTimedOut, setHasTimedOut] = useState(false);

@@ -123,7 +123,8 @@ export function useResourceStats(
   // files endpoint requires healthy repository
   const filesQuery = useGetRepositoryFilesQuery(repoName && effectiveHealthy ? { name: repoName } : skipToken);
 
-  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
+  const isFilesQuerySkipped = !repoName || !effectiveHealthy;
+  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading || isFilesQuerySkipped;
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
