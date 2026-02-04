@@ -18,10 +18,16 @@ import (
 
 const DEFAULT_RESOURCE_LIMIT = 1000
 
+type QuotasConfig struct {
+	EnforceQuotas  bool
+	SupportMessage string
+}
+
 type QuotaExceededError struct {
-	Resource string
-	Used     int64
-	Limit    int
+	Resource       string
+	Used           int64
+	Limit          int
+	SupportMessage string
 }
 
 func (e QuotaExceededError) Error() string {
@@ -29,7 +35,7 @@ func (e QuotaExceededError) Error() string {
 }
 
 func (e QuotaExceededError) Message() string {
-	return fmt.Sprintf("Limit reached for resource %s: %d/%d. Please contact support to increase it.", e.Resource, e.Used, e.Limit)
+	return fmt.Sprintf("Limit reached for resource %s: %d/%d %s", e.Resource, e.Used, e.Limit, e.SupportMessage)
 }
 
 type OverridesService struct {

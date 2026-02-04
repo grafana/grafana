@@ -629,6 +629,7 @@ type Cfg struct {
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnforceQuotas                              bool
+	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool

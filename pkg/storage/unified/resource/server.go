@@ -278,7 +278,7 @@ type ResourceServerOptions struct {
 
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
-	EnforceQuotas bool
+	QuotasConfig QuotasConfig
 }
 
 // NewSearchServer creates a standalone search server.
@@ -365,27 +365,26 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		log:              logger,
-		backend:          opts.Backend,
-		blob:             blobstore,
-		diagnostics:      opts.Diagnostics,
-		access:           opts.AccessClient,
-		secure:           opts.SecureValues,
-		writeHooks:       opts.WriteHooks,
-		lifecycle:        opts.Lifecycle,
-		now:              opts.Now,
-		ctx:              ctx,
-		cancel:           cancel,
-		storageMetrics:   opts.storageMetrics,
-		maxPageSizeBytes: opts.MaxPageSizeBytes,
-		reg:              opts.Reg,
-		queue:            opts.QOSQueue,
-		queueConfig:      opts.QOSConfig,
-		overridesService: opts.OverridesService,
-		storageEnabled:   true,
-		searchClient:     opts.SearchClient,
-		enforceQuotas:    opts.EnforceQuotas,
-
+		log:                            logger,
+		backend:                        opts.Backend,
+		blob:                           blobstore,
+		diagnostics:                    opts.Diagnostics,
+		access:                         opts.AccessClient,
+		secure:                         opts.SecureValues,
+		writeHooks:                     opts.WriteHooks,
+		lifecycle:                      opts.Lifecycle,
+		now:                            opts.Now,
+		ctx:                            ctx,
+		cancel:                         cancel,
+		storageMetrics:                 opts.storageMetrics,
+		maxPageSizeBytes:               opts.MaxPageSizeBytes,
+		reg:                            opts.Reg,
+		queue:                          opts.QOSQueue,
+		queueConfig:                    opts.QOSConfig,
+		overridesService:               opts.OverridesService,
+		storageEnabled:                 true,
+		searchClient:                   opts.SearchClient,
+		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
@@ -446,7 +445,7 @@ type server struct {
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
 	overridesService *OverridesService
-	enforceQuotas    bool // Limit tenant resources based on their quotas
+	quotasConfig     QuotasConfig
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1694,11 +1693,12 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-		if s.enforceQuotas {
+		if s.quotasConfig.EnforceQuotas {
 			return QuotaExceededError{
-				Resource: nsr.Resource,
-				Used:     stats[0].Count,
-				Limit:    quota.Limit,
+				Resource:       nsr.Resource,
+				Used:           stats[0].Count,
+				Limit:          quota.Limit,
+				SupportMessage: s.quotasConfig.SupportMessage,
 			}
 		}
 	}

@@ -70,7 +70,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		withOverridesService,
 		withSearch,
 		withSearchClient,
-		withQuotaEnforcement,
+		withQuotaConfig,
 	)
 	if err != nil {
 		return nil, err
@@ -270,8 +270,11 @@ func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	return nil
 }
 
-func withQuotaEnforcement(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	resourceOpts.EnforceQuotas = opts.Cfg.EnforceQuotas
+func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QuotasConfig = resource.QuotasConfig{
+		EnforceQuotas:  opts.Cfg.EnforceQuotas,
+		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
+	}
 	return nil
 }
 
