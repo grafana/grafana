@@ -215,7 +215,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rowVariables: css({
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: theme.spacing(1),
     }),
     rowTitleButton: css({
