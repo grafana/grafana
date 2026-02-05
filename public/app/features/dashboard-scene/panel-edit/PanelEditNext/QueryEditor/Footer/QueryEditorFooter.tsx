@@ -70,35 +70,33 @@ export function QueryEditorFooter() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.content}>
-        <ul className={styles.itemsList}>
-          {items.map((item) => (
-            <li key={item.id} className={styles.item}>
-              <Button
-                fill="text"
-                size="sm"
-                className={styles.itemButton}
-                onClick={handleOpenSidebar}
-                aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
-              >
-                {item.isActive && <span className={styles.activeIndicator} />}
-                <span className={styles.label}>{item.label}</span>
-                <span className={cx(styles.value, item.isActive && styles.valueActive)}>{item.value}</span>
-              </Button>
-            </li>
-          ))}
-        </ul>
-        <Button
-          fill="text"
-          size="sm"
-          icon="angle-left"
-          iconPlacement="right"
-          onClick={handleOpenSidebar}
-          aria-label={t('query-editor.footer.query-options', 'Query Options')}
-        >
-          <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
-        </Button>
-      </div>
+      <ul className={styles.itemsList}>
+        {items.map((item) => (
+          <li key={item.id} className={styles.item}>
+            <Button
+              fill="text"
+              size="sm"
+              className={styles.itemButton}
+              onClick={handleOpenSidebar}
+              aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
+            >
+              {item.isActive && <span className={styles.activeIndicator} />}
+              <span className={styles.label}>{item.label}</span>
+              <span className={cx(styles.value, item.isActive && styles.valueActive)}>{item.value}</span>
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <Button
+        fill="text"
+        size="sm"
+        icon="angle-left"
+        iconPlacement="right"
+        onClick={handleOpenSidebar}
+        aria-label={t('query-editor.footer.query-options', 'Query Options')}
+      >
+        <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
+      </Button>
     </div>
   );
 }
@@ -110,6 +108,10 @@ function getStyles(theme: GrafanaTheme2) {
       bottom: 0,
       left: 0,
       right: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
       backgroundColor: theme.colors.background.secondary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
@@ -117,12 +119,6 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
       zIndex: 1,
       minHeight: 26,
-    }),
-    content: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing(2),
     }),
     itemsList: css({
       display: 'flex',
