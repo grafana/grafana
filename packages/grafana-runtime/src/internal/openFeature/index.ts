@@ -1,9 +1,33 @@
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { OpenFeature } from '@openfeature/react-sdk';
+import { OpenFeature, ProviderEvents, NOOP_PROVIDER, EventDetails } from '@openfeature/react-sdk';
 
-import { FeatureToggles } from '@grafana/data';
+import { AppEvents, FeatureToggles } from '@grafana/data';
 
 import { config } from '../../config';
+import { getAppEvents } from '../../services';
+import { logError } from '../../utils/logging';
+
+function checkDefaultProvider(event?: EventDetails) {
+  if (event?.domain) {
+    return;
+  }
+
+  // Warn plugin developers if we've detected OpenFeature's default provider has been changed,
+  //  as plugins should always be using a domain when setting a provider to avoid conflicts.
+  if (OpenFeature.getProvider() !== NOOP_PROVIDER) {
+    const err = new Error(
+      'OpenFeature default domain provider has been unexpectedly changed. This may be caused by a plugin that is incorrectly using the default domain.',
+      { cause: OpenFeature.getProvider() }
+    );
+    console.error(err);
+    logError(err);
+
+    getAppEvents().publish({
+      type: AppEvents.alertWarning.name,
+      payload: [err.message],
+    });
+  }
+}
 
 export type FeatureFlagName = keyof FeatureToggles;
 
@@ -17,6 +41,9 @@ export type FeatureFlagName = keyof FeatureToggles;
 export const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 
 export async function initOpenFeature() {
+  OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
+  OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
+
   const subPath = config.appSubUrl || '';
   const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
 
