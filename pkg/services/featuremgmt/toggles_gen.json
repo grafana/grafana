@@ -4415,6 +4415,22 @@
     },
     {
       "metadata": {
+        "name": "teamHttpHeadersFromAppPlatform",
+        "resourceVersion": "1770314407036",
+        "creationTimestamp": "2026-02-05T17:51:52Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-05 18:00:07.036855 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "teamHttpHeadersTempo",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-05-22T19:13:31Z",
