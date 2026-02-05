@@ -1,8 +1,17 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { AssistantHook, useAssistant } from '@grafana/assistant';
+
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(),
+  createAssistantContextItem: jest.fn(),
+}));
+
+const useAssistantMock = jest.mocked(useAssistant);
 
 const createMockDetails = (overrides = {}) => ({
   id: '123',
@@ -16,9 +25,15 @@ const createMockDetails = (overrides = {}) => ({
 
 describe('DashboardCard', () => {
   const mockOnClick = jest.fn();
+  const mockOpenAssistant = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: assistant not available
+    useAssistantMock.mockReturnValue({
+      isAvailable: false,
+      openAssistant: mockOpenAssistant,
+    } as unknown as AssistantHook);
   });
 
   it('should render title as heading', () => {
@@ -311,6 +326,104 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Assistant button', () => {
+    beforeEach(() => {
+      // Enable assistant for these tests
+      useAssistantMock.mockReturnValue({
+        isAvailable: true,
+        openAssistant: mockOpenAssistant,
+      } as unknown as AssistantHook);
+    });
+
+    it('should show Assistant button when assistant is available and showAssistantButton is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      expect(screen.getByRole('button', { name: /Customize with Assistant/i })).toBeInTheDocument();
+    });
+
+    it('should not show Assistant button when showAssistantButton is false', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton={false}
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show Assistant button when assistant is unavailable', () => {
+      useAssistantMock.mockReturnValue({
+        isAvailable: false,
+        openAssistant: mockOpenAssistant,
+      } as unknown as AssistantHook);
+
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
+    });
+
+    it('should call onTrackAssistantButton callback when Assistant button is clicked', async () => {
+      const mockOnAssistantClick = jest.fn();
+
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onTrackAssistantButton={mockOnAssistantClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOnAssistantClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should open assistant when Assistant button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'dashboard-library/use-dashboard',
+          mode: 'dashboarding',
+          autoSend: true,
+        })
+      );
     });
   });
 });

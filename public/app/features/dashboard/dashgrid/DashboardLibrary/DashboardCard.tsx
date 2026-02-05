@@ -28,6 +28,7 @@ interface Props {
   details?: Details;
   onClick: () => void;
   onClose?: () => void;
+  onTrackAssistantButton?: () => void; // Called before opening assistant, for analytics tracking
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
@@ -40,6 +41,7 @@ function DashboardCardComponent({
   imageUrl,
   onClick,
   onClose,
+  onTrackAssistantButton,
   dashboard,
   details,
   isLogo,
@@ -67,6 +69,8 @@ function DashboardCardComponent({
 
   const onUseAssistantClick = () => {
     if (assistantAvailable) {
+      onTrackAssistantButton?.();
+
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
         // @ts-expect-error - 'dashboarding' mode is valid but not in current type definitions

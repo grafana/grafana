@@ -42,6 +42,18 @@ export const TemplateDashboardModal = () => {
     setSearchParams(searchParams);
   };
 
+  const onTrackAssistantButton = (dashboard: GnetDashboard) => {
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+      datasourceTypes: [],
+      libraryItemId: String(dashboard.id),
+      libraryItemTitle: dashboard.name,
+      sourceEntryPoint: TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON,
+      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
+    });
+  };
+
   const onPreviewDashboardClick = async (dashboard: GnetDashboard) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
     DashboardLibraryInteractions.itemClicked({
@@ -145,6 +157,7 @@ export const TemplateDashboardModal = () => {
                     imageUrl={thumbnailUrl}
                     onClick={() => onPreviewDashboardClick(dashboard)}
                     onClose={onClose}
+                    onTrackAssistantButton={() => onTrackAssistantButton(dashboard)}
                     dashboard={dashboard}
                     kind="template_dashboard"
                     showAssistantButton
