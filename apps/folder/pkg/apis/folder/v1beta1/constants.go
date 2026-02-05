@@ -7,8 +7,6 @@ const (
 	APIGroup = "folder.grafana.app"
 	// APIVersion is the API version used by all kinds in this package
 	APIVersion = "v1beta1"
-
-	OpenAPIPrefix = "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1."
 )
 
 var (

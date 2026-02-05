@@ -182,17 +182,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMappingList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMappingList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMappingList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
                 }
               }
             }
@@ -244,12 +244,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
               }
             }
           },
@@ -261,12 +261,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -276,12 +276,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -291,12 +291,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -493,12 +493,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -550,12 +550,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
               }
             }
           },
@@ -567,12 +567,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -582,12 +582,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -767,12 +767,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -782,12 +782,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
                 }
               }
             }
@@ -925,32 +925,7 @@
             "description": "Default OK response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "metadata",
-                    "items"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           },
@@ -1017,52 +992,7 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "offset",
-                    "totalHits",
-                    "hits",
-                    "queryCost",
-                    "maxScore"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "hits": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "maxScore": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "offset": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    },
-                    "queryCost": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "totalHits": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }
@@ -1175,44 +1105,7 @@
             "description": "Default OK response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "offset",
-                    "totalHits",
-                    "hits",
-                    "queryCost",
-                    "maxScore"
-                  ],
-                  "properties": {
-                    "hits": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "maxScore": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "offset": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    },
-                    "queryCost": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "totalHits": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }
@@ -1324,17 +1217,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccountList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccountList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccountList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountList"
                 }
               }
             }
@@ -1386,12 +1279,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
               }
             }
           },
@@ -1403,12 +1296,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1418,12 +1311,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1433,12 +1326,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1635,12 +1528,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1692,12 +1585,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
               }
             }
           },
@@ -1709,12 +1602,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1724,12 +1617,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1909,12 +1802,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -1924,12 +1817,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
                 }
               }
             }
@@ -2628,17 +2521,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBindingList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBindingList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBindingList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
                 }
               }
             }
@@ -2690,12 +2583,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
               }
             }
           },
@@ -2707,12 +2600,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -2722,12 +2615,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -2737,12 +2630,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -2939,12 +2832,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -2996,12 +2889,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
               }
             }
           },
@@ -3013,12 +2906,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -3028,12 +2921,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -3213,12 +3106,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -3228,12 +3121,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
                 }
               }
             }
@@ -3383,17 +3276,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamList"
                 }
               }
             }
@@ -3445,12 +3338,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
               }
             }
           },
@@ -3462,12 +3355,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3477,12 +3370,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3492,12 +3385,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3694,12 +3587,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3751,12 +3644,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
               }
             }
           },
@@ -3768,12 +3661,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3783,12 +3676,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3968,12 +3861,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -3983,12 +3876,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
                 }
               }
             }
@@ -4078,7 +3971,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsResponse"
                 }
               }
             }
@@ -4088,14 +3981,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "GetGroups"
+          "kind": "GetGroupsResponse"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the GetGroups",
+          "description": "name of the GetGroupsResponse",
           "required": true,
           "schema": {
             "type": "string",
@@ -4300,17 +4193,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.UserList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.UserList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.UserList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList"
                 }
               }
             }
@@ -4362,12 +4255,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
               }
             }
           },
@@ -4379,12 +4272,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4394,12 +4287,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4409,12 +4302,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4611,12 +4504,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4668,12 +4561,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
               }
             }
           },
@@ -4685,12 +4578,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4700,12 +4593,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4885,12 +4778,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -4900,12 +4793,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
                 }
               }
             }
@@ -5034,6 +4927,1755 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRole": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the CoreRole",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRoleList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRoleSpec": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "group",
+          "permissions"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "default": ""
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "permissions": {
+            "description": "delegatable?: bool created? updated?",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "title": {
+            "description": "Display name of the role",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecPermission": {
+        "type": "object",
+        "required": [
+          "action",
+          "scope"
+        ],
+        "properties": {
+          "action": {
+            "description": "RBAC action (e.g: \"dashbaords:read\")",
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the ExternalGroupMapping",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ExternalGroupMapping",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ExternalGroupMappingList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingSpec": {
+        "type": "object",
+        "required": [
+          "teamRef",
+          "externalGroupId"
+        ],
+        "properties": {
+          "externalGroupId": {
+            "type": "string",
+            "default": ""
+          },
+          "teamRef": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingTeamRef"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingTeamRef": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "Name is the unique identifier for a team.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsBody": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsExternalGroupMapping": {
+        "type": "object",
+        "required": [
+          "name",
+          "externalGroup"
+        ],
+        "properties": {
+          "externalGroup": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsExternalGroupMapping"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "GetGroupsResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetMembersBody": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetMembersResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetMembersTeamUser": {
+        "type": "object",
+        "required": [
+          "team",
+          "user",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsBody": {
+        "type": "object",
+        "required": [
+          "offset",
+          "totalHits",
+          "hits",
+          "queryCost",
+          "maxScore"
+        ],
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "maxScore": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "queryCost": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsResponse": {
+        "type": "object",
+        "required": [
+          "offset",
+          "totalHits",
+          "hits",
+          "queryCost",
+          "maxScore"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "maxScore": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "queryCost": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsTeamHit": {
+        "type": "object",
+        "required": [
+          "name",
+          "title",
+          "email",
+          "provisioned",
+          "externalUID"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "default": ""
+          },
+          "externalUID": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "provisioned": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersResponse": {
+        "type": "object",
+        "required": [
+          "offset",
+          "totalHits",
+          "hits",
+          "queryCost",
+          "maxScore"
+        ],
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "maxScore": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "queryCost": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit": {
+        "type": "object",
+        "required": [
+          "name",
+          "title",
+          "login",
+          "email",
+          "role",
+          "lastSeenAt",
+          "lastSeenAtAge",
+          "provisioned",
+          "score"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "default": ""
+          },
+          "lastSeenAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastSeenAtAge": {
+            "type": "string",
+            "default": ""
+          },
+          "login": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "provisioned": {
+            "type": "boolean",
+            "default": false
+          },
+          "role": {
+            "type": "string",
+            "default": ""
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamsBody": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamsResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamsUserTeam": {
+        "type": "object",
+        "required": [
+          "user",
+          "team",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRole": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the GlobalRole",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBinding": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the GlobalRoleBinding",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingSpec": {
+        "type": "object",
+        "required": [
+          "subject",
+          "roleRefs"
+        ],
+        "properties": {
+          "roleRefs": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "subject": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingspecRoleRef": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "kind of role",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the role",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingspecSubject": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "kind of the identity getting the permission",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleSpec": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "group",
+          "permissions"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "default": ""
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "permissions": {
+            "description": "delegatable?: bool created? updated?",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "title": {
+            "description": "Display name of the role",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecPermission": {
+        "type": "object",
+        "required": [
+          "action",
+          "scope"
+        ],
+        "properties": {
+          "action": {
+            "description": "RBAC action (e.g: \"dashbaords:read\")",
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermission": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the ResourcePermission",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionSpec": {
+        "type": "object",
+        "required": [
+          "resource",
+          "permissions"
+        ],
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "resource": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionspecPermission": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name",
+          "verb"
+        ],
+        "properties": {
+          "kind": {
+            "description": "kind of the identity getting the permission",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity getting the permission",
+            "type": "string",
+            "default": ""
+          },
+          "verb": {
+            "description": "action set granted to the user (e.g. \"admin\" or \"edit\", \"view\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionspecResource": {
+        "type": "object",
+        "required": [
+          "apiGroup",
+          "resource",
+          "name"
+        ],
+        "properties": {
+          "apiGroup": {
+            "description": "api group of the resource (e.g: \"folder.grafana.app\")",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the resource (e.g: \"fold1\")",
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "description": "kind of the resource (e.g: \"folders\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Role": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the Role",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBinding": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the RoleBinding",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpec": {
+        "type": "object",
+        "required": [
+          "subject",
+          "roleRefs"
+        ],
+        "properties": {
+          "roleRefs": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "subject": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingspecRoleRef": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "kind of role",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the role",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingspecSubject": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "kind of the identity getting the permission",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleSpec": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "group",
+          "permissions"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "default": ""
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "permissions": {
+            "description": "delegatable?: bool created? updated?",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "title": {
+            "description": "Display name of the role",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecPermission": {
+        "type": "object",
+        "required": [
+          "action",
+          "scope"
+        ],
+        "properties": {
+          "action": {
+            "description": "RBAC action (e.g: \"dashbaords:read\")",
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the ServiceAccount",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ServiceAccount",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ServiceAccountList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountSpec": {
+        "type": "object",
+        "required": [
+          "disabled",
+          "plugin",
+          "role",
+          "title"
+        ],
+        "properties": {
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "plugin": {
+            "type": "string",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the Team",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "Team",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the TeamBinding",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "TeamBinding",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "TeamBindingList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec": {
+        "type": "object",
+        "required": [
+          "subject",
+          "teamRef",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "description": "permission of the identity in the team",
+            "type": "string",
+            "default": ""
+          },
+          "subject": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject"
+              }
+            ]
+          },
+          "teamRef": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamRef"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamRef": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "Name is the unique identifier for a team.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamLBACRule": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the TeamLBACRule",
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamLBACRuleList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamLBACRuleSpec": {
+        "type": "object",
+        "required": [
+          "datasource_uid",
+          "datasource_type",
+          "team_filters"
+        ],
+        "properties": {
+          "datasource_type": {
+            "description": "Data source type that this TeamLBAC Rule applies to",
+            "type": "string",
+            "default": ""
+          },
+          "datasource_uid": {
+            "description": "Data source UID that this TeamLBAC Rule applies to",
+            "type": "string",
+            "default": ""
+          },
+          "team_filters": {
+            "description": "Map of team UIDs to their filter lists Each team can have multiple filters",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.Team"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "TeamList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamSpec": {
+        "type": "object",
+        "required": [
+          "title",
+          "email",
+          "provisioned",
+          "externalUID"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "default": ""
+          },
+          "externalUID": {
+            "type": "string",
+            "default": ""
+          },
+          "provisioned": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec",
+          "status"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the User",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserSpec"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "User",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.User"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "UserList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserSpec": {
+        "type": "object",
+        "required": [
+          "disabled",
+          "email",
+          "emailVerified",
+          "grafanaAdmin",
+          "login",
+          "title",
+          "provisioned",
+          "role"
+        ],
+        "properties": {
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "email": {
+            "type": "string",
+            "default": ""
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "default": false
+          },
+          "grafanaAdmin": {
+            "type": "boolean",
+            "default": false
+          },
+          "login": {
+            "type": "string",
+            "default": ""
+          },
+          "provisioned": {
+            "type": "boolean",
+            "default": false
+          },
+          "role": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus": {
+        "type": "object",
+        "required": [
+          "lastSeenAt"
+        ],
+        "properties": {
+          "lastSeenAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",
         "additionalProperties": true,
@@ -5385,87 +7027,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRole": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the CoreRole",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "description",
-          "group",
-          "permissions"
-        ],
-        "properties": {
-          "description": {
-            "type": "string",
-            "default": ""
-          },
-          "group": {
-            "type": "string",
-            "default": ""
-          },
-          "permissions": {
-            "description": "delegatable?: bool created? updated?",
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "title": {
-            "description": "Display name of the role",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleStatus": {
         "type": "object",
         "properties": {
@@ -5482,25 +7043,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecPermission": {
-        "type": "object",
-        "required": [
-          "action",
-          "scope"
-        ],
-        "properties": {
-          "action": {
-            "description": "RBAC action (e.g: \"dashbaords:read\")",
-            "type": "string",
-            "default": ""
-          },
-          "scope": {
-            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -5534,432 +7076,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMapping": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the ExternalGroupMapping",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMappingSpec"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMapping"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingSpec": {
-        "type": "object",
-        "required": [
-          "teamRef",
-          "externalGroupId"
-        ],
-        "properties": {
-          "externalGroupId": {
-            "type": "string",
-            "default": ""
-          },
-          "teamRef": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ExternalGroupMappingTeamRef"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingTeamRef": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "description": "Name is the unique identifier for a team.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroups": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroupsBody": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetMembers": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetMembersBody": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams": {
-        "type": "object",
-        "required": [
-          "offset",
-          "totalHits",
-          "hits",
-          "queryCost",
-          "maxScore"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "hits": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "maxScore": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "queryCost": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "totalHits": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeamsBody": {
-        "type": "object",
-        "required": [
-          "offset",
-          "totalHits",
-          "hits",
-          "queryCost",
-          "maxScore"
-        ],
-        "properties": {
-          "hits": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "maxScore": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "queryCost": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "totalHits": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers": {
-        "type": "object",
-        "required": [
-          "offset",
-          "totalHits",
-          "hits",
-          "queryCost",
-          "maxScore"
-        ],
-        "properties": {
-          "hits": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "maxScore": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "queryCost": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "totalHits": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetTeams": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetTeamsBody": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRole": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the GlobalRole",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBinding": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the GlobalRoleBinding",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingSpec": {
-        "type": "object",
-        "required": [
-          "subject",
-          "roleRefs"
-        ],
-        "properties": {
-          "roleRefs": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "subject": {
-            "default": {}
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingStatus": {
         "type": "object",
         "properties": {
@@ -5976,44 +7092,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingspecRoleRef": {
-        "type": "object",
-        "required": [
-          "kind",
-          "name"
-        ],
-        "properties": {
-          "kind": {
-            "description": "kind of role",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "uid of the role",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingspecSubject": {
-        "type": "object",
-        "required": [
-          "kind",
-          "name"
-        ],
-        "properties": {
-          "kind": {
-            "description": "kind of the identity getting the permission",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "uid of the identity",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -6047,63 +7125,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "description",
-          "group",
-          "permissions"
-        ],
-        "properties": {
-          "description": {
-            "type": "string",
-            "default": ""
-          },
-          "group": {
-            "type": "string",
-            "default": ""
-          },
-          "permissions": {
-            "description": "delegatable?: bool created? updated?",
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "title": {
-            "description": "Display name of the role",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleStatus": {
         "type": "object",
         "properties": {
@@ -6120,25 +7141,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecPermission": {
-        "type": "object",
-        "required": [
-          "action",
-          "scope"
-        ],
-        "properties": {
-          "action": {
-            "description": "RBAC action (e.g: \"dashbaords:read\")",
-            "type": "string",
-            "default": ""
-          },
-          "scope": {
-            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -6172,74 +7174,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermission": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the ResourcePermission",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionSpec": {
-        "type": "object",
-        "required": [
-          "resource",
-          "permissions"
-        ],
-        "properties": {
-          "permissions": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "resource": {
-            "default": {}
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionStatus": {
         "type": "object",
         "properties": {
@@ -6256,56 +7190,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionspecPermission": {
-        "type": "object",
-        "required": [
-          "kind",
-          "name",
-          "verb"
-        ],
-        "properties": {
-          "kind": {
-            "description": "kind of the identity getting the permission",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "uid of the identity getting the permission",
-            "type": "string",
-            "default": ""
-          },
-          "verb": {
-            "description": "action set granted to the user (e.g. \"admin\" or \"edit\", \"view\")",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionspecResource": {
-        "type": "object",
-        "required": [
-          "apiGroup",
-          "resource",
-          "name"
-        ],
-        "properties": {
-          "apiGroup": {
-            "description": "api group of the resource (e.g: \"folder.grafana.app\")",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "uid of the resource (e.g: \"fold1\")",
-            "type": "string",
-            "default": ""
-          },
-          "resource": {
-            "description": "kind of the resource (e.g: \"folders\")",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -6339,98 +7223,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Role": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the Role",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBinding": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the RoleBinding",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingSpec": {
-        "type": "object",
-        "required": [
-          "subject",
-          "roleRefs"
-        ],
-        "properties": {
-          "roleRefs": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "subject": {
-            "default": {}
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingStatus": {
         "type": "object",
         "properties": {
@@ -6447,44 +7239,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingspecRoleRef": {
-        "type": "object",
-        "required": [
-          "kind",
-          "name"
-        ],
-        "properties": {
-          "kind": {
-            "description": "kind of role",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "uid of the role",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingspecSubject": {
-        "type": "object",
-        "required": [
-          "kind",
-          "name"
-        ],
-        "properties": {
-          "kind": {
-            "description": "kind of the identity getting the permission",
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "description": "uid of the identity",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -6518,63 +7272,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "description",
-          "group",
-          "permissions"
-        ],
-        "properties": {
-          "description": {
-            "type": "string",
-            "default": ""
-          },
-          "group": {
-            "type": "string",
-            "default": ""
-          },
-          "permissions": {
-            "description": "delegatable?: bool created? updated?",
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "title": {
-            "description": "Display name of the role",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleStatus": {
         "type": "object",
         "properties": {
@@ -6591,25 +7288,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecPermission": {
-        "type": "object",
-        "required": [
-          "action",
-          "scope"
-        ],
-        "properties": {
-          "action": {
-            "description": "RBAC action (e.g: \"dashbaords:read\")",
-            "type": "string",
-            "default": ""
-          },
-          "scope": {
-            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -6638,103 +7316,6 @@
           },
           "state": {
             "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the ServiceAccount",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccountSpec"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.ServiceAccount"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec": {
-        "type": "object",
-        "required": [
-          "disabled",
-          "plugin",
-          "role",
-          "title"
-        ],
-        "properties": {
-          "disabled": {
-            "type": "boolean",
-            "default": false
-          },
-          "plugin": {
-            "type": "string",
-            "default": ""
-          },
-          "role": {
-            "type": "string",
-            "default": ""
-          },
-          "title": {
             "type": "string",
             "default": ""
           }
@@ -6789,146 +7370,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Team": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the Team",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamSpec"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBinding": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the TeamBinding",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBindingSpec"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBinding"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec": {
-        "type": "object",
-        "required": [
-          "subject",
-          "teamRef",
-          "permission",
-          "external"
-        ],
-        "properties": {
-          "external": {
-            "type": "boolean",
-            "default": false
-          },
-          "permission": {
-            "description": "permission of the identity in the team",
-            "type": "string",
-            "default": ""
-          },
-          "subject": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBindingspecSubject"
-              }
-            ]
-          },
-          "teamRef": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.TeamBindingTeamRef"
-              }
-            ]
-          }
-        }
-      },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingStatus": {
         "type": "object",
         "properties": {
@@ -6945,32 +7386,6 @@
             "additionalProperties": {
               "default": {}
             }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingTeamRef": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "description": "Name is the unique identifier for a team.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "description": "uid of the identity",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -6999,150 +7414,6 @@
           },
           "state": {
             "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRule": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the TeamLBACRule",
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec": {
-        "type": "object",
-        "required": [
-          "datasource_uid",
-          "datasource_type",
-          "team_filters"
-        ],
-        "properties": {
-          "datasource_type": {
-            "description": "Data source type that this TeamLBAC Rule applies to",
-            "type": "string",
-            "default": ""
-          },
-          "datasource_uid": {
-            "description": "Data source UID that this TeamLBAC Rule applies to",
-            "type": "string",
-            "default": ""
-          },
-          "team_filters": {
-            "description": "Map of team UIDs to their filter lists Each team can have multiple filters",
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "default": ""
-              }
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.Team"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "email",
-          "provisioned",
-          "externalUID"
-        ],
-        "properties": {
-          "email": {
-            "type": "string",
-            "default": ""
-          },
-          "externalUID": {
-            "type": "string",
-            "default": ""
-          },
-          "provisioned": {
-            "type": "boolean",
-            "default": false
-          },
-          "title": {
             "type": "string",
             "default": ""
           }
@@ -7192,302 +7463,6 @@
           },
           "state": {
             "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.User": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "spec",
-          "status"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Spec is the spec of the User",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.UserSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.UserStatus"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserHit": {
-        "type": "object",
-        "required": [
-          "name",
-          "title",
-          "login",
-          "email",
-          "role",
-          "lastSeenAt",
-          "lastSeenAtAge",
-          "provisioned",
-          "score"
-        ],
-        "properties": {
-          "email": {
-            "type": "string",
-            "default": ""
-          },
-          "lastSeenAt": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "lastSeenAtAge": {
-            "type": "string",
-            "default": ""
-          },
-          "login": {
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
-          "provisioned": {
-            "type": "boolean",
-            "default": false
-          },
-          "role": {
-            "type": "string",
-            "default": ""
-          },
-          "score": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserList": {
-        "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1iam~1pkg~1apis~1iam~1v0alpha1.User"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec": {
-        "type": "object",
-        "required": [
-          "disabled",
-          "email",
-          "emailVerified",
-          "grafanaAdmin",
-          "login",
-          "title",
-          "provisioned",
-          "role"
-        ],
-        "properties": {
-          "disabled": {
-            "type": "boolean",
-            "default": false
-          },
-          "email": {
-            "type": "string",
-            "default": ""
-          },
-          "emailVerified": {
-            "type": "boolean",
-            "default": false
-          },
-          "grafanaAdmin": {
-            "type": "boolean",
-            "default": false
-          },
-          "login": {
-            "type": "string",
-            "default": ""
-          },
-          "provisioned": {
-            "type": "boolean",
-            "default": false
-          },
-          "role": {
-            "type": "string",
-            "default": ""
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus": {
-        "type": "object",
-        "required": [
-          "lastSeenAt"
-        ],
-        "properties": {
-          "lastSeenAt": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam": {
-        "type": "object",
-        "required": [
-          "user",
-          "team",
-          "permission",
-          "external"
-        ],
-        "properties": {
-          "external": {
-            "type": "boolean",
-            "default": false
-          },
-          "permission": {
-            "type": "string",
-            "default": ""
-          },
-          "team": {
-            "type": "string",
-            "default": ""
-          },
-          "user": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping": {
-        "type": "object",
-        "required": [
-          "name",
-          "externalGroup"
-        ],
-        "properties": {
-          "externalGroup": {
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser": {
-        "type": "object",
-        "required": [
-          "team",
-          "user",
-          "permission",
-          "external"
-        ],
-        "properties": {
-          "external": {
-            "type": "boolean",
-            "default": false
-          },
-          "permission": {
-            "type": "string",
-            "default": ""
-          },
-          "team": {
-            "type": "string",
-            "default": ""
-          },
-          "user": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1RoutesNamespacedSearchTeamsGETResponseTeamHit": {
-        "type": "object",
-        "required": [
-          "name",
-          "title",
-          "email",
-          "provisioned",
-          "externalUID"
-        ],
-        "properties": {
-          "email": {
-            "type": "string",
-            "default": ""
-          },
-          "externalUID": {
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
-          "provisioned": {
-            "type": "boolean",
-            "default": false
-          },
-          "title": {
             "type": "string",
             "default": ""
           }
@@ -8309,20 +8284,6 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta": {
-        "description": "TypeMeta describes an individual object in an API response or request with strings representing the type of the object and its API schema version. Structures that are versioned or persisted should inline TypeMeta.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
       }
     }
   }

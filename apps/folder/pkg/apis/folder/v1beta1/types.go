@@ -6,6 +6,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+const OpenAPIPrefix = "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1."
+
 // FolderInfoList returns a list of folder references (parents or children)
 // Unlike FolderList, each item is not a full k8s object
 // +k8s:deepcopy-gen=true

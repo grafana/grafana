@@ -991,7 +991,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
-				oas.Components.Schemas[key] = &v.Schema
+				oas.Components.Schemas[k] = &v.Schema // use the short key (without the full package path)
 			}
 		}
 
