@@ -423,6 +423,7 @@ export class GraphiteDatasource
         // refID should always be the last element
         refId = splitTarget.pop() || '';
         s.target = splitTarget.join(' ');
+        s.tags['name'] = s.target;
       }
       // Disables Grafana own series naming
       s.title = s.target;
