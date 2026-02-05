@@ -6,7 +6,7 @@ import { Alert } from '@grafana/ui';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { Title } from '../common/TItle';
+import { Title } from '../common/Title';
 
 import { PoliciesTree } from './PoliciesTree';
 
