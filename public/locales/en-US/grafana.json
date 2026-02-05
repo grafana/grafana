@@ -2104,7 +2104,11 @@
     },
     "navigation": {
       "alert-rules": "Alert rules",
-      "recently-deleted": "Recently deleted"
+      "contact-points": "Contact points",
+      "notification-policies": "Notification policies",
+      "recently-deleted": "Recently deleted",
+      "templates": "Templates",
+      "time-intervals": "Time intervals"
     },
     "need-help-info": {
       "need-help": "Need help?"
@@ -3167,6 +3171,10 @@
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
+    "templates-page": {
+      "add-template": "Add notification template group",
+      "description": "Create notification templates to customize your notifications."
+    },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
       "title-drawer": "Edit {{name}}",
@@ -3211,7 +3219,8 @@
       "error-loading": {
         "description": "Could not load time intervals. Please try again later.",
         "title": "Error loading time intervals"
-      }
+      },
+      "title": "Time intervals"
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
