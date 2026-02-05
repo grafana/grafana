@@ -7,6 +7,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { getFolderPermissions } from '../../permissions';
@@ -25,9 +26,12 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
     });
   };
 
+  // For now, only admins can see folder owners
+  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+
   return (
     <Stack alignItems="center">
-      {config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
+      {isAdmin && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences || []} />
       )}
       {config.featureToggles.restoreDashboards && (

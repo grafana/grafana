@@ -17,19 +17,15 @@ export const ManageOwnerReferences = ({
   onSave: () => void;
   onRemove: () => void;
 }) => {
-  const [pendingReference, setPendingReference] = useState<OwnerReferenceType | null>(null);
+  const [ownerRef, setOwnerRef] = useState<OwnerReferenceType | null>(null);
   const { data: ownerReferences } = useGetOwnerReferences({ resourceId });
   const [trigger] = useSetOwnerReference({ resourceId });
   const [removeOwnerReference] = useRemoveOwnerReferences({ resourceId });
 
-  const addOwnerReference = (ownerReference: OwnerReferenceType) => {
-    trigger(ownerReference);
-  };
-
   const handleSaveButtonClick = () => {
-    if (pendingReference) {
-      addOwnerReference(pendingReference);
-      setPendingReference(null);
+    if (ownerRef) {
+      trigger(ownerRef);
+      setOwnerRef(null);
       onSave();
       reportInteraction('grafana_owner_reference_modal_save_button_clicked', {
         actionType: ownerReferences[0]?.uid ? 'reference changed' : 'reference set',
@@ -37,24 +33,22 @@ export const ManageOwnerReferences = ({
     }
   };
 
+  const handleRemoveButtonClick = () => {
+    reportInteraction('grafana_owner_reference_modal_remove_button_clicked');
+    removeOwnerReference();
+    onRemove();
+  };
+
   return (
     <Stack direction="column" gap={2}>
       <OwnerReferenceSelector
         defaultTeamUid={ownerReferences[0]?.uid}
         onChange={(ownerReference) => {
-          setPendingReference(ownerReference);
+          setOwnerRef(ownerReference);
         }}
       />
       <Stack direction="row" gap={2} justifyContent="end">
-        <Button
-          variant="destructive"
-          fill="outline"
-          onClick={() => {
-            reportInteraction('grafana_owner_reference_modal_remove_button_clicked');
-            removeOwnerReference();
-            onRemove();
-          }}
-        >
+        <Button variant="destructive" fill="outline" onClick={handleRemoveButtonClick}>
           <Trans i18nKey="manage-owner-references.remove-owner">Remove owner</Trans>
         </Button>
         <Button onClick={handleSaveButtonClick}>

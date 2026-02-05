@@ -7,6 +7,7 @@ import { Box, Button, Drawer, Dropdown, Icon, Menu, MenuItem, Modal, Stack, Text
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { ManageOwnerReferences } from 'app/core/components/OwnerReferences/ManageOwnerReferences';
+import { contextSrv } from 'app/core/services/context_srv';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
@@ -36,8 +37,9 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
-
   const deleteFolder = useDeleteFolderMutationFacade();
+
+  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const {
     canEditFolders,
@@ -141,7 +143,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
-  const showManageOwners = canViewPermissions && !isProvisionedFolder;
+  // For now, only admins can manage folder owners
+  const showManageOwners = isAdmin && !isProvisionedFolder;
 
   const menu = (
     <Menu>
