@@ -57,7 +57,7 @@ export interface ContentHeaderProps {
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
 /**
