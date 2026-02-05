@@ -5,7 +5,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
-import { variableRegex } from 'app/features/variables/utils';
+import { variableRegexExec } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -102,6 +102,8 @@ export class DashboardExporter {
       variableLookup[variable.name] = variable;
     }
 
+    const datasourceVariableRefNameMap: { [key: string]: string } = {};
+
     const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
       if (obj.datasource === undefined) {
         obj.datasource = fallback;
@@ -112,12 +114,19 @@ export class DashboardExporter {
       let datasourceVariable: any = null;
 
       const datasourceUid: string | undefined = datasource?.uid;
-      const match = datasourceUid && variableRegex.exec(datasourceUid);
+      const match = datasourceUid && variableRegexExec(datasourceUid);
+      let varName: string | undefined;
 
       // ignore data source properties that contain a variable
       if (match) {
-        const varName = match[1] || match[2] || match[4];
+        varName = match[1] || match[2] || match[4];
         datasourceVariable = variableLookup[varName];
+
+        // if datasource variable is already templated, skip it
+        if (datasourceVariableRefNameMap[varName]) {
+          return;
+        }
+
         if (datasourceVariable && datasourceVariable.current) {
           datasource = datasourceVariable.current.value;
         }
@@ -138,14 +147,10 @@ export class DashboardExporter {
             version: ds.meta.info.version || '1.0.0',
           };
 
-          // if used via variable we can skip templatizing usage
-          if (datasourceVariable) {
-            return;
-          }
-
           const libraryPanel = obj.libraryPanel;
           const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
           let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+          const templatedUid = '${' + refName + '}';
 
           datasources[refName] = {
             name: refName,
@@ -166,7 +171,14 @@ export class DashboardExporter {
             };
           }
 
-          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+          // if panel or query is relying on a datasource variable
+          // skip templating datasource uid but save the reference so we can set datasource variable's current prop
+          if (datasourceVariable && varName) {
+            datasourceVariableRefNameMap[varName] = '${' + refName + '}';
+            return;
+          }
+
+          obj.datasource = { type: ds.meta.id, uid: templatedUid };
         });
     };
 
