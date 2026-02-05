@@ -30,6 +30,7 @@ import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { DryRunValidationResult } from './types';
+import { useExtraConfigState } from './useExtraConfigState';
 import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
 
 export interface ImportFormValues {
@@ -135,10 +136,13 @@ function ImportWizardContent() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
+  // Watch the policyTreeName to check for existing extra config conflicts
+  const policyTreeName = watch('policyTreeName');
+  const { extraConfigState, existingIdentifier } = useExtraConfigState(policyTreeName);
+
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(async () => {
     const formValues = getValues();
-    const mergeMatchers = `${MERGE_MATCHERS_LABEL_NAME}=${formValues.policyTreeName}`;
 
     // Check if we have the required data to run dry-run
     if (!formValues.policyTreeName) {
@@ -160,7 +164,7 @@ function ImportWizardContent() {
           source: formValues.notificationsSource,
           datasourceName: formValues.notificationsDatasourceName ?? undefined,
           yamlFile: formValues.notificationsYamlFile,
-          mergeMatchers,
+          configIdentifier: formValues.policyTreeName,
         },
         // TODO: Set skipValidation to false once the backend endpoint is implemented
         { skipValidation: true }
@@ -241,15 +245,13 @@ function ImportWizardContent() {
     const willImportRules = values.step2Completed && !values.step2Skipped;
 
     try {
-      const notificationsLabel = `${MERGE_MATCHERS_LABEL_NAME}=${values.policyTreeName}`;
-
       // Import notifications first (if step 1 was completed)
       if (willImportNotifications) {
         await importNotifications({
           source: values.notificationsSource,
           datasourceName: values.notificationsDatasourceName ?? undefined,
           yamlFile: values.notificationsYamlFile,
-          mergeMatchers: notificationsLabel,
+          configIdentifier: values.policyTreeName,
         });
       }
 
@@ -336,6 +338,8 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
+              extraConfigState={extraConfigState}
+              existingIdentifier={existingIdentifier}
             />
           )}
 
@@ -383,12 +387,26 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
+  /** State of existing extra config: 'none' | 'same' (will overwrite) | 'different' (blocked) */
+  extraConfigState: 'none' | 'same' | 'different';
+  /** Identifier of existing extra config, if any */
+  existingIdentifier?: string;
 }
 
-function Step1Wrapper({ canImport, onNext, onSkip, dryRunState, dryRunResult, onTriggerDryRun }: Step1WrapperProps) {
+function Step1Wrapper({
+  canImport,
+  onNext,
+  onSkip,
+  dryRunState,
+  dryRunResult,
+  onTriggerDryRun,
+  extraConfigState,
+  existingIdentifier,
+}: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  // Can proceed if form is valid and dry-run passed (not loading or error)
-  const canProceed = isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error';
+  // Can proceed if form is valid, dry-run passed, and no conflicting extra config
+  const canProceed =
+    isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error' && extraConfigState !== 'different';
 
   return (
     <WizardStep
@@ -410,6 +428,8 @@ function Step1Wrapper({ canImport, onNext, onSkip, dryRunState, dryRunResult, on
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
+        extraConfigState={extraConfigState}
+        existingIdentifier={existingIdentifier}
       />
     </WizardStep>
   );

@@ -8,12 +8,15 @@ interface UseBranchDropdownOptionsParams {
   prBranch?: string;
   lastBranch?: string;
   branchData?: GetRepositoryRefsApiResponse;
+  canPushToConfiguredBranch?: boolean;
+  canPushToNonConfiguredBranch?: boolean;
 }
 
 interface BranchOption {
   label: string;
   value: string;
   description?: string;
+  infoOption?: boolean; // this controls whether an option is just for info display (disabled)
 }
 
 function getBranchDescriptions() {
@@ -24,6 +27,14 @@ function getBranchDescriptions() {
     ),
     pr: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch', 'Pull request branch'),
     lastUsed: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used', 'Last branch'),
+    disabledConfigured: t(
+      'provisioned-resource-form.save-or-delete-resource-shared-fields.info-branch-disabled',
+      'Push to configured branch is disabled'
+    ),
+    readOnlyLabel: t(
+      'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-read-only-branch',
+      ' (read-only)'
+    ),
   };
 }
 
@@ -36,6 +47,8 @@ export const useBranchDropdownOptions = ({
   prBranch,
   lastBranch,
   branchData,
+  canPushToConfiguredBranch,
+  canPushToNonConfiguredBranch,
 }: UseBranchDropdownOptionsParams): BranchOption[] => {
   const descriptions = useMemo(() => getBranchDescriptions(), []);
 
@@ -46,11 +59,17 @@ export const useBranchDropdownOptions = ({
 
   if (configuredBranch) {
     options.push({
-      label: `${configuredBranch}`,
+      label: `${configuredBranch}${canPushToConfiguredBranch ? '' : descriptions.readOnlyLabel}`,
       value: configuredBranch,
-      description: descriptions.configured,
+      description: canPushToConfiguredBranch ? descriptions.configured : descriptions.disabledConfigured,
+      infoOption: !canPushToConfiguredBranch,
     });
     addedBranches.add(configuredBranch);
+  }
+
+  if (!canPushToNonConfiguredBranch) {
+    // only show the configured branch when non‑configured branches aren’t allowed.
+    return options;
   }
 
   if (prBranch && !addedBranches.has(prBranch)) {
