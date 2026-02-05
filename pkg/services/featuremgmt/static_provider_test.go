@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
@@ -143,7 +142,7 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		provider, err := newStaticProvider(nil, []FeatureFlag{tt.flags})
+		provider, err := newStaticProvider(make(map[string]setting.TypedFlag), []FeatureFlag{tt.flags})
 		assert.NoError(t, err)
 
 		var result any
@@ -167,42 +166,63 @@ func Test_StaticProvider_ConfigOverride(t *testing.T) {
 	tests := []struct {
 		name          string
 		originalValue string
-		configValue   any
+		configValue   string
+		expectedValue any
 	}{
 		{
 			name:          "bool",
 			originalValue: "false",
-			configValue:   true,
+			configValue:   "true",
+			expectedValue: true,
 		},
 		{
 			name:          "int",
 			originalValue: "0",
-			configValue:   int64(1),
+			configValue:   "1",
+			expectedValue: int64(1),
 		},
 		{
 			name:          "float",
 			originalValue: "0.0",
-			configValue:   1.0,
+			configValue:   "1.0",
+			expectedValue: 1.0,
 		},
 		{
 			name:          "string",
 			originalValue: "foo",
 			configValue:   "bar",
+			expectedValue: "bar",
 		},
 		{
 			name:          "structure",
 			originalValue: "{}",
-			configValue:   make(map[string]any),
+			configValue:   `{"foo":"bar"}`,
+			expectedValue: map[string]any{"foo": "bar"},
 		},
 	}
 
 	for _, tt := range tests {
-		configFlags, standardFlags := makeFlags(tt)
-		provider, err := newStaticProvider(configFlags, standardFlags)
+		standardFlags := []FeatureFlag{
+			{
+				Name:       tt.name,
+				Expression: tt.originalValue,
+			},
+		}
+
+		// Parse config flag using ParseFlagWithType (same as production code)
+		typedFlags := make(map[string]setting.TypedFlag)
+		flag, flagType, err := setting.ParseFlagWithType(tt.name, tt.configValue)
+		require.NoError(t, err)
+		typedFlags[tt.name] = setting.TypedFlag{
+			InMemoryFlag: flag,
+			Type:         flagType,
+		}
+
+		provider, err := newStaticProvider(typedFlags, standardFlags)
 		assert.NoError(t, err)
 
 		var result any
-		switch tt.configValue.(type) {
+		switch tt.expectedValue.(type) {
 		case bool:
 			result = provider.BooleanEvaluation(t.Context(), tt.name, false, openfeature.FlattenedContext{}).Value
 		case float64:
@@ -215,23 +235,6 @@ func Test_StaticProvider_ConfigOverride(t *testing.T) {
 			result = provider.ObjectEvaluation(t.Context(), tt.name, make(map[string]any), openfeature.FlattenedContext{}).Value
 		}
 
-		assert.Equal(t, tt.configValue, result)
+		assert.Equal(t, tt.expectedValue, result)
 	}
-}
-
-func makeFlags(tt struct {
-	name          string
-	originalValue string
-	configValue   any
-}) (map[string]memprovider.InMemoryFlag, []FeatureFlag) {
-	orig := FeatureFlag{
-		Name:       tt.name,
-		Expression: tt.originalValue,
-	}
-
-	config := map[string]memprovider.InMemoryFlag{
-		tt.name: setting.NewInMemoryFlag(tt.name, tt.configValue),
-	}
-
-	return config, []FeatureFlag{orig}
 }

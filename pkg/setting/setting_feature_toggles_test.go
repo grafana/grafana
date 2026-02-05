@@ -76,12 +76,12 @@ func TestFeatureToggles(t *testing.T) {
 			require.ErrorIs(t, err, nil)
 		}
 
-		featureToggles, err := ReadFeatureTogglesFromInitFile(toggles)
+		typedFlags, err := ReadFeatureTogglesFromInitFile(toggles)
 		require.NoError(t, err)
 
-		for k, v := range featureToggles {
+		for k, typedFlag := range typedFlags {
 			toggle := tc.expectedToggles[k]
-			require.Equal(t, toggle, v, tc.name)
+			require.Equal(t, toggle, typedFlag.InMemoryFlag, tc.name)
 		}
 	}
 }
@@ -101,7 +101,7 @@ func TestFlagValueSerialization(t *testing.T) {
 	for _, tt := range testCases {
 		asStringMap := AsStringMap(map[string]memprovider.InMemoryFlag{tt.Key: tt})
 
-		deserialized, err := ParseFlag(tt.Key, asStringMap[tt.Key])
+		deserialized, _, err := ParseFlagWithType(tt.Key, asStringMap[tt.Key])
 		assert.NoError(t, err)
 
 		if diff := cmp.Diff(tt, deserialized); diff != "" {

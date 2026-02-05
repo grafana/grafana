@@ -18,31 +18,34 @@ const DefaultVariantName = "default"
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	section := iniFile.Section("feature_toggles")
-	toggles, err := ReadFeatureTogglesFromInitFile(section)
+	typedFlags, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return err
 	}
 	// TODO IsFeatureToggleEnabled has been deprecated for 2 years now, we should remove this function completely
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = func(key string) bool {
-		toggle, ok := toggles[key]
+		typedFlag, ok := typedFlags[key]
 		if !ok {
 			return false
 		}
 
-		value, ok := toggle.Variants[toggle.DefaultVariant].(bool)
+		value, ok := typedFlag.Variants[typedFlag.DefaultVariant].(bool)
 		return value && ok
 	}
 	return nil
 }
 
-func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]memprovider.InMemoryFlag, error) {
-	featureToggles := make(map[string]memprovider.InMemoryFlag, 10)
+func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]TypedFlag, error) {
+	typedFlags := make(map[string]TypedFlag, 10)
 
 	// parse the comma separated list in `enable`.
 	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
 	for _, feature := range util.SplitString(featuresTogglesStr) {
-		featureToggles[feature] = memprovider.InMemoryFlag{Key: feature, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: true}}
+		typedFlags[feature] = TypedFlag{
+			InMemoryFlag: memprovider.InMemoryFlag{Key: feature, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: true}},
+			Type:         FlagTypeBoolean,
+		}
 	}
 
 	// read all other settings under [feature_toggles]. If a toggle is
@@ -52,37 +55,74 @@ func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[str
 			continue
 		}
 
-		b, err := ParseFlag(v.Name(), v.Value())
+		flag, flagType, err := ParseFlagWithType(v.Name(), v.Value())
 		if err != nil {
-			return featureToggles, err
+			return typedFlags, err
 		}
 
-		featureToggles[v.Name()] = b
+		typedFlags[v.Name()] = TypedFlag{
+			InMemoryFlag: flag,
+			Type:         flagType,
+		}
 	}
-	return featureToggles, nil
+	return typedFlags, nil
 }
 
-func ParseFlag(name, value string) (memprovider.InMemoryFlag, error) {
+// FlagType represents the data type of a feature flag
+type FlagType int
+
+const (
+	FlagTypeBoolean FlagType = iota
+	FlagTypeInteger
+	FlagTypeFloat
+	FlagTypeString
+	FlagTypeObject
+)
+
+// TypedFlag embeds InMemoryFlag and adds type information
+type TypedFlag struct {
+	memprovider.InMemoryFlag
+	Type FlagType
+}
+
+// ParseFlagWithType parses a flag value and returns both the InMemoryFlag and its type
+func ParseFlagWithType(name, value string) (memprovider.InMemoryFlag, FlagType, error) {
 	var structure map[string]any
 
 	if integer, err := strconv.Atoi(value); err == nil {
-		return NewInMemoryFlag(name, integer), nil
+		return NewInMemoryFlag(name, integer), FlagTypeInteger, nil
 	}
 	if float, err := strconv.ParseFloat(value, 64); err == nil {
-		return NewInMemoryFlag(name, float), nil
+		return NewInMemoryFlag(name, float), FlagTypeFloat, nil
 	}
 	if err := json.Unmarshal([]byte(value), &structure); err == nil {
-		return NewInMemoryFlag(name, structure), nil
+		return NewInMemoryFlag(name, structure), FlagTypeObject, nil
 	}
 	if boolean, err := strconv.ParseBool(value); err == nil {
-		return NewInMemoryFlag(name, boolean), nil
+		return NewInMemoryFlag(name, boolean), FlagTypeBoolean, nil
 	}
 
-	return NewInMemoryFlag(name, value), nil
+	return NewInMemoryFlag(name, value), FlagTypeString, nil
 }
 
 func NewInMemoryFlag(name string, value any) memprovider.InMemoryFlag {
 	return memprovider.InMemoryFlag{Key: name, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: value}}
+}
+
+// DetermineFlagType determines the FlagType from a value
+func DetermineFlagType(value any) FlagType {
+	switch value.(type) {
+	case bool:
+		return FlagTypeBoolean
+	case int, int64:
+		return FlagTypeInteger
+	case float64, float32:
+		return FlagTypeFloat
+	case string:
+		return FlagTypeString
+	default:
+		return FlagTypeObject
+	}
 }
 
 func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {

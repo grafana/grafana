@@ -2,7 +2,6 @@ package featuremgmt
 
 import (
 	"fmt"
-	"maps"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -14,13 +13,19 @@ import (
 // also allows for bulk evaluation of flags, necessary to proxy OFREP requests.
 type inMemoryBulkProvider struct {
 	memprovider.InMemoryProvider
-	flags map[string]memprovider.InMemoryFlag
+	flags map[string]setting.TypedFlag
 }
 
-func newInMemoryBulkProvider(flags map[string]memprovider.InMemoryFlag) *inMemoryBulkProvider {
+func newInMemoryBulkProvider(typedFlags map[string]setting.TypedFlag) *inMemoryBulkProvider {
+	// Convert TypedFlags to InMemoryFlags for the provider
+	flags := make(map[string]memprovider.InMemoryFlag, len(typedFlags))
+	for key, typedFlag := range typedFlags {
+		flags[key] = typedFlag.InMemoryFlag
+	}
+
 	return &inMemoryBulkProvider{
 		InMemoryProvider: memprovider.NewInMemoryProvider(flags),
-		flags:            flags,
+		flags:            typedFlags,
 	}
 }
 
@@ -33,21 +38,26 @@ func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
 	return keys, nil
 }
 
-func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
-	flags := make(map[string]memprovider.InMemoryFlag, len(standardFlags))
+func newStaticProvider(confFlags map[string]setting.TypedFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
+	typedFlags := make(map[string]setting.TypedFlag, len(standardFlags)+len(confFlags))
 
-	// Parse and add standard flags
+	// Parse and add standard flags with type information
 	for _, flag := range standardFlags {
-		inMemFlag, err := setting.ParseFlag(flag.Name, flag.Expression)
+		inMemFlag, flagType, err := setting.ParseFlagWithType(flag.Name, flag.Expression)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse flag %s: %w", flag.Name, err)
 		}
 
-		flags[flag.Name] = inMemFlag
+		typedFlags[flag.Name] = setting.TypedFlag{
+			InMemoryFlag: inMemFlag,
+			Type:         flagType,
+		}
 	}
 
-	// Add flags from config.ini file
-	maps.Copy(flags, confFlags)
+	// Add flags from config.ini file - already typed
+	for name, typedFlag := range confFlags {
+		typedFlags[name] = typedFlag
+	}
 
-	return newInMemoryBulkProvider(flags), nil
+	return newInMemoryBulkProvider(typedFlags), nil
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -25,8 +24,8 @@ type OpenFeatureConfig struct {
 	URL *url.URL
 	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
 	HTTPClient *http.Client
-	// StaticFlags are the feature flags to use with static provider
-	StaticFlags map[string]memprovider.InMemoryFlag
+	// StaticFlags are the feature flags to use with static provider (with type information)
+	StaticFlags map[string]setting.TypedFlag
 	// TargetingKey is used for evaluation context
 	TargetingKey string
 	// ContextAttrs are additional attributes for evaluation context
@@ -100,7 +99,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 func createProvider(
 	providerType setting.OpenFeatureProviderType,
 	u *url.URL,
-	staticFlags map[string]memprovider.InMemoryFlag,
+	staticFlags map[string]setting.TypedFlag,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
 	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
