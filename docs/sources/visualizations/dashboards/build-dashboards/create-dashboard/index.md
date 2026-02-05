@@ -19,6 +19,10 @@ weight: 1
 
 ## Create a dashboard
 
+{{< admonition type="note" >}}
+For information on the new dynamic dashboards editing experience, refer to the [next version of the Grafana OSS documentation](https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-dashboard/).
+{{< /admonition >}}
+
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
 **Before you begin:**
