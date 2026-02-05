@@ -11,16 +11,43 @@ import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
 
 import { angularMapper, loadingStrategyMapper } from './shared';
 
-function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
-  const { logos, updated, version, description = '', keywords } = spec.pluginJson.info;
-  const author = { ...spec.pluginJson.info.author, name: spec.pluginJson.info.author?.name ?? '' };
-  const links = (spec.pluginJson.info.links || []).map((l) => ({ ...l, name: l.name ?? '', url: l.url ?? '' }));
-  const screenshots = (spec.pluginJson.info.screenshots || []).map((s) => ({
+function toCDNUrl(spec: v0alpha1Spec, path: string): string {
+  try {
+    const normalizedBase = spec.baseURL.endsWith('/') ? spec.baseURL : `${spec.baseURL}/`;
+    const url = new URL(path, normalizedBase);
+    return url.toString();
+  } catch (error) {
+    return path; // plugin without proper CDN URL or builtin plugin
+  }
+}
+
+function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
+  if (!spec.pluginJson.info.screenshots) {
+    return [];
+  }
+
+  return spec.pluginJson.info.screenshots.map((s) => ({
     ...s,
     name: s.name ?? '',
-    path: s.path ?? '',
+    path: toCDNUrl(spec, s.path ?? ''),
   }));
+}
+
+function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
+  return {
+    ...spec.pluginJson.info.logos,
+    large: toCDNUrl(spec, spec.pluginJson.info.logos.large),
+    small: toCDNUrl(spec, spec.pluginJson.info.logos.small),
+  };
+}
+
+function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
+  const { updated, version, description = '', keywords } = spec.pluginJson.info;
+  const author = { ...spec.pluginJson.info.author, name: spec.pluginJson.info.author?.name ?? '' };
+  const links = (spec.pluginJson.info.links || []).map((l) => ({ ...l, name: l.name ?? '', url: l.url ?? '' }));
+  const screenshots = screenshotsMapper(spec);
   const build = {};
+  const logos = logosMapper(spec);
 
   return {
     author,
@@ -113,12 +140,12 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const loadingStrategy = loadingStrategyMapper(spec);
   const sort = sortMapper(spec);
   const type = PluginType.panel;
-  const module = spec.module?.path ?? '';
-  const baseUrl = spec.baseURL ?? '';
+  const module = spec.module.path;
+  const baseUrl = spec.baseURL;
   const signature = signatureMapper(spec);
   const angular = angularMapper(spec);
   const translations = spec.translations;
-  const moduleHash = spec.module?.hash;
+  const moduleHash = spec.module.hash;
 
   return {
     id,

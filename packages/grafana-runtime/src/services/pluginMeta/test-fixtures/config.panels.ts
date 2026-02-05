@@ -42,7 +42,7 @@ export const panel: PanelPluginMeta = structuredClone({
   type: PluginType.panel,
 });
 
-export const clockPanel = {
+export const clockPanelConfigCDN: PanelPluginMeta = structuredClone({
   id: 'grafana-clock-panel',
   name: 'Clock',
   info: {
@@ -85,11 +85,13 @@ export const clockPanel = {
   hideFromList: false,
   sort: 100,
   skipDataQuery: false,
+  state: '' as PluginState,
   baseUrl: 'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel',
-  signature: PluginSignatureStatus.valid,
+  signature: 'valid' as PluginSignatureStatus,
   module: 'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/module.js',
   angular: { detected: false } as AngularMeta,
-  loadingStrategy: PluginLoadingStrategy.script,
+  loadingStrategy: 'script' as PluginLoadingStrategy,
+  moduleHash: 'sha256-VWOd7WYQVvhfE36pnbvZHoIG25IkO9aaXYJwVKnH538=',
   translations: {
     'cs-CZ':
       'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/cs-CZ/grafana-clock-panel.json',
@@ -131,7 +133,78 @@ export const clockPanel = {
       'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/zh-Hant/grafana-clock-panel.json',
   },
   type: PluginType.panel,
-};
+});
+
+export const clockPanelConfigOnPrem: PanelPluginMeta = structuredClone({
+  id: 'grafana-clock-panel',
+  name: 'Clock',
+  info: {
+    author: {
+      name: 'Grafana Labs',
+      url: 'https://grafana.com',
+    },
+    description: 'Clock panel for grafana',
+    links: [
+      {
+        name: 'Project site',
+        url: 'https://github.com/grafana/clock-panel',
+      },
+      {
+        name: 'MIT License',
+        url: 'https://github.com/grafana/clock-panel/blob/master/LICENSE',
+      },
+    ],
+    logos: {
+      small: 'public/plugins/grafana-clock-panel/img/clock.svg',
+      large: 'public/plugins/grafana-clock-panel/img/clock.svg',
+    },
+    build: {},
+    screenshots: [
+      {
+        name: 'Showcase',
+        path: 'public/plugins/grafana-clock-panel/img/screenshot-showcase.png',
+      },
+      {
+        name: 'Options',
+        path: 'public/plugins/grafana-clock-panel/img/screenshot-clock-options.png',
+      },
+    ],
+    version: '3.2.0',
+    updated: '2025-12-10',
+    keywords: ['clock', 'panel'],
+  },
+  hideFromList: false,
+  sort: 100,
+  skipDataQuery: false,
+  state: '' as PluginState,
+  baseUrl: 'public/plugins/grafana-clock-panel',
+  signature: 'valid' as PluginSignatureStatus,
+  module: 'public/plugins/grafana-clock-panel/module.js',
+  angular: { detected: false } as AngularMeta,
+  loadingStrategy: 'script' as PluginLoadingStrategy,
+  translations: {
+    'cs-CZ': 'public/plugins/grafana-clock-panel/locales/cs-CZ/grafana-clock-panel.json',
+    'de-DE': 'public/plugins/grafana-clock-panel/locales/de-DE/grafana-clock-panel.json',
+    'en-US': 'public/plugins/grafana-clock-panel/locales/en-US/grafana-clock-panel.json',
+    'es-ES': 'public/plugins/grafana-clock-panel/locales/es-ES/grafana-clock-panel.json',
+    'fr-FR': 'public/plugins/grafana-clock-panel/locales/fr-FR/grafana-clock-panel.json',
+    'hu-HU': 'public/plugins/grafana-clock-panel/locales/hu-HU/grafana-clock-panel.json',
+    'id-ID': 'public/plugins/grafana-clock-panel/locales/id-ID/grafana-clock-panel.json',
+    'it-IT': 'public/plugins/grafana-clock-panel/locales/it-IT/grafana-clock-panel.json',
+    'ja-JP': 'public/plugins/grafana-clock-panel/locales/ja-JP/grafana-clock-panel.json',
+    'ko-KR': 'public/plugins/grafana-clock-panel/locales/ko-KR/grafana-clock-panel.json',
+    'nl-NL': 'public/plugins/grafana-clock-panel/locales/nl-NL/grafana-clock-panel.json',
+    'pl-PL': 'public/plugins/grafana-clock-panel/locales/pl-PL/grafana-clock-panel.json',
+    'pt-BR': 'public/plugins/grafana-clock-panel/locales/pt-BR/grafana-clock-panel.json',
+    'pt-PT': 'public/plugins/grafana-clock-panel/locales/pt-PT/grafana-clock-panel.json',
+    'ru-RU': 'public/plugins/grafana-clock-panel/locales/ru-RU/grafana-clock-panel.json',
+    'sv-SE': 'public/plugins/grafana-clock-panel/locales/sv-SE/grafana-clock-panel.json',
+    'tr-TR': 'public/plugins/grafana-clock-panel/locales/tr-TR/grafana-clock-panel.json',
+    'zh-Hans': 'public/plugins/grafana-clock-panel/locales/zh-Hans/grafana-clock-panel.json',
+    'zh-Hant': 'public/plugins/grafana-clock-panel/locales/zh-Hant/grafana-clock-panel.json',
+  },
+  type: PluginType.panel,
+});
 
 export const panels: PanelPluginMetas = structuredClone({
   alertlist: {

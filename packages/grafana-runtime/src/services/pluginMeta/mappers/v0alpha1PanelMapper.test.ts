@@ -1,5 +1,5 @@
-import { panels } from '../test-fixtures/config.panels';
-import { v0alpha1Response } from '../test-fixtures/v0alpha1Response';
+import { clockPanelConfigCDN, clockPanelConfigOnPrem, panels } from '../test-fixtures/config.panels';
+import { clockPanelMetaCDN, clockPanelMetaOnPrem, v0alpha1Response } from '../test-fixtures/v0alpha1Response';
 
 import { v0alpha1PanelMapper } from './v0alpha1PanelMapper';
 
@@ -116,5 +116,23 @@ describe('v0alpha1PanelMapper', () => {
     expect(v0alpha1Response.items).toHaveLength(53);
     expect(Object.keys(result)).toHaveLength(27);
     expect(Object.keys(result)).toEqual(Object.keys(panels));
+  });
+
+  it('should map correct url for logos and screenshots when using CDN', () => {
+    const result = v0alpha1PanelMapper({ items: [clockPanelMetaCDN] });
+
+    const actual = result[clockPanelConfigCDN.id];
+
+    expect(actual.info.logos).toEqual(clockPanelConfigCDN.info.logos);
+    expect(actual.info.screenshots).toEqual(clockPanelConfigCDN.info.screenshots);
+  });
+
+  it('should map correct url for logos and screenshots when not using CDN', () => {
+    const result = v0alpha1PanelMapper({ items: [clockPanelMetaOnPrem] });
+
+    const actual = result[clockPanelConfigOnPrem.id];
+
+    expect(actual.info.logos).toEqual(clockPanelConfigOnPrem.info.logos);
+    expect(actual.info.screenshots).toEqual(clockPanelConfigOnPrem.info.screenshots);
   });
 });
