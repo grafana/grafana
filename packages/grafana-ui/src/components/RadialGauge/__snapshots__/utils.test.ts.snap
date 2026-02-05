@@ -1,15 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for center x and y 1`] = `"M NaN NaN A [object Object] [object Object] 0 1 1 NaN NaN"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for half arc 1`] = `"M 0 -80 A 80 80 0 0 1 0 80"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for half arc 1`] = `"M NaN NaN A [object Object] [object Object] 0 0 1 NaN NaN"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow radius 1`] = `"M 0 -50 A 50 50 0 0 1 0 50"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow bar width 1`] = `"M NaN NaN A [object Object] [object Object] 0 0 1 NaN NaN"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M 0 -80 A 80 80 0 0 1 80 0"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow radius 1`] = `"M NaN NaN A [object Object] [object Object] 0 0 1 NaN NaN"`;
-
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M NaN NaN A [object Object] [object Object] 0 0 1 NaN NaN"`;
-
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M NaN NaN A [object Object] [object Object] 0 1 1 NaN NaN"`;
-
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for wide bar width 1`] = `"M NaN NaN A [object Object] [object Object] 0 0 1 NaN NaN"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M 0 -80 A 80 80 0 1 1 -80 0"`;

@@ -222,10 +222,12 @@ export function drawRadialArcPath(startAngle: number, endAngle: number, radius: 
 
   const largeArc = endAngle > 180 ? 1 : 0;
 
-  let x1 = radius * Math.cos(startRadians);
-  let y1 = radius * Math.sin(startRadians);
-  let x2 = radius * Math.cos(endRadians);
-  let y2 = radius * Math.sin(endRadians);
+  const MAX_DECIMALS = 2;
+
+  const x1 = parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
+  const y1 = parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
+  const x2 = parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
+  const y2 = parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
 
   return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 }
