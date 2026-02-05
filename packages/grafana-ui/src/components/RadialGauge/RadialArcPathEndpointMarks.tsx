@@ -4,7 +4,7 @@ import { FieldDisplay } from '@grafana/data';
 
 import { getEndpointMarkerColors, getGuideDotColor } from './colors';
 import { GradientStop, RadialGaugeDimensions } from './types';
-import { drawRadialArcPath, toRad } from './utils';
+import { toRad } from './utils';
 
 interface RadialArcPathEndpointMarksPropsBase {
   arcLengthDeg: number;
