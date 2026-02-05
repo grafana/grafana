@@ -21,7 +21,7 @@ describe('GrafanaLiveService', () => {
   const liveDataStreamOptions = {
     addr: {
       scope: LiveChannelScope.Grafana,
-      namespace: ' abc',
+      stream: ' abc',
       path: 'abc',
     },
   };
