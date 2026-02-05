@@ -35,11 +35,13 @@ export interface Props {
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
   const [hasFetched, setHasFetched] = useState(false);
+  const structureRev = data?.structureRev ?? data?.series?.length ?? 0;
+
   const { value, loading, error, retry } = useAsyncRetry(async () => {
     await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
     setHasFetched(true);
-    return await getAllSuggestions(data);
-  }, [hasFetched, data]);
+    return await getAllSuggestions(data?.series);
+  }, [hasFetched, structureRev]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
