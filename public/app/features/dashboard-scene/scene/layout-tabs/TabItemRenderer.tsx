@@ -5,13 +5,14 @@ import { useLocation } from 'react-router';
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneVariableSet, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { VariableValueSelectWrapper } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
@@ -148,12 +149,14 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
+  const tabVariablesSet = tab.state.$variables;
 
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
+      {tabVariablesSet && <TabVariables tabVariablesSet={tabVariablesSet} styles={styles} />}
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>
@@ -183,4 +186,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minHeight: theme.spacing(1 + 0.125),
     paddingTop: theme.spacing(1),
   }),
+  tabVariables: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
 });
+
+function TabVariables({
+  tabVariablesSet,
+  styles,
+}: {
+  tabVariablesSet: SceneVariableSet;
+  styles: ReturnType<typeof getStyles>;
+}) {
+  const { variables } = tabVariablesSet.useState();
+  const tabDrilldownVariables = variables.filter(
+    (variable) => sceneUtils.isAdHocVariable(variable) || sceneUtils.isGroupByVariable(variable)
+  );
+
+  if (tabDrilldownVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.tabVariables}>
+      {tabDrilldownVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
+  );
+}

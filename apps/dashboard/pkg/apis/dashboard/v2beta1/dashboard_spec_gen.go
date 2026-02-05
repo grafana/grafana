@@ -1377,6 +1377,7 @@ type DashboardTabsLayoutTabSpec struct {
 	Layout               DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
+	Variables            []DashboardAdhocVariableKindOrGroupByVariableKind                           `json:"variables,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.

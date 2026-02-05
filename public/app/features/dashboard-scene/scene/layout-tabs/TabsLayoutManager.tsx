@@ -434,6 +434,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
             title: newTitle,
             conditionalRendering,
             repeatByVariable: row.state.repeatByVariable,
+            $variables: row.state.$variables,
           })
         );
       }

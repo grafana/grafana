@@ -2,7 +2,9 @@ import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Field, Input, TextLink } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { SceneVariable, SceneVariableSet, sceneUtils } from '@grafana/scenes';
+import { Alert, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -11,7 +13,8 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getNextAvailableId, getVariableScene } from '../../settings/variables/utils';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
@@ -54,8 +57,24 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
   );
 
   const layoutCategory = useLayoutCategory(layout);
+  const sectionVariablesCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Tab variables'),
+        id: 'dash-tab-section-variables',
+        isOpenDefault: false,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: 'dash-tab-section-variables-list',
+          skipField: true,
+          render: () => <TabSectionVariables tab={model} />,
+        })
+      ),
+    [model]
+  );
 
-  const editOptions = [tabCategory, ...layoutCategory, repeatCategory];
+  const editOptions = [tabCategory, sectionVariablesCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -162,4 +181,96 @@ function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {
     perform: () => tab.onChangeTitle(title),
     undo: () => tab.onChangeTitle(prevTitle),
   });
+}
+
+function TabSectionVariables({ tab }: { tab: TabItem }) {
+  const variableSet = tab.state.$variables;
+  const variables = variableSet?.useState().variables ?? [];
+  const editableVariables = variables.filter(
+    (variable) => sceneUtils.isAdHocVariable(variable) || sceneUtils.isGroupByVariable(variable)
+  );
+  const dashboard = getDashboardSceneFor(tab);
+  const canAddGroupBy = config.featureToggles.groupByVariable;
+
+  const onAddVariable = (type: 'adhoc' | 'groupby') => {
+    const set = ensureTabVariableSet(tab, variableSet);
+    if (!set) {
+      return;
+    }
+
+    const newVar = getVariableScene(type, {
+      name: getNextAvailableId(type, set.state.variables ?? []),
+    });
+    dashboardEditActions.addVariable({ source: set, addedObject: newVar });
+    const variableKey = newVar.state.key ?? newVar.state.name;
+    dashboard.state.editPane.selectObject(newVar, variableKey, { force: true, multi: false });
+  };
+
+  return (
+    <Stack direction="column" gap={1}>
+      <Text>
+        <Trans i18nKey="dashboard.tabs-layout.tab-options.section-variables.description">
+          Add ad hoc filters and group by variables that only apply to this tab.
+        </Trans>
+      </Text>
+      <Stack direction="row" gap={1}>
+        <Button variant="secondary" size="sm" onClick={() => onAddVariable('adhoc')}>
+          <Trans i18nKey="dashboard.tabs-layout.tab-options.section-variables.add-adhoc">Add ad hoc filters</Trans>
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => onAddVariable('groupby')} disabled={!canAddGroupBy}>
+          <Trans i18nKey="dashboard.tabs-layout.tab-options.section-variables.add-groupby">Add group by</Trans>
+        </Button>
+      </Stack>
+      {editableVariables.length === 0 ? (
+        <Text color="secondary">
+          <Trans i18nKey="dashboard.tabs-layout.tab-options.section-variables.empty">No tab variables yet.</Trans>
+        </Text>
+      ) : (
+        <Stack direction="column" gap={0}>
+          {editableVariables.map((variable) => (
+            <Button
+              key={variable.state.key ?? variable.state.name}
+              variant="secondary"
+              size="sm"
+              fill="text"
+              onClick={() =>
+                dashboard.state.editPane.selectObject(variable, variable.state.key ?? variable.state.name, {
+                  force: true,
+                })
+              }
+            >
+              {getVariableLabel(variable)}
+            </Button>
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  );
+}
+
+function ensureTabVariableSet(tab: TabItem, currentSet?: SceneVariableSet): SceneVariableSet | undefined {
+  if (currentSet) {
+    return currentSet;
+  }
+
+  const newSet = new SceneVariableSet({ variables: [] });
+  const currentState = tab.state.$variables;
+  dashboardEditActions.edit({
+    description: t('dashboard.tabs-layout.tab-options.section-variables.create', 'Create tab variables'),
+    source: tab,
+    perform: () => tab.setState({ $variables: newSet }),
+    undo: () => tab.setState({ $variables: currentState }),
+  });
+  return newSet;
+}
+
+function getVariableLabel(variable: SceneVariable) {
+  const name = variable.state.label || variable.state.name;
+  if (sceneUtils.isAdHocVariable(variable)) {
+    return t('dashboard.tabs-layout.tab-options.section-variables.label-adhoc', 'Ad hoc: {{name}}', { name });
+  }
+  if (sceneUtils.isGroupByVariable(variable)) {
+    return t('dashboard.tabs-layout.tab-options.section-variables.label-groupby', 'Group by: {{name}}', { name });
+  }
+  return name;
 }

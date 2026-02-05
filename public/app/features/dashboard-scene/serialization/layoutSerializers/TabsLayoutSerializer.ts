@@ -4,6 +4,7 @@ import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { createSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
 export function serializeTabsLayout(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
@@ -30,6 +31,11 @@ export function serializeTab(tab: TabItem): TabsLayoutTabKind {
       }),
     },
   };
+
+  const tabVariables = serializeSectionVariables(tab.state.$variables);
+  if (tabVariables) {
+    tabKind.spec.variables = tabVariables;
+  }
 
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
@@ -64,11 +70,14 @@ export function deserializeTab(
   panelIdGenerator?: () => number
 ): TabItem {
   const layout = tab.spec.layout;
+  const variables = createSectionVariables(tab.spec.variables);
 
   return new TabItem({
     title: tab.spec.title,
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),
+    $variables: variables,
   });
 }
+

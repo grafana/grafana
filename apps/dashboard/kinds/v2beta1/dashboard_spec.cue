@@ -688,6 +688,7 @@ TabsLayoutTabSpec: {
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
+	variables?: [...AdhocVariableKind | GroupByVariableKind]
 }
 
 PanelSpec: {
