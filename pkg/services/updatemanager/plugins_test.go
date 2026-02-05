@@ -381,7 +381,7 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 	flag := memprovider.InMemoryFlag{Key: featuremgmt.FlagPluginsAutoUpdate, Variants: map[string]any{"": flagValue}}
 
 	staticFlags := map[string]setting.TypedFlag{
-		featuremgmt.FlagPluginsAutoUpdate: {flag, setting.FlagTypeBoolean},
+		featuremgmt.FlagPluginsAutoUpdate: {InMemoryFlag: flag, Type: setting.FlagTypeBoolean},
 	}
 
 	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
