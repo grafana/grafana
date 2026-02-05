@@ -221,6 +221,7 @@ func (svc *InhibitionRuleService) DeleteInhibitionRule(ctx context.Context, uid 
 // Helper functions
 
 func (svc *InhibitionRuleService) getInhibitionRuleByUID(ctx context.Context, rev *legacy_storage.ConfigRevision, uid string, orgID int64) (models.InhibitionRule, bool, error) {
+	// Check Grafana-managed rules first
 	grafanaInhibitionRules := rev.Config.AlertmanagerConfig.InhibitRules
 
 	if idx := slices.IndexFunc(grafanaInhibitionRules, inhibitionRuleByUID(uid)); idx != -1 {
@@ -237,6 +238,16 @@ func (svc *InhibitionRuleService) getInhibitionRuleByUID(ctx context.Context, re
 		}
 
 		return newInhibitionRule(ir, uid, prov), true, nil
+	}
+
+	// Check imported rules
+	if importedRules := svc.getImportedInhibitRules(rev); len(importedRules) > 0 {
+		if idx := slices.IndexFunc(importedRules, inhibitionRuleByUID(uid)); idx != -1 {
+			ir := &importedRules[idx]
+			uid := generateInhibitionRuleUID(ir)
+
+			return newInhibitionRule(ir, uid, models.ProvenanceConvertedPrometheus), true, nil
+		}
 	}
 
 	return models.InhibitionRule{}, false, nil
