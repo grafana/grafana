@@ -15,12 +15,12 @@ interface QueryEditorBodyProps {
 export function QueryEditorBody({ children }: QueryEditorBodyProps) {
   const styles = useStyles2(getStyles);
   const { queryOptions } = useQueryEditorUIContext();
-  const { isSidebarOpen } = queryOptions;
+  const { isQueryOptionsOpen } = queryOptions;
 
   return (
     <div className={styles.container}>
       <div className={styles.content}>{children}</div>
-      {isSidebarOpen && (
+      {isQueryOptionsOpen && (
         <div className={styles.sidebarWrapper}>
           <QueryEditorDetailsSidebar />
         </div>

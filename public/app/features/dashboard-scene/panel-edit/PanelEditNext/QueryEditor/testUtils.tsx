@@ -67,8 +67,8 @@ export const mockOptions: QueryGroupOptions = {
 
 export const mockQueryOptionsState: QueryOptionsState = {
   options: mockOptions,
-  isSidebarOpen: false,
-  setIsSidebarOpen: jest.fn(),
+  isQueryOptionsOpen: false,
+  setIsQueryOptionsOpen: jest.fn(),
 };
 
 export const mockUIStateBase = {

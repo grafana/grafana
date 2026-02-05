@@ -14,14 +14,14 @@ export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
   const { queryError } = useQueryRunnerContext();
   const { queryOptions, showingDatasourceHelp } = useQueryEditorUIContext();
-  const { isSidebarOpen } = queryOptions;
+  const { isQueryOptionsOpen } = queryOptions;
 
   return (
     <div className={styles.container}>
       <ContentHeaderSceneWrapper />
       {showingDatasourceHelp && <DatasourceHelpPanel />}
       <QueryEditorBody>{queryError && <QueryErrorAlert error={queryError} />}</QueryEditorBody>
-      {!isSidebarOpen && <QueryEditorFooter />}
+      {!isQueryOptionsOpen && <QueryEditorFooter />}
     </div>
   );
 }

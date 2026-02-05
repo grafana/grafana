@@ -30,8 +30,8 @@ export interface PanelState {
 
 export interface QueryOptionsState {
   options: QueryGroupOptions;
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: (open: boolean) => void;
+  isQueryOptionsOpen: boolean;
+  setIsQueryOptionsOpen: (open: boolean) => void;
 }
 
 export interface QueryEditorUIState {

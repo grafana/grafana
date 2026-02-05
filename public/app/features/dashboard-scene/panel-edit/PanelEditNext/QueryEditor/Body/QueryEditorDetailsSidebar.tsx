@@ -26,11 +26,11 @@ export function QueryEditorDetailsSidebar() {
   const { datasource, dsSettings } = useDatasourceContext();
   const { data } = useQueryRunnerContext();
   const { queryOptions } = useQueryEditorUIContext();
-  const { options, setIsSidebarOpen } = queryOptions;
+  const { options, setIsQueryOptionsOpen } = queryOptions;
   const { onQueryOptionsChange } = useActionsContext();
 
   const handleClose = () => {
-    setIsSidebarOpen(false);
+    setIsQueryOptionsOpen(false);
   };
 
   // Local state for controlled inputs

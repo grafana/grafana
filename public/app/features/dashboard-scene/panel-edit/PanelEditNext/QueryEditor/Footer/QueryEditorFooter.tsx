@@ -19,7 +19,7 @@ export function QueryEditorFooter() {
   const styles = useStyles2(getStyles);
 
   const { queryOptions } = useQueryEditorUIContext();
-  const { options, setIsSidebarOpen } = queryOptions;
+  const { options, setIsQueryOptionsOpen } = queryOptions;
   const { data } = useQueryRunnerContext();
   const { datasource } = useDatasourceContext();
 
@@ -65,7 +65,7 @@ export function QueryEditorFooter() {
   }, [options, data, datasource]);
 
   const handleOpenSidebar = () => {
-    setIsSidebarOpen(true);
+    setIsQueryOptionsOpen(true);
   };
 
   return (

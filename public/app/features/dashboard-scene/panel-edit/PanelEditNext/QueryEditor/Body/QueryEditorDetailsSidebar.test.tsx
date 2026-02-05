@@ -11,7 +11,7 @@ import { ds1SettingsMock, mockActions, mockOptions } from '../testUtils';
 import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
 
 describe('QueryEditorDetailsSidebar', () => {
-  const mockSetIsSidebarOpen = jest.fn();
+  const mockSetIsQueryOptionsOpen = jest.fn();
 
   const defaultQrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = {
     queries: [],
@@ -34,8 +34,8 @@ describe('QueryEditorDetailsSidebar', () => {
   ) => {
     const queryOptions: QueryOptionsState = {
       options,
-      isSidebarOpen: true,
-      setIsSidebarOpen: mockSetIsSidebarOpen,
+      isQueryOptionsOpen: true,
+      setIsQueryOptionsOpen: mockSetIsQueryOptionsOpen,
     };
 
     return render(
@@ -78,7 +78,7 @@ describe('QueryEditorDetailsSidebar', () => {
     const header = screen.getByRole('button', { name: /query options/i });
     fireEvent.click(header);
 
-    expect(mockSetIsSidebarOpen).toHaveBeenCalledWith(false);
+    expect(mockSetIsQueryOptionsOpen).toHaveBeenCalledWith(false);
   });
 
   describe('maxDataPoints input', () => {

@@ -38,7 +38,7 @@ export function QueryEditorContextWrapper({
   const queryRunnerState = queryRunner?.useState();
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
   const transformations: Transformation[] = useMemo(() => {
@@ -157,8 +157,8 @@ export function QueryEditorContextWrapper({
       },
       queryOptions: {
         options: dataPane.buildQueryOptions(),
-        isSidebarOpen,
-        setIsSidebarOpen,
+        isQueryOptionsOpen,
+        setIsQueryOptionsOpen,
       },
       selectedQueryDsData: selectedQueryDsData ?? null,
       selectedQueryDsLoading,
@@ -173,7 +173,7 @@ export function QueryEditorContextWrapper({
       selectedTransformation,
       dataPane,
       queryRunnerState,
-      isSidebarOpen,
+      isQueryOptionsOpen,
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
