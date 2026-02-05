@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 export interface FooterLabelValue {
   id: string;
@@ -34,28 +34,30 @@ export function QueryEditorFooter({ items, onItemClick, onToggleSidebar }: Query
         <ul className={styles.itemsList}>
           {items.map((item) => (
             <li key={item.id} className={styles.item}>
-              <button
-                type="button"
-                className={cx(styles.itemButton, item.isActive && styles.itemButtonActive)}
+              <Button
+                fill="text"
+                size="sm"
+                className={styles.itemButton}
                 onClick={() => handleItemClick(item)}
                 aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
               >
                 {item.isActive && <span className={styles.activeIndicator} />}
                 <span className={styles.label}>{item.label}</span>
                 <span className={cx(styles.value, item.isActive && styles.valueActive)}>{item.value}</span>
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
-        <button
-          type="button"
-          className={styles.queryOptionsButton}
+        <Button
+          fill="text"
+          size="sm"
+          icon="angle-left"
+          iconPlacement="right"
           onClick={onToggleSidebar}
           aria-label={t('query-editor.footer.query-options', 'Query Options')}
         >
           <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
-          <Icon name="angle-left" size="md" />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -72,7 +74,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
-      padding: theme.spacing(0.5, 1.5),
+      padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
       zIndex: 1,
       minHeight: 26,
     }),
@@ -97,32 +99,14 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
     }),
     itemButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      cursor: 'pointer',
-      fontSize: theme.typography.bodySmall.fontSize,
+      // Override Button's default padding and add gap for children
+      padding: theme.spacing(0, 0.5),
 
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.short,
-        }),
+      '& > span': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: theme.spacing(0.5),
       },
-
-      '&:hover': {
-        opacity: 0.8,
-      },
-
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: 2,
-      },
-    }),
-    itemButtonActive: css({
-      // Additional styles for active state if needed
     }),
     label: css({
       color: theme.colors.text.primary,
@@ -139,32 +123,6 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.circle,
       backgroundColor: theme.colors.success.text,
       flexShrink: 0,
-    }),
-    queryOptionsButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      cursor: 'pointer',
-      color: theme.colors.primary.text,
-      fontSize: theme.typography.bodySmall.fontSize,
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-
-      '&:hover': {
-        opacity: 0.8,
-      },
-
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: 2,
-      },
     }),
   };
 }

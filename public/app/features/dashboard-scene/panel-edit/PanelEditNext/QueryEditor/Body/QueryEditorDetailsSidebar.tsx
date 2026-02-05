@@ -3,7 +3,7 @@ import { ChangeEvent, FocusEvent, useCallback, useEffect, useState } from 'react
 
 import { GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TIME_OPTION_PLACEHOLDER } from '../../constants';
 import {
@@ -161,12 +161,11 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
 
   return (
     <div className={styles.container}>
-      <button type="button" className={styles.header} onClick={onClose}>
-        <Icon name="angle-right" size="md" />
+      <Button fill="text" size="lg" icon="angle-right" className={styles.header} onClick={onClose}>
         <span className={styles.headerText}>
           <Trans i18nKey="query-editor.details-sidebar.title">Query Options</Trans>
         </span>
-      </button>
+      </Button>
       <div className={styles.content}>
         <Stack direction="column" gap={1}>
           {/* Max data points */}
@@ -347,22 +346,17 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.primary,
     }),
     header: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
+      width: '100%',
+      justifyContent: 'flex-start',
       padding: theme.spacing(1, 1.5),
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      textAlign: 'left',
+      borderRadius: 'unset',
+
+      '& > svg': {
+        color: theme.colors.text.primary,
+      },
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
-      },
-
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: -2,
       },
     }),
     headerText: css({
