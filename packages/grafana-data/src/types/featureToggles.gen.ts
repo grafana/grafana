@@ -304,6 +304,11 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
+  * Does not register datasource apis that use the numeric id
+  * @default false
+  */
+  datasourceDisableIdApi?: boolean;
+  /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
   */
