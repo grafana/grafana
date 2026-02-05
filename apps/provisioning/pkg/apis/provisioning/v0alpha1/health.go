@@ -15,10 +15,15 @@ const (
 	// For repositories and connections, this reflects whether the health check is passing.
 	ConditionTypeReady = "Ready"
 
-	// ConditionTypeQuota indicates whether the resource is within configured quota limits.
-	// This is an aggregated condition that can track multiple quota types (resources, storage, etc.).
+	// ConditionTypeNamespaceQuota indicates whether the resource's namespace is within configured quota limits.
+	// This is an aggregated condition that can track multiple quota types (e.g., number of repositories in namespace).
 	// True = within quota or no limits configured, False = quota reached or exceeded.
-	ConditionTypeQuota = "Quota"
+	ConditionTypeNamespaceQuota = "NamespaceQuota"
+
+	// ConditionTypeResourceQuota indicates whether the resource is within configured quota limits.
+	// This is an aggregated condition that can track multiple quota types (e.g., dashboards synced by repository).
+	// True = within quota or no limits configured, False = quota reached or exceeded.
+	ConditionTypeResourceQuota = "ResourceQuota"
 )
 
 // Condition reasons for the Ready condition
@@ -52,10 +57,10 @@ const (
 	ReasonWithinQuota = "WithinQuota"
 	// ReasonQuotaUnlimited indicates no quota limits are configured.
 	ReasonQuotaUnlimited = "QuotaUnlimited"
-	// ReasonResourceQuotaReached indicates the resource count is exactly at the limit.
-	ReasonResourceQuotaReached = "ResourceQuotaReached"
-	// ReasonResourceQuotaExceeded indicates the resource count exceeds the limit.
-	ReasonResourceQuotaExceeded = "ResourceQuotaExceeded"
+	// ReasonQuotaReached indicates the resource count is exactly at the limit.
+	ReasonQuotaReached = "QuotaReached"
+	// ReasonQuotaExceeded indicates the resource count exceeds the limit.
+	ReasonQuotaExceeded = "QuotaExceeded"
 )
 
 type HealthStatus struct {

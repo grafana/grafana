@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
@@ -173,7 +173,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
 	github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173 // indirect
-	github.com/grafana/authlib v0.0.0-20260203131350-b83e80394acc // indirect
+	github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect

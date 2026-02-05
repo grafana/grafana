@@ -19,7 +19,7 @@ export function MoveProvisionedDashboardDrawer({
   onDismiss,
   onSuccess,
 }: Props) {
-  const { defaultValues, loadedFromRef, readOnly, workflowOptions, isNew, repository } =
+  const { defaultValues, loadedFromRef, readOnly, canPushToConfiguredBranch, isNew, repository } =
     useProvisionedDashboardData(dashboard);
 
   if (!defaultValues) {
@@ -34,7 +34,7 @@ export function MoveProvisionedDashboardDrawer({
       readOnly={readOnly}
       repository={repository}
       isNew={isNew}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
       targetFolderUID={targetFolderUID}
       targetFolderTitle={targetFolderTitle}
       onDismiss={onDismiss}
