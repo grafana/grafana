@@ -28,16 +28,17 @@ import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicke
 
 import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 
+import { PanelEditor } from './PanelEditor';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
 
 export interface Props {
   data?: PanelData;
   showBackButton?: boolean;
   panel: VizPanel;
-  editPreview: VizPanel;
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
   isNewPanel?: boolean;
+  panelEditor?: PanelEditor;
 }
 
 const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> => {
@@ -54,7 +55,7 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     : [allVisualizationsTab, suggestionsTab];
 };
 
-export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
+export function PanelVizTypePicker({ panel, data, onChange, onClose, showBackButton, isNewPanel, panelEditor }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
@@ -159,7 +160,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
               <VisualizationSuggestions
                 onChange={onChange}
                 panel={panelModel}
-                editPreview={editPreview}
+                panelEditor={panelEditor}
                 data={data}
                 searchQuery={searchQuery}
                 isNewPanel={isNewPanel}
