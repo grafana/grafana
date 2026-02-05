@@ -947,7 +947,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -993,7 +993,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member", "admin"})
+		collector := zanzanaCollector([]string{"member", "admin"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1041,7 +1041,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil).Once()
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1058,7 +1058,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1072,7 +1072,7 @@ func TestZanzanaCollector(t *testing.T) {
 
 		mockClient.On("Read", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("client error"))
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		_, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.Error(t, err)
