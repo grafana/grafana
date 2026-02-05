@@ -631,6 +631,12 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 
 	anyBackfilled := false
 	for _, orgID := range orgIDs {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
 		// Get all unique folder UIDs for this org from alert_rule table where folder_fullpath is NULL
 		var folderUIDs []string
 		err := ng.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -673,12 +679,15 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
 
-	// Run backfill job once at startup
-	if err := ng.BackfillFolderFullpaths(ctx); err != nil {
-		ng.Log.Warn("Failed to backfill folder fullpaths, will continue anyway", "error", err)
-	}
-
 	children, subCtx := errgroup.WithContext(ctx)
+
+	// Run backfill job in background
+	children.Go(func() error {
+		if err := ng.BackfillFolderFullpaths(subCtx); err != nil {
+			ng.Log.Warn("Failed to backfill folder fullpaths", "error", err)
+		}
+		return nil
+	})
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
