@@ -1,6 +1,7 @@
 import { OwnerReference as OwnerReferenceType } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { useGetTeamMembersQuery, useGetTeamQuery } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Stack, Text, Link, Tooltip } from '@grafana/ui';
 
 /**
@@ -35,7 +36,11 @@ export const OwnerReference = ({
   }
 
   return (
-    <Link href={`/org/teams/edit/${ownerReference.uid}/members`} key={ownerReference.uid}>
+    <Link
+      href={`/org/teams/edit/${ownerReference.uid}/members`}
+      key={ownerReference.uid}
+      onClick={() => reportInteraction('grafana_owner_reference_link_clicked')}
+    >
       <Tooltip content={membersTooltip}>
         <Text>{team.spec.title}</Text>
       </Tooltip>

@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
-import { Collapse, Field, Input, Link, MultiSelect, Stack, useStyles2 } from '@grafana/ui';
+import { Collapse, Field, InlineLabel, Input, MultiSelect, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -97,7 +97,7 @@ export const AmRootRouteForm = ({
           invalid={Boolean(errors.receiver) ? true : undefined}
           error={errors.receiver?.message}
         >
-          <div className={styles.container} data-testid="am-receiver-select">
+          <Stack direction="row" data-testid="am-receiver-select" wrap="nowrap">
             <Controller
               render={({ field: { onChange, ref, value, ...field } }) =>
                 isGrafanaAlertmanager ? (
@@ -128,16 +128,16 @@ export const AmRootRouteForm = ({
                 required: { value: true, message: t('alerting.am-root-route-form.message.required', 'Required.') },
               }}
             />
-            <span>
-              <Trans i18nKey="alerting.am-root-route-form.or">or</Trans>
-            </span>
-            <Link
-              className={styles.linkText}
-              href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}
-            >
-              <Trans i18nKey="alerting.am-root-route-form.create-a-contact-point">Create a contact point</Trans>
-            </Link>
-          </div>
+            <InlineLabel width="auto" transparent={true}>
+              <TextLink
+                external
+                href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}
+                inline={true}
+              >
+                <Trans i18nKey="alerting.am-root-route-form.create-a-contact-point">Create a contact point</Trans>
+              </TextLink>
+            </InlineLabel>
+          </Stack>
         </Field>
         <Field
           noMargin
@@ -237,7 +237,7 @@ export const AmRootRouteForm = ({
             </Stack>
           </div>
         </Collapse>
-        <div className={styles.container}>{actionButtons}</div>
+        {actionButtons}
       </Stack>
     </form>
   );
