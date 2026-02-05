@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -21,10 +21,10 @@ interface SidebarCardProps {
 export const SidebarCard = ({ config, isSelected, id, children, onClick, query }: SidebarCardProps) => {
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
-
+  const isHidden = !!query?.hide;
   return (
     <button
-      className={styles.card}
+      className={cx(styles.card, { [styles.hidden]: isHidden })}
       onClick={onClick}
       type="button"
       aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
@@ -117,6 +117,10 @@ function getStyles(
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
+    }),
+
+    hidden: css({
+      opacity: 0.6,
     }),
   };
 }
