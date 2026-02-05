@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorActions } from './QueryEditorContext';
+import { QueryEditorActions, QueryOptionsState } from './QueryEditorContext';
 
 export function setup(jsx: React.ReactElement) {
   return {
@@ -50,7 +50,7 @@ export const mockActions: QueryEditorActions = {
   onQueryOptionsChange: jest.fn(),
 };
 
-export const mockQueryOptions: QueryGroupOptions = {
+export const mockOptions: QueryGroupOptions = {
   queries: [],
   dataSource: { type: undefined, uid: undefined },
   maxDataPoints: undefined,
@@ -60,4 +60,10 @@ export const mockQueryOptions: QueryGroupOptions = {
     shift: undefined,
     hide: undefined,
   },
+};
+
+export const mockQueryOptionsState: QueryOptionsState = {
+  options: mockOptions,
+  isSidebarOpen: false,
+  setIsSidebarOpen: jest.fn(),
 };

@@ -5,7 +5,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockQueryOptions } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockQueryOptionsState } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryEditorSidebar } from './QueryEditorSidebar';
@@ -35,7 +35,7 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          options: mockQueryOptions,
+          queryOptions: mockQueryOptionsState,
         }}
         actions={mockActions}
       >
@@ -57,7 +57,7 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          options: mockQueryOptions,
+          queryOptions: mockQueryOptionsState,
         }}
         actions={mockActions}
       >
@@ -87,7 +87,7 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          options: mockQueryOptions,
+          queryOptions: mockQueryOptionsState,
         }}
         actions={mockActions}
       >
@@ -127,7 +127,7 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          options: mockQueryOptions,
+          queryOptions: mockQueryOptionsState,
         }}
         actions={mockActions}
       >

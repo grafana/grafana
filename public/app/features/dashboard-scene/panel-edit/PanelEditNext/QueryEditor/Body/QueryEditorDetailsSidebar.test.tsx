@@ -2,14 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
+import { QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockQueryOptions } from '../testUtils';
+import { QueryOptionsState, QueryEditorProvider } from '../QueryEditorContext';
+import { ds1SettingsMock, mockActions, mockOptions } from '../testUtils';
 
 import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
 
 describe('QueryEditorDetailsSidebar', () => {
-  const mockOnClose = jest.fn();
+  const mockSetIsSidebarOpen = jest.fn();
 
   const defaultQrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = {
     queries: [],
@@ -27,9 +28,15 @@ describe('QueryEditorDetailsSidebar', () => {
   });
 
   const renderSidebar = (
-    options = mockQueryOptions,
+    options: QueryGroupOptions = mockOptions,
     qrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = defaultQrState
   ) => {
+    const queryOptions: QueryOptionsState = {
+      options,
+      isSidebarOpen: true,
+      setIsSidebarOpen: mockSetIsSidebarOpen,
+    };
+
     return render(
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: ds1SettingsMock, dsError: undefined }}
@@ -40,11 +47,11 @@ describe('QueryEditorDetailsSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          options,
+          queryOptions,
         }}
         actions={mockActions}
       >
-        <QueryEditorDetailsSidebar onClose={mockOnClose} />
+        <QueryEditorDetailsSidebar />
       </QueryEditorProvider>
     );
   };
@@ -59,13 +66,13 @@ describe('QueryEditorDetailsSidebar', () => {
     expect(screen.getByLabelText('Time shift')).toBeInTheDocument();
   });
 
-  it('should call onClose when header is clicked', async () => {
+  it('should close sidebar when header is clicked', async () => {
     renderSidebar();
 
     const header = screen.getByRole('button', { name: /query options/i });
     fireEvent.click(header);
 
-    expect(mockOnClose).toHaveBeenCalled();
+    expect(mockSetIsSidebarOpen).toHaveBeenCalledWith(false);
   });
 
   describe('maxDataPoints input', () => {
@@ -129,7 +136,7 @@ describe('QueryEditorDetailsSidebar', () => {
 
     it('should set minInterval to null for empty input', () => {
       const optionsWithMinInterval = {
-        ...mockQueryOptions,
+        ...mockOptions,
         minInterval: '5s',
       };
 
@@ -220,7 +227,7 @@ describe('QueryEditorDetailsSidebar', () => {
         isLoading: false,
       };
 
-      renderSidebar(mockQueryOptions, qrStateWithoutInterval);
+      renderSidebar(mockOptions, qrStateWithoutInterval);
 
       // Should show "-" when no interval
       expect(screen.getByText('-')).toBeInTheDocument();
