@@ -692,9 +692,9 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, createdRules, 1)
-		require.Len(t, createdRules[0].NotificationSettings, 1)
-		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
-		require.Equal(t, groupBy, createdRules[0].NotificationSettings[0].GroupBy)
+		require.NotNil(t, createdRules[0].NotificationSettings)
+		require.Equal(t, receiver, createdRules[0].NotificationSettings.ContactPointRouting.Receiver)
+		require.Equal(t, groupBy, createdRules[0].NotificationSettings.ContactPointRouting.GroupBy)
 	})
 
 	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {

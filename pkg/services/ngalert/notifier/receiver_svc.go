@@ -46,7 +46,7 @@ type routeService interface {
 
 type alertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 type secretService interface {
@@ -604,10 +604,8 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 		}
 
 		for key, settings := range keys {
-			for _, s := range settings {
-				if s.Receiver != "" {
-					receiverUsesInRules[s.Receiver] = append(receiverUsesInRules[s.Receiver], key)
-				}
+			if settings.Receiver != "" {
+				receiverUsesInRules[settings.Receiver] = append(receiverUsesInRules[settings.Receiver], key)
 			}
 		}
 	}

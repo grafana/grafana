@@ -760,8 +760,9 @@ func TestDiff(t *testing.T) {
 	t.Run("should detect changes in NotificationSettings", func(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
 
-		baseSettings := NotificationSettingsGen(NSMuts.WithGroupBy("test1", "test2"))()
-		rule1.NotificationSettings = []NotificationSettings{baseSettings}
+		baseNotificationSettings := NotificationSettingsGen(NSMuts.WithGroupBy("test1", "test2"))()
+		baseSettings := baseNotificationSettings.ContactPointRouting
+		rule1.NotificationSettings = &baseNotificationSettings
 
 		addTime := func(d *model.Duration, duration time.Duration) *time.Duration {
 			dur := time.Duration(*d)
@@ -776,10 +777,10 @@ func TestDiff(t *testing.T) {
 		}{
 			{
 				name:                 "should detect changes in Receiver",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithReceiver(baseSettings.Receiver+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithReceiver(baseSettings.Receiver+"-modified")),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].Receiver",
+						Path:  "NotificationSettings.ContactPointRouting.Receiver",
 						Left:  reflect.ValueOf(baseSettings.Receiver),
 						Right: reflect.ValueOf(baseSettings.Receiver + "-modified"),
 					},
@@ -787,10 +788,10 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupWait",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithGroupWait(addTime(baseSettings.GroupWait, 1*time.Second))),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithGroupWait(addTime(baseSettings.GroupWait, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].GroupWait",
+						Path:  "NotificationSettings.ContactPointRouting.GroupWait",
 						Left:  reflect.ValueOf(*baseSettings.GroupWait),
 						Right: reflect.ValueOf(model.Duration(*addTime(baseSettings.GroupWait, 1*time.Second))),
 					},
@@ -798,10 +799,10 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupInterval",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithGroupInterval(addTime(baseSettings.GroupInterval, 1*time.Second))),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithGroupInterval(addTime(baseSettings.GroupInterval, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].GroupInterval",
+						Path:  "NotificationSettings.ContactPointRouting.GroupInterval",
 						Left:  reflect.ValueOf(*baseSettings.GroupInterval),
 						Right: reflect.ValueOf(model.Duration(*addTime(baseSettings.GroupInterval, 1*time.Second))),
 					},
@@ -809,10 +810,10 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in RepeatInterval",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithRepeatInterval(addTime(baseSettings.RepeatInterval, 1*time.Second))),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithRepeatInterval(addTime(baseSettings.RepeatInterval, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].RepeatInterval",
+						Path:  "NotificationSettings.ContactPointRouting.RepeatInterval",
 						Left:  reflect.ValueOf(*baseSettings.RepeatInterval),
 						Right: reflect.ValueOf(model.Duration(*addTime(baseSettings.RepeatInterval, 1*time.Second))),
 					},
@@ -820,15 +821,15 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupBy",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithGroupBy(baseSettings.GroupBy[0]+"-modified", baseSettings.GroupBy[1]+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithGroupBy(baseSettings.GroupBy[0]+"-modified", baseSettings.GroupBy[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].GroupBy[0]",
+						Path:  "NotificationSettings.ContactPointRouting.GroupBy[0]",
 						Left:  reflect.ValueOf(baseSettings.GroupBy[0]),
 						Right: reflect.ValueOf(baseSettings.GroupBy[0] + "-modified"),
 					},
 					{
-						Path:  "NotificationSettings[0].GroupBy[1]",
+						Path:  "NotificationSettings.ContactPointRouting.GroupBy[1]",
 						Left:  reflect.ValueOf(baseSettings.GroupBy[1]),
 						Right: reflect.ValueOf(baseSettings.GroupBy[1] + "-modified"),
 					},
@@ -836,15 +837,15 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in MuteTimeIntervals",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithMuteTimeIntervals(baseSettings.MuteTimeIntervals[0]+"-modified", baseSettings.MuteTimeIntervals[1]+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithMuteTimeIntervals(baseSettings.MuteTimeIntervals[0]+"-modified", baseSettings.MuteTimeIntervals[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].MuteTimeIntervals[0]",
+						Path:  "NotificationSettings.ContactPointRouting.MuteTimeIntervals[0]",
 						Left:  reflect.ValueOf(baseSettings.MuteTimeIntervals[0]),
 						Right: reflect.ValueOf(baseSettings.MuteTimeIntervals[0] + "-modified"),
 					},
 					{
-						Path:  "NotificationSettings[0].MuteTimeIntervals[1]",
+						Path:  "NotificationSettings.ContactPointRouting.MuteTimeIntervals[1]",
 						Left:  reflect.ValueOf(baseSettings.MuteTimeIntervals[1]),
 						Right: reflect.ValueOf(baseSettings.MuteTimeIntervals[1] + "-modified"),
 					},
@@ -852,15 +853,15 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in ActiveTimeIntervals",
-				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
-						Path:  "NotificationSettings[0].ActiveTimeIntervals[0]",
+						Path:  "NotificationSettings.ContactPointRouting.ActiveTimeIntervals[0]",
 						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[0]),
 						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[0] + "-modified"),
 					},
 					{
-						Path:  "NotificationSettings[0].ActiveTimeIntervals[1]",
+						Path:  "NotificationSettings.ContactPointRouting.ActiveTimeIntervals[1]",
 						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[1]),
 						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[1] + "-modified"),
 					},
@@ -871,7 +872,7 @@ func TestDiff(t *testing.T) {
 		for _, tt := range testCases {
 			t.Run(tt.name, func(t *testing.T) {
 				rule2 := CopyRule(rule1)
-				rule2.NotificationSettings = []NotificationSettings{tt.notificationSettings}
+				rule2.NotificationSettings = &tt.notificationSettings
 				diffs := rule1.Diff(rule2)
 
 				cOpt := []cmp.Option{

@@ -535,7 +535,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			if err != nil {
 				return fmt.Errorf("failed to parse configuration: %w", err)
 			}
-			validator := notifier.NewNotificationSettingsValidator(&cfg.AlertmanagerConfig)
+			validator := notifier.NewNotificationSettingsValidator(cfg)
 			for _, s := range newOrUpdatedNotificationSettings {
 				if err := validator.Validate(s); err != nil {
 					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
