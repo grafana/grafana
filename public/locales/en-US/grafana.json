@@ -12062,19 +12062,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "custom-value-description": "Press Enter to create new branch",
+      "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
+      "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-path": "Path",
-      "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
-      "placeholder-new-branch": "Enter new branch name",
       "suffix-configured-branch": "Configured branch",
       "suffix-last-used": "Last branch",
-      "suffix-pr-branch": "Pull request branch"
+      "suffix-pr-branch": "Pull request branch",
+      "suffix-read-only-branch": " (read-only)"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12764,10 +12766,6 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "Push to a new branch",
-      "push-to-existing-branch": "Push to an existing branch"
     }
   },
   "public-dashboard": {
