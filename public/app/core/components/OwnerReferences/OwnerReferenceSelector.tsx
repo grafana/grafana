@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Box, Combobox, ComboboxOption, Label } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import {
   useListTeamQuery,
@@ -31,20 +31,26 @@ export const OwnerReferenceSelector = ({
     value: team.metadata.name!,
   }));
   return (
-    <Combobox
-      loading={isLoading}
-      options={teamsOptions}
-      value={selectedTeam || defaultTeamUid}
-      placeholder={t('manage-owner-references.select-owner', 'Select an owner')}
-      onChange={(team: ComboboxOption<string>) => {
-        setSelectedTeam(team);
-        onChange({
-          apiVersion: OWNER_REFERENCE_API_VERSION,
-          kind: OWNER_REFERENCE_KIND,
-          name: team.value,
-          uid: team.value,
-        });
-      }}
-    />
+    <Box>
+      <Label htmlFor="owner-reference-selector">
+        <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team</Trans>
+      </Label>
+      <Combobox
+        id="owner-reference-selector"
+        loading={isLoading}
+        options={teamsOptions}
+        value={selectedTeam || defaultTeamUid}
+        placeholder={t('manage-owner-references.select-owner', 'Select an owner')}
+        onChange={(team: ComboboxOption<string>) => {
+          setSelectedTeam(team);
+          onChange({
+            apiVersion: OWNER_REFERENCE_API_VERSION,
+            kind: OWNER_REFERENCE_KIND,
+            name: team.value,
+            uid: team.value,
+          });
+        }}
+      />
+    </Box>
   );
 };

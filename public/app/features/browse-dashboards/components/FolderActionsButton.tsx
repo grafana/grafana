@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Alert, Box, Button, Drawer, Dropdown, Icon, Menu, MenuItem, Modal, Text } from '@grafana/ui';
+import { Box, Button, Drawer, Dropdown, Icon, Menu, MenuItem, Modal, Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { ManageOwnerReferences } from 'app/core/components/OwnerReferences/ManageOwnerReferences';
@@ -137,7 +137,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   };
 
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
-  const manageOwnersLabel = t('browse-dashboards.folder-actions-button.manage-folder-owner', 'Manage folder owner');
+  const manageOwnersLabel = t('manage-owner-references.manage-folder-owner', 'Manage folder owner');
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
@@ -197,33 +197,34 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       )}
       {showManageOwnersModal && (
         <Modal
-          title={t('browse-dashboards.action.manage-folder-owner', 'Manage folder owner')}
+          title={t('manage-owner-references.manage-folder-owner', 'Manage folder owner')}
           isOpen={showManageOwnersModal}
           onDismiss={() => setShowManageOwnersModal(false)}
         >
-          <Box>
-            <Alert
-              severity="info"
-              title={t(
-                'browse-dashboards.action.manage-folder-owner-alert-title',
-                'Set folder owner to help organise your resources. '
-              )}
-            >
-              <Trans i18nKey="browse-dashboards.action.manage-folder-owner-alert-text">
+          <Stack gap={1} direction="column">
+            <Text element="p">
+              <Trans i18nKey="manage-owner-references.manage-folder-owner-alert-title">
+                Select a team to own this folder to help organise your resources.
+              </Trans>
+            </Text>
+            <Text element="p">
+              <Trans i18nKey="manage-owner-references.manage-folder-owner-alert-text">
                 Folders owned by teams that you belong to will be prioritised for you in the folder picker and other
                 locations.
               </Trans>
-            </Alert>
-          </Box>
-          <ManageOwnerReferences
-            resourceId={folder.uid}
-            onSave={() => {
-              setShowManageOwnersModal(false);
-            }}
-            onRemove={() => {
-              setShowManageOwnersModal(false);
-            }}
-          />
+            </Text>
+            <Box paddingTop={1}>
+              <ManageOwnerReferences
+                resourceId={folder.uid}
+                onSave={() => {
+                  setShowManageOwnersModal(false);
+                }}
+                onRemove={() => {
+                  setShowManageOwnersModal(false);
+                }}
+              />
+            </Box>
+          </Stack>
         </Modal>
       )}
       {showDeleteProvisionedFolderDrawer && (
