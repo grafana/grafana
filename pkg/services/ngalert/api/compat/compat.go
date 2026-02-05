@@ -463,19 +463,23 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.Notificati
 	if ns == nil {
 		return nil
 	}
-	m := ns.ContactPointRouting
-	if m == nil {
-		return nil
+	if m := ns.ContactPointRouting; m != nil {
+		return &definitions.AlertRuleNotificationSettings{
+			Receiver:            m.Receiver,
+			GroupBy:             m.GroupBy,
+			GroupWait:           m.GroupWait,
+			GroupInterval:       m.GroupInterval,
+			RepeatInterval:      m.RepeatInterval,
+			MuteTimeIntervals:   m.MuteTimeIntervals,
+			ActiveTimeIntervals: m.ActiveTimeIntervals,
+		}
 	}
-	return &definitions.AlertRuleNotificationSettings{
-		Receiver:            m.Receiver,
-		GroupBy:             m.GroupBy,
-		GroupWait:           m.GroupWait,
-		GroupInterval:       m.GroupInterval,
-		RepeatInterval:      m.RepeatInterval,
-		MuteTimeIntervals:   m.MuteTimeIntervals,
-		ActiveTimeIntervals: m.ActiveTimeIntervals,
+	if m := ns.PolicyRouting; m != nil {
+		return &definitions.AlertRuleNotificationSettings{
+			Policy: &m.Policy,
+		}
 	}
+	return nil
 }
 
 // AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
@@ -512,6 +516,10 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	if ns == nil {
 		return nil
 	}
+	if ns.Policy != nil {
+		return util.Pointer(models.NotificationSettingsFromPolicy(*ns.Policy))
+	}
+	// Default to contact point routing for backwards compatibility in validation.
 	return util.Pointer(models.NotificationSettingsFromContact(
 		models.ContactPointRouting{
 			Receiver:            ns.Receiver,
