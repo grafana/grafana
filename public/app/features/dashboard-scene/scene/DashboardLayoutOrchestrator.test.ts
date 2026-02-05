@@ -1,6 +1,6 @@
 import { VizPanel } from '@grafana/scenes';
 
-import { setupTabsTest } from '../utils/test-utils';
+import { setupTabsTest, TabsTestSetup } from '../utils/test-utils';
 
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
@@ -312,7 +312,7 @@ describe('DashboardLayoutOrchestrator', () => {
         after: true,
         expected: ['a', 'd ef bc g'],
       },
-    ].forEach((scenario) => {
+    ].forEach((scenario: TabsTestSetup) => {
       it(scenario.name, () => {
         const { performDrag, assertExpectedTabs, assertInitialTabs } = setupTabsTest(scenario);
 

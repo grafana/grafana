@@ -49,7 +49,6 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jes
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }
-
 export function setupLoadDashboardMockReject(rsp: DeepPartial<FetchError>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockRejectedValue(rsp);
   // disabling type checks since this is a test util
@@ -95,11 +94,8 @@ export function mockResizeObserver() {
         );
       });
     }
-
     observe() {}
-
     disconnect() {}
-
     unobserve() {}
   };
 }
@@ -338,7 +334,7 @@ export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) 
   return '';
 }
 
-type TabsTestSetup = {
+export type TabsTestSetup = {
   /**
    * Spec defining rows and tabs structure:
    * - each string represents tabs in a separate row
