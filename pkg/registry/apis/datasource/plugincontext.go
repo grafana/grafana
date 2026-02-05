@@ -120,15 +120,23 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 
 // UpdateDataSource implements PluginDatasourceProvider.
 func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
+
+	backend.Logger.Warn("running UpdateDataSource", "ds", ds)
 	cmd, err := q.converter.toUpdateCommand(ds)
 	if err != nil {
+		backend.Logger.Warn("running UpdateDataSource failed to create cmd", "err", err)
 		return nil, err
 	}
+	backend.Logger.Warn("running UpdateDataSource with cmd", "cmd", cmd)
 	out, err := q.dsService.UpdateDataSource(ctx, cmd)
 	if err != nil {
+		backend.Logger.Warn("running UpdateDataSource failed to update service", "err", err)
 		return nil, err
 	}
-	return q.converter.asDataSource(out)
+	backend.Logger.Warn("running UpdateDataSource, succeeded", "out", out)
+	r, e := q.converter.asDataSource(out)
+	backend.Logger.Warn("running UpdateDataSource, converted", "r", r, "err", e)
+	return r, e
 }
 
 // Delete implements PluginDatasourceProvider.
