@@ -68,7 +68,7 @@ func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
 				Subsystem: metricsSubSystem,
 				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 			},
-			[]string{"method", "request_namespace"},
+			[]string{"method"},
 		),
 	}
 }
