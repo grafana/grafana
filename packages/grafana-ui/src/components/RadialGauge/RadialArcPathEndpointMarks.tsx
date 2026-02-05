@@ -4,7 +4,7 @@ import { FieldDisplay } from '@grafana/data';
 
 import { getEndpointMarkerColors, getGuideDotColor } from './colors';
 import { GradientStop, RadialGaugeDimensions } from './types';
-import { toRad } from './utils';
+import { drawRadialArcPath, toRad } from './utils';
 
 interface RadialArcPathEndpointMarksPropsBase {
   arcLengthDeg: number;
@@ -77,15 +77,15 @@ export const RadialArcPathEndpointMarks = memo(
         );
       }
       case 'glow':
+        if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
+          return null;
+        }
         const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
         const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
         const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
-        if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
-          break;
-        }
         return (
           <path
-            d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
+            d={`M ${xStartMark} ${yStartMark} A ${radius} ${radius} 0 0 1 ${xEnd} ${yEnd}`}
             fill="none"
             strokeWidth={barWidth}
             stroke={endpointMarkerGlowFilter}
