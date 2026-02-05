@@ -24,12 +24,18 @@ export interface PanelState {
   transformations: Transformation[];
 }
 
+export interface QueryOptionsState {
+  options: QueryGroupOptions;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean) => void;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | null;
   selectedTransformation: Transformation | null;
   setSelectedQuery: (query: DataQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
-  options: QueryGroupOptions;
+  queryOptions: QueryOptionsState;
 }
 
 export interface QueryEditorActions {

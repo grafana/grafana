@@ -1,32 +1,72 @@
 import { css, cx } from '@emotion/css';
-import { useCallback } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-export interface FooterLabelValue {
+import { TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+
+interface FooterLabelValue {
   id: string;
   label: string;
   value: string;
   isActive?: boolean;
 }
 
-interface QueryEditorFooterProps {
-  items: FooterLabelValue[];
-  onItemClick: (item: FooterLabelValue) => void;
-  onToggleSidebar: () => void;
-}
-
-export function QueryEditorFooter({ items, onItemClick, onToggleSidebar }: QueryEditorFooterProps) {
+export function QueryEditorFooter() {
   const styles = useStyles2(getStyles);
 
-  const handleItemClick = useCallback(
-    (item: FooterLabelValue) => {
-      onItemClick(item);
-    },
-    [onItemClick]
-  );
+  const { queryOptions } = useQueryEditorUIContext();
+  const { options, setIsSidebarOpen } = queryOptions;
+  const { data } = useQueryRunnerContext();
+  const { datasource } = useDatasourceContext();
+
+  // Compute footer items from actual query options
+  // Items with isActive=true have non-default (user-set) values and are highlighted
+  const items: FooterLabelValue[] = useMemo(() => {
+    const realMaxDataPoints = data?.request?.maxDataPoints;
+    const realInterval = data?.request?.interval;
+    const minIntervalOnDs = datasource?.interval ?? t('query-editor.footer.placeholder.no-limit', 'No limit');
+
+    return [
+      {
+        id: 'maxDataPoints',
+        label: t('query-editor.footer.label.max-data-points', 'Max data points'),
+        value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
+        isActive: options.maxDataPoints != null,
+      },
+      {
+        id: 'minInterval',
+        label: t('query-editor.footer.label.min-interval', 'Min interval'),
+        value: options.minInterval ?? minIntervalOnDs,
+        isActive: options.minInterval != null,
+      },
+      {
+        id: 'interval',
+        label: t('query-editor.footer.label.interval', 'Interval'),
+        value: realInterval ?? '-',
+        isActive: false, // Interval is always computed, never user-set
+      },
+      {
+        id: 'relativeTime',
+        label: t('query-editor.footer.label.relative-time', 'Relative time'),
+        value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
+        isActive: options.timeRange?.from != null,
+      },
+      {
+        id: 'timeShift',
+        label: t('query-editor.footer.label.time-shift', 'Time shift'),
+        value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
+        isActive: options.timeRange?.shift != null,
+      },
+    ];
+  }, [options, data, datasource]);
+
+  const handleOpenSidebar = () => {
+    setIsSidebarOpen(true);
+  };
 
   return (
     <div className={styles.container}>
@@ -38,7 +78,7 @@ export function QueryEditorFooter({ items, onItemClick, onToggleSidebar }: Query
                 fill="text"
                 size="sm"
                 className={styles.itemButton}
-                onClick={() => handleItemClick(item)}
+                onClick={handleOpenSidebar}
                 aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
               >
                 {item.isActive && <span className={styles.activeIndicator} />}
@@ -53,7 +93,7 @@ export function QueryEditorFooter({ items, onItemClick, onToggleSidebar }: Query
           size="sm"
           icon="angle-left"
           iconPlacement="right"
-          onClick={onToggleSidebar}
+          onClick={handleOpenSidebar}
           aria-label={t('query-editor.footer.query-options', 'Query Options')}
         >
           <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>

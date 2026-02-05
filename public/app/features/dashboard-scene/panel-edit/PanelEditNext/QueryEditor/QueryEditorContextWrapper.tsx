@@ -35,6 +35,7 @@ export function QueryEditorContextWrapper({
   const queryRunnerState = queryRunner?.useState();
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const transformations: Transformation[] = useMemo(() => {
     if (panel.state.$data instanceof SceneDataTransformer) {
@@ -127,11 +128,15 @@ export function QueryEditorContextWrapper({
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },
-      options: dataPane.buildQueryOptions(),
+      queryOptions: {
+        options: dataPane.buildQueryOptions(),
+        isSidebarOpen,
+        setIsSidebarOpen,
+      },
     }),
     // Re-compute when queryRunner state changes (maxDataPoints, minInterval, etc.)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedQuery, selectedTransformation, dataPane, queryRunnerState]
+    [selectedQuery, selectedTransformation, dataPane, queryRunnerState, isSidebarOpen]
   );
 
   const actions = useMemo(

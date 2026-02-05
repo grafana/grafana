@@ -4,18 +4,27 @@ import { ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { useQueryEditorUIContext } from '../QueryEditorContext';
+
+import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
+
 interface QueryEditorBodyProps {
   children?: ReactNode;
-  sidebar?: ReactNode;
 }
 
-export function QueryEditorBody({ children, sidebar }: QueryEditorBodyProps) {
+export function QueryEditorBody({ children }: QueryEditorBodyProps) {
   const styles = useStyles2(getStyles);
+  const { queryOptions } = useQueryEditorUIContext();
+  const { isSidebarOpen } = queryOptions;
 
   return (
     <div className={styles.container}>
       <div className={styles.content}>{children}</div>
-      {sidebar && <div className={styles.sidebarWrapper}>{sidebar}</div>}
+      {isSidebarOpen && (
+        <div className={styles.sidebarWrapper}>
+          <QueryEditorDetailsSidebar />
+        </div>
+      )}
     </div>
   );
 }

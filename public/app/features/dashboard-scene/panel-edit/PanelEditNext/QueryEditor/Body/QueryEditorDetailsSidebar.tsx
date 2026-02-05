@@ -13,10 +13,6 @@ import {
   useQueryRunnerContext,
 } from '../QueryEditorContext';
 
-interface QueryEditorDetailsSidebarProps {
-  onClose: () => void;
-}
-
 function timeRangeValidation(value: string | null) {
   return !value || rangeUtil.isValidTimeSpan(value);
 }
@@ -25,12 +21,17 @@ function emptyToNull(value: string) {
   return value === '' ? null : value;
 }
 
-export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebarProps) {
+export function QueryEditorDetailsSidebar() {
   const styles = useStyles2(getStyles);
   const { datasource, dsSettings } = useDatasourceContext();
   const { data } = useQueryRunnerContext();
-  const { options } = useQueryEditorUIContext();
+  const { queryOptions } = useQueryEditorUIContext();
+  const { options, setIsSidebarOpen } = queryOptions;
   const { onQueryOptionsChange } = useActionsContext();
+
+  const handleClose = () => {
+    setIsSidebarOpen(false);
+  };
 
   // Local state for controlled inputs
   const [relativeTimeValue, setRelativeTimeValue] = useState(options.timeRange?.from || '');
@@ -161,7 +162,7 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
 
   return (
     <div className={styles.container}>
-      <Button fill="text" size="lg" icon="angle-right" className={styles.header} onClick={onClose}>
+      <Button fill="text" size="lg" icon="angle-right" className={styles.header} onClick={handleClose}>
         <span className={styles.headerText}>
           <Trans i18nKey="query-editor.details-sidebar.title">Query Options</Trans>
         </span>
