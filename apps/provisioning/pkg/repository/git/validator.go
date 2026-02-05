@@ -57,10 +57,14 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 		}
 	}
 
-	if branch == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(branch) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), branch, "invalid branch name"))
+	// Allow empty branch names for Github Repositories,
+	// as we have a way to retrieve the default branch if missing for them.
+	if repo.Spec.Type != provisioning.GitHubRepositoryType {
+		if branch == "" {
+			list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
+		} else if !IsValidGitBranchName(branch) {
+			list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), branch, "invalid branch name"))
+		}
 	}
 
 	// Readonly repositories may not need a token (if public)

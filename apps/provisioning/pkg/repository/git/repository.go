@@ -44,7 +44,7 @@ type gitRepository struct {
 }
 
 func NewRepository(
-	ctx context.Context,
+	_ context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {

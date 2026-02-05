@@ -37,6 +37,7 @@ type GithubRepository interface {
 	repository.Reader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
+	repository.BranchHandler
 	Owner() string
 	Repo() string
 	Client() Client
@@ -75,6 +76,23 @@ func (r *githubRepository) Client() Client {
 	return r.gh
 }
 
+func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+	repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
+	if err != nil {
+		return "", fmt.Errorf("failed to get repository metadata: %w", err)
+	}
+	return repo.DefaultBranch, nil
+}
+
+func (r *githubRepository) GetCurrentBranch() string {
+	return r.config.Spec.GitHub.Branch
+}
+
+func (r *githubRepository) SetBranch(branch string) {
+	r.config.Spec.GitHub.Branch = branch
+	r.GitRepository.SetBranch(branch)
+}
+
 func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
 	giturl = strings.TrimSuffix(giturl, ".git")
 	giturl = strings.TrimSuffix(giturl, "/")
@@ -101,16 +119,14 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
-	// TODO(ferruvich): we should allow empty branches and default to
-	//  the default by getting the repo - this should be done in repo controller probably.
-	if r.config.Spec.GitHub.Branch == "main" {
-		repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
+	// For Github repositories, in case the branch is empty, we get the default branch and set it up for testing.
+	if r.GetCurrentBranch() == "" {
+		branch, err := r.GetDefaultBranch(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		r.config.Spec.GitHub.Branch = repo.DefaultBranch
-		r.GitRepository.SetBranch(repo.DefaultBranch)
+		r.SetBranch(branch)
 	}
 
 	return r.GitRepository.Test(ctx)
