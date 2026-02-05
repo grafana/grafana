@@ -12,16 +12,6 @@ const testLogsDataFrame = [
         name: LOGS_DATAPLANE_BODY_NAME,
         type: FieldType.string,
         values: ['log 1', 'log 2'], // Add display function
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        // Add state and getLinks
-        state: {},
-        getLinks: () => [],
       },
       {
         name: 'labels',
