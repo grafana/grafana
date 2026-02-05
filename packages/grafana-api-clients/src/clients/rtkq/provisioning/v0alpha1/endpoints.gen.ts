@@ -296,7 +296,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository,
+          body: queryArg.repository,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -345,7 +345,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository,
+          body: queryArg.repository,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -514,7 +514,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository,
+          body: queryArg.repository,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -961,8 +961,7 @@ export type UpdateJobApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type ListRepositoryApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositoryList;
+export type ListRepositoryApiResponse = /** status 200 OK */ RepositoryList;
 export type ListRepositoryApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1008,9 +1007,9 @@ export type ListRepositoryApiArg = {
   watch?: boolean;
 };
 export type CreateRepositoryApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+  | Repository
+  | /** status 201 Created */ Repository
+  | /** status 202 Accepted */ Repository;
 export type CreateRepositoryApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1020,7 +1019,7 @@ export type CreateRepositoryApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+  repository: Repository;
 };
 export type DeletecollectionRepositoryApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionRepositoryApiArg = {
@@ -1073,17 +1072,14 @@ export type DeletecollectionRepositoryApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetRepositoryApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+export type GetRepositoryApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceRepositoryApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+export type ReplaceRepositoryApiResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
 export type ReplaceRepositoryApiArg = {
   /** name of the Repository */
   name: string;
@@ -1095,7 +1091,7 @@ export type ReplaceRepositoryApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+  repository: Repository;
 };
 export type DeleteRepositoryApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteRepositoryApiArg = {
@@ -1114,9 +1110,7 @@ export type DeleteRepositoryApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateRepositoryApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+export type UpdateRepositoryApiResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
 export type UpdateRepositoryApiArg = {
   /** name of the Repository */
   name: string;
@@ -1132,21 +1126,14 @@ export type UpdateRepositoryApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: any;
-};
+export type GetRepositoryFilesApiResponse = /** status 200 OK */ any;
 export type GetRepositoryFilesApiArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** branch or commit hash */
   ref?: string;
 };
-export type GetRepositoryFilesWithPathApiResponse = /** status 200 OK */ TypeMeta;
+export type GetRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type GetRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
@@ -1155,7 +1142,7 @@ export type GetRepositoryFilesWithPathApiArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type ReplaceRepositoryFilesWithPathApiResponse = /** status 200 OK */ TypeMeta;
+export type ReplaceRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type ReplaceRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
@@ -1173,7 +1160,7 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
     [key: string]: any;
   };
 };
-export type CreateRepositoryFilesWithPathApiResponse = /** status 200 OK */ TypeMeta;
+export type CreateRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type CreateRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
@@ -1191,7 +1178,7 @@ export type CreateRepositoryFilesWithPathApiArg = {
     [key: string]: any;
   };
 };
-export type DeleteRepositoryFilesWithPathApiResponse = /** status 200 OK */ TypeMeta;
+export type DeleteRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type DeleteRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
@@ -1240,14 +1227,7 @@ export type GetRepositoryJobsWithPathApiArg = {
   /** Original Job UID */
   uid: string;
 };
-export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: any;
-};
+export type GetRepositoryRefsApiResponse = /** status 200 OK */ any;
 export type GetRepositoryRefsApiArg = {
   /** name of the RefList */
   name: string;
@@ -1259,23 +1239,19 @@ export type GetRepositoryRenderWithPathApiArg = {
   /** Image GUID */
   guid: string;
 };
-export type GetRepositoryResourcesApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceList;
+export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
 };
-export type GetRepositoryStatusApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceRepositoryStatusApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+export type ReplaceRepositoryStatusApiResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
 export type ReplaceRepositoryStatusApiArg = {
   /** name of the Repository */
   name: string;
@@ -1287,11 +1263,9 @@ export type ReplaceRepositoryStatusApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+  repository: Repository;
 };
-export type UpdateRepositoryStatusApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository;
+export type UpdateRepositoryStatusApiResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
 export type UpdateRepositoryStatusApiArg = {
   /** name of the Repository */
   name: string;
@@ -1307,20 +1281,11 @@ export type UpdateRepositoryStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateRepositoryTestApiResponse = /** status 200 OK */ TypeMeta;
+export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
 export type CreateRepositoryTestApiArg = {
   /** name of the TestResults */
   name: string;
-  body: {
-    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-    apiVersion?: string;
-    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-    kind?: string;
-    metadata?: any;
-    secure?: any;
-    spec?: any;
-    status?: any;
-  };
+  body: any;
 };
 export type GetRepositoryWebhookApiResponse = /** status 200 OK */ TypeMeta;
 export type GetRepositoryWebhookApiArg = {
@@ -1532,7 +1497,7 @@ export type Condition = {
   /** type of condition in CamelCase or in foo.example.com/CamelCase. */
   type: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ErrorDetails = {
+export type ErrorDetails = {
   /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
   detail?: string;
   /** Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable. */
@@ -1560,7 +1525,7 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: Condition[];
   /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
-  fieldErrors?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ErrorDetails[];
+  fieldErrors?: ErrorDetails[];
   /** The connection health status */
   health: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1HealthStatus;
   /** The generation of the spec last time reconciliation ran */
@@ -1735,7 +1700,7 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   warnings?: string[];
   write?: number;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositoryUrLs = {
+export type RepositoryUrLs = {
   /** Compare this version to the target branch */
   compareURL?: string;
   /** A URL that will create a new pull request for this branch */
@@ -1762,7 +1727,7 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** Summary of processed actions */
   summary?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobResourceSummary[];
   /** URLs contains URLs for the reference branch or commit if applicable. */
-  url?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositoryUrLs;
+  url?: RepositoryUrLs;
   warnings?: string[];
 };
 export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job = {
@@ -1782,13 +1747,13 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   kind?: string;
   metadata?: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SecureValues = {
+export type SecureValues = {
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
   webhookSecret?: InlineSecureValue;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1BitbucketRepositoryConfig = {
+export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
@@ -1800,10 +1765,10 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionInfo = {
+export type ConnectionInfo = {
   name: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitRepositoryConfig = {
+export type GitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
@@ -1815,7 +1780,7 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** The repository URL (e.g. `https://github.com/example/test.git`). */
   url?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitHubRepositoryConfig = {
+export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
@@ -1827,7 +1792,7 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitLabRepositoryConfig = {
+export type GitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
@@ -1837,10 +1802,10 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1LocalRepositoryConfig = {
+export type LocalRepositoryConfig = {
   path?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SyncOptions = {
+export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
   /** The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one. */
@@ -1852,23 +1817,23 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositorySpec = {
+export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
-  bitbucket?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1BitbucketRepositoryConfig;
+  bitbucket?: BitbucketRepositoryConfig;
   /** The connection the repository references. This means the Repository is interacting with git via a Connection. */
-  connection?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionInfo;
+  connection?: ConnectionInfo;
   /** Repository description */
   description?: string;
   /** The repository on Git. Mutually exclusive with local | github | git. */
-  git?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitRepositoryConfig;
+  git?: GitRepositoryConfig;
   /** The repository on GitHub. Mutually exclusive with local | github | git. */
-  github?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitHubRepositoryConfig;
+  github?: GitHubRepositoryConfig;
   /** The repository on GitLab. Mutually exclusive with local | github | git. */
-  gitlab?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitLabRepositoryConfig;
+  gitlab?: GitLabRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
-  local?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1LocalRepositoryConfig;
+  local?: LocalRepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */
-  sync: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SyncOptions;
+  sync: SyncOptions;
   /** The repository display name (shown in the UI) */
   title: string;
   /** The repository type.  When selected oneOf the values below should be non-nil
@@ -1883,18 +1848,18 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1QuotaStatus = {
+export type QuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
   maxRepositories?: number;
   /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
   maxResourcesPerRepository?: number;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceCount = {
+export type ResourceCount = {
   count: number;
   group: string;
   resource: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SyncStatus = {
+export type SyncStatus = {
   /** When the sync job finished */
   finished?: number;
   /** Incremental synchronization for versioned repositories */
@@ -1919,61 +1884,131 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1TokenStatus = {
+export type TokenStatus = {
   expiration?: number;
   lastUpdated?: number;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1WebhookStatus = {
+export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
   subscribedEvents?: string[];
   url?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositoryStatus = {
+export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */
   conditions?: Condition[];
   /** Error information during repository deletion (if any) */
   deleteError?: string;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
-  fieldErrors?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ErrorDetails[];
+  fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
   health: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
   /** Quota contains the configured quota limits for this repository */
-  quota?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1QuotaStatus;
+  quota?: QuotaStatus;
   /** The object count when sync last ran */
-  stats?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceCount[];
+  stats?: ResourceCount[];
   /** Sync information with the last sync information */
-  sync: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SyncStatus;
+  sync: SyncStatus;
   /** Token will get updated with current token information */
-  token?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1TokenStatus;
+  token?: TokenStatus;
   /** Webhook Information (if applicable) */
-  webhook: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1WebhookStatus;
+  webhook: WebhookStatus;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository = {
+export type Repository = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
-  secure?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SecureValues;
-  spec?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositorySpec;
-  status?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositoryStatus;
+  secure?: SecureValues;
+  spec?: RepositorySpec;
+  status?: RepositoryStatus;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1RepositoryList = {
+export type RepositoryList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Repository[];
+  items: Repository[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
 };
-export type TypeMeta = {
+export type ResourceRepositoryInfo = {
+  /** The name (identifier) */
+  name: string;
+  /** The namespace this belongs to */
+  namespace: string;
+  /** The display name for this repository */
+  title: string;
+  /** The repository type
+    
+    Possible enum values:
+     - `"bitbucket"`
+     - `"git"`
+     - `"github"`
+     - `"gitlab"`
+     - `"local"` */
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+};
+export type Unstructured = {
+  [key: string]: any;
+};
+export type ResourceType = {
+  /** For non-k8s native formats, what did this start as
+    
+    Possible enum values:
+     - `"access-control"` Access control https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/access-control/sample.yaml
+     - `"alerting"` Alert configuration https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/alerting/sample.yaml
+     - `"dashboard"` Dashboard JSON
+     - `"datasources"` Datasource definitions eg: https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/datasources/sample.yaml */
+  classic?: 'access-control' | 'alerting' | 'dashboard' | 'datasources';
+  group?: string;
+  kind?: string;
+  resource?: string;
+  version?: string;
+};
+export type ResourceObjects = {
+  /** The action required/used for dryRun
+    
+    Possible enum values:
+     - `"create"`
+     - `"delete"`
+     - `"move"`
+     - `"update"` */
+  action?: 'create' | 'delete' | 'move' | 'update';
+  /** The value returned from a dryRun request */
+  dryRun?: Unstructured;
+  /** The same value, currently saved in the grafana database */
+  existing?: Unstructured;
+  /** The resource from the repository with all modifications applied eg, the name, folder etc will all be applied to this object */
+  file?: Unstructured;
+  /** The identified type for this object */
+  type: ResourceType;
+  /** For write events, this will return the value that was added or updated */
+  upsert?: Unstructured;
+};
+export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** If errors exist, show them here */
+  errors?: string[];
+  /** The repo hash value */
+  hash?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
+  /** Path to the remote file */
+  path?: string;
+  /** The request ref (or branch if exists) */
+  ref?: string;
+  /** Basic repository info */
+  repository: ResourceRepositoryInfo;
+  /** Different flavors of the same object */
+  resource: ResourceObjects;
+  /** The modified time in the remote file system */
+  timestamp?: Time;
+  /** Typed links for this file (only supported by external systems, github etc) */
+  urls?: RepositoryUrLs;
 };
 export type JobList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2016,7 +2051,7 @@ export type JobSpec = {
   /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
   repository?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceListItem = {
+export type ResourceListItem = {
   folder?: string;
   group: string;
   /** the k8s identifier */
@@ -2027,13 +2062,31 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   time?: number;
   title?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceList = {
+export type ResourceList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceListItem[];
+  items: ResourceListItem[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type TestResults = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** HTTP status code */
+  code: number;
+  /** Field related errors */
+  errors?: ErrorDetails[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** Is the connection healthy */
+  success: boolean;
+};
+export type TypeMeta = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
 };
 export type RepositoryView = {
   /** For git, this is the target branch */
@@ -2078,11 +2131,6 @@ export type RepositoryViewList = {
   kind?: string;
   /** MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited) */
   maxRepositories: number;
-};
-export type ResourceCount = {
-  count: number;
-  group: string;
-  resource: string;
 };
 export type ManagerStats = {
   /** Manager identity */
