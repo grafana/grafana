@@ -41,3 +41,8 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  * This is a common example value shown when no value is set.
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
+
+export const CONTENT_SIDE_BAR = {
+  width: 300,
+  labelWidth: 80,
+};

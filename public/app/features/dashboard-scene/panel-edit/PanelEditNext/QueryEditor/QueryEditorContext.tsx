@@ -8,7 +8,7 @@ import { QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
-import { Transformation } from './types';
+import { QueryOptionField, Transformation } from './types';
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -31,7 +31,9 @@ export interface PanelState {
 export interface QueryOptionsState {
   options: QueryGroupOptions;
   isQueryOptionsOpen: boolean;
-  setIsQueryOptionsOpen: (open: boolean) => void;
+  openSidebar: (focusField?: QueryOptionField) => void;
+  closeSidebar: () => void;
+  focusedField: QueryOptionField | null;
 }
 
 export interface QueryEditorUIState {
