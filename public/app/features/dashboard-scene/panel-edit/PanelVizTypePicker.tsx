@@ -95,7 +95,9 @@ export function PanelVizTypePicker({
   const defaultTab = tabs[0].value;
   const [storedListMode, setStoredListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
 
-  const shouldDefaultToSuggestions = isNewPanel && !hasPickedViz && config.featureToggles.newVizSuggestions;
+  const shouldDefaultToSuggestions =
+    (isNewPanel && !hasPickedViz && config.featureToggles.newVizSuggestions) ||
+    storedListMode === VisualizationSelectPaneTab.Suggestions;
   const initialTab = shouldDefaultToSuggestions ? VisualizationSelectPaneTab.Suggestions : storedListMode;
   const [listMode, setListMode] = useState(initialTab);
 
