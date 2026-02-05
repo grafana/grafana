@@ -109,26 +109,10 @@ func NewInMemoryFlag(name string, value any) memprovider.InMemoryFlag {
 	return memprovider.InMemoryFlag{Key: name, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: value}}
 }
 
-// DetermineFlagType determines the FlagType from a value
-func DetermineFlagType(value any) FlagType {
-	switch value.(type) {
-	case bool:
-		return FlagTypeBoolean
-	case int, int64:
-		return FlagTypeInteger
-	case float64, float32:
-		return FlagTypeFloat
-	case string:
-		return FlagTypeString
-	default:
-		return FlagTypeObject
-	}
-}
-
-func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {
+func AsStringMap(m map[string]TypedFlag) map[string]string {
 	var res = map[string]string{}
 	for k, v := range m {
-		res[k] = serializeFlagValue(v)
+		res[k] = serializeFlagValue(v.InMemoryFlag)
 	}
 	return res
 }
