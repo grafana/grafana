@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -962,24 +961,18 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana dashboards as resources"
 
-	if true {
-		return oas, nil
-	}
-
 	// Add dashboard hits manually
 	if oas.Info.Title == "dashboard.grafana.app/v0alpha1" {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-		defsBase := "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1."
-		refsBase := "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1."
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
 
 		// Add any missing definitions
 		//-----------------------------
 		for _, k := range kinds {
-			v := defs[defsBase+k]
-			clean := strings.Replace(k, defsBase, refsBase, 1)
-			if oas.Components.Schemas[clean] == nil {
+			key := dashv0.OpenAPIPrefix + k
+			v := defs[key]
+			if oas.Components.Schemas[key] == nil {
 				switch k {
 				case "SearchResults":
 					v.Schema.Properties["sortBy"] = *spec.RefProperty(
@@ -998,7 +991,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
-				oas.Components.Schemas[clean] = &v.Schema
+				oas.Components.Schemas[key] = &v.Schema
 			}
 		}
 
