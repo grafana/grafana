@@ -69,6 +69,8 @@ type kvStorageBackend struct {
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
 	withExperimentalClusterScope bool
+	lastImportStore              *lastImportStore
+	lastImportTimeMaxAge         time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -103,6 +105,9 @@ type KVBackendOptions struct {
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	// needed for sqlkv
 	DBKeepAlive any
+
+	// If not zero, the backend will regularly remove times from "last import times" older than this.
+	LastImportTimeMaxAge time.Duration
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -143,14 +148,16 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
 		dbKeepAlive:                  opts.DBKeepAlive,
+		lastImportStore:              newLastImportStore(kv),
+		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
 
-	// Start the event cleanup background job
-	go backend.runCleanupOldEvents(ctx)
+	// Start the cleanup background job.
+	go backend.runCleanups(ctx)
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
@@ -169,8 +176,8 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
-// runCleanupOldEvents starts a background goroutine that periodically cleans up old events
-func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+// runCleanups starts periodically cleans up old events and last import times.
+func (k *kvStorageBackend) runCleanups(ctx context.Context) {
 	// Run cleanup every hour
 	ticker := time.NewTicker(k.eventPruningInterval)
 	defer ticker.Stop()
@@ -182,7 +189,21 @@ func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
 			return
 		case <-ticker.C:
 			k.cleanupOldEvents(ctx)
+			k.cleanupOldLastImportTimes(ctx)
 		}
+	}
+}
+
+func (k *kvStorageBackend) cleanupOldLastImportTimes(ctx context.Context) {
+	if k.lastImportTimeMaxAge <= 0 {
+		return
+	}
+
+	deleted, err := k.lastImportStore.CleanupLastImportTimes(ctx, k.lastImportTimeMaxAge)
+	if err != nil {
+		k.log.Error("Failed to cleanup last import times", "error", err)
+	} else if deleted > 0 {
+		k.log.Info("Cleaned up last import times", "deleted_count", deleted)
 	}
 }
 
@@ -195,7 +216,7 @@ func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 		return
 	}
 
-	if deletedCount == 0 {
+	if deletedCount > 0 {
 		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
 	}
 }
@@ -1304,7 +1325,16 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
+		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
+		if err != nil {
+			yield(ResourceLastImportTime{}, err)
+			return
+		}
+		for _, v := range valid {
+			if !yield(v.ToResourceLastImportTime(), nil) {
+				return
+			}
+		}
 	}
 }
 
@@ -1322,71 +1352,59 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
-	if setting.RebuildCollection {
-		for _, key := range setting.Collection {
-			events := make([]string, 0)
-			for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
-				if err != nil {
-					b.log.Error("failed to list event: %s", err)
-					return rsp
-				}
-
-				evtKey, err := ParseEventKey(evtKeyStr)
-				if err != nil {
-					b.log.Error("error parsing event key: %s", err)
-					return rsp
-				}
-
-				if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
-					continue
-				}
-
-				events = append(events, evtKeyStr)
-			}
-
-			if err := b.eventStore.batchDelete(ctx, events); err != nil {
-				b.log.Error("failed to delete events: %s", err)
+	for _, key := range setting.Collection {
+		events := make([]string, 0)
+		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
+			if err != nil {
+				b.log.Error("failed to list event: %s", err)
 				return rsp
 			}
 
-			historyKeys := make([]DataKey, 0)
-
-			for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			}, SortOrderAsc) {
-				if err != nil {
-					b.log.Error("failed to list collection before delete: %s", err)
-					return rsp
-				}
-
-				historyKeys = append(historyKeys, dataKey)
-			}
-
-			previousCount := int64(len(historyKeys))
-			if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
-				b.log.Error("failed to delete collection: %s", err)
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				b.log.Error("error parsing event key: %s", err)
 				return rsp
 			}
-			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace:     key.Namespace,
-				Group:         key.Group,
-				Resource:      key.Resource,
-				PreviousCount: previousCount,
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
 			}
+
+			events = append(events, evtKeyStr)
 		}
-	} else {
-		for _, key := range setting.Collection {
-			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+
+		if err := b.eventStore.batchDelete(ctx, events); err != nil {
+			b.log.Error("failed to delete events: %s", err)
+			return rsp
+		}
+
+		historyKeys := make([]DataKey, 0)
+
+		for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, SortOrderAsc) {
+			if err != nil {
+				b.log.Error("failed to list collection before delete: %s", err)
+				return rsp
 			}
+
+			historyKeys = append(historyKeys, dataKey)
+		}
+
+		previousCount := int64(len(historyKeys))
+		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
+			b.log.Error("failed to delete collection: %s", err)
+			return rsp
+		}
+		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
+			Namespace:     key.Namespace,
+			Group:         key.Group,
+			Resource:      key.Resource,
+			PreviousCount: previousCount,
 		}
 	}
-
-	obj := &unstructured.Unstructured{}
 
 	saved := make([]DataKey, 0)
 	rollback := func() {
@@ -1396,6 +1414,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			b.log.Error("failed to delete during rollback: %s", err)
 		}
 	}
+
+	updatedResources := make(map[NamespacedResource]bool)
 
 	for iter.Next() {
 		if iter.RollbackRequested() {
@@ -1452,6 +1472,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			continue
 		}
 
+		obj := &unstructured.Unstructured{}
 		err := obj.UnmarshalJSON(req.Value)
 		if err != nil {
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
@@ -1482,9 +1503,21 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		saved = append(saved, dataKey)
+		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
 	}
 
-	// TODO update last import time
+	if rsp.Error == nil {
+		now := time.Now()
+		for nsr := range updatedResources {
+			err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
+				NamespacedResource: nsr,
+				LastImportTime:     now,
+			})
+			if err != nil {
+				rsp.Error = AsErrorResult(fmt.Errorf("failed to save last import time for resource %s: %s", nsr.String(), err))
+			}
+		}
+	}
 
 	return rsp
 }

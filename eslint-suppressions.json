@@ -758,11 +758,6 @@
       "count": 6
     }
   },
-  "packages/grafana-ui/src/components/SetInterval/SetInterval.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -1375,11 +1370,6 @@
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeRange.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/notification-policies/EditDefaultPolicyForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
     }
   },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {
@@ -2174,11 +2164,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/containers/DashboardPageProxy.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/containers/PublicDashboardPage.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2630,11 +2615,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/logsFrame.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2762,56 +2742,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/plugins/extensions/registry/AddedComponentsRegistry.test.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
-  "public/app/features/plugins/extensions/registry/AddedFunctionsRegistry.test.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
-  "public/app/features/plugins/extensions/registry/AddedLinksRegistry.test.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
-  "public/app/features/plugins/extensions/registry/ExposedComponentsRegistry.test.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginComponent.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginComponents.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginFunctions.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginLinks.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/extensions/validators.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 30
-    }
-  },
-  "public/app/features/plugins/extensions/validators.ts": {
-    "no-restricted-syntax": {
-      "count": 4
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {

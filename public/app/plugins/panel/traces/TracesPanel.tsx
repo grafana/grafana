@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, createRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { TraceSearchProps, Field, LinkModel, PanelProps } from '@grafana/data';
@@ -27,7 +27,7 @@ export interface TracesPanelOptions {
 }
 
 export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<TracesPanelOptions>) => {
-  const topOfViewRef = createRef<HTMLDivElement>();
+  const topOfViewRef = useRef<HTMLDivElement>(null);
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const dataSource = useAsync(async () => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);

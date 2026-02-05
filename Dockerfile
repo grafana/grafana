@@ -14,9 +14,9 @@ ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructions we can delegate dependency updates to dependabot
-FROM alpine:3.23.2 AS alpine-base
+FROM alpine:3.23.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.25.6-alpine AS go-builder-base
+FROM golang:1.25.7-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -236,12 +236,15 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
+# This is used by the community plugin runner sandbox
+RUN apk add --no-cache bubblewrap
+
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
-RUN set -o pipefail && grafana server -v | sed -e 's/Version //' > /.grafana-version && \
-  chmod 644 /.grafana-version
+RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
+RUN chmod 644 /.grafana-version
 
 EXPOSE 3000
 

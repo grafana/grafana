@@ -76,7 +76,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleList":                                                  schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec":                                                  schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamList":                                                          schema_pkg_apis_iam_v0alpha1_TeamList(ref),
-		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamRef":                                                           schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec":                                                          schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamStatus":                                                        schema_pkg_apis_iam_v0alpha1_TeamStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamstatusOperatorState":                                           schema_pkg_apis_iam_v0alpha1_TeamstatusOperatorState(ref),
@@ -203,13 +202,6 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 							Format:  "",
 						},
 					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
 					"group": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -232,7 +224,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 						},
 					},
 				},
-				Required: []string{"title", "description", "version", "group", "permissions"},
+				Required: []string{"title", "description", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -1283,13 +1275,6 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 							Format:  "",
 						},
 					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
 					"group": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -1312,7 +1297,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"title", "description", "version", "group", "permissions"},
+				Required: []string{"title", "description", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -2125,13 +2110,6 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
 					"group": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -2154,7 +2132,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"title", "description", "version", "group", "permissions"},
+				Required: []string{"title", "description", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -3013,27 +2991,6 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 	}
 }
 
-func schema_pkg_apis_iam_v0alpha1_TeamRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name is the unique identifier for a team.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"name"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3437,10 +3394,18 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds6RoutesTeamsGETResponseUs
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"teamRef": {
+					"user": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamRef"),
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"team": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"permission": {
@@ -3458,11 +3423,9 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds6RoutesTeamsGETResponseUs
 						},
 					},
 				},
-				Required: []string{"teamRef", "permission", "external"},
+				Required: []string{"user", "team", "permission", "external"},
 			},
 		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamRef"},
 	}
 }
 

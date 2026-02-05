@@ -272,20 +272,20 @@ type (
 type MergeResult definition.MergeResult
 
 func (m MergeResult) LogContext() []any {
-	if len(m.RenamedReceivers) == 0 && len(m.RenamedTimeIntervals) == 0 {
+	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
 		return nil
 	}
 	logCtx := make([]any, 0, 4)
-	if len(m.RenamedReceivers) > 0 {
+	if len(m.Receivers) > 0 {
 		rcvBuilder := strings.Builder{}
-		for from, to := range m.RenamedReceivers {
+		for from, to := range m.Receivers {
 			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
 		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
 	}
-	if len(m.RenamedTimeIntervals) > 0 {
+	if len(m.TimeIntervals) > 0 {
 		intervalBuilder := strings.Builder{}
-		for from, to := range m.RenamedTimeIntervals {
+		for from, to := range m.TimeIntervals {
 			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
 		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))

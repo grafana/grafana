@@ -222,7 +222,6 @@ export function PanelChrome({
       ) {
         return;
       }
-
       // setTimeout is needed here because onSelect stops the event propagation
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
@@ -434,6 +433,7 @@ export function PanelChrome({
                   placement="bottom-end"
                   menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
                   onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
                 />
               )}
             </div>
