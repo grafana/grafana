@@ -753,11 +753,6 @@
       "count": 6
     }
   },
-  "packages/grafana-ui/src/components/SetInterval/SetInterval.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2

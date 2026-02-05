@@ -21,11 +21,21 @@ type QuotaLimits struct {
 	MaxRepositories int64
 }
 
-// EvaluateCondition creates a Quota condition based on current stats and limits.
+type Usage struct {
+	TotalResources int64
+}
+
+func NewQuotaUsageFromStats(stats []provisioning.ResourceCount) Usage {
+	return Usage{
+		TotalResources: calculateTotalResources(stats),
+	}
+}
+
+// EvaluateCondition creates a Quota condition based on current stats and quota status.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
-func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav1.Condition {
+func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.Condition {
 	// Check if any limits are configured
-	if q.MaxResources == 0 {
+	if quota.MaxResourcesPerRepository == 0 {
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
@@ -34,29 +44,29 @@ func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav
 		}
 	}
 
-	total := calculateTotalResources(stats)
+	total := quotaUsage.TotalResources
 
 	switch {
-	case total > q.MaxResources:
+	case total > quota.MaxResourcesPerRepository:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonQuotaExceeded,
-			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
-	case total == q.MaxResources:
+	case total == quota.MaxResourcesPerRepository:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonQuotaReached,
-			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	default:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
-			Message: fmt.Sprintf("Within quota: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Within quota: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	}
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import RCCascader from 'rc-cascader';
+import RCCascader from '@rc-component/cascader';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -286,7 +286,7 @@ const UnthemedCascader = ({
           expandIcon={null}
           open={alwaysOpen}
           disabled={disabled}
-          dropdownClassName={styles.dropdown}
+          popupClassName={styles.dropdown}
         >
           <div className={disableDivFocus}>
             <Input
