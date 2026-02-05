@@ -12,6 +12,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleSpec":                                                      schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleStatus":                                                    schema_pkg_apis_iam_v0alpha1_CoreRoleStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecPermission":                                            schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecRoleRef":                                               schema_pkg_apis_iam_v0alpha1_CoreRolespecRoleRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolestatusOperatorState":                                       schema_pkg_apis_iam_v0alpha1_CoreRolestatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMapping":                                              schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingList":                                          schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
@@ -38,6 +39,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleSpec":                                                    schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleStatus":                                                  schema_pkg_apis_iam_v0alpha1_GlobalRoleStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecPermission":                                          schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecRoleRef":                                             schema_pkg_apis_iam_v0alpha1_GlobalRolespecRoleRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolestatusOperatorState":                                     schema_pkg_apis_iam_v0alpha1_GlobalRolestatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermission":                                                schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionList":                                            schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref),
@@ -58,6 +60,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleSpec":                                                          schema_pkg_apis_iam_v0alpha1_RoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleStatus":                                                        schema_pkg_apis_iam_v0alpha1_RoleStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecPermission":                                                schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecRoleRef":                                                   schema_pkg_apis_iam_v0alpha1_RolespecRoleRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolestatusOperatorState":                                           schema_pkg_apis_iam_v0alpha1_RolestatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount":                                                    schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountList":                                                schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
@@ -211,7 +214,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
+							Description: "All permissions for this role",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -223,12 +226,40 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"permissionsOmitted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecPermission"),
+									},
+								},
+							},
+						},
+					},
+					"roleRefs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecRoleRef"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "description", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecPermission"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecPermission", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolespecRoleRef"},
 	}
 }
 
@@ -300,6 +331,35 @@ func schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref common.ReferenceCal
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CoreRolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the role being referenced",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}
@@ -1284,7 +1344,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
+							Description: "All permissions for this role",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -1296,12 +1356,40 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 							},
 						},
 					},
+					"permissionsOmitted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecPermission"),
+									},
+								},
+							},
+						},
+					},
+					"roleRefs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecRoleRef"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "description", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecPermission"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecPermission", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolespecRoleRef"},
 	}
 }
 
@@ -1373,6 +1461,35 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref common.ReferenceC
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GlobalRolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the role being referenced",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}
@@ -2119,7 +2236,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
+							Description: "All permissions for this role",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -2131,12 +2248,40 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
+					"permissionsOmitted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecPermission"),
+									},
+								},
+							},
+						},
+					},
+					"roleRefs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecRoleRef"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "description", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecPermission"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecPermission", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecRoleRef"},
 	}
 }
 
@@ -2208,6 +2353,35 @@ func schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref common.ReferenceCallbac
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_RolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the role being referenced",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}

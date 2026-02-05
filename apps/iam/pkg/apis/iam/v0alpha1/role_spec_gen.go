@@ -16,16 +16,16 @@ func NewRolespecPermission() *RolespecPermission {
 }
 
 // +k8s:openapi-gen=true
-type RolespecRoleref struct {
+type RolespecRoleRef struct {
 	// Kind of role being referenced (for now only GlobalRole is supported)
 	Kind string `json:"kind"`
 	// Name of the role being referenced
 	Name string `json:"name"`
 }
 
-// NewRolespecRoleref creates a new RolespecRoleref object.
-func NewRolespecRoleref() *RolespecRoleref {
-	return &RolespecRoleref{}
+// NewRolespecRoleRef creates a new RolespecRoleRef object.
+func NewRolespecRoleRef() *RolespecRoleRef {
+	return &RolespecRoleRef{}
 }
 
 // +k8s:openapi-gen=true
@@ -34,16 +34,16 @@ type RoleSpec struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Group       string `json:"group"`
+	// All permissions for this role
+	Permissions []RolespecPermission `json:"permissions"`
+	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
+	PermissionsOmitted []RolespecPermission `json:"permissionsOmitted,omitempty"`
+	// Roles to take permissions from (for now the list should be of size 1)
 	// TODO:
 	// delegatable?: bool
 	// created?
 	// updated?
-	// All permissions for this role
-	Permissions []RolespecPermission `json:"permissions"`
-	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
-	PermissionsOmitted *[]RolespecPermission `json:"permissionsOmitted,omitempty"`
-	// Roles to take permissions from (for now the list should be of size 1)
-	RoleRefs *[]RolespecRoleref `json:"roleRefs,omitempty"`
+	RoleRefs []RolespecRoleRef `json:"roleRefs,omitempty"`
 }
 
 // NewRoleSpec creates a new RoleSpec object.
