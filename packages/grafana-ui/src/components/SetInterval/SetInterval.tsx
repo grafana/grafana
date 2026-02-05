@@ -1,4 +1,3 @@
-import { isEqual } from 'lodash';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
@@ -69,10 +68,7 @@ export const SetInterval = React.memo(({ func, loading, interval: intervalStr }:
   useEffect(() => {
     const prev = prevPropsRef.current;
     const currentProps: Props = { func, loading, interval: intervalStr };
-    if (
-      (RefreshPicker.isLive(prev.interval) && RefreshPicker.isLive(currentProps.interval)) ||
-      isEqual(prev, currentProps)
-    ) {
+    if (RefreshPicker.isLive(prev.interval) && RefreshPicker.isLive(currentProps.interval)) {
       return;
     }
 
