@@ -57,7 +57,7 @@ type staticEvaluator struct {
 
 func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmodel.OFREPEvaluateSuccessResponse, error) {
 	// Get the typed flag
-	typedFlag, exists := s.provider.flags[flagKey]
+	flag, exists := s.provider.flags[flagKey]
 	if !exists {
 		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("flag %s not found", flagKey)
 	}
@@ -75,37 +75,39 @@ func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmod
 		}
 	}
 
+	typedFlag := TypedFlag(flag)
+
 	// Evaluate based on type
-	switch typedFlag.Type {
-	case setting.FlagTypeBoolean:
+	switch typedFlag.GetFlagType() {
+	case FlagTypeBoolean:
 		result, err := s.client.BooleanValueDetails(ctx, flagKey, false, evalCtx)
 		if err != nil {
 			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
 		}
 		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
 
-	case setting.FlagTypeInteger:
+	case FlagTypeInteger:
 		result, err := s.client.IntValueDetails(ctx, flagKey, 0, evalCtx)
 		if err != nil {
 			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
 		}
 		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
 
-	case setting.FlagTypeFloat:
+	case FlagTypeFloat:
 		result, err := s.client.FloatValueDetails(ctx, flagKey, 0.0, evalCtx)
 		if err != nil {
 			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
 		}
 		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
 
-	case setting.FlagTypeString:
+	case FlagTypeString:
 		result, err := s.client.StringValueDetails(ctx, flagKey, "", evalCtx)
 		if err != nil {
 			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
 		}
 		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
 
-	case setting.FlagTypeObject:
+	case FlagTypeObject:
 		result, err := s.client.ObjectValueDetails(ctx, flagKey, map[string]any{}, evalCtx)
 		if err != nil {
 			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)

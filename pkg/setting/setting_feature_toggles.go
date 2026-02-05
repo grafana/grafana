@@ -18,34 +18,31 @@ const DefaultVariantName = "default"
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	section := iniFile.Section("feature_toggles")
-	typedFlags, err := ReadFeatureTogglesFromInitFile(section)
+	toggles, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return err
 	}
 	// TODO IsFeatureToggleEnabled has been deprecated for 2 years now, we should remove this function completely
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = func(key string) bool {
-		typedFlag, ok := typedFlags[key]
+		toggle, ok := toggles[key]
 		if !ok {
 			return false
 		}
 
-		value, ok := typedFlag.Variants[typedFlag.DefaultVariant].(bool)
+		value, ok := toggle.Variants[toggle.DefaultVariant].(bool)
 		return value && ok
 	}
 	return nil
 }
 
-func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]TypedFlag, error) {
-	typedFlags := make(map[string]TypedFlag, 10)
+func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]memprovider.InMemoryFlag, error) {
+	featureToggles := make(map[string]memprovider.InMemoryFlag, 10)
 
 	// parse the comma separated list in `enable`.
 	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
 	for _, feature := range util.SplitString(featuresTogglesStr) {
-		typedFlags[feature] = TypedFlag{
-			InMemoryFlag: memprovider.InMemoryFlag{Key: feature, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: true}},
-			Type:         FlagTypeBoolean,
-		}
+		featureToggles[feature] = memprovider.InMemoryFlag{Key: feature, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: true}}
 	}
 
 	// read all other settings under [feature_toggles]. If a toggle is
@@ -55,64 +52,43 @@ func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[str
 			continue
 		}
 
-		flag, flagType, err := ParseFlagWithType(v.Name(), v.Value())
+		b, err := ParseFlag(v.Name(), v.Value())
 		if err != nil {
-			return typedFlags, err
+			return featureToggles, err
 		}
 
-		typedFlags[v.Name()] = TypedFlag{
-			InMemoryFlag: flag,
-			Type:         flagType,
-		}
+		featureToggles[v.Name()] = b
 	}
-	return typedFlags, nil
+	return featureToggles, nil
 }
 
-// FlagType represents the data type of a feature flag
-type FlagType int
-
-const (
-	FlagTypeBoolean FlagType = iota
-	FlagTypeInteger
-	FlagTypeFloat
-	FlagTypeString
-	FlagTypeObject
-)
-
-// TypedFlag embeds InMemoryFlag and adds type information
-type TypedFlag struct {
-	memprovider.InMemoryFlag
-	Type FlagType
-}
-
-// ParseFlagWithType parses a flag value and returns both the InMemoryFlag and its type
-func ParseFlagWithType(name, value string) (memprovider.InMemoryFlag, FlagType, error) {
+func ParseFlag(name, value string) (memprovider.InMemoryFlag, error) {
 	var structure map[string]any
 
 	if integer, err := strconv.Atoi(value); err == nil {
-		return NewInMemoryFlag(name, integer), FlagTypeInteger, nil
+		return NewInMemoryFlag(name, integer), nil
 	}
 	if float, err := strconv.ParseFloat(value, 64); err == nil {
-		return NewInMemoryFlag(name, float), FlagTypeFloat, nil
+		return NewInMemoryFlag(name, float), nil
 	}
 	if err := json.Unmarshal([]byte(value), &structure); err == nil {
-		return NewInMemoryFlag(name, structure), FlagTypeObject, nil
+		return NewInMemoryFlag(name, structure), nil
 	}
 	if boolean, err := strconv.ParseBool(value); err == nil {
-		return NewInMemoryFlag(name, boolean), FlagTypeBoolean, nil
+		return NewInMemoryFlag(name, boolean), nil
 	}
 
-	return NewInMemoryFlag(name, value), FlagTypeString, nil
+	return NewInMemoryFlag(name, value), nil
 }
 
 func NewInMemoryFlag(name string, value any) memprovider.InMemoryFlag {
 	return memprovider.InMemoryFlag{Key: name, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: value}}
 }
 
-func AsStringMap(m map[string]TypedFlag) map[string]string {
+func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {
 	var res = map[string]string{}
 	for k, v := range m {
-		res[k] = serializeFlagValue(v.InMemoryFlag)
+		res[k] = serializeFlagValue(v)
 	}
 	return res
 }

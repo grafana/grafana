@@ -13,14 +13,14 @@ import (
 // also allows for bulk evaluation of flags, necessary to proxy OFREP requests.
 type inMemoryBulkProvider struct {
 	memprovider.InMemoryProvider
-	flags map[string]setting.TypedFlag
+	flags map[string]memprovider.InMemoryFlag
 }
 
-func newInMemoryBulkProvider(typedFlags map[string]setting.TypedFlag) *inMemoryBulkProvider {
+func newInMemoryBulkProvider(typedFlags map[string]memprovider.InMemoryFlag) *inMemoryBulkProvider {
 	// Convert TypedFlags to InMemoryFlags for the provider
 	flags := make(map[string]memprovider.InMemoryFlag, len(typedFlags))
-	for key, typedFlag := range typedFlags {
-		flags[key] = typedFlag.InMemoryFlag
+	for key, flag := range typedFlags {
+		flags[key] = flag
 	}
 
 	return &inMemoryBulkProvider{
@@ -38,20 +38,18 @@ func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
 	return keys, nil
 }
 
-func newStaticProvider(confFlags map[string]setting.TypedFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
-	typedFlags := make(map[string]setting.TypedFlag, len(standardFlags)+len(confFlags))
+func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
+	typedFlags := make(map[string]memprovider.InMemoryFlag, len(standardFlags)+len(confFlags))
 
 	// Parse and add standard flags with type information
 	for _, flag := range standardFlags {
-		inMemFlag, flagType, err := setting.ParseFlagWithType(flag.Name, flag.Expression)
+		inMemFlag, err := setting.ParseFlag(flag.Name, flag.Expression)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse flag %s: %w", flag.Name, err)
 		}
 
-		typedFlags[flag.Name] = setting.TypedFlag{
-			InMemoryFlag: inMemFlag,
-			Type:         flagType,
-		}
+		typedFlags[flag.Name] = inMemFlag
+
 	}
 
 	// Add flags from config.ini file - already typed

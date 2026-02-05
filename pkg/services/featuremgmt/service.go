@@ -34,11 +34,11 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 	mgmt.registerFlags(standardFeatureFlags...)
 
 	// Load the flags from `custom.ini` files
-	typedFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	flags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
 		return mgmt, err
 	}
-	for key, val := range typedFlags {
+	for key, val := range flags {
 		_, ok := mgmt.flags[key]
 		if !ok {
 			mgmt.flags[key] = &FeatureFlag{

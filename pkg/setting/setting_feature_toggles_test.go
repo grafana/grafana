@@ -14,16 +14,16 @@ func TestFeatureToggles(t *testing.T) {
 	testCases := []struct {
 		name            string
 		conf            map[string]string
-		expectedToggles map[string]TypedFlag
+		expectedToggles map[string]memprovider.InMemoryFlag
 	}{
 		{
 			name: "can parse feature toggles passed in the `enable` array",
 			conf: map[string]string{
 				"enable": "feature1,feature2",
 			},
-			expectedToggles: map[string]TypedFlag{
-				"feature1": {InMemoryFlag: NewInMemoryFlag("feature1", true), Type: FlagTypeBoolean},
-				"feature2": {InMemoryFlag: NewInMemoryFlag("feature2", true), Type: FlagTypeBoolean},
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", true),
 			},
 		},
 		{
@@ -32,10 +32,10 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature3": "true",
 			},
-			expectedToggles: map[string]TypedFlag{
-				"feature1": {InMemoryFlag: NewInMemoryFlag("feature1", true), Type: FlagTypeBoolean},
-				"feature2": {InMemoryFlag: NewInMemoryFlag("feature2", true), Type: FlagTypeBoolean},
-				"feature3": {InMemoryFlag: NewInMemoryFlag("feature3", true), Type: FlagTypeBoolean},
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", true),
+				"feature3": NewInMemoryFlag("feature3", true),
 			},
 		},
 		{
@@ -44,28 +44,25 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature2": "false",
 			},
-			expectedToggles: map[string]TypedFlag{
-				"feature1": {InMemoryFlag: NewInMemoryFlag("feature1", true), Type: FlagTypeBoolean},
-				"feature2": {InMemoryFlag: NewInMemoryFlag("feature2", false), Type: FlagTypeBoolean},
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", false),
 			},
 		},
 		{
 			name: "feature flags of different types are handled correctly",
 			conf: map[string]string{
-				"feature1": "1",
-				"feature2": "1.0",
-				"feature3": `{"foo":"bar"}`,
-				"feature4": "bar",
-				"feature5": "t",
-				"feature6": "T",
+				"feature1": "1", "feature2": "1.0",
+				"feature3": `{"foo":"bar"}`, "feature4": "bar",
+				"feature5": "t", "feature6": "T",
 			},
-			expectedToggles: map[string]TypedFlag{
-				"feature1": {InMemoryFlag: NewInMemoryFlag("feature1", 1), Type: FlagTypeInteger},
-				"feature2": {InMemoryFlag: NewInMemoryFlag("feature2", 1.0), Type: FlagTypeFloat},
-				"feature3": {InMemoryFlag: NewInMemoryFlag("feature3", map[string]any{"foo": "bar"}), Type: FlagTypeObject},
-				"feature4": {InMemoryFlag: NewInMemoryFlag("feature4", "bar"), Type: FlagTypeString},
-				"feature5": {InMemoryFlag: NewInMemoryFlag("feature5", true), Type: FlagTypeBoolean},
-				"feature6": {InMemoryFlag: NewInMemoryFlag("feature6", true), Type: FlagTypeBoolean},
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", 1),
+				"feature2": NewInMemoryFlag("feature2", 1.0),
+				"feature3": NewInMemoryFlag("feature3", map[string]any{"foo": "bar"}),
+				"feature4": NewInMemoryFlag("feature4", "bar"),
+				"feature5": NewInMemoryFlag("feature5", true),
+				"feature6": NewInMemoryFlag("feature6", true),
 			},
 		},
 	}
@@ -79,12 +76,12 @@ func TestFeatureToggles(t *testing.T) {
 			require.ErrorIs(t, err, nil)
 		}
 
-		typedFlags, err := ReadFeatureTogglesFromInitFile(toggles)
+		featureToggles, err := ReadFeatureTogglesFromInitFile(toggles)
 		require.NoError(t, err)
 
-		for k, expectedFlag := range tc.expectedToggles {
-			actualFlag := typedFlags[k]
-			require.Equal(t, expectedFlag, actualFlag, tc.name)
+		for k, v := range featureToggles {
+			toggle := tc.expectedToggles[k]
+			require.Equal(t, toggle, v, tc.name)
 		}
 	}
 }
@@ -102,11 +99,9 @@ func TestFlagValueSerialization(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		// Wrap InMemoryFlag in TypedFlag (Type field doesn't affect serialization)
-		typedFlag := TypedFlag{InMemoryFlag: tt, Type: FlagTypeString}
-		asStringMap := AsStringMap(map[string]TypedFlag{tt.Key: typedFlag})
+		asStringMap := AsStringMap(map[string]memprovider.InMemoryFlag{tt.Key: tt})
 
-		deserialized, _, err := ParseFlagWithType(tt.Key, asStringMap[tt.Key])
+		deserialized, err := ParseFlag(tt.Key, asStringMap[tt.Key])
 		assert.NoError(t, err)
 
 		if diff := cmp.Diff(tt, deserialized); diff != "" {

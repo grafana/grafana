@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
@@ -142,7 +143,7 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		provider, err := newStaticProvider(make(map[string]setting.TypedFlag), []FeatureFlag{tt.flags})
+		provider, err := newStaticProvider(make(map[string]memprovider.InMemoryFlag), []FeatureFlag{tt.flags})
 		assert.NoError(t, err)
 
 		var result any
@@ -209,14 +210,11 @@ func Test_StaticProvider_ConfigOverride(t *testing.T) {
 			},
 		}
 
-		// Parse config flag using ParseFlagWithType (same as production code)
-		typedFlags := make(map[string]setting.TypedFlag)
-		flag, flagType, err := setting.ParseFlagWithType(tt.name, tt.configValue)
+		// Parse config flag using ParseFlag (same as production code)
+		typedFlags := make(map[string]memprovider.InMemoryFlag)
+		flag, err := setting.ParseFlag(tt.name, tt.configValue)
 		require.NoError(t, err)
-		typedFlags[tt.name] = setting.TypedFlag{
-			InMemoryFlag: flag,
-			Type:         flagType,
-		}
+		typedFlags[tt.name] = flag
 
 		provider, err := newStaticProvider(typedFlags, standardFlags)
 		assert.NoError(t, err)
