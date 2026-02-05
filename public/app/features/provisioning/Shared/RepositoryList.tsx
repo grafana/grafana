@@ -18,7 +18,6 @@ interface Props {
 export function RepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const isProvisionedInstance = useIsProvisionedInstance();
-  // RepositoryList doesn't need file stats, so we don't need to wait for health/reconciliation
   const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0]?.metadata?.name);
 
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
