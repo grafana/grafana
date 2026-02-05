@@ -59,6 +59,7 @@ const injectedRtkApi = api
           params: {
             delegatable: queryArg.delegatable,
             includeHidden: queryArg.includeHidden,
+            targetOrgId: queryArg.targetOrgId,
           },
         }),
         providesTags: ['access_control', 'enterprise'],
@@ -115,7 +116,12 @@ const injectedRtkApi = api
         providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addTeamRole: build.mutation<AddTeamRoleApiResponse, AddTeamRoleApiArg>({
@@ -131,6 +137,9 @@ const injectedRtkApi = api
           url: `/access-control/teams/${queryArg.teamId}/roles`,
           method: 'PUT',
           body: queryArg.setTeamRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -150,7 +159,14 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       listUserRoles: build.query<ListUserRolesApiResponse, ListUserRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/users/${queryArg.userId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/users/${queryArg.userId}/roles`,
+          params: {
+            includeHidden: queryArg.includeHidden,
+            includeMapped: queryArg.includeMapped,
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addUserRole: build.mutation<AddUserRoleApiResponse, AddUserRoleApiArg>({
@@ -166,6 +182,9 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           method: 'PUT',
           body: queryArg.setUserRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -727,17 +746,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['dashboards', 'permissions'],
       }),
-      restoreDashboardVersionByUid: build.mutation<
-        RestoreDashboardVersionByUidApiResponse,
-        RestoreDashboardVersionByUidApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/restore`,
-          method: 'POST',
-          body: queryArg.restoreDashboardVersionCommand,
-        }),
-        invalidatesTags: ['dashboards', 'versions'],
-      }),
       getDashboardVersionsByUid: build.query<GetDashboardVersionsByUidApiResponse, GetDashboardVersionsByUidApiArg>({
         query: (queryArg) => ({
           url: `/dashboards/uid/${queryArg.uid}/versions`,
@@ -770,18 +778,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['datasources', 'correlations'],
-      }),
-      getDataSourceIdByName: build.query<GetDataSourceIdByNameApiResponse, GetDataSourceIdByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/id/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
-      deleteDataSourceByName: build.mutation<DeleteDataSourceByNameApiResponse, DeleteDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}`, method: 'DELETE' }),
-        invalidatesTags: ['datasources'],
-      }),
-      getDataSourceByName: build.query<GetDataSourceByNameApiResponse, GetDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}` }),
-        providesTags: ['datasources'],
       }),
       datasourceProxyDeleteByUiDcalls: build.mutation<
         DatasourceProxyDeleteByUiDcallsApiResponse,
@@ -2077,6 +2073,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}` }),
         providesTags: ['sso_settings'],
       }),
+      patchProviderSettings: build.mutation<PatchProviderSettingsApiResponse, PatchProviderSettingsApiArg>({
+        query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PATCH', body: queryArg.body }),
+        invalidatesTags: ['sso_settings'],
+      }),
       updateProviderSettings: build.mutation<UpdateProviderSettingsApiResponse, UpdateProviderSettingsApiArg>({
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PUT', body: queryArg.body }),
         invalidatesTags: ['sso_settings'],
@@ -2091,6 +2091,7 @@ export type ListRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListRolesApiArg = {
   delegatable?: boolean;
   includeHidden?: boolean;
+  targetOrgId?: number;
 };
 export type CreateRoleApiResponse = /** status 201 (empty) */ RoleDto;
 export type CreateRoleApiArg = {
@@ -2133,6 +2134,7 @@ export type ListTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type ListTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
 };
 export type AddTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2144,6 +2146,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
   setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
@@ -2161,6 +2164,9 @@ export type ListUsersRolesApiArg = {
 export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
+  includeHidden?: boolean;
+  includeMapped?: boolean;
+  targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2172,6 +2178,7 @@ export type SetUserRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetUserRolesApiArg = {
   userId: number;
+  targetOrgId?: number;
   setUserRolesCommand: SetUserRolesCommand;
 };
 export type RemoveUserRoleApiResponse =
@@ -2628,26 +2635,6 @@ export type UpdateDashboardPermissionsByUidApiArg = {
   uid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type RestoreDashboardVersionByUidApiResponse = /** status 200 (empty) */ {
-  /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
-  folderUid?: string;
-  /** ID The unique identifier (id) of the created/updated dashboard. */
-  id: number;
-  /** Status status of the response. */
-  status: string;
-  /** Slug The slug of the dashboard. */
-  title: string;
-  /** UID The unique identifier (uid) of the created/updated dashboard. */
-  uid: string;
-  /** URL The relative URL for accessing the created/updated dashboard. */
-  url: string;
-  /** Version The version of the dashboard. */
-  version: number;
-};
-export type RestoreDashboardVersionByUidApiArg = {
-  uid: string;
-  restoreDashboardVersionCommand: RestoreDashboardVersionCommand;
-};
 export type GetDashboardVersionsByUidApiResponse = /** status 200 (empty) */ DashboardVersionResponseMeta;
 export type GetDashboardVersionsByUidApiArg = {
   uid: string;
@@ -2683,26 +2670,6 @@ export type GetCorrelationsApiArg = {
   page?: number;
   /** Source datasource UID filter to be applied to correlations */
   sourceUid?: string[];
-};
-export type GetDataSourceIdByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the data source. */
-  id: number;
-};
-export type GetDataSourceIdByNameApiArg = {
-  name: string;
-};
-export type DeleteDataSourceByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted data source. */
-  id: number;
-  /** Message Message of the deleted dashboard. */
-  message: string;
-};
-export type DeleteDataSourceByNameApiArg = {
-  name: string;
-};
-export type GetDataSourceByNameApiResponse = /** status 200 (empty) */ DataSource;
-export type GetDataSourceByNameApiArg = {
-  name: string;
 };
 export type DatasourceProxyDeleteByUiDcallsApiResponse = unknown;
 export type DatasourceProxyDeleteByUiDcallsApiArg = {
@@ -3456,7 +3423,7 @@ export type AddTeamGroupApiApiArg = {
   teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
-export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
+export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult[];
 export type SearchTeamGroupsApiArg = {
   teamId: number;
   page?: number;
@@ -3839,6 +3806,16 @@ export type GetProviderSettingsApiResponse = /** status 200 (empty) */ {
 };
 export type GetProviderSettingsApiArg = {
   key: string;
+};
+export type PatchProviderSettingsApiResponse =
+  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type PatchProviderSettingsApiArg = {
+  key: string;
+  body: {
+    settings?: {
+      [key: string]: any;
+    };
+  };
 };
 export type UpdateProviderSettingsApiResponse =
   /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -4568,9 +4545,6 @@ export type DashboardAclUpdateItem = {
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
 };
-export type RestoreDashboardVersionCommand = {
-  version?: number;
-};
 export type DashboardVersionMeta = {
   created?: string;
   createdBy?: string;
@@ -5269,11 +5243,6 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: any;
-  functional?: any;
-  performance?: any;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5282,7 +5251,6 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
@@ -5299,7 +5267,6 @@ export type PreferencesSpec = {
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
-export type CookieType = string;
 export type NavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5307,7 +5274,6 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type PatchPrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5321,7 +5287,6 @@ export type PatchPrefsCmd = {
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -6039,6 +6004,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  teamUid?: string;
   uid?: string;
 };
 export type TeamGroupMapping = {
@@ -6633,7 +6599,6 @@ export const {
   useGetDashboardPermissionsListByUidQuery,
   useLazyGetDashboardPermissionsListByUidQuery,
   useUpdateDashboardPermissionsByUidMutation,
-  useRestoreDashboardVersionByUidMutation,
   useGetDashboardVersionsByUidQuery,
   useLazyGetDashboardVersionsByUidQuery,
   useGetDashboardVersionByUidQuery,
@@ -6643,11 +6608,6 @@ export const {
   useAddDataSourceMutation,
   useGetCorrelationsQuery,
   useLazyGetCorrelationsQuery,
-  useGetDataSourceIdByNameQuery,
-  useLazyGetDataSourceIdByNameQuery,
-  useDeleteDataSourceByNameMutation,
-  useGetDataSourceByNameQuery,
-  useLazyGetDataSourceByNameQuery,
   useDatasourceProxyDeleteByUiDcallsMutation,
   useDatasourceProxyGetByUiDcallsQuery,
   useLazyDatasourceProxyGetByUiDcallsQuery,
@@ -6952,5 +6912,6 @@ export const {
   useRemoveProviderSettingsMutation,
   useGetProviderSettingsQuery,
   useLazyGetProviderSettingsQuery,
+  usePatchProviderSettingsMutation,
   useUpdateProviderSettingsMutation,
 } = injectedRtkApi;

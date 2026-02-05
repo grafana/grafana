@@ -13,6 +13,7 @@ import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelecto
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 
 import { FilterView } from './FilterView';
@@ -44,9 +45,11 @@ export function RuleListActions() {
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
-  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources;
+  const canCreateCloudRules =
+    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
@@ -55,6 +58,13 @@ export function RuleListActions() {
     config.featureToggles.alertingMigrationUI &&
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+
+  // Migration Wizard UI requires either notifications or rules import permission (user can skip one step)
+  const canAccessMigrationWizardUI =
+    config.featureToggles.alertingMigrationWizardUI &&
+    (contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite) ||
+      (contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+        contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus)));
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
@@ -81,6 +91,13 @@ export function RuleListActions() {
               url="/alerting/import-datasource-managed-rules"
             />
           )}
+          {canAccessMigrationWizardUI && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to GMA')}
+              icon="exchange-alt"
+              url="/alerting/import-to-gma"
+            />
+          )}
         </Menu.Group>
         <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
           {canCreateGrafanaRules && (
@@ -100,7 +117,14 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA, canExportRules, toggleShowExportDrawer]
+    [
+      canCreateGrafanaRules,
+      canCreateCloudRules,
+      canImportRulesToGMA,
+      canAccessMigrationWizardUI,
+      canExportRules,
+      toggleShowExportDrawer,
+    ]
   );
 
   return (
@@ -123,10 +147,12 @@ export function RuleListActions() {
 
 export default function RuleListPage() {
   const { isApplying } = useApplyDefaultSearch();
+  const { navId, pageNav } = useAlertRulesNav();
 
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
+      pageNav={pageNav}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
       isLoading={isApplying}
       actions={<RuleListActions />}

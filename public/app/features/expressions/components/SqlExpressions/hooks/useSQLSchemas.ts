@@ -67,9 +67,9 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
 
     try {
       // Filter out Dashboard datasource queries - they are frontend-only and can't be processed by backend
-      const backendQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
+      const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
 
-      if (backendQueries.length === 0) {
+      if (nonDashboardQueries.length === 0) {
         setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
         setLoading(false);
         return;
@@ -79,9 +79,9 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
+        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
-          queries: backendQueries,
+          queries: nonDashboardQueries,
           from: currentTimeRange.from.toISOString(),
           to: currentTimeRange.to.toISOString(),
         }

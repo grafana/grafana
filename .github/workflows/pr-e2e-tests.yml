@@ -47,7 +47,12 @@ jobs:
     runs-on: ubuntu-latest-16-cores
     permissions:
       contents: read
+      id-token: write
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -66,10 +71,12 @@ jobs:
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        env:
+          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
         with:
           version: 0.18.8
           verb: run
-          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
+          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
       - name: Cat built artifact
         if: steps.cache.outputs.cache-hit != 'true'
         run: cat out.txt

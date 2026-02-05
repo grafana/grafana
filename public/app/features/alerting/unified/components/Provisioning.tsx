@@ -3,6 +3,8 @@ import { ComponentPropsWithoutRef } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
 
+import { KnownProvenance } from '../types/knownProvenance';
+
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
   Template = 'template',
@@ -15,11 +17,11 @@ export enum ProvisionedResource {
 // we'll omit the props we don't want consumers to overwrite and forward the others to the alert component
 type ExtraAlertProps = Omit<ComponentPropsWithoutRef<typeof Alert>, 'title' | 'severity'>;
 
-interface ProvisioningAlertProps extends ExtraAlertProps {
+interface ResourceAlertProps extends ExtraAlertProps {
   resource: ProvisionedResource;
 }
 
-export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps) => {
+export const ProvisioningAlert = ({ resource, ...rest }: ResourceAlertProps) => {
   return (
     <Alert
       title={t('alerting.provisioning.title-provisioned', 'This {{resource}} cannot be edited through the UI', {
@@ -36,19 +38,40 @@ export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps)
   );
 };
 
-export const ImportedContactPointAlert = (props: ExtraAlertProps) => {
+export const ImportedResourceAlert = ({ resource, ...rest }: ResourceAlertProps) => {
   return (
     <Alert
       title={t(
         'alerting.provisioning.title-imported',
-        'This contact point was imported and cannot be edited through the UI'
+        'This {{resource}} was imported and cannot be edited through the UI',
+        {
+          resource,
+        }
+      )}
+      severity="info"
+      {...rest}
+    >
+      <Trans i18nKey="alerting.provisioning.body-imported">
+        This {{ resource }} contains integrations that were imported from an external Alertmanager and is currently
+        read-only. The integrations will become editable after the migration process is complete.
+      </Trans>
+    </Alert>
+  );
+};
+
+export const ImportedTimeIntervalAlert = (props: ExtraAlertProps) => {
+  return (
+    <Alert
+      title={t(
+        'alerting.provisioning.title-imported-time-interval',
+        'This time interval was imported and cannot be edited through the UI'
       )}
       severity="info"
       {...props}
     >
-      <Trans i18nKey="alerting.provisioning.body-imported">
-        This contact point contains integrations that were imported from an external Alertmanager and is currently
-        read-only. The integrations will become editable after the migration process is complete.
+      <Trans i18nKey="alerting.provisioning.body-imported-time-interval">
+        This time interval was imported from an external Alertmanager and is currently read-only. The time interval will
+        become editable after the migration process is complete.
       </Trans>
     </Alert>
   );
@@ -64,11 +87,17 @@ export const ProvisioningBadge = ({
    */
   provenance?: string;
 }) => {
-  const badge = <Badge text={t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned')} color="purple" />;
+  const isConvertedPrometheus = provenance === KnownProvenance.ConvertedPrometheus;
+  const badgeText = isConvertedPrometheus
+    ? t('alerting.provisioning-badge.badge.text-converted-prometheus', 'Imported')
+    : t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned');
+  const badgeColor = isConvertedPrometheus ? 'blue' : 'purple';
+  const badge = <Badge text={badgeText} color={badgeColor} />;
 
   if (tooltip) {
+    const provenanceText = isConvertedPrometheus ? 'Prometheus/Mimir' : provenance;
     const provenanceTooltip = (
-      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" values={{ provenance }}>
+      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" values={{ provenance: provenanceText }}>
         This resource has been provisioned via {{ provenance }} and cannot be edited through the UI
       </Trans>
     );

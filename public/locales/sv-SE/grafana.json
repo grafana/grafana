@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Återställ till standardvärden",
-      "title-invalid-configuration": "Ogiltig konfiguration",
       "title-more-actions": "Fler åtgärder",
       "tooltip-more-actions": "Fler åtgärder"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Gruppera efter",
       "aria-label-group-interval": "Gruppintervall",
       "aria-label-group-wait": "Gruppväntan",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Upprepningsintervall",
       "create-a-contact-point": "Skapa en kontaktpunkt",
+      "description-unique-routing": "",
       "label-default-contact-point": "Standardkontaktpunkt",
+      "label-name": "",
       "label-timing-options": "Tidsalternativ",
       "message": {
         "required": "Krävs."
       },
-      "or": "eller"
+      "or": "eller",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Lägg till matchare",
@@ -802,12 +805,15 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Ta bort",
       "duplicate": "Dubblett",
       "label-integration": "Integration",
       "label-notification-settings": "Aviseringsinställningar",
       "label-section": "Valfria inställningar för {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-deprecated": "",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "AV",
@@ -961,6 +967,13 @@
       "content-route-continue-matching-other-policies": "Den här vägen kommer att fortsätta att matcha andra policyer"
     },
     "copy-to-clipboard": "Kopiera ”{{label}}” till klippbordet",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Aviseringar levereras till",
@@ -1017,10 +1030,6 @@
       "show-details": "Visa detaljer",
       "this-datasource-has-been-removed": "Denna datakälla har tagits bort",
       "update-datasource": "Uppdatera datakälla"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident har inte installerats eller har inte konfigurerats korrekt",
-      "declare-incident": "Deklarera incident"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident har inte installerats eller har inte konfigurerats korrekt",
@@ -1642,6 +1651,11 @@
       },
       "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Övervaka statusen för ditt system",
       "monitor-status-system-tooltip": "Larminsikter tillhandahåller förbyggda instrumentpaneler för övervakning av larmdata.",
@@ -1928,6 +1942,10 @@
       "select-group": "Markera grupp",
       "select-namespace": "Välj namnutrymme"
     },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
+    },
     "need-help-info": {
       "need-help": "Behöver du hjälp?"
     },
@@ -2121,6 +2139,10 @@
       "new-policy": "Lägg till ny policy",
       "no-matchers": "Inga matchare",
       "reload-policies": "Ladda om policyer",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Spara policy",
       "update": {
         "please-wait": "Vänta medan vi uppdaterar dina aviseringspolicyer.",
@@ -2137,8 +2159,56 @@
         "suffix": "Uppdatera sidan och försök igen.",
         "title": "Det gick inte att lägga till eller uppdatera aviseringspolicy"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} ytterligare policyer",
+      "n-more-policies_other": "{{count}} ytterligare policyer"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Ny underordnad policy",
@@ -2176,11 +2246,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Den här resursen har etablerats via {{provenance}} och kan inte redigeras via användargränssnittet",
       "badge-tooltip-standard": "Denna resurs har etablerats och kan inte redigeras via användargränssnittet",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Denna {{resource}} har provisionerats, vilket betyder att den skapades genom konfigurering. Kontakta serveradministratören om du vill uppdatera denna {{resource}}.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Denna {{resource}} kan inte redigeras via användargränssnittet"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisionerad"
       }
     },
@@ -2308,7 +2383,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Gruppera efter",
-      "description-group-by": "Kombinera flera larm till en enda avisering genom att gruppera dem efter samma etikettvärden. Om den är tom ärvs den från standardaviseringspolicyn.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -2316,6 +2392,13 @@
       "label-override-grouping": "Åsidosätt gruppering",
       "label-override-timings": "Åsidosätt tidsinställningar",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Redigera",
@@ -2673,12 +2756,13 @@
     "rules-group": {
       "deleting": "Raderar",
       "text-federated": "Federerade",
-      "text-provisioned": "Provisionerad"
+      "text-provisioned": "Provisionerad",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3081,6 +3165,12 @@
       "label-edit": "Redigera",
       "label-export": "Exportera"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, radera kontaktpunkt",
       "deleting": "Tar bort ...",
@@ -3098,6 +3188,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Radera aviseringspolicy"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3608,7 +3707,9 @@
       "delete-button": "Ta bort",
       "delete-modal-invalid-text": "En eller flera mappar innehåller bibliotekspaneler eller varningsregler. Ta först bort dessa innan du fortsätter.",
       "delete-modal-invalid-title": "Det går inte att ta bort mapp",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Denna åtgärd raderar följande innehåll:",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Ta bort",
@@ -3623,7 +3724,10 @@
       "move-modal-title": "Flytta",
       "move-provisioned-folder": "",
       "moving": "Flyttar ...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Mappnamn krävs.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Du har valt både provisionerade och icke-provisionerade resurser. Dessa kan inte hanteras tillsammans. Välj enbart provisionerade eller enbart icke-provisionerade resurser och försök igen.",
       "selected-mix-resources-modal-title": "Blandade resurstyper valda"
     },
@@ -3713,6 +3817,9 @@
       "manage-permissions": "Hantera behörigheter",
       "move": ""
     },
+    "folder-owners": {
+      "owned-by": ""
+    },
     "folder-picker": {
       "accessible-label": "Välj mapp: {{ label }} för närvarande vald",
       "button-label": "Välj mapp",
@@ -3722,6 +3829,7 @@
       "non-folder-item": "Icke-mapp {{itemKind}} {{itemUID}}",
       "root-title": "Kontrollpaneler",
       "search-placeholder": "Sök mappar",
+      "shared-with-me": "",
       "unknown-error": "Okänt fel"
     },
     "manage-folder-nav": {
@@ -3764,7 +3872,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -3826,6 +3933,7 @@
       "label-method": "Metod",
       "label-payload": "Nyttolast",
       "label-query-parameters": "Frågeparametrar",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -4541,6 +4649,14 @@
     "actions": {
       "open-settings": "Inställningar"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Stäng widgeten ”Lägg till panel”",
       "tooltip-close-widget": "Stäng widgeten"
@@ -4911,6 +5027,7 @@
       },
       "variables": {
         "add-variable": "Lägg till variabel",
+        "reorder": "",
         "select-type": "Välj typ av variabel",
         "select-type-card-tooltip": "Klicka för att välja typ",
         "select-variable": "Välj"
@@ -4923,12 +5040,14 @@
       "add-visualization-body": "Välj en datakälla och sedan en fråga och visualisera dina data med diagram, statistik och tabeller eller skapa listor, markdown-dokument och andra widgetar.",
       "add-visualization-button": "Lägg till visualisering",
       "add-visualization-header": "Starta din nya instrumentpanel genom att lägga till en visualisering",
+      "description": "",
       "import-a-dashboard-body": "Importera instrumentpaneler från filer eller från <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5116,6 +5235,9 @@
       "panel-data-label": "Paneldata",
       "panel-json-description": "Modellen som sparas i instrumentpanelens JSON som konfigurerar hur allt fungerar.",
       "panel-json-label": "Panel JSON",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Välj källa",
       "unknown": "Okänt objekt: {{show}}"
     },
@@ -5140,6 +5262,9 @@
       "title": {
         "deleted": "raderad"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5338,6 +5463,7 @@
       },
       "header-hidden-tooltip": "Radrubrik endast synlig i redigeringsläge",
       "name": "Rader",
+      "new-row-title": "",
       "row": {
         "collapse": "Dölj rad",
         "expand": "Expandera rad",
@@ -5434,20 +5560,16 @@
       "loading-configuration": "Läser in konfiguration"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5709,6 @@
           "arrow": "Dela",
           "title": "Dela",
           "tooltip": "Kopiera länk"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Kassera",
-            "text": "Det finns ändringar i denna instrumentpanel som inte sparats. Du måste spara dem innan du kan dela dem.",
-            "title": "Spara ändringarna i instrumentpanelen?",
-            "yesText": "Spara"
-          }
         },
         "unlink-library-panel": "Ta bort länk till bibliotekspanel"
       },
@@ -5779,7 +5893,7 @@
       "load": "Ladda"
     },
     "gcom-field": {
-      "label": "Hitta och importera instrumentpaneler för vanliga applikationer på <1></1>",
+      "label": "",
       "load-button": "Ladda",
       "placeholder": "URL eller ID för Grafana.com instrumentpanel",
       "validation-required": "URL eller ID för Grafana instrumentpanel krävs"
@@ -6202,6 +6316,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Avbryt",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Mapp"
     },
     "inspect-data-tab": {
@@ -6209,7 +6325,9 @@
     },
     "inspect-json-tab": {
       "apply": "Tillämpa",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6281,6 +6399,11 @@
       "title": {
         "remove-panel": "Ta bort panel"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Varning"
@@ -6380,12 +6503,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classic",
         "json": "JSON",
         "v1-resource": "V1-resurs",
         "v2-resource": "V2-resurs",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Är du säker på att du vill återställa instrumentpanelen till version {{version}}? Alla ändringar som inte sparats kommer att gå förlorade.",
@@ -6456,8 +6582,8 @@
       "loading-connected-dashboards": "Laddar anslutna instrumentpaneler …",
       "placeholder-search-affected-dashboards": "Sök berörda instrumentpaneler",
       "update-all": "Uppdatera allt",
-      "affected-dashboards_one": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1> Följande instrumentpaneler som använder panelen kommer att påverkas:",
-      "affected-dashboards_other": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1> Följande instrumentpaneler som använder panelen kommer att påverkas:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Fel när instrumentpanel skulle sparas",
@@ -6492,6 +6618,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Växla delningsmenyn"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6641,6 +6773,16 @@
       },
       "label": "Dölj"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "Variabeltyp"
     },
@@ -6707,7 +6849,7 @@
       "delete-button": "Ta bort",
       "title": "Ta bort"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "Vill du radera denna instrumentpanel?",
     "general": {
       "auto-refresh-description": "Definiera de automatiska uppdateringsintervallen som ska vara tillgängliga i listan över automatiska uppdateringar. Använd formatet ”5s” för sekunder, ”1m” för minuter, ”1h” för timmar och ”1d” för dagar (t.ex.: ”5s,10s,30s,1m,5m,15m,30m,1h,2h,1d”).",
@@ -6980,6 +7122,7 @@
         "drone-datasource": "Drone-datakälla",
         "git-lab-integration-and-datasource": "GitLab-integrering och datakälla",
         "honeycomb-integration-and-datasource": "Honeycomb-integrering och datakälla",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-integrering och datakälla",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-datakälla",
         "mongo-db-integration-and-data-source": "MongoDB-integrering och datakälla",
@@ -7838,7 +7981,6 @@
       "export-externally-label": "Exportera instrumentpanelen om du vill använda i en annan instans",
       "export-format": "Format",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Ta bort distributionsinformation",
       "info-text": "Kopiera eller ladda ner en fil som innehåller instrumentpanelens definition",
       "title": "Exportera instrumentpanelen"
     },
@@ -7970,6 +8112,43 @@
   "gauge": {
     "category-gauge": "Mätare",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Minsta radhöjd (horisontell orientering)",
     "description-min-width": "Minsta kolumnbredd (vertikal orientering)",
     "description-neutral": "Lämna tomt för att använda Min som neutral punkt",
@@ -7985,6 +8164,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Visa tröskelvärdesetiketter",
     "name-show-threshold-markers": "Visa tröskelmarkörer",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -9554,8 +9734,8 @@
     "query-inspector": {
       "query-inspector": "Frågeinspektör",
       "text-loading-query-inspector": "Läser in frågeinspektör …",
-      "count-frames_one": "{{count}} ramar, ",
-      "count-frames_other": "{{count}} ramar, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} rader",
       "count-rows_other": "{{count}} rader"
     }
@@ -9692,7 +9872,6 @@
       "error-fetching": "Fel vid hämtning av LDAP-inställningar",
       "error-saving": "Fel vid sparande av LDAP-inställningar",
       "error-validate-form": "Fel vid validering av LDAP-inställningar",
-      "feature-flag-disabled": "",
       "saved": "LDAP-inställningar sparade"
     },
     "bind-dn": {
@@ -9814,8 +9993,8 @@
       "loading-connected-dashboards": "Laddar anslutna instrumentpaneler …",
       "placeholder-search-affected-dashboards": "Sök berörda instrumentpaneler",
       "update-all": "Uppdatera allt",
-      "num-affected_one": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1>",
-      "num-affected_other": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -9992,6 +10171,8 @@
       "no-more-logs-available": "Inga fler loggar tillgängliga.",
       "older-logs": "äldre",
       "open-in-split-view": "Öppna i delad vy",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "Tidsfönster för sammanhang",
       "time-window-tooltip": "Tid före och efter den refererade loggen",
       "title-log-context": "Loggsammanhang",
@@ -10266,9 +10447,15 @@
       "options": "Alternativ"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importerar instrumentpanel från <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Publicerad av",
       "updated-on": "Uppdaterat den"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Är du säker på att du vill radera ”{{snapshotToRemove}}”?",
@@ -10903,7 +11090,9 @@
     "invite-user": {
       "invite-button": "Bjud in",
       "invite-new-user-button": "Bjud in ny användare",
-      "invite-tooltip": "Bjud in användare"
+      "invite-tooltip": "Bjud in användare",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Lägg till bokmärken",
@@ -11130,6 +11319,9 @@
     "noOptionsMessage-no-organizations-found": "Inga organisationer hittades",
     "select-placeholder": "Välj organisation"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Redigera rubrik"
@@ -11176,6 +11368,7 @@
     },
     "header-menu": {
       "copy": "Kopiera",
+      "copy-styles": "",
       "create-library-panel": "Skapa bibliotekspanel",
       "duplicate": "Dubblett",
       "edit": "Redigera",
@@ -11187,11 +11380,13 @@
       "inspect-json": "Panel JSON",
       "more": "Mer ...",
       "new-alert-rule": "Ny varningsregel",
+      "paste-styles": "",
       "query": "Fråga",
       "remove": "Ta bort",
       "replace-library-panel": "Byt ut bibliotekspanel",
       "share": "Dela",
       "show-legend": "Visa förklaring",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "view": "Visa"
@@ -11627,6 +11822,7 @@
       "text-installed": "Installerad"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Grafana-beroende",
       "installed-version": "{{versionNumber}} (installerad version)",
       "latest-compatible-version": "{{versionNumber}} (senaste kompatibla versionen)",
@@ -11748,13 +11944,12 @@
       "description-clear-repository-connection": "Lägg till ett tydligt namn för den här lagringsplatsanslutningen",
       "empty": "Tom",
       "error-field-required": "Detta fält är obligatoriskt.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Visningsnamn",
       "placeholder-my-repository-connection": "Min lagringsplatsanslutning",
       "text-loading-resource-information": "Läser in resursinformation …",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
       "dashboards-count_other": "{{count}} kontrollpanel",
@@ -11774,13 +11969,16 @@
       "alert-repository-settings-updated": "Inställningar för lagringsplats har uppdaterats",
       "button-save": "Spara",
       "button-saving": "Sparar ...",
+      "description-connection": "",
       "description-enabled": "När automatisk hämtning är aktiverad kan målet inte ändras.",
       "description-read-only": "Resurser kan inte ändras via Grafana.",
       "description-title": "Ett användarvänligt namn för konfigurationen",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Detta fält är obligatoriskt.",
       "error-save-repository": "Det gick inte att spara lagringsplatsinställningar",
       "label-automatic-pulling": "Automatisk hämtning",
+      "label-connection": "",
       "label-enabled": "Aktiverad",
       "label-interval-seconds": "Intervall (sekunder)",
       "label-repository-type": "Typ av lagringsplats",
@@ -11806,32 +12004,54 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11841,13 +12061,11 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12033,6 +12251,8 @@
       "error-delete-all-repositories": "Det gick inte att radera alla databaser",
       "subtitle": "Visa och hantera dina konfigurerade databaser",
       "success-all-repositories-deleted": "Alla konfigurerade databaser har raderats",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Kom igång",
       "tab-getting-started-title": "Kom igång",
       "tab-repositories": "Lagringsplatser",
@@ -12096,6 +12316,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12116,7 +12339,7 @@
       "jobs": "Jobb"
     },
     "repository-actions": {
-      "connections": "",
+      "connection": "",
       "settings": "Inställningar",
       "source-code": "Källkod"
     },
@@ -12137,8 +12360,12 @@
         "view-repository": "Visa lagringsplats"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Kontrollerad:",
+      "connection-status": "",
       "finished": "",
       "health": "Hälsa",
       "healthy": "Hälsosamma",
@@ -12296,25 +12523,48 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Detta kommer att radera lagringsplatskonfigurationen och du kommer att förlora alla ändringar. Är du säker på att du vill kassera dina ändringar?",
         "confirm": "Ja, kassera",
         "dismiss": "Fortsätta jobba",
         "title": "Kassera lagringsplatsinställningen?"
       },
+      "github-app-connection-status": "",
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "github-app-select-connection": "",
       "step-bootstrap": "Välj vad du vill synkronisera",
+      "step-configure-repo": "",
       "step-connect": "Anslut",
       "step-finish": "Välj ytterligare inställningar",
       "step-synchronize": "Synkronisera med extern lagring",
       "sync-description": "Synkronisera resurser med extern lagring. Efter det här engångssteget sparas alla framtida uppdateringar automatiskt på lagringsplatsen och provisioneras tillbaka till instansen.",
       "sync-option-migrate-resources": "",
       "title-bootstrap": "Välj vad du vill synkronisera",
+      "title-configure-repo": "",
       "title-connect": "Anslut till extern lagring",
       "title-finish": "Välj ytterligare inställningar",
       "title-synchronize": "Synkronisera med extern lagring"
@@ -12331,6 +12581,9 @@
       "push-to-a-new-branch": "",
       "push-to-existing-branch": ""
     }
+  },
+  "provisioning-alert": {
+    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12536,51 +12789,59 @@
       "title-data-source-help": "Hjälp med datakälla"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
+  "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
+    "sidebar": {
+      "card-click": "",
+      "queries-expressions": "",
+      "query-stack": "",
+      "toggle-size": "",
+      "transformations": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Dölj frågeraden",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Visa hjälp med datakälla",
       "drag-and-drop": "Ändra ordning genom dra och släpp",
       "duplicate-query": "Duplicera fråga",
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Ta bort fråga",
+      "selected-datasource-label": "",
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12588,17 +12849,17 @@
     },
     "page": {
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
-      "no-deleted-dashboards-text": "När du tar bort en instrumentpanel visas den här under 30 dagar innan den raderas permanent. Din organisations administratör kan återställa nyligen raderade instrumentpaneler.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "Inga resultat hittades för din fråga"
     },
     "restore-modal": {
       "restore-button": "Återställ",
       "restore-loading": "Återställer ...",
       "title": "Återställ instrumentpaneler",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
+      "folder-picker-text_other": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
+      "text_one": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel.",
+      "text_other": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel."
     }
   },
   "recentlyDeleted": {
@@ -12736,14 +12997,6 @@
       "starred": "Stjärnmärkt",
       "view-as-folders": "Visa efter mappar",
       "view-as-list": "Visa som lista"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetiskt (A–Ö)",
-          "alphabetically-za": "Alfabetiskt (Ö–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importera",
@@ -13285,6 +13538,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -13342,8 +13596,8 @@
       "label-never": "Aldrig"
     },
     "status-history-panel": {
-      "too-many-points_one": "För många punkter för att visualisera ordentligt. <1></1>Uppdatera frågan för att returnera färre punkter. <3></3>({{count}} punkter mottagna)",
-      "too-many-points_other": "För många punkter för att visualisera ordentligt. <1></1>Uppdatera frågan för att returnera färre punkter. <3></3>({{count}} punkter mottagna)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
@@ -13454,6 +13708,7 @@
     "name-wrap-header-text": "Radbryt rubriktext",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
@@ -14717,6 +14972,9 @@
         "variable-values-fetched-datasource-query": "Variabelvärden hämtas från en datakällfråga"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "standard",
@@ -14895,6 +15153,9 @@
       "label-both": "Båda",
       "label-lines": "Rader",
       "label-points": "Poäng"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

@@ -85,7 +85,8 @@ Once you've added a dashboard link, it appears in the upper right corner of your
 Add links to other dashboards at the top of your current dashboard.
 
 1. In the dashboard you want to link, click **Edit**.
-1. Click **Settings**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
 
    The default link type is **Dashboards**.
@@ -109,7 +110,8 @@ Add links to other dashboards at the top of your current dashboard.
 Add a link to a URL at the top of your current dashboard. You can link to any available URL, including dashboards, panels, or external sites. You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
 
 1. In the dashboard you want to link, click **Edit**.
-1. Click **Settings**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
 1. In the **Type** drop-down, select **Link**.
 1. In the **URL** field, enter the URL to which you want to link.
@@ -132,7 +134,8 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
 To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
-1. Click **Settings**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **Links** tab.
 1. Do one of the following:
    - **Edit** - Click the name of the link and update the link settings.

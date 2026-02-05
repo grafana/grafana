@@ -193,7 +193,7 @@ func (a *alertRule) Type() ngmodels.RuleType {
 }
 
 func (a *alertRule) Status() ngmodels.RuleStatus {
-	return a.stateManager.GetStatusForRuleUID(a.key.OrgID, a.key.UID)
+	return a.stateManager.GetStatusForRuleUID(context.Background(), a.key.OrgID, a.key.UID)
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.

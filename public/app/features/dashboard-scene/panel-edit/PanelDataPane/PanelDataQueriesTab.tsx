@@ -1,21 +1,22 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
-  SceneObjectBase,
   SceneComponentProps,
-  sceneGraph,
-  SceneQueryRunner,
-  SceneObjectRef,
-  VizPanel,
-  SceneObjectState,
   SceneDataQuery,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -29,6 +30,7 @@ import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
+import { AccessControlAction } from 'app/types/accessControl';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
@@ -40,7 +42,8 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
-import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
+import { hasBackendDatasource } from './utils';
 
 interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
@@ -347,8 +350,11 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.useState();
-  const { data, queries } = model.queryRunner.useState();
+  const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+  const canReadQueries = config.featureToggles.savedQueriesRBAC
+    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
+    : contextSrv.isSignedIn;
 
   const handleAddExpression = useCallback(
     (type: ExpressionQueryType) => {
@@ -361,6 +367,18 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     },
     [model]
   );
+
+  // Determine which expressions should be disabled (for frontend-only datasources)
+  const disabledExpressions = useMemo(() => {
+    const hasBackendDs = hasBackendDatasource({ datasourceUid: datasourceState?.uid ?? dsSettings?.uid, queries });
+    if (!hasBackendDs) {
+      return {
+        [ExpressionQueryType.sql]:
+          'SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.',
+      };
+    }
+    return {};
+  }, [datasourceState?.uid, dsSettings?.uid, queries]);
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -428,7 +446,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             >
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
             </Button>
-            {queryLibraryEnabled && (
+            {queryLibraryEnabled && canReadQueries && (
               <Button
                 icon="plus"
                 onClick={() =>
@@ -448,7 +466,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <ExpressionTypeDropdown handleOnSelect={handleAddExpression}>
+          <ExpressionTypeDropdown handleOnSelect={handleAddExpression} disabledExpressions={disabledExpressions}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>

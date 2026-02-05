@@ -63,3 +63,13 @@ func TestResourceVersionManager(t *testing.T) {
 		require.Equal(t, rv, int64(200))
 	})
 }
+
+func TestSnowflakeFromRVRoundtrips(t *testing.T) {
+	// 2026-01-12 19:33:58.806211 +0000 UTC
+	offset := int64(1768246438806211) // in microseconds
+
+	for n := range int64(100) {
+		ts := offset + n
+		require.Equal(t, ts, RVFromSnowflake(SnowflakeFromRV(ts)))
+	}
+}
