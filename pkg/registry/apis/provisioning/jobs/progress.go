@@ -71,7 +71,9 @@ func (r *jobProgressRecorder) Started() time.Time {
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	var shouldLogError bool
+	var shouldLogWarning bool
 	var logErr error
+	var logWarning error
 
 	r.mu.Lock()
 	r.resultCount++
@@ -100,6 +102,9 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		if result.Action() == repository.FileActionDeleted {
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
+	} else if result.Warning() != nil {
+		shouldLogWarning = true
+		logWarning = result.Warning()
 	}
 
 	r.updateSummary(result)
@@ -108,6 +113,8 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
+	} else if shouldLogWarning {
+		logger.Warn("job resource operation completed with warning", "err", logWarning)
 	} else {
 		logger.Info("job resource operation succeeded")
 	}

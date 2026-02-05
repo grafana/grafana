@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestNewSkippedJobResourceResult(t *testing.T) {
@@ -217,4 +219,94 @@ func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	assert.NotNil(t, result.Error(), "Regular error should be stored as error")
 	assert.Equal(t, regularErr, result.Error())
 	assert.Nil(t, result.Warning(), "Regular error should not be stored as warning")
+}
+
+func TestNewJobResourceResult_WithFieldErrorAsWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "/test/path"
+	action := repository.FileActionCreated
+
+	// Kubernetes field error (e.g., missing name in resource)
+	fieldErr := field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
+
+	// Test with field.Error directly (should be a warning)
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(fieldErr).
+		Build()
+
+	assert.Equal(t, name, result.Name())
+	assert.Equal(t, group, result.Group())
+	assert.Equal(t, kind, result.Kind())
+	assert.Equal(t, path, result.Path())
+	assert.Equal(t, action, result.Action())
+	assert.Nil(t, result.Error(), "Field error should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "Field error should be stored as warning")
+	assert.Equal(t, fieldErr, result.Warning())
+
+	// Test with an error that wraps field.Error
+	wrappedErr := fmt.Errorf("failed to parse file: %w", fieldErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping field.Error should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping field.Error should be stored as warning")
+}
+
+func TestNewJobResourceResult_WithDashboardRefreshIntervalErrorAsWarning(t *testing.T) {
+	name := "test-dashboard"
+	group := "dashboard.grafana.app"
+	kind := "Dashboard"
+	path := "/test/dashboard.json"
+	action := repository.FileActionCreated
+
+	// Dashboard refresh interval error
+	dashboardErr := dashboards.ErrDashboardRefreshIntervalTooShort
+
+	// Test with dashboard error directly (should be a warning)
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(dashboardErr).
+		Build()
+
+	assert.Equal(t, name, result.Name())
+	assert.Equal(t, group, result.Group())
+	assert.Equal(t, kind, result.Kind())
+	assert.Equal(t, path, result.Path())
+	assert.Equal(t, action, result.Action())
+	assert.Nil(t, result.Error(), "Dashboard refresh interval error should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "Dashboard refresh interval error should be stored as warning")
+	assert.Equal(t, dashboardErr, result.Warning())
+
+	// Test with an error that wraps the dashboard error
+	wrappedErr := fmt.Errorf("writing resource from file: %w", dashboardErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping dashboard error should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping dashboard error should be stored as warning")
 }
