@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,6 +14,7 @@ import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { PreviewOverlay } from './PreviewOverlay';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
@@ -81,13 +82,35 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView, editPreview } = model.useState();
+  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView, editPreview, optionsPane } =
+    model.useState();
   const panel = model.getPanel();
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const isScrollingLayout = useScrollReflowLimit();
+
+  const [applyPreview, setApplyPreview] = useState<(() => void) | undefined>(undefined);
+  const [hasUnappliedPreview, setHasUnappliedPreview] = useState(false);
+
+  useEffect(() => {
+    if (!optionsPane) {
+      setApplyPreview(undefined);
+      setHasUnappliedPreview(false);
+      return;
+    }
+
+    setApplyPreview(() => optionsPane.state.applyPreview);
+    setHasUnappliedPreview(!!optionsPane.state.hasUnappliedPreview);
+
+    const sub = optionsPane.subscribeToState((newState) => {
+      setApplyPreview(() => newState.applyPreview);
+      setHasUnappliedPreview(!!newState.hasUnappliedPreview);
+    });
+
+    return () => sub.unsubscribe();
+  }, [optionsPane]);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
@@ -113,7 +136,12 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={editPreview ?? panel} tableView={tableView} />
+          <VizWrapper
+            panel={editPreview ?? panel}
+            tableView={tableView}
+            isPreview={hasUnappliedPreview}
+            onApply={applyPreview}
+          />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -163,15 +191,20 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 interface VizWrapperProps {
   panel: VizPanel;
   tableView?: VizPanel;
+  isPreview?: boolean;
+  onApply?: () => void;
 }
 
-function VizWrapper({ panel, tableView }: VizWrapperProps) {
+function VizWrapper({ panel, tableView, isPreview, onApply }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
   const panelToShow = tableView ?? panel;
 
   return (
     <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
+      <div className={cx(styles.vizInner, isPreview && styles.previewBorder)}>
+        {isPreview && <PreviewOverlay onApply={onApply} />}
+        <panelToShow.Component model={panelToShow} />
+      </div>
     </div>
   );
 }
@@ -274,6 +307,15 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       paddingLeft: theme.spacing(2),
+    }),
+    previewBorder: css({
+      border: `2px solid ${theme.colors.primary.border}`,
+      borderRadius: theme.shape.radius.default,
+      position: 'relative',
+    }),
+    vizInner: css({
+      height: '100%',
+      width: '100%',
     }),
     fixedSizeViz: css({
       height: '100vh',
