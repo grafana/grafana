@@ -5,6 +5,8 @@ import { useForm, FormProvider } from 'react-hook-form';
 
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
+
 import { BootstrapStep, Props } from './BootstrapStep';
 import { StepStatusProvider } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
@@ -29,8 +31,16 @@ jest.mock('./hooks/useRepositoryStatus', () => ({
   useRepositoryStatus: jest.fn(),
 }));
 
+jest.mock('../utils/isFreeTierLicense', () => ({
+  isFreeTierLicense: jest.fn(),
+}));
+
+type WizardFormDefaults = Omit<Partial<WizardFormData>, 'repository'> & {
+  repository?: Partial<WizardFormData['repository']>;
+};
+
 // Wrapper component to provide form context
-function FormWrapper({ children, defaultValues }: { children: ReactNode; defaultValues?: Partial<WizardFormData> }) {
+function FormWrapper({ children, defaultValues }: { children: ReactNode; defaultValues?: WizardFormDefaults }) {
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: {
@@ -58,7 +68,7 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
   );
 }
 
-function setup(props: Partial<Props> = {}, formDefaultValues?: Partial<WizardFormData>) {
+function setup(props: Partial<Props> = {}, formDefaultValues?: WizardFormDefaults) {
   const user = userEvent.setup();
 
   const defaultProps: Props = {
@@ -123,6 +133,9 @@ describe('BootstrapStep', () => {
         },
       ],
     });
+
+    // Default to non-free tier (quota not enforced)
+    (isFreeTierLicense as jest.Mock).mockReturnValue(false);
   });
 
   describe('rendering', () => {
@@ -321,6 +334,129 @@ describe('BootstrapStep', () => {
 
       // Default is folder, so title field should be visible
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('quota exceeded', () => {
+    it('should not render content when resource count exceeds free-tier limit on folder sync', () => {
+      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
+        fileCount: 25,
+        resourceCount: 25, // Exceeds free-tier limit of 20
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      // Content should not be rendered when quota is exceeded on free tier
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+    });
+
+    it('should render content when resource count exceeds free-tier limit but not on free tier', async () => {
+      (isFreeTierLicense as jest.Mock).mockReturnValue(false);
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
+        fileCount: 25,
+        resourceCount: 25, // Exceeds limit but not on free tier
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      // Quota is not enforced when not on free tier
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content when resource count is within quota on free tier', async () => {
+      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
+        fileCount: 15,
+        resourceCount: 15, // Within free-tier limit of 20
+        resourceCountString: '15 resources',
+        fileCountString: '15 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content when resource count equals quota limit on free tier', async () => {
+      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
+        fileCount: 20,
+        resourceCount: 20, // Exactly at free-tier limit of 20
+        resourceCountString: '20 resources',
+        fileCountString: '20 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      // Exactly at limit is allowed (only > limit triggers exceeded)
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content when resource count exceeds limit on free tier for instance sync', async () => {
+      (isFreeTierLicense as jest.Mock).mockReturnValue(true);
+
+      (useModeOptions as jest.Mock).mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'instance',
+            label: 'Sync all resources with external storage',
+            description: 'Resources will be synced with external storage',
+            subtitle: 'Use this option if you want to sync your entire instance',
+          },
+        ],
+        disabledOptions: [],
+      });
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
+        fileCount: 25,
+        resourceCount: 25, // Exceeds limit but instance sync is not restricted
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup(
+        {},
+        {
+          repository: {
+            sync: {
+              target: 'instance',
+              enabled: true,
+            },
+          },
+        }
+      );
+
+      expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
     });
   });
 });

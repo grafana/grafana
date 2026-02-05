@@ -27,7 +27,7 @@ func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav
 	// Check if any limits are configured
 	if q.MaxResources == 0 {
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonQuotaUnlimited,
 			Message: "No quota limits configured",
@@ -39,21 +39,21 @@ func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav
 	switch {
 	case total > q.MaxResources:
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonResourceQuotaExceeded,
+			Reason:  provisioning.ReasonQuotaExceeded,
 			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, q.MaxResources),
 		}
 	case total == q.MaxResources:
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
-			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonResourceQuotaReached,
+			Type:    provisioning.ConditionTypeResourceQuota,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonQuotaReached,
 			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, q.MaxResources),
 		}
 	default:
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeQuota,
+			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
 			Message: fmt.Sprintf("Within quota: %d/%d resources", total, q.MaxResources),
