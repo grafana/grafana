@@ -34,7 +34,7 @@ grafana::codegen:run() {
     include_common_input_dirs=$([[ ${api_pkg} == "common" ]] && echo "true" || echo "false")
     # Fix ref paths in non-common packages so they use OpenAPI model names (io.k8s....)
     # and resolve against definitions from pkg/apimachinery/apis/common.
-    fix_common_ref_paths=$([[ ${api_pkg} == "common" ]] && echo "false" || echo "true")
+    fix_common_ref_paths=true
 
     kube::codegen::gen_helpers \
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
