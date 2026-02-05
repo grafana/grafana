@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { QueryGroupOptions } from 'app/types/query';
 
+import { QueryEditorType } from '../constants';
+
 import { QueryEditorActions, QueryOptionsState } from './QueryEditorContext';
 
 export function setup(jsx: React.ReactElement) {
@@ -47,6 +49,7 @@ export const mockActions: QueryEditorActions = {
   duplicateQuery: jest.fn(),
   runQueries: jest.fn(),
   changeDataSource: jest.fn(),
+  toggleQueryHide: jest.fn(),
   onQueryOptionsChange: jest.fn(),
 };
 
@@ -66,4 +69,13 @@ export const mockQueryOptionsState: QueryOptionsState = {
   options: mockOptions,
   isSidebarOpen: false,
   setIsSidebarOpen: jest.fn(),
+};
+
+export const mockUIStateBase = {
+  selectedQueryDsData: null,
+  selectedQueryDsLoading: false,
+  showingDatasourceHelp: false,
+  toggleDatasourceHelp: jest.fn(),
+  cardType: QueryEditorType.Query,
+  queryOptions: mockQueryOptionsState,
 };

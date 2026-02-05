@@ -241,6 +241,7 @@ var wireBasicSet = wire.NewSet(
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
 	legacy.ProvideMigratorDashboardAccessor,
+	unifiedmigrations.ProvideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-import { SidebarSize } from '../../constants';
+import { QueryEditorType, SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions, mockQueryOptionsState } from '../testUtils';
 import { Transformation } from '../types';
@@ -36,6 +36,11 @@ describe('QueryEditorSidebar', () => {
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
           queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -58,6 +63,11 @@ describe('QueryEditorSidebar', () => {
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
           queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -88,6 +98,11 @@ describe('QueryEditorSidebar', () => {
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
           queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -128,6 +143,11 @@ describe('QueryEditorSidebar', () => {
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
           queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >

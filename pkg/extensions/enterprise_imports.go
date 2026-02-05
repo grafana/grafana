@@ -40,6 +40,7 @@ import (
 	_ "gocloud.dev/secrets/gcpkms"
 	_ "gocloud.dev/secrets/hashivault"
 	_ "k8s.io/api"
+	_ "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	_ "k8s.io/apimachinery/pkg/util/httpstream/spdy"
 	_ "k8s.io/apimachinery/pkg/util/proxy"
 	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"

@@ -4,6 +4,7 @@ import { PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { QueryGroupOptions } from 'app/types/query';
 
+import { QueryEditorType } from '../../constants';
 import { QueryOptionsState, QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions, mockOptions } from '../testUtils';
 
@@ -48,6 +49,11 @@ describe('QueryEditorDetailsSidebar', () => {
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
           queryOptions,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
