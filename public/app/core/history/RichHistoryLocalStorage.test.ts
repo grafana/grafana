@@ -198,6 +198,7 @@ describe('RichHistoryLocalStorage', () => {
           comment: i.toString(),
           queries: [],
           ts: Date.now() + 10000, // to bypass retention policy
+          datasourceName: 'name-of-dev-test',
         });
       }
 

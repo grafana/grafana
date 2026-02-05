@@ -210,10 +210,25 @@ function getRichHistoryDTOs(): RichHistoryLocalStorageDTO[] {
 }
 
 function migrateRichHistory(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
-  const transformedRichHistory = richHistory.map((query) => {
-    const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
-    return { ...query, queries: transformedQueries };
-  });
+  const transformedRichHistory = richHistory
+    .filter((query) => {
+      // Filter out entries that are missing any required properties
+      return (
+        query &&
+        typeof query.ts === 'number' &&
+        typeof query.datasourceName === 'string' &&
+        typeof query.starred === 'boolean' &&
+        typeof query.comment === 'string' &&
+        Array.isArray(query.queries)
+      );
+    })
+    .map((query) => {
+      const transformedQueries: DataQuery[] = query.queries.map((q, index) =>
+        createDataQuery(query, q, index)
+      );
+
+      return { ...query, queries: transformedQueries };
+    });
 
   return transformedRichHistory;
 }
