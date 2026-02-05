@@ -42,10 +42,15 @@ export const ContextMenu = React.memo(
           bottom: window.innerHeight < y + rect.height + OFFSET,
         };
 
+        const top = Math.max(0, collisions.bottom ? y - rect.height - OFFSET : y + OFFSET);
+        const maxHeight = window.innerHeight - top - OFFSET;
+
         setPositionStyles({
           position: 'fixed',
           left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
-          top: Math.max(0, collisions.bottom ? y - rect.height - OFFSET : y + OFFSET),
+          top,
+          maxHeight,
+          overflowY: 'auto' as const,
         });
       }
     }, [x, y]);
