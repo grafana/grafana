@@ -12,6 +12,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
@@ -37,6 +38,7 @@ export function QueryEditorContextWrapper({
   const queryRunnerState = queryRunner?.useState();
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
+  const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
   const transformations: Transformation[] = useMemo(() => {
@@ -153,13 +155,29 @@ export function QueryEditorContextWrapper({
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },
+      queryOptions: {
+        options: dataPane.buildQueryOptions(),
+        isQueryOptionsOpen,
+        setIsQueryOptionsOpen,
+      },
       selectedQueryDsData: selectedQueryDsData ?? null,
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
       cardType: getEditorType(selectedQuery || selectedTransformation),
     }),
-    [selectedQuery, selectedTransformation, selectedQueryDsData, selectedQueryDsLoading, showingDatasourceHelp]
+    // Re-compute when queryRunner state changes (maxDataPoints, minInterval, etc.)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      selectedQuery,
+      selectedTransformation,
+      dataPane,
+      queryRunnerState,
+      isQueryOptionsOpen,
+      selectedQueryDsData,
+      selectedQueryDsLoading,
+      showingDatasourceHelp,
+    ]
   );
 
   const actions = useMemo(
@@ -176,6 +194,7 @@ export function QueryEditorContextWrapper({
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
+      onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
     }),
     [dataPane]
   );
