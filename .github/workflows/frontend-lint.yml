@@ -200,7 +200,7 @@ jobs:
       id-token: write
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
     name: Check circular dependencies
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     steps:
     - name: Checkout build commit
       uses: actions/checkout@v5
