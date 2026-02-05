@@ -41,7 +41,7 @@ export const OwnerReferenceSelector = ({
         options={teamsOptions}
         value={selectedTeam || defaultTeamUid}
         placeholder={t('manage-owner-references.select-owner', 'Select an owner')}
-        onChange={(team: ComboboxOption<string>) => {
+        onChange={(team) => {
           setSelectedTeam(team);
           onChange({
             apiVersion: OWNER_REFERENCE_API_VERSION,
