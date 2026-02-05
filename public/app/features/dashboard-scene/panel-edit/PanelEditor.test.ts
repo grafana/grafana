@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { config } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
@@ -26,6 +27,8 @@ import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
+import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { buildPanelEditScene } from './PanelEditor';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
@@ -322,6 +325,53 @@ describe('PanelEditor', () => {
       expect(panelEditor.state.dataPane).toBeDefined();
 
       expect(panel.state.$data).toBeDefined();
+    });
+  });
+
+  describe('Query editor version toggle', () => {
+    describe('when queryEditorNext feature toggle is enabled', () => {
+      beforeEach(() => {
+        config.featureToggles.queryEditorNext = true;
+      });
+
+      afterEach(() => {
+        config.featureToggles.queryEditorNext = false;
+      });
+
+      it('should use the v2 query editor experience by default', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+
+      it('should switch to v1 query editor experience when toggled off', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        panelEditor.onToggleQueryEditorVersion();
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should switch back to v2 query editor experience when toggled on again', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        panelEditor.onToggleQueryEditorVersion(); // v2 -> v1
+        panelEditor.onToggleQueryEditorVersion(); // v1 -> v2
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+    });
+
+    describe('when queryEditorNext feature toggle is disabled', () => {
+      beforeEach(() => {
+        config.featureToggles.queryEditorNext = false;
+      });
+
+      it('should use the v1 query editor experience', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
     });
   });
 });
