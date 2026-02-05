@@ -8,7 +8,6 @@ import {
 } from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState } from 'app/types/explore';
 
 import { EditFormDTO } from './Forms/types';
@@ -79,6 +78,32 @@ describe('correlations utils', () => {
         },
       },
     });
+  });
+
+  it('attaches external correlations defined in the configuration', () => {
+    config.featureToggles.lokiLogsDataplane = false;
+    const { testDataFrames, refIdMap, loki } = setup();
+    attachCorrelationsToDataFrames(
+      testDataFrames,
+      [
+        {
+          uid: 'loki-to-prometheus',
+          label: 'logs to metrics',
+          source: loki,
+          type: 'external',
+          config: { field: 'traceId', target: { url: 'testUrl' } },
+          provisioned: false,
+        },
+      ],
+      refIdMap
+    );
+
+    expect(testDataFrames[0].fields[1].config.links).toHaveLength(1);
+    expect(testDataFrames[0].fields[1].config.links).toMatchObject([
+      {
+        title: 'logs to metrics',
+      },
+    ]);
   });
 
   it('does not create duplicates when attaching links to the same data frame', () => {
