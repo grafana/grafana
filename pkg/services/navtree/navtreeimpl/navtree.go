@@ -464,6 +464,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		alertChildNavs = append(alertChildNavs, navLink)
 	}
 
+	// Permissions for notification configuration items
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
@@ -477,22 +478,42 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
-	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
-			Icon: "comment-alt-share",
-		})
-	}
-
-	if hasAccess(ac.EvalAny(
+	notificationPoliciesPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
 		ac.EvalPermission(ac.ActionAlertingRoutesRead),
 		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
-	)) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+	}
+
+	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))
+	hasNotificationPoliciesAccess := hasAccess(ac.EvalAny(notificationPoliciesPerms...))
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		// V2 Navigation: Group notification config items under a single parent (tabs managed on frontend)
+		if hasContactPointsAccess || hasNotificationPoliciesAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Notification configuration",
+				SubTitle: "Manage contact points, notification policies, templates, and time intervals",
+				Id:       "notification-config",
+				Url:      s.cfg.AppSubURL + "/alerting/notifications",
+				Icon:     "comment-alt-share",
+			})
+		}
+	} else {
+		// Legacy Navigation: Show contact points and notification policies as separate items
+		if hasContactPointsAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+				Icon: "comment-alt-share",
+			})
+		}
+
+		if hasNotificationPoliciesAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		}
 	}
 
 	if hasAccess(ac.EvalAny(

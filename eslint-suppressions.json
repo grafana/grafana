@@ -2680,11 +2680,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/logsFrame.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "no-restricted-syntax": {
       "count": 1
