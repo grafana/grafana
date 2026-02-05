@@ -860,6 +860,7 @@
     "common": {
       "cancel": "取消",
       "clear-filters": "清除篩選",
+      "close": "",
       "delete": "刪除",
       "edit": "編輯",
       "export": "匯出",
@@ -1580,6 +1581,17 @@
       "action-button": "匯入",
       "additional-settings": "附加設定",
       "alert-rules": "警報規則",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "匯入",
         "loading": "正在載入…",
@@ -1606,13 +1618,15 @@
         "label": "資料來源",
         "required-message": "請選擇一個資料來源"
       },
-      "error": "無法匯入警報規則：{{error}}",
+      "error": "",
       "group": {
         "description": "輸入以搜尋現有群組",
         "label": "群組"
       },
       "import-location-and-filters": "匯入位置和篩選條件",
       "import-source": "匯入來源",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "輸入以搜尋現有的命名空間",
         "label": "命名空間"
@@ -1624,17 +1638,155 @@
       "pause-recording": {
         "label": "暫停匯入的錄製規則"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "錄製規則",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "現有的資料來源管理規則",
         "datasource-description": "從現有資料來源匯入規則",
         "yaml": "Prometheus YAML 檔案",
         "yaml-description": "從 Prometheus YAML 檔案匯入規則。"
       },
-      "success": "已成功將警報規則匯入至 Grafana 管理的規則。",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "需匯入規則的資料夾",
         "label": "目標資料夾"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "選擇一個與 Prometheus 相容的 YAML 檔案進行匯入",
@@ -1645,6 +1797,9 @@
         "target-datasource-required": "請選擇目標資料來源"
       },
       "yaml-error": "無法剖析 YAML 檔案：{{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2609,7 +2764,8 @@
       "expand-all": "展開全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "匯入警報規則"
+      "import-to-gma": "匯入警報規則",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在載入規則…",
@@ -3454,6 +3610,10 @@
       "hosted-domain-label": "託管網域",
       "id-token-attribute-name-description": "用於從傳回的 OAuth2 權杖中擷取 ID 權杖的金鑰名稱。",
       "id-token-attribute-name-label": "ID 權杖屬性名稱",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "用於從使用者 ID 權杖中查找使用者登入的 JMESPath 表達式。",
       "login-attribute-path-label": "登入屬性路徑",
       "login-prompt-consent": "同意",
@@ -3520,6 +3680,8 @@
       "use-refresh-token-label": "使用重新整理權杖",
       "validate-hosted-domain-description": "若啟用，Grafana 將會比對從 Google ID 權杖擷取的託管網域與使用者指定的「{{ allowedDomainsLabel }}」清單。",
       "validate-hosted-domain-label": "驗證託管網域",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "用於驗證 OAuth2 提供者的權杖檔案路徑。僅當用戶端驗證設定為「workload_identity」時才需要此項設定。預設為 /var/run/secrets/azure/tokens/azure-identity-token。",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} 權杖檔案",
       "workload-identity-token-file-required": "當用戶端驗證設定為「Workload identity」時必須設定此欄位。"
@@ -4850,12 +5012,6 @@
       "message": {
         "edit-dashboard-json": "編輯儀表板 JSON"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "驗證是為了開發目的，應該可以安全地忽略。若您是 Grafana 開發人員，請考慮檢查並更新儀表板架構",
-      "title-checking-dashboard-validity": "正在檢查儀表板有效性",
-      "title-dashboard-failed-schema-validation": "儀表板結構驗證失敗",
-      "title-error-checking-dashboard-validity": "檢查儀表板有效性時發生錯誤"
     },
     "default-layout": {
       "description": "單獨設定每個面板的位置和大小",
@@ -6458,6 +6614,9 @@
     },
     "query-editor": {
       "query": "查詢"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10384,6 +10543,17 @@
       "label-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該標籤"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "現有的資料庫面板清單。這些面板不受匯入影響。"
@@ -11897,13 +12067,17 @@
       "description-clear-repository-connection": "為此儲存庫連線新增一個明確的名稱",
       "empty": "空",
       "error-field-required": "此為必填欄位。",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "顯示名稱",
       "placeholder-my-repository-connection": "我的儲存庫連線",
+      "retry-action": "",
       "text-loading-resource-information": "正在載入資源資訊…",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
       "folders-count_other": "{{count}} 個資料夾"
@@ -12529,9 +12703,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "在公開儀表板之前，請確認以下幾點：",
@@ -12737,9 +12908,29 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

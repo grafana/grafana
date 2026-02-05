@@ -111,7 +111,7 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 	}
 
 	current = &watcher{
-		orgId:     u.GetOrgID(),
+		ns:        u.GetNamespace(),
 		channel:   e.Channel,
 		publisher: b.publisher,
 		watch:     watch,
@@ -159,7 +159,7 @@ func (b *WatchRunner) OnPublish(_ context.Context, u identity.Requester, e model
 }
 
 type watcher struct {
-	orgId     int64
+	ns        string
 	channel   string
 	publisher model.ChannelPublisher
 	done      bool
@@ -205,7 +205,7 @@ func (b *watcher) run(ctx context.Context) {
 			data := make([]byte, len(buf))
 			copy(data, buf)
 
-			err := b.publisher(b.orgId, b.channel, data)
+			err := b.publisher(b.ns, b.channel, data)
 			if err != nil {
 				logger.Error("publish error", "channel", b.channel, "err", err)
 				b.watch.Stop()

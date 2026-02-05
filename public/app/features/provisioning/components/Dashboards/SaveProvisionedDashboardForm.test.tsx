@@ -152,10 +152,7 @@ function setup(props: Partial<Props> = {}) {
       workflow: 'write',
     },
     readOnly: false,
-    workflowOptions: [
-      { label: 'Branch', value: 'branch' },
-      { label: 'Write', value: 'write' },
-    ],
+    canPushToConfiguredBranch: true,
     ...props,
   };
 
@@ -191,7 +188,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
@@ -202,7 +199,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByTestId('common-options')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
   });
@@ -411,10 +408,10 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.queryByTestId('common-options')).not.toBeInTheDocument();
 
     // Workflow options are not shown
-    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
 
     // Branch field is not shown
-    expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
   });
 
   it('enables save button when only the comment changes', async () => {
