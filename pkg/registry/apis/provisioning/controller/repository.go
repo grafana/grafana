@@ -577,7 +577,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
-	shouldGenerateToken := false
+	var shouldGenerateToken bool
 	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
 	}
@@ -711,6 +711,26 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
+	}
+
+	// If branch is empty, fetch and set the default branch before running health check
+	if branchHandler, ok := repo.(repository.BranchHandler); ok {
+		if branchHandler.GetCurrentBranch() == "" {
+			logger.Info("given repository branch is empty, getting default branch")
+
+			defaultBranch, err := branchHandler.GetDefaultBranch(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get default branch: %w", err)
+			}
+
+			branchHandler.SetBranch(defaultBranch)
+
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  fmt.Sprintf("/spec/%s/branch", repo.Config().Spec.Type),
+				"value": defaultBranch,
+			})
+		}
 	}
 
 	// Handle health checks using the health checker

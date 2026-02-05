@@ -435,9 +435,12 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
+			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+			registry := migrations.ProvideMigrationRegistry(mockAccessor)
 			migrator := migrations.ProvideUnifiedMigrator(
-				&legacy.MockMigrationDashboardAccessor{},
+				mockAccessor,
 				mockClient,
+				registry,
 			)
 
 			// Create test data
@@ -487,9 +490,12 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 		Once()
 
 	// Create migrator with mock client
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	registry := migrations.ProvideMigrationRegistry(mockAccessor)
 	migrator := migrations.ProvideUnifiedMigrator(
-		&legacy.MockMigrationDashboardAccessor{},
+		mockAccessor,
 		mockClient,
+		registry,
 	)
 
 	// Create test data
@@ -515,9 +521,12 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 
 func TestUnifiedMigration_RebuildIndexes_NilClient(t *testing.T) {
 	// Test that when client is nil, the method skips rebuilding and returns nil
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	registry := migrations.ProvideMigrationRegistry(mockAccessor)
 	migrator := migrations.ProvideUnifiedMigrator(
-		&legacy.MockMigrationDashboardAccessor{},
+		mockAccessor,
 		nil,
+		registry,
 	)
 
 	info := authlib.NamespaceInfo{
@@ -696,9 +705,12 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
+			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+			registry := migrations.ProvideMigrationRegistry(mockAccessor)
 			migrator := migrations.ProvideUnifiedMigrator(
-				&legacy.MockMigrationDashboardAccessor{},
+				mockAccessor,
 				mockClient,
+				registry,
 			)
 
 			// Create test data
@@ -764,9 +776,12 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 		Once()
 
 	// Create migrator with mock client
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	registry := migrations.ProvideMigrationRegistry(mockAccessor)
 	migrator := migrations.ProvideUnifiedMigrator(
-		&legacy.MockMigrationDashboardAccessor{},
+		mockAccessor,
 		mockClient,
+		registry,
 	)
 
 	// Create test data

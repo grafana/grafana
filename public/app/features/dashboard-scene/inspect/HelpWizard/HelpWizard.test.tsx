@@ -54,7 +54,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
-async function setup() {
+function setup() {
   const { panel } = buildTestScene();
   panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 

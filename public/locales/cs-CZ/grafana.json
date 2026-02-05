@@ -869,6 +869,7 @@
     "common": {
       "cancel": "Zrušit",
       "clear-filters": "Vymazat filtry",
+      "close": "",
       "delete": "Odstranit",
       "edit": "Upravit",
       "export": "Exportovat",
@@ -1595,6 +1596,17 @@
       "action-button": "Importovat",
       "additional-settings": "Další nastavení",
       "alert-rules": "Pravidla výstrah",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Importovat",
         "loading": "Načítání…",
@@ -1621,13 +1633,15 @@
         "label": "Zdroj dat",
         "required-message": "Vyberte zdroj dat"
       },
-      "error": "Nepodařilo se importovat pravidla výstrah: {{error}}",
+      "error": "",
       "group": {
         "description": "Zadejte a vyhledejte existující skupinu",
         "label": "Skupina"
       },
       "import-location-and-filters": "Importovat lokalitu a filtry",
       "import-source": "Importovat zdroj",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Zadejte a vyhledejte existující jmenný prostor",
         "label": "Jmenný prostor"
@@ -1639,17 +1653,170 @@
       "pause-recording": {
         "label": "Pozastavit importovaná pravidla pro nahrávání"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Pravidla nahrávání",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_few": "",
+        "renamed-intervals_many": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_few": "",
+        "renamed-receivers_many": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_few": "",
+        "will-import-rules-count_many": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Stávající pravidla spravovaná zdrojem dat",
         "datasource-description": "Importovat pravidla ze stávajících zdrojů dat",
         "yaml": "Soubor Prometheus YAML",
         "yaml-description": "Importovat pravidla ze souboru Prometheus YAML."
       },
-      "success": "Pravidla výstrah byla úspěšně importována do pravidel spravovaných Grafanou.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_few": "",
+        "renamed-intervals_many": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_few": "",
+        "renamed-receivers_many": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Složka, do které chcete importovat pravidla",
         "label": "Cílová složka"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Vyberte soubor YAML kompatibilní s Prometheusem, který chcete importovat",
@@ -1660,6 +1827,9 @@
         "target-datasource-required": "Vyberte cílový zdroj dat"
       },
       "yaml-error": "Nepodařilo se analyzovat soubor YAML: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2639,7 +2809,8 @@
       "expand-all": "Rozbalit vše"
     },
     "rule-list-v2": {
-      "import-to-gma": "Importovat pravidla výstrah"
+      "import-to-gma": "Importovat pravidla výstrah",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Načítání pravidla…",
@@ -3487,6 +3658,10 @@
       "hosted-domain-label": "Hostovaná doména",
       "id-token-attribute-name-description": "Název klíče použitého k extrakci ID tokenu z vráceného tokenu OAuth2.",
       "id-token-attribute-name-label": "Název atributu ID tokenu",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání přihlašovacích údajů uživatele z tokenu ID uživatele.",
       "login-attribute-path-label": "Cesta atributu přihlášení",
       "login-prompt-consent": "Souhlas",
@@ -3553,6 +3728,8 @@
       "use-refresh-token-label": "Použít token pro obnovení",
       "validate-hosted-domain-description": "Pokud je povoleno, Grafana porovná hostovanou doménu načtenou z tokenu Google ID se seznamem „{{ allowedDomainsLabel }}“ zadaným uživatelem.",
       "validate-hosted-domain-label": "Ověřit hostovanou doménu",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Cesta k souboru tokenu použitému k ověření u poskytovatele OAuth2. To je vyžadováno pouze v případě, že je ověření klienta nastaveno na „workload_identity“. Výchozí nastavení je /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "Soubor tokenu {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Toto pole musí být nastaveno, pokud je ověření klienta nastaveno na „Workload identity“."
@@ -4907,12 +5084,6 @@
       "message": {
         "edit-dashboard-json": "Upravit nástěnku JSON"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Validace je poskytována pro účely vývoje a mělo by být bezpečné ji ignorovat. Pokud jste vývojář Grafany, zvažte kontrolu a aktualizaci schématu nástěnky",
-      "title-checking-dashboard-validity": "Kontrola platnosti nástěnky",
-      "title-dashboard-failed-schema-validation": "Ověření schématu nástěnky se nezdařilo",
-      "title-error-checking-dashboard-validity": "Chyba při kontrole platnosti nástěnky"
     },
     "default-layout": {
       "description": "Umístěte a upravte velikost každého panelu jednotlivě",
@@ -6524,6 +6695,9 @@
     },
     "query-editor": {
       "query": "Dotaz"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10516,6 +10690,17 @@
       "label-log-stats": "{{label}}: {{total}} z {{rowCount}} řádků má tento štítek"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Seznam existujících panelů knihovny. Tyto panely nejsou ovlivněny importem."
@@ -12038,13 +12223,17 @@
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
       "empty": "Prázdný",
       "error-field-required": "Toto pole je povinné.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
+      "retry-action": "",
       "text-loading-resource-information": "Načítání informací o zdroji…",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} nástěnka",
       "dashboards-count_few": "{{count}} nástěnka",
       "dashboards-count_many": "{{count}} nástěnka",
@@ -12688,9 +12877,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Před zveřejněním nástěnky potvrďte následující:",
@@ -12899,9 +13085,32 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_few": "",
+        "text_many": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

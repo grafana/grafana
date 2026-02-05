@@ -1412,6 +1412,38 @@
     },
     {
       "metadata": {
+        "name": "datasourceDisableIdApi",
+        "resourceVersion": "1769095508888",
+        "creationTimestamp": "2026-01-22T15:24:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-22 15:25:08.888626 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Does not register datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceIdBasedAPIEnabled",
+        "resourceVersion": "1769095222868",
+        "creationTimestamp": "2026-01-22T15:20:22Z",
+        "deletionTimestamp": "2026-01-22T15:23:04Z"
+      },
+      "spec": {
+        "description": "Registers datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceQueryTypes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T16:46:28Z",
@@ -1423,6 +1455,24 @@
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceRemoveDeprecatedIdApi",
+        "resourceVersion": "1769095435732",
+        "creationTimestamp": "2026-01-22T15:23:04Z",
+        "deletionTimestamp": "2026-01-22T15:24:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-22 15:23:55.732998 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Does not registers datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -2344,15 +2394,43 @@
     {
       "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770238644779",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-04 20:57:24.779562 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+        "stage": "deprecated",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZResourcePermissionsRedirect",
+        "resourceVersion": "1770238644779",
+        "creationTimestamp": "2026-02-04T20:57:24Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZRolesRedirect",
+        "resourceVersion": "1770238644779",
+        "creationTimestamp": "2026-02-04T20:57:24Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2703,6 +2781,20 @@
       },
       "spec": {
         "description": "Enables search for team bindings in the app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamsHandlerRedirect",
+        "resourceVersion": "1770222039889",
+        "creationTimestamp": "2026-02-04T16:20:39Z"
+      },
+      "spec": {
+        "description": "Redirects the request to teams related endpoints to the app platform API",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
