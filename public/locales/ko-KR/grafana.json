@@ -860,6 +860,7 @@
     "common": {
       "cancel": "취소",
       "clear-filters": "필터 초기화",
+      "close": "",
       "delete": "삭제",
       "edit": "편집",
       "export": "내보내기",
@@ -1580,6 +1581,17 @@
       "action-button": "가져오기",
       "additional-settings": "추가 설정",
       "alert-rules": "경고 규칙",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "가져오기",
         "loading": "로딩 중...",
@@ -1606,13 +1618,15 @@
         "label": "데이터 소스",
         "required-message": "데이터 소스를 선택하세요"
       },
-      "error": "경고 규칙 가져오기 실패: {{error}}",
+      "error": "",
       "group": {
         "description": "기존 그룹을 검색하려면 입력하세요",
         "label": "그룹"
       },
       "import-location-and-filters": "위치 및 필터 가져오기",
       "import-source": "소스 가져오기",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "기존 네임스페이스를 검색하려면 입력하세요",
         "label": "네임스페이스"
@@ -1624,17 +1638,155 @@
       "pause-recording": {
         "label": "가져온 기록 규칙 일시 중지"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "기록 규칙",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "기존 데이터 소스 관리 규칙",
         "datasource-description": "기존 데이터 소스에서 규칙 가져오기",
         "yaml": "Prometheus YAML 파일",
         "yaml-description": "Prometheus YAML 파일에서 규칙을 가져옵니다."
       },
-      "success": "경고 규칙을 Grafana 관리 규칙으로 가져왔습니다.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "규칙을 가져올 폴더",
         "label": "대상 폴더"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "가져올 Prometheus 호환 YAML 파일을 선택합니다.",
@@ -1645,6 +1797,9 @@
         "target-datasource-required": "대상 데이터 소스를 선택하세요."
       },
       "yaml-error": "YAML 파일 파싱에 실패: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2609,7 +2764,8 @@
       "expand-all": "모두 펼치기"
     },
     "rule-list-v2": {
-      "import-to-gma": "경보 규칙 가져오기"
+      "import-to-gma": "경보 규칙 가져오기",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "규칙 로딩 중...",
@@ -3454,6 +3610,10 @@
       "hosted-domain-label": "호스팅된 도메인",
       "id-token-attribute-name-description": "반환된 OAuth2 토큰에서 ID 토큰을 추출하는 데 사용되는 키의 이름입니다.",
       "id-token-attribute-name-label": "ID 토큰 속성 이름",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "사용자 ID 토큰에서 사용자 로그인 조회에 사용할 JMESPath 표현식입니다.",
       "login-attribute-path-label": "로그인 속성 경로",
       "login-prompt-consent": "동의",
@@ -3520,6 +3680,8 @@
       "use-refresh-token-label": "새로 고침 토큰 사용",
       "validate-hosted-domain-description": "활성화되면 Grafana는 Google ID 토큰에서 검색한 호스팅된 도메인을 사용자가 지정한 \"{{ allowedDomainsLabel }}\" 목록과 일치시킵니다.",
       "validate-hosted-domain-label": "호스팅된 도메인 검증",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "OAuth2 공급자를 인증하는 데 사용되는 토큰 파일에 대한 파일 경로입니다. 클라이언트 인증이 'workload_identity'로 설정된 경우에만 필요합니다. 기본값은 /var/run/secrets/azure/tokens/azure-identity-token입니다.",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} 토큰 파일",
       "workload-identity-token-file-required": "이 필드는 클라이언트 인증이 '워크로드 ID'로 설정된 경우에 설정해야 합니다."
@@ -4850,12 +5012,6 @@
       "message": {
         "edit-dashboard-json": "대시보드 JSON 편집"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "검증은 개발 목적으로 제공되며 무시해도 괜찮습니다. 사용자 님이 Grafana 개발자인 경우 대시보드 스키마를 확인하고 업데이트하는 것이 좋습니다",
-      "title-checking-dashboard-validity": "대시보드 유효성 확인",
-      "title-dashboard-failed-schema-validation": "대시보드 스키마 검증 실패",
-      "title-error-checking-dashboard-validity": "대시보드 유효성 확인 중 오류 발생"
     },
     "default-layout": {
       "description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
@@ -6458,6 +6614,9 @@
     },
     "query-editor": {
       "query": "쿼리"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10384,6 +10543,17 @@
       "label-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}에 해당 라벨이 있습니다"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "기존 라이브러리 패널의 목록입니다. 이러한 패널은 가져오기의 영향을 받지 않습니다."
@@ -11897,13 +12067,17 @@
       "description-clear-repository-connection": "이 리포지토리 연결에 대해 알기 쉬운 이름 추가",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "표시 이름",
       "placeholder-my-repository-connection": "내 리포지토리 연결",
+      "retry-action": "",
       "text-loading-resource-information": "리소스 정보 로딩 중...",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
@@ -12529,9 +12703,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "대시보드를 공개하기 전에 다음 사항을 확인하세요.",
@@ -12737,9 +12908,29 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

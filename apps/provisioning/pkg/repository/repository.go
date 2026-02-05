@@ -169,3 +169,10 @@ type Versioned interface {
 	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
+
+// BranchHandler is a repository that supports making actions on branches.
+type BranchHandler interface {
+	GetDefaultBranch(ctx context.Context) (string, error)
+	GetCurrentBranch() string
+	SetBranch(branch string)
+}

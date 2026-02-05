@@ -926,7 +926,6 @@
         ]
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAccess": {
-        "description": "Information about how the requesting user can use a given dashboard",
         "type": "object",
         "required": [
           "isPublic",
@@ -2239,7 +2238,7 @@
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardThresholdsConfig"
           },
           "unit": {
-            "description": "Unit a field should use. The unit you select is applied to all fields except time.\nYou can use the units ID availables in Grafana or a custom unit.\nAvailable units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts\nAs custom unit, you can use the following formats:\n`suffix:\u003csuffix\u003e` for custom unit that should go after value.\n`prefix:\u003cprefix\u003e` for custom unit that should go before value.\n`time:\u003cformat\u003e` For custom date time formats type for example `time:YYYY-MM-DD`.\n`si:\u003cbase scale\u003e\u003cunit characters\u003e` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.\n`count:\u003cunit\u003e` for a custom count unit.\n`currency:\u003cunit\u003e` for custom a currency unit.",
+            "description": "Unit a field should use. The unit you select is applied to all fields except time.\nYou can use the units ID available in Grafana or a custom unit.\nAvailable units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts\nAs custom unit, you can use the following formats:\n`suffix:\u003csuffix\u003e` for custom unit that should go after value.\n`prefix:\u003cprefix\u003e` for custom unit that should go before value.\n`time:\u003cformat\u003e` For custom date time formats type for example `time:YYYY-MM-DD`.\n`si:\u003cbase scale\u003e\u003cunit characters\u003e` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.\n`count:\u003cunit\u003e` for a custom count unit.\n`currency:\u003cunit\u003e` for custom a currency unit.",
             "type": "string"
           },
           "writeable": {
