@@ -12626,7 +12626,7 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
-      "path-description": "Path to the subdirectory with the resources you want to sync. Set to grafana/ by default. Update if using a folder different from grafana/.",
+      "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
