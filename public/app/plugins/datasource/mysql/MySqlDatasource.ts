@@ -24,7 +24,6 @@ export class MySqlDatasource extends SqlDatasource {
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
-    this.dialect = 'other';
     this.variables = new SQLVariableSupport(this);
   }
 
