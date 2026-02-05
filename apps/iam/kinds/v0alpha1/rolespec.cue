@@ -20,7 +20,7 @@ RoleSpec: {
 	description: string
 	group: string
 
-	// Permissions: For custom roles, this contains all permissions. For basic roles, this contains permissions that were added (drift from seed).
+	// All permissions for this role
 	permissions: [...#Permission]
 
 	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
