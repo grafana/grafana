@@ -11,13 +11,13 @@ import { QueryEditorBody } from './Body/QueryEditorBody';
 import { QueryEditorDetailsSidebar } from './Body/QueryEditorDetailsSidebar';
 import { FooterLabelValue, QueryEditorFooter } from './Footer/QueryEditorFooter';
 import { ContentHeader } from './Header/ContentHeader';
-import { useDatasourceContext, useQueryOptionsContext, useQueryRunnerContext } from './QueryEditorContext';
+import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const { options } = useQueryOptionsContext();
+  const { options } = useQueryEditorUIContext();
   const { data } = useQueryRunnerContext();
   const { datasource } = useDatasourceContext();
 

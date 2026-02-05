@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { v4 } from 'uuid';
 
 import {
@@ -14,7 +14,7 @@ import { QueryGroupOptions } from 'app/types/query';
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { QueryEditorProvider, QueryOptionsState } from './QueryEditorContext';
+import { QueryEditorProvider } from './QueryEditorContext';
 import { Transformation } from './types';
 import { isDataTransformerConfig } from './utils';
 
@@ -127,8 +127,11 @@ export function QueryEditorContextWrapper({
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },
+      options: dataPane.buildQueryOptions(),
     }),
-    [selectedQuery, selectedTransformation]
+    // Re-compute when queryRunner state changes (maxDataPoints, minInterval, etc.)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedQuery, selectedTransformation, dataPane, queryRunnerState]
   );
 
   const actions = useMemo(
@@ -144,25 +147,9 @@ export function QueryEditorContextWrapper({
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
+      onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
     }),
     [dataPane]
-  );
-
-  const handleQueryOptionsChange = useCallback(
-    (options: QueryGroupOptions) => {
-      dataPane.onQueryOptionsChange(options);
-    },
-    [dataPane]
-  );
-
-  const queryOptionsState: QueryOptionsState = useMemo(
-    () => ({
-      options: dataPane.buildQueryOptions(),
-      onChange: handleQueryOptionsChange,
-    }),
-    // Re-compute when queryRunner state changes (maxDataPoints, minInterval, etc.)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dataPane, queryRunnerState, handleQueryOptionsChange]
   );
 
   return (
@@ -172,7 +159,6 @@ export function QueryEditorContextWrapper({
       panelState={panelState}
       uiState={uiState}
       actions={actions}
-      queryOptionsState={queryOptionsState}
     >
       {children}
     </QueryEditorProvider>

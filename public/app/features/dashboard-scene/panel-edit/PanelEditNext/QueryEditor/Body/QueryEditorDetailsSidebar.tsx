@@ -6,7 +6,12 @@ import { t, Trans } from '@grafana/i18n';
 import { Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TIME_OPTION_PLACEHOLDER } from '../../constants';
-import { useDatasourceContext, useQueryOptionsContext, useQueryRunnerContext } from '../QueryEditorContext';
+import {
+  useActionsContext,
+  useDatasourceContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 
 interface QueryEditorDetailsSidebarProps {
   onClose: () => void;
@@ -24,7 +29,8 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
   const styles = useStyles2(getStyles);
   const { datasource, dsSettings } = useDatasourceContext();
   const { data } = useQueryRunnerContext();
-  const { options, onChange } = useQueryOptionsContext();
+  const { options } = useQueryEditorUIContext();
+  const { onQueryOptionsChange } = useActionsContext();
 
   // Local state for controlled inputs
   const [relativeTimeValue, setRelativeTimeValue] = useState(options.timeRange?.from || '');
@@ -53,26 +59,26 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
       }
 
       if (maxDataPoints !== options.maxDataPoints) {
-        onChange({
+        onQueryOptionsChange({
           ...options,
           maxDataPoints,
         });
       }
     },
-    [onChange, options]
+    [onQueryOptionsChange, options]
   );
 
   const onMinIntervalBlur = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
       const minInterval = emptyToNull(event.target.value);
       if (minInterval !== options.minInterval) {
-        onChange({
+        onQueryOptionsChange({
           ...options,
           minInterval,
         });
       }
     },
-    [onChange, options]
+    [onQueryOptionsChange, options]
   );
 
   const onRelativeTimeChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +91,7 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
       const isValid = timeRangeValidation(newValue);
 
       if (isValid && options.timeRange?.from !== newValue) {
-        onChange({
+        onQueryOptionsChange({
           ...options,
           timeRange: {
             ...(options.timeRange ?? {}),
@@ -96,7 +102,7 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
 
       setRelativeTimeIsValid(isValid);
     },
-    [onChange, options]
+    [onQueryOptionsChange, options]
   );
 
   const onTimeShiftChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +115,7 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
       const isValid = timeRangeValidation(newValue);
 
       if (isValid && options.timeRange?.shift !== newValue) {
-        onChange({
+        onQueryOptionsChange({
           ...options,
           timeRange: {
             ...(options.timeRange ?? {}),
@@ -120,7 +126,7 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
 
       setTimeShiftIsValid(isValid);
     },
-    [onChange, options]
+    [onQueryOptionsChange, options]
   );
 
   // Check if caching options should be shown
@@ -129,12 +135,12 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
 
   const onCacheTimeoutBlur = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
-      onChange({
+      onQueryOptionsChange({
         ...options,
         cacheTimeout: emptyToNull(event.target.value),
       });
     },
-    [onChange, options]
+    [onQueryOptionsChange, options]
   );
 
   const onCacheTTLBlur = useCallback(
@@ -145,12 +151,12 @@ export function QueryEditorDetailsSidebar({ onClose }: QueryEditorDetailsSidebar
         ttl = null;
       }
 
-      onChange({
+      onQueryOptionsChange({
         ...options,
         queryCachingTTL: ttl,
       });
     },
-    [onChange, options]
+    [onQueryOptionsChange, options]
   );
 
   return (

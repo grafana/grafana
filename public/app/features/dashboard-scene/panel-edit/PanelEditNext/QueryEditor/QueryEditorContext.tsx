@@ -29,6 +29,7 @@ export interface QueryEditorUIState {
   selectedTransformation: Transformation | null;
   setSelectedQuery: (query: DataQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
+  options: QueryGroupOptions;
 }
 
 export interface QueryEditorActions {
@@ -39,11 +40,7 @@ export interface QueryEditorActions {
   duplicateQuery: (index: number) => void;
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
-}
-
-export interface QueryOptionsState {
-  options: QueryGroupOptions;
-  onChange: (options: QueryGroupOptions) => void;
+  onQueryOptionsChange: (options: QueryGroupOptions) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);
@@ -51,7 +48,6 @@ const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
 const PanelContext = createContext<PanelState | null>(null);
 const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
-const QueryOptionsContext = createContext<QueryOptionsState | null>(null);
 
 export function useDatasourceContext(): DatasourceState {
   const context = useContext(DatasourceContext);
@@ -93,14 +89,6 @@ export function useQueryEditorUIContext(): QueryEditorUIState {
   return context;
 }
 
-export function useQueryOptionsContext(): QueryOptionsState {
-  const context = useContext(QueryOptionsContext);
-  if (!context) {
-    throw new Error('useQueryOptionsContext must be used within QueryEditorProvider');
-  }
-  return context;
-}
-
 interface QueryEditorProviderProps {
   children: ReactNode;
   dsState: DatasourceState;
@@ -108,7 +96,6 @@ interface QueryEditorProviderProps {
   panelState: PanelState;
   uiState: QueryEditorUIState;
   actions: QueryEditorActions;
-  queryOptionsState: QueryOptionsState;
 }
 
 export function QueryEditorProvider({
@@ -118,16 +105,13 @@ export function QueryEditorProvider({
   panelState,
   uiState,
   actions,
-  queryOptionsState,
 }: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
       <DatasourceContext.Provider value={dsState}>
         <QueryRunnerContext.Provider value={qrState}>
           <PanelContext.Provider value={panelState}>
-            <QueryEditorUIContext.Provider value={uiState}>
-              <QueryOptionsContext.Provider value={queryOptionsState}>{children}</QueryOptionsContext.Provider>
-            </QueryEditorUIContext.Provider>
+            <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
           </PanelContext.Provider>
         </QueryRunnerContext.Provider>
       </DatasourceContext.Provider>
