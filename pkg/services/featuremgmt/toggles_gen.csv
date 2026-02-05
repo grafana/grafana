@@ -170,6 +170,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-12-27,k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 2025-01-09,improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
+2026-02-05,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-20,grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/partner-datasources,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
