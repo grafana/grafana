@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { DataQuery } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorTypeConfig } from '../../constants';
@@ -14,9 +15,10 @@ interface SidebarCardProps {
   id: string;
   children: React.ReactNode;
   onClick: () => void;
+  query?: DataQuery;
 }
 
-export const SidebarCard = ({ config, isSelected, id, children, onClick }: SidebarCardProps) => {
+export const SidebarCard = ({ config, isSelected, id, children, onClick, query }: SidebarCardProps) => {
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
 
@@ -35,9 +37,11 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick }: Sideb
             {typeText}
           </Text>
         </Stack>
-        <div className={styles.hoverActions}>
-          <HoverActions />
-        </div>
+        {query && (
+          <div className={styles.hoverActions}>
+            <HoverActions query={query} />
+          </div>
+        )}
       </div>
       <div className={styles.cardContent}>{children}</div>
     </button>

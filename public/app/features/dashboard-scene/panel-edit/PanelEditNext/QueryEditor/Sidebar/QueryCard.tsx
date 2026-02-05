@@ -21,6 +21,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       isSelected={isSelected}
       id={query.refId}
       onClick={() => setSelectedQuery(query)}
+      query={query}
     >
       <DataSourceLogo dataSource={queryDsSettings} />
       <Text weight="light" variant="code" color="secondary">
