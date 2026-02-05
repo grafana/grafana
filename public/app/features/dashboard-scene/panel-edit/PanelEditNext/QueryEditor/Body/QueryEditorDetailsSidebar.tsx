@@ -273,10 +273,11 @@ export function QueryEditorDetailsSidebar() {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
+      height: '100%',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       width: CONTENT_SIDE_BAR.width,
-      height: '100%',
       backgroundColor: theme.colors.background.primary,
     }),
     header: css({

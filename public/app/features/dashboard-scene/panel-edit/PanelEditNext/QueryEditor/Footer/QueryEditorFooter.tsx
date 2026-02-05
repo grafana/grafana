@@ -132,7 +132,7 @@ function getStyles(theme: GrafanaTheme2) {
     itemsList: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       listStyle: 'none',
       margin: 0,
       padding: 0,
