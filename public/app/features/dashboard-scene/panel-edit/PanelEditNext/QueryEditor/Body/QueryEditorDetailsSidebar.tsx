@@ -162,7 +162,15 @@ export function QueryEditorDetailsSidebar() {
 
   return (
     <div className={styles.container}>
-      <Button fill="text" size="lg" icon="angle-right" className={styles.header} onClick={handleClose}>
+      <Button
+        fill="text"
+        size="lg"
+        icon="angle-right"
+        className={styles.header}
+        onClick={handleClose}
+        aria-expanded={true}
+        aria-label={t('query-editor.details-sidebar.collapse', 'Collapse query options sidebar')}
+      >
         <span className={styles.headerText}>
           <Trans i18nKey="query-editor.details-sidebar.title">Query Options</Trans>
         </span>
