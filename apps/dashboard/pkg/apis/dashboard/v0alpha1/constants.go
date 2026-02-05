@@ -7,6 +7,8 @@ const (
 	APIGroup = "dashboard.grafana.app"
 	// APIVersion is the API version used by all kinds in this package
 	APIVersion = "v0alpha1"
+
+	OpenAPIPrefix = "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1."
 )
 
 var (
