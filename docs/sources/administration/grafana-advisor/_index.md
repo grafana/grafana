@@ -39,7 +39,7 @@ To set up Grafana Advisor you need:
 
 ### Enable feature toggles
 
-To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 To enable the required feature toggles, add them to your Grafana configuration file:
 
@@ -205,7 +205,7 @@ Your alert is now configured to monitor Advisor results and notify you when fail
 
 ## How to manage Advisor using the Grafana CLI `grafanactl`
 
-The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](/docs/grafana/latest/as-code/observability-as-code/grafana-cli/) documentation.
+The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI]([/docs/grafana/latest/as-code/observability-as-code/grafana-cli/](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/)) documentation.
 
 It can be used to manage Advisor `checks` and `checktypes`. We'll cover some examples below.
 
