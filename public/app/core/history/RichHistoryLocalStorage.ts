@@ -223,9 +223,7 @@ function migrateRichHistory(richHistory: RichHistoryLocalStorageDTO[]): RichHist
       );
     })
     .map((query) => {
-      const transformedQueries: DataQuery[] = query.queries.map((q, index) =>
-        createDataQuery(query, q, index)
-      );
+      const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
 
       return { ...query, queries: transformedQueries };
     });
