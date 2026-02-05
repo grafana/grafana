@@ -74,7 +74,7 @@ const EditCorrelationFormAppPlatform = ({ onUpdated, correlation, readOnly = fal
       partialSpec.type = data.type;
     }
 
-    // target is not explicitly defined, so just always copy it
+    // target is only loosely defined as an object, so always copy it
     partialSpec.config = { field: data.config.field, target: data.config.target };
 
     if (
@@ -86,7 +86,7 @@ const EditCorrelationFormAppPlatform = ({ onUpdated, correlation, readOnly = fal
       });
     }
 
-    return update({ name: correlation.uid, patch: partialSpec });
+    return update({ name: correlation.uid, patch: { spec: partialSpec } });
   };
 
   useEffect(() => {
