@@ -440,40 +440,27 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		args = append(args, saFilter.Args...)
 	}
 
-	var teamFilter accesscontrol.SQLFilter
-	if query.ExcludeManaged {
-		teamFilter = accesscontrol.SQLFilter{Where: " 1 = 1", Args: nil}
-	} else {
-		var err error
-		teamFilter, err = accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
+	var teamFilter *accesscontrol.SQLFilter
+	if !query.ExcludeManaged {
+		filter, err := accesscontrol.Filter(
+			query.User,
+			"t.id",
+			"teams:id:",
+			accesscontrol.ActionTeamsRead,
+		)
 		if err != nil {
 			return nil, err
 		}
+		teamFilter = &filter
 	}
 
-	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
+	team := teamSelect + teamFrom + where
 	args = append(args, args[:initialLength]...)
-var teamFilter *accesscontrol.SQLFilter
-if !query.ExcludeManaged {
-	filter, err := accesscontrol.Filter(
-		query.User,
-		"t.id",
-		"teams:id:",
-		accesscontrol.ActionTeamsRead,
-	)
-	if err != nil {
-		return nil, err
+
+	if teamFilter != nil {
+		team += " AND " + teamFilter.Where
+		args = append(args, teamFilter.Args...)
 	}
-	teamFilter = &filter
-}
-
-team := teamSelect + teamFrom + where
-args = append(args, args[:initialLength]...)
-
-if teamFilter != nil {
-	team += " AND " + teamFilter.Where
-	args = append(args, teamFilter.Args...)
-}
 
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)
