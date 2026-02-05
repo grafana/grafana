@@ -9,7 +9,7 @@ import { OmitUnion } from '../types';
 export interface FormExternalDTO {
   sourceUID: string;
   label: string;
-  description: string;
+  description?: string;
   type: 'external';
   config: CorrelationExternal['config'];
 }
@@ -18,7 +18,7 @@ export interface FormQueryDTO {
   sourceUID: string;
   targetUID: string;
   label: string;
-  description: string;
+  description?: string;
   type: 'query';
   config: CorrelationQuery['config'];
 }

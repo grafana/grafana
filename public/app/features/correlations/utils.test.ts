@@ -1,7 +1,16 @@
-import { DataFrame, DataFrameType, DataSourceInstanceSettings, FieldType, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  DataSourceInstanceSettings,
+  FieldType,
+  SupportedTransformationType,
+  toDataFrame,
+} from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
 
-import { attachCorrelationsToDataFrames } from './utils';
+import { EditFormDTO } from './Forms/types';
+import { Correlation } from './types';
+import { attachCorrelationsToDataFrames, generatePartialEditSpec } from './utils';
 
 describe('correlations utils', () => {
   it('attaches correlations defined in the configuration', () => {
@@ -87,6 +96,60 @@ describe('correlations utils', () => {
     const dataFrameOut = attachCorrelationsToDataFrames([testDataFrame], [correlations[3]], refIdMap);
     expect(dataFrameOut[0].fields[1].config.links).toHaveLength(1);
     config.featureToggles.lokiLogsDataplane = originalDataplaneState;
+  });
+
+  it('generates a partial spec with config only when nothing is edited', () => {
+    const correlation: Correlation = {
+      uid: 'test',
+      sourceUID: 'test',
+      label: 'test',
+      provisioned: false,
+      type: 'external',
+      config: { field: 'test', target: { url: 'test' } },
+    };
+    const editForm: EditFormDTO = { ...correlation, label: correlation.label! };
+    const partialSpec = generatePartialEditSpec(editForm, correlation);
+    expect(partialSpec).toStrictEqual({ config: { field: 'test', target: { url: 'test' } } });
+  });
+
+  it('generates a partial spec as expected when things are edited', () => {
+    const correlation: Correlation = {
+      uid: 'test',
+      sourceUID: 'test',
+      label: 'test',
+      provisioned: false,
+      type: 'external',
+      config: { field: 'test', target: { url: 'test' } },
+    };
+    const editForm: EditFormDTO = {
+      ...correlation,
+      label: 'diffLabel',
+      description: 'diffDesc',
+      type: 'query',
+      config: {
+        field: 'diffField',
+        target: { diff: 'target' },
+        transformations: [
+          {
+            type: SupportedTransformationType.Logfmt,
+            expression: 'diffExp',
+            mapValue: 'diffMapValue',
+            field: 'diffField',
+          },
+        ],
+      },
+    };
+    const partialSpec = generatePartialEditSpec(editForm, correlation);
+    expect(partialSpec).toStrictEqual({
+      label: 'diffLabel',
+      description: 'diffDesc',
+      type: 'query',
+      config: {
+        field: 'diffField',
+        target: { diff: 'target' },
+        transformations: [{ expression: 'diffExp', field: 'diffField', mapValue: 'diffMapValue', type: 'logfmt' }],
+      },
+    });
   });
 });
 

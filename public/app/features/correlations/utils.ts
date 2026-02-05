@@ -1,5 +1,7 @@
+import { isEqual } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
+import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 import {
   config,
@@ -14,7 +16,8 @@ import { ExploreItemState } from 'app/types/explore';
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 import { parseLogsFrame } from '../logs/logsFrame';
 
-import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
+import { EditFormDTO } from './Forms/types';
+import { Correlation, CreateCorrelationParams, CreateCorrelationResponse } from './types';
 import { CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
@@ -142,6 +145,32 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
       ? `${dsInstances[0]?.name} to ${dsInstances[1]?.name}`
       : '';
   });
+};
+
+export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlation): Partial<CorrelationSpec> => {
+  let partialSpec: Partial<CorrelationSpec> = {};
+  if (data.label !== correlation.label) {
+    partialSpec.label = data.label;
+  }
+  if (data.description !== correlation.description) {
+    partialSpec.description = data.description;
+  }
+  if (data.type !== correlation.type) {
+    partialSpec.type = data.type;
+  }
+
+  // target is only loosely defined as an object, so always copy it
+  partialSpec.config = { field: data.config.field, target: data.config.target };
+
+  if (
+    data.config.transformations !== undefined &&
+    !isEqual(data.config.transformations, correlation.config.transformations)
+  ) {
+    partialSpec.config.transformations = data.config.transformations.map((t) => {
+      return { expression: t.expression, field: t.field, mapValue: t.mapValue, type: t.type };
+    });
+  }
+  return partialSpec;
 };
 
 export const correlationsLogger = createMonitoringLogger('features.correlations');

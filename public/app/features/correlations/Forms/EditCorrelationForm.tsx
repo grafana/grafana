@@ -1,12 +1,12 @@
-import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { useUpdateCorrelationMutation, CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { useUpdateCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { config } from '@grafana/runtime';
 
 import { Wizard } from '../components/Wizard/Wizard';
 import { Correlation } from '../types';
 import { useCorrelations } from '../useCorrelations';
+import { generatePartialEditSpec } from '../utils';
 
 import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
 import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
@@ -63,30 +63,7 @@ const EditCorrelationFormAppPlatform = ({ onUpdated, correlation, readOnly = fal
   // the full app platform correlation including the api version and metadata,
   // which we do not store in the frontend
   const onSubmit = (data: EditFormDTO) => {
-    let partialSpec: Partial<CorrelationSpec> = {};
-    if (data.label !== correlation.label) {
-      partialSpec.label = data.label;
-    }
-    if (data.description !== correlation.description) {
-      partialSpec.description = data.description;
-    }
-    if (data.type !== correlation.type) {
-      partialSpec.type = data.type;
-    }
-
-    // target is only loosely defined as an object, so always copy it
-    partialSpec.config = { field: data.config.field, target: data.config.target };
-
-    if (
-      data.config.transformations !== undefined &&
-      !isEqual(data.config.transformations, correlation.config.transformations)
-    ) {
-      partialSpec.config.transformations = data.config.transformations.map((t) => {
-        return { expression: t.expression, field: t.field, mapValue: t.mapValue, type: t.type };
-      });
-    }
-
-    return update({ name: correlation.uid, patch: { spec: partialSpec } });
+    return update({ name: correlation.uid, patch: { spec: generatePartialEditSpec(data, correlation) } });
   };
 
   useEffect(() => {
