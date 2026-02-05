@@ -263,6 +263,90 @@ mute_time_intervals:
 	})
 }
 
+func TestConfigRevisionImported_GetInhibitRules(t *testing.T) {
+	const configWithoutRules = `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+`
+
+	t.Run("should return empty list if no imported configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		assert.Nil(t, imported.importedConfig)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	// NOTE: requires https://github.com/grafana/alerting/pull/475
+	// otherwise we get `invalid merge options: matchers must not be empty` error
+	//t.Run("should return empty list if no subtree matcher", func(t *testing.T) {
+	//	extraCfg := extraConfig(configWithoutRules)
+	//	extraCfg.MergeMatchers = nil
+	//	rev := getConfigRevisionForTest(withExtraConfig(extraCfg))
+	//	imported, err := rev.Imported()
+	//	require.NoError(t, err)
+	//	assert.Nil(t, imported.importedConfig)
+
+	//	result, err := imported.GetInhibitRules()
+	//	require.NoError(t, err)
+	//	require.Empty(t, result)
+	//})
+
+	t.Run("should return empty list if no inhibition rules in imported config", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(configWithoutRules)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("should return imported inhibition rules with SubtreeMatchers added", func(t *testing.T) {
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+			withManagedRoutes(nil), // Clear default managed routes
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+
+		// Check first rule
+		assert.Len(t, result[0].SourceMatchers, 2) // Original + SubtreeMatcher
+		assert.Len(t, result[0].TargetMatchers, 2) // Original + SubtreeMatcher
+		assert.Equal(t, []string{"cluster"}, result[0].Equal)
+
+		// Verify SubtreeMatcher was added
+		hasSubtreeMatcher := false
+		for _, m := range result[0].SourceMatchers {
+			if m.Name == "__imported" && m.Value == "test" {
+				hasSubtreeMatcher = true
+				break
+			}
+		}
+		assert.True(t, hasSubtreeMatcher, "SubtreeMatcher should be added to SourceMatchers")
+
+		// Check second rule
+		assert.Len(t, result[1].SourceMatchers, 2)
+		assert.Len(t, result[1].TargetMatchers, 2)
+		assert.Equal(t, []string{"instance"}, result[1].Equal)
+	})
+}
+
+func withManagedRoutes(routes map[string]*definition.Route) opt {
+	return func(rev *ConfigRevision) {
+		rev.Config.ManagedRoutes = routes
+	}
+}
+
 func extraConfig(yamlString string) definitions.ExtraConfiguration {
 	return definitions.ExtraConfiguration{
 		Identifier: "test",
@@ -310,4 +394,17 @@ receivers:
   - name: imported-receiver-2
     webhook_configs:
       - url: "http://localhost/"
+inhibit_rules:
+  - source_matchers:
+      - alertname = SourceAlert
+    target_matchers:
+      - alertname = TargetAlert
+    equal:
+      - cluster
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal:
+      - instance
 `

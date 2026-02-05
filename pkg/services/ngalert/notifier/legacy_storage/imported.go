@@ -152,3 +152,24 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
 }
+
+func (e ImportedConfigRevision) GetInhibitRules() ([]config.InhibitRule, error) {
+	if e.importedConfig == nil {
+		return nil, nil
+	}
+
+	// NOTE: as per https://github.com/grafana/alerting/pull/475
+	// merging matchers semantics is being deprecated so matchers are being made optional
+	// if no matchers, return no inhibition rules
+	if len(e.opts.SubtreeMatchers) == 0 {
+		return nil, nil
+	}
+
+	importedInhibit := e.importedConfig.InhibitRules
+	if len(importedInhibit) == 0 {
+		return nil, nil
+	}
+
+	// Add SubtreeMatchers to imported rules
+	return definition.MergeInhibitRules(nil, importedInhibit, e.opts.SubtreeMatchers), nil
+}
