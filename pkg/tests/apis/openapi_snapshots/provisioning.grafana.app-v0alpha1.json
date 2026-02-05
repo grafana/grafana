@@ -136,17 +136,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ConnectionList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ConnectionList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ConnectionList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionList"
                 }
               }
             }
@@ -198,12 +198,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
               }
             }
           },
@@ -215,12 +215,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -230,12 +230,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -245,12 +245,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -447,12 +447,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -504,12 +504,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
               }
             }
           },
@@ -521,12 +521,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -536,12 +536,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -721,12 +721,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -736,12 +736,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -799,33 +799,7 @@
             "description": "OK",
             "content": {
               "*/*": {
-                "schema": {
-                  "description": "ExternalRepositoryList lists repositories from an external git provider",
-                  "type": "object",
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      },
-                      "x-kubernetes-list-type": "atomic"
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }
@@ -873,12 +847,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -930,12 +904,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
               }
             }
           },
@@ -947,12 +921,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -962,12 +936,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -1055,12 +1029,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -1070,12 +1044,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
                 }
               }
             }
@@ -1225,17 +1199,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobList"
                 }
               }
             }
@@ -1287,12 +1261,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
               }
             }
           },
@@ -1304,12 +1278,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1319,12 +1293,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1334,12 +1308,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1536,12 +1510,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1593,12 +1567,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
               }
             }
           },
@@ -1610,12 +1584,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1625,12 +1599,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1810,12 +1784,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1825,12 +1799,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -3877,7 +3851,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookResponse"
                 }
               }
             }
@@ -3902,7 +3876,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookResponse"
                 }
               }
             }
@@ -4078,18 +4052,45 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
           },
           "secure": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSecure"
+              }
+            ]
           },
           "spec": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSpec"
+              }
+            ]
           },
           "status": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionStatus"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Connection",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionInfo": {
         "type": "object",
@@ -4116,7 +4117,12 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
+                }
+              ]
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4125,24 +4131,51 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSecure": {
         "type": "object",
         "properties": {
           "clientSecret": {
             "description": "ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back",
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
           },
           "privateKey": {
             "description": "PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back",
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
           },
           "token": {
             "description": "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
           }
         }
       },
@@ -4154,17 +4187,32 @@
         ],
         "properties": {
           "bitbucket": {
-            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\""
+            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
+              }
+            ]
           },
           "description": {
             "description": "The connection description",
             "type": "string"
           },
           "github": {
-            "description": "GitHub connection configuration Only applicable when provider is \"github\""
+            "description": "GitHub connection configuration Only applicable when provider is \"github\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubConnectionConfig"
+              }
+            ]
           },
           "gitlab": {
-            "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\""
+            "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
+              }
+            ]
           },
           "title": {
             "description": "The connection display name (shown in the UI)",
@@ -4199,7 +4247,12 @@
             "description": "Conditions represent the latest available observations of the connection's state.",
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
+                }
+              ]
             },
             "x-kubernetes-list-map-keys": [
               "type"
@@ -4212,13 +4265,23 @@
             "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
             },
             "x-kubernetes-list-type": "atomic"
           },
           "health": {
             "description": "The connection health status",
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HealthStatus"
+              }
+            ]
           },
           "observedGeneration": {
             "description": "The generation of the spec last time reconciliation ran",
@@ -4247,7 +4310,12 @@
             "description": "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
             }
           }
         }
@@ -4336,7 +4404,12 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ExternalRepository"
+                }
+              ]
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4345,9 +4418,21 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ExternalRepositoryList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FileItem": {
         "type": "object",
@@ -4553,15 +4638,37 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
           },
           "spec": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobSpec"
+              }
+            ]
           },
           "status": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobStatus"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJob",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJobList": {
         "type": "object",
@@ -4573,7 +4680,12 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJob"
+                }
+              ]
             }
           },
           "kind": {
@@ -4581,9 +4693,21 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJobList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoryItem": {
         "type": "object",
@@ -4656,15 +4780,37 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
           },
           "spec": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobSpec"
+              }
+            ]
           },
           "status": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobStatus"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Job",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobList": {
         "type": "object",
@@ -4679,7 +4825,12 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
+                }
+              ]
             }
           },
           "kind": {
@@ -4687,9 +4838,21 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "JobList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobResourceSummary": {
         "type": "object",
@@ -4768,22 +4931,52 @@
             ]
           },
           "delete": {
-            "description": "Delete when the action is `delete`"
+            "description": "Delete when the action is `delete`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.DeleteJobOptions"
+              }
+            ]
           },
           "migrate": {
-            "description": "Required when the action is `migrate`"
+            "description": "Required when the action is `migrate`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.MigrateJobOptions"
+              }
+            ]
           },
           "move": {
-            "description": "Move when the action is `move`"
+            "description": "Move when the action is `move`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.MoveJobOptions"
+              }
+            ]
           },
           "pr": {
-            "description": "Pull request options"
+            "description": "Pull request options",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions"
+              }
+            ]
           },
           "pull": {
-            "description": "Required when the action is `pull`"
+            "description": "Required when the action is `pull`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SyncJobOptions"
+              }
+            ]
           },
           "push": {
-            "description": "Required when the action is `push`"
+            "description": "Required when the action is `push`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
+              }
+            ]
           },
           "repository": {
             "description": "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
@@ -4832,10 +5025,17 @@
           "summary": {
             "description": "Summary of processed actions",
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobResourceSummary"
+            }
           },
           "url": {
-            "description": "URLs contains URLs for the reference branch or commit if applicable."
+            "description": "URLs contains URLs for the reference branch or commit if applicable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryURLs"
+              }
+            ]
           },
           "warnings": {
             "type": "array",
@@ -4909,7 +5109,12 @@
             "description": "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
             }
           },
           "targetPath": {
@@ -5267,7 +5472,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.HealthStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HealthStatus"
               }
             ]
           },
@@ -6066,13 +6271,25 @@
             "format": "int32"
           },
           "job": {
-            "description": "Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned"
+            "description": "Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobSpec"
+              }
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
         "type": "object",
@@ -6140,851 +6357,6 @@
         "type": "object",
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig": {
-        "type": "object",
-        "required": [
-          "clientID"
-        ],
-        "properties": {
-          "clientID": {
-            "description": "App client ID",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection": {
-        "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "secure": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ConnectionSecure"
-              }
-            ]
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ConnectionSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ConnectionStatus"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Connection"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure": {
-        "type": "object",
-        "properties": {
-          "clientSecret": {
-            "description": "ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
-              }
-            ]
-          },
-          "privateKey": {
-            "description": "PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
-              }
-            ]
-          },
-          "token": {
-            "description": "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "type"
-        ],
-        "properties": {
-          "bitbucket": {
-            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.BitbucketConnectionConfig"
-              }
-            ]
-          },
-          "description": {
-            "description": "The connection description",
-            "type": "string"
-          },
-          "github": {
-            "description": "GitHub connection configuration Only applicable when provider is \"github\"",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.GitHubConnectionConfig"
-              }
-            ]
-          },
-          "gitlab": {
-            "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.GitlabConnectionConfig"
-              }
-            ]
-          },
-          "title": {
-            "description": "The connection display name (shown in the UI)",
-            "type": "string",
-            "default": ""
-          },
-          "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "bitbucket",
-              "github",
-              "gitlab"
-            ]
-          },
-          "url": {
-            "description": "The connection URL",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus": {
-        "description": "The status of a Connection. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.",
-        "type": "object",
-        "required": [
-          "observedGeneration",
-          "health"
-        ],
-        "properties": {
-          "conditions": {
-            "description": "Conditions represent the latest available observations of the connection's state.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
-                }
-              ]
-            },
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
-            "x-kubernetes-list-type": "map",
-            "x-kubernetes-patch-merge-key": "type",
-            "x-kubernetes-patch-strategy": "merge"
-          },
-          "fieldErrors": {
-            "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "health": {
-            "description": "The connection health status",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.HealthStatus"
-              }
-            ]
-          },
-          "observedGeneration": {
-            "description": "The generation of the spec last time reconciliation ran",
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.DeleteJobOptions": {
-        "type": "object",
-        "properties": {
-          "paths": {
-            "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "ref": {
-            "description": "Ref to the branch or commit hash to delete from",
-            "type": "string"
-          },
-          "resources": {
-            "description": "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ResourceRef"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExportJobOptions": {
-        "type": "object",
-        "properties": {
-          "branch": {
-            "description": "FIXME: we should validate this in admission hooks Target branch for export (only git)",
-            "type": "string"
-          },
-          "folder": {
-            "description": "The source folder (or empty) to export",
-            "type": "string"
-          },
-          "message": {
-            "description": "Message to use when committing the changes in a single commit",
-            "type": "string"
-          },
-          "path": {
-            "description": "FIXME: we should validate this in admission hooks Prefix in target file system",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository": {
-        "type": "object",
-        "required": [
-          "name",
-          "url"
-        ],
-        "properties": {
-          "name": {
-            "description": "Name of the repository",
-            "type": "string",
-            "default": ""
-          },
-          "owner": {
-            "description": "Owner is the user, organization, or workspace that owns the repository For GitHub: organization or user For GitLab: namespace (user or group) For Bitbucket: workspace For pure Git: empty",
-            "type": "string"
-          },
-          "url": {
-            "description": "URL of the repository",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepositoryList": {
-        "description": "ExternalRepositoryList lists repositories from an external git provider",
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ExternalRepository"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubConnectionConfig": {
-        "type": "object",
-        "required": [
-          "appID",
-          "installationID"
-        ],
-        "properties": {
-          "appID": {
-            "description": "GitHub App ID",
-            "type": "string",
-            "default": ""
-          },
-          "installationID": {
-            "description": "GitHub App installation ID",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitlabConnectionConfig": {
-        "type": "object",
-        "required": [
-          "clientID"
-        ],
-        "properties": {
-          "clientID": {
-            "description": "App client ID",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus": {
-        "type": "object",
-        "required": [
-          "healthy"
-        ],
-        "properties": {
-          "checked": {
-            "description": "When the health was checked last time",
-            "type": "integer",
-            "format": "int64"
-          },
-          "error": {
-            "description": "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
-            "type": "string",
-            "enum": [
-              "health",
-              "hook"
-            ]
-          },
-          "healthy": {
-            "description": "When not healthy, requests will not be executed",
-            "type": "boolean",
-            "default": false
-          },
-          "message": {
-            "description": "Summary messages (can be shown to users) Will only be populated when not healthy",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            },
-            "x-kubernetes-list-type": "atomic"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob": {
-        "description": "HistoricJob is an append only log, saving all jobs that have been processed.\n\nNOTE: This should not be used directly by any external consumer. When there is a more stable integration with loki (an appropriate append only store) this may be removed without notice.\n\nThe repository name and type are stored as labels.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobStatus"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJobList": {
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.HistoricJob"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job": {
-        "description": "The repository name and type are stored as labels",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobStatus"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.Job"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary": {
-        "type": "object",
-        "properties": {
-          "create": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "delete": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "error": {
-            "description": "Create or update (export)",
-            "type": "integer",
-            "format": "int64"
-          },
-          "errors": {
-            "description": "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "group": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "noop": {
-            "description": "No action required (useful for sync)",
-            "type": "integer",
-            "format": "int64"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "update": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "warning": {
-            "description": "The error count",
-            "type": "integer",
-            "format": "int64"
-          },
-          "warnings": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "write": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec": {
-        "type": "object",
-        "properties": {
-          "action": {
-            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
-            "type": "string",
-            "enum": [
-              "delete",
-              "migrate",
-              "move",
-              "pr",
-              "pull",
-              "push"
-            ]
-          },
-          "delete": {
-            "description": "Delete when the action is `delete`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.DeleteJobOptions"
-              }
-            ]
-          },
-          "migrate": {
-            "description": "Required when the action is `migrate`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.MigrateJobOptions"
-              }
-            ]
-          },
-          "move": {
-            "description": "Move when the action is `move`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.MoveJobOptions"
-              }
-            ]
-          },
-          "pr": {
-            "description": "Pull request options",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.PullRequestJobOptions"
-              }
-            ]
-          },
-          "pull": {
-            "description": "Required when the action is `pull`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.SyncJobOptions"
-              }
-            ]
-          },
-          "push": {
-            "description": "Required when the action is `push`",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ExportJobOptions"
-              }
-            ]
-          },
-          "repository": {
-            "description": "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus": {
-        "description": "The job status",
-        "type": "object",
-        "properties": {
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "finished": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "progress": {
-            "description": "Optional value 0-100 that can be set while running",
-            "type": "number",
-            "format": "double"
-          },
-          "started": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "state": {
-            "description": "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
-            "type": "string",
-            "enum": [
-              "error",
-              "pending",
-              "success",
-              "warning",
-              "working"
-            ]
-          },
-          "summary": {
-            "description": "Summary of processed actions",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.JobResourceSummary"
-            }
-          },
-          "url": {
-            "description": "URLs contains URLs for the reference branch or commit if applicable.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryURLs"
-              }
-            ]
-          },
-          "warnings": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "description": "Message to use when committing the changes in a single commit",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MoveJobOptions": {
-        "type": "object",
-        "properties": {
-          "paths": {
-            "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "ref": {
-            "description": "Ref to the branch or commit hash that should move",
-            "type": "string"
-          },
-          "resources": {
-            "description": "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1provisioning~1pkg~1apis~1provisioning~1v0alpha1.ResourceRef"
-                }
-              ]
-            }
-          },
-          "targetPath": {
-            "description": "Destination path for the move (e.g. \"new-location/\")",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions": {
-        "type": "object",
-        "properties": {
-          "hash": {
-            "description": "The specific commit hash that triggered this notice",
-            "type": "string"
-          },
-          "pr": {
-            "description": "Pull request number (when appropriate)",
-            "type": "integer",
-            "format": "int32"
-          },
-          "ref": {
-            "description": "The branch of commit hash",
-            "type": "string"
-          },
-          "url": {
-            "description": "URL to the originator (eg, PR URL)",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRef": {
-        "type": "object",
-        "properties": {
-          "group": {
-            "description": "Group is the group of the resource, such as \"dashboard.grafana.app\".",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is the type of resource, for example, \"Dashboard\".",
-            "type": "string"
-          },
-          "name": {
-            "description": "Name is the name of the resource, such as a dashboard UID.",
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncJobOptions": {
-        "type": "object",
-        "required": [
-          "incremental"
-        ],
-        "properties": {
-          "incremental": {
-            "description": "Incremental synchronization for versioned repositories",
-            "type": "boolean",
-            "default": false
-          }
-        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
@@ -7538,20 +6910,6 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta": {
-        "description": "TypeMeta describes an individual object in an API response or request with strings representing the type of the object and its API schema version. Structures that are versioned or persisted should inline TypeMeta.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
         "description": "Event represents a single event to a watched resource.",

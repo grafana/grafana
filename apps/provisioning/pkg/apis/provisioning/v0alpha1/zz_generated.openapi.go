@@ -15,69 +15,69 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Author{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_Author(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
-		BitbucketRepositoryConfig{}.OpenAPIModelName():                                                          schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection":                schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
-		ConnectionInfo{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionList":            schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure":          schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec":            schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus":          schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.DeleteJobOptions":          schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
-		ErrorDetails{}.OpenAPIModelName():                                                                       schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExportJobOptions":          schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository":        schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepositoryList":    schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
-		FileItem{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
-		FileList{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubConnectionConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref),
-		GitHubRepositoryConfig{}.OpenAPIModelName():                                                          schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
-		GitLabRepositoryConfig{}.OpenAPIModelName():                                                          schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
-		GitRepositoryConfig{}.OpenAPIModelName():                                                             schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitlabConnectionConfig": schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus":           schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob":            schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJobList":        schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
-		HistoryItem{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
-		HistoryList{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job":                    schema_pkg_apis_provisioning_v0alpha1_Job(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobList":                schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary":     schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec":                schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus":              schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
-		LocalRepositoryConfig{}.OpenAPIModelName():                                                           schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
-		ManagerStats{}.OpenAPIModelName():                                                                    schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":      schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MoveJobOptions":         schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":  schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
-		QuotaStatus{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
-		RefItem{}.OpenAPIModelName():                                                                         schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
-		RefList{}.OpenAPIModelName():                                                                         schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
-		Repository{}.OpenAPIModelName():                                                                      schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
-		RepositoryList{}.OpenAPIModelName():                                                                  schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
-		RepositorySpec{}.OpenAPIModelName():                                                                  schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
-		RepositoryStatus{}.OpenAPIModelName():                                                                schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
-		RepositoryURLs{}.OpenAPIModelName():                                                                  schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryView":         schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryViewList":     schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
-		ResourceCount{}.OpenAPIModelName():                                                                   schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
-		ResourceList{}.OpenAPIModelName():                                                                    schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
-		ResourceListItem{}.OpenAPIModelName():                                                                schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
-		ResourceObjects{}.OpenAPIModelName():                                                                 schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRef":            schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
-		ResourceRepositoryInfo{}.OpenAPIModelName():                                                          schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
-		ResourceStats{}.OpenAPIModelName():                                                                   schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
-		ResourceType{}.OpenAPIModelName():                                                                    schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
-		ResourceWrapper{}.OpenAPIModelName():                                                                 schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
-		SecureValues{}.OpenAPIModelName():                                                                    schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncJobOptions":         schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
-		SyncOptions{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
-		SyncStatus{}.OpenAPIModelName():                                                                      schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
-		TestResults{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
-		TokenStatus{}.OpenAPIModelName():                                                                     schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookResponse":        schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
-		WebhookStatus{}.OpenAPIModelName():                                                                   schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
+		Author{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_Author(ref),
+		BitbucketConnectionConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
+		BitbucketRepositoryConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
+		Connection{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		ConnectionInfo{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
+		ConnectionList{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
+		ConnectionSecure{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
+		ConnectionSpec{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
+		ConnectionStatus{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
+		DeleteJobOptions{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
+		ErrorDetails{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
+		ExportJobOptions{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
+		ExternalRepository{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
+		ExternalRepositoryList{}.OpenAPIModelName():    schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
+		FileItem{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
+		FileList{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
+		GitHubConnectionConfig{}.OpenAPIModelName():    schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref),
+		GitHubRepositoryConfig{}.OpenAPIModelName():    schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
+		GitLabRepositoryConfig{}.OpenAPIModelName():    schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
+		GitRepositoryConfig{}.OpenAPIModelName():       schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
+		GitlabConnectionConfig{}.OpenAPIModelName():    schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref),
+		HealthStatus{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
+		HistoricJob{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
+		HistoricJobList{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
+		HistoryItem{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
+		HistoryList{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
+		Job{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_Job(ref),
+		JobList{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
+		JobResourceSummary{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
+		JobSpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
+		JobStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
+		LocalRepositoryConfig{}.OpenAPIModelName():     schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		ManagerStats{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
+		MigrateJobOptions{}.OpenAPIModelName():         schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
+		MoveJobOptions{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
+		PullRequestJobOptions{}.OpenAPIModelName():     schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
+		QuotaStatus{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
+		RefItem{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
+		RefList{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
+		Repository{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
+		RepositoryList{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
+		RepositorySpec{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
+		RepositoryStatus{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
+		RepositoryURLs{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
+		RepositoryView{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
+		RepositoryViewList{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
+		ResourceCount{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		ResourceList{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
+		ResourceListItem{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
+		ResourceObjects{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
+		ResourceRef{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
+		ResourceRepositoryInfo{}.OpenAPIModelName():    schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
+		ResourceStats{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
+		ResourceType{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
+		ResourceWrapper{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
+		SecureValues{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
+		SyncJobOptions{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
+		SyncOptions{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
+		SyncStatus{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
+		TestResults{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
+		TokenStatus{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
+		WebhookResponse{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
+		WebhookStatus{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
 	}
 }
 
@@ -207,26 +207,26 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec"),
+							Ref:     ref(ConnectionSpec{}.OpenAPIModelName()),
 						},
 					},
 					"secure": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure"),
+							Ref:     ref(ConnectionSecure{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus"),
+							Ref:     ref(ConnectionStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			ConnectionSecure{}.OpenAPIModelName(), ConnectionSpec{}.OpenAPIModelName(), ConnectionStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -288,7 +288,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection"),
+										Ref:     ref(Connection{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -299,7 +299,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			Connection{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -378,19 +378,19 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub connection configuration Only applicable when provider is \"github\"",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubConnectionConfig"),
+							Ref:         ref(GitHubConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
 					"bitbucket": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig"),
+							Ref:         ref(BitbucketConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
 					"gitlab": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitlabConnectionConfig"),
+							Ref:         ref(GitlabConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -398,7 +398,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubConnectionConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitlabConnectionConfig"},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -464,7 +464,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection health status",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus"),
+							Ref:         ref(HealthStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -472,7 +472,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -512,7 +512,7 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRef"),
+										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -522,7 +522,7 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRef"},
+			ResourceRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -684,7 +684,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref common.Ref
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository"),
+										Ref:     ref(ExternalRepository{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -695,7 +695,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			ExternalRepository{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1052,20 +1052,20 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallb
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec"),
+							Ref:     ref(JobSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus"),
+							Ref:     ref(JobStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			JobSpec{}.OpenAPIModelName(), JobStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1102,7 +1102,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob"),
+										Ref:     ref(HistoricJob{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1112,7 +1112,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			HistoricJob{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1254,20 +1254,20 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec"),
+							Ref:     ref(JobSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus"),
+							Ref:     ref(JobStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			JobSpec{}.OpenAPIModelName(), JobStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1304,7 +1304,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job"),
+										Ref:     ref(Job{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1315,7 +1315,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			Job{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1447,44 +1447,44 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 					"pr": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pull request options",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions"),
+							Ref:         ref(PullRequestJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"push": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `push`",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExportJobOptions"),
+							Ref:         ref(ExportJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"pull": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `pull`",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncJobOptions"),
+							Ref:         ref(SyncJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"migrate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `migrate`",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions"),
+							Ref:         ref(MigrateJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"delete": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Delete when the action is `delete`",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.DeleteJobOptions"),
+							Ref:         ref(DeleteJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"move": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Move when the action is `move`",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MoveJobOptions"),
+							Ref:         ref(MoveJobOptions{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.DeleteJobOptions", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExportJobOptions", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MoveJobOptions", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncJobOptions"},
+			DeleteJobOptions{}.OpenAPIModelName(), ExportJobOptions{}.OpenAPIModelName(), MigrateJobOptions{}.OpenAPIModelName(), MoveJobOptions{}.OpenAPIModelName(), PullRequestJobOptions{}.OpenAPIModelName(), SyncJobOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -1563,7 +1563,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary"),
+										Ref: ref(JobResourceSummary{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1579,7 +1579,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary", RepositoryURLs{}.OpenAPIModelName()},
+			JobResourceSummary{}.OpenAPIModelName(), RepositoryURLs{}.OpenAPIModelName()},
 	}
 }
 
@@ -1706,7 +1706,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRef"),
+										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1716,7 +1716,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceRef"},
+			ResourceRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -2141,7 +2141,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus"),
+							Ref:         ref(HealthStatus{}.OpenAPIModelName()),
 						},
 					},
 					"sync": {
@@ -2202,7 +2202,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -2411,7 +2411,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryView"),
+										Ref:     ref(RepositoryView{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2422,7 +2422,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryView"},
+			RepositoryView{}.OpenAPIModelName()},
 	}
 }
 
@@ -3238,14 +3238,14 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref common.ReferenceC
 					"job": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec"),
+							Ref:         ref(JobSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec"},
+			JobSpec{}.OpenAPIModelName()},
 	}
 }
 

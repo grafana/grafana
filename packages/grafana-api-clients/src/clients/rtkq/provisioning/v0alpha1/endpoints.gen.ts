@@ -33,7 +33,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/connections`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection,
+          body: queryArg.connection,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -82,7 +82,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/connections/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection,
+          body: queryArg.connection,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -139,7 +139,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/connections/${queryArg.name}/status`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection,
+          body: queryArg.connection,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -187,7 +187,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/jobs`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job,
+          body: queryArg.job,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -233,7 +233,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/jobs/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job,
+          body: queryArg.job,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -565,8 +565,7 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type ListConnectionApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionList;
+export type ListConnectionApiResponse = /** status 200 OK */ ConnectionList;
 export type ListConnectionApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -612,9 +611,9 @@ export type ListConnectionApiArg = {
   watch?: boolean;
 };
 export type CreateConnectionApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+  | Connection
+  | /** status 201 Created */ Connection
+  | /** status 202 Accepted */ Connection;
 export type CreateConnectionApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -624,7 +623,7 @@ export type CreateConnectionApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+  connection: Connection;
 };
 export type DeletecollectionConnectionApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionConnectionApiArg = {
@@ -677,17 +676,14 @@ export type DeletecollectionConnectionApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetConnectionApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+export type GetConnectionApiResponse = /** status 200 OK */ Connection;
 export type GetConnectionApiArg = {
   /** name of the Connection */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceConnectionApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+export type ReplaceConnectionApiResponse = /** status 200 OK */ Connection | /** status 201 Created */ Connection;
 export type ReplaceConnectionApiArg = {
   /** name of the Connection */
   name: string;
@@ -699,7 +695,7 @@ export type ReplaceConnectionApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+  connection: Connection;
 };
 export type DeleteConnectionApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteConnectionApiArg = {
@@ -718,9 +714,7 @@ export type DeleteConnectionApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateConnectionApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+export type UpdateConnectionApiResponse = /** status 200 OK */ Connection | /** status 201 Created */ Connection;
 export type UpdateConnectionApiArg = {
   /** name of the Connection */
   name: string;
@@ -736,29 +730,19 @@ export type UpdateConnectionApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: any;
-};
+export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ any;
 export type GetConnectionRepositoriesApiArg = {
   /** name of the ExternalRepositoryList */
   name: string;
 };
-export type GetConnectionStatusApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+export type GetConnectionStatusApiResponse = /** status 200 OK */ Connection;
 export type GetConnectionStatusApiArg = {
   /** name of the Connection */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceConnectionStatusApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+export type ReplaceConnectionStatusApiResponse = /** status 200 OK */ Connection | /** status 201 Created */ Connection;
 export type ReplaceConnectionStatusApiArg = {
   /** name of the Connection */
   name: string;
@@ -770,11 +754,9 @@ export type ReplaceConnectionStatusApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+  connection: Connection;
 };
-export type UpdateConnectionStatusApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection;
+export type UpdateConnectionStatusApiResponse = /** status 200 OK */ Connection | /** status 201 Created */ Connection;
 export type UpdateConnectionStatusApiArg = {
   /** name of the Connection */
   name: string;
@@ -790,8 +772,7 @@ export type UpdateConnectionStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type ListJobApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobList;
+export type ListJobApiResponse = /** status 200 OK */ JobList;
 export type ListJobApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -837,9 +818,9 @@ export type ListJobApiArg = {
   watch?: boolean;
 };
 export type CreateJobApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job;
+  | Job
+  | /** status 201 Created */ Job
+  | /** status 202 Accepted */ Job;
 export type CreateJobApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -849,7 +830,7 @@ export type CreateJobApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job;
+  job: Job;
 };
 export type DeletecollectionJobApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionJobApiArg = {
@@ -902,17 +883,14 @@ export type DeletecollectionJobApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetJobApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job;
+export type GetJobApiResponse = /** status 200 OK */ Job;
 export type GetJobApiArg = {
   /** name of the Job */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceJobApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job;
+export type ReplaceJobApiResponse = /** status 200 OK */ Job | /** status 201 Created */ Job;
 export type ReplaceJobApiArg = {
   /** name of the Job */
   name: string;
@@ -924,7 +902,7 @@ export type ReplaceJobApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job;
+  job: Job;
 };
 export type DeleteJobApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteJobApiArg = {
@@ -943,9 +921,7 @@ export type DeleteJobApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateJobApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job;
+export type UpdateJobApiResponse = /** status 200 OK */ Job | /** status 201 Created */ Job;
 export type UpdateJobApiArg = {
   /** name of the Job */
   name: string;
@@ -1287,12 +1263,12 @@ export type CreateRepositoryTestApiArg = {
   name: string;
   body: any;
 };
-export type GetRepositoryWebhookApiResponse = /** status 200 OK */ TypeMeta;
+export type GetRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
 export type GetRepositoryWebhookApiArg = {
   /** name of the WebhookResponse */
   name: string;
 };
-export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ TypeMeta;
+export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
 export type CreateRepositoryWebhookApiArg = {
   /** name of the WebhookResponse */
   name: string;
@@ -1440,7 +1416,7 @@ export type InlineSecureValue =
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
       remove: boolean;
     };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionSecure = {
+export type ConnectionSecure = {
   /** ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back */
   clientSecret?: InlineSecureValue;
   /** PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back */
@@ -1448,29 +1424,29 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
   token?: InlineSecureValue;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1BitbucketConnectionConfig = {
+export type BitbucketConnectionConfig = {
   /** App client ID */
   clientID: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitHubConnectionConfig = {
+export type GitHubConnectionConfig = {
   /** GitHub App ID */
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitlabConnectionConfig = {
+export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionSpec = {
+export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
-  bitbucket?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1BitbucketConnectionConfig;
+  bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
-  github?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitHubConnectionConfig;
+  github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
-  gitlab?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1GitlabConnectionConfig;
+  gitlab?: GitlabConnectionConfig;
   /** The connection display name (shown in the UI) */
   title: string;
   /** The connection provider type
@@ -1507,7 +1483,7 @@ export type ErrorDetails = {
   /** Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values. */
   type: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1HealthStatus = {
+export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
   /** The type of the error
@@ -1521,25 +1497,25 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionStatus = {
+export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: Condition[];
   /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** The connection health status */
-  health: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1HealthStatus;
+  health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection = {
+export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
-  secure?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionSecure;
-  spec?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionSpec;
-  status?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionStatus;
+  secure?: ConnectionSecure;
+  spec?: ConnectionSpec;
+  status?: ConnectionStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -1551,10 +1527,10 @@ export type ListMeta = {
   /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
   selfLink?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionList = {
+export type ConnectionList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Connection[];
+  items: Connection[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -1604,7 +1580,7 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceRef = {
+export type ResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
   /** Kind is the type of resource, for example, "Dashboard". */
@@ -1612,29 +1588,29 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** Name is the name of the resource, such as a dashboard UID. */
   name?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1DeleteJobOptions = {
+export type DeleteJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceRef[];
+  resources?: ResourceRef[];
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1MigrateJobOptions = {
+export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1MoveJobOptions = {
+export type MoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
   /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ResourceRef[];
+  resources?: ResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1PullRequestJobOptions = {
+export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
   hash?: string;
   /** Pull request number (when appropriate) */
@@ -1644,11 +1620,11 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** URL to the originator (eg, PR URL) */
   url?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SyncJobOptions = {
+export type SyncJobOptions = {
   /** Incremental synchronization for versioned repositories */
   incremental: boolean;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ExportJobOptions = {
+export type ExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
@@ -1658,7 +1634,7 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobSpec = {
+export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
@@ -1668,21 +1644,21 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
      - `"push"` replicates the local copy of the repository in the remote branch. */
   action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
   /** Delete when the action is `delete` */
-  delete?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1DeleteJobOptions;
+  delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
-  migrate?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1MigrateJobOptions;
+  migrate?: MigrateJobOptions;
   /** Move when the action is `move` */
-  move?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1MoveJobOptions;
+  move?: MoveJobOptions;
   /** Pull request options */
-  pr?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1PullRequestJobOptions;
+  pr?: PullRequestJobOptions;
   /** Required when the action is `pull` */
-  pull?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SyncJobOptions;
+  pull?: SyncJobOptions;
   /** Required when the action is `push` */
-  push?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ExportJobOptions;
+  push?: ExportJobOptions;
   /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
   repository?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobResourceSummary = {
+export type JobResourceSummary = {
   create?: number;
   delete?: number;
   /** Create or update (export) */
@@ -1710,7 +1686,7 @@ export type RepositoryUrLs = {
   /** A URL pointing to the file or ref in the repository */
   sourceURL?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobStatus = {
+export type JobStatus = {
   errors?: string[];
   finished?: number;
   message?: string;
@@ -1725,24 +1701,24 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
      - `"working"` The job is running */
   state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
-  summary?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobResourceSummary[];
+  summary?: JobResourceSummary[];
   /** URLs contains URLs for the reference branch or commit if applicable. */
   url?: RepositoryUrLs;
   warnings?: string[];
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job = {
+export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
-  spec?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobSpec;
-  status?: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobStatus;
+  spec?: JobSpec;
+  status?: JobStatus;
 };
-export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1JobList = {
+export type JobList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1Job[];
+  items: Job[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -1902,7 +1878,7 @@ export type RepositoryStatus = {
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
-  health: GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1HealthStatus;
+  health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
   /** Quota contains the configured quota limits for this repository */
@@ -2010,47 +1986,6 @@ export type ResourceWrapper = {
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: RepositoryUrLs;
 };
-export type JobList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: any;
-};
-export type Job = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: any;
-  spec?: any;
-  status?: any;
-};
-export type JobSpec = {
-  /** Possible enum values:
-     - `"delete"` deletes files in the remote repository
-     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
-     - `"move"` moves files in the remote repository
-     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
-     - `"pull"` replicates the remote branch in the local copy of the repository.
-     - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
-  /** Delete when the action is `delete` */
-  delete?: any;
-  /** Required when the action is `migrate` */
-  migrate?: any;
-  /** Move when the action is `move` */
-  move?: any;
-  /** Pull request options */
-  pr?: any;
-  /** Required when the action is `pull` */
-  pull?: any;
-  /** Required when the action is `push` */
-  push?: any;
-  /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
-  repository?: string;
-};
 export type ResourceListItem = {
   folder?: string;
   group: string;
@@ -2082,9 +2017,15 @@ export type TestResults = {
   /** Is the connection healthy */
   success: boolean;
 };
-export type TypeMeta = {
+export type WebhookResponse = {
+  /** Optional message */
+  added?: string;
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** HTTP Status code 200 implies that the payload was understood but nothing is required 202 implies that an async job has been scheduled to handle the request */
+  code?: number;
+  /** Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned */
+  job?: JobSpec;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
