@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"path"
-	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -100,29 +98,7 @@ func (c *Calculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSB
 		return "", nil
 	}
 
-	manifest, err := c.signature.ReadPluginManifestFromFS(ctx, p.FS)
-	if err != nil {
-		return "", fmt.Errorf("read plugin manifest: %w", err)
-	}
-	if !manifest.IsV2() {
-		return "", nil
-	}
-
-	var childPath string
-	if childFSBase != "" {
-		// Calculate the relative path of the child plugin folder from the parent plugin folder.
-		childPath, err = p.FS.Rel(childFSBase)
-		if err != nil {
-			return "", fmt.Errorf("rel path: %w", err)
-		}
-		// MANIFETS.txt uses forward slashes as path separators.
-		childPath = filepath.ToSlash(childPath)
-	}
-	moduleHash, ok := manifest.Files[path.Join(childPath, "module.js")]
-	if !ok {
-		return "", nil
-	}
-	return convertHashForSRI(moduleHash)
+	return convertHashForSRI(p.ModuleHash)
 }
 
 func (c *Calculator) cdnEnabled(pluginID string, fs plugins.FS) bool {
