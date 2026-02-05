@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/provisioning
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/google/go-github/v70 v70.0.0
