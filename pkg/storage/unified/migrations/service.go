@@ -25,6 +25,7 @@ type UnifiedStorageMigrationServiceImpl struct {
 	sqlStore db.DB
 	kv       kvstore.KVStore
 	client   resource.ResourceClient
+	registry *MigrationRegistry
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -36,6 +37,7 @@ func ProvideUnifiedStorageMigrationService(
 	sqlStore db.DB,
 	kv kvstore.KVStore,
 	client resource.ResourceClient,
+	registry *MigrationRegistry,
 ) contract.UnifiedStorageMigrationService {
 	return &UnifiedStorageMigrationServiceImpl{
 		migrator: migrator,
@@ -43,6 +45,7 @@ func ProvideUnifiedStorageMigrationService(
 		sqlStore: sqlStore,
 		kv:       kv,
 		client:   client,
+		registry: registry,
 	}
 }
 
@@ -56,7 +59,7 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	logger.Info("Running migrations for unified storage")
 	metrics.MUnifiedStorageMigrationStatus.Set(3)
-	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client)
+	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client, p.registry)
 }
 
 func RegisterMigrations(
@@ -65,6 +68,7 @@ func RegisterMigrations(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	client resource.ResourceClient,
+	registry *MigrationRegistry,
 ) error {
 	ctx, span := tracer.Start(ctx, "storage.unified.RegisterMigrations")
 	defer span.End()
@@ -75,11 +79,11 @@ func RegisterMigrations(
 		logger.Warn("Failed to register migrator metrics", "error", err)
 	}
 
-	if err := validateRegisteredResources(); err != nil {
+	if err := validateRegisteredResources(registry); err != nil {
 		return err
 	}
 
-	if err := registerMigrations(ctx, cfg, mg, migrator, client, sqlStore); err != nil {
+	if err := registerMigrations(ctx, cfg, mg, migrator, client, sqlStore, registry); err != nil {
 		return err
 	}
 

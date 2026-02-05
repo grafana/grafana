@@ -1,4 +1,5 @@
 import { ReactNode, useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 import { v4 } from 'uuid';
 
 import {
@@ -7,15 +8,17 @@ import {
   LoadingState,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
 import { Transformation } from './types';
-import { isDataTransformerConfig } from './utils';
+import { getEditorType, isDataTransformerConfig } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -34,6 +37,7 @@ export function QueryEditorContextWrapper({
   const queryRunnerState = queryRunner?.useState();
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
+  const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
   const transformations: Transformation[] = useMemo(() => {
     if (panel.state.$data instanceof SceneDataTransformer) {
@@ -55,6 +59,7 @@ export function QueryEditorContextWrapper({
     return [];
   }, [panel]);
 
+  // NOTE: This is the datasource for the panel, not the query
   const dsState = useMemo(
     () => ({
       datasource,
@@ -64,13 +69,18 @@ export function QueryEditorContextWrapper({
     [datasource, dsSettings, dsError]
   );
 
+  const queryError = useMemo(() => {
+    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === selectedQueryRefId);
+  }, [queryRunnerState?.data?.errors, selectedQueryRefId]);
+
   const qrState = useMemo(
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
       isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
+      queryError,
     }),
-    [queryRunnerState?.queries, queryRunnerState?.data]
+    [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
   const panelState = useMemo(() => {
@@ -112,22 +122,44 @@ export function QueryEditorContextWrapper({
     return null;
   }, [transformations, selectedTransformationId]);
 
+  const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
+    if (!selectedQuery?.datasource) {
+      return undefined;
+    }
+
+    try {
+      const dsSettings = getDataSourceSrv().getInstanceSettings(selectedQuery.datasource);
+      const datasource = await getDataSourceSrv().get(selectedQuery.datasource);
+      return { datasource, dsSettings };
+    } catch (err) {
+      console.error('Failed to load datasource for selected query:', err);
+      return undefined;
+    }
+  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type]);
+
   const uiState = useMemo(
     () => ({
       selectedQuery,
       selectedTransformation,
-      setSelectedQuery: (query: DataQuery | null) => {
+      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         setSelectedQueryRefId(query?.refId ?? null);
         // Clear transformation selection when selecting a query
         setSelectedTransformationId(null);
+        // Reset datasource help when switching queries
+        setShowingDatasourceHelp(false);
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },
+      selectedQueryDsData: selectedQueryDsData ?? null,
+      selectedQueryDsLoading,
+      showingDatasourceHelp,
+      toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
+      cardType: getEditorType(selectedQuery || selectedTransformation),
     }),
-    [selectedQuery, selectedTransformation]
+    [selectedQuery, selectedTransformation, selectedQueryDsData, selectedQueryDsLoading, showingDatasourceHelp]
   );
 
   const actions = useMemo(
@@ -139,6 +171,7 @@ export function QueryEditorContextWrapper({
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,
+      toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);

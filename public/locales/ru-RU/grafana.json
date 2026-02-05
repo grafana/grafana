@@ -869,6 +869,7 @@
     "common": {
       "cancel": "Отмена",
       "clear-filters": "Очистить фильтры",
+      "close": "",
       "delete": "Удалить",
       "edit": "Редактировать",
       "export": "Экспорт",
@@ -1595,6 +1596,17 @@
       "action-button": "Импорт",
       "additional-settings": "Дополнительные параметры",
       "alert-rules": "Правила оповещения",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Импорт",
         "loading": "Загрузка…",
@@ -1621,13 +1633,15 @@
         "label": "Источник данных",
         "required-message": "Выберите источник данных"
       },
-      "error": "Не удалось импортировать правила оповещения: {{error}}",
+      "error": "",
       "group": {
         "description": "Введите текст для поиска существующей группы.",
         "label": "Группа"
       },
       "import-location-and-filters": "Импортировать местоположение и фильтры",
       "import-source": "Импорт источника",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Введите текст для поиска существующего пространства имен.",
         "label": "Пространство имен"
@@ -1639,17 +1653,170 @@
       "pause-recording": {
         "label": "Приостановить импортированные правила записи"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Правила записи",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_few": "",
+        "renamed-intervals_many": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_few": "",
+        "renamed-receivers_many": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_few": "",
+        "will-import-rules-count_many": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Существующие правила, управляемые источником данных",
         "datasource-description": "Импорт правил из существующих источников данных",
         "yaml": "YAML-файл Prometheus",
         "yaml-description": "Импорт правил из YAML-файла Prometheus."
       },
-      "success": "Правила оповещения импортированы в правила, управляемые Grafana.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_few": "",
+        "renamed-intervals_many": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_few": "",
+        "renamed-receivers_many": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Папка для импорта правил.",
         "label": "Целевая папка"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Выберите YAML-файл для импорта, совместимый с Prometheus",
@@ -1660,6 +1827,9 @@
         "target-datasource-required": "Выберите целевой источник данных"
       },
       "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2639,7 +2809,8 @@
       "expand-all": "Развернуть всё"
     },
     "rule-list-v2": {
-      "import-to-gma": "Импорт правил оповещения"
+      "import-to-gma": "Импорт правил оповещения",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Загрузка правила...",
@@ -3487,6 +3658,10 @@
       "hosted-domain-label": "Домен размещения",
       "id-token-attribute-name-description": "Имя ключа, используемого для извлечения идентификационного токена из возвращенного токена OAuth2.",
       "id-token-attribute-name-label": "Путь атрибута идентификационного токена",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Выражение JMESPath, используемое для поиска логина в идентификационном токене пользователя.",
       "login-attribute-path-label": "Путь атрибута логина",
       "login-prompt-consent": "Согласие",
@@ -3553,6 +3728,8 @@
       "use-refresh-token-label": "Использовать токен обновления",
       "validate-hosted-domain-description": "Если этот параметр включен, Grafana будет сопоставлять домен размещения, полученный из токена Google ID, с заданным пользователем списком «{{ allowedDomainsLabel }}».",
       "validate-hosted-domain-label": "Проверять домен размещения",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Путь к файлу токена, используемому для аутентификации через OAuth2. Требуется только в том случае, если для аутентификации клиента установлено значение workload_identity (удостоверение рабочей нагрузки). По умолчанию: /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "Файл токена {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Это поле необходимо настроить, если для аутентификации клиента установлено значение Workload identity (Удостоверение рабочей нагрузки)."
@@ -4907,12 +5084,6 @@
       "message": {
         "edit-dashboard-json": "Редактировать JSON-файл дашборда"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Проверка выполняется для целей разработки и может быть пропущена. Если вы разработчик Grafana, попробуйте проверить и обновить схему дашборда",
-      "title-checking-dashboard-validity": "Проверка надежности дашборда",
-      "title-dashboard-failed-schema-validation": "Дашборд не прошел проверку схемы",
-      "title-error-checking-dashboard-validity": "Ошибка при проверке надежности дашборда"
     },
     "default-layout": {
       "description": "Расположение и размер каждой отдельной панели",
@@ -6524,6 +6695,9 @@
     },
     "query-editor": {
       "query": "Запрос"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10516,6 +10690,17 @@
       "label-log-stats": "{{label}}: {{total}} из {{rowCount}} строк содержат эту метку"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Список существующих панелей библиотеки. Импорт не влияет на эти панели."
@@ -12038,13 +12223,17 @@
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
+      "retry-action": "",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
       "dashboards-count_many": "{{count}} дашбордов",
@@ -12688,9 +12877,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Прежде чем сделать дашборд общедоступным, обратите внимание на следующее:",
@@ -12899,9 +13085,32 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_few": "",
+        "text_many": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

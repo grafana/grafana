@@ -32,6 +32,18 @@ type ApiInstaller[T runtime.Object] interface {
 
 	// ValidateOnDelete validates object deletion.
 	ValidateOnDelete(ctx context.Context, obj T) error
+
+	// MutateOnCreate mutates the object on creation.
+	MutateOnCreate(ctx context.Context, obj T) error
+
+	// MutateOnUpdate mutates the object on update.
+	MutateOnUpdate(ctx context.Context, oldObj, newObj T) error
+
+	// MutateOnDelete mutates the object on deletion.
+	MutateOnDelete(ctx context.Context, obj T) error
+
+	// MutateOnConnect mutates the object on connect.
+	MutateOnConnect(ctx context.Context, obj T) error
 }
 
 // RoleApiInstaller provides Role-specific API registration and validation.
@@ -73,6 +85,26 @@ func (n *NoopApiInstaller[T]) ValidateOnUpdate(ctx context.Context, oldObj, newO
 
 func (n *NoopApiInstaller[T]) ValidateOnDelete(ctx context.Context, obj T) error {
 	// No validation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnCreate(ctx context.Context, obj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnUpdate(ctx context.Context, oldObj, newObj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnDelete(ctx context.Context, obj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnConnect(ctx context.Context, obj T) error {
+	// No mutation needed in OSS
 	return nil
 }
 
