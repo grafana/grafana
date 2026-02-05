@@ -68,7 +68,10 @@ export function getFormattedThresholds(
   const formatted: Threshold[] = [];
 
   if (offsetColor) {
-    formatted.push({ value: parseFloat(min.toFixed(decimals)), color: theme.visualization.getColorByName(first.color) });
+    formatted.push({
+      value: parseFloat(min.toFixed(decimals)),
+      color: theme.visualization.getColorByName(first.color),
+    });
   }
 
   let skip = offsetColor;
@@ -90,7 +93,7 @@ export function getFormattedThresholds(
     }
   }
   if (max > last.value) {
-    formatted.push({ value: +max.toFixed(decimals), color: theme.visualization.getColorByName(last.color) });
+    formatted.push({ value: parseFloat(max.toFixed(decimals)), color: theme.visualization.getColorByName(last.color) });
   }
   return formatted;
 }
