@@ -84,13 +84,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:        "showDashboardValidationWarnings",
-			Description: "Show warnings when dashboards do not validate against the schema",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -465,6 +458,14 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
+			Expression:      "false",
+		},
+		{
+			Name:            "datasourceDisableIdApi",
+			Description:     "Does not register datasource apis that use the numeric id",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // affects the routes at startup
 			Expression:      "false",
 		},
 		{
@@ -1364,6 +1365,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "teamHttpHeadersFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,
@@ -1520,6 +1529,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "alertingMigrationWizardUI",
+			Description:  "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,
@@ -1648,7 +1665,23 @@ var (
 		},
 		{
 			Name:         "kubernetesAuthZHandlerRedirect",
-			Description:  "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+			Description:  "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+			Stage:        FeatureStageDeprecated,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthZResourcePermissionsRedirect",
+			Description:  "Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthZRolesRedirect",
+			Description:  "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2025,6 +2058,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "panelStyleActions",
+			Description:  "Enable style actions (copy/paste) in the panel editor",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
 			Stage:        FeatureStageExperimental,
@@ -2239,6 +2280,14 @@ var (
 		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamsHandlerRedirect",
+			Description:  "Redirects the request to teams related endpoints to the app platform API",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Atur ulang ke nilai default",
-      "title-invalid-configuration": "Konfigurasi tidak valid",
       "title-more-actions": "Tindakan lainnya",
       "tooltip-more-actions": "Tindakan lainnya"
     },
@@ -661,14 +660,18 @@
       "aria-label-group-by": "Kelompokkan berdasarkan",
       "aria-label-group-interval": "Interval grup",
       "aria-label-group-wait": "Periode tunggu grup",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Interval pengulangan",
       "create-a-contact-point": "Buat titik kontak",
+      "description-unique-routing": "",
       "label-default-contact-point": "Titik kontak default",
+      "label-name": "",
       "label-timing-options": "Opsi pengaturan waktu",
       "message": {
         "required": "Diperlukan."
       },
-      "or": "atau"
+      "or": "atau",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Tambahkan pencocok",
@@ -857,6 +860,7 @@
     "common": {
       "cancel": "Batalkan",
       "clear-filters": "Hapus filter",
+      "close": "",
       "delete": "Hapus",
       "edit": "Edit",
       "export": "Ekspor",
@@ -1577,6 +1581,17 @@
       "action-button": "Impor",
       "additional-settings": "Pengaturan tambahan",
       "alert-rules": "Aturan peringatan",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Impor",
         "loading": "Memuat...",
@@ -1603,13 +1618,15 @@
         "label": "Sumber data",
         "required-message": "Pilih sumber data"
       },
-      "error": "Gagal mengimpor aturan peringatan: {{error}}",
+      "error": "",
       "group": {
         "description": "Ketik untuk mencari grup yang ada",
         "label": "Grup"
       },
       "import-location-and-filters": "Impor lokasi dan filter",
       "import-source": "Impor sumber",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Ketik untuk mencari namespace yang ada",
         "label": "Ruang nama"
@@ -1621,17 +1638,155 @@
       "pause-recording": {
         "label": "Jeda aturan perekaman yang diimpor"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Aturan perekaman",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Aturan yang dikelola oleh sumber data yang ada",
         "datasource-description": "Impor aturan dari sumber data yang ada",
         "yaml": "File YAML Prometheus",
         "yaml-description": "Impor aturan dari file YAML Prometheus."
       },
-      "success": "Berhasil mengimpor aturan peringatan ke aturan yang dikelola Grafana.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Folder tempat mengimpor aturan",
         "label": "Folder target"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Pilih file YAML yang kompatibel dengan Prometheus untuk diimpor",
@@ -1642,6 +1797,9 @@
         "target-datasource-required": "Pilih sumber data target"
       },
       "yaml-error": "Gagal mengurai file YAML: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2129,6 +2287,10 @@
       "new-policy": "Tambah kebijakan baru",
       "no-matchers": "Tidak ada pencocok",
       "reload-policies": "Muat ulang kebijakan",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Simpan kebijakan",
       "update": {
         "please-wait": "Harap tunggu sementara kami memperbarui kebijakan pemberitahuan Anda.",
@@ -2146,6 +2308,54 @@
         "title": "Gagal menambahkan atau memperbarui kebijakan pemberitahuan"
       },
       "n-more-policies_other": "{{count}} kebijakan tambahan"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Kebijakan turunan baru",
@@ -2329,6 +2539,13 @@
       "label-override-grouping": "Timpa pengelompokan",
       "label-override-timings": "Timpa pengaturan waktu",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
@@ -2547,7 +2764,8 @@
       "expand-all": "Perluas semua"
     },
     "rule-list-v2": {
-      "import-to-gma": "Impor aturan peringatan"
+      "import-to-gma": "Impor aturan peringatan",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Memuat aturan...",
@@ -3092,6 +3310,12 @@
       "label-edit": "Edit",
       "label-export": "Ekspor"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ya, hapus titik kontak",
       "deleting": "Menghapus...",
@@ -3109,6 +3333,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Hapus kebijakan pemberitahuan"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3377,6 +3610,10 @@
       "hosted-domain-label": "Domain yang di-hosting",
       "id-token-attribute-name-description": "Nama kunci yang digunakan untuk mengekstrak token ID dari token OAuth2 yang dikembalikan.",
       "id-token-attribute-name-label": "Nama atribut token ID",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian login pengguna dari token ID pengguna.",
       "login-attribute-path-label": "Jalur atribut login",
       "login-prompt-consent": "Persetujuan",
@@ -3443,6 +3680,8 @@
       "use-refresh-token-label": "Gunakan token muat ulang",
       "validate-hosted-domain-description": "Jika diaktifkan, Grafana akan mencocokkan Domain yang Di-hosting yang diambil dari Token ID Google dengan daftar \"{{ allowedDomainsLabel }}\" yang ditentukan oleh pengguna.",
       "validate-hosted-domain-label": "Validasi domain yang di-hosting",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Jalur file ke file token yang digunakan untuk mengautentikasi ke penyedia OAuth2. Ini hanya diperlukan ketika autentikasi klien diatur ke \"workload_identity\". Default ke /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "file token {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Bidang ini harus diatur ketika autentikasi klien diatur ke \"Identitas beban kerja\"."
@@ -4773,12 +5012,6 @@
       "message": {
         "edit-dashboard-json": "Edit JSON Dasbor"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Validasi diberikan untuk tujuan pengembangan dan seharusnya aman untuk diabaikan. Jika Anda adalah developer Grafana, pertimbangkan untuk memeriksa dan memperbarui skema dasbor",
-      "title-checking-dashboard-validity": "Memeriksa validitas dasbor",
-      "title-dashboard-failed-schema-validation": "Validasi skema dasbor gagal",
-      "title-error-checking-dashboard-validity": "Kesalahan saat memeriksa validitas dasbor"
     },
     "default-layout": {
       "description": "Posisikan dan ukur setiap panel secara individu",
@@ -6218,6 +6451,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Batalkan",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Folder"
     },
     "inspect-data-tab": {
@@ -6379,6 +6614,9 @@
     },
     "query-editor": {
       "query": "Kueri"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -9755,7 +9993,6 @@
       "error-fetching": "Kesalahan saat mengambil pengaturan LDAP",
       "error-saving": "Kesalahan saat menyimpan pengaturan LDAP",
       "error-validate-form": "Kesalahan saat memvalidasi pengaturan LDAP",
-      "feature-flag-disabled": "",
       "saved": "Pengaturan LDAP tersimpan"
     },
     "bind-dn": {
@@ -10304,6 +10541,17 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} dari {{rowCount}} baris memiliki bidang tersebut",
       "label-log-stats": "{{label}}: {{total}} dari {{rowCount}} baris memiliki label tersebut"
+    }
+  },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
     }
   },
   "manage-dashbaords": {
@@ -11243,6 +11491,7 @@
     },
     "header-menu": {
       "copy": "Salin",
+      "copy-styles": "",
       "create-library-panel": "Buat panel pustaka",
       "duplicate": "Duplikasikan",
       "edit": "Edit",
@@ -11254,11 +11503,13 @@
       "inspect-json": "JSON Panel",
       "more": "Lebih banyak...",
       "new-alert-rule": "Aturan peringatan baru",
+      "paste-styles": "",
       "query": "Kueri",
       "remove": "Hapus",
       "replace-library-panel": "Ganti panel pustaka",
       "share": "Bagikan",
       "show-legend": "Tampilkan keterangan",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "view": "Lihat"
@@ -11816,16 +12067,17 @@
       "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Nama tampilan",
       "placeholder-my-repository-connection": "Koneksi repositori saya",
+      "retry-action": "",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -11876,6 +12128,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11889,6 +12144,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12225,6 +12481,9 @@
         "view-repository": "Lihat repositori"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Diperiksa:",
       "connection-status": "",
@@ -12418,7 +12677,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "Pilih item yang akan disinkronkan",
       "step-configure-repo": "",
       "step-connect": "Hubungkan",
@@ -12444,9 +12702,6 @@
       "push-to-a-new-branch": "",
       "push-to-existing-branch": ""
     }
-  },
-  "provisioning-alert": {
-    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12653,9 +12908,29 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""
@@ -13566,6 +13841,7 @@
     "name-wrap-header-text": "Bungkus teks header",
     "name-wrap-text": "",
     "placeholder-column-width": "otomatis",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",

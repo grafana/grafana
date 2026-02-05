@@ -1,8 +1,12 @@
 import { createContext, ReactNode, useContext } from 'react';
 
-import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
+import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
+import { QueryGroupOptions } from 'app/types/query';
+
+import { QueryEditorType } from '../constants';
 
 import { Transformation } from './types';
 
@@ -16,6 +20,7 @@ export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
   isLoading: boolean;
+  queryError?: DataQueryError;
 }
 
 export interface PanelState {
@@ -23,21 +28,38 @@ export interface PanelState {
   transformations: Transformation[];
 }
 
+export interface QueryOptionsState {
+  options: QueryGroupOptions;
+  isQueryOptionsOpen: boolean;
+  setIsQueryOptionsOpen: (open: boolean) => void;
+}
+
 export interface QueryEditorUIState {
-  selectedQuery: DataQuery | null;
+  selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
-  setSelectedQuery: (query: DataQuery | null) => void;
+  setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
+  queryOptions: QueryOptionsState;
+  selectedQueryDsData: {
+    datasource?: DataSourceApi;
+    dsSettings?: DataSourceInstanceSettings;
+  } | null;
+  selectedQueryDsLoading: boolean;
+  showingDatasourceHelp: boolean;
+  toggleDatasourceHelp: () => void;
+  cardType: QueryEditorType;
 }
 
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>) => void;
-  deleteQuery: (index: number) => void;
-  duplicateQuery: (index: number) => void;
+  deleteQuery: (refId: string) => void;
+  duplicateQuery: (refId: string) => void;
+  toggleQueryHide: (refId: string) => void;
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
+  onQueryOptionsChange: (options: QueryGroupOptions) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

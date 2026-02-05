@@ -10,10 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
-type NoopAggregatorConfigurator struct {
-}
+type NoopAggregatorConfigurator struct{}
 
-func (n NoopAggregatorConfigurator) Configure(opts *options.Options, config *genericapiserver.RecommendedConfig, delegateAPIServer genericapiserver.DelegationTarget, scheme *runtime.Scheme, builders []builder.APIGroupBuilder) (*genericapiserver.GenericAPIServer, error) {
+func (n NoopAggregatorConfigurator) Configure(
+	opts *options.Options,
+	config *genericapiserver.RecommendedConfig,
+	extraConfig *ExtraConfig,
+	delegateAPIServer genericapiserver.DelegationTarget,
+	scheme *runtime.Scheme,
+	builders []builder.APIGroupBuilder,
+) (*genericapiserver.GenericAPIServer, error) {
 	return nil, nil
 }
 

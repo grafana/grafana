@@ -130,7 +130,7 @@ func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace str
 			ContinuationToken: continuationToken,
 		}
 
-		resp, err := r.server.GetOpenFGA().Read(ctx, req)
+		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read tuples: %w", err)
 		}

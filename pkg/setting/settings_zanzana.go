@@ -50,6 +50,8 @@ type ZanzanaServerSettings struct {
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
+	// Page size for Read queries in reconciler. Default is 100.
+	ReadPageSize int32
 
 	// Reconciler settings
 	// Enable the Unistore to Zanzana reconciler
@@ -196,6 +198,10 @@ type OpenFgaCacheSettings struct {
 	SharedIteratorTTL time.Duration
 }
 
+const (
+	defaultReadPageSize = 100
+)
+
 func (cfg *Cfg) readZanzanaSettings() {
 	zc := ZanzanaClientSettings{}
 	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
@@ -231,12 +237,13 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs := ZanzanaServerSettings{}
 	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
-	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("127.0.0.1:8080")
+	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
 	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
+	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
 
 	// Reconciler settings
 	zs.ReconcilerEnabled = serverSec.Key("reconciler_enabled").MustBool(false)

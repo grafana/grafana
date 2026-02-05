@@ -15,6 +15,7 @@ import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
+import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -59,6 +60,8 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
+  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
+
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   const moreActionsMenu = useMemo(
@@ -84,6 +87,13 @@ export function RuleListActions() {
               url="/alerting/import-datasource-managed-rules"
             />
           )}
+          {canAccessMigrationWizardUI && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to GMA')}
+              icon="exchange-alt"
+              url="/alerting/import-to-gma"
+            />
+          )}
         </Menu.Group>
         <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
           {canCreateGrafanaRules && (
@@ -103,7 +113,14 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA, canExportRules, toggleShowExportDrawer]
+    [
+      canCreateGrafanaRules,
+      canCreateCloudRules,
+      canImportRulesToGMA,
+      canAccessMigrationWizardUI,
+      canExportRules,
+      toggleShowExportDrawer,
+    ]
   );
 
   return (

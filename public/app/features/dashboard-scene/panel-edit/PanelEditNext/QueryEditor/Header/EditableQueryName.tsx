@@ -116,7 +116,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       title={t('query-editor.edit-query-name', 'Edit query name')}
     >
       <span className={styles.queryNameText}>
-        <Text color="primary" element="p" truncate>
+        <Text color="primary" element="p" truncate variant="code">
           {query.refId}
         </Text>
       </span>
@@ -129,7 +129,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   queryNameWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
+    gap: theme.spacing(1.5),
     cursor: 'pointer',
     border: '1px solid transparent',
     borderRadius: theme.shape.radius.default,
@@ -146,15 +146,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:focus-visible': {
       border: `2px solid ${theme.colors.primary.border}`,
     },
-
-    '&:hover, &:focus-visible': {
-      '[data-edit-icon]': {
-        visibility: 'visible',
-      },
-    },
-  }),
-  queryEditIcon: css({
-    visibility: 'hidden',
   }),
   queryNameText: css({
     display: 'block',
@@ -164,9 +155,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   queryNameInput: css({
     maxWidth: '300px',
+
+    input: {
+      fontFamily: theme.typography.fontFamilyMonospace,
+    },
   }),
   inputRow: css({
     position: 'relative',
+  }),
+  queryEditIcon: css({
+    color: theme.colors.text.secondary,
   }),
   validationMessage: css({
     position: 'absolute',

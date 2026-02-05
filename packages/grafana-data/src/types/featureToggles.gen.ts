@@ -64,11 +64,6 @@ export interface FeatureToggles {
   */
   cloudWatchCrossAccountQuerying?: boolean;
   /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -308,6 +303,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourceQueryTypes?: boolean;
+  /**
+  * Does not register datasource apis that use the numeric id
+  * @default false
+  */
+  datasourceDisableIdApi?: boolean;
   /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
@@ -875,6 +875,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+  * @default false
+  */
+  teamHttpHeadersFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -970,6 +975,11 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
+  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1052,10 +1062,21 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
+  * @deprecated
   * @default false
   */
   kubernetesAuthZHandlerRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZResourcePermissionsRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRolesRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1287,6 +1308,11 @@ export interface FeatureToggles {
   */
   newVizSuggestions?: boolean;
   /**
+  * Enable style actions (copy/paste) in the panel editor
+  * @default false
+  */
+  panelStyleActions?: boolean;
+  /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false
   */
@@ -1421,6 +1447,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamBindings?: boolean;
+  /**
+  * Redirects the request to teams related endpoints to the app platform API
+  * @default false
+  */
+  kubernetesTeamsHandlerRedirect?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false

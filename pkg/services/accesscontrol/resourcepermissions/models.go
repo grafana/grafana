@@ -27,6 +27,7 @@ type GetResourcePermissionsQuery struct {
 	ResourceID           string
 	ResourceAttribute    string
 	OnlyManaged          bool
+	ExcludeManaged       bool //Exclude managed roles from SQL query (for provisioned-only fetches)
 	InheritedScopes      []string
 	EnforceAccessControl bool
 	User                 identity.Requester
