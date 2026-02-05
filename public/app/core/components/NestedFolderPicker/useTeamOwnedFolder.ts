@@ -91,6 +91,9 @@ function useTeams(options?: { skip: boolean }) {
   };
 }
 
+/**
+ * Coerce error which for some reason is returned as unknown from the RTKQ hook to something more meaningful and typed.
+ */
 function coercedError(error: unknown, fallbackMessage = 'Failed to load teams') {
   if (!error) {
     return undefined;
@@ -100,6 +103,7 @@ function coercedError(error: unknown, fallbackMessage = 'Failed to load teams') 
     return error;
   }
 
+  // FetchError is what our backendSrv is throwing and RTKQ is using it as a base query.
   if (isFetchError(error)) {
     return new Error(error.data?.message ?? error.statusText ?? fallbackMessage);
   }
