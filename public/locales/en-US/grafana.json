@@ -2379,6 +2379,9 @@
       "label-new-sibling-above": "New sibling above",
       "label-new-sibling-below": "New sibling below"
     },
+    "policy-page": {
+      "text-subtitle": "Determine how alerts are routed to contact points for alert rules configured to use this notification policy."
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
       "preview-alerts": "Preview alerts",
@@ -3241,6 +3244,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} ago)"
+    },
+    "title": {
+      "aria-label-return-to": "Return to previous view"
     },
     "titles": {
       "group-view": {
