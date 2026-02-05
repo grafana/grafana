@@ -10,8 +10,6 @@ import (
 
 // isWarningError checks if the given error should be treated as a warning.
 // It uses errors.As to check if the error is of any of the warning error types.
-// Validation errors (field errors, dashboard errors, etc.) are wrapped as
-// ResourceValidationError at the source in the resources layer.
 func isWarningError(err error) bool {
 	if err == nil {
 		return false
