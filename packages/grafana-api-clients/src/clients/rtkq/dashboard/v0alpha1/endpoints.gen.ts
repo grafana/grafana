@@ -146,7 +146,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/librarypanels`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel,
+          body: queryArg.libraryPanel,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -195,7 +195,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/librarypanels/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel,
+          body: queryArg.libraryPanel,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -497,8 +497,7 @@ export type GetDashboardDtoApiArg = {
   /** name of the DashboardWithAccessInfo */
   name: string;
 };
-export type ListLibraryPanelApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanelList;
+export type ListLibraryPanelApiResponse = /** status 200 OK */ LibraryPanelList;
 export type ListLibraryPanelApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -544,9 +543,9 @@ export type ListLibraryPanelApiArg = {
   watch?: boolean;
 };
 export type CreateLibraryPanelApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel;
+  | LibraryPanel
+  | /** status 201 Created */ LibraryPanel
+  | /** status 202 Accepted */ LibraryPanel;
 export type CreateLibraryPanelApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -556,7 +555,7 @@ export type CreateLibraryPanelApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel;
+  libraryPanel: LibraryPanel;
 };
 export type DeletecollectionLibraryPanelApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionLibraryPanelApiArg = {
@@ -609,17 +608,14 @@ export type DeletecollectionLibraryPanelApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetLibraryPanelApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel;
+export type GetLibraryPanelApiResponse = /** status 200 OK */ LibraryPanel;
 export type GetLibraryPanelApiArg = {
   /** name of the LibraryPanel */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceLibraryPanelApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel;
+export type ReplaceLibraryPanelApiResponse = /** status 200 OK */ LibraryPanel | /** status 201 Created */ LibraryPanel;
 export type ReplaceLibraryPanelApiArg = {
   /** name of the LibraryPanel */
   name: string;
@@ -631,7 +627,7 @@ export type ReplaceLibraryPanelApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel;
+  libraryPanel: LibraryPanel;
 };
 export type DeleteLibraryPanelApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteLibraryPanelApiArg = {
@@ -650,9 +646,7 @@ export type DeleteLibraryPanelApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateLibraryPanelApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel;
+export type UpdateLibraryPanelApiResponse = /** status 200 OK */ LibraryPanel | /** status 201 Created */ LibraryPanel;
 export type UpdateLibraryPanelApiArg = {
   /** name of the LibraryPanel */
   name: string;
@@ -668,7 +662,7 @@ export type UpdateLibraryPanelApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ SearchResults;
+export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ any;
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
@@ -701,14 +695,7 @@ export type SearchDashboardsAndFoldersApiArg = {
   /** [experimental] optionally include matches from panel titles */
   panelTitleSearch?: boolean;
 };
-export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Sortable fields (depends on backend support) */
-  fields: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-};
+export type GetSortableFieldsApiResponse = /** status 200 undefined */ any;
 export type GetSortableFieldsApiArg = void;
 export type ListSnapshotApiResponse = /** status 200 OK */ SnapshotList;
 export type ListSnapshotApiArg = {
@@ -909,7 +896,7 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured = {
+export type Unstructured = {
   [key: string]: any;
 };
 export type DashboardConversionStatus = {
@@ -933,7 +920,7 @@ export type Dashboard = {
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the Dashboard */
-  spec: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  spec: Unstructured;
   status: DashboardStatus;
 };
 export type ListMeta = {
@@ -999,17 +986,17 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1AnnotationActions = {
+export type AnnotationActions = {
   canAdd: boolean;
   canDelete: boolean;
   canEdit: boolean;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1AnnotationPermission = {
-  dashboard: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1AnnotationActions;
-  organization: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1AnnotationActions;
+export type AnnotationPermission = {
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1DashboardAccess = {
-  annotationsPermissions: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1AnnotationPermission;
+export type DashboardAccess = {
+  annotationsPermissions: AnnotationPermission;
   canAdmin: boolean;
   canDelete: boolean;
   canEdit: boolean;
@@ -1022,14 +1009,14 @@ export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1
   url?: string;
 };
 export type DashboardWithAccessInfo = {
-  access: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1DashboardAccess;
+  access: DashboardAccess;
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the Dashboard */
-  spec: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  spec: Unstructured;
   status: DashboardStatus;
 };
 export type GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1DataSourceRef = {
@@ -1040,7 +1027,7 @@ export type GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1
   /** Datasource UID (NOTE: name in k8s) */
   uid?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1GridPos = {
+export type GridPos = {
   h: number;
   w: number;
   x: number;
@@ -1119,19 +1106,19 @@ export type GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1
   };
   [key: string]: any;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanelSpec = {
+export type LibraryPanelSpec = {
   /** The default datasource type */
   datasource?: GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1DataSourceRef;
   /** Library panel description */
   description?: string;
   /** The fieldConfig schema depends on the panel type */
-  fieldConfig: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  fieldConfig: Unstructured;
   /** The grid position */
-  gridPos?: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1GridPos;
+  gridPos?: GridPos;
   /** The links for the panel */
-  links?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured[];
+  links?: Unstructured[];
   /** The options schema depends on the panel type */
-  options: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  options: Unstructured;
   /** The title of the panel when displayed in the dashboard */
   panelTitle?: string;
   /** The panel type */
@@ -1145,13 +1132,13 @@ export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1
   /** The panel type */
   type: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanelStatus = {
+export type LibraryPanelStatus = {
   /** The properties previously stored in SQL that are not included in this model */
-  missing?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  missing?: Unstructured;
   /** Translation warnings (mostly things that were in SQL columns but not found in the saved body) */
   warnings?: string[];
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel = {
+export type LibraryPanel = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
@@ -1159,79 +1146,17 @@ export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1
   /** Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata */
   metadata?: ObjectMeta;
   /** Panel properties */
-  spec: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanelSpec;
+  spec: LibraryPanelSpec;
   /** Status will show errors */
-  status?: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanelStatus;
+  status?: LibraryPanelStatus;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanelList = {
+export type LibraryPanelList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V0Alpha1LibraryPanel[];
+  items: LibraryPanel[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
-};
-export type TermFacet = {
-  count?: number;
-  term?: string;
-};
-export type FacetResult = {
-  field?: string;
-  /** The number of documents that do *not* have this field */
-  missing?: number;
-  terms?: TermFacet[];
-  /** The distinct terms */
-  total?: number;
-};
-export type ManagedBy = {
-  id?: string;
-  kind: string;
-};
-export type DashboardHit = {
-  /** Dashboard description */
-  description?: string;
-  /** Explain the score (if possible) */
-  explain?: any;
-  /** Stick untyped extra fields in this object (including the sort value) */
-  field?: any;
-  /** The k8s name (eg, grafana UID) for the parent folder */
-  folder?: string;
-  managedBy?: ManagedBy;
-  /** The k8s "name" (eg, grafana UID) */
-  name: string;
-  /** Owner references set on the resource metadata in the format {Group}/{Kind}/{Name} */
-  ownerReferences?: string[];
-  /** Dashboard or folder */
-  resource: string;
-  /** When using "real" search, this is the score */
-  score?: number;
-  /** Filter tags */
-  tags?: string[];
-  /** The display name */
-  title: string;
-};
-export type SortBy = {
-  desc?: boolean;
-  field: string;
-};
-export type SearchResults = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  facets?: {
-    [key: string]: FacetResult;
-  };
-  hits: DashboardHit[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  /** Max score */
-  maxScore?: number;
-  /** Where the query started from */
-  offset?: number;
-  /** Cost of running the query */
-  queryCost?: number;
-  sortBy?: SortBy;
-  /** The number of matching results */
-  totalHits: number;
 };
 export type SnapshotSpec = {
   /** The raw dashboard (unstructured for now) */

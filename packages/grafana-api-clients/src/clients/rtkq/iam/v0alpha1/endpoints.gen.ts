@@ -2059,11 +2059,11 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenLi
   kind?: string;
   metadata?: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured = {
+export type Unstructured = {
   [key: string]: any;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingSpec = {
-  settings: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  settings: Unstructured;
   /** Possible enum values:
      - `"db"`
      - `"system"` system is from config file, env or argument */

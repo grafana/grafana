@@ -799,7 +799,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderAccessInfo"
                 }
               }
             }
@@ -897,7 +897,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.DescendantCounts"
                 }
               }
             }
@@ -946,7 +946,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1folder~1pkg~1apis~1folder~1v1beta1.FolderInfoList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList"
                 }
               }
             }
@@ -985,6 +985,40 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.DescendantCounts": {
+        "type": "object",
+        "required": [
+          "counts"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "folder.grafana.app",
+            "kind": "DescendantCounts",
+            "version": "v1beta1"
+          }
+        ]
+      },
       "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder": {
         "type": "object",
         "required": [
@@ -1022,6 +1056,128 @@
           {
             "group": "folder.grafana.app",
             "kind": "Folder",
+            "version": "v1beta1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderAccessInfo": {
+        "description": "Access control information for the current user",
+        "type": "object",
+        "required": [
+          "canSave",
+          "canEdit",
+          "canAdmin",
+          "canDelete"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "canAdmin": {
+            "type": "boolean",
+            "default": false
+          },
+          "canDelete": {
+            "type": "boolean",
+            "default": false
+          },
+          "canEdit": {
+            "type": "boolean",
+            "default": false
+          },
+          "canSave": {
+            "type": "boolean",
+            "default": false
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderAccessInfo",
+            "version": "v1beta1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfo": {
+        "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
+        "type": "object",
+        "required": [
+          "name",
+          "title"
+        ],
+        "properties": {
+          "description": {
+            "description": "The folder description",
+            "type": "string"
+          },
+          "detached": {
+            "description": "This folder does not resolve",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Name is the k8s name (eg, the unique identifier) for a folder",
+            "type": "string",
+            "default": ""
+          },
+          "parent": {
+            "description": "The parent folder UID",
+            "type": "string"
+          },
+          "title": {
+            "description": "Title is the display value",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList": {
+        "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfo"
+                }
+              ]
+            },
+            "x-kubernetes-list-map-keys": [
+              "uid"
+            ],
+            "x-kubernetes-list-type": "map"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderInfoList",
             "version": "v1beta1"
           }
         ]
@@ -1084,75 +1240,26 @@
           }
         }
       },
-      "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo": {
-        "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats": {
         "type": "object",
         "required": [
-          "name",
-          "title"
+          "group",
+          "resource",
+          "count"
         ],
         "properties": {
-          "description": {
-            "description": "The folder description",
-            "type": "string"
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
-          "detached": {
-            "description": "This folder does not resolve",
-            "type": "boolean"
-          },
-          "name": {
-            "description": "Name is the k8s name (eg, the unique identifier) for a folder",
+          "group": {
             "type": "string",
             "default": ""
           },
-          "parent": {
-            "description": "The parent folder UID",
-            "type": "string"
-          },
-          "title": {
-            "description": "Title is the display value",
+          "resource": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfoList": {
-        "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1folder~1pkg~1apis~1folder~1v1beta1.FolderInfo"
-                }
-              ]
-            },
-            "x-kubernetes-list-map-keys": [
-              "uid"
-            ],
-            "x-kubernetes-list-type": "map"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
           }
         }
       },
@@ -1662,20 +1769,6 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta": {
-        "description": "TypeMeta describes an individual object in an API response or request with strings representing the type of the object and its API schema version. Structures that are versioned or persisted should inline TypeMeta.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
       }
     }
   }

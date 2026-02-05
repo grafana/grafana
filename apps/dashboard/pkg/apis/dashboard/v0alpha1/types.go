@@ -10,7 +10,7 @@ type DashboardWithAccessInfo struct {
 }
 
 func (DashboardWithAccessInfo) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo"
+	return OpenAPIPrefix + "DashboardWithAccessInfo"
 }
 
 // +k8s:deepcopy-gen=true
@@ -29,10 +29,18 @@ type DashboardAccess struct {
 	AnnotationsPermissions *AnnotationPermission `json:"annotationsPermissions"`
 }
 
+func (DashboardAccess) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DashboardAccess"
+}
+
 // +k8s:deepcopy-gen=true
 type AnnotationPermission struct {
 	Dashboard    AnnotationActions `json:"dashboard"`
 	Organization AnnotationActions `json:"organization"`
+}
+
+func (AnnotationPermission) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AnnotationPermission"
 }
 
 // +k8s:deepcopy-gen=true
@@ -40,4 +48,8 @@ type AnnotationActions struct {
 	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
 	CanDelete bool `json:"canDelete"`
+}
+
+func (AnnotationActions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AnnotationActions"
 }

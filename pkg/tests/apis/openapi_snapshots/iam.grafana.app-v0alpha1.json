@@ -5034,6 +5034,11 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
+      },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display": {
         "type": "object",
         "required": [
@@ -7488,11 +7493,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured": {
-        "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
-      },
       "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef": {
         "type": "object",
         "required": [
@@ -7586,7 +7586,7 @@
         ],
         "properties": {
           "settings": {
-            "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
           },
           "source": {
             "description": "Possible enum values:\n - `\"db\"`\n - `\"system\"` system is from config file, env or argument",

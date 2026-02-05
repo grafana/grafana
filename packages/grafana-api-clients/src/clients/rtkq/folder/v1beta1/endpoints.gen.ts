@@ -306,7 +306,7 @@ export type UpdateFolderApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetFolderAccessApiResponse = /** status 200 OK */ TypeMeta;
+export type GetFolderAccessApiResponse = /** status 200 OK */ FolderAccessInfo;
 export type GetFolderAccessApiArg = {
   /** name of the FolderAccessInfo */
   name: string;
@@ -316,13 +316,12 @@ export type GetFolderChildrenApiArg = {
   /** name of the FolderList */
   name: string;
 };
-export type GetFolderCountsApiResponse = /** status 200 OK */ TypeMeta;
+export type GetFolderCountsApiResponse = /** status 200 OK */ DescendantCounts;
 export type GetFolderCountsApiArg = {
   /** name of the DescendantCounts */
   name: string;
 };
-export type GetFolderParentsApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Folder1Pkg1Apis1Folder1V1Beta1FolderInfoList;
+export type GetFolderParentsApiResponse = /** status 200 OK */ FolderInfoList;
 export type GetFolderParentsApiArg = {
   /** name of the FolderInfoList */
   name: string;
@@ -517,13 +516,29 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type TypeMeta = {
+export type FolderAccessInfo = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  canAdmin: boolean;
+  canDelete: boolean;
+  canEdit: boolean;
+  canSave: boolean;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Folder1Pkg1Apis1Folder1V1Beta1FolderInfo = {
+export type ResourceStats = {
+  count: number;
+  group: string;
+  resource: string;
+};
+export type DescendantCounts = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  counts: ResourceStats[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+};
+export type FolderInfo = {
   /** The folder description */
   description?: string;
   /** This folder does not resolve */
@@ -535,10 +550,10 @@ export type GithubCom1Grafana1Grafana1Apps1Folder1Pkg1Apis1Folder1V1Beta1FolderI
   /** Title is the display value */
   title: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Folder1Pkg1Apis1Folder1V1Beta1FolderInfoList = {
+export type FolderInfoList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Folder1Pkg1Apis1Folder1V1Beta1FolderInfo[];
+  items: FolderInfo[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;

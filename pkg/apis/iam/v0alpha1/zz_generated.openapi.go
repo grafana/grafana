@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -304,7 +305,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref common.ReferenceCallback) c
 					},
 					"settings": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -312,7 +313,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 

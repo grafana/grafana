@@ -413,7 +413,7 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured = {
+export type Unstructured = {
   [key: string]: any;
 };
 export type DashboardConversionStatus = {
@@ -437,7 +437,7 @@ export type Dashboard = {
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the Dashboard */
-  spec: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  spec: Unstructured;
   status: DashboardStatus;
 };
 export type ListMeta = {
@@ -503,17 +503,17 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1AnnotationActions = {
+export type AnnotationActions = {
   canAdd: boolean;
   canDelete: boolean;
   canEdit: boolean;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1AnnotationPermission = {
-  dashboard: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1AnnotationActions;
-  organization: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1AnnotationActions;
+export type AnnotationPermission = {
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1DashboardAccess = {
-  annotationsPermissions: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1AnnotationPermission;
+export type DashboardAccess = {
+  annotationsPermissions: AnnotationPermission;
   canAdmin: boolean;
   canDelete: boolean;
   canEdit: boolean;
@@ -526,14 +526,14 @@ export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1D
   url?: string;
 };
 export type DashboardWithAccessInfo = {
-  access: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V1Beta1DashboardAccess;
+  access: DashboardAccess;
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the Dashboard */
-  spec: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Unstructured;
+  spec: Unstructured;
   status: DashboardStatus;
 };
 export const {

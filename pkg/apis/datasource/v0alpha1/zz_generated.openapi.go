@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -16,9 +17,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource":            schema_pkg_apis_datasource_v0alpha1_DataSource(ref),
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceList":        schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DatasourceAccessInfo":  schema_pkg_apis_datasource_v0alpha1_DatasourceAccessInfo(ref),
+		DatasourceAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_datasource_v0alpha1_DatasourceAccessInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceSpec": schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.HealthCheckResult":     schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
+		HealthCheckResult{}.OpenAPIModelName():                                          schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec":      UnstructuredSpec{}.OpenAPIDefinition(),
 	}
 }
@@ -64,7 +65,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue"),
+										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -75,7 +76,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -243,7 +244,7 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 					"jsonData": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Generic unstructured configuration settings",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -251,7 +252,7 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 
@@ -299,13 +300,13 @@ func schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref common.ReferenceC
 					"details": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec depends on the plugin",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }

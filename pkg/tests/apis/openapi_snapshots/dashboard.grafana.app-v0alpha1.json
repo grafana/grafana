@@ -940,17 +940,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               }
             }
@@ -1002,12 +1002,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
               }
             }
           },
@@ -1019,12 +1019,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1034,12 +1034,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1049,12 +1049,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1251,12 +1251,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1308,12 +1308,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
               }
             }
           },
@@ -1325,12 +1325,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1340,12 +1340,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1525,12 +1525,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1540,12 +1540,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1774,9 +1774,7 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResults"
-                }
+                "schema": {}
               }
             }
           }
@@ -1806,29 +1804,7 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "fields"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "fields": {
-                      "description": "Sortable fields (depends on backend support)",
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }
@@ -2291,185 +2267,50 @@
   },
   "components": {
     "schemas": {
-      "DashboardHit": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions": {
         "type": "object",
         "required": [
-          "resource",
-          "name",
-          "title"
+          "canAdd",
+          "canEdit",
+          "canDelete"
         ],
         "properties": {
-          "description": {
-            "description": "Dashboard description",
-            "type": "string"
+          "canAdd": {
+            "type": "boolean",
+            "default": false
           },
-          "explain": {
-            "description": "Explain the score (if possible)"
+          "canDelete": {
+            "type": "boolean",
+            "default": false
           },
-          "field": {
-            "description": "Stick untyped extra fields in this object (including the sort value)"
-          },
-          "folder": {
-            "description": "The k8s name (eg, grafana UID) for the parent folder",
-            "type": "string"
-          },
-          "managedBy": {
-            "$ref": "#/components/schemas/ManagedBy"
-          },
-          "name": {
-            "description": "The k8s \"name\" (eg, grafana UID)",
-            "type": "string",
-            "default": ""
-          },
-          "ownerReferences": {
-            "description": "Owner references set on the resource metadata in the format {Group}/{Kind}/{Name}",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "resource": {
-            "description": "Dashboard or folder",
-            "type": "string",
-            "default": ""
-          },
-          "score": {
-            "description": "When using \"real\" search, this is the score",
-            "type": "number",
-            "format": "double"
-          },
-          "tags": {
-            "description": "Filter tags",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "title": {
-            "description": "The display name",
-            "type": "string",
-            "default": ""
+          "canEdit": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
-      "FacetResult": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "missing": {
-            "description": "The number of documents that do *not* have this field",
-            "type": "integer",
-            "format": "int64"
-          },
-          "terms": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TermFacet"
-            }
-          },
-          "total": {
-            "description": "The distinct terms",
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ManagedBy": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission": {
         "type": "object",
         "required": [
-          "kind"
+          "dashboard",
+          "organization"
         ],
         "properties": {
-          "id": {
-            "type": "string"
+          "dashboard": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
+              }
+            ]
           },
-          "kind": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "SearchResults": {
-        "type": "object",
-        "required": [
-          "totalHits",
-          "hits"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "facets": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/FacetResult"
-            }
-          },
-          "hits": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DashboardHit"
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "maxScore": {
-            "description": "Max score",
-            "type": "number",
-            "format": "double"
-          },
-          "offset": {
-            "description": "Where the query started from",
-            "type": "integer",
-            "format": "int64"
-          },
-          "queryCost": {
-            "description": "Cost of running the query",
-            "type": "number",
-            "format": "double"
-          },
-          "sortBy": {
-            "$ref": "#/components/schemas/SortBy"
-          },
-          "totalHits": {
-            "description": "The number of matching results",
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
-      "SortBy": {
-        "type": "object",
-        "required": [
-          "field"
-        ],
-        "properties": {
-          "desc": {
-            "type": "boolean"
-          },
-          "field": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "TermFacet": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "term": {
-            "type": "string"
+          "organization": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
+              }
+            ]
           }
         }
       },
@@ -2501,7 +2342,7 @@
             "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
               }
             ]
           },
@@ -2521,6 +2362,55 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess": {
+        "type": "object",
+        "required": [
+          "isPublic",
+          "canSave",
+          "canEdit",
+          "canAdmin",
+          "canStar",
+          "canDelete",
+          "annotationsPermissions"
+        ],
+        "properties": {
+          "annotationsPermissions": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission"
+          },
+          "canAdmin": {
+            "type": "boolean",
+            "default": false
+          },
+          "canDelete": {
+            "type": "boolean",
+            "default": false
+          },
+          "canEdit": {
+            "type": "boolean",
+            "default": false
+          },
+          "canSave": {
+            "description": "The permissions part",
+            "type": "boolean",
+            "default": false
+          },
+          "canStar": {
+            "type": "boolean",
+            "default": false
+          },
+          "isPublic": {
+            "type": "boolean",
+            "default": false
+          },
+          "slug": {
+            "description": "Metadata fields",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus": {
         "description": "ConversionStatus is the status of the conversion of the dashboard.",
@@ -2618,7 +2508,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.DashboardAccess"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess"
               }
             ]
           },
@@ -2642,7 +2532,7 @@
             "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
               }
             ]
           },
@@ -2662,6 +2552,232 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.GridPos": {
+        "type": "object",
+        "required": [
+          "w",
+          "h",
+          "x",
+          "y"
+        ],
+        "properties": {
+          "h": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "w": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "x": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "y": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel": {
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Panel properties",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec"
+              }
+            ]
+          },
+          "status": {
+            "description": "Status will show errors",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "LibraryPanel",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "LibraryPanelList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec": {
+        "type": "object",
+        "required": [
+          "type",
+          "options",
+          "fieldConfig"
+        ],
+        "properties": {
+          "datasource": {
+            "description": "The default datasource type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/github.com~1grafana~1grafana-plugin-sdk-go~1experimental~1apis~1data~1v0alpha1.DataSourceRef"
+              }
+            ]
+          },
+          "description": {
+            "description": "Library panel description",
+            "type": "string"
+          },
+          "fieldConfig": {
+            "description": "The fieldConfig schema depends on the panel type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "gridPos": {
+            "description": "The grid position",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.GridPos"
+              }
+            ]
+          },
+          "links": {
+            "description": "The links for the panel",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+            }
+          },
+          "options": {
+            "description": "The options schema depends on the panel type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "panelTitle": {
+            "description": "The title of the panel when displayed in the dashboard",
+            "type": "string"
+          },
+          "pluginVersion": {
+            "description": "The panel type",
+            "type": "string"
+          },
+          "targets": {
+            "description": "The datasource queries",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/github.com~1grafana~1grafana-plugin-sdk-go~1experimental~1apis~1data~1v0alpha1.DataQuery"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "title": {
+            "description": "The title of the library panel",
+            "type": "string"
+          },
+          "transparent": {
+            "description": "Whether the panel is transparent",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "The panel type",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus": {
+        "type": "object",
+        "properties": {
+          "missing": {
+            "description": "The properties previously stored in SQL that are not included in this model",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "warnings": {
+            "description": "Translation warnings (mostly things that were in SQL columns but not found in the saved body)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot": {
         "type": "object",
@@ -2783,6 +2899,11 @@
             "type": "string"
           }
         }
+      },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
       },
       "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataQuery": {
         "description": "Generic query properties",
@@ -2916,319 +3037,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.AnnotationActions": {
-        "type": "object",
-        "required": [
-          "canAdd",
-          "canEdit",
-          "canDelete"
-        ],
-        "properties": {
-          "canAdd": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.AnnotationPermission": {
-        "type": "object",
-        "required": [
-          "dashboard",
-          "organization"
-        ],
-        "properties": {
-          "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.AnnotationActions"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.DashboardAccess": {
-        "type": "object",
-        "required": [
-          "isPublic",
-          "canSave",
-          "canEdit",
-          "canAdmin",
-          "canStar",
-          "canDelete",
-          "annotationsPermissions"
-        ],
-        "properties": {
-          "annotationsPermissions": {
-            "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.AnnotationPermission"
-          },
-          "canAdmin": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          },
-          "canSave": {
-            "description": "The permissions part",
-            "type": "boolean",
-            "default": false
-          },
-          "canStar": {
-            "type": "boolean",
-            "default": false
-          },
-          "isPublic": {
-            "type": "boolean",
-            "default": false
-          },
-          "slug": {
-            "description": "Metadata fields",
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.GridPos": {
-        "type": "object",
-        "required": [
-          "w",
-          "h",
-          "x",
-          "y"
-        ],
-        "properties": {
-          "h": {
-            "type": "integer",
-            "format": "int32",
-            "default": 0
-          },
-          "w": {
-            "type": "integer",
-            "format": "int32",
-            "default": 0
-          },
-          "x": {
-            "type": "integer",
-            "format": "int32",
-            "default": 0
-          },
-          "y": {
-            "type": "integer",
-            "format": "int32",
-            "default": 0
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanel": {
-        "type": "object",
-        "required": [
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Panel properties",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelSpec"
-              }
-            ]
-          },
-          "status": {
-            "description": "Status will show errors",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanelStatus"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.LibraryPanel"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec": {
-        "type": "object",
-        "required": [
-          "type",
-          "options",
-          "fieldConfig"
-        ],
-        "properties": {
-          "datasource": {
-            "description": "The default datasource type",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana-plugin-sdk-go~1experimental~1apis~1data~1v0alpha1.DataSourceRef"
-              }
-            ]
-          },
-          "description": {
-            "description": "Library panel description",
-            "type": "string"
-          },
-          "fieldConfig": {
-            "description": "The fieldConfig schema depends on the panel type",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "gridPos": {
-            "description": "The grid position",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v0alpha1.GridPos"
-              }
-            ]
-          },
-          "links": {
-            "description": "The links for the panel",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
-            }
-          },
-          "options": {
-            "description": "The options schema depends on the panel type",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "panelTitle": {
-            "description": "The title of the panel when displayed in the dashboard",
-            "type": "string"
-          },
-          "pluginVersion": {
-            "description": "The panel type",
-            "type": "string"
-          },
-          "targets": {
-            "description": "The datasource queries",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/github.com~1grafana~1grafana-plugin-sdk-go~1experimental~1apis~1data~1v0alpha1.DataQuery"
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "title": {
-            "description": "The title of the library panel",
-            "type": "string"
-          },
-          "transparent": {
-            "description": "Whether the panel is transparent",
-            "type": "boolean"
-          },
-          "type": {
-            "description": "The panel type",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus": {
-        "type": "object",
-        "properties": {
-          "missing": {
-            "description": "The properties previously stored in SQL that are not included in this model",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "warnings": {
-            "description": "Translation warnings (mostly things that were in SQL columns but not found in the saved body)",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured": {
-        "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

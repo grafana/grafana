@@ -1450,7 +1450,7 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1InlineSecureValue =
+export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
@@ -1477,11 +1477,11 @@ export type GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1Inlin
     };
 export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1ConnectionSecure = {
   /** ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back */
-  clientSecret?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1InlineSecureValue;
+  clientSecret?: InlineSecureValue;
   /** PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back */
-  privateKey?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1InlineSecureValue;
+  privateKey?: InlineSecureValue;
   /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
-  token?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1InlineSecureValue;
+  token?: InlineSecureValue;
 };
 export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1BitbucketConnectionConfig = {
   /** App client ID */
@@ -1784,9 +1784,9 @@ export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0
 };
 export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1SecureValues = {
   /** Token used to connect the configured repository */
-  token?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1InlineSecureValue;
+  token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
-  webhookSecret?: GithubCom1Grafana1Grafana1Pkg1Apimachinery1Apis1Common1V0Alpha1InlineSecureValue;
+  webhookSecret?: InlineSecureValue;
 };
 export type GithubCom1Grafana1Grafana1Apps1Provisioning1Pkg1Apis1Provisioning1V0Alpha1BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */

@@ -5946,6 +5946,45 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
+        "description": "Allow access to a secure value inside",
+        "oneOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "create"
+            ]
+          },
+          {
+            "required": [
+              "remove"
+            ]
+          }
+        ],
+        "properties": {
+          "create": {
+            "description": "Create a secure value -- this is only used for POST/PUT",
+            "type": "string",
+            "maxLength": 24576,
+            "minLength": 1
+          },
+          "name": {
+            "description": "Name in the secret service (reference)",
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
+          },
+          "remove": {
+            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig": {
         "type": "object",
         "required": [
@@ -6086,7 +6125,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
               }
             ]
           },
@@ -6095,7 +6134,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
               }
             ]
           },
@@ -6104,7 +6143,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
               }
             ]
           }
@@ -7418,7 +7457,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
               }
             ]
           },
@@ -7427,7 +7466,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
               }
             ]
           }
@@ -7566,45 +7605,6 @@
             "type": "string"
           }
         }
-      },
-      "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue": {
-        "description": "Allow access to a secure value inside",
-        "oneOf": [
-          {
-            "required": [
-              "name"
-            ]
-          },
-          {
-            "required": [
-              "create"
-            ]
-          },
-          {
-            "required": [
-              "remove"
-            ]
-          }
-        ],
-        "properties": {
-          "create": {
-            "description": "Create a secure value -- this is only used for POST/PUT",
-            "type": "string",
-            "maxLength": 24576,
-            "minLength": 1
-          },
-          "name": {
-            "description": "Name in the secret service (reference)",
-            "type": "string",
-            "maxLength": 253,
-            "minLength": 1
-          },
-          "remove": {
-            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

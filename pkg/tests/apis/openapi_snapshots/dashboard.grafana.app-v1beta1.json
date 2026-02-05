@@ -838,6 +838,53 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.AnnotationActions": {
+        "type": "object",
+        "required": [
+          "canAdd",
+          "canEdit",
+          "canDelete"
+        ],
+        "properties": {
+          "canAdd": {
+            "type": "boolean",
+            "default": false
+          },
+          "canDelete": {
+            "type": "boolean",
+            "default": false
+          },
+          "canEdit": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.AnnotationPermission": {
+        "type": "object",
+        "required": [
+          "dashboard",
+          "organization"
+        ],
+        "properties": {
+          "dashboard": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.AnnotationActions"
+              }
+            ]
+          },
+          "organization": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.AnnotationActions"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.Dashboard": {
         "type": "object",
         "required": [
@@ -866,7 +913,7 @@
             "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
               }
             ]
           },
@@ -886,6 +933,55 @@
             "version": "v1beta1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardAccess": {
+        "type": "object",
+        "required": [
+          "isPublic",
+          "canSave",
+          "canEdit",
+          "canAdmin",
+          "canStar",
+          "canDelete",
+          "annotationsPermissions"
+        ],
+        "properties": {
+          "annotationsPermissions": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.AnnotationPermission"
+          },
+          "canAdmin": {
+            "type": "boolean",
+            "default": false
+          },
+          "canDelete": {
+            "type": "boolean",
+            "default": false
+          },
+          "canEdit": {
+            "type": "boolean",
+            "default": false
+          },
+          "canSave": {
+            "description": "The permissions part",
+            "type": "boolean",
+            "default": false
+          },
+          "canStar": {
+            "type": "boolean",
+            "default": false
+          },
+          "isPublic": {
+            "type": "boolean",
+            "default": false
+          },
+          "slug": {
+            "description": "Metadata fields",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardConversionStatus": {
         "description": "ConversionStatus is the status of the conversion of the dashboard.",
@@ -983,7 +1079,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v1beta1.DashboardAccess"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardAccess"
               }
             ]
           },
@@ -1007,7 +1103,7 @@
             "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apimachinery~1apis~1common~1v0alpha1.Unstructured"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
               }
             ]
           },
@@ -1028,104 +1124,7 @@
           }
         ]
       },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationActions": {
-        "type": "object",
-        "required": [
-          "canAdd",
-          "canEdit",
-          "canDelete"
-        ],
-        "properties": {
-          "canAdd": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission": {
-        "type": "object",
-        "required": [
-          "dashboard",
-          "organization"
-        ],
-        "properties": {
-          "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v1beta1.AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v1beta1.AnnotationActions"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess": {
-        "description": "Information about how the requesting user can use a given dashboard",
-        "type": "object",
-        "required": [
-          "isPublic",
-          "canSave",
-          "canEdit",
-          "canAdmin",
-          "canStar",
-          "canDelete",
-          "annotationsPermissions"
-        ],
-        "properties": {
-          "annotationsPermissions": {
-            "$ref": "#/components/schemas/github.com~1grafana~1grafana~1apps~1dashboard~1pkg~1apis~1dashboard~1v1beta1.AnnotationPermission"
-          },
-          "canAdmin": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          },
-          "canSave": {
-            "description": "The permissions part",
-            "type": "boolean",
-            "default": false
-          },
-          "canStar": {
-            "type": "boolean",
-            "default": false
-          },
-          "isPublic": {
-            "type": "boolean",
-            "default": false
-          },
-          "slug": {
-            "description": "Metadata fields",
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured": {
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true

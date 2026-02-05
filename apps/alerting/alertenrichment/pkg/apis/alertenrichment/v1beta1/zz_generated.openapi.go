@@ -8,6 +8,7 @@
 package v1beta1
 
 import (
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -680,7 +681,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.Refer
 					"request": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The data source request to perform.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 					"refId": {
@@ -694,7 +695,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			v0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 

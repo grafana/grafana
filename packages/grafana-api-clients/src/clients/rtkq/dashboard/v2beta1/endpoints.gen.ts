@@ -1265,17 +1265,17 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1AnnotationActions = {
+export type AnnotationActions = {
   canAdd: boolean;
   canDelete: boolean;
   canEdit: boolean;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1AnnotationPermission = {
-  dashboard: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1AnnotationActions;
-  organization: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1AnnotationActions;
+export type AnnotationPermission = {
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 };
-export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1DashboardAccess = {
-  annotationsPermissions: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1AnnotationPermission;
+export type DashboardAccess = {
+  annotationsPermissions: AnnotationPermission;
   canAdmin: boolean;
   canDelete: boolean;
   canEdit: boolean;
@@ -1288,7 +1288,7 @@ export type GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1D
   url?: string;
 };
 export type DashboardWithAccessInfo = {
-  access: GithubCom1Grafana1Grafana1Apps1Dashboard1Pkg1Apis1Dashboard1V2Beta1DashboardAccess;
+  access: DashboardAccess;
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
