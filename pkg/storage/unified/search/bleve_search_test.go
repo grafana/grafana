@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/require"
@@ -280,7 +281,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", writer, nil, false)
+	}, size, info.Fields, "test", writer, nil, false, time.Time{})
 	require.NoError(t, err)
 
 	return index
@@ -351,7 +352,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, nil, "test", noop, nil, false)
+	}, 10, nil, "test", noop, nil, false, time.Time{})
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{

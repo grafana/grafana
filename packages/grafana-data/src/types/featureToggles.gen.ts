@@ -1427,6 +1427,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Redirects the request to teams related endpoints to the app platform API
+  * @default false
+  */
+  kubernetesTeamsHandlerRedirect?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */

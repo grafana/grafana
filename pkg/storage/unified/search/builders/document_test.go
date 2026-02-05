@@ -158,10 +158,12 @@ func TestBuildSelectableFields(t *testing.T) {
 	tb := &iamv0.TeamBinding{}
 	tb.Spec.Subject.Name = "subject name"
 	tb.Spec.TeamRef.Name = "teamref name"
+	tb.Spec.External = true
 
 	expected := map[string]string{
 		"spec.subject.name": "subject name",
 		"spec.teamRef.name": "teamref name",
+		"spec.external":     "true",
 	}
 
 	res, err := BuildSelectableFields(tb, iamv0.TeamBindingKind())
