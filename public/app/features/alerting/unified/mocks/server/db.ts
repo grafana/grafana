@@ -230,6 +230,7 @@ const grafanaContactPointFactory = GrafanaContactPointFactory.define(({ sequence
       'grafana.com/access/canDelete': 'true',
       'grafana.com/access/canReadSecrets': 'true',
       'grafana.com/access/canWrite': 'true',
+      'grafana.com/access/canTest': 'true',
       'grafana.com/inUse/routes': '0',
       'grafana.com/inUse/rules': '1',
       'grafana.com/provenance': 'none',

@@ -25,6 +25,13 @@ type CheckType struct {
 	Status CheckTypeStatus `json:"status" yaml:"status"`
 }
 
+func NewCheckType() *CheckType {
+	return &CheckType{
+		Spec:   *NewCheckTypeSpec(),
+		Status: *NewCheckTypeStatus(),
+	}
+}
+
 func (o *CheckType) GetSpec() any {
 	return o.Spec
 }

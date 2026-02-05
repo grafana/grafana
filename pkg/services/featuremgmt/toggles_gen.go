@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagDisableEnvelopeEncryption
-	// Disable envelope encryption (emergency only)
-	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -38,10 +34,6 @@ const (
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
-
-	// FlagShowDashboardValidationWarnings
-	// Show warnings when dashboards do not validate against the schema
-	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -386,10 +378,6 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
-
-	// FlagSsoSettingsLDAP
-	// Use the new SSO Settings API to configure LDAP
-	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -797,6 +785,10 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagKubernetesTeamsHandlerRedirect
+	// Redirects the request to teams related endpoints to the app platform API
+	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
