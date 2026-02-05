@@ -20,11 +20,21 @@ Grafana allows you to query, visualize, alert on and understand your metrics no 
 - [Get Grafana](https://grafana.com/get)
 - [Installation guides](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)
 
-Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
-
 ## Documentation
 
-The Grafana documentation is available at [grafana.com/docs](https://grafana.com/docs/).
+For the plugin documentation, visit [plugin documentation website](https://grafana.com/docs/grafana/latest/datasources/mysql/).
+
+## Video Tutorial
+
+Watch this video to learn more about setting up the Grafana Google Sheets data source plugin:
+
+[![MySQL data source plugin | Visualize MySQL using Grafana | Tutorial](https://img.youtube.com/vi/p_RDHfHS-P8/hq720.jpg)](https://youtu.be/p_RDHfHS-P8 "MySQL data source plugin")
+
+> [!TIP]
+> 
+> ## Give it a try using Grafana Play
+> 
+> With Grafana Play, you can explore and see how it works, learning from practical examples to accelerate your development. This feature can be seen on [MySQL data source plugin demo](https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview).
 
 ## Contributing
 
