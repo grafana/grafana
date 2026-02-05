@@ -725,19 +725,22 @@ func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
+	settings := rule.ContactPointRouting()
 	if query.ReceiverName != "" {
-		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return settings.Receiver == query.ReceiverName
-		}) {
+		if settings == nil {
+			return false
+		}
+		if settings.Receiver != query.ReceiverName {
 			return false
 		}
 	}
 
 	if query.TimeIntervalName != "" {
-		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) ||
-				slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
-		}) {
+		if settings == nil {
+			return false
+		}
+		if !slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) &&
+			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return false
 		}
 	}
@@ -1007,17 +1010,21 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 		st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRules", "error", err)
 		return nil, false
 	}
+	settings := converted.ContactPointRouting()
 	if query.ReceiverName != "" { // remove false-positive hits from the result
-		if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return settings.Receiver == query.ReceiverName
-		}) {
+		if settings == nil {
+			return nil, false
+		}
+		if settings.Receiver != query.ReceiverName {
 			return nil, false
 		}
 	}
 	if query.TimeIntervalName != "" {
-		if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) || slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
-		}) {
+		if settings == nil {
+			return nil, false
+		}
+		if !slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) &&
+			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return nil, false
 		}
 	}
@@ -1325,7 +1332,7 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 }
 
 // ListNotificationSettings fetches all notification settings for given organization
-func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
+func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
 	var rules []alertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(alertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
@@ -1354,7 +1361,7 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
+	result := make(map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, len(rules))
 	for _, rule := range rules {
 		if rule.NotificationSettings == "" {
 			continue
@@ -1363,23 +1370,20 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert notification settings %s to models: %w", rule.UID, err)
 		}
-		ns := make([]ngmodels.NotificationSettings, 0, len(rule.NotificationSettings))
-		for _, setting := range converted {
-			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
-				continue
-			}
-			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(setting.ActiveTimeIntervals, q.TimeIntervalName) {
-				continue
-			}
-			ns = append(ns, setting)
+		if converted == nil {
+			continue
 		}
-		if len(ns) > 0 {
-			key := ngmodels.AlertRuleKey{
-				OrgID: q.OrgID,
-				UID:   rule.UID,
-			}
-			result[key] = ns
+
+		if q.ReceiverName != "" && q.ReceiverName != converted.Receiver {
+			continue
 		}
+		if q.TimeIntervalName != "" && !slices.Contains(converted.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(converted.ActiveTimeIntervals, q.TimeIntervalName) {
+			continue
+		}
+		result[ngmodels.AlertRuleKey{
+			OrgID: q.OrgID,
+			UID:   rule.UID,
+		}] = *converted
 	}
 	return result, nil
 }
@@ -1502,10 +1506,13 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 		}
 
 		r := rule.Copy()
-		for idx := range r.NotificationSettings {
-			if r.NotificationSettings[idx].Receiver == oldReceiver {
-				r.NotificationSettings[idx].Receiver = newReceiver
-			}
+		settings := r.ContactPointRouting()
+		if settings == nil {
+			continue
+		}
+
+		if settings.Receiver == oldReceiver {
+			settings.Receiver = newReceiver
 		}
 
 		updates = append(updates, ngmodels.UpdateRule{
@@ -1577,16 +1584,18 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 		}
 
 		r := rule.Copy()
-		for idx := range r.NotificationSettings {
-			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
-				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
-					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
-				}
+		settings := r.ContactPointRouting()
+		if settings == nil {
+			continue
+		}
+		for mtIdx := range settings.MuteTimeIntervals {
+			if settings.MuteTimeIntervals[mtIdx] == oldTimeInterval {
+				settings.MuteTimeIntervals[mtIdx] = newTimeInterval
 			}
-			for mtIdx := range r.NotificationSettings[idx].ActiveTimeIntervals {
-				if r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] == oldTimeInterval {
-					r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] = newTimeInterval
-				}
+		}
+		for mtIdx := range settings.ActiveTimeIntervals {
+			if settings.ActiveTimeIntervals[mtIdx] == oldTimeInterval {
+				settings.ActiveTimeIntervals[mtIdx] = newTimeInterval
 			}
 		}
 
