@@ -1126,7 +1126,9 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		// If we get here, we're doing list with selectable fields. Let's do search instead, since
 		// we index all selectable fields, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		if s.storageMetrics != nil {
+			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		}
 		return s.listWithFieldSelectors(ctx, req)
 	}
 
@@ -1217,7 +1219,9 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
+	if s.storageMetrics != nil {
+		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
+	}
 	return rsp, err
 }
 
