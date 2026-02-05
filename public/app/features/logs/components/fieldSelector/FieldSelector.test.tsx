@@ -192,8 +192,8 @@ describe('LogsTableFieldSelector', () => {
         clear={clear}
         dataFrames={dataFrames}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -210,8 +210,8 @@ describe('LogsTableFieldSelector', () => {
         clear={clear}
         dataFrames={dataFrames}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={FIELD_SELECTOR_MIN_WIDTH}
+        setWidth={setSidebarWidth}
+        width={FIELD_SELECTOR_MIN_WIDTH}
         toggle={toggle}
       />
     );
@@ -234,8 +234,8 @@ describe('LogsTableFieldSelector', () => {
         clear={clear}
         dataFrames={dataFrames}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -261,8 +261,8 @@ describe('LogsTableFieldSelector', () => {
         clear={clear}
         dataFrames={dataFrames}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -281,8 +281,8 @@ describe('LogsTableFieldSelector', () => {
         clear={clear}
         dataFrames={dataFrames}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );

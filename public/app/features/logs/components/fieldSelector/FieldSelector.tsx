@@ -3,14 +3,18 @@ import { startTransition, useCallback, useMemo, useState } from 'react';
 
 import { fuzzySearch, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { defaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 
 import { reportInteractionOnce } from '../panel/analytics';
 
 import { FieldList } from './FieldList';
 import { FieldSearch } from './FieldSearch';
 
-export const FIELD_SELECTOR_DEFAULT_WIDTH = 220;
+const FIELD_SELECTOR_DEFAULT_WIDTH = 220;
 export const FIELD_SELECTOR_MIN_WIDTH = 20;
+export const getDefaultFieldSelectorWidth = () => {
+  return defaultOptions.fieldSelectorWidth ?? FIELD_SELECTOR_DEFAULT_WIDTH;
+};
 
 interface FieldStats {
   percentOfLinesWithLabel: number;
