@@ -152,6 +152,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index, 1);
       return queries;
     });
+    this.runQueries();
   };
 
   public duplicateQuery = (refId: string) => {
@@ -163,6 +164,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index + 1, 0, duplicated);
       return queries;
     });
+    this.runQueries();
   };
 
   public toggleQueryHide = (refId: string) => {
@@ -170,6 +172,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries[index] = { ...query, hide: !query.hide };
       return queries;
     });
+    this.runQueries();
   };
 
   public runQueries = () => {
