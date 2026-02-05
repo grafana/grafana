@@ -406,6 +406,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			// If we can't read the latest version, clean up what we wrote
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				_ = k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey)
+			}
 			return 0, fmt.Errorf("failed to check latest version: %w", err)
 		}
 
@@ -413,12 +416,18 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				_ = k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey)
+			}
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				_ = k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey)
+			}
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
@@ -432,6 +441,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			// If we can't read the latest version, clean up what we wrote
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				_ = k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey)
+			}
 			return 0, fmt.Errorf("failed to check latest version: %w", err)
 		}
 
@@ -439,6 +451,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				_ = k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey)
+			}
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
 
@@ -446,6 +461,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				_ = k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey)
+			}
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
 	}
