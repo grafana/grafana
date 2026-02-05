@@ -120,8 +120,24 @@ describe('useWizardNavigation', () => {
       expect(mockNavigate).toHaveBeenCalledWith(PROVISIONING_URL);
     });
 
-    it('should skip sync step and create job when canSkipSync is true', async () => {
+    it('should skip sync step and create job in background when canSkipSync is true', async () => {
       mockCreateSyncJob.mockResolvedValue({ success: true });
+      const { result } = setup({
+        initialStep: 'bootstrap',
+        canSkipSync: true,
+      });
+
+      await act(async () => {
+        await result.current.goToNextStep();
+      });
+
+      // Job is created in background
+      expect(mockCreateSyncJob).toHaveBeenCalledWith(false);
+      expect(result.current.activeStep).toBe('finish');
+    });
+
+    it('should navigate immediately even if createSyncJob fails', async () => {
+      mockCreateSyncJob.mockRejectedValue(new Error('Job creation failed'));
       const { result } = setup({
         initialStep: 'bootstrap',
         canSkipSync: true,
@@ -133,20 +149,6 @@ describe('useWizardNavigation', () => {
 
       expect(mockCreateSyncJob).toHaveBeenCalledWith(false);
       expect(result.current.activeStep).toBe('finish');
-    });
-
-    it('should not advance if createSyncJob returns falsy', async () => {
-      mockCreateSyncJob.mockResolvedValue(null);
-      const { result } = setup({
-        initialStep: 'bootstrap',
-        canSkipSync: true,
-      });
-
-      await act(async () => {
-        await result.current.goToNextStep();
-      });
-
-      expect(result.current.activeStep).toBe('bootstrap');
     });
 
     it('should navigate to provisioning URL if next step exceeds steps length', async () => {

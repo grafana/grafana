@@ -91,10 +91,11 @@ export function useWizardNavigation({
       if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2;
 
-        const job = await createSyncJob(false);
-        if (!job) {
-          return;
-        }
+        // Fire job in background, don't wait for result
+        createSyncJob(false).catch((error) => {
+          // Log errors for debugging, but don't block navigation
+          console.error('Failed to create background sync job when skipping sync step:', error);
+        });
       }
 
       if (nextStepIndex >= steps.length) {

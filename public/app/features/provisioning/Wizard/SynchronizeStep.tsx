@@ -55,7 +55,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     }
   };
 
-  if (isLoading) {
+  if (isLoading || healthStatusNotReady) {
     return <Spinner />;
   }
   if (job) {
