@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-const UserDefinedRoutingTreeName = "user-defined"
-const NamedRouteMatcher = "__grafana_managed_route__"
+const UserDefinedRoutingTreeName = models.DefaultRoutingTreeName
+const NamedRouteMatcher = models.NamedRouteLabel
 
 type ManagedRoute struct {
 	Name    string

@@ -572,6 +572,12 @@ type AlertRuleNotificationSettings struct {
 	// at the time that matches any interval.
 	// example: ["maintenance"]
 	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
+
+	// Name of the notification policy to route alerts through.
+	// Mutually exclusive with all other fields, cannot be used with simplified routing.
+	// Requires experimental feature flag: alertingMultiplePolicies
+	// example: "Alerting Team"
+	Policy *string `json:"policy,omitempty"`
 }
 
 // swagger:model

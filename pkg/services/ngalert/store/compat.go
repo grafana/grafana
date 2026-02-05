@@ -119,6 +119,10 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		}
 	}
 
+	if ar.AlertRoutingPolicy != nil {
+		result.NotificationSettings = util.Pointer(models.NotificationSettingsFromPolicy(*ar.AlertRoutingPolicy))
+	}
+
 	if !opts.ExcludeContactPointRouting && ar.NotificationSettings != "" {
 		ns, err := parseNotificationSettings(ar.NotificationSettings)
 		if err != nil {
@@ -225,6 +229,10 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		result.NotificationSettings = string(notificationSettingsData)
 	}
 
+	if pr := ar.PolicyRouting(); pr != nil && !pr.IsDefault() {
+		result.AlertRoutingPolicy = &pr.Policy
+	}
+
 	metadata, err := json.Marshal(ar.Metadata)
 	if err != nil {
 		return alertRule{}, fmt.Errorf("failed to metadata: %w", err)
@@ -261,6 +269,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Labels:                      rule.Labels,
 		IsPaused:                    rule.IsPaused,
 		NotificationSettings:        rule.NotificationSettings,
+		AlertRoutingPolicy:          rule.AlertRoutingPolicy,
 		Metadata:                    rule.Metadata,
 		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 	}
@@ -295,6 +304,7 @@ func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 		Labels:                      version.Labels,
 		IsPaused:                    version.IsPaused,
 		NotificationSettings:        version.NotificationSettings,
+		AlertRoutingPolicy:          version.AlertRoutingPolicy,
 		Metadata:                    version.Metadata,
 		MissingSeriesEvalsToResolve: version.MissingSeriesEvalsToResolve,
 	}
