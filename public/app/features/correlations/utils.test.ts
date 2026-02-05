@@ -7,10 +7,25 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { ExploreItemState } from 'app/types/explore';
 
 import { EditFormDTO } from './Forms/types';
 import { Correlation } from './types';
-import { attachCorrelationsToDataFrames, generatePartialEditSpec } from './utils';
+import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn().mockReturnValue({
+    get: jest.fn().mockResolvedValue({
+      name: 'getTest',
+      getRef: () => {
+        return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
+      },
+    }),
+  }),
+}));
 
 describe('correlations utils', () => {
   it('attaches correlations defined in the configuration', () => {
@@ -150,6 +165,39 @@ describe('correlations utils', () => {
         transformations: [{ expression: 'diffExp', field: 'diffField', mapValue: 'diffMapValue', type: 'logfmt' }],
       },
     });
+  });
+
+  it('generates the expected label from pane datasource when not mixed', async () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { uid: 'testQuery' } }];
+    const sourcePane: ExploreItemState = {
+      datasourceInstance: { name: 'testA', meta: { mixed: false } },
+      queries: queries,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const targetPane: ExploreItemState = {
+      datasourceInstance: { name: 'testB', meta: { mixed: false } },
+      queries: queries,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const label = await generateDefaultLabel(sourcePane, targetPane);
+    expect(label).toBe('testA to testB');
+  });
+
+  it('generates the expected label from query datasources when mixed', async () => {
+    const queriesA: DataQuery[] = [{ refId: 'A', datasource: { uid: 'testQueryA' } }];
+    const queriesB: DataQuery[] = [{ refId: 'B', datasource: { uid: 'testQueryB' } }];
+    const sourcePane: ExploreItemState = {
+      datasourceInstance: { name: 'testA', meta: { mixed: true } },
+      queries: queriesA,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const targetPane: ExploreItemState = {
+      datasourceInstance: { name: 'testB', meta: { mixed: false } },
+      queries: queriesB,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const label = await generateDefaultLabel(sourcePane, targetPane);
+    expect(label).toBe('getTest to testB');
   });
 });
 
