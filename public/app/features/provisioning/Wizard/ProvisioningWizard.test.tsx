@@ -4,6 +4,7 @@ import { UserEvent } from '@testing-library/user-event';
 import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
+import { useGetRepositoryRefsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import {
   useCreateRepositoryJobsMutation,
   useGetFrontendSettingsQuery,
@@ -29,6 +30,10 @@ jest.mock('react-router-dom-v5-compat', () => ({
 jest.mock('../hooks/useCreateOrUpdateRepository');
 jest.mock('../hooks/useBranchOptions');
 jest.mock('../hooks/useConnectionOptions');
+jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
+  ...jest.requireActual('@grafana/api-clients/rtkq/provisioning/v0alpha1'),
+  useGetRepositoryRefsQuery: jest.fn(),
+}));
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetFrontendSettingsQuery: jest.fn(),
@@ -42,6 +47,9 @@ const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.Mock
   typeof useCreateOrUpdateRepository
 >;
 const mockUseBranchOptions = useBranchOptions as jest.MockedFunction<typeof useBranchOptions>;
+const mockUseGetRepositoryRefsQuery = useGetRepositoryRefsQuery as jest.MockedFunction<
+  typeof useGetRepositoryRefsQuery
+>;
 const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.MockedFunction<
   typeof useGetFrontendSettingsQuery
 >;
@@ -122,7 +130,7 @@ async function fillConnectionForm(
   }
 
   if (type !== 'local' && data.branch) {
-    await user.type(screen.getByRole('combobox'), data.branch);
+    await user.type(screen.getByRole('combobox'), `${data.branch}{Enter}`);
   }
 
   if (data.path) {
@@ -142,6 +150,14 @@ describe('ProvisioningWizard', () => {
       ],
       loading: false,
       error: null,
+    });
+
+    // Mock useGetRepositoryRefsQuery for GitHub repositories
+    mockUseGetRepositoryRefsQuery.mockReturnValue({
+      data: { items: [{ name: 'main' }, { name: 'develop' }] },
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
     });
 
     // Mock useConnectionOptions to prevent async state updates
@@ -442,7 +458,7 @@ describe('ProvisioningWizard', () => {
         screen.getByPlaceholderText('https://gitlab.com/owner/repository'),
         'https://gitlab.com/test/repo'
       );
-      await user.type(screen.getByRole('combobox'), 'main');
+      await user.type(screen.getByRole('combobox'), 'main{Enter}');
       await user.type(screen.getByRole('textbox', { name: /Path/i }), '/');
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -564,7 +580,7 @@ describe('ProvisioningWizard', () => {
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
       expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
-      await user.type(screen.getByRole('combobox'), 'main');
+      await user.type(screen.getByRole('combobox'), 'main{Enter}');
       await user.type(screen.getByRole('textbox', { name: /Path/i }), '/');
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
