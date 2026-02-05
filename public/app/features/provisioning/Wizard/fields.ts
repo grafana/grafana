@@ -31,7 +31,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       label: t('provisioning.shared.path-label', 'Path'),
       description: t(
         'provisioning.shared.path-description',
-        'Path to the subdirectory with the resources you want to sync. Set to grafana/ by default. Update if using a folder different from grafana/.'
+        'Optional. Path to the subdirectory with the resources you want to sync.'
       ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: 'grafana/',
