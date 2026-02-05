@@ -99,7 +99,6 @@ export function TableNGWrap({
             setControlsExpanded={setControlsExpanded}
             sortOrder={sortOrder}
             setSortOrder={handleSortOrderChange}
-            timestampResolution={'ms'}
           />
         </div>
       )}
