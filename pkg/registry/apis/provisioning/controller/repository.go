@@ -577,7 +577,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
-	shouldGenerateToken := false
+	var shouldGenerateToken bool
 	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
 	}
@@ -713,6 +713,23 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		patchOperations = append(patchOperations, hookOps...)
 	}
 
+	// If branch is empty, fetch and set the default branch before running health check
+	// We'll persist the change at the end, just before status patching
+	var needsSpecUpdate bool
+	if branchHandler, ok := repo.(repository.BranchHandler); ok {
+		if branchHandler.GetCurrentBranch() == "" {
+			logger.Info("given repository branch is empty, getting default branch")
+
+			defaultBranch, err := branchHandler.GetDefaultBranch(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get default branch: %w", err)
+			}
+
+			branchHandler.SetBranch(defaultBranch)
+			needsSpecUpdate = true
+		}
+	}
+
 	// Handle health checks using the health checker
 	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
@@ -740,6 +757,14 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
+
+	// Update spec if branch was detected and set (do this before status patch)
+	if needsSpecUpdate {
+		_, err := rc.client.Repositories(obj.Namespace).Update(ctx, repo.Config(), v1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update repository spec: %w", err)
+		}
+	}
 
 	// Apply all patch operations
 	if len(patchOperations) > 0 {
