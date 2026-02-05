@@ -16,24 +16,6 @@ import z from 'zod';
 
 import { t } from '@grafana/i18n';
 
-// ============================================================================
-// Storage Keys
-// ============================================================================
-
-/**
- * UserStorage key for Alert Rules page saved searches.
- */
-export const RULES_SAVED_SEARCHES_STORAGE_KEY = 'savedSearches';
-
-/**
- * UserStorage key for Alert Activity (Triage) page saved searches.
- */
-export const TRIAGE_SAVED_SEARCHES_STORAGE_KEY = 'triageSavedSearches';
-
-// ============================================================================
-// Schemas
-// ============================================================================
-
 /**
  * Zod schema for validating a saved search object.
  * Used to validate data loaded from storage.
@@ -45,15 +27,7 @@ export const savedSearchSchema = z.object({
   query: z.string(),
   createdAt: z.number().optional(),
 });
-
-/**
- * Zod schema for validating an array of saved searches.
- */
 export const savedSearchesArraySchema = z.array(savedSearchSchema);
-
-// ============================================================================
-// Types
-// ============================================================================
 
 export type SavedSearch = z.infer<typeof savedSearchSchema>;
 
@@ -76,16 +50,8 @@ export function isValidationError(error: unknown): error is ValidationError {
   );
 }
 
-// ============================================================================
-// Validation Utilities
-// ============================================================================
-
 /**
  * Validates a saved search name.
- * @param name - The name to validate
- * @param savedSearches - Existing saved searches for uniqueness check
- * @param excludeId - Optional ID to exclude from uniqueness check (for rename)
- * @returns Error message string or null if valid
  */
 export function validateSearchName(name: string, savedSearches: SavedSearch[], excludeId?: string): string | null {
   const trimmed = name.trim();
