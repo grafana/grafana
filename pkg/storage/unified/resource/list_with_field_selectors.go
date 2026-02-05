@@ -5,9 +5,14 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
+	defer span.End()
+
 	if req.Options.Key.Namespace == "" {
 		return &resourcepb.ListResponse{
 			Error: NewBadRequestError("namespace must be specified for list with filter"),
@@ -25,6 +30,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 
 	var listRv int64
 	if req.NextPageToken != "" {
+		span.AddEvent("continue token present")
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return &resourcepb.ListResponse{
@@ -40,6 +46,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 	if err != nil {
 		return nil, err
 	}
+	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
 
 	// If it's the first page, set the listRv to the search response RV
 	if listRv <= 0 {
