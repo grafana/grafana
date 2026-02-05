@@ -120,7 +120,7 @@ describe('useWizardNavigation', () => {
       expect(mockNavigate).toHaveBeenCalledWith(PROVISIONING_URL);
     });
 
-    it('should skip sync step and create job when canSkipSync is true', async () => {
+    it('should skip sync step and create job in background when canSkipSync is true', async () => {
       mockCreateSyncJob.mockResolvedValue({ success: true });
       const { result } = setup({
         initialStep: 'bootstrap',
@@ -131,11 +131,12 @@ describe('useWizardNavigation', () => {
         await result.current.goToNextStep();
       });
 
-      expect(mockCreateSyncJob).toHaveBeenCalledWith(false);
+      // Job is created in background with skipStatusUpdates
+      expect(mockCreateSyncJob).toHaveBeenCalledWith(false, { skipStatusUpdates: true });
       expect(result.current.activeStep).toBe('finish');
     });
 
-    it('should not advance if createSyncJob returns falsy', async () => {
+    it('should navigate immediately even if createSyncJob fails', async () => {
       mockCreateSyncJob.mockResolvedValue(null);
       const { result } = setup({
         initialStep: 'bootstrap',
@@ -146,7 +147,10 @@ describe('useWizardNavigation', () => {
         await result.current.goToNextStep();
       });
 
-      expect(result.current.activeStep).toBe('bootstrap');
+      // Job creation is attempted but navigation happens regardless
+      expect(mockCreateSyncJob).toHaveBeenCalledWith(false, { skipStatusUpdates: true });
+      // Navigation still proceeds (fire-and-forget)
+      expect(result.current.activeStep).toBe('finish');
     });
 
     it('should navigate to provisioning URL if next step exceeds steps length', async () => {
@@ -167,6 +171,8 @@ describe('useWizardNavigation', () => {
         await result.current.goToNextStep();
       });
 
+      // Navigation proceeds to provisioning URL since finish step doesn't exist
+      // Note: Job creation is tested in the "should skip sync step" test above
       expect(mockNavigate).toHaveBeenCalledWith(PROVISIONING_URL);
     });
   });

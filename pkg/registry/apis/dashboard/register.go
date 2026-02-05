@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -965,7 +965,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	if oas.Info.Title == "dashboard.grafana.app/v0alpha1" {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 		defsBase := "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1."
-		refsBase := "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1."
+		refsBase := dashv0.OpenAPIPrefix
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
 

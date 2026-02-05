@@ -863,6 +863,7 @@
     "common": {
       "cancel": "Avbryt",
       "clear-filters": "Rensa filter",
+      "close": "",
       "delete": "Ta bort",
       "edit": "Redigera",
       "export": "Exportera",
@@ -1585,6 +1586,17 @@
       "action-button": "Importera",
       "additional-settings": "Ytterligare inställningar",
       "alert-rules": "Varningsregler",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Importera",
         "loading": "Laddar …",
@@ -1611,13 +1623,15 @@
         "label": "Datakälla",
         "required-message": "Välj en datakälla"
       },
-      "error": "Misslyckades med att importera larmregler: {{error}}",
+      "error": "",
       "group": {
         "description": "Skriv för att söka efter en befintlig grupp",
         "label": "Grupp"
       },
       "import-location-and-filters": "Importeringsplats och filter",
       "import-source": "Importera från",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Skriv för att söka efter ett befintligt namnområde",
         "label": "Namnområde"
@@ -1629,17 +1643,160 @@
       "pause-recording": {
         "label": "Pausa importerade inspelningsregler"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Inspelningsregler",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Befintliga regler hanterade av datakälla",
         "datasource-description": "Importera regler från befintliga datakällor",
         "yaml": "Prometheus YAML-fil",
         "yaml-description": "Importera regler från en Prometheus YAML-fil."
       },
-      "success": "Larmregler har importerats till Grafana-hanterade regler.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Mappen som reglerna ska importeras till",
         "label": "Målmapp"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Välj en Prometheus-kompatibel YAML-fil att importera",
@@ -1650,6 +1807,9 @@
         "target-datasource-required": "Välj en måldatakälla"
       },
       "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2619,7 +2779,8 @@
       "expand-all": "Visa alla"
     },
     "rule-list-v2": {
-      "import-to-gma": "Importera varningsregler"
+      "import-to-gma": "Importera varningsregler",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Laddar regeln …",
@@ -3465,6 +3626,10 @@
       "hosted-domain-label": "Värddomän",
       "id-token-attribute-name-description": "Namnet på nyckeln som används för att extrahera ID-token från den returnerade OAuth2-token.",
       "id-token-attribute-name-label": "ID-tokenattributnamn",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "JMESPath-uttryck som ska användas för användarens inloggningssökning från användar-ID-token.",
       "login-attribute-path-label": "Sökväg för inloggningsattribut",
       "login-prompt-consent": "Samtycke",
@@ -3531,6 +3696,8 @@
       "use-refresh-token-label": "Använd uppdateringstoken",
       "validate-hosted-domain-description": "Om det är aktiverat kontrollerar Grafana den värddomän som hämtas från Googles ID-token mot den ”{{ allowedDomainsLabel }}”-lista som användaren har specificerat.",
       "validate-hosted-domain-label": "Validera värddomänen",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Filsökvägen till tokenfilen som används för autentisering mot OAuth2-leverantören. Detta krävs endast när klientautentisering är inställd på ”workload_identity”. Standardvärdet är /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} tokenfil",
       "workload-identity-token-file-required": "Detta fält måste anges när klientautentisering är inställd på ”Workload identity”."
@@ -4869,12 +5036,6 @@
       "message": {
         "edit-dashboard-json": "Redigera instrumentpanel JSON"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Validering tillhandahålls för utvecklingsändamål och bör vara säkert att ignorera. Om du är en Grafana-utvecklare kan du överväga att kontrollera och uppdatera instrumentpanelschemat",
-      "title-checking-dashboard-validity": "Kontrollerar instrumentpanelens giltighet",
-      "title-dashboard-failed-schema-validation": "Validering av instrumentpanelens schema misslyckades",
-      "title-error-checking-dashboard-validity": "Fel vid kontroll av instrumentpanelens giltighet"
     },
     "default-layout": {
       "description": "Placera och storleksanpassa varje panel var för sig",
@@ -6480,6 +6641,9 @@
     },
     "query-editor": {
       "query": "Fråga"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10428,6 +10592,17 @@
       "label-log-stats": "{{label}}: {{total}} av {{rowCount}} rader har den etiketten"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Lista över befintliga bibliotekspaneler. Dessa paneler påverkas inte av importen."
@@ -11944,13 +12119,17 @@
       "description-clear-repository-connection": "Lägg till ett tydligt namn för den här lagringsplatsanslutningen",
       "empty": "Tom",
       "error-field-required": "Detta fält är obligatoriskt.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Visningsnamn",
       "placeholder-my-repository-connection": "Min lagringsplatsanslutning",
+      "retry-action": "",
       "text-loading-resource-information": "Läser in resursinformation …",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
       "dashboards-count_other": "{{count}} kontrollpanel",
       "files-count_one": "{{count}} filer",
@@ -12582,9 +12761,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Innan du offentliggör instrumentpanelen ska du bekräfta följande:",
@@ -12791,9 +12967,30 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""
