@@ -187,6 +187,10 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
+	// FlagDatasourceDisableIdApi
+	// Does not register datasource apis that use the numeric id
+	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
@@ -603,8 +607,16 @@ const (
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
 	// FlagKubernetesAuthZHandlerRedirect
-	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
 	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
+
+	// FlagKubernetesAuthZResourcePermissionsRedirect
+	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
+
+	// FlagKubernetesAuthZRolesRedirect
+	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
@@ -785,6 +797,10 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagKubernetesTeamsHandlerRedirect
+	// Redirects the request to teams related endpoints to the app platform API
+	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies

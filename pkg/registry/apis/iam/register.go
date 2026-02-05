@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
@@ -91,7 +92,7 @@ func RegisterAPIService(
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
-	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller)
 	registerMetrics(reg)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -163,6 +164,7 @@ func NewAPIService(
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
+	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -210,6 +212,10 @@ func NewAPIService(
 				if a.GetResource() == "resourcepermissions" {
 					// Authorization is handled by the backend wrapper
 					return authorizer.DecisionAllow, "", nil
+				}
+
+				if a.GetResource() == "teamlbacrules" {
+					return teamLBACAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
@@ -416,12 +422,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, teamBindingResource, opts.OptsGetter, grafanaregistry.SelectableFieldsOptions{
-		GetAttrs: teambinding.GetAttrs,
-	})
+
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(iamv0.TeamBindingKind()),
+	}
+	teamBindingUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme,
+		teamBindingResource, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
+
 	var teamBindingStore storewrapper.K8sStorage = teamBindingUniStore
 
 	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
@@ -882,16 +892,42 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.MutateOnCreate(ctx, typedObj)
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
+		case *iamv0.Role:
+			oldObj, ok := a.GetOldObject().(*iamv0.Role)
+			if !ok {
+				return fmt.Errorf("old object is not a Role")
+			}
+			return b.roleApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.GlobalRole:
+			oldObj, ok := a.GetOldObject().(*iamv0.GlobalRole)
+			if !ok {
+				return fmt.Errorf("old object is not a GlobalRole")
+			}
+			return b.globalRoleApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
-		return nil
+		switch oldObj := a.GetOldObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnDelete(ctx, oldObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnDelete(ctx, oldObj)
+		}
 	case admission.Connect:
-		return nil
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnConnect(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnConnect(ctx, typedObj)
+		}
 	}
 
 	return nil

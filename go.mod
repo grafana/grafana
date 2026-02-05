@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.25.6
+go 1.25.7
 
 // Direct requirements -- every entry needs an owner
 require (
@@ -89,7 +89,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20260203131350-b83e80394acc // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -119,7 +119,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
-	github.com/hashicorp/go-plugin v1.7.0 // indirect; @grafana/plugins-platform-backend
+	github.com/hashicorp/go-plugin v1.7.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.7.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-backend
 	github.com/hashicorp/hcl/v2 v2.24.0 // @grafana/alerting-backend
@@ -224,6 +224,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	k8s.io/api v0.34.3 // @grafana/grafana-app-platform-squad
+	k8s.io/apiextensions-apiserver v0.34.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.34.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.34.3 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.34.3 // @grafana/grafana-app-platform-squad
@@ -686,7 +687,6 @@ require (
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.34.3 // indirect
 	k8s.io/kms v0.34.3 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
