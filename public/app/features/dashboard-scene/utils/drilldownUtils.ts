@@ -7,7 +7,7 @@ import { getDatasourceFromQueryRunner } from './utils';
 
 export function verifyDrilldownApplicability(
   sourceObject: SceneObject,
-  queriesDataSource: DataSourceRef | undefined,
+  queriesDataSource: DataSourceRef | null | undefined,
   drilldownDatasource: DataSourceRef | null,
   isApplicabilityEnabled?: boolean
 ): boolean {
