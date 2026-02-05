@@ -214,16 +214,10 @@ const UnthemedCascader = ({
       ...prev,
       isSearching: false,
       focusCascade: false,
+      ...(prev.activeLabel === '' && { rcValue: [] }),
     }));
-
-    if (cascaderState.activeLabel === '') {
-      setCascaderState((prev) => ({
-        ...prev,
-        rcValue: [],
-      }));
-    }
     onBlur?.();
-  }, [cascaderState.activeLabel, onBlur]);
+  }, [onBlur]);
 
   const handleBlurCascade = React.useCallback(() => {
     setCascaderState((prev) => ({
