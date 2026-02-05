@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
@@ -31,8 +30,10 @@ var (
 
 // wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
 // to treat them as warnings rather than hard errors. This includes:
-// - Dashboard validation errors (e.g., refresh interval too low)
 // - Kubernetes field validation errors
+// - Dashboard validation errors (all DashboardErr types)
+// - Duplicate resource errors
+// - Resource already in repository errors
 func wrapAsValidationErrorIfNeeded(err error) error {
 	if err == nil {
 		return nil
@@ -50,13 +51,15 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 		return NewResourceValidationError(err)
 	}
 
-	// Check if it's a dashboard validation error
+	// Check if it's a dashboard validation error (wrap all dashboard errors as validation errors)
 	var dashboardErr dashboardaccess.DashboardErr
 	if errors.As(err, &dashboardErr) {
-		// Only wrap specific dashboard validation errors, not all dashboard errors
-		if dashboardErr.Equal(dashboards.ErrDashboardRefreshIntervalTooShort) {
-			return NewResourceValidationError(err)
-		}
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a duplicate name error or already in repository error
+	if errors.Is(err, ErrDuplicateName) || errors.Is(err, ErrAlreadyInRepository) {
+		return NewResourceValidationError(err)
 	}
 
 	return err

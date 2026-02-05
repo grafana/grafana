@@ -70,10 +70,12 @@ func (r *jobProgressRecorder) Started() time.Time {
 }
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
-	var shouldLogError bool
-	var shouldLogWarning bool
-	var logErr error
-	var logWarning error
+	var (
+		shouldLogError   bool
+		shouldLogWarning bool
+		logErr           error
+		logWarning       error
+	)
 
 	r.mu.Lock()
 	r.resultCount++
