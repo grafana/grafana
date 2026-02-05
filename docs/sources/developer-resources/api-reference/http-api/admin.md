@@ -666,29 +666,21 @@ Content-Type: application/json
 
 ## Reload LDAP configuration
 
+{{% admonition type="warning" %}}
+This endpoint has been made obsolete in Grafana 12.4.0.
+{{% /admonition %}}
+
+This endpoint is obsolete and has been removed from the Admin API. It is no longer needed because SSO settings automatically reloads the LDAP settings from the database or from the .toml file.
+
 `POST /api/admin/ldap/reload`
-
-Reloads the LDAP configuration.
-
-Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
-
-**Example Request**:
-
-```http
-POST /api/admin/ldap/reload HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-```
 
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 410
 Content-Type: application/json
 
-{
-  "message": "LDAP config reloaded"
-}
+{"message":"this endpoint has been removed, it is no longer needed after the LDAP configuration is loaded from the SSO settings"}
 ```
 
 ## Rotate data encryption keys
