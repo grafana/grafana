@@ -67,9 +67,7 @@ export function PanelGroupByActionPopover({
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
         <Stack direction="column">
-          <div
-            className={styles.searchContainer}
-          >
+          <div className={styles.searchContainer}>
             <FilterInput
               placeholder={t('panel-group-by.search-placeholder', 'Search')}
               value={searchValue}
