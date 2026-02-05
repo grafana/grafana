@@ -6,6 +6,7 @@ import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 import { ROUTES_META_SYMBOL, Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
+import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
 import { useExportRoutingTree } from '../useExportRoutingTree';
 import { isRouteProvisioned, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
@@ -40,7 +41,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   actions.push(
     <LinkButton
       key="view-routing-tree"
-      href={`/alerting/routes/policy/${encodeURIComponent(route.name ?? '')}/edit`}
+      href={createRelativeUrl(`/alerting/routes/policy/${encodeURIComponent(route.name ?? '')}/edit`)}
       variant="secondary"
       size="sm"
       icon={canEdit ? 'pen' : 'eye'}
