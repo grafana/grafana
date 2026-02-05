@@ -145,9 +145,19 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const menu = (
     <Menu>
-      {canShowPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
-      {showManageOwners && <MenuItem onClick={() => setShowManageOwnersModal(true)} label={manageOwnersLabel} />}
-      {canMoveFolder && (
+      {canViewPermissions && !isProvisionedFolder && (
+        <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
+      )}
+      {showManageOwners && (
+        <MenuItem
+          onClick={() => {
+            reportInteraction('grafana_folder_actions_manage_owners_clicked');
+            setShowManageOwnersModal(true);
+          }}
+          label={manageOwnersLabel}
+        />
+      )}
+      {canMoveFolder && !isReadOnlyRepo && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
           label={moveLabel}
