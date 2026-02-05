@@ -461,6 +461,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourceDisableIdApi",
+			Description:     "Does not register datasource apis that use the numeric id",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // affects the routes at startup
+			Expression:      "false",
+		},
+		{
 			Name:            "queryService",
 			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
