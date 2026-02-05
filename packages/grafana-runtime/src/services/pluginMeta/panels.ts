@@ -43,7 +43,7 @@ export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginM
 }
 
 /**
- * Check if a panel plugin is installed. The function does not check if the panel plugin is enabled.
+ * Check if a panel plugin is installed.
  * @param pluginId - The id of the panel plugin.
  * @returns True if the panel plugin is installed, false otherwise.
  */

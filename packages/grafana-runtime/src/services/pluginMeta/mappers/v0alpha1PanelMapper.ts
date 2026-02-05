@@ -1,7 +1,5 @@
 import {
-  type AngularMeta,
   type PanelPluginMeta,
-  PluginLoadingStrategy,
   type PluginMetaInfo,
   PluginSignatureStatus,
   PluginState,
@@ -10,6 +8,8 @@ import {
 
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
+
+import { angularMapper, loadingStrategyMapper } from './shared';
 
 function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
   const { logos, updated, version, description = '', keywords } = spec.pluginJson.info;
@@ -55,15 +55,6 @@ function stateMapper(spec: v0alpha1Spec): PluginState | undefined {
   }
 
   return;
-}
-
-function loadingStrategyMapper(spec: v0alpha1Spec): PluginLoadingStrategy {
-  const loadingStrategy = spec.module?.loadingStrategy ?? PluginLoadingStrategy.fetch;
-  if (loadingStrategy === PluginLoadingStrategy.script) {
-    return PluginLoadingStrategy.script;
-  }
-
-  return PluginLoadingStrategy.fetch;
 }
 
 const idToSortMap: Record<string, number> = {
@@ -125,8 +116,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const module = spec.module?.path ?? '';
   const baseUrl = spec.baseURL ?? '';
   const signature = signatureMapper(spec);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const angular = {} as AngularMeta;
+  const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module?.hash;
 
