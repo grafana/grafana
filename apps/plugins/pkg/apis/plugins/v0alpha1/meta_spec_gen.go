@@ -213,12 +213,12 @@ func NewMetaExtensions() *MetaExtensions {
 
 // +k8s:openapi-gen=true
 type MetaSpec struct {
-	PluginJson   MetaJSONData               `json:"pluginJson"`
-	Class        MetaSpecClass              `json:"class"`
-	Module       *MetaV0alpha1SpecModule    `json:"module,omitempty"`
-	BaseURL      *string                    `json:"baseURL,omitempty"`
-	Signature    *MetaV0alpha1SpecSignature `json:"signature,omitempty"`
-	Translations map[string]string          `json:"translations,omitempty"`
+	PluginJson   MetaJSONData              `json:"pluginJson"`
+	Class        MetaSpecClass             `json:"class"`
+	Module       MetaV0alpha1SpecModule    `json:"module"`
+	BaseURL      string                    `json:"baseURL"`
+	Signature    MetaV0alpha1SpecSignature `json:"signature"`
+	Translations map[string]string         `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
 }
@@ -227,6 +227,8 @@ type MetaSpec struct {
 func NewMetaSpec() *MetaSpec {
 	return &MetaSpec{
 		PluginJson: *NewMetaJSONData(),
+		Module:     *NewMetaV0alpha1SpecModule(),
+		Signature:  *NewMetaV0alpha1SpecSignature(),
 	}
 }
 
@@ -502,9 +504,9 @@ func NewMetaV0alpha1ExtensionsExtensionPoints() *MetaV0alpha1ExtensionsExtension
 
 // +k8s:openapi-gen=true
 type MetaV0alpha1SpecModule struct {
-	Path            string                                 `json:"path"`
-	Hash            *string                                `json:"hash,omitempty"`
-	LoadingStrategy *MetaV0alpha1SpecModuleLoadingStrategy `json:"loadingStrategy,omitempty"`
+	Path            string                                `json:"path"`
+	Hash            *string                               `json:"hash,omitempty"`
+	LoadingStrategy MetaV0alpha1SpecModuleLoadingStrategy `json:"loadingStrategy"`
 }
 
 // NewMetaV0alpha1SpecModule creates a new MetaV0alpha1SpecModule object.

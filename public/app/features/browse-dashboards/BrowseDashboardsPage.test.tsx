@@ -113,6 +113,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
+    it('shows the "Recently deleted" button when restore is enabled', async () => {
+      const previousFlag = config.featureToggles.restoreDashboards;
+      config.featureToggles.restoreDashboards = true;
+
+      render(<BrowseDashboardsPage queryParams={{}} />);
+      await screen.findByPlaceholderText('Search for dashboards and folders');
+      expect(await screen.findByRole('link', { name: 'Recently deleted' })).toBeInTheDocument();
+
+      config.featureToggles.restoreDashboards = previousFlag;
+    });
+
     it('does not show the "New" button if the user does not have permissions', async () => {
       mockPermissions.canCreateDashboards = false;
       mockPermissions.canCreateFolders = false;

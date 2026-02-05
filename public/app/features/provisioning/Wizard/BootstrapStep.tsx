@@ -4,18 +4,24 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { UPGRADE_URL } from '../constants';
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
+
+// TODO use the limits from the API when they are available
+const FREE_TIER_FOLDER_RESOURCE_LIMIT = 20;
 
 export interface Props {
   settingsData?: RepositoryViewList;
@@ -35,10 +41,33 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
   const selectedTarget = watch('repository.sync.target');
   const repositoryType = watch('repository.type');
-  const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
+  const { enabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions?.[0];
-  const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, selectedTarget);
+
+  const {
+    isReady: isRepositoryReady,
+    isLoading: isRepositoryStatusLoading,
+    hasError: repositoryStatusError,
+    refetch: retryRepositoryStatus,
+    isHealthy: isRepositoryHealthy,
+  } = useRepositoryStatus(repoName);
+
+  const {
+    resourceCountString,
+    fileCountString,
+    resourceCount,
+    isLoading: isResourceStatsLoading,
+  } = useResourceStats(repoName, selectedTarget, undefined, {
+    enableRepositoryStatus: false,
+    isHealthy: isRepositoryHealthy,
+  });
+
+  const isQuotaExceeded = Boolean(
+    isFreeTierLicense() && selectedTarget === 'folder' && resourceCount > FREE_TIER_FOLDER_RESOURCE_LIMIT
+  );
   const styles = useStyles2(getStyles);
+
+  const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -48,14 +77,60 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }, [getValues, setValue]);
 
   useEffect(() => {
-    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
-  }, [isLoading, setStepStatusInfo]);
+    // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
+    if (repositoryStatusError || isRepositoryHealthy === false) {
+      setStepStatusInfo({
+        status: 'error',
+        error: {
+          title: t(
+            'provisioning.bootstrap-step.error-repository-status-unhealthy-title',
+            'Repository status unhealthy'
+          ),
+          message: t(
+            'provisioning.bootstrap-step.error-repository-status-unhealthy-message',
+            'There was an issue connecting to the repository. Please check the repository settings and try again.'
+          ),
+        },
+        action: {
+          label: t('provisioning.bootstrap-step.retry-action', 'Retry'),
+          onClick: retryRepositoryStatus,
+        },
+      });
+    } else if (isQuotaExceeded) {
+      setStepStatusInfo({
+        status: 'error',
+        error: {
+          title: t('provisioning.bootstrap-step.error-quota-exceeded-title', 'Resource quota exceeded'),
+          message: t(
+            'provisioning.bootstrap-step.error-quota-exceeded-message',
+            'The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.',
+            { resourceCount, limit: FREE_TIER_FOLDER_RESOURCE_LIMIT }
+          ),
+        },
+        action: {
+          label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
+          href: UPGRADE_URL,
+          external: true,
+        },
+      });
+    } else {
+      setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
+    }
+  }, [
+    isLoading,
+    setStepStatusInfo,
+    repositoryStatusError,
+    retryRepositoryStatus,
+    isRepositoryHealthy,
+    isQuotaExceeded,
+    resourceCount,
+  ]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);
   }, [target, setValue]);
 
-  if (isLoading) {
+  if (!repositoryStatusError && isLoading) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
@@ -63,6 +138,11 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         />
       </Box>
     );
+  }
+
+  if (repositoryStatusError || isRepositoryHealthy === false || isQuotaExceeded) {
+    // error message and retry will be set in above step status
+    return null;
   }
 
   return (
@@ -140,28 +220,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             />
           </Field>
         )}
-
-        {disabledOptions?.length > 0 && (
-          <>
-            {/* Unavailable options */}
-            <Box marginTop={3}>
-              <Text variant="h4">
-                {t('provisioning.bootstrap-step.unavailable-options.title', 'Unavailable options')}
-              </Text>
-            </Box>
-            {disabledOptions?.map((action) => (
-              <Card key={action.target} noMargin disabled={action.disabled}>
-                <Card.Heading>
-                  <Text variant="h5">{action.label}</Text>
-                </Card.Heading>
-                <Card.Description>
-                  <div className={styles.divider} />
-                  <Icon name="info-circle" className={styles.infoIcon} /> {action.disabledReason}
-                </Card.Description>
-              </Card>
-            ))}
-          </>
-        )}
       </Stack>
     </Stack>
   );
@@ -174,10 +232,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.border.medium,
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
-  }),
-  infoIcon: css({
-    color: theme.colors.primary.main,
-    marginRight: theme.spacing(0.25),
-    marginBottom: theme.spacing(0.25),
   }),
 });

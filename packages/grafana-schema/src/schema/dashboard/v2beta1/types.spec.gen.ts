@@ -1158,6 +1158,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
