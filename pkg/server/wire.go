@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -121,6 +122,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
+	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -241,6 +243,10 @@ var wireBasicSet = wire.NewSet(
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
 	legacy.ProvideMigratorDashboardAccessor,
+	legacy.ProvidePlaylistMigrator,
+	dashboardmigration.NewDashboardFolderRegistrar,
+	playlistmigration.NewPlaylistRegistrar,
+	provideMigrationRegistrars,
 	unifiedmigrations.ProvideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -571,4 +577,18 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
 	wire.Build(wireExtsSet)
 	return &unifiedsearch.StandardDocumentBuilders{}, nil
+}
+
+/*
+provideMigrationRegistrars collects all migration registrars for Wire.
+This function lives in the server package because it imports concrete
+registrar types from multiple packages (migrations, playlist, etc.).
+When adding a new resource migration, add the registrar parameter here
+and append it to the returned slice.
+*/
+func provideMigrationRegistrars(
+	dashFolders *dashboardmigration.DashboardFolderRegistrar,
+	playlists *playlistmigration.PlaylistRegistrar,
+) []unifiedmigrations.MigrationRegistrar {
+	return []unifiedmigrations.MigrationRegistrar{dashFolders, playlists}
 }

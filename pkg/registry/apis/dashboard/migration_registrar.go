@@ -1,0 +1,45 @@
+package dashboard
+
+import (
+	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+/*
+DashboardFolderRegistrar registers the folders and dashboards migration.
+This is owned by the dashboard team and uses the MigrationDashboardAccessor
+to stream folder and dashboard resources from legacy SQL storage.
+*/
+type DashboardFolderRegistrar struct {
+	accessor legacy.MigrationDashboardAccessor
+}
+
+func NewDashboardFolderRegistrar(accessor legacy.MigrationDashboardAccessor) *DashboardFolderRegistrar {
+	return &DashboardFolderRegistrar{accessor: accessor}
+}
+
+func (r *DashboardFolderRegistrar) RegisterMigrations(registry *migrations.MigrationRegistry) {
+	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
+	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
+
+	registry.Register(migrations.MigrationDefinition{
+		ID:          "folders-dashboards",
+		MigrationID: "folders and dashboards migration",
+		Resources: []migrations.ResourceInfo{
+			{GroupResource: folderGR, LockTable: "folder"},
+			{GroupResource: dashboardGR, LockTable: "dashboard"},
+		},
+		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+			folderGR:    r.accessor.MigrateFolders,
+			dashboardGR: r.accessor.MigrateDashboards,
+		},
+		Validators: []migrations.ValidatorFactory{
+			migrations.CountValidation(folderGR, "dashboard", "org_id = ? AND is_folder = true AND deleted IS NULL"),
+			migrations.CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
+			migrations.FolderTreeValidation(folderGR),
+		},
+	})
+}
