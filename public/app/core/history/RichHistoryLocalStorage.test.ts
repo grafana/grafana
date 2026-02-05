@@ -304,5 +304,79 @@ describe('RichHistoryLocalStorage', () => {
         expect(total).toBe(1);
       });
     });
+
+    describe('migrateRichHistory filtering', () => {
+      it('should filter out entries missing required properties', async () => {
+        store.setObject(key, [
+          {
+            ts: 1760399401374,
+            // missing datasourceName, starred, comment, queries
+          },
+          {
+            ts: 1760399401375,
+            datasourceName: 'name-of-dev-test',
+            // missing starred, comment, queries
+          },
+          {
+            ts: 1760399401376,
+            datasourceName: 'name-of-dev-test',
+            starred: true,
+            // missing comment, queries
+          },
+          {
+            ts: 1760399401377,
+            datasourceName: 'name-of-dev-test',
+            starred: true,
+            comment: 'test',
+            // missing queries
+          },
+          {
+            ts: 1760399401378,
+            datasourceName: 'name-of-dev-test',
+            starred: true,
+            comment: 'test',
+            queries: 'not an array', // wrong type
+          },
+          {
+            // valid entry
+            ts: 1760399401379,
+            datasourceName: 'name-of-dev-test',
+            starred: false,
+            comment: 'valid entry',
+            queries: [{ refId: 'A', query: 'test query' }],
+          },
+        ]);
+
+        const { richHistory, total } = await storage.getRichHistory(mockFilters);
+        // Only the valid entry should remain
+        expect(richHistory).toHaveLength(1);
+        expect(total).toBe(1);
+        expect(richHistory[0]).toMatchObject({
+          id: '1760399401379',
+          createdAt: 1760399401379,
+          datasourceName: 'name-of-dev-test',
+          starred: false,
+          comment: 'valid entry',
+          queries: [{ refId: 'A', query: 'test query' }],
+        });
+      });
+
+      it('should handle empty queries array', async () => {
+        store.setObject(key, [
+          {
+            ts: 2000,
+            datasourceName: 'name-of-dev-test',
+            starred: false,
+            comment: 'empty queries',
+            queries: [],
+          },
+        ]);
+
+        const { richHistory, total } = await storage.getRichHistory(mockFilters);
+        expect(richHistory).toHaveLength(1);
+        expect(total).toBe(1);
+        expect(richHistory[0].queries).toEqual([]);
+      });
+    });
   });
 });
