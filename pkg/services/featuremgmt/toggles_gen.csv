@@ -56,6 +56,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-11,dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2025-07-30,scanRowInvalidDashboardParseFallbackEnabled,experimental,@grafana/search-and-storage,false,false,false
 2024-05-23,datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-01-22,datasourceDisableIdApi,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryService,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2025-08-28,queryServiceWithConnections,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false
