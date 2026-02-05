@@ -41,7 +41,6 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
-  editPreviewRef?: SceneObjectRef<VizPanel>;
 }
 
 interface PluginOptionsCache {
@@ -138,10 +137,8 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 }
 
 function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
-  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz, editPreviewRef } =
-    model.useState();
+  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz } = model.useState();
   const panel = panelRef.resolve();
-  const editPreview = editPreviewRef?.resolve() ?? panel; // if something goes wrong, at least update the panel.
   const { pluginId } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
   const styles = useStyles2(getStyles);
@@ -232,7 +229,6 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
       {isVizPickerOpen && (
         <PanelVizTypePicker
           panel={panel}
-          editPreview={editPreview}
           onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}

@@ -34,7 +34,6 @@ export interface Props {
   data?: PanelData;
   showBackButton?: boolean;
   panel: VizPanel;
-  editPreview: VizPanel;
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
   isNewPanel?: boolean;
@@ -54,7 +53,7 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     : [allVisualizationsTab, suggestionsTab];
 };
 
-export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
+export function PanelVizTypePicker({ panel, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
@@ -159,7 +158,6 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
               <VisualizationSuggestions
                 onChange={onChange}
                 panel={panelModel}
-                editPreview={editPreview}
                 data={data}
                 searchQuery={searchQuery}
                 isNewPanel={isNewPanel}
