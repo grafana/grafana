@@ -146,6 +146,9 @@ RefreshPickerComponent.displayName = 'RefreshPicker';
 
 export const RefreshPicker = Object.assign(RefreshPickerComponent, {
   isLive: (refreshInterval?: string): boolean => refreshInterval === liveOption.value,
+  liveOption,
+  offOption,
+  autoOption,
 });
 
 export const translateOption = (option: string) => {
