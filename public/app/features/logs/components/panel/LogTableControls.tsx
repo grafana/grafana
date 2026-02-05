@@ -99,12 +99,6 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       minWidth: theme.spacing(4),
       backgroundColor: theme.colors.background.primary,
     }),
-    scrollToTopButton: css({
-      margin: 0,
-      marginTop: 'auto',
-      color: theme.colors.text.secondary,
-      height: theme.spacing(2),
-    }),
     controlsExpandedButton: css({
       transform: !controlsExpanded ? 'rotate(180deg)' : '',
     }),
@@ -112,39 +106,6 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
-    }),
-    divider: css({
-      borderTop: `solid 1px ${theme.colors.border.medium}`,
-      height: 1,
-      marginTop: theme.spacing(-0.25),
-      marginBottom: theme.spacing(-1.75),
-    }),
-    controlButtonActive: css({
-      margin: 0,
-      color: theme.colors.text.secondary,
-      height: theme.spacing(2),
-      '&:after': {
-        display: 'block',
-        content: '" "',
-        position: 'absolute',
-        height: 2,
-        borderRadius: theme.shape.radius.default,
-        bottom: theme.spacing(-1),
-        backgroundImage: theme.colors.gradients.brandHorizontal,
-        width: theme.spacing(2.25),
-        opacity: 1,
-      },
-    }),
-    menuItemActive: css({
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        top: theme.spacing(0.5),
-        height: `calc(100% - ${theme.spacing(1)})`,
-        width: '2px',
-        backgroundColor: theme.colors.warning.main,
-      },
     }),
   };
 };
