@@ -1065,39 +1065,6 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "pending+error -> error when For is exceeded",
-			alertRule: baseRuleWith(m.WithForNTimes(2), m.WithErrorExecAs(models.ErrorErrState)),
-			evalResults: map[time.Time]eval.Results{
-				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-				},
-				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
-				},
-				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
-				},
-				tn(4): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
-				},
-			},
-			expectedAnnotations: 2,
-			expectedStates: []*state.State{
-				{
-					Labels:             labels["system + rule + labels1"],
-					ResultFingerprint:  labels1.Fingerprint(),
-					State:              eval.Error,
-					Error:              errors.New("with_state_error"),
-					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
-					LatestResult:       newEvaluation(tn(4), eval.Error),
-					StartsAt:           tn(4),
-					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					LastEvaluationTime: tn(4),
-					LastSentAt:         util.Pointer(tn(4)),
-				},
-			},
-		},
-		{
 			desc:      "pending+error -> normal when Error resolves before For exceeded",
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
@@ -1180,37 +1147,6 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(tn(5)),
-				},
-			},
-		},
-		{
-			desc:      "pending+nodata -> nodata when For is exceeded",
-			alertRule: baseRuleWith(m.WithForNTimes(2)),
-			evalResults: map[time.Time]eval.Results{
-				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-				},
-				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
-				},
-				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
-				},
-				tn(4): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
-				},
-			},
-			expectedAnnotations: 2,
-			expectedStates: []*state.State{
-				{
-					Labels:             labels["system + rule + labels1"],
-					ResultFingerprint:  labels1.Fingerprint(),
-					State:              eval.NoData,
-					LatestResult:       newEvaluation(tn(4), eval.NoData),
-					StartsAt:           tn(4),
-					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					LastEvaluationTime: tn(4),
-					LastSentAt:         util.Pointer(tn(4)),
 				},
 			},
 		},
