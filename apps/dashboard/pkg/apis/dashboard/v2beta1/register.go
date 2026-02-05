@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
@@ -42,34 +43,6 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"librarypanels", "librarypanel", "LibraryPanel",
-	func() runtime.Object { return &LibraryPanel{} },
-	func() runtime.Object { return &LibraryPanelList{} },
-	utils.TableColumns{
-		Definition: []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Description: "The dashboard name"},
-			{Name: "Type", Type: "string", Description: "the panel type"},
-			{Name: "Created At", Type: "date"},
-		},
-		Reader: func(obj any) ([]interface{}, error) {
-			panel, ok := obj.(*LibraryPanel)
-			if ok {
-				if panel != nil {
-					return []interface{}{
-						panel.Name,
-						panel.Spec.Title,
-						panel.Spec.Type,
-						panel.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
-			}
-			return nil, fmt.Errorf("expected library panel")
-		},
-	},
-)
-
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -87,10 +60,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Dashboard{},
 		&DashboardList{},
 		&DashboardWithAccessInfo{},
-		&DashboardVersionList{},
-		&VersionsQueryOptions{},
-		&LibraryPanel{},
-		&LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)

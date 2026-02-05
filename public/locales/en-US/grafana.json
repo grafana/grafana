@@ -1696,6 +1696,10 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
+        "extra-config-conflict-desc": "There is already an uncommitted imported configuration named \"{{identifier}}\". To proceed, either use \"{{identifier}}\" as your policy tree name to replace it, or commit/discard the existing configuration first.",
+        "extra-config-conflict-title": "Cannot import notification resources",
+        "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
+        "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
@@ -2100,7 +2104,11 @@
     },
     "navigation": {
       "alert-rules": "Alert rules",
-      "recently-deleted": "Recently deleted"
+      "contact-points": "Contact points",
+      "notification-policies": "Notification policies",
+      "recently-deleted": "Recently deleted",
+      "templates": "Templates",
+      "time-intervals": "Time intervals"
     },
     "need-help-info": {
       "need-help": "Need help?"
@@ -3163,6 +3171,10 @@
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
+    "templates-page": {
+      "add-template": "Add notification template group",
+      "description": "Create notification templates to customize your notifications."
+    },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
       "title-drawer": "Edit {{name}}",
@@ -3207,7 +3219,8 @@
       "error-loading": {
         "description": "Could not load time intervals. Please try again later.",
         "title": "Error loading time intervals"
-      }
+      },
+      "title": "Time intervals"
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
@@ -6638,6 +6651,9 @@
     "query-editor": {
       "query": "Query"
     },
+    "query-editor-content": {
+      "content-body-goes-here": "Content body goes here!"
+    },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
@@ -8273,7 +8289,7 @@
       "bar-shape": "Bar Style",
       "bar-shape-flat": "Flat",
       "bar-shape-rounded": "Rounded",
-      "bar-width": "Bar width",
+      "bar-width": "Bar width factor",
       "effects": {
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
@@ -8301,7 +8317,7 @@
       "text-mode-name": "Name",
       "text-mode-none": "None",
       "text-mode-value": "Value",
-      "text-mode-value-and-name": "Value and Name",
+      "text-mode-value-and-name": "Value and name",
       "threshold-labels": "Show labels",
       "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
@@ -10585,6 +10601,17 @@
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
     }
   },
+  "logstable": {
+    "category-table": "Logs Table",
+    "show-copy-log": {
+      "description": "Enables/disables the log line link button in the first column of each row",
+      "name": "Show copy log link button"
+    },
+    "show-inspect-button": {
+      "description": "Enables/disables the log line inspect button in the first column of each row",
+      "name": "Show inspect button"
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "List of existing library panels. These panels are not affected by the import."
@@ -12035,19 +12062,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "custom-value-description": "Press Enter to create new branch",
+      "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
+      "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-path": "Path",
-      "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
-      "placeholder-new-branch": "Enter new branch name",
       "suffix-configured-branch": "Configured branch",
       "suffix-last-used": "Last branch",
-      "suffix-pr-branch": "Pull request branch"
+      "suffix-pr-branch": "Pull request branch",
+      "suffix-read-only-branch": " (read-only)"
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12103,6 +12132,8 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "error-quota-exceeded-message": "The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.",
+      "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
@@ -12112,8 +12143,11 @@
       "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
+      "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
-      "unmanaged-resources-label": "Unmanaged resources"
+      "text-waiting-for-repository-health": "Checking repository health...",
+      "unmanaged-resources-label": "Unmanaged resources",
+      "upgrade-action": "Upgrade account"
     },
     "check-repository": {
       "check": "Check"
@@ -12733,14 +12767,7 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "Push to a new branch",
-      "push-to-existing-branch": "Push to an existing branch"
     }
-  },
-  "provisioning-alert": {
-    "retry": "Retry"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12948,9 +12975,30 @@
   },
   "query-editor": {
     "action": {
-      "inspector": "Query inspector"
+      "coming-soon": "Transformation actions coming soon",
+      "duplicate": "Duplicate query",
+      "hide": "Hide response",
+      "hide-help": "Hide data source help",
+      "inspector": "Query inspector",
+      "more-actions": "More actions",
+      "remove-query": "Remove query",
+      "remove-transformation": "Remove transformation",
+      "show": "Show response",
+      "show-help": "Show data source help"
     },
     "edit-query-name": "Edit query name",
+    "header": {
+      "expression": "Expression",
+      "transformation": "Transformation",
+      "warning-badges": {
+        "text_one": "{{count}} {{type}}",
+        "text_other": "{{count}} {{type}}"
+      }
+    },
+    "help": {
+      "close": "Close help",
+      "close-aria": "Close help panel"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"

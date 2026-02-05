@@ -11,7 +11,6 @@ import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
@@ -24,6 +23,7 @@ import { MoveModal } from './BrowseActions/MoveModal';
 
 interface Props {
   folder: FolderDTO;
+  /* If the folder is managed by a provisioned repo and is read-only */
   isReadOnlyRepo?: boolean;
   repoType?: RepoType;
 }
@@ -39,12 +39,21 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const deleteFolder = useDeleteFolderMutationFacade();
 
-  const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
+  const {
+    canEditFolders,
+    canDeleteFolders: canDeleteFoldersPermissions,
+    canViewPermissions,
+    canSetPermissions,
+  } = getFolderPermissions(folder);
+
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
-  // When its single provisioned folder, cannot move the root repository folder
   const isProvisionedRootFolder = isProvisionedFolder && !isProvisionedInstance && folder.parentUid === undefined;
   // Can only move folders when the folder is not provisioned
-  const canMoveFolder = canEditFolders && !isProvisionedRootFolder;
+  const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
+  // Can only delete folders when the folder has the right permission and is not provisioned root folder
+  const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
+  // Show permissions only if the folder is not provisioned
+  const canShowPermissions = canViewPermissions && !isProvisionedFolder;
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
@@ -136,17 +145,15 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const menu = (
     <Menu>
-      {canViewPermissions && !isProvisionedFolder && (
-        <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
-      )}
+      {canShowPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {showManageOwners && <MenuItem onClick={() => setShowManageOwnersModal(true)} label={manageOwnersLabel} />}
-      {canMoveFolder && !isReadOnlyRepo && (
+      {canMoveFolder && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
           label={moveLabel}
         />
       )}
-      {canDeleteFolders && !isReadOnlyRepo && (
+      {canDeleteFolders && (
         <MenuItem
           destructive
           onClick={isProvisionedFolder ? showDeleteProvisionedModal : showDeleteModal}
@@ -156,22 +163,14 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     </Menu>
   );
 
-  if (!canViewPermissions && !canMoveFolder && !canDeleteFolders) {
+  if (!canShowPermissions && !canMoveFolder && !canDeleteFolders) {
     return null;
   }
 
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button
-          variant="secondary"
-          disabled={isReadOnlyRepo && !canViewPermissions}
-          tooltip={
-            isReadOnlyRepo && !canViewPermissions
-              ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
-              : undefined
-          }
-        >
+        <Button variant="secondary" disabled={isReadOnlyRepo && !canViewPermissions}>
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
