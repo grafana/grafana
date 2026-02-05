@@ -1461,9 +1461,7 @@ func TestQuery_StartQuery_WithNamePrefixScope(t *testing.T) {
 
 		assert.NoError(t, err)
 		require.Len(t, cli.calls.startQuery, 1)
-		assert.Contains(t, *cli.calls.startQuery[0].QueryString, "SOURCE logGroups(namePrefix: ['/aws/lambda'])")
-		assert.Contains(t, *cli.calls.startQuery[0].QueryString, logIdentifierInternal)
-		assert.Contains(t, *cli.calls.startQuery[0].QueryString, logStreamIdentifierInternal)
+		assert.Equal(t, "SOURCE logGroups(namePrefix: ['/aws/lambda']) | fields @timestamp,ltrim(@log) as "+logIdentifierInternal+",ltrim(@logStream) as "+logStreamIdentifierInternal+"|fields @message", *cli.calls.startQuery[0].QueryString)
 	})
 
 	t.Run("injects SOURCE clause for allLogGroups scope", func(t *testing.T) {
@@ -1489,9 +1487,7 @@ func TestQuery_StartQuery_WithNamePrefixScope(t *testing.T) {
 
 		assert.NoError(t, err)
 		require.Len(t, cli.calls.startQuery, 1)
-		assert.Contains(t, *cli.calls.startQuery[0].QueryString, "SOURCE logGroups()")
-		assert.Contains(t, *cli.calls.startQuery[0].QueryString, logIdentifierInternal)
-		assert.Contains(t, *cli.calls.startQuery[0].QueryString, logStreamIdentifierInternal)
+		assert.Equal(t, "SOURCE logGroups() | fields @timestamp,ltrim(@log) as "+logIdentifierInternal+",ltrim(@logStream) as "+logStreamIdentifierInternal+"|fields @message", *cli.calls.startQuery[0].QueryString)
 	})
 
 	t.Run("returns error when query already contains SOURCE command", func(t *testing.T) {
@@ -1544,7 +1540,7 @@ func TestQuery_StartQuery_WithNamePrefixScope(t *testing.T) {
 
 		assert.NoError(t, err)
 		require.Len(t, cli.calls.startQuery, 1)
-		assert.NotContains(t, *cli.calls.startQuery[0].QueryString, "SOURCE")
+		assert.Equal(t, "fields @timestamp,ltrim(@log) as "+logIdentifierInternal+",ltrim(@logStream) as "+logStreamIdentifierInternal+"|fields @message", *cli.calls.startQuery[0].QueryString)
 	})
 }
 
