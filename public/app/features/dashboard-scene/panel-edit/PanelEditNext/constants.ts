@@ -35,3 +35,9 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
   },
 } as const;
+
+/**
+ * Default placeholder for time-related inputs (relative time, time shift).
+ * This is a common example value shown when no value is set.
+ */
+export const TIME_OPTION_PLACEHOLDER = '1h';

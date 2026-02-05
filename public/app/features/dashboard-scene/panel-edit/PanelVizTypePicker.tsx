@@ -38,6 +38,7 @@ export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
   isNewPanel?: boolean;
+  hasPickedViz?: boolean;
 }
 
 const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> => {
@@ -54,7 +55,16 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     : [allVisualizationsTab, suggestionsTab];
 };
 
-export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
+export function PanelVizTypePicker({
+  panel,
+  editPreview,
+  data,
+  onChange,
+  onClose,
+  showBackButton,
+  isNewPanel,
+  hasPickedViz,
+}: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
@@ -83,7 +93,13 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
   /** TABS */
   const tabs = useMemo(getTabs, []);
   const defaultTab = tabs[0].value;
-  const [listMode, setListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
+  const [storedListMode, setStoredListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
+
+  const shouldDefaultToSuggestions =
+    (isNewPanel && !hasPickedViz && config.featureToggles.newVizSuggestions) ||
+    storedListMode === VisualizationSelectPaneTab.Suggestions;
+  const initialTab = shouldDefaultToSuggestions ? VisualizationSelectPaneTab.Suggestions : storedListMode;
+  const [listMode, setListMode] = useState(initialTab);
 
   const handleListModeChange = useCallback(
     (value: VisualizationSelectPaneTab) => {
@@ -94,8 +110,9 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
         schema_version: '1.0.0',
       });
       setListMode(value);
+      setStoredListMode(value);
     },
-    [setListMode]
+    [setListMode, setStoredListMode]
   );
 
   const handleBackButtonClick = useCallback(() => {

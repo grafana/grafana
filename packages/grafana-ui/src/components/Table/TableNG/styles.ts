@@ -46,6 +46,10 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
         '&:last-child': {
           borderInlineEnd: 'none',
         },
+
+        '&[aria-selected="true"][role="columnheader"]': {
+          outline: 'none',
+        },
       },
 
       // add a box shadow on hover and selection for all body cells

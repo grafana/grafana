@@ -1,4 +1,5 @@
 import { DataQuery, store } from '@grafana/data';
+import { createMonitoringLogger, MonitoringLogger } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
@@ -25,7 +26,14 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => dsMock,
+  createMonitoringLogger: jest.fn().mockReturnValue({ logWarning: jest.fn() }),
 }));
+
+// logger is created at import so we cannot initialize inside the test
+const loggerIndex = (createMonitoringLogger as jest.Mock).mock.calls.findIndex(
+  (args) => args[0] === 'features.query-history.local-storage'
+);
+const loggerMock: MonitoringLogger = (createMonitoringLogger as jest.Mock).mock.results[loggerIndex]?.value;
 
 interface MockQuery extends DataQuery {
   query: string;
@@ -74,6 +82,8 @@ describe('RichHistoryLocalStorage', () => {
     jest.setSystemTime(now);
     storage = new RichHistoryLocalStorage();
     await storage.deleteAll();
+
+    (loggerMock.logWarning as jest.Mock).mockReset();
   });
 
   afterEach(() => {
@@ -198,6 +208,7 @@ describe('RichHistoryLocalStorage', () => {
           comment: i.toString(),
           queries: [],
           ts: Date.now() + 10000, // to bypass retention policy
+          datasourceName: 'name-of-dev-test',
         });
       }
 
@@ -219,6 +230,90 @@ describe('RichHistoryLocalStorage', () => {
       expect(newHistory).toHaveLength(MAX_HISTORY_ITEMS); // starred item added
       expect(newHistory.filter((h) => h.starred)).toHaveLength(starredItemsInHistory + 1); // starred item added
       expect(newHistory.filter((h) => !h.starred)).toHaveLength(starredItemsInHistory - removedNotStarredItems);
+    });
+  });
+
+  describe('quota errors and retries', () => {
+    it('should rotate and retry saving when QuotaExceededError occurs once', async () => {
+      const initial = [
+        { ts: Date.now(), starred: true, comment: 'starred1', queries: [], datasourceName: 'name-of-dev-test' },
+        { ts: Date.now(), starred: false, comment: 'notStarred1', queries: [], datasourceName: 'name-of-dev-test' },
+        { ts: Date.now(), starred: true, comment: 'starred2', queries: [], datasourceName: 'name-of-dev-test' },
+      ];
+      store.setObject(key, initial);
+
+      // Spy on setObject to throw once with QuotaExceededError, then call through
+      const originalSetObject = store.setObject.bind(store);
+      jest
+        .spyOn(store, 'setObject')
+        // first attempt throws and errors
+        .mockImplementationOnce(() => {
+          const err = new Error('quota hit');
+          err.name = 'QuotaExceededError';
+          throw err;
+        })
+        // second attempt calls through
+        .mockImplementation((k: string, value: unknown) => {
+          return originalSetObject(k, value);
+        });
+
+      const result = await storage.addToRichHistory({
+        starred: false,
+        datasourceUid: 'dev-test',
+        datasourceName: 'name-of-dev-test',
+        comment: 'new',
+        queries: [{ refId: 'A' }],
+      });
+      expect(result.richHistoryQuery).toBeDefined();
+
+      // After one failure, rotation removes one unstarred entry
+      const saved = store.getObject<RichHistoryQuery[]>(key)!;
+      expect(saved).toHaveLength(3);
+      expect(saved).toMatchObject([
+        expect.objectContaining({ comment: 'new' }),
+        expect.objectContaining({ comment: 'starred1' }),
+        expect.objectContaining({ comment: 'starred2' }),
+      ]);
+
+      // Ensure logger was called for the failure, with expected flags
+      expect(loggerMock.logWarning).toHaveBeenCalled();
+      const [message, payload] = (loggerMock.logWarning as jest.Mock).mock.calls[0];
+      expect(message).toContain('Failed to save rich history to local storage');
+      expect(payload.saveRetriesLeft).toBe('3');
+      expect(payload.quotaExceededError).toBe('true');
+    });
+
+    it('should throw StorageFull when QuotaExceededError persists for all retries and track attempts', async () => {
+      store.setObject(key, [
+        { ts: Date.now(), starred: false, comment: 'notStarred1', queries: [], datasourceName: 'name-of-dev-test' },
+      ]);
+
+      const setSpy = jest.spyOn(store, 'setObject').mockImplementation(() => {
+        const err = new Error('quota still hit');
+        err.name = 'QuotaExceededError';
+        throw err;
+      });
+
+      await expect(
+        storage.addToRichHistory({
+          starred: false,
+          datasourceUid: 'dev-test',
+          datasourceName: 'name-of-dev-test',
+          comment: 'new',
+          queries: [{ refId: 'B' }],
+        })
+      ).rejects.toMatchObject({ name: 'StorageFull' });
+
+      // 4 failed tracking attempts (1 save + 3 retries) should be logged (for each failed try)
+      expect(loggerMock.logWarning).toHaveBeenCalledTimes(4);
+      const calls = (loggerMock.logWarning as jest.Mock).mock.calls;
+      expect(calls[0][0]).toContain('Failed to save rich history to local storage');
+      expect(calls[0][1].saveRetriesLeft).toBe('3');
+      expect(calls[1][1].saveRetriesLeft).toBe('2');
+      expect(calls[2][1].saveRetriesLeft).toBe('1');
+      expect(calls[3][1].saveRetriesLeft).toBe('0');
+
+      setSpy.mockRestore();
     });
   });
 
@@ -301,6 +396,80 @@ describe('RichHistoryLocalStorage', () => {
         const { richHistory, total } = await storage.getRichHistory(mockFilters);
         expect(richHistory).toStrictEqual([expectedHistoryItem]);
         expect(total).toBe(1);
+      });
+    });
+
+    describe('migrateRichHistory filtering', () => {
+      it('should filter out entries missing required properties', async () => {
+        store.setObject(key, [
+          {
+            ts: 1760399401374,
+            // missing datasourceName, starred, comment, queries
+          },
+          {
+            ts: 1760399401375,
+            datasourceName: 'name-of-dev-test',
+            // missing starred, comment, queries
+          },
+          {
+            ts: 1760399401376,
+            datasourceName: 'name-of-dev-test',
+            starred: true,
+            // missing comment, queries
+          },
+          {
+            ts: 1760399401377,
+            datasourceName: 'name-of-dev-test',
+            starred: true,
+            comment: 'test',
+            // missing queries
+          },
+          {
+            ts: 1760399401378,
+            datasourceName: 'name-of-dev-test',
+            starred: true,
+            comment: 'test',
+            queries: 'not an array', // wrong type
+          },
+          {
+            // valid entry
+            ts: 1760399401379,
+            datasourceName: 'name-of-dev-test',
+            starred: false,
+            comment: 'valid entry',
+            queries: [{ refId: 'A', query: 'test query' }],
+          },
+        ]);
+
+        const { richHistory, total } = await storage.getRichHistory(mockFilters);
+        // Only the valid entry should remain
+        expect(richHistory).toHaveLength(1);
+        expect(total).toBe(1);
+        expect(richHistory[0]).toMatchObject({
+          id: '1760399401379',
+          createdAt: 1760399401379,
+          datasourceName: 'name-of-dev-test',
+          starred: false,
+          comment: 'valid entry',
+          queries: [{ refId: 'A', query: 'test query' }],
+        });
+      });
+
+      it('should handle empty queries array', async () => {
+        store.setObject(key, [
+          {
+            ts: 2000,
+            datasourceName: 'name-of-dev-test',
+            starred: false,
+            comment: 'empty queries',
+            queries: [],
+          },
+        ]);
+
+        const { richHistory, total } = await storage.getRichHistory(mockFilters);
+        expect(richHistory).toHaveLength(1);
+        expect(total).toBe(1);
+        expect(richHistory[0].queries).toEqual([]);
       });
     });
   });
