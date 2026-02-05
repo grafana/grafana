@@ -6,19 +6,76 @@
 package manifestdata
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+)
+
+var (
+	rawSchemaRepositoryv0alpha1     = []byte(`{"Repository":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":{},"type":"object"}}`)
+	versionSchemaRepositoryv0alpha1 app.VersionSchema
+	_                               = json.Unmarshal(rawSchemaRepositoryv0alpha1, &versionSchemaRepositoryv0alpha1)
+	rawSchemaConnectionv0alpha1     = []byte(`{"Connection":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":{},"type":"object"}}`)
+	versionSchemaConnectionv0alpha1 app.VersionSchema
+	_                               = json.Unmarshal(rawSchemaConnectionv0alpha1, &versionSchemaConnectionv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
 	AppName:          "provisioning",
 	Group:            "provisioning.grafana.app",
 	PreferredVersion: "v0alpha1",
-	Versions:         []app.ManifestVersion{},
+	Versions: []app.ManifestVersion{
+		{
+			Name:   "v0alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "Repository",
+					Plural:     "Repositories",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaRepositoryv0alpha1,
+				},
+
+				{
+					Kind:       "Connection",
+					Plural:     "Connections",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaConnectionv0alpha1,
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
+			},
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -29,7 +86,10 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("provisioning")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{}
+var kindVersionToGoType = map[string]resource.Kind{
+	"Repository/v0alpha1": v0alpha1.RepositoryKind(),
+	"Connection/v0alpha1": v0alpha1.ConnectionKind(),
+}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.
