@@ -294,4 +294,17 @@ with `<TYPE>` as "note", "caution", or "warning":
 Use admonitions sparingly.
 Only include exceptional information in admonitions.
 
+## Codebase Navigation
+
+When working with the Grafana codebase:
+
+- **[ENTRY_POINTS.md](ENTRY_POINTS.md)** - Quick reference to key starting points (backend, frontend, plugins)
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines and workflow
+- **[/contribute/](contribute/)** - Detailed developer documentation
+  - [Backend Guide](contribute/backend/README.md)
+  - [Frontend Style Guide](contribute/style-guides/frontend.md)
+  - [Architecture Overview](contribute/architecture/README.md)
+
+These resources help locate relevant code without reading the entire codebase.
+
 <!-- docs-ai-end -->
