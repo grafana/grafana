@@ -7,8 +7,8 @@ import { getDragStyles, useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import {
-  FIELD_SELECTOR_DEFAULT_WIDTH,
   FIELD_SELECTOR_MIN_WIDTH,
+  getDefaultFieldSelectorWidth,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/LogsTableFieldSelector';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
@@ -31,7 +31,7 @@ interface Props {
 
 export function LogsTableFields({
   tableWidth,
-  sidebarWidth = FIELD_SELECTOR_DEFAULT_WIDTH,
+  sidebarWidth = getDefaultFieldSelectorWidth(),
   height,
   dataFrame,
   displayedFields,

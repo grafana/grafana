@@ -25,6 +25,7 @@ export interface Options {
 
 export const defaultOptions: Partial<Options> = {
   displayedFields: [],
+  fieldSelectorWidth: 220,
   showControls: true,
   showCopyLogLink: false,
   showInspectLogLine: true,

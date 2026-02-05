@@ -4,11 +4,10 @@ import { DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
+import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 
-import { FieldNameMetaStore } from '../../../explore/Logs/LogsTableWrap';
-import { SETTING_KEY_ROOT } from '../../../explore/Logs/utils/logs';
-
-import { FIELD_SELECTOR_DEFAULT_WIDTH, FIELD_SELECTOR_MIN_WIDTH, FieldSelector, FieldWithStats } from './FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH, FieldSelector, FieldWithStats, getDefaultFieldSelectorWidth } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';
@@ -55,7 +54,7 @@ export const LogsTableFieldSelector = ({
 
   const expand = useCallback(() => {
     const width = getFieldSelectorWidth(SETTING_KEY_ROOT);
-    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? FIELD_SELECTOR_DEFAULT_WIDTH : width);
+    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? getDefaultFieldSelectorWidth() : width);
     reportInteraction('logs_field_selector_expand_clicked', {
       mode: 'table',
     });

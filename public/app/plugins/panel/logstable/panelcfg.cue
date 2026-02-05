@@ -29,7 +29,7 @@ composableKinds: PanelCfg: {
 					showCopyLogLink?:    bool | *false
 					showControls?:       bool | *true
 					sortOrder?:          common.LogsSortOrder | (*"Descending" | _)
-					fieldSelectorWidth?: number
+					fieldSelectorWidth?: number | *220
 					displayedFields?: [...string]
 					setDisplayedFields?: _
 					buildLinkToLogLine?: _
