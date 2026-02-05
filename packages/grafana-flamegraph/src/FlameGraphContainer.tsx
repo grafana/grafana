@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
@@ -117,6 +117,15 @@ const FlameGraphContainer = ({
   const [collapsedMap, setCollapsedMap] = useState(new CollapsedMap());
 
   const theme = useMemo(() => getTheme(), [getTheme]);
+
+  // Use refs to hold the latest callback values to prevent unnecessary re-renders
+  const onTableSymbolClickRef = useRef(onTableSymbolClick);
+  const onTableSortRef = useRef(onTableSort);
+
+  // Update refs when props change
+  onTableSymbolClickRef.current = onTableSymbolClick;
+  onTableSortRef.current = onTableSort;
+
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
       return;
@@ -194,14 +203,15 @@ const FlameGraphContainer = ({
       if (search === anchored) {
         setSearch('');
       } else {
-        onTableSymbolClick?.(symbol);
+        onTableSymbolClickRef.current?.(symbol);
         setSearch(anchored);
         resetFocus();
       }
     },
-    [setSearch, resetFocus, onTableSymbolClick, search]
+    [setSearch, resetFocus, search]
   );
 
+  // Memoize methods to prevent unnecessary re-renders of FlameGraphTopTableContainer
   const onSearch = useCallback(
     (str: string) => {
       if (!str) {
@@ -211,6 +221,19 @@ const FlameGraphContainer = ({
       setSearch(`^${escapeStringForRegex(str)}$`);
     },
     [setSearch]
+  );
+  const onSandwich = useCallback(
+    (label: string) => {
+      resetFocus();
+      setSandwichItem(label);
+    },
+    [resetFocus, setSandwichItem]
+  );
+  const onTableSortStable = useCallback(
+    (sort: string) => {
+      onTableSortRef.current?.(sort);
+    },
+    []
   );
 
   if (!dataContainer) {
@@ -229,10 +252,7 @@ const FlameGraphContainer = ({
       focusedItemData={focusedItemData}
       textAlign={textAlign}
       sandwichItem={sandwichItem}
-      onSandwich={(label: string) => {
-        resetFocus();
-        setSandwichItem(label);
-      }}
+      onSandwich={onSandwich}
       onFocusPillClick={resetFocus}
       onSandwichPillClick={resetSandwich}
       colorScheme={colorScheme}
@@ -255,7 +275,7 @@ const FlameGraphContainer = ({
       sandwichItem={sandwichItem}
       onSandwich={setSandwichItem}
       onSearch={onSearch}
-      onTableSort={onTableSort}
+      onTableSort={onTableSortStable}
       colorScheme={colorScheme}
     />
   );
