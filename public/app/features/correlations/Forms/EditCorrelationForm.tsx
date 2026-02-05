@@ -82,7 +82,7 @@ const EditCorrelationFormAppPlatform = ({ onUpdated, correlation, readOnly = fal
       !isEqual(data.config.transformations, correlation.config.transformations)
     ) {
       partialSpec.config.transformations = data.config.transformations.map((t) => {
-        return { expression: t.expression || '', field: t.field || '', mapValue: t.mapValue || '', type: t.type };
+        return { expression: t.expression, field: t.field, mapValue: t.mapValue, type: t.type };
       });
     }
 
