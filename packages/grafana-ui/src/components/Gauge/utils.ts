@@ -68,7 +68,7 @@ export function getFormattedThresholds(
   const formatted: Threshold[] = [];
 
   if (offsetColor) {
-    formatted.push({ value: +min.toFixed(decimals), color: theme.visualization.getColorByName(first.color) });
+    formatted.push({ value: parseFloat(min.toFixed(decimals)), color: theme.visualization.getColorByName(first.color) });
   }
 
   let skip = offsetColor;
