@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -26,6 +27,7 @@ var _ contracts.SecureValueService = (*SecureValueService)(nil)
 
 type SecureValueService struct {
 	tracer                     trace.Tracer
+	database                   contracts.Database
 	accessClient               claims.AccessClient
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	secureValueValidator       contracts.SecureValueValidator
@@ -37,6 +39,7 @@ type SecureValueService struct {
 
 func ProvideSecureValueService(
 	tracer trace.Tracer,
+	database contracts.Database,
 	accessClient claims.AccessClient,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	secureValueValidator contracts.SecureValueValidator,
@@ -47,6 +50,7 @@ func ProvideSecureValueService(
 ) contracts.SecureValueService {
 	return &SecureValueService{
 		tracer:                     tracer,
+		database:                   database,
 		accessClient:               accessClient,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		secureValueValidator:       secureValueValidator,
@@ -90,16 +94,27 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 		s.metrics.SecureValueCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// Secure value creation uses the active keeper
-	keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace, contracts.ReadOpts{ForUpdate: true})
-	if err != nil {
-		return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+	// Note that the callback never returns an error so the transaction always commits.
+	// That's required for a secure value metadata row to be inserted in the db and cleaned up by the gc worker later.
+	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		// Secure value creation uses the active keeper
+		// Lock the keeper to avoid it being deleted while the secure value version is being created
+		keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace, contracts.ReadOpts{ForUpdate: true})
+		if err != nil {
+			createErr = fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+			return nil
+		}
+
+		createdSv, createErr = s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
+		return nil
+	}); err != nil {
+		createErr = errors.Join(createErr, err)
 	}
 
-	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
+	return createdSv, createErr
 }
 
-func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, sync bool, updateErr error) {
+func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (createdSv *secretv1beta1.SecureValue, sync bool, updateErr error) {
 	start := time.Now()
 	name, namespace := newSecureValue.GetName(), newSecureValue.GetNamespace()
 
@@ -136,30 +151,42 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
 	}
 
-	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{ForUpdate: true})
-	if err != nil {
-		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
-	}
-
-	if newSecureValue.Spec.Value == nil && newSecureValue.Spec.Ref == nil {
-		keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
+	// Note that the callback never returns an error so the transaction always commits.
+	// That's required for a secure value metadata row to be inserted in the db and cleaned up by the gc worker later.
+	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		// Lock the keeper to avoid it being deleted while the secure value version is being created
+		keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
-			return nil, false, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Status.Keeper, err)
-		}
-		logging.FromContext(ctx).Debug("retrieved keeper", "namespace", newSecureValue.Namespace, "type", keeperCfg.Type())
-
-		secret, err := keeper.Expose(ctx, keeperCfg, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, currentVersion.Status.Version)
-		if err != nil {
-			return nil, false, fmt.Errorf("reading secret value from keeper: %w %w", contracts.ErrSecureValueMissingSecretAndRef, err)
+			updateErr = fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
+			return nil
 		}
 
-		newSecureValue.Spec.Value = &secret
+		if newSecureValue.Spec.Value == nil && newSecureValue.Spec.Ref == nil {
+			keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
+			if err != nil {
+				updateErr = fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
+				return nil
+			}
+			logging.FromContext(ctx).Debug("retrieved keeper", "namespace", newSecureValue.Namespace, "type", keeperCfg.Type())
+
+			secret, err := keeper.Expose(ctx, keeperCfg, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, currentVersion.Status.Version)
+			if err != nil {
+				updateErr = fmt.Errorf("reading secret value from keeper: %w %w", contracts.ErrSecureValueMissingSecretAndRef, err)
+				return nil
+			}
+
+			newSecureValue.Spec.Value = &secret
+		}
+
+		// Secure value updates use the keeper used to create the secure value
+		createdSv, updateErr = s.createNewVersion(ctx, currentVersion.Status.Keeper, keeperCfg, newSecureValue, actorUID)
+		return nil
+	}); err != nil {
+		updateErr = errors.Join(updateErr, err)
 	}
 
-	// Secure value updates use the keeper used to create the secure value
 	const updateIsSync = true
-	createdSv, err := s.createNewVersion(ctx, currentVersion.Status.Keeper, keeperCfg, newSecureValue, actorUID)
-	return createdSv, updateIsSync, err
+	return createdSv, updateIsSync, updateErr
 }
 
 func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1beta1.KeeperConfig, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
@@ -369,8 +396,7 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// TODO: does this need to be for update?
-	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})
+	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("fetching secure value: %+w", err)
 	}
