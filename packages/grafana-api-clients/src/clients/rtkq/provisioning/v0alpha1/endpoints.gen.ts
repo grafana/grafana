@@ -730,7 +730,14 @@ export type UpdateConnectionApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ any;
+export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
 export type GetConnectionRepositoriesApiArg = {
   /** name of the ExternalRepositoryList */
   name: string;
@@ -1102,7 +1109,14 @@ export type UpdateRepositoryApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetRepositoryFilesApiResponse = /** status 200 OK */ any;
+export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
 export type GetRepositoryFilesApiArg = {
   /** name of the ResourceWrapper */
   name: string;
@@ -1203,7 +1217,14 @@ export type GetRepositoryJobsWithPathApiArg = {
   /** Original Job UID */
   uid: string;
 };
-export type GetRepositoryRefsApiResponse = /** status 200 OK */ any;
+export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
 export type GetRepositoryRefsApiArg = {
   /** name of the RefList */
   name: string;
@@ -1261,7 +1282,16 @@ export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
 export type CreateRepositoryTestApiArg = {
   /** name of the TestResults */
   name: string;
-  body: any;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    secure?: any;
+    spec?: any;
+    status?: any;
+  };
 };
 export type GetRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
 export type GetRepositoryWebhookApiArg = {
