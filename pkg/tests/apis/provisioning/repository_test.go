@@ -12,8 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-github/v70/github"
 	"github.com/grafana/grafana/pkg/extensions"
-	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -262,6 +264,37 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					},
 				},
 				// Missing secure.token
+			}},
+		},
+		{
+			name: "should accept a GH repo with empty branch",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-with-empty-branch",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Repo With Connection",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url": "https://github.com/a/path",
+						// Empty branch!
+						"branch": "",
+					},
+					// Empty workflows to not trigger a token check
+					"workflows": []string{},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": "someToken",
+					},
+				},
 			}},
 		},
 	} {
@@ -1581,5 +1614,87 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repoHealthyAgain.Status.Health.Healthy, "repository should be healthy")
 		assert.Empty(t, repoHealthyAgain.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
+	})
+}
+
+func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t, withLogs)
+	ctx := context.Background()
+	namespace := "default"
+	defaultBranchName := "defaultBranchName"
+
+	repoFactory := helper.GetEnv().GithubRepoFactory
+	repoFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				repo := &github.Repository{
+					ID:            github.Ptr(int64(12345)),
+					Name:          github.Ptr("name"),
+					DefaultBranch: &defaultBranchName,
+				}
+				_, _ = w.Write(ghmock.MustMarshal(repo))
+			}),
+		),
+	)
+	helper.SetGithubRepositoryFactory(repoFactory)
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+
+	t.Run("default branch gets retrieved for repository", func(t *testing.T) {
+		repoName := "repo-with-empty-branch"
+
+		// Create a repository that will be healthy initially
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-with-empty-branch",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo With Connection",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url": "https://github.com/a/path",
+					// Empty branch!
+					"branch": "",
+				},
+				// Empty workflows to not trigger a token check
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{
+					"create": "someToken",
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - repository should have branch name
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			require.NoError(collect, err, "issue getting repo")
+			require.Equal(collect, repo.Generation, repo.Status.ObservedGeneration, "repo should be reconciled")
+			require.Equal(collect, defaultBranchName, repo.Spec.GitHub.Branch, "default branch should be set")
+		}, 30*time.Second, 1*time.Second, "repository should have default branch")
 	})
 }
