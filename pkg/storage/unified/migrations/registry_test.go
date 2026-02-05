@@ -670,4 +670,3 @@ type testRegistrar struct {
 func (r *testRegistrar) RegisterMigrations(registry *MigrationRegistry) {
 	registry.Register(r.def)
 }
-
