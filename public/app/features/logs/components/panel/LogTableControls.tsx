@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
-import { LogLineTimestampResolution } from './LogLine';
 import { CONTROLS_WIDTH_EXPANDED } from './LogListControls';
 import { LogListControlsOption } from './LogListControlsOption';
 import { LOG_LIST_CONTROLS_WIDTH } from './virtualization';
@@ -15,7 +14,6 @@ type Props = {
   controlsExpanded: boolean;
   setControlsExpanded: (expanded: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
-  timestampResolution: LogLineTimestampResolution;
   logOptionsStorageKey?: string;
   sortOrder: LogsSortOrder;
 };

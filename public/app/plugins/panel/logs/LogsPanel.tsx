@@ -25,7 +25,6 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
-  urlUtil,
   LogSortOrderChangeEvent,
   LoadingState,
   rangeUtil,
@@ -41,6 +40,7 @@ import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
+import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
@@ -137,12 +137,6 @@ interface LogsPanelProps extends PanelProps<Options> {
    * showLogAttributes?: boolean
    */
 }
-interface LogsPermalinkUrlState {
-  logs?: {
-    id?: string;
-  };
-}
-
 const noCommonLabels: Labels = {};
 
 export const LogsPanel = ({
@@ -789,25 +783,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
-
-function getLogsPanelState(): LogsPermalinkUrlState | undefined {
-  const urlParams = urlUtil.getUrlSearchParams();
-  const panelStateEncoded = urlParams?.panelState;
-  if (
-    panelStateEncoded &&
-    Array.isArray(panelStateEncoded) &&
-    panelStateEncoded?.length > 0 &&
-    typeof panelStateEncoded[0] === 'string'
-  ) {
-    try {
-      return JSON.parse(panelStateEncoded[0]);
-    } catch (e) {
-      console.error('error parsing logsPanelState', e);
-    }
-  }
-
-  return undefined;
-}
 
 async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange: TimeRange) {
   // this is an extra check, to be sure that we are not
