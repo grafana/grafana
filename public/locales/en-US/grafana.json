@@ -2379,6 +2379,17 @@
       "label-new-sibling-above": "New sibling above",
       "label-new-sibling-below": "New sibling below"
     },
+    "policy-tree-selector": {
+      "aria-label": "Select notification policy",
+      "custom-policy-desc": "Route alerts through the {{name}} policy tree",
+      "default-policy": "Default policy",
+      "default-policy-desc": "Alert instances will be routed using the default Grafana notification policy",
+      "description": "Select which notification policy tree should handle routing for this alert rule.",
+      "placeholder": "Select a policy...",
+      "title": "Notification policy",
+      "view-policies": "View policies",
+      "view-policies-aria": "View notification policies"
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
       "preview-alerts": "Preview alerts",
