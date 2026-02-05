@@ -25,6 +25,7 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { initializeDashboardRunningQueryCount } from 'app/features/query/state/runningQueryCount';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
@@ -48,6 +49,7 @@ import {
 } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
@@ -367,6 +369,17 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
         restoreDashboardStateFromLocalStorage(dashboard);
       }
+
+      const vizPanels = dashboard.state.body.getVizPanels();
+      initializeDashboardRunningQueryCount(
+        vizPanels.map((panel) => {
+          const queryRunner = getQueryRunnerFor(panel);
+          return {
+            id: getPanelIdForVizPanel(panel),
+            hasQueries: Boolean(queryRunner?.state?.queries?.length),
+          };
+        })
+      );
 
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
