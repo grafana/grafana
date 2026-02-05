@@ -20,13 +20,13 @@ func (p *testPublisher) publish(_ string, _ string, _ []byte) error {
 
 func TestNewManagedStream(t *testing.T) {
 	publisher := &testPublisher{t: t}
-	c := NewNamespaceStream("default", "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
+	c := NewStream("default", "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
 	require.NotNil(t, c)
 }
 
 func TestManagedStreamMinuteRate(t *testing.T) {
 	publisher := &testPublisher{t: t}
-	c := NewNamespaceStream("default", "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
+	c := NewStream("default", "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
 	require.NotNil(t, c)
 
 	c.incRate("test1", time.Now().Unix())

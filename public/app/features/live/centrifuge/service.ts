@@ -154,7 +154,7 @@ export class CentrifugeService implements CentrifugeSrv {
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${this.deps.namespace}/${addr.scope}/${addr.namespace}/${addr.path}`;
+    const id = `${this.deps.namespace}/${addr.scope}/${addr.stream}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;

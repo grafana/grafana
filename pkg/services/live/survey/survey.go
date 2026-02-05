@@ -33,7 +33,7 @@ func (c *Caller) SetupHandlers() error {
 }
 
 type NodeManagedChannelsRequest struct {
-	Namespace string `json:"namespace"`
+	NS string `json:"ns"`
 }
 
 type NodeManagedChannelsResponse struct {
@@ -72,7 +72,7 @@ func (c *Caller) handleManagedStreams(data []byte) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	channels, err := c.managedStreamRunner.GetManagedChannels(req.Namespace)
+	channels, err := c.managedStreamRunner.GetManagedChannels(req.NS)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *Caller) handleManagedStreams(data []byte) (any, error) {
 }
 
 func (c *Caller) CallManagedStreams(ns string) ([]*managedstream.ManagedChannel, error) {
-	req := NodeManagedChannelsRequest{Namespace: ns}
+	req := NodeManagedChannelsRequest{NS: ns}
 	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
