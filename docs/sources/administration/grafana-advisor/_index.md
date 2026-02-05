@@ -121,11 +121,15 @@ This guide walks you through creating a Grafana alert that monitors Advisor chec
 7. Provide a token name and set an appropriate expiration date
 8. Click **Generate token**
 
-> **Important**: Copy the token value immediately and store it securely - you won't be able to see it again
+{{< admonition type="caution" >}}
+Copy the token value immediately and store it securely - you won't be able to see it again.
+{{< /admonition >}}
 
 ### Step 2: Set up the Grafana Infinity data source
 
-> **Important**: Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+{{< admonition type="note" >}}
+Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+{{< /admonition >}}
 
 1. Go to **Connections → Add new connection**
 2. Search for "Infinity"
