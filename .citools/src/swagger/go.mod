@@ -1,6 +1,6 @@
 module swagger
 
-go 1.25.5
+go 1.25.7
 
 tool github.com/go-swagger/go-swagger/cmd/swagger
 

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/quotas
 
-go 1.25.3
+go 1.25.7
 
 require (
 	github.com/grafana/grafana-app-sdk v0.48.7
