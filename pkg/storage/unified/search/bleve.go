@@ -1652,7 +1652,7 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 			return query.NewMatchAllQuery(), nil
 		}
 
-		if len(req.Values) == 1 && useExactTermQuery {
+		if len(req.Values) == 1 && (useExactTermQuery || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)) {
 			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
 		}
 
