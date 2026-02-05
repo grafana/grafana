@@ -4,18 +4,12 @@ import { PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockQueryOptionsState } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockQueryOptions } from '../testUtils';
 
 import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
 
 describe('QueryEditorDetailsSidebar', () => {
   const mockOnClose = jest.fn();
-  const mockOnChange = jest.fn();
-
-  const defaultQueryOptionsState = {
-    ...mockQueryOptionsState,
-    onChange: mockOnChange,
-  };
 
   const defaultQrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = {
     queries: [],
@@ -33,7 +27,7 @@ describe('QueryEditorDetailsSidebar', () => {
   });
 
   const renderSidebar = (
-    queryOptionsState = defaultQueryOptionsState,
+    options = mockQueryOptions,
     qrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = defaultQrState
   ) => {
     return render(
@@ -46,9 +40,9 @@ describe('QueryEditorDetailsSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
+          options,
         }}
         actions={mockActions}
-        queryOptionsState={queryOptionsState}
       >
         <QueryEditorDetailsSidebar onClose={mockOnClose} />
       </QueryEditorProvider>
@@ -75,14 +69,14 @@ describe('QueryEditorDetailsSidebar', () => {
   });
 
   describe('maxDataPoints input', () => {
-    it('should call onChange with updated maxDataPoints on blur', () => {
+    it('should call onQueryOptionsChange with updated maxDataPoints on blur', () => {
       renderSidebar();
 
       const input = screen.getByLabelText('Max data points');
       fireEvent.change(input, { target: { value: '500' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           maxDataPoints: 500,
         })
@@ -96,7 +90,7 @@ describe('QueryEditorDetailsSidebar', () => {
       fireEvent.change(input, { target: { value: 'abc' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           maxDataPoints: null,
         })
@@ -110,7 +104,7 @@ describe('QueryEditorDetailsSidebar', () => {
       fireEvent.change(input, { target: { value: '0' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           maxDataPoints: null,
         })
@@ -119,14 +113,14 @@ describe('QueryEditorDetailsSidebar', () => {
   });
 
   describe('minInterval input', () => {
-    it('should call onChange with updated minInterval on blur', () => {
+    it('should call onQueryOptionsChange with updated minInterval on blur', () => {
       renderSidebar();
 
       const input = screen.getByLabelText('Min interval');
       fireEvent.change(input, { target: { value: '10s' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           minInterval: '10s',
         })
@@ -134,21 +128,18 @@ describe('QueryEditorDetailsSidebar', () => {
     });
 
     it('should set minInterval to null for empty input', () => {
-      const queryOptionsWithMinInterval = {
-        ...defaultQueryOptionsState,
-        options: {
-          ...defaultQueryOptionsState.options,
-          minInterval: '5s',
-        },
+      const optionsWithMinInterval = {
+        ...mockQueryOptions,
+        minInterval: '5s',
       };
 
-      renderSidebar(queryOptionsWithMinInterval);
+      renderSidebar(optionsWithMinInterval);
 
       const input = screen.getByLabelText('Min interval');
       fireEvent.change(input, { target: { value: '' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           minInterval: null,
         })
@@ -157,14 +148,14 @@ describe('QueryEditorDetailsSidebar', () => {
   });
 
   describe('relativeTime input', () => {
-    it('should call onChange with valid relative time', () => {
+    it('should call onQueryOptionsChange with valid relative time', () => {
       renderSidebar();
 
       const input = screen.getByLabelText('Relative time');
       fireEvent.change(input, { target: { value: '1h' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           timeRange: expect.objectContaining({
             from: '1h',
@@ -173,27 +164,27 @@ describe('QueryEditorDetailsSidebar', () => {
       );
     });
 
-    it('should not call onChange with invalid relative time', () => {
+    it('should not call onQueryOptionsChange with invalid relative time', () => {
       renderSidebar();
 
       const input = screen.getByLabelText('Relative time');
       fireEvent.change(input, { target: { value: 'invalid' } });
       fireEvent.blur(input);
 
-      // onChange should not be called for invalid time
-      expect(mockOnChange).not.toHaveBeenCalled();
+      // onQueryOptionsChange should not be called for invalid time
+      expect(mockActions.onQueryOptionsChange).not.toHaveBeenCalled();
     });
   });
 
   describe('timeShift input', () => {
-    it('should call onChange with valid time shift', () => {
+    it('should call onQueryOptionsChange with valid time shift', () => {
       renderSidebar();
 
       const input = screen.getByLabelText('Time shift');
       fireEvent.change(input, { target: { value: '2h' } });
       fireEvent.blur(input);
 
-      expect(mockOnChange).toHaveBeenCalledWith(
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
         expect.objectContaining({
           timeRange: expect.objectContaining({
             shift: '2h',
@@ -202,15 +193,15 @@ describe('QueryEditorDetailsSidebar', () => {
       );
     });
 
-    it('should not call onChange with invalid time shift', () => {
+    it('should not call onQueryOptionsChange with invalid time shift', () => {
       renderSidebar();
 
       const input = screen.getByLabelText('Time shift');
       fireEvent.change(input, { target: { value: 'invalid' } });
       fireEvent.blur(input);
 
-      // onChange should not be called for invalid time
-      expect(mockOnChange).not.toHaveBeenCalled();
+      // onQueryOptionsChange should not be called for invalid time
+      expect(mockActions.onQueryOptionsChange).not.toHaveBeenCalled();
     });
   });
 
@@ -229,7 +220,7 @@ describe('QueryEditorDetailsSidebar', () => {
         isLoading: false,
       };
 
-      renderSidebar(defaultQueryOptionsState, qrStateWithoutInterval);
+      renderSidebar(mockQueryOptions, qrStateWithoutInterval);
 
       // Should show "-" when no interval
       expect(screen.getByText('-')).toBeInTheDocument();
