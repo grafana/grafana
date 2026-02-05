@@ -1620,7 +1620,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t, withLogs)
+	helper := runGrafana(t)
 	ctx := context.Background()
 	namespace := "default"
 	defaultBranchName := "defaultBranchName"
