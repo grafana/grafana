@@ -10,8 +10,6 @@ export interface LogsFrameFields {
   timeField: FieldWithIndex;
 }
 
-// @todo adapted from the deprecated table
-// @todo LOG_LINE_BODY_FIELD_NAME, ___OTEL_LOG_ATTRIBUTES___
 export const buildColumnsWithMeta = (
   logsFrameFields: LogsFrameFields,
   dataFrame: DataFrame,

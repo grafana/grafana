@@ -15,6 +15,7 @@ import type { Options as TableOptions } from '@grafana/schema/src/raw/composable
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -30,7 +31,6 @@ import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { Options } from './options/types';
-import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
 import { defaultOptions, Options as LogsTableOptions } from './panelcfg.gen';
 import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
@@ -65,7 +65,7 @@ export const LogsTable = ({
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
-  const permalinkedLogId = getLogsTablePanelState()?.logs?.id ?? undefined;
+  const permalinkedLogId = getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = permalinkedLogId
     ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
     : undefined;
