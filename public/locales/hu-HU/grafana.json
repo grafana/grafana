@@ -863,6 +863,7 @@
     "common": {
       "cancel": "Mégse",
       "clear-filters": "Szűrők törlése",
+      "close": "",
       "delete": "Törlés",
       "edit": "Szerkesztés",
       "export": "Exportálás",
@@ -1585,6 +1586,17 @@
       "action-button": "Importálás",
       "additional-settings": "További beállítások",
       "alert-rules": "Riasztási szabályok",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Importálás",
         "loading": "Betöltés...",
@@ -1611,13 +1623,15 @@
         "label": "Adatforrás",
         "required-message": "Válasszon adatforrást"
       },
-      "error": "A riasztási szabályok importálása nem sikerült: {{error}}",
+      "error": "",
       "group": {
         "description": "Írjon be szöveget egy meglévő csoport kereséséhez",
         "label": "Csoport"
       },
       "import-location-and-filters": "Hely és szűrők importálása",
       "import-source": "Forrás importálása",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Írjon be szöveget egy meglévő névtér kereséséhez",
         "label": "Névtér"
@@ -1629,17 +1643,160 @@
       "pause-recording": {
         "label": "Importált felvételkészítési szabályok szüneteltetése"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Felvételkészítési szabályok",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Meglévő, adatforrás által felügyelt szabályok",
         "datasource-description": "Szabályok importálása meglévő adatforrásokból",
         "yaml": "Prometheus YAML-fájl",
         "yaml-description": "Szabályok importálása Prometheus YAML-fájlból."
       },
-      "success": "Sikeresen importálta a riasztási szabályokat a Grafana által felügyelt szabályokba.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Az a mappa, amelybe a szabályokat importálni kívánja",
         "label": "Célmappa"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Válasszon ki egy Prometheus-kompatibilis YAML-fájlt az importáláshoz",
@@ -1650,6 +1807,9 @@
         "target-datasource-required": "Először jelöljön ki egy céladatforrást"
       },
       "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2619,7 +2779,8 @@
       "expand-all": "Összes kibontása"
     },
     "rule-list-v2": {
-      "import-to-gma": "Riasztási szabályok importálása"
+      "import-to-gma": "Riasztási szabályok importálása",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "A szabály betöltése…",
@@ -3465,6 +3626,10 @@
       "hosted-domain-label": "Üzemeltetett tartomány",
       "id-token-attribute-name-description": "Az azonosítótokennek a visszaküldött OAuth2-tokenből történő kivonásához használt kulcs neve.",
       "id-token-attribute-name-label": "Azonosítótoken-attribútum neve",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "A felhasználói bejelentkezés felhasználói azonosítótoken alapján végzett kereséséhez használandó JMESPath-kifejezés.",
       "login-attribute-path-label": "Bejelentkezési attribútum útvonala",
       "login-prompt-consent": "Hozzájárulás",
@@ -3531,6 +3696,8 @@
       "use-refresh-token-label": "Frissítési token használata",
       "validate-hosted-domain-description": "Ha engedélyezett, a Grafana a Google ID-tokennel lekérdezett üzemeltetett tartományt a felhasználó által megadott „{{ allowedDomainsLabel }}” listával próbálja meg egyeztetni.",
       "validate-hosted-domain-label": "Üzemeltetett tartomány validálása",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Az OAuth2-szolgáltató hitelesítéséhez használt tokenfájl elérési útja. Ez csak akkor szükséges, ha az ügyfélhitelesítés „workload_identity” értékre van állítva. Alapértelmezés szerint: /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} tokenfájl",
       "workload-identity-token-file-required": "Ezt a mezőt akkor kell beállítani, ha az ügyfélhitelesítés „Munkaterhelés-identitás” értékre van állítva."
@@ -4869,12 +5036,6 @@
       "message": {
         "edit-dashboard-json": "Irányítópult JSON-kódjának szerkesztése"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Az érvényesítés fejlesztési célokat szolgál, és biztonságosan figyelmen kívül hagyható. Ha Ön Grafana-fejlesztő, fontolja meg az irányítópult-séma ellenőrzését és frissítését",
-      "title-checking-dashboard-validity": "Irányítópult érvényességének ellenőrzése",
-      "title-dashboard-failed-schema-validation": "Sikertelen sémaérvényesítés az irányítópulton",
-      "title-error-checking-dashboard-validity": "Hiba történt az irányítópult érvényességének ellenőrzésekor"
     },
     "default-layout": {
       "description": "Az egyes panelek elhelyezése és méretezése külön-külön",
@@ -6480,6 +6641,9 @@
     },
     "query-editor": {
       "query": "Lekérdezés"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10428,6 +10592,17 @@
       "label-log-stats": "{{label}}: {{total}}/{{rowCount}} sor rendelkezik ezzel a címkével"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Meglévő könyvtárpanelek listája. Ezeket a paneleket az importálás nem érinti."
@@ -11944,13 +12119,17 @@
       "description-clear-repository-connection": "Adjon egy egyértelmű nevet ehhez az adattári kapcsolathoz",
       "empty": "Üres",
       "error-field-required": "A mező kitöltése kötelező.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Megjelenített név",
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
+      "retry-action": "",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
       "files-count_one": "{{count}} fájl",
@@ -12582,9 +12761,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Mielőtt nyilvánossá tenné az irányítópultot, vegye figyelembe a következőket:",
@@ -12791,9 +12967,30 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

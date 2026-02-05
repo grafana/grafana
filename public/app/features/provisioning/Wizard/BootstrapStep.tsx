@@ -49,7 +49,9 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isLoading: isRepositoryStatusLoading,
     hasError: repositoryStatusError,
     refetch: retryRepositoryStatus,
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    isUnhealthy,
+    healthStatusNotReady,
   } = useRepositoryStatus(repoName);
 
   const {
@@ -57,10 +59,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     fileCountString,
     resourceCount,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, selectedTarget, undefined, {
-    enableRepositoryStatus: false,
-    isHealthy: isRepositoryHealthy,
-  });
+  } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
   const isQuotaExceeded = Boolean(
     isFreeTierLicense() && selectedTarget === 'folder' && resourceCount > FREE_TIER_FOLDER_RESOURCE_LIMIT
@@ -68,6 +67,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
+  // Wait for health if: ready but neither healthy nor unhealthy (still reconciling)
+  const isWaitingForHealth = isRepositoryReady && !repositoryStatusError && !isHealthy && !isUnhealthy;
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -78,7 +79,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
   useEffect(() => {
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
-    if (repositoryStatusError || isRepositoryHealthy === false) {
+    // Only show error if: query error, OR unhealthy (already reconciled)
+    if (repositoryStatusError || isUnhealthy) {
       setStepStatusInfo({
         status: 'error',
         error: {
@@ -113,6 +115,9 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           external: true,
         },
       });
+    } else if (isWaitingForHealth) {
+      // Show running status while checking repository health
+      setStepStatusInfo({ status: 'running' });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }
@@ -121,9 +126,10 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setStepStatusInfo,
     repositoryStatusError,
     retryRepositoryStatus,
-    isRepositoryHealthy,
+    isWaitingForHealth,
     isQuotaExceeded,
     resourceCount,
+    isUnhealthy,
   ]);
 
   useEffect(() => {
@@ -140,7 +146,18 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     );
   }
 
-  if (repositoryStatusError || isRepositoryHealthy === false || isQuotaExceeded) {
+  if (isWaitingForHealth) {
+    return (
+      <Box padding={4}>
+        <LoadingPlaceholder
+          text={t('provisioning.bootstrap-step.text-waiting-for-repository-health', 'Checking repository health...')}
+        />
+      </Box>
+    );
+  }
+
+  // Only show error state if: query error, OR unhealthy (already reconciled), OR quota exceeded
+  if (repositoryStatusError || isUnhealthy || isQuotaExceeded) {
     // error message and retry will be set in above step status
     return null;
   }
