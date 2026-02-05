@@ -301,7 +301,7 @@ describe('useSavedSearches', () => {
         await result.current.deleteSearch('1');
       });
 
-      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_delete');
+      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_delete', {});
     });
   });
 

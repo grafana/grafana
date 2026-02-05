@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { shouldUseTriageSavedSearches } from '../../featureToggles';
 import { useAsync } from '../../hooks/useAsync';
-import { applySavedSearch, serializeCurrentState } from '../scene/triageSavedSearchUtils';
+import { applySavedSearch, serializeCurrentSearchState } from '../scene/triageSavedSearchUtils';
 
 import { loadDefaultTriageSavedSearch, trackTriageSavedSearchAutoApply } from './useTriageSavedSearches';
 
@@ -25,7 +25,7 @@ const SESSION_VISITED_KEY = 'grafana.alerting.triagePage.visited';
  * @returns true if there are active filters or groupBy selections
  */
 function hasActiveTriageFilters(): boolean {
-  const currentState = serializeCurrentState();
+  const currentState = serializeCurrentSearchState();
   if (!currentState) {
     return false;
   }

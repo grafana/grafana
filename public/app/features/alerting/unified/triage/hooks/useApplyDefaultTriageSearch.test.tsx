@@ -27,7 +27,7 @@ jest.mock('./useTriageSavedSearches', () => ({
 
 jest.mock('../scene/triageSavedSearchUtils', () => ({
   applySavedSearch: jest.fn(),
-  serializeCurrentState: jest.fn(),
+  serializeCurrentSearchState: jest.fn(),
 }));
 
 const loadDefaultTriageSavedSearchMock = useTriageSavedSearchesMod.loadDefaultTriageSavedSearch as jest.MockedFunction<
@@ -40,8 +40,8 @@ const trackTriageSavedSearchAutoApplyMock =
 const applySavedSearchMock = triageSavedSearchUtilsMod.applySavedSearch as jest.MockedFunction<
   typeof triageSavedSearchUtilsMod.applySavedSearch
 >;
-const serializeCurrentStateMock = triageSavedSearchUtilsMod.serializeCurrentState as jest.MockedFunction<
-  typeof triageSavedSearchUtilsMod.serializeCurrentState
+const serializeCurrentStateMock = triageSavedSearchUtilsMod.serializeCurrentSearchState as jest.MockedFunction<
+  typeof triageSavedSearchUtilsMod.serializeCurrentSearchState
 >;
 
 const SESSION_VISITED_KEY = 'grafana.alerting.triagePage.visited';

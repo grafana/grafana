@@ -4,7 +4,7 @@ import {
   applySavedSearch,
   extractFilterObjects,
   generateTriageUrl,
-  serializeCurrentState,
+  serializeCurrentSearchState,
 } from './triageSavedSearchUtils';
 
 // Mock locationService
@@ -12,12 +12,14 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
     push: jest.fn(),
+    getSearch: jest.fn(() => new URLSearchParams()),
   },
 }));
 
 describe('triageSavedSearchUtils', () => {
   // Store original window.location
   const originalLocation = window.location;
+  const mockGetSearch = locationService.getSearch as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -89,14 +91,10 @@ describe('triageSavedSearchUtils', () => {
 
   describe('serializeCurrentState', () => {
     it('should serialize URL params', () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          href: 'http://localhost:3000/alerting/alerts?var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now',
-        },
-        writable: true,
-      });
+      const params = new URLSearchParams('var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now');
+      mockGetSearch.mockReturnValueOnce(params);
 
-      const result = serializeCurrentState();
+      const result = serializeCurrentSearchState();
       expect(result).toContain('var-filters=');
       expect(result).toContain('var-groupBy=severity');
       expect(result).toContain('from=now-1h');
@@ -104,37 +102,27 @@ describe('triageSavedSearchUtils', () => {
     });
 
     it('should handle multiple var-filters', () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          href: 'http://localhost:3000/alerting/alerts?var-filters=a&var-filters=b',
-        },
-        writable: true,
-      });
+      const params = new URLSearchParams('var-filters=a&var-filters=b');
+      mockGetSearch.mockReturnValueOnce(params);
 
-      const result = serializeCurrentState();
-      const params = new URLSearchParams(result);
-      expect(params.getAll('var-filters')).toEqual(['a', 'b']);
+      const result = serializeCurrentSearchState();
+      const resultParams = new URLSearchParams(result);
+      expect(resultParams.getAll('var-filters')).toEqual(['a', 'b']);
     });
 
     it('should return empty string when no relevant params', () => {
-      Object.defineProperty(window, 'location', {
-        value: { href: 'http://localhost:3000/alerting/alerts' },
-        writable: true,
-      });
+      const params = new URLSearchParams();
+      mockGetSearch.mockReturnValueOnce(params);
 
-      const result = serializeCurrentState();
+      const result = serializeCurrentSearchState();
       expect(result).toBe('');
     });
 
     it('should ignore non-triage params', () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          href: 'http://localhost:3000/alerting/alerts?unrelated=param&var-groupBy=severity',
-        },
-        writable: true,
-      });
+      const params = new URLSearchParams('unrelated=param&var-groupBy=severity');
+      mockGetSearch.mockReturnValueOnce(params);
 
-      const result = serializeCurrentState();
+      const result = serializeCurrentSearchState();
       expect(result).toBe('var-groupBy=severity');
       expect(result).not.toContain('unrelated');
     });

@@ -10,15 +10,7 @@ import { locationService } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, SceneObject, sceneGraph } from '@grafana/scenes';
 
 import { toFilters, toUrl } from '../../../../variables/adhoc/urlParser';
-import { VARIABLES } from '../constants';
-
-/**
- * URL parameter keys relevant to triage saved searches.
- * - var-filters: Ad-hoc filters (can have multiple values)
- * - var-groupBy: Group by label selections
- * - from/to: Time range
- */
-const TRIAGE_URL_PARAMS = ['var-filters', 'var-groupBy', 'from', 'to'] as const;
+import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
 /**
  * Serializes the current triage page state from the URL to a query string.
@@ -30,16 +22,16 @@ const TRIAGE_URL_PARAMS = ['var-filters', 'var-groupBy', 'from', 'to'] as const;
  *
  * @example
  * // URL: /alerting/alerts?var-filters=alertname|=|test&var-groupBy=severity&from=now-1h&to=now
- * serializeCurrentState()
+ * serializeCurrentSearchState()
  * // Returns: "var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now"
  */
-export function serializeCurrentState(): string {
-  const currentUrl = new URL(window.location.href);
+export function serializeCurrentSearchState(): string {
+  const currentParams = locationService.getSearch();
   const params = new URLSearchParams();
 
   // Copy relevant params - use getAll() for multi-value support (var-filters)
-  TRIAGE_URL_PARAMS.forEach((key) => {
-    const values = currentUrl.searchParams.getAll(key);
+  TRIAGE_STATE_URL_PARAMS.forEach((key) => {
+    const values = currentParams.getAll(key);
     values.forEach((value) => params.append(key, value));
   });
 
@@ -64,14 +56,14 @@ export function serializeTriageState(
 
   // Add filters using toUrl (properly escapes pipes in values with __gfp__)
   toUrl(filters).forEach((filterStr) => {
-    params.append('var-filters', filterStr);
+    params.append(URL_PARAMS.filters, filterStr);
   });
 
   // Add groupBy
   const groupByArray = Array.isArray(groupBy) ? groupBy : [groupBy].filter(Boolean);
   groupByArray.forEach((key) => {
     if (key) {
-      params.append('var-groupBy', key);
+      params.append(URL_PARAMS.groupBy, key);
     }
   });
 
@@ -79,8 +71,8 @@ export function serializeTriageState(
   const fromValue = typeof timeRange.from === 'string' ? timeRange.from : timeRange.from.toISOString();
   const toValue = typeof timeRange.to === 'string' ? timeRange.to : timeRange.to.toISOString();
 
-  params.set('from', fromValue);
-  params.set('to', toValue);
+  params.set(URL_PARAMS.timeFrom, fromValue);
+  params.set(URL_PARAMS.timeTo, toValue);
 
   return params.toString();
 }
@@ -108,13 +100,13 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
   // Update groupBy (explicitly set to empty array if absent)
   const groupByVar = sceneGraph.lookupVariable(VARIABLES.groupBy, scene);
   if (groupByVar instanceof GroupByVariable) {
-    groupByVar.changeValueTo(params.getAll('var-groupBy').filter(Boolean));
+    groupByVar.changeValueTo(params.getAll(URL_PARAMS.groupBy).filter(Boolean));
   }
 
   // Update time range
   const sceneTimeRange = sceneGraph.getTimeRange(scene);
-  const from = params.get('from') ?? 'now-4h';
-  const to = params.get('to') ?? 'now';
+  const from = params.get(URL_PARAMS.timeFrom) ?? 'now-4h';
+  const to = params.get(URL_PARAMS.timeTo) ?? 'now';
   const fromDateTime = dateMath.parse(from, false);
   const toDateTime = dateMath.parse(to, true);
 
@@ -133,7 +125,7 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
  */
 export function extractFilterObjects(query: string): AdHocVariableFilter[] {
   const params = new URLSearchParams(query);
-  const filterValues = params.getAll('var-filters');
+  const filterValues = params.getAll(URL_PARAMS.filters);
   const filters = toFilters(filterValues);
 
   // Add values array for Scenes URL sync compatibility
