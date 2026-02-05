@@ -7,11 +7,14 @@ import (
 	"testing"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -433,4 +436,148 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// TestIntegrationLibraryElementFolderHierarchy tests that permissions are correctly propagated in a folder hierarchy:
+// 1. Parent folder access grants access to child folder library elements (inherited permissions)
+// 2. Child folder access does NOT grant access to parent folder library elements (no reverse inheritance)
+func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				DisableAnonymous:      true,
+				EnableFeatureToggles: []string{
+					"kubernetesLibraryPanels",
+				},
+				UnifiedStorageEnableSearch: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				},
+				DisableAuthZClientCache: true,
+			})
+			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			// Create a nested folder structure: parentFolder -> childFolder -> grandchildFolder
+			parentFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "ParentFolder")
+			require.NoError(t, err)
+			require.NotNil(t, parentFolder)
+
+			childFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "ChildFolder", parentFolder.UID)
+			require.NoError(t, err)
+			require.NotNil(t, childFolder)
+
+			grandchildFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "GrandchildFolder", childFolder.UID)
+			require.NoError(t, err)
+			require.NotNil(t, grandchildFolder)
+
+			libraryElements := make([]string, 0, 3)
+			for _, f := range []*folder.Folder{parentFolder, childFolder, grandchildFolder} {
+				libraryElement, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in "+f.Title, f.UID, nil)
+				require.NoError(t, err)
+				libraryElements = append(libraryElements, libraryElement)
+			}
+			t.Cleanup(func() {
+				err = deleteLibraryElement(t, ctx, ctx.AdminUser, libraryElements[0])
+				require.NoError(t, err)
+				err = deleteLibraryElement(t, ctx, ctx.AdminUser, libraryElements[1])
+				require.NoError(t, err)
+				err = deleteLibraryElement(t, ctx, ctx.AdminUser, libraryElements[2])
+				require.NoError(t, err)
+			})
+
+			// Create a test user
+			testUser := ctx.Helper.CreateUser("hierarchy-test-user", "Org1", org.RoleViewer, nil)
+			listURL := "/api/library-elements"
+
+			// Helper to get visible library element UIDs
+			getVisibleUIDs := func() ([]string, int) {
+				listData, err := getDashboardViaHTTP(t, &ctx, listURL, testUser)
+				require.NoError(t, err)
+				require.NotNil(t, listData)
+
+				result := listData["result"].(map[string]interface{})
+				elements := result["elements"].([]interface{})
+				totalCount := int(result["totalCount"].(float64))
+
+				visibleUIDs := make([]string, 0, len(elements))
+				for _, elem := range elements {
+					elemMap := elem.(map[string]interface{})
+					if uid, ok := elemMap["uid"].(string); ok {
+						visibleUIDs = append(visibleUIDs, uid)
+					}
+				}
+				return visibleUIDs, totalCount
+			}
+
+			// Test 1: Parent folder access grants access to all child library elements
+			t.Run("parent access grants child access", func(t *testing.T) {
+				// Give user access to the parent folder
+				setResourceUserPermission(t, ctx, ctx.AdminUser, false, parentFolder.UID, addUserPermission(t, nil, testUser, ResourcePermissionLevelView))
+
+				visibleUIDs, totalCount := getVisibleUIDs()
+
+				// User with parent folder access should see ALL library elements
+				require.Contains(t, visibleUIDs, libraryElements[0])
+				require.Contains(t, visibleUIDs, libraryElements[1])
+				require.Contains(t, visibleUIDs, libraryElements[2])
+				require.Len(t, visibleUIDs, 3)
+				require.Equal(t, 3, totalCount)
+			})
+
+			// Test 2: Remove parent access, give only grandchild access - should NOT see parent/child elements
+			t.Run("child access does not grant parent access", func(t *testing.T) {
+				// Remove access to parent folder
+				setResourceUserPermission(t, ctx, ctx.AdminUser, false, parentFolder.UID, []ResourcePermissionSetting{})
+
+				// Give user access to ONLY the grandchild folder
+				setResourceUserPermission(t, ctx, ctx.AdminUser, false, grandchildFolder.UID, addUserPermission(t, nil, testUser, ResourcePermissionLevelView))
+
+				visibleUIDs, totalCount := getVisibleUIDs()
+
+				// User should ONLY see the library element in the grandchild folder
+				require.Contains(t, visibleUIDs, libraryElements[2])
+				require.NotContains(t, visibleUIDs, libraryElements[1])
+				require.NotContains(t, visibleUIDs, libraryElements[0])
+				require.Len(t, visibleUIDs, 1)
+				require.Equal(t, 1, totalCount)
+			})
+		})
+	}
+}
+
+// createSubFolder creates a folder with a parent folder
+func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, title string, parentUID string) (*folder.Folder, error) {
+	t.Helper()
+
+	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      user,
+		Namespace: helper.Namespacer(user.Identity.GetOrgID()),
+		GVR:       getFolderGVR(),
+	})
+
+	folderObj := createFolderObject(t, title, helper.Namespacer(user.Identity.GetOrgID()), parentUID)
+
+	createdFolder, err := folderClient.Resource.Create(context.Background(), folderObj, v1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
+	meta, _ := utils.MetaAccessor(createdFolder)
+
+	return &folder.Folder{
+		UID:       createdFolder.GetName(),
+		Title:     meta.FindTitle(""),
+		ParentUID: parentUID,
+	}, nil
 }
