@@ -49,7 +49,6 @@ func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFl
 		}
 
 		typedFlags[flag.Name] = inMemFlag
-
 	}
 
 	// Add flags from config.ini file - already typed
