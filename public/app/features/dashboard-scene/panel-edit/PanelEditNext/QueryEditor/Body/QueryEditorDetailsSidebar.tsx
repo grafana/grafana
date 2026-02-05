@@ -12,7 +12,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
-import { QueryOptionField, QueryOptionFields } from '../types';
+import { QueryOptionField } from '../types';
 
 function timeRangeValidation(value: string | null) {
   return !value || rangeUtil.isValidTimeSpan(value);
@@ -52,7 +52,7 @@ export function QueryEditorDetailsSidebar() {
       const value = event.currentTarget.value;
 
       // Handle number fields
-      if (field === QueryOptionFields.maxDataPoints || field === QueryOptionFields.queryCachingTTL) {
+      if (field === QueryOptionField.maxDataPoints || field === QueryOptionField.queryCachingTTL) {
         let numValue: number | null = parseInt(value, 10);
         if (isNaN(numValue) || numValue === 0) {
           numValue = null;
@@ -64,10 +64,10 @@ export function QueryEditorDetailsSidebar() {
       }
 
       // Handle time range fields
-      if (field === QueryOptionFields.relativeTime || field === QueryOptionFields.timeShift) {
+      if (field === QueryOptionField.relativeTime || field === QueryOptionField.timeShift) {
         const stringValue = emptyToNull(value);
         const isValid = timeRangeValidation(stringValue);
-        const timeRangeField = field === QueryOptionFields.relativeTime ? 'from' : 'shift';
+        const timeRangeField = field === QueryOptionField.relativeTime ? 'from' : 'shift';
         if (isValid && stringValue !== options.timeRange?.[timeRangeField]) {
           onQueryOptionsChange({
             ...options,
@@ -79,9 +79,9 @@ export function QueryEditorDetailsSidebar() {
 
       // Handle string fields (minInterval, cacheTimeout)
       const stringValue = emptyToNull(value);
-      if (field === QueryOptionFields.minInterval && stringValue !== options.minInterval) {
+      if (field === QueryOptionField.minInterval && stringValue !== options.minInterval) {
         onQueryOptionsChange({ ...options, minInterval: stringValue });
-      } else if (field === QueryOptionFields.cacheTimeout && stringValue !== options.cacheTimeout) {
+      } else if (field === QueryOptionField.cacheTimeout && stringValue !== options.cacheTimeout) {
         onQueryOptionsChange({ ...options, cacheTimeout: stringValue });
       }
     },
@@ -122,8 +122,8 @@ export function QueryEditorDetailsSidebar() {
                 type="number"
                 defaultValue={options.maxDataPoints ?? ''}
                 placeholder={realMaxDataPoints ? String(realMaxDataPoints) : ''}
-                onBlur={(e) => handleBlur(e, QueryOptionFields.maxDataPoints)}
-                autoFocus={focusedField === QueryOptionFields.maxDataPoints}
+                onBlur={(e) => handleBlur(e, QueryOptionField.maxDataPoints)}
+                autoFocus={focusedField === QueryOptionField.maxDataPoints}
                 aria-label={t('query-editor.details-sidebar.max-data-points', 'Max data points')}
                 className={styles.fieldInput}
               />
@@ -145,8 +145,8 @@ export function QueryEditorDetailsSidebar() {
                 type="text"
                 defaultValue={options.minInterval ?? ''}
                 placeholder={String(minIntervalOnDs)}
-                onBlur={(e) => handleBlur(e, QueryOptionFields.minInterval)}
-                autoFocus={focusedField === QueryOptionFields.minInterval}
+                onBlur={(e) => handleBlur(e, QueryOptionField.minInterval)}
+                autoFocus={focusedField === QueryOptionField.minInterval}
                 aria-label={t('query-editor.details-sidebar.min-interval', 'Min interval')}
                 className={styles.fieldInput}
               />
@@ -183,8 +183,8 @@ export function QueryEditorDetailsSidebar() {
                 type="text"
                 defaultValue={options.timeRange?.from ?? ''}
                 placeholder={TIME_OPTION_PLACEHOLDER}
-                onBlur={(e) => handleBlur(e, QueryOptionFields.relativeTime)}
-                autoFocus={focusedField === QueryOptionFields.relativeTime}
+                onBlur={(e) => handleBlur(e, QueryOptionField.relativeTime)}
+                autoFocus={focusedField === QueryOptionField.relativeTime}
                 aria-label={t('query-editor.details-sidebar.relative-time', 'Relative time')}
                 className={styles.fieldInput}
               />
@@ -206,8 +206,8 @@ export function QueryEditorDetailsSidebar() {
                 type="text"
                 defaultValue={options.timeRange?.shift ?? ''}
                 placeholder={TIME_OPTION_PLACEHOLDER}
-                onBlur={(e) => handleBlur(e, QueryOptionFields.timeShift)}
-                autoFocus={focusedField === QueryOptionFields.timeShift}
+                onBlur={(e) => handleBlur(e, QueryOptionField.timeShift)}
+                autoFocus={focusedField === QueryOptionField.timeShift}
                 aria-label={t('query-editor.details-sidebar.time-shift', 'Time shift')}
                 className={styles.fieldInput}
               />
@@ -231,8 +231,8 @@ export function QueryEditorDetailsSidebar() {
                   defaultValue={options.cacheTimeout ?? ''}
                   // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="60"
-                  onBlur={(e) => handleBlur(e, QueryOptionFields.cacheTimeout)}
-                  autoFocus={focusedField === QueryOptionFields.cacheTimeout}
+                  onBlur={(e) => handleBlur(e, QueryOptionField.cacheTimeout)}
+                  autoFocus={focusedField === QueryOptionField.cacheTimeout}
                   aria-label={t('query-editor.details-sidebar.cache-timeout', 'Cache timeout')}
                   className={styles.fieldInput}
                 />
@@ -256,8 +256,8 @@ export function QueryEditorDetailsSidebar() {
                   type="number"
                   defaultValue={options.queryCachingTTL ?? ''}
                   placeholder={dsSettings?.cachingConfig?.TTLMs ? String(dsSettings.cachingConfig.TTLMs) : ''}
-                  onBlur={(e) => handleBlur(e, QueryOptionFields.queryCachingTTL)}
-                  autoFocus={focusedField === QueryOptionFields.cacheTTL}
+                  onBlur={(e) => handleBlur(e, QueryOptionField.queryCachingTTL)}
+                  autoFocus={focusedField === QueryOptionField.queryCachingTTL}
                   aria-label={t('query-editor.details-sidebar.cache-ttl', 'Cache TTL')}
                   className={styles.fieldInput}
                 />

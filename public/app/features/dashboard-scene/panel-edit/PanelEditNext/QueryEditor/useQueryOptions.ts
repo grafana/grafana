@@ -56,7 +56,7 @@ export function useQueryOptions({ panel, queryRunner, dsSettings }: UseQueryOpti
       timeRange,
     };
   }, [
-    panelState,
+    panelState.$timeRange,
     queryRunnerState?.maxDataPoints,
     queryRunnerState?.minInterval,
     queryRunnerState?.cacheTimeout,

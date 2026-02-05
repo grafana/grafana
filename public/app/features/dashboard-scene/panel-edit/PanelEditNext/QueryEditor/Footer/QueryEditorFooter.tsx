@@ -7,7 +7,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 
 import { TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { QueryOptionField, QueryOptionFields } from '../types';
+import { QueryOptionField } from '../types';
 
 interface FooterLabelValue {
   id: QueryOptionField;
@@ -33,31 +33,31 @@ export function QueryEditorFooter() {
 
     return [
       {
-        id: QueryOptionFields.maxDataPoints,
+        id: QueryOptionField.maxDataPoints,
         label: t('query-editor.footer.label.max-data-points', 'Max data points'),
         value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
         isActive: options.maxDataPoints != null,
       },
       {
-        id: QueryOptionFields.minInterval,
+        id: QueryOptionField.minInterval,
         label: t('query-editor.footer.label.min-interval', 'Min interval'),
         value: options.minInterval ?? minIntervalOnDs,
         isActive: options.minInterval != null,
       },
       {
-        id: QueryOptionFields.interval,
+        id: QueryOptionField.interval,
         label: t('query-editor.footer.label.interval', 'Interval'),
         value: realInterval ?? '-',
         isActive: false, // Interval is always computed, never user-set
       },
       {
-        id: QueryOptionFields.relativeTime,
+        id: QueryOptionField.relativeTime,
         label: t('query-editor.footer.label.relative-time', 'Relative time'),
         value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.from != null,
       },
       {
-        id: QueryOptionFields.timeShift,
+        id: QueryOptionField.timeShift,
         label: t('query-editor.footer.label.time-shift', 'Time shift'),
         value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.shift != null,
@@ -70,7 +70,7 @@ export function QueryEditorFooter() {
     event.stopPropagation();
 
     // Don't focus interval since it's read-only
-    if (fieldId && fieldId !== QueryOptionFields.interval) {
+    if (fieldId && fieldId !== QueryOptionField.interval) {
       openSidebar(fieldId);
     } else {
       openSidebar();
