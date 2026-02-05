@@ -77,15 +77,13 @@ export function trackDashboardSceneCreatedOrSaved(
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
-  // Extract variable type counts from tracking info and group them
-  const variableCountsByType = sceneDashboardTrackingInfo
-    ? Object.fromEntries(
-        Object.entries(sceneDashboardTrackingInfo).flatMap(([key, value]) => {
-          const [, type] = key.match(/^variable_type_(.+)_count$/) || [];
-          return type ? [[type, value]] : [];
-        })
-      )
-    : {};
+  // Extract variable type counts from tracking info
+  const variables = Object.entries(sceneDashboardTrackingInfo ?? {})
+    .filter(([key]) => /^variable_type_.+_count$/.test(key))
+    .reduce<Record<string, number>>((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
 
   const dashboardLibraryProperties =
     config.featureToggles.dashboardLibrary ||
@@ -112,14 +110,14 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
-          variable_counts: variableCountsByType,
+          ...variables,
           ...dashboardLibraryProperties,
         }
       : {
           uid: dashboard.state.uid || '',
           numPanels: sceneDashboardTrackingInfo?.panels_count || 0,
           numRows: sceneDashboardTrackingInfo?.rowCount || 0,
-          variable_counts: variableCountsByType,
+          ...variables,
           ...dashboardLibraryProperties,
         }),
   });
