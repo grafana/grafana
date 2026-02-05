@@ -760,16 +760,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	// Only update if the quota has changed
-	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/quota",
-			"value": newQuota,
-		})
-	}
-
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)

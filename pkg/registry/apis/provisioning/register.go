@@ -133,7 +133,6 @@ type APIBuilder struct {
 
 	restConfigGetter func(context.Context) (*clientrest.Config, error)
 	registry         prometheus.Registerer
-	quotaGetter      quotas.QuotaGetter
 }
 
 // NewAPIBuilder creates an API builder.
@@ -161,7 +160,6 @@ func NewAPIBuilder(
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
-	quotaGetter quotas.QuotaGetter,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -206,7 +204,6 @@ func NewAPIBuilder(
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
-		quotaGetter:                         quotaGetter,
 	}
 
 	for _, builder := range extraBuilders {
@@ -291,11 +288,6 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
-	quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
-		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories:           cfg.ProvisioningMaxRepositories,
-	})
-
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,
 		repoFactory,
@@ -317,7 +309,6 @@ func RegisterAPIService(
 		reg,
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
-		quotaGetter,
 	)
 	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
 	// See SetQuotas for details.
@@ -897,6 +888,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+				MaxResourcesPerRepository: b.quotaLimits.MaxResources,
+				MaxRepositories:           b.quotaLimits.MaxRepositories,
+			})
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -912,7 +907,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 				informerFactoryResyncInterval,
 				b.minSyncInterval,
-				b.quotaGetter,
+				quotaGetter,
 			)
 			if err != nil {
 				return err
