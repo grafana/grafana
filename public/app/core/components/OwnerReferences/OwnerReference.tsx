@@ -6,7 +6,7 @@ import { Stack, Text, Link, Tooltip } from '@grafana/ui';
 /**
  * Display a team owner reference, with additional information about the team members.
  */
-const OwnerReference = ({
+export const OwnerReference = ({
   ownerReference,
   compact = false,
 }: {
@@ -37,26 +37,8 @@ const OwnerReference = ({
   return (
     <Link href={`/org/teams/edit/${ownerReference.uid}/members`} key={ownerReference.uid}>
       <Tooltip content={membersTooltip}>
-        <Stack gap={1} alignItems="center">
-          {team.spec.title}
-        </Stack>
+        <Text>{team.spec.title}</Text>
       </Tooltip>
     </Link>
   );
-};
-
-/**
- * Display a list of team owner references
- */
-export const TeamOwnerReferences = ({ ownerReferences }: { ownerReferences: OwnerReferenceType[] }) => {
-  if (!ownerReferences || ownerReferences.length === 0) {
-    return null;
-  }
-
-  if (ownerReferences.length === 1) {
-    const ref = ownerReferences[0];
-    return <OwnerReference ownerReference={ref} />;
-  }
-
-  return ownerReferences.map((ref) => <OwnerReference ownerReference={ref} compact key={ref.uid} />);
 };
