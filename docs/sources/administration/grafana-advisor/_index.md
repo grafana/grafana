@@ -215,7 +215,7 @@ It can be used to manage Advisor `checks` and `checktypes`. We'll cover some exa
 grafanactl advisor checks list
 ```
 
-### Get the list of checktypes
+### Get the list of check types
 
 ```bash
 grafanactl advisor checktypes list
