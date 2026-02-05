@@ -201,7 +201,11 @@ func (s *Service) BatchCheck(ctx context.Context, req *authzv1.BatchCheckRequest
 	defer span.End()
 
 	checks := req.GetChecks()
-	span.SetAttributes(attribute.Int("check_count", len(checks)))
+	span.SetAttributes(
+		attribute.String("namespace", req.GetNamespace()),
+		attribute.String("subject", req.GetSubject()),
+		attribute.Int("check_count", len(checks)),
+	)
 
 	ctxLogger := s.logger.FromContext(ctx).New(
 		"subject", req.GetSubject(),
@@ -220,6 +224,10 @@ func (s *Service) BatchCheck(ctx context.Context, req *authzv1.BatchCheckRequest
 		return &authzv1.BatchCheckResponse{
 			Results: make(map[string]*authzv1.BatchCheckResult),
 		}, nil
+	}
+
+	if len(checks) > types.MaxBatchCheckItems {
+		return nil, status.Errorf(codes.InvalidArgument, "batch check exceeds maximum of %d items", types.MaxBatchCheckItems)
 	}
 
 	results := make(map[string]*authzv1.BatchCheckResult, len(checks))
@@ -306,7 +314,7 @@ func (s *Service) groupBatchCheckItems(
 		if g, ok := groups[action]; ok {
 			g.items = append(g.items, item)
 			g.checkReqs = append(g.checkReqs, checkReq)
-			// Bypass the cache for the entire group as soon as one check requires fresh data 
+			// Bypass the cache for the entire group as soon as one check requires fresh data
 			if requiresFresh {
 				g.requiresFreshData = true
 			}
