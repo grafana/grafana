@@ -55,7 +55,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/externalgroupmappings`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping,
+          body: queryArg.externalGroupMapping,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -107,7 +107,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/externalgroupmappings/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping,
+          body: queryArg.externalGroupMapping,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -218,7 +218,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/serviceaccounts`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount,
+          body: queryArg.serviceAccount,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -267,7 +267,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/serviceaccounts/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount,
+          body: queryArg.serviceAccount,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -406,7 +406,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/teambindings`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding,
+          body: queryArg.teamBinding,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -455,7 +455,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/teambindings/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding,
+          body: queryArg.teamBinding,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -518,7 +518,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/teams`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team,
+          body: queryArg.team,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -564,7 +564,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/teams/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team,
+          body: queryArg.team,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -649,7 +649,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/users`,
           method: 'POST',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User,
+          body: queryArg.user,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -695,7 +695,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/users/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User,
+          body: queryArg.user,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -757,8 +757,7 @@ export type GetDisplayMappingApiArg = {
   /** Display keys */
   key: string[];
 };
-export type ListExternalGroupMappingApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMappingList;
+export type ListExternalGroupMappingApiResponse = /** status 200 OK */ ExternalGroupMappingList;
 export type ListExternalGroupMappingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -804,9 +803,9 @@ export type ListExternalGroupMappingApiArg = {
   watch?: boolean;
 };
 export type CreateExternalGroupMappingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping;
+  | ExternalGroupMapping
+  | /** status 201 Created */ ExternalGroupMapping
+  | /** status 202 Accepted */ ExternalGroupMapping;
 export type CreateExternalGroupMappingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -816,7 +815,7 @@ export type CreateExternalGroupMappingApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping;
+  externalGroupMapping: ExternalGroupMapping;
 };
 export type DeletecollectionExternalGroupMappingApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionExternalGroupMappingApiArg = {
@@ -869,8 +868,7 @@ export type DeletecollectionExternalGroupMappingApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetExternalGroupMappingApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping;
+export type GetExternalGroupMappingApiResponse = /** status 200 OK */ ExternalGroupMapping;
 export type GetExternalGroupMappingApiArg = {
   /** name of the ExternalGroupMapping */
   name: string;
@@ -878,8 +876,8 @@ export type GetExternalGroupMappingApiArg = {
   pretty?: string;
 };
 export type ReplaceExternalGroupMappingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping;
+  | ExternalGroupMapping
+  | /** status 201 Created */ ExternalGroupMapping;
 export type ReplaceExternalGroupMappingApiArg = {
   /** name of the ExternalGroupMapping */
   name: string;
@@ -891,7 +889,7 @@ export type ReplaceExternalGroupMappingApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping;
+  externalGroupMapping: ExternalGroupMapping;
 };
 export type DeleteExternalGroupMappingApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteExternalGroupMappingApiArg = {
@@ -911,8 +909,8 @@ export type DeleteExternalGroupMappingApiArg = {
   propagationPolicy?: string;
 };
 export type UpdateExternalGroupMappingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping;
+  | ExternalGroupMapping
+  | /** status 201 Created */ ExternalGroupMapping;
 export type UpdateExternalGroupMappingApiArg = {
   /** name of the ExternalGroupMapping */
   name: string;
@@ -942,17 +940,7 @@ export type SearchExternalGroupMappingsApiArg = {
     externalGroups?: string[];
   };
 };
-export type GetSearchTeamsApiResponse = /** status 200 undefined */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  hits: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  maxScore: number;
-  offset: number;
-  queryCost: number;
-  totalHits: number;
-};
+export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
 export type GetSearchTeamsApiArg = {
   /** team name query string */
   query?: string;
@@ -975,8 +963,7 @@ export type GetSearchUsersApiArg = {
   /** sortable field */
   sort?: string;
 };
-export type ListServiceAccountApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccountList;
+export type ListServiceAccountApiResponse = /** status 200 OK */ ServiceAccountList;
 export type ListServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1022,9 +1009,9 @@ export type ListServiceAccountApiArg = {
   watch?: boolean;
 };
 export type CreateServiceAccountApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount;
+  | ServiceAccount
+  | /** status 201 Created */ ServiceAccount
+  | /** status 202 Accepted */ ServiceAccount;
 export type CreateServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1034,7 +1021,7 @@ export type CreateServiceAccountApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount;
+  serviceAccount: ServiceAccount;
 };
 export type DeletecollectionServiceAccountApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionServiceAccountApiArg = {
@@ -1087,8 +1074,7 @@ export type DeletecollectionServiceAccountApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetServiceAccountApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount;
+export type GetServiceAccountApiResponse = /** status 200 OK */ ServiceAccount;
 export type GetServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -1096,8 +1082,8 @@ export type GetServiceAccountApiArg = {
   pretty?: string;
 };
 export type ReplaceServiceAccountApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount;
+  | ServiceAccount
+  | /** status 201 Created */ ServiceAccount;
 export type ReplaceServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -1109,7 +1095,7 @@ export type ReplaceServiceAccountApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount;
+  serviceAccount: ServiceAccount;
 };
 export type DeleteServiceAccountApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteServiceAccountApiArg = {
@@ -1129,8 +1115,8 @@ export type DeleteServiceAccountApiArg = {
   propagationPolicy?: string;
 };
 export type UpdateServiceAccountApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount;
+  | ServiceAccount
+  | /** status 201 Created */ ServiceAccount;
 export type UpdateServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -1256,8 +1242,7 @@ export type UpdateSsoSettingApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type ListTeamBindingApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingList;
+export type ListTeamBindingApiResponse = /** status 200 OK */ TeamBindingList;
 export type ListTeamBindingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1303,9 +1288,9 @@ export type ListTeamBindingApiArg = {
   watch?: boolean;
 };
 export type CreateTeamBindingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding;
+  | TeamBinding
+  | /** status 201 Created */ TeamBinding
+  | /** status 202 Accepted */ TeamBinding;
 export type CreateTeamBindingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1315,7 +1300,7 @@ export type CreateTeamBindingApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding;
+  teamBinding: TeamBinding;
 };
 export type DeletecollectionTeamBindingApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionTeamBindingApiArg = {
@@ -1368,17 +1353,14 @@ export type DeletecollectionTeamBindingApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetTeamBindingApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding;
+export type GetTeamBindingApiResponse = /** status 200 OK */ TeamBinding;
 export type GetTeamBindingApiArg = {
   /** name of the TeamBinding */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceTeamBindingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding;
+export type ReplaceTeamBindingApiResponse = /** status 200 OK */ TeamBinding | /** status 201 Created */ TeamBinding;
 export type ReplaceTeamBindingApiArg = {
   /** name of the TeamBinding */
   name: string;
@@ -1390,7 +1372,7 @@ export type ReplaceTeamBindingApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding;
+  teamBinding: TeamBinding;
 };
 export type DeleteTeamBindingApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteTeamBindingApiArg = {
@@ -1409,9 +1391,7 @@ export type DeleteTeamBindingApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateTeamBindingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding;
+export type UpdateTeamBindingApiResponse = /** status 200 OK */ TeamBinding | /** status 201 Created */ TeamBinding;
 export type UpdateTeamBindingApiArg = {
   /** name of the TeamBinding */
   name: string;
@@ -1427,7 +1407,7 @@ export type UpdateTeamBindingApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type ListTeamApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamList;
+export type ListTeamApiResponse = /** status 200 OK */ TeamList;
 export type ListTeamApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1473,9 +1453,9 @@ export type ListTeamApiArg = {
   watch?: boolean;
 };
 export type CreateTeamApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team;
+  | Team
+  | /** status 201 Created */ Team
+  | /** status 202 Accepted */ Team;
 export type CreateTeamApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1485,7 +1465,7 @@ export type CreateTeamApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team;
+  team: Team;
 };
 export type DeletecollectionTeamApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionTeamApiArg = {
@@ -1538,16 +1518,14 @@ export type DeletecollectionTeamApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetTeamApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team;
+export type GetTeamApiResponse = /** status 200 OK */ Team;
 export type GetTeamApiArg = {
   /** name of the Team */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceTeamApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team;
+export type ReplaceTeamApiResponse = /** status 200 OK */ Team | /** status 201 Created */ Team;
 export type ReplaceTeamApiArg = {
   /** name of the Team */
   name: string;
@@ -1559,7 +1537,7 @@ export type ReplaceTeamApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team;
+  team: Team;
 };
 export type DeleteTeamApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteTeamApiArg = {
@@ -1578,9 +1556,7 @@ export type DeleteTeamApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateTeamApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team;
+export type UpdateTeamApiResponse = /** status 200 OK */ Team | /** status 201 Created */ Team;
 export type UpdateTeamApiArg = {
   /** name of the Team */
   name: string;
@@ -1596,9 +1572,9 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetTeamGroupsApiResponse = /** status 200 OK */ TypeMeta;
+export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroupsResponse;
 export type GetTeamGroupsApiArg = {
-  /** name of the GetGroups */
+  /** name of the GetGroupsResponse */
   name: string;
   /** number of results to return */
   limit?: number;
@@ -1619,7 +1595,7 @@ export type GetTeamMembersApiArg = {
   /** number of results to skip */
   offset?: number;
 };
-export type ListUserApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserList;
+export type ListUserApiResponse = /** status 200 OK */ UserList;
 export type ListUserApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1665,9 +1641,9 @@ export type ListUserApiArg = {
   watch?: boolean;
 };
 export type CreateUserApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User
-  | /** status 202 Accepted */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User;
+  | User
+  | /** status 201 Created */ User
+  | /** status 202 Accepted */ User;
 export type CreateUserApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1677,7 +1653,7 @@ export type CreateUserApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User;
+  user: User;
 };
 export type DeletecollectionUserApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionUserApiArg = {
@@ -1730,16 +1706,14 @@ export type DeletecollectionUserApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetUserApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User;
+export type GetUserApiResponse = /** status 200 OK */ User;
 export type GetUserApiArg = {
   /** name of the User */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceUserApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User;
+export type ReplaceUserApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
 export type ReplaceUserApiArg = {
   /** name of the User */
   name: string;
@@ -1751,7 +1725,7 @@ export type ReplaceUserApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  githubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User;
+  user: User;
 };
 export type DeleteUserApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteUserApiArg = {
@@ -1770,9 +1744,7 @@ export type DeleteUserApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateUserApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User;
+export type UpdateUserApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
 export type UpdateUserApiArg = {
   /** name of the User */
   name: string;
@@ -1951,27 +1923,27 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMappingTeamRef = {
+export type ExternalGroupMappingTeamRef = {
   /** Name is the unique identifier for a team. */
   name: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMappingSpec = {
+export type ExternalGroupMappingSpec = {
   externalGroupId: string;
-  teamRef: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMappingTeamRef;
+  teamRef: ExternalGroupMappingTeamRef;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping = {
+export type ExternalGroupMapping = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the ExternalGroupMapping */
-  spec: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMappingSpec;
+  spec: ExternalGroupMappingSpec;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMappingList = {
+export type ExternalGroupMappingList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ExternalGroupMapping[];
+  items: ExternalGroupMapping[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
@@ -2021,25 +1993,25 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccountSpec = {
+export type ServiceAccountSpec = {
   disabled: boolean;
   plugin: string;
   role: string;
   title: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount = {
+export type ServiceAccount = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the ServiceAccount */
-  spec: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccountSpec;
+  spec: ServiceAccountSpec;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccountList = {
+export type ServiceAccountList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1ServiceAccount[];
+  items: ServiceAccount[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
@@ -2086,64 +2058,69 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList = {
   kind?: string;
   metadata?: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingspecSubject = {
+export type TeamBindingspecSubject = {
   /** uid of the identity */
   name: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingTeamRef = {
+export type TeamBindingTeamRef = {
   /** Name is the unique identifier for a team. */
   name: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingSpec = {
+export type TeamBindingSpec = {
   external: boolean;
   /** permission of the identity in the team */
   permission: string;
-  subject: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingspecSubject;
-  teamRef: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingTeamRef;
+  subject: TeamBindingspecSubject;
+  teamRef: TeamBindingTeamRef;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding = {
+export type TeamBinding = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the TeamBinding */
-  spec: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingSpec;
+  spec: TeamBindingSpec;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBindingList = {
+export type TeamBindingList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamBinding[];
+  items: TeamBinding[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamSpec = {
+export type TeamSpec = {
   email: string;
   externalUID: string;
   provisioned: boolean;
   title: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team = {
+export type Team = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the Team */
-  spec: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamSpec;
+  spec: TeamSpec;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1TeamList = {
+export type TeamList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1Team[];
+  items: Team[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
 };
-export type TypeMeta = {
+export type GetGroupsExternalGroupMapping = {
+  externalGroup: string;
+  name: string;
+};
+export type GetGroupsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  items: GetGroupsExternalGroupMapping[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
@@ -2178,7 +2155,7 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   kind?: string;
   metadata?: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserSpec = {
+export type UserSpec = {
   disabled: boolean;
   email: string;
   emailVerified: boolean;
@@ -2188,23 +2165,23 @@ export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserSpec = {
   role: string;
   title: string;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserStatus = {
+export type UserStatus = {
   lastSeenAt: number;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User = {
+export type User = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the User */
-  spec: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserSpec;
-  status: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserStatus;
+  spec: UserSpec;
+  status: UserStatus;
 };
-export type GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1UserList = {
+export type UserList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Apps1Iam1Pkg1Apis1Iam1V0Alpha1User[];
+  items: User[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
