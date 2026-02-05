@@ -41,6 +41,7 @@ replace (
 )
 
 require (
+	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.50.1
 	github.com/grafana/grafana-app-sdk/logging v0.50.1
 	github.com/grafana/grafana/apps/folder v0.0.0
