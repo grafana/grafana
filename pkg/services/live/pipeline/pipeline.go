@@ -72,11 +72,11 @@ type ChannelFrame struct {
 
 // Vars has some helpful things pipeline entities could use.
 type Vars struct {
-	NS        string // k8s namespace
-	Channel   string
-	Scope     string
-	Namespace string // the thing within a scope
-	Path      string
+	NS      string // k8s namespace, maps to the Grafana org id or stack ID
+	Channel string
+	Scope   string
+	Stream  string // the thing within a scope, maps to the Grafana live "namespace"
+	Path    string
 }
 
 // DataOutputter can output incoming data before conversion to frames.
@@ -296,11 +296,11 @@ func (p *Pipeline) DataToChannelFrames(ctx context.Context, rule LiveChannelRule
 	}
 
 	vars := Vars{
-		NS:        ns,
-		Channel:   channelID,
-		Scope:     channel.Scope,
-		Namespace: channel.Namespace,
-		Path:      channel.Path,
+		NS:      ns,
+		Channel: channelID,
+		Scope:   channel.Scope,
+		Stream:  channel.Namespace,
+		Path:    channel.Path,
 	}
 
 	frames, err := rule.Converter.Convert(ctx, vars, body)
@@ -399,11 +399,11 @@ func (p *Pipeline) processFrame(ctx context.Context, ns string, channelID string
 	}
 
 	vars := Vars{
-		NS:        ns,
-		Channel:   channelID,
-		Scope:     ch.Scope,
-		Namespace: ch.Namespace,
-		Path:      ch.Path,
+		NS:      ns,
+		Channel: channelID,
+		Scope:   ch.Scope,
+		Stream:  ch.Namespace,
+		Path:    ch.Path,
 	}
 
 	if len(rule.FrameProcessors) > 0 {
@@ -502,11 +502,11 @@ func (p *Pipeline) processData(ctx context.Context, ns string, channelID string,
 	}
 
 	vars := Vars{
-		NS:        ns,
-		Channel:   channelID,
-		Scope:     ch.Scope,
-		Namespace: ch.Namespace,
-		Path:      ch.Path,
+		NS:      ns,
+		Channel: channelID,
+		Scope:   ch.Scope,
+		Stream:  ch.Namespace,
+		Path:    ch.Path,
 	}
 
 	if len(rule.DataOutputters) > 0 {
