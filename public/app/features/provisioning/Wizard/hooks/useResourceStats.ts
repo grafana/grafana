@@ -120,8 +120,7 @@ export function useResourceStats(
     refetchOnMountOrArgChange: true,
   });
 
-  const isFilesQuerySkipped = !repoName || !isHealthy;
-  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading || isFilesQuerySkipped;
+  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),

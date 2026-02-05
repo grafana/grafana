@@ -149,8 +149,6 @@ describe('BootstrapStep', () => {
       healthMessage: undefined,
       healthStatusNotReady: false,
       refetch: jest.fn(),
-      hasTimedOut: false,
-      resetTimeout: jest.fn(),
     });
 
     mockUseResourceStats.mockReturnValue({
@@ -531,8 +529,6 @@ describe('BootstrapStep', () => {
         healthMessage: ['Some temporary error'],
         healthStatusNotReady: true,
         refetch: jest.fn(),
-        hasTimedOut: false,
-        resetTimeout: jest.fn(),
       });
 
       mockUseResourceStats.mockReturnValue({
@@ -567,8 +563,6 @@ describe('BootstrapStep', () => {
         healthMessage: ['Connection failed'],
         healthStatusNotReady: false,
         refetch: jest.fn(),
-        hasTimedOut: false,
-        resetTimeout: jest.fn(),
       });
 
       mockUseResourceStats.mockReturnValue({
@@ -602,8 +596,6 @@ describe('BootstrapStep', () => {
         healthMessage: undefined,
         healthStatusNotReady: false,
         refetch: jest.fn(),
-        hasTimedOut: false,
-        resetTimeout: jest.fn(),
       });
 
       mockUseResourceStats.mockReturnValue({
@@ -622,93 +614,6 @@ describe('BootstrapStep', () => {
 
       // Should show normal content
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
-    });
-  });
-
-  describe('timeout handling', () => {
-    afterEach(() => {
-      jest.useRealTimers();
-      jest.clearAllTimers();
-    });
-
-    it('should display timeout error when hasTimedOut is true', async () => {
-      jest.useFakeTimers();
-      mockUseRepositoryStatus.mockReturnValue({
-        isReady: true,
-        isLoading: false,
-        isFetching: false,
-        hasError: false,
-        isHealthy: false, // not healthy (or still reconciling)
-        isUnhealthy: false, // not unhealthy yet (still reconciling)
-        isReconciled: false,
-        healthMessage: undefined,
-        healthStatusNotReady: false,
-        refetch: jest.fn(),
-        hasTimedOut: true,
-        resetTimeout: jest.fn(),
-      });
-
-      mockUseResourceStats.mockReturnValue({
-        managedCount: 0,
-        unmanagedCount: 0,
-        fileCount: 0,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
-        fileCountString: 'Empty',
-        isLoading: false,
-        requiresMigration: false,
-        shouldSkipSync: true,
-      });
-
-      setup();
-
-      expect(await screen.findByText('Repository health check timed out')).toBeInTheDocument();
-      // Check for timeout message (handles both "30 seconds" and "NaN seconds" if TIMEOUT_MS isn't loaded)
-      expect(await screen.findByText(/The repository did not become healthy within .* seconds/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
-    });
-
-    it('should call resetTimeout when retry button is clicked', async () => {
-      // Use real timers for this test since userEvent needs them
-      jest.useRealTimers();
-
-      const mockResetTimeout = jest.fn();
-      mockUseRepositoryStatus.mockReturnValue({
-        isReady: true,
-        isLoading: false,
-        isFetching: false,
-        hasError: false,
-        isHealthy: false, // not healthy (or still reconciling)
-        isUnhealthy: false, // not unhealthy yet (still reconciling)
-        isReconciled: false,
-        healthMessage: undefined,
-        healthStatusNotReady: false,
-        refetch: jest.fn(),
-        hasTimedOut: true,
-        resetTimeout: mockResetTimeout,
-      });
-
-      mockUseResourceStats.mockReturnValue({
-        managedCount: 0,
-        unmanagedCount: 0,
-        fileCount: 0,
-        resourceCount: 0,
-        resourceCountString: 'Empty',
-        fileCountString: 'Empty',
-        isLoading: false,
-        requiresMigration: false,
-        shouldSkipSync: true,
-      });
-
-      const { user } = setup();
-
-      // Wait for the error to be displayed
-      await screen.findByText('Repository health check timed out');
-
-      const retryButton = screen.getByRole('button', { name: /Retry/i });
-      await user.click(retryButton);
-
-      expect(mockResetTimeout).toHaveBeenCalled();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
-import { TIMEOUT_MS, useRepositoryStatus } from './hooks/useRepositoryStatus';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
@@ -51,8 +51,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     refetch: retryRepositoryStatus,
     isHealthy,
     isUnhealthy,
-    hasTimedOut,
-    resetTimeout,
   } = useRepositoryStatus(repoName);
 
   const {
@@ -71,11 +69,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   // Wait for health if: ready but neither healthy nor unhealthy (still reconciling)
   const isWaitingForHealth = isRepositoryReady && !repositoryStatusError && !isHealthy && !isUnhealthy;
 
-  const handleRetryWithReset = useCallback(() => {
-    resetTimeout();
-    retryRepositoryStatus();
-  }, [resetTimeout, retryRepositoryStatus]);
-
   useEffect(() => {
     // Pick a name nice name based on type+settings
     const repository = getValues('repository');
@@ -84,30 +77,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }, [getValues, setValue]);
 
   useEffect(() => {
-    // Handle timeout error
-    if (hasTimedOut) {
-      const timeoutSeconds = TIMEOUT_MS / 1000;
-      setStepStatusInfo({
-        status: 'error',
-        error: {
-          title: t(
-            'provisioning.bootstrap-step.error-repository-status-timeout-title',
-            'Repository health check timed out'
-          ),
-          message: t(
-            'provisioning.bootstrap-step.error-repository-status-timeout-message',
-            'The repository did not become healthy within {{timeoutSeconds}} seconds. Please check the repository settings and try again.',
-            { timeoutSeconds }
-          ),
-        },
-        action: {
-          label: t('provisioning.bootstrap-step.retry-action', 'Retry'),
-          onClick: handleRetryWithReset,
-        },
-      });
-      return;
-    }
-
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
     // Only show error if: query error, OR unhealthy (already reconciled)
     if (repositoryStatusError || isUnhealthy) {
@@ -156,8 +125,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setStepStatusInfo,
     repositoryStatusError,
     retryRepositoryStatus,
-    hasTimedOut,
-    handleRetryWithReset,
     isWaitingForHealth,
     isQuotaExceeded,
     resourceCount,
@@ -178,7 +145,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     );
   }
 
-  if (isWaitingForHealth && !hasTimedOut) {
+  if (isWaitingForHealth) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
@@ -188,8 +155,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     );
   }
 
-  // Only show error state if: query error, OR unhealthy (already reconciled), OR quota exceeded, OR timed out
-  if (repositoryStatusError || isUnhealthy || isQuotaExceeded || hasTimedOut) {
+  // Only show error state if: query error, OR unhealthy (already reconciled), OR quota exceeded
+  if (repositoryStatusError || isUnhealthy || isQuotaExceeded) {
     // error message and retry will be set in above step status
     return null;
   }

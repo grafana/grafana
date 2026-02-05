@@ -1,11 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { isResourceReconciled } from '../../utils/repositoryStatus';
-
-export const TIMEOUT_MS = 30000; // 30 seconds
 
 export function useRepositoryStatus(repoName?: string) {
   const query = useListRepositoryQuery(
@@ -29,74 +26,6 @@ export function useRepositoryStatus(repoName?: string) {
   // True when health status is not yet determined (waiting for reconciliation)
   const healthStatusNotReady = isReady && !isHealthy && !isUnhealthy;
 
-  const [hasTimedOut, setHasTimedOut] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  // Store current values in refs for use in resetTimeout callback
-  const rawIsHealthyRef = useRef(rawIsHealthy);
-  const isSuccessRef = useRef(query.isSuccess);
-  const repoNameRef = useRef(repoName);
-
-  useEffect(() => {
-    rawIsHealthyRef.current = rawIsHealthy;
-    isSuccessRef.current = query.isSuccess;
-    repoNameRef.current = repoName;
-  }, [rawIsHealthy, query.isSuccess, repoName]);
-
-  // Reset timeout when repository becomes healthy (use raw value for timeout logic)
-  useEffect(() => {
-    if (rawIsHealthy === true) {
-      setHasTimedOut(false);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = undefined;
-      }
-    }
-  }, [rawIsHealthy]);
-
-  // Start timeout when repoName is provided and repository is not healthy
-  useEffect(() => {
-    if (!repoName) {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = undefined;
-      }
-      setHasTimedOut(false);
-      return;
-    }
-
-    // Only start timeout if we're waiting for health status
-    if (!hasTimedOut && rawIsHealthy !== true && query.isSuccess) {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        setHasTimedOut(true);
-      }, TIMEOUT_MS);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = undefined;
-      }
-    };
-  }, [repoName, hasTimedOut, rawIsHealthy, query.isSuccess]);
-
-  const resetTimeout = useCallback(() => {
-    setHasTimedOut(false);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
-    }
-    // Restart timeout if still not healthy
-    if (repoNameRef.current && rawIsHealthyRef.current !== true && isSuccessRef.current) {
-      timeoutRef.current = setTimeout(() => {
-        setHasTimedOut(true);
-      }, TIMEOUT_MS);
-    }
-  }, []);
-
   return {
     isReady,
     isHealthy, // true only when healthy AND reconciled
@@ -108,7 +37,5 @@ export function useRepositoryStatus(repoName?: string) {
     isFetching: query.isFetching,
     hasError: query.isError,
     refetch: query.refetch,
-    hasTimedOut,
-    resetTimeout,
   };
 }
