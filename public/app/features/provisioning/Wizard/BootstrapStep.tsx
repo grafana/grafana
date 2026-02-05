@@ -36,7 +36,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setValue,
     watch,
     getValues,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useFormContext<WizardFormData>();
 
   const selectedTarget = watch('repository.sync.target');
@@ -69,11 +69,13 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
 
   useEffect(() => {
-    // Pick a name nice name based on type+settings
-    const repository = getValues('repository');
-    const title = generateRepositoryTitle(repository);
-    setValue('repository.title', title);
-  }, [getValues, setValue]);
+    // Pick a nice name based on type+settings, but only if user hasn't modified it
+    if (!dirtyFields.repository?.title) {
+      const repository = getValues('repository');
+      const title = generateRepositoryTitle(repository);
+      setValue('repository.title', title);
+    }
+  }, [getValues, setValue, dirtyFields.repository?.title]);
 
   useEffect(() => {
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
