@@ -389,7 +389,7 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 		responseErr  error
 		expectErr    bool
 		expectErrMsg string
-		numRetries   int // Expected number of RPC calls (1 for success, 3 for max retries)
+		numRetries   int // Expected number of RPC calls (1 for success, 5 for max retries)
 	}{
 		{
 			name: "response error retries and returns error",
@@ -402,7 +402,7 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			responseErr:  nil,
 			expectErr:    true,
 			expectErrMsg: "failed to rebuild index",
-			numRetries:   3, // MaxRetries: 3 means 3 total attempts
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
 			name:         "RPC error retries and returns error",
@@ -410,7 +410,7 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			responseErr:  fmt.Errorf("connection failed"),
 			expectErr:    true,
 			expectErrMsg: "connection failed",
-			numRetries:   3, // MaxRetries: 3 means 3 total attempts
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
 			name: "no error succeeds on first attempt",
@@ -435,9 +435,12 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
+			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+			registry := migrations.ProvideMigrationRegistry(mockAccessor)
 			migrator := migrations.ProvideUnifiedMigrator(
-				&legacy.MockMigrationDashboardAccessor{},
+				mockAccessor,
 				mockClient,
+				registry,
 			)
 
 			// Create test data
@@ -487,9 +490,12 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 		Once()
 
 	// Create migrator with mock client
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	registry := migrations.ProvideMigrationRegistry(mockAccessor)
 	migrator := migrations.ProvideUnifiedMigrator(
-		&legacy.MockMigrationDashboardAccessor{},
+		mockAccessor,
 		mockClient,
+		registry,
 	)
 
 	// Create test data
@@ -515,9 +521,12 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 
 func TestUnifiedMigration_RebuildIndexes_NilClient(t *testing.T) {
 	// Test that when client is nil, the method skips rebuilding and returns nil
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	registry := migrations.ProvideMigrationRegistry(mockAccessor)
 	migrator := migrations.ProvideUnifiedMigrator(
-		&legacy.MockMigrationDashboardAccessor{},
+		mockAccessor,
 		nil,
+		registry,
 	)
 
 	info := authlib.NamespaceInfo{
@@ -547,7 +556,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 		resources    []schema.GroupResource
 		expectErr    bool
 		expectErrMsg string
-		numRetries   int // Expected number of RPC calls (1 for success, 3 for max retries)
+		numRetries   int // Expected number of RPC calls (1 for success, 5 for max retries)
 	}{
 		{
 			name: "not all pods contacted retries and returns error",
@@ -559,7 +568,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			},
 			expectErr:    true,
 			expectErrMsg: "distributor did not contact all instances",
-			numRetries:   3, // MaxRetries: 3 means 3 total attempts
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
 			name: "missing build time for resource succeeds (index may not exist)",
@@ -597,7 +606,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			},
 			expectErr:    true,
 			expectErrMsg: "was built before migration finished",
-			numRetries:   3, // MaxRetries: 3 means 3 total attempts
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
 			name: "build time exactly at migration time succeeds",
@@ -656,7 +665,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			},
 			expectErr:    true,
 			expectErrMsg: "some pods failed to rebuild",
-			numRetries:   3, // MaxRetries: 3 means 3 total attempts
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
 			name: "multiple resources with valid build times succeeds",
@@ -696,9 +705,12 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
+			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+			registry := migrations.ProvideMigrationRegistry(mockAccessor)
 			migrator := migrations.ProvideUnifiedMigrator(
-				&legacy.MockMigrationDashboardAccessor{},
+				mockAccessor,
 				mockClient,
+				registry,
 			)
 
 			// Create test data
@@ -764,9 +776,12 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 		Once()
 
 	// Create migrator with mock client
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	registry := migrations.ProvideMigrationRegistry(mockAccessor)
 	migrator := migrations.ProvideUnifiedMigrator(
-		&legacy.MockMigrationDashboardAccessor{},
+		mockAccessor,
 		mockClient,
+		registry,
 	)
 
 	// Create test data

@@ -2951,7 +2951,7 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.1"
+    "@grafana/llm": "npm:1.0.2"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
     "@grafana/runtime": "npm:12.4.0-pre"
@@ -3326,9 +3326,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.4":
-  version: 0.1.4
-  resolution: "@grafana/assistant@npm:0.1.4"
+"@grafana/assistant@npm:0.1.13":
+  version: 0.1.13
+  resolution: "@grafana/assistant@npm:0.1.13"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3336,7 +3336,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/1435e4552763e88a2d4715f2e529d1a247d949563567bfb46405a2a3e348b98dc08b32c96214c2d00c46e185f92a76da8d29422b1b70edbd8447e02b3b8cf3d0
+  checksum: 10/90b94602f739b2940d3ff21a97cdcf09be828f5ece5212131e1351c5f8e0528e232f219a3370c0655f80ee20ae340ae62a1a4331064c66060c47de7287f81832
   languageName: node
   linkType: hard
 
@@ -3636,11 +3636,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@grafana/llm@npm:1.0.1"
+"@grafana/llm@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@grafana/llm@npm:1.0.2"
   dependencies:
-    "@modelcontextprotocol/sdk": "npm:^1.24.3"
+    "@modelcontextprotocol/sdk": "npm:^1.25.1"
     publint: "npm:^0.3.12"
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
@@ -3650,7 +3650,7 @@ __metadata:
     "@grafana/runtime": ^10.4.0 || ^11 || ^12
     react: ^18
     rxjs: ^7.8.2
-  checksum: 10/29739ca477d0db9c3c2f5ede2eb032d411b379fcad12976677d24b27c2d38929f5916d1a7915f503d0e1080b06ccfd3f0663c2c90e52a22b170f9ebdbab01d7f
+  checksum: 10/867a0845dd57c63b9d833549d12f36b112d3b0577bcb87ca7b829210917ea11dce39a6cbd59f5fbc2613daaf4d6b83bab98cd81273c04f3f9aa9478c81f1c7db
   languageName: node
   linkType: hard
 
@@ -4281,6 +4281,15 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
   checksum: 10/4795063e249a818c60e223f3527797878cb546ef007a52a7dd6c1a01094d3b2107820476a10fc83c0ba9dc4387c1ae49e70c8f8cff9722636219773caad19372
+  languageName: node
+  linkType: hard
+
+"@hono/node-server@npm:^1.19.9":
+  version: 1.19.9
+  resolution: "@hono/node-server@npm:1.19.9"
+  peerDependencies:
+    hono: ^4
+  checksum: 10/d4915c2e736ee1e3934b5538cde92b19914dc71346340528a04e4c7219afc7367965080cd1a5291ac9cbda7b0780b89b6ca93472a9418aa105d6d1183033dc8a
   languageName: node
   linkType: hard
 
@@ -5716,10 +5725,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.24.3":
-  version: 1.24.3
-  resolution: "@modelcontextprotocol/sdk@npm:1.24.3"
+"@modelcontextprotocol/sdk@npm:^1.25.1":
+  version: 1.25.3
+  resolution: "@modelcontextprotocol/sdk@npm:1.25.3"
   dependencies:
+    "@hono/node-server": "npm:^1.19.9"
     ajv: "npm:^8.17.1"
     ajv-formats: "npm:^3.0.1"
     content-type: "npm:^1.0.5"
@@ -5730,6 +5740,7 @@ __metadata:
     express: "npm:^5.0.1"
     express-rate-limit: "npm:^7.5.0"
     jose: "npm:^6.1.1"
+    json-schema-typed: "npm:^8.0.2"
     pkce-challenge: "npm:^5.0.0"
     raw-body: "npm:^3.0.0"
     zod: "npm:^3.25 || ^4.0"
@@ -5742,7 +5753,7 @@ __metadata:
       optional: true
     zod:
       optional: false
-  checksum: 10/661aea493ee06674edc0d1409d5ff6e53053da2c3eb27d28ecdd5aa212d9d6bac8c00bec1cd18c1065f2d5774afef34e3cdcd19643056f954c14f611fee8cbc4
+  checksum: 10/e4e38845ecfeaee124860ac2dfe378d2a4e8a09bd085b77124c9047b944826cff1776f97c11eaa56b0d83e164518a064f19c0be3046fa4307ba05dbe2ec325a1
   languageName: node
   linkType: hard
 
@@ -20415,7 +20426,7 @@ __metadata:
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.4"
+    "@grafana/assistant": "npm:0.1.13"
     "@grafana/aws-sdk": "npm:0.9.0"
     "@grafana/azure-sdk": "npm:0.0.8"
     "@grafana/data": "workspace:*"
@@ -20429,7 +20440,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.1"
+    "@grafana/llm": "npm:1.0.2"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:3.2.0"
@@ -23848,6 +23859,13 @@ __metadata:
   version: 1.0.0
   resolution: "json-schema-traverse@npm:1.0.0"
   checksum: 10/02f2f466cdb0362558b2f1fd5e15cce82ef55d60cd7f8fa828cf35ba74330f8d767fcae5c5c2adb7851fa811766c694b9405810879bc4e1ddd78a7c0e03658ad
+  languageName: node
+  linkType: hard
+
+"json-schema-typed@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "json-schema-typed@npm:8.0.2"
+  checksum: 10/fa866d1fe91e3a94aa4fe007861475cd03dcaf47b719861cab171ef2f8598478007c634d29ae45de94ee34ddff4e13414c63ea5ff06c5b868b613142c699d511
   languageName: node
   linkType: hard
 
