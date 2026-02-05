@@ -236,6 +236,7 @@ export interface GrafanaConfig {
   externalUserMngInfo: string;
   externalUserMngAnalytics: boolean;
   externalUserMngAnalyticsParams: string;
+  externalUserUpgradeLinkUrl: string;
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;

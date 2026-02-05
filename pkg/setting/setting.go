@@ -138,18 +138,20 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets      []string
-	ProvisioningAllowImageRendering bool
-	ProvisioningMinSyncInterval     time.Duration
-	ProvisioningRepositoryTypes     []string
-	ProvisioningLokiURL             string
-	ProvisioningLokiUser            string
-	ProvisioningLokiPassword        string
-	ProvisioningLokiTenantID        string
-	DataPath                        string
-	LogsPath                        string
-	PluginsPath                     string
-	EnterpriseLicensePath           string
+	ProvisioningAllowedTargets            []string
+	ProvisioningAllowImageRendering       bool
+	ProvisioningMinSyncInterval           time.Duration
+	ProvisioningRepositoryTypes           []string
+	ProvisioningLokiURL                   string
+	ProvisioningLokiUser                  string
+	ProvisioningLokiPassword              string
+	ProvisioningLokiTenantID              string
+	ProvisioningMaxResourcesPerRepository int64 // 0 = unlimited
+	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
+	DataPath                              string
+	LogsPath                              string
+	PluginsPath                           string
+	EnterpriseLicensePath                 string
 
 	// Classic Provisioning settings
 	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
@@ -279,12 +281,13 @@ type Cfg struct {
 	ManagedServiceAccountsEnabled bool
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders   []string
-	AWSAssumeRoleEnabled      bool
-	AWSSessionDuration        string
-	AWSExternalId             string
-	AWSListMetricsPageLimit   int
-	AWSForwardSettingsPlugins []string
+	AWSAllowedAuthProviders          []string
+	AWSAssumeRoleEnabled             bool
+	AWSPerDatasourceHTTPProxyEnabled bool
+	AWSSessionDuration               string
+	AWSExternalId                    string
+	AWSListMetricsPageLimit          int
+	AWSForwardSettingsPlugins        []string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -448,6 +451,7 @@ type Cfg struct {
 	ExternalUserMngInfo            string
 	ExternalUserMngAnalytics       bool
 	ExternalUserMngAnalyticsParams string
+	ExternalUserUpgradeLinkUrl     string
 	AutoAssignOrg                  bool
 	AutoAssignOrgId                int
 	AutoAssignOrgRole              string
@@ -601,7 +605,6 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
-	IndexScoringModel                          string        // Note: Temporary config to switch the index scoring model and will be removed soon.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
@@ -622,6 +625,7 @@ type Cfg struct {
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	EnableSearch                               bool
+	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool
@@ -1508,6 +1512,7 @@ func (cfg *Cfg) readLDAPConfig() {
 func (cfg *Cfg) handleAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
 	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
@@ -1852,6 +1857,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
+	cfg.ExternalUserUpgradeLinkUrl = valueAsString(users, "external_upgrade_link_url", "")
 
 	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
@@ -2179,6 +2185,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
+	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
+	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

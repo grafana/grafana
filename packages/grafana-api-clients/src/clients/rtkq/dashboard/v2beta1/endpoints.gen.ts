@@ -705,7 +705,7 @@ export type DashboardFieldConfig = {
   path?: string;
   thresholds?: DashboardThresholdsConfig;
   /** Unit a field should use. The unit you select is applied to all fields except time.
-    You can use the units ID availables in Grafana or a custom unit.
+    You can use the units ID available in Grafana or a custom unit.
     Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
     As custom unit, you can use the following formats:
     `suffix:<suffix>` for custom unit that should go after value.
@@ -976,6 +976,10 @@ export type DashboardTimeSettingsSpec = {
   weekStart?: 'saturday' | 'monday' | 'sunday';
 };
 export type DashboardVariableOption = {
+  /** Additional properties for multi-props variables */
+  properties?: {
+    [key: string]: string;
+  };
   /** Whether the option is selected or not */
   selected?: boolean;
   /** Text to be displayed for the option */

@@ -69,10 +69,12 @@ func (s *Service) Checks() []checks.Check {
 		datasourcecheck.New(
 			s.datasourceSvc,
 			s.pluginStore,
-			s.pluginContextProvider,
-			s.pluginClient,
 			s.pluginRepo,
 			s.GrafanaVersion,
+			&checks.HealthCheckerImpl{
+				PluginContextProvider: s.pluginContextProvider,
+				PluginClient:          s.pluginClient,
+			},
 		),
 		plugincheck.New(
 			s.pluginStore,

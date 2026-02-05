@@ -82,33 +82,21 @@ func (_c *MockMigrationDashboardAccessor_CountResources_Call) RunAndReturn(run f
 }
 
 // MigrateDashboards provides a mock function with given fields: ctx, orgId, opts, stream
-func (_m *MockMigrationDashboardAccessor) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (_m *MockMigrationDashboardAccessor) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	ret := _m.Called(ctx, orgId, opts, stream)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MigrateDashboards")
 	}
 
-	var r0 *BlobStoreInfo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)); ok {
-		return rf(ctx, orgId, opts, stream)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) *BlobStoreInfo); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
 		r0 = rf(ctx, orgId, opts, stream)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*BlobStoreInfo)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
-		r1 = rf(ctx, orgId, opts, stream)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockMigrationDashboardAccessor_MigrateDashboards_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MigrateDashboards'
@@ -132,44 +120,32 @@ func (_c *MockMigrationDashboardAccessor_MigrateDashboards_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigrateDashboards_Call) Return(_a0 *BlobStoreInfo, _a1 error) *MockMigrationDashboardAccessor_MigrateDashboards_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockMigrationDashboardAccessor_MigrateDashboards_Call) Return(_a0 error) *MockMigrationDashboardAccessor_MigrateDashboards_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigrateDashboards_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)) *MockMigrationDashboardAccessor_MigrateDashboards_Call {
+func (_c *MockMigrationDashboardAccessor_MigrateDashboards_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error) *MockMigrationDashboardAccessor_MigrateDashboards_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MigrateFolders provides a mock function with given fields: ctx, orgId, opts, stream
-func (_m *MockMigrationDashboardAccessor) MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (_m *MockMigrationDashboardAccessor) MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	ret := _m.Called(ctx, orgId, opts, stream)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MigrateFolders")
 	}
 
-	var r0 *BlobStoreInfo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)); ok {
-		return rf(ctx, orgId, opts, stream)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) *BlobStoreInfo); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
 		r0 = rf(ctx, orgId, opts, stream)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*BlobStoreInfo)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
-		r1 = rf(ctx, orgId, opts, stream)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockMigrationDashboardAccessor_MigrateFolders_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MigrateFolders'
@@ -193,44 +169,32 @@ func (_c *MockMigrationDashboardAccessor_MigrateFolders_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigrateFolders_Call) Return(_a0 *BlobStoreInfo, _a1 error) *MockMigrationDashboardAccessor_MigrateFolders_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockMigrationDashboardAccessor_MigrateFolders_Call) Return(_a0 error) *MockMigrationDashboardAccessor_MigrateFolders_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigrateFolders_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)) *MockMigrationDashboardAccessor_MigrateFolders_Call {
+func (_c *MockMigrationDashboardAccessor_MigrateFolders_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error) *MockMigrationDashboardAccessor_MigrateFolders_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MigrateLibraryPanels provides a mock function with given fields: ctx, orgId, opts, stream
-func (_m *MockMigrationDashboardAccessor) MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (_m *MockMigrationDashboardAccessor) MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	ret := _m.Called(ctx, orgId, opts, stream)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MigrateLibraryPanels")
 	}
 
-	var r0 *BlobStoreInfo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)); ok {
-		return rf(ctx, orgId, opts, stream)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) *BlobStoreInfo); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
 		r0 = rf(ctx, orgId, opts, stream)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*BlobStoreInfo)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
-		r1 = rf(ctx, orgId, opts, stream)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockMigrationDashboardAccessor_MigrateLibraryPanels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MigrateLibraryPanels'
@@ -254,44 +218,32 @@ func (_c *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call) Run(run func
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call) Return(_a0 *BlobStoreInfo, _a1 error) *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call) Return(_a0 error) *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)) *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call {
+func (_c *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error) *MockMigrationDashboardAccessor_MigrateLibraryPanels_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MigratePlaylists provides a mock function with given fields: ctx, orgId, opts, stream
-func (_m *MockMigrationDashboardAccessor) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (_m *MockMigrationDashboardAccessor) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	ret := _m.Called(ctx, orgId, opts, stream)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MigratePlaylists")
 	}
 
-	var r0 *BlobStoreInfo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)); ok {
-		return rf(ctx, orgId, opts, stream)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) *BlobStoreInfo); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
 		r0 = rf(ctx, orgId, opts, stream)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*BlobStoreInfo)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error); ok {
-		r1 = rf(ctx, orgId, opts, stream)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockMigrationDashboardAccessor_MigratePlaylists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MigratePlaylists'
@@ -315,12 +267,12 @@ func (_c *MockMigrationDashboardAccessor_MigratePlaylists_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigratePlaylists_Call) Return(_a0 *BlobStoreInfo, _a1 error) *MockMigrationDashboardAccessor_MigratePlaylists_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockMigrationDashboardAccessor_MigratePlaylists_Call) Return(_a0 error) *MockMigrationDashboardAccessor_MigratePlaylists_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockMigrationDashboardAccessor_MigratePlaylists_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)) *MockMigrationDashboardAccessor_MigratePlaylists_Call {
+func (_c *MockMigrationDashboardAccessor_MigratePlaylists_Call) RunAndReturn(run func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error) *MockMigrationDashboardAccessor_MigratePlaylists_Call {
 	_c.Call.Return(run)
 	return _c
 }

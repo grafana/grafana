@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 )
 
 const (
@@ -243,8 +244,8 @@ var TeamLBACRuleInfo = utils.NewResourceInfo(
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Datasource Type", Type: "string", Format: "string", Description: "Data source type"},
 			{Name: "Datasource UID", Type: "string", Format: "string", Description: "Data source UID"},
-			{Name: "Team UID", Type: "string", Format: "string", Description: "Team UID"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -254,8 +255,8 @@ var TeamLBACRuleInfo = utils.NewResourceInfo(
 			}
 			return []interface{}{
 				t.Name,
+				t.Spec.DatasourceType,
 				t.Spec.DatasourceUid,
-				t.Spec.TeamUid,
 				t.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
@@ -412,17 +413,7 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 	)
 
 	// Enable field selectors for TeamBinding
-	err := scheme.AddFieldLabelConversionFunc(
-		TeamBindingResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)
-			}
-		},
-	)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, TeamBindingKind())
 	if err != nil {
 		return err
 	}

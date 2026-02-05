@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/text/panelcfg.cue file.
+
 export enum TextMode {
   Code = 'code',
   HTML = 'html',

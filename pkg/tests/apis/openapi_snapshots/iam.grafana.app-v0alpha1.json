@@ -4040,6 +4040,38 @@
         ],
         "description": "connect GET requests to groups of Team",
         "operationId": "getTeamGroups",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 30
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page number (starting from 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 0
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -4089,6 +4121,38 @@
         ],
         "description": "connect GET requests to members of Team",
         "operationId": "getTeamMembers",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 30
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page number (starting from 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 0
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -4893,6 +4957,38 @@
         ],
         "description": "connect GET requests to teams of User",
         "operationId": "getUserTeams",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 30
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page number (starting from 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 0
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -6137,7 +6233,6 @@
         "required": [
           "title",
           "description",
-          "version",
           "group",
           "permissions"
         ],
@@ -6161,11 +6256,6 @@
             "description": "Display name of the role",
             "type": "string",
             "default": ""
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           }
         }
       },
@@ -6339,6 +6429,42 @@
         }
       },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroupsBody": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetMembers": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetMembersBody": {
         "type": "object",
         "required": [
           "items"
@@ -6720,7 +6846,6 @@
         "required": [
           "title",
           "description",
-          "version",
           "group",
           "permissions"
         ],
@@ -6744,11 +6869,6 @@
             "description": "Display name of the role",
             "type": "string",
             "default": ""
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           }
         }
       },
@@ -7197,7 +7317,6 @@
         "required": [
           "title",
           "description",
-          "version",
           "group",
           "permissions"
         ],
@@ -7221,11 +7340,6 @@
             "description": "Display name of the role",
             "type": "string",
             "default": ""
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           }
         }
       },
@@ -7652,27 +7766,30 @@
         "type": "object",
         "required": [
           "datasource_uid",
-          "team_uid",
-          "filters"
+          "datasource_type",
+          "team_filters"
         ],
         "properties": {
+          "datasource_type": {
+            "description": "Data source type that this TeamLBAC Rule applies to",
+            "type": "string",
+            "default": ""
+          },
           "datasource_uid": {
             "description": "Data source UID that this TeamLBAC Rule applies to",
             "type": "string",
             "default": ""
           },
-          "filters": {
-            "description": "Filters for the TeamLBAC Rule",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
+          "team_filters": {
+            "description": "Map of team UIDs to their filter lists Each team can have multiple filters",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
             }
-          },
-          "team_uid": {
-            "description": "Team UID that this TeamLBAC Rule applies to",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -7699,19 +7816,6 @@
           },
           "metadata": {
             "default": {}
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamRef": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "description": "Name is the unique identifier for a team.",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -7962,7 +8066,8 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam": {
         "type": "object",
         "required": [
-          "teamRef",
+          "user",
+          "team",
           "permission",
           "external"
         ],
@@ -7975,8 +8080,13 @@
             "type": "string",
             "default": ""
           },
-          "teamRef": {
-            "default": {}
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -7992,6 +8102,33 @@
             "default": ""
           },
           "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser": {
+        "type": "object",
+        "required": [
+          "team",
+          "user",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
             "type": "string",
             "default": ""
           }
