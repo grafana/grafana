@@ -48,6 +48,7 @@ function getStyles(
   theme: GrafanaTheme2,
   { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
 ) {
+  // TODO: doesn't really disappear when no longer hovering, fix this later
   const hoverActions = css({
     opacity: 0,
     marginLeft: 'auto',
