@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"google.golang.org/grpc/metadata"
 
