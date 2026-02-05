@@ -50,7 +50,7 @@ const autoOption = {
   ariaLabel: 'Select refresh from the query range',
 };
 
-export const RefreshPicker = React.memo((props: Props) => {
+const RefreshPickerComponent = React.memo((props: Props) => {
   const {
     intervals,
     onRefresh,
@@ -141,9 +141,12 @@ export const RefreshPicker = React.memo((props: Props) => {
     </ButtonGroup>
   );
 });
-RefreshPicker.isLive = (refreshInterval?: string): boolean => refreshInterval === liveOption.value;
 
-RefreshPicker.displayName = 'RefreshPicker';
+RefreshPickerComponent.displayName = 'RefreshPicker';
+
+export const RefreshPicker = Object.assign(RefreshPickerComponent, {
+  isLive: (refreshInterval?: string): boolean => refreshInterval === liveOption.value,
+});
 
 export const translateOption = (option: string) => {
   switch (option) {
