@@ -18,7 +18,7 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
       id={transformation.transformId}
       onClick={() => setSelectedTransformation(transformation)}
     >
-      <Text weight="light" variant="body" color="secondary">
+      <Text weight="light" variant="code" color="secondary">
         {transformationName}
       </Text>
     </SidebarCard>
