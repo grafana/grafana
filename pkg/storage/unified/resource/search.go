@@ -923,20 +923,11 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Versio
 func newSelectableFieldsAdded(indexSelectableFields, selectableFields []string) bool {
 	// If index has no selectable fields yet, it's easy...
 	if len(indexSelectableFields) == 0 {
-		if len(selectableFields) == 0 {
-			return false
-		}
-		return true
+		return len(selectableFields) > 0
 	}
 
-	isfs := map[string]bool{}
-	for _, field := range indexSelectableFields {
-		isfs[field] = true
-	}
-
-	for _, field := range selectableFields {
-		if !isfs[field] {
-			// We have found a new selectable field -- we need to reindex.
+	for _, sf := range selectableFields {
+		if !slices.Contains(indexSelectableFields, sf) {
 			return true
 		}
 	}
