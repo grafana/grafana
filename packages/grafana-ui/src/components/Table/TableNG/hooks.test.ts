@@ -248,7 +248,7 @@ describe('TableNG hooks', () => {
           sortColumns: [],
         });
       });
-      expect(result.current).toBe(28);
+      expect(result.current).toBe(TABLE.HEADER_HEIGHT);
     });
 
     it('should return the appropriate height for wrapped text', () => {
@@ -359,7 +359,7 @@ describe('TableNG hooks', () => {
           sortColumns: [],
         });
       });
-      expect(result.current).toBe(28);
+      expect(result.current).toBe(TABLE.HEADER_HEIGHT);
     });
   });
 
