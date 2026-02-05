@@ -20,6 +20,7 @@ import { Stepper } from './Stepper';
 import { WizardButtonBar } from './components/WizardButtonBar';
 import { WizardStepContent } from './components/WizardStepContent';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { useWizardButtons } from './hooks/useWizardButtons';
 import { useWizardCancellation } from './hooks/useWizardCancellation';
@@ -76,7 +77,11 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
-  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
+  const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
+  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
+    isHealthy,
+    healthStatusNotReady,
+  });
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName,
     setStepStatusInfo,

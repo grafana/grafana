@@ -304,6 +304,11 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
+  * Does not register datasource apis that use the numeric id
+  * @default false
+  */
+  datasourceDisableIdApi?: boolean;
+  /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
   */
@@ -1052,10 +1057,21 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
+  * @deprecated
   * @default false
   */
   kubernetesAuthZHandlerRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZResourcePermissionsRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRolesRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false

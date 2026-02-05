@@ -892,16 +892,42 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.MutateOnCreate(ctx, typedObj)
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
+		case *iamv0.Role:
+			oldObj, ok := a.GetOldObject().(*iamv0.Role)
+			if !ok {
+				return fmt.Errorf("old object is not a Role")
+			}
+			return b.roleApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.GlobalRole:
+			oldObj, ok := a.GetOldObject().(*iamv0.GlobalRole)
+			if !ok {
+				return fmt.Errorf("old object is not a GlobalRole")
+			}
+			return b.globalRoleApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
-		return nil
+		switch oldObj := a.GetOldObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnDelete(ctx, oldObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnDelete(ctx, oldObj)
+		}
 	case admission.Connect:
-		return nil
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnConnect(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnConnect(ctx, typedObj)
+		}
 	}
 
 	return nil
