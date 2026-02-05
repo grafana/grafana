@@ -59,7 +59,7 @@ export function LogsTableFields({
     (width: number) => {
       onSidebarWidthChange(width);
       // Getting value in getFieldSelectorWidth
-      store.set(`${SETTING_KEY_ROOT}.table.fieldSelector.width`, width);
+      store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, width);
     },
     [onSidebarWidthChange]
   );
@@ -72,6 +72,17 @@ export function LogsTableFields({
       });
     },
     [setSidebarWidthWrapper]
+  );
+
+  const toggleField = useCallback(
+    (key: string) => {
+      if (displayedFields.includes(key)) {
+        onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));
+      } else {
+        onDisplayedFieldsChange([...displayedFields, key]);
+      }
+    },
+    [displayedFields, onDisplayedFieldsChange]
   );
 
   /**
@@ -123,13 +134,7 @@ export function LogsTableFields({
             reorder={onDisplayedFieldsChange}
             setSidebarWidth={onSidebarWidthChange}
             sidebarWidth={sidebarWidth}
-            toggle={(key: string) => {
-              if (displayedFields.includes(key)) {
-                onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));
-              } else {
-                onDisplayedFieldsChange([...displayedFields, key]);
-              }
-            }}
+            toggle={toggleField}
           />
         </Resizable>
       )}
