@@ -313,7 +313,7 @@ export function QueryEditorDetailsSidebar() {
               <Tooltip
                 content={t(
                   'query-editor.details-sidebar.cache-ttl-tooltip',
-                  'Cache time-to-live: How long results from this queries in this panel will be cached, in milliseconds.'
+                  'Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.'
                 )}
               >
                 <Icon name="info-circle" size="md" className={styles.infoIcon} />
