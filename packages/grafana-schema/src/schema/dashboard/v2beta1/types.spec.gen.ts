@@ -777,6 +777,7 @@ export interface RowsLayoutRowSpec {
 	fillScreen?: boolean;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: RowRepeatOptions;
+	variables?: (AdhocVariableKind | GroupByVariableKind)[];
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
@@ -871,6 +872,142 @@ export interface RowRepeatOptions {
 
 export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
 	mode: RepeatMode,
+	value: "",
+});
+
+// Adhoc variable kind
+export interface AdhocVariableKind {
+	kind: "AdhocVariable";
+	group: string;
+	datasource?: {
+		name?: string;
+	};
+	spec: AdhocVariableSpec;
+}
+
+export const defaultAdhocVariableKind = (): AdhocVariableKind => ({
+	kind: "AdhocVariable",
+	group: "",
+	spec: defaultAdhocVariableSpec(),
+});
+
+// Adhoc variable specification
+export interface AdhocVariableSpec {
+	name: string;
+	baseFilters: AdHocFilterWithLabels[];
+	filters: AdHocFilterWithLabels[];
+	defaultKeys: MetricFindValue[];
+	label?: string;
+	hide: VariableHide;
+	skipUrlSync: boolean;
+	description?: string;
+	allowCustomValue: boolean;
+}
+
+export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
+	name: "",
+	baseFilters: [],
+	filters: [],
+	defaultKeys: [],
+	hide: "dontHide",
+	skipUrlSync: false,
+	allowCustomValue: true,
+});
+
+// Define the AdHocFilterWithLabels type
+export interface AdHocFilterWithLabels {
+	key: string;
+	operator: string;
+	value: string;
+	values?: string[];
+	keyLabel?: string;
+	valueLabels?: string[];
+	forceEdit?: boolean;
+	origin?: "dashboard";
+	// @deprecated
+	condition?: string;
+}
+
+export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
+	key: "",
+	operator: "",
+	value: "",
+	origin: FilterOrigin,
+});
+
+// Determine the origin of the adhoc variable filter
+export const FilterOrigin = "dashboard";
+
+// Define the MetricFindValue type
+export interface MetricFindValue {
+	text: string;
+	value?: string | number;
+	group?: string;
+	expandable?: boolean;
+}
+
+export const defaultMetricFindValue = (): MetricFindValue => ({
+	text: "",
+});
+
+// Determine if the variable shows on dashboard
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
+
+export const defaultVariableHide = (): VariableHide => ("dontHide");
+
+// Group variable kind
+export interface GroupByVariableKind {
+	kind: "GroupByVariable";
+	group: string;
+	datasource?: {
+		name?: string;
+	};
+	spec: GroupByVariableSpec;
+}
+
+export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
+	kind: "GroupByVariable",
+	group: "",
+	spec: defaultGroupByVariableSpec(),
+});
+
+// GroupBy variable specification
+export interface GroupByVariableSpec {
+	name: string;
+	defaultValue?: VariableOption;
+	current: VariableOption;
+	options: VariableOption[];
+	multi: boolean;
+	label?: string;
+	hide: VariableHide;
+	skipUrlSync: boolean;
+	description?: string;
+}
+
+export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
+	name: "",
+	current: { text: "", value: "", },
+	options: [],
+	multi: false,
+	hide: "dontHide",
+	skipUrlSync: false,
+});
+
+// Variable option specification
+export interface VariableOption {
+	// Whether the option is selected or not
+	selected?: boolean;
+	// Text to be displayed for the option
+	text: string | string[];
+	// Value of the option
+	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
+}
+
+export const defaultVariableOption = (): VariableOption => ({
+	text: "",
 	value: "",
 });
 
@@ -1150,29 +1287,6 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	allowCustomValue: true,
 });
 
-// Variable option specification
-export interface VariableOption {
-	// Whether the option is selected or not
-	selected?: boolean;
-	// Text to be displayed for the option
-	text: string | string[];
-	// Value of the option
-	value: string | string[];
-	// Additional properties for multi-props variables
-	properties?: Record<string, string>;
-}
-
-export const defaultVariableOption = (): VariableOption => ({
-	text: "",
-	value: "",
-});
-
-// Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
-
-export const defaultVariableHide = (): VariableHide => ("dontHide");
-
 // Options to config when to refresh a variable
 // `never`: Never refresh the variable
 // `onDashboardLoad`: Queries the data source every time the dashboard loads.
@@ -1384,119 +1498,6 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
-});
-
-// Group variable kind
-export interface GroupByVariableKind {
-	kind: "GroupByVariable";
-	group: string;
-	datasource?: {
-		name?: string;
-	};
-	spec: GroupByVariableSpec;
-}
-
-export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
-	kind: "GroupByVariable",
-	group: "",
-	spec: defaultGroupByVariableSpec(),
-});
-
-// GroupBy variable specification
-export interface GroupByVariableSpec {
-	name: string;
-	defaultValue?: VariableOption;
-	current: VariableOption;
-	options: VariableOption[];
-	multi: boolean;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-}
-
-export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
-	name: "",
-	current: { text: "", value: "", },
-	options: [],
-	multi: false,
-	hide: "dontHide",
-	skipUrlSync: false,
-});
-
-// Adhoc variable kind
-export interface AdhocVariableKind {
-	kind: "AdhocVariable";
-	group: string;
-	datasource?: {
-		name?: string;
-	};
-	spec: AdhocVariableSpec;
-}
-
-export const defaultAdhocVariableKind = (): AdhocVariableKind => ({
-	kind: "AdhocVariable",
-	group: "",
-	spec: defaultAdhocVariableSpec(),
-});
-
-// Adhoc variable specification
-export interface AdhocVariableSpec {
-	name: string;
-	baseFilters: AdHocFilterWithLabels[];
-	filters: AdHocFilterWithLabels[];
-	defaultKeys: MetricFindValue[];
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-	allowCustomValue: boolean;
-}
-
-export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
-	name: "",
-	baseFilters: [],
-	filters: [],
-	defaultKeys: [],
-	hide: "dontHide",
-	skipUrlSync: false,
-	allowCustomValue: true,
-});
-
-// Define the AdHocFilterWithLabels type
-export interface AdHocFilterWithLabels {
-	key: string;
-	operator: string;
-	value: string;
-	values?: string[];
-	keyLabel?: string;
-	valueLabels?: string[];
-	forceEdit?: boolean;
-	origin?: "dashboard";
-	// @deprecated
-	condition?: string;
-}
-
-export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
-	key: "",
-	operator: "",
-	value: "",
-	origin: FilterOrigin,
-});
-
-// Determine the origin of the adhoc variable filter
-export const FilterOrigin = "dashboard";
-
-// Define the MetricFindValue type
-export interface MetricFindValue {
-	text: string;
-	value?: string | number;
-	group?: string;
-	expandable?: boolean;
-}
-
-export const defaultMetricFindValue = (): MetricFindValue => ({
-	text: "",
 });
 
 export interface SwitchVariableKind {

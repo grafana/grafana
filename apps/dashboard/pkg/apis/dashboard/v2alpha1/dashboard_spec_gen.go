@@ -957,6 +957,7 @@ type DashboardRowsLayoutRowSpec struct {
 	FillScreen           *bool                                                                       `json:"fillScreen,omitempty"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
+	Variables            []DashboardAdhocVariableKindOrGroupByVariableKind                           `json:"variables,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 }
 
@@ -1079,6 +1080,170 @@ type DashboardRowRepeatOptions struct {
 func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
 	return &DashboardRowRepeatOptions{
 		Mode: DashboardRepeatMode,
+	}
+}
+
+// Adhoc variable kind
+// +k8s:openapi-gen=true
+type DashboardAdhocVariableKind struct {
+	Kind string                     `json:"kind"`
+	Spec DashboardAdhocVariableSpec `json:"spec"`
+}
+
+// NewDashboardAdhocVariableKind creates a new DashboardAdhocVariableKind object.
+func NewDashboardAdhocVariableKind() *DashboardAdhocVariableKind {
+	return &DashboardAdhocVariableKind{
+		Kind: "AdhocVariable",
+		Spec: *NewDashboardAdhocVariableSpec(),
+	}
+}
+
+// Adhoc variable specification
+// +k8s:openapi-gen=true
+type DashboardAdhocVariableSpec struct {
+	Name             string                           `json:"name"`
+	Datasource       *DashboardDataSourceRef          `json:"datasource,omitempty"`
+	BaseFilters      []DashboardAdHocFilterWithLabels `json:"baseFilters"`
+	Filters          []DashboardAdHocFilterWithLabels `json:"filters"`
+	DefaultKeys      []DashboardMetricFindValue       `json:"defaultKeys"`
+	Label            *string                          `json:"label,omitempty"`
+	Hide             DashboardVariableHide            `json:"hide"`
+	SkipUrlSync      bool                             `json:"skipUrlSync"`
+	Description      *string                          `json:"description,omitempty"`
+	AllowCustomValue bool                             `json:"allowCustomValue"`
+}
+
+// NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
+func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
+	return &DashboardAdhocVariableSpec{
+		Name:             "",
+		BaseFilters:      []DashboardAdHocFilterWithLabels{},
+		Filters:          []DashboardAdHocFilterWithLabels{},
+		DefaultKeys:      []DashboardMetricFindValue{},
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
+	}
+}
+
+// Define the AdHocFilterWithLabels type
+// +k8s:openapi-gen=true
+type DashboardAdHocFilterWithLabels struct {
+	Key         string   `json:"key"`
+	Operator    string   `json:"operator"`
+	Value       string   `json:"value"`
+	Values      []string `json:"values,omitempty"`
+	KeyLabel    *string  `json:"keyLabel,omitempty"`
+	ValueLabels []string `json:"valueLabels,omitempty"`
+	ForceEdit   *bool    `json:"forceEdit,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
+	// @deprecated
+	Condition *string `json:"condition,omitempty"`
+}
+
+// NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
+func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
+	return &DashboardAdHocFilterWithLabels{
+		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
+	}
+}
+
+// Determine the origin of the adhoc variable filter
+// +k8s:openapi-gen=true
+const DashboardFilterOrigin = "dashboard"
+
+// Define the MetricFindValue type
+// +k8s:openapi-gen=true
+type DashboardMetricFindValue struct {
+	Text       string                    `json:"text"`
+	Value      *DashboardStringOrFloat64 `json:"value,omitempty"`
+	Group      *string                   `json:"group,omitempty"`
+	Expandable *bool                     `json:"expandable,omitempty"`
+}
+
+// NewDashboardMetricFindValue creates a new DashboardMetricFindValue object.
+func NewDashboardMetricFindValue() *DashboardMetricFindValue {
+	return &DashboardMetricFindValue{}
+}
+
+// Determine if the variable shows on dashboard
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// +k8s:openapi-gen=true
+type DashboardVariableHide string
+
+const (
+	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+)
+
+// Group variable kind
+// +k8s:openapi-gen=true
+type DashboardGroupByVariableKind struct {
+	Kind string                       `json:"kind"`
+	Spec DashboardGroupByVariableSpec `json:"spec"`
+}
+
+// NewDashboardGroupByVariableKind creates a new DashboardGroupByVariableKind object.
+func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
+	return &DashboardGroupByVariableKind{
+		Kind: "GroupByVariable",
+		Spec: *NewDashboardGroupByVariableSpec(),
+	}
+}
+
+// GroupBy variable specification
+// +k8s:openapi-gen=true
+type DashboardGroupByVariableSpec struct {
+	Name         string                    `json:"name"`
+	Datasource   *DashboardDataSourceRef   `json:"datasource,omitempty"`
+	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
+	Current      DashboardVariableOption   `json:"current"`
+	Options      []DashboardVariableOption `json:"options"`
+	Multi        bool                      `json:"multi"`
+	Label        *string                   `json:"label,omitempty"`
+	Hide         DashboardVariableHide     `json:"hide"`
+	SkipUrlSync  bool                      `json:"skipUrlSync"`
+	Description  *string                   `json:"description,omitempty"`
+}
+
+// NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.
+func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
+	return &DashboardGroupByVariableSpec{
+		Name: "",
+		Current: DashboardVariableOption{
+			Text: DashboardStringOrArrayOfString{
+				String: (func(input string) *string { return &input })(""),
+			},
+			Value: DashboardStringOrArrayOfString{
+				String: (func(input string) *string { return &input })(""),
+			},
+		},
+		Options:     []DashboardVariableOption{},
+		Multi:       false,
+		Hide:        DashboardVariableHideDontHide,
+		SkipUrlSync: false,
+	}
+}
+
+// Variable option specification
+// +k8s:openapi-gen=true
+type DashboardVariableOption struct {
+	// Whether the option is selected or not
+	Selected *bool `json:"selected,omitempty"`
+	// Text to be displayed for the option
+	Text DashboardStringOrArrayOfString `json:"text"`
+	// Value of the option
+	Value DashboardStringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
+}
+
+// NewDashboardVariableOption creates a new DashboardVariableOption object.
+func NewDashboardVariableOption() *DashboardVariableOption {
+	return &DashboardVariableOption{
+		Text:  *NewDashboardStringOrArrayOfString(),
+		Value: *NewDashboardStringOrArrayOfString(),
 	}
 }
 
@@ -1417,38 +1582,6 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 	}
 }
 
-// Variable option specification
-// +k8s:openapi-gen=true
-type DashboardVariableOption struct {
-	// Whether the option is selected or not
-	Selected *bool `json:"selected,omitempty"`
-	// Text to be displayed for the option
-	Text DashboardStringOrArrayOfString `json:"text"`
-	// Value of the option
-	Value DashboardStringOrArrayOfString `json:"value"`
-	// Additional properties for multi-props variables
-	Properties map[string]string `json:"properties,omitempty"`
-}
-
-// NewDashboardVariableOption creates a new DashboardVariableOption object.
-func NewDashboardVariableOption() *DashboardVariableOption {
-	return &DashboardVariableOption{
-		Text:  *NewDashboardStringOrArrayOfString(),
-		Value: *NewDashboardStringOrArrayOfString(),
-	}
-}
-
-// Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-// +k8s:openapi-gen=true
-type DashboardVariableHide string
-
-const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
-)
-
 // Options to config when to refresh a variable
 // `never`: Never refresh the variable
 // `onDashboardLoad`: Queries the data source every time the dashboard loads.
@@ -1748,138 +1881,6 @@ func NewDashboardCustomVariableSpec() *DashboardCustomVariableSpec {
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
 	}
-}
-
-// Group variable kind
-// +k8s:openapi-gen=true
-type DashboardGroupByVariableKind struct {
-	Kind string                       `json:"kind"`
-	Spec DashboardGroupByVariableSpec `json:"spec"`
-}
-
-// NewDashboardGroupByVariableKind creates a new DashboardGroupByVariableKind object.
-func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
-	return &DashboardGroupByVariableKind{
-		Kind: "GroupByVariable",
-		Spec: *NewDashboardGroupByVariableSpec(),
-	}
-}
-
-// GroupBy variable specification
-// +k8s:openapi-gen=true
-type DashboardGroupByVariableSpec struct {
-	Name         string                    `json:"name"`
-	Datasource   *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
-	Current      DashboardVariableOption   `json:"current"`
-	Options      []DashboardVariableOption `json:"options"`
-	Multi        bool                      `json:"multi"`
-	Label        *string                   `json:"label,omitempty"`
-	Hide         DashboardVariableHide     `json:"hide"`
-	SkipUrlSync  bool                      `json:"skipUrlSync"`
-	Description  *string                   `json:"description,omitempty"`
-}
-
-// NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.
-func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
-	return &DashboardGroupByVariableSpec{
-		Name: "",
-		Current: DashboardVariableOption{
-			Text: DashboardStringOrArrayOfString{
-				String: (func(input string) *string { return &input })(""),
-			},
-			Value: DashboardStringOrArrayOfString{
-				String: (func(input string) *string { return &input })(""),
-			},
-		},
-		Options:     []DashboardVariableOption{},
-		Multi:       false,
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
-	}
-}
-
-// Adhoc variable kind
-// +k8s:openapi-gen=true
-type DashboardAdhocVariableKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardAdhocVariableSpec `json:"spec"`
-}
-
-// NewDashboardAdhocVariableKind creates a new DashboardAdhocVariableKind object.
-func NewDashboardAdhocVariableKind() *DashboardAdhocVariableKind {
-	return &DashboardAdhocVariableKind{
-		Kind: "AdhocVariable",
-		Spec: *NewDashboardAdhocVariableSpec(),
-	}
-}
-
-// Adhoc variable specification
-// +k8s:openapi-gen=true
-type DashboardAdhocVariableSpec struct {
-	Name             string                           `json:"name"`
-	Datasource       *DashboardDataSourceRef          `json:"datasource,omitempty"`
-	BaseFilters      []DashboardAdHocFilterWithLabels `json:"baseFilters"`
-	Filters          []DashboardAdHocFilterWithLabels `json:"filters"`
-	DefaultKeys      []DashboardMetricFindValue       `json:"defaultKeys"`
-	Label            *string                          `json:"label,omitempty"`
-	Hide             DashboardVariableHide            `json:"hide"`
-	SkipUrlSync      bool                             `json:"skipUrlSync"`
-	Description      *string                          `json:"description,omitempty"`
-	AllowCustomValue bool                             `json:"allowCustomValue"`
-}
-
-// NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
-func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
-	return &DashboardAdhocVariableSpec{
-		Name:             "",
-		BaseFilters:      []DashboardAdHocFilterWithLabels{},
-		Filters:          []DashboardAdHocFilterWithLabels{},
-		DefaultKeys:      []DashboardMetricFindValue{},
-		Hide:             DashboardVariableHideDontHide,
-		SkipUrlSync:      false,
-		AllowCustomValue: true,
-	}
-}
-
-// Define the AdHocFilterWithLabels type
-// +k8s:openapi-gen=true
-type DashboardAdHocFilterWithLabels struct {
-	Key         string   `json:"key"`
-	Operator    string   `json:"operator"`
-	Value       string   `json:"value"`
-	Values      []string `json:"values,omitempty"`
-	KeyLabel    *string  `json:"keyLabel,omitempty"`
-	ValueLabels []string `json:"valueLabels,omitempty"`
-	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      *string  `json:"origin,omitempty"`
-	// @deprecated
-	Condition *string `json:"condition,omitempty"`
-}
-
-// NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
-func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
-	return &DashboardAdHocFilterWithLabels{
-		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
-	}
-}
-
-// Determine the origin of the adhoc variable filter
-// +k8s:openapi-gen=true
-const DashboardFilterOrigin = "dashboard"
-
-// Define the MetricFindValue type
-// +k8s:openapi-gen=true
-type DashboardMetricFindValue struct {
-	Text       string                    `json:"text"`
-	Value      *DashboardStringOrFloat64 `json:"value,omitempty"`
-	Group      *string                   `json:"group,omitempty"`
-	Expandable *bool                     `json:"expandable,omitempty"`
-}
-
-// NewDashboardMetricFindValue creates a new DashboardMetricFindValue object.
-func NewDashboardMetricFindValue() *DashboardMetricFindValue {
-	return &DashboardMetricFindValue{}
 }
 
 // +k8s:openapi-gen=true
@@ -2273,6 +2274,68 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 }
 
 // +k8s:openapi-gen=true
+type DashboardAdhocVariableKindOrGroupByVariableKind struct {
+	AdhocVariableKind   *DashboardAdhocVariableKind   `json:"AdhocVariableKind,omitempty"`
+	GroupByVariableKind *DashboardGroupByVariableKind `json:"GroupByVariableKind,omitempty"`
+}
+
+// NewDashboardAdhocVariableKindOrGroupByVariableKind creates a new DashboardAdhocVariableKindOrGroupByVariableKind object.
+func NewDashboardAdhocVariableKindOrGroupByVariableKind() *DashboardAdhocVariableKindOrGroupByVariableKind {
+	return &DashboardAdhocVariableKindOrGroupByVariableKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardAdhocVariableKindOrGroupByVariableKind` as JSON.
+func (resource DashboardAdhocVariableKindOrGroupByVariableKind) MarshalJSON() ([]byte, error) {
+	if resource.AdhocVariableKind != nil {
+		return json.Marshal(resource.AdhocVariableKind)
+	}
+	if resource.GroupByVariableKind != nil {
+		return json.Marshal(resource.GroupByVariableKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardAdhocVariableKindOrGroupByVariableKind` from JSON.
+func (resource *DashboardAdhocVariableKindOrGroupByVariableKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "AdhocVariable":
+		var dashboardAdhocVariableKind DashboardAdhocVariableKind
+		if err := json.Unmarshal(raw, &dashboardAdhocVariableKind); err != nil {
+			return err
+		}
+
+		resource.AdhocVariableKind = &dashboardAdhocVariableKind
+		return nil
+	case "GroupByVariable":
+		var dashboardGroupByVariableKind DashboardGroupByVariableKind
+		if err := json.Unmarshal(raw, &dashboardGroupByVariableKind); err != nil {
+			return err
+		}
+
+		resource.GroupByVariableKind = &dashboardGroupByVariableKind
+		return nil
+	}
+
+	return nil
+}
+
+// +k8s:openapi-gen=true
 type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind struct {
 	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
 	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
@@ -2430,6 +2493,116 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 	}
 
 	return nil
+}
+
+// +k8s:openapi-gen=true
+type DashboardStringOrFloat64 struct {
+	String  *string  `json:"String,omitempty"`
+	Float64 *float64 `json:"Float64,omitempty"`
+}
+
+// NewDashboardStringOrFloat64 creates a new DashboardStringOrFloat64 object.
+func NewDashboardStringOrFloat64() *DashboardStringOrFloat64 {
+	return &DashboardStringOrFloat64{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardStringOrFloat64` as JSON.
+func (resource DashboardStringOrFloat64) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrFloat64` from JSON.
+func (resource *DashboardStringOrFloat64) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// +k8s:openapi-gen=true
+type DashboardStringOrArrayOfString struct {
+	String        *string  `json:"String,omitempty"`
+	ArrayOfString []string `json:"ArrayOfString,omitempty"`
+}
+
+// NewDashboardStringOrArrayOfString creates a new DashboardStringOrArrayOfString object.
+func NewDashboardStringOrArrayOfString() *DashboardStringOrArrayOfString {
+	return &DashboardStringOrArrayOfString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardStringOrArrayOfString` as JSON.
+func (resource DashboardStringOrArrayOfString) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.ArrayOfString != nil {
+		return json.Marshal(resource.ArrayOfString)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrArrayOfString` from JSON.
+func (resource *DashboardStringOrArrayOfString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// ArrayOfString
+	var ArrayOfString []string
+	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfString = nil
+	} else {
+		resource.ArrayOfString = ArrayOfString
+		return nil
+	}
+
+	return errors.Join(errList...)
 }
 
 // +k8s:openapi-gen=true
@@ -2662,114 +2835,4 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 	}
 
 	return nil
-}
-
-// +k8s:openapi-gen=true
-type DashboardStringOrArrayOfString struct {
-	String        *string  `json:"String,omitempty"`
-	ArrayOfString []string `json:"ArrayOfString,omitempty"`
-}
-
-// NewDashboardStringOrArrayOfString creates a new DashboardStringOrArrayOfString object.
-func NewDashboardStringOrArrayOfString() *DashboardStringOrArrayOfString {
-	return &DashboardStringOrArrayOfString{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardStringOrArrayOfString` as JSON.
-func (resource DashboardStringOrArrayOfString) MarshalJSON() ([]byte, error) {
-	if resource.String != nil {
-		return json.Marshal(resource.String)
-	}
-
-	if resource.ArrayOfString != nil {
-		return json.Marshal(resource.ArrayOfString)
-	}
-
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrArrayOfString` from JSON.
-func (resource *DashboardStringOrArrayOfString) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	var errList []error
-
-	// String
-	var String string
-	if err := json.Unmarshal(raw, &String); err != nil {
-		errList = append(errList, err)
-		resource.String = nil
-	} else {
-		resource.String = &String
-		return nil
-	}
-
-	// ArrayOfString
-	var ArrayOfString []string
-	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
-		errList = append(errList, err)
-		resource.ArrayOfString = nil
-	} else {
-		resource.ArrayOfString = ArrayOfString
-		return nil
-	}
-
-	return errors.Join(errList...)
-}
-
-// +k8s:openapi-gen=true
-type DashboardStringOrFloat64 struct {
-	String  *string  `json:"String,omitempty"`
-	Float64 *float64 `json:"Float64,omitempty"`
-}
-
-// NewDashboardStringOrFloat64 creates a new DashboardStringOrFloat64 object.
-func NewDashboardStringOrFloat64() *DashboardStringOrFloat64 {
-	return &DashboardStringOrFloat64{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardStringOrFloat64` as JSON.
-func (resource DashboardStringOrFloat64) MarshalJSON() ([]byte, error) {
-	if resource.String != nil {
-		return json.Marshal(resource.String)
-	}
-
-	if resource.Float64 != nil {
-		return json.Marshal(resource.Float64)
-	}
-
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrFloat64` from JSON.
-func (resource *DashboardStringOrFloat64) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	var errList []error
-
-	// String
-	var String string
-	if err := json.Unmarshal(raw, &String); err != nil {
-		errList = append(errList, err)
-		resource.String = nil
-	} else {
-		resource.String = &String
-		return nil
-	}
-
-	// Float64
-	var Float64 float64
-	if err := json.Unmarshal(raw, &Float64); err != nil {
-		errList = append(errList, err)
-		resource.Float64 = nil
-	} else {
-		resource.Float64 = &Float64
-		return nil
-	}
-
-	return errors.Join(errList...)
 }
