@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { OwnerReference as OwnerReferenceType } from 'app/api/clients/folder/v1beta1';
 
@@ -40,6 +41,7 @@ export const ManageOwnerReferences = ({
           onClick={() => {
             removeOwnerReference();
             onRemove();
+            reportInteraction('grafana_owner_reference_modal_remove_button_clicked');
           }}
         >
           <Trans i18nKey="manage-owner-references.remove-owner">Remove owner</Trans>
@@ -47,6 +49,9 @@ export const ManageOwnerReferences = ({
         <Button
           onClick={() => {
             if (pendingReference) {
+              reportInteraction('grafana_owner_reference_modal_save_button_clicked', {
+                actionType: ownerReferences[0].uid ? 'reference changed' : 'reference set',
+              });
               addOwnerReference(pendingReference);
               setPendingReference(null);
               onSave();
