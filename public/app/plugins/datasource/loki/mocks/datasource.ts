@@ -22,7 +22,6 @@ export function createLokiDatasource(
 ): LokiDatasource {
   const customSettings: DataSourceInstanceSettings<LokiOptions> = {
     url: 'myloggingurl',
-    id: 0,
     uid: '',
     type: '',
     name: '',

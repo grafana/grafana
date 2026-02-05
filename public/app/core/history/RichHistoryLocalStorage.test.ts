@@ -1,6 +1,5 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, store } from '@grafana/data';
 import { createMonitoringLogger, MonitoringLogger } from '@grafana/runtime';
-import store from 'app/core/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';

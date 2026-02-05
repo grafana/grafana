@@ -135,7 +135,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if err := IsPathSupported(info.Path); err != nil {
-		return nil, err
+		return nil, NewResourceValidationError(err)
 	}
 
 	var gvk *schema.GroupVersionKind
@@ -144,7 +144,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, apierrors.NewBadRequest("unable to read file as a resource")
+			return nil, NewResourceValidationError(err)
 		}
 	}
 
@@ -172,7 +172,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
+		return nil, NewResourceValidationError(fmt.Errorf("the file namespace does not match target namespace"))
 	}
 	obj.SetNamespace(r.repo.Namespace)
 
@@ -213,7 +213,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// TODO: catch the not found gvk error to return bad request
 	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
 	if err != nil {
-		return nil, fmt.Errorf("get client for kind: %w", err)
+		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
 	}
 
 	return parsed, nil
@@ -290,6 +290,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
+		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -404,6 +406,11 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
+
+	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+	if f.Existing != nil {
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
 	updateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))

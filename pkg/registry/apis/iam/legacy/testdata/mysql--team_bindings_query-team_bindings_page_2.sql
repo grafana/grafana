@@ -5,6 +5,5 @@ INNER JOIN `grafana`.`user` u ON tm.user_id  = u.id
 WHERE
   tm.org_id = 1
     AND tm.id >= 2
-AND NOT tm.external
 ORDER BY t.id ASC
 LIMIT 1;

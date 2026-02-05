@@ -31,7 +31,7 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   private getRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>): Promise<T> {
-    return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
+    return getBackendSrv().get(`/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`, parameters);
   }
 
   async getExternalId(): Promise<string> {

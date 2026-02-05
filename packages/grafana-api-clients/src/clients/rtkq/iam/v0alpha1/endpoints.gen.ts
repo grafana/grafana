@@ -153,6 +153,23 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['ExternalGroupMapping'],
       }),
+      searchExternalGroupMappings: build.mutation<
+        SearchExternalGroupMappingsApiResponse,
+        SearchExternalGroupMappingsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/searchExternalGroupMappings`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+            sort: queryArg.sort,
+          },
+        }),
+        invalidatesTags: ['Search'],
+      }),
       getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
         query: (queryArg) => ({
           url: `/searchTeams`,
@@ -588,11 +605,25 @@ const injectedRtkApi = api
         invalidatesTags: ['Team'],
       }),
       getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.name}/groups` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.name}/groups`,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
         providesTags: ['Team'],
       }),
       getTeamMembers: build.query<GetTeamMembersApiResponse, GetTeamMembersApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.name}/members` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.name}/members`,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
         providesTags: ['Team'],
       }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
@@ -705,7 +736,14 @@ const injectedRtkApi = api
         invalidatesTags: ['User'],
       }),
       getUserTeams: build.query<GetUserTeamsApiResponse, GetUserTeamsApiArg>({
-        query: (queryArg) => ({ url: `/users/${queryArg.name}/teams` }),
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/teams`,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
         providesTags: ['User'],
       }),
     }),
@@ -887,6 +925,20 @@ export type UpdateExternalGroupMappingApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type SearchExternalGroupMappingsApiResponse = unknown;
+export type SearchExternalGroupMappingsApiArg = {
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
+  /** sortable field */
+  sort?: string;
+  body: {
+    externalGroups?: string[];
+  };
 };
 export type GetSearchTeamsApiResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1528,11 +1580,23 @@ export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroups;
 export type GetTeamGroupsApiArg = {
   /** name of the GetGroups */
   name: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
 };
 export type GetTeamMembersApiResponse = /** status 200 OK */ TeamMemberList;
 export type GetTeamMembersApiArg = {
   /** name of the TeamMemberList */
   name: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
 };
 export type ListUserApiResponse = /** status 200 OK */ UserList;
 export type ListUserApiArg = {
@@ -1703,6 +1767,12 @@ export type GetUserTeamsApiResponse = /** status 200 OK */ UserTeamList;
 export type GetUserTeamsApiArg = {
   /** name of the UserTeamList */
   name: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -2147,6 +2217,7 @@ export const {
   useReplaceExternalGroupMappingMutation,
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
+  useSearchExternalGroupMappingsMutation,
   useGetSearchTeamsQuery,
   useLazyGetSearchTeamsQuery,
   useGetSearchUsersQuery,

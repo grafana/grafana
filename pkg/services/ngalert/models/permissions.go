@@ -14,6 +14,7 @@ const (
 	ReceiverPermissionWrite           ReceiverPermission = "write"
 	ReceiverPermissionDelete          ReceiverPermission = "delete"
 	ReceiverPermissionModifyProtected ReceiverPermission = "modify-protected"
+	ReceiverPermissionTest            ReceiverPermission = "test"
 )
 
 // ReceiverPermissions returns all possible silence permissions.
@@ -24,6 +25,7 @@ func ReceiverPermissions() []ReceiverPermission {
 		ReceiverPermissionWrite,
 		ReceiverPermissionDelete,
 		ReceiverPermissionModifyProtected,
+		ReceiverPermissionTest,
 	}
 }
 

@@ -639,7 +639,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=11.6.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {

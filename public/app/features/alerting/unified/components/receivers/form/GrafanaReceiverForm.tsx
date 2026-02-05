@@ -9,22 +9,19 @@ import {
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { canEditEntity, canModifyProtectedEntity } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
-  GrafanaManagedContactPoint,
-  GrafanaManagedReceiverConfig,
-  Receiver,
-} from 'app/plugins/datasource/alertmanager/types';
+  canEditEntity,
+  canModifyProtectedEntity,
+  isProvisionedResource,
+} from 'app/features/alerting/unified/utils/k8s/utils';
+import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
-import {
-  formChannelValuesToGrafanaChannelConfig,
-  formValuesToGrafanaReceiver,
-  grafanaReceiverToFormValues,
-} from '../../../utils/receiver-form';
-import { ImportedContactPointAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { formValuesToGrafanaReceiver, grafanaReceiverToFormValues } from '../../../utils/receiver-form';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
@@ -70,7 +67,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   } = useOnCallIntegration();
 
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
-  const [testReceivers, setTestReceivers] = useState<Receiver[]>();
+  const [testChannelData, setTestChannelData] = useState<{
+    channelValues: GrafanaChannelValues;
+    existingIntegration?: GrafanaManagedReceiverConfig;
+  }>();
 
   // transform receiver DTO to form values
   const [existingValue, id2original] = useMemo((): [
@@ -112,23 +112,23 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   const onTestChannel = (values: GrafanaChannelValues) => {
     const existing: GrafanaManagedReceiverConfig | undefined = id2original[values.__id];
-    const chan = formChannelValuesToGrafanaChannelConfig(values, defaultChannelValues, 'test', existing);
-
-    const receivers: Receiver[] = [
-      {
-        name: 'test',
-        grafana_managed_receiver_configs: [chan],
-      },
-    ];
-
-    setTestReceivers(receivers);
+    setTestChannelData({
+      channelValues: values,
+      existingIntegration: existing,
+    });
   };
+
+  const { canTest } = useTestContactPoint({
+    contactPoint,
+    defaultChannelValues,
+  });
 
   // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
   const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
   const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
-  const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
-  const isTestable = !readOnly;
+  const isProvisioned = isProvisionedResource(contactPoint?.provenance);
+  const isEditable = !readOnly && hasScopedEditPermissions && !isProvisioned;
+  const isTestable = !readOnly && canTest;
   const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
@@ -139,18 +139,15 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   // Map notifiers to Notifier[] format for ReceiverForm
   // The grafanaNotifiers include version-specific options via the versions array from the backend
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
     if (n.type === ReceiverTypes.OnCall) {
       return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-        dto: extendOnCallNotifierFeatures(n as any) as any,
+        dto: extendOnCallNotifierFeatures(n),
         meta: onCallNotifierMeta,
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-    return { dto: n as any };
+    return { dto: n };
   });
 
   return (
@@ -170,10 +167,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {contactPoint?.provisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
-        <ImportedContactPointAlert />
+      {isProvisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
+        <ImportedResourceAlert resource={ProvisionedResource.ContactPoint} />
       )}
-      {contactPoint?.provisioned && !hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
+      {isProvisioned && !hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
         <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />
       )}
 
@@ -194,12 +191,14 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         }
         canEditProtectedFields={canEditProtectedFields}
       />
-      {testReceivers && (
+      {testChannelData && (
         <TestContactPointModal
-          onDismiss={() => setTestReceivers(undefined)}
-          isOpen={!!testReceivers}
-          alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-          receivers={testReceivers}
+          onDismiss={() => setTestChannelData(undefined)}
+          isOpen={!!testChannelData}
+          contactPoint={contactPoint}
+          channelValues={testChannelData.channelValues}
+          existingIntegration={testChannelData.existingIntegration}
+          defaultChannelValues={defaultChannelValues}
         />
       )}
     </>

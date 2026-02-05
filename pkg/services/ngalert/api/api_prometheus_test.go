@@ -420,6 +420,47 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 `, folder.Fullpath), string(r.Body()))
 	})
 
+	t.Run("evaluationTime should come from state with newest LastEvaluationTime", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+
+		rule := gen.With(asFixture(), withClassicConditionSingleQuery(), gen.WithNoNotificationSettings()).GenerateRef()
+		fakeStore.PutRule(context.Background(), rule)
+
+		// Create two states with different evaluation times and durations.
+		// State 1: newer evaluation time
+		// State 2: older evaluation time
+		baseTime := timeNow()
+		newerTime := baseTime.Add(2 * time.Minute)
+		newerDuration := 5 * time.Second
+		olderTime := baseTime.Add(1 * time.Minute)
+		olderDuration := 10 * time.Second
+
+		fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+			s.Labels = data.Labels{"instance": "newer"}
+			s.LastEvaluationTime = newerTime
+			s.EvaluationDuration = newerDuration
+			return s
+		})
+		fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+			s.Labels = data.Labels{"instance": "older"}
+			s.LastEvaluationTime = olderTime
+			s.EvaluationDuration = olderDuration
+			return s
+		})
+
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(r.Body(), &res))
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+
+		ruleResult := res.Data.RuleGroups[0].Rules[0]
+		require.Equal(t, newerTime, ruleResult.LastEvaluation, "LastEvaluation should be from state with newest evaluation time")
+		require.Equal(t, newerDuration.Seconds(), ruleResult.EvaluationTime, "EvaluationTime should be from state with newest LastEvaluationTime")
+	})
+
 	t.Run("with a rule that is paused", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(true))

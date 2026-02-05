@@ -12,6 +12,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
+import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
@@ -128,7 +129,7 @@ export function Drawer({
         motionName: styles.maskMotion,
       }}
     >
-      <FloatingFocusManager context={context} modal>
+      <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
         <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div

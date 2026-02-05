@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -126,6 +127,9 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	if err := json.Unmarshal(dashBytes, &dashboard); err != nil {
 		return fmt.Errorf("failed to unmarshal dashboard JSON: %w", err)
 	}
+
+	// Ensure panels have unique IDs before conversion.
+	migration.EnsurePanelsHaveUniqueIds(dashboard)
 
 	// Get defaults
 	timeSettingsDefaults := dashv2alpha1.NewDashboardTimeSettingsSpec()
@@ -961,6 +965,30 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 	}
 }
 
+func transformVariableStaticOptionsOrderToEnum(order interface{}) *dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrder {
+	if order == nil {
+		return nil
+	}
+
+	switch v := order.(type) {
+	case string:
+		var value dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrder
+		switch v {
+		case "before":
+			value = dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrderBefore
+		case "after":
+			value = dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrderAfter
+		case "sorted":
+			value = dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrderSorted
+		default:
+			return nil
+		}
+		return &value
+	default:
+		return nil
+	}
+}
+
 func transformVariables(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) ([]dashv2alpha1.DashboardVariableKind, error) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
@@ -1262,6 +1290,8 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 
 	// Always set options (matching frontend behavior)
 	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
+	queryVar.Spec.StaticOptions = buildVariableOptions(varMap["staticOptions"])
+	queryVar.Spec.StaticOptionsOrder = transformVariableStaticOptionsOrderToEnum(varMap["staticOptionsOrder"])
 
 	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		queryVar.Spec.AllValue = &allValue

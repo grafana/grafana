@@ -170,7 +170,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Signature:       string(panel.Signature),
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
-			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
+			LoadingStrategy: panel.LoadingStrategy,
 			Translations:    panel.Translations,
 		}
 	}
@@ -248,6 +248,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngLinkName:              hs.Cfg.ExternalUserMngLinkName,
 		ExternalUserMngAnalytics:             hs.Cfg.ExternalUserMngAnalytics,
 		ExternalUserMngAnalyticsParams:       hs.Cfg.ExternalUserMngAnalyticsParams,
+		ExternalUserUpgradeLinkUrl:           hs.Cfg.ExternalUserUpgradeLinkUrl,
 		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
 		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
@@ -315,6 +316,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
+		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
@@ -531,7 +533,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
-			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			LoadingStrategy:           plugin.LoadingStrategy,
 			Translations:              plugin.Translations,
 		}
 
@@ -638,7 +640,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Path:            plugin.Module,
 		Preload:         false,
 		Angular:         plugin.Angular,
-		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
+		LoadingStrategy: plugin.LoadingStrategy,
 		Extensions:      plugin.Extensions,
 		Dependencies:    plugin.Dependencies,
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),

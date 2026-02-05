@@ -8,6 +8,7 @@ import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
@@ -19,6 +20,7 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { useUserActivity } from './useUserActivity';
 
 interface Props {
   dashboard: DashboardScene;
@@ -27,25 +29,38 @@ interface Props {
   controls?: React.ReactNode;
 }
 
-export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
+export function DashboardEditPaneSplitter(props: Props) {
+  if (config.featureToggles.dashboardNewLayouts) {
+    return <DashboardEditPaneSplitterNewLayouts {...props} />;
+  } else {
+    return <DashboardEditPaneSplitterLegacy {...props} />;
+  }
+}
+
+function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight ?? 0);
+
+  return (
+    <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+      <div className={styles.canvasWrappperOld}>
+        <NavToolbarActions dashboard={dashboard} />
+        <div className={styles.controlsWrapperSticky}>{controls}</div>
+        <div className={styles.body}>{body}</div>
+      </div>
+    </NativeScrollbar>
+  );
+}
+
+function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-
-  if (!config.featureToggles.dashboardNewLayouts) {
-    return (
-      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.canvasWrappperOld}>
-          <NavToolbarActions dashboard={dashboard} />
-          <div className={styles.controlsWrapperSticky}>{controls}</div>
-          <div className={styles.body}>{body}</div>
-        </div>
-      </NativeScrollbar>
-    );
-  }
+  const isUserActive = useUserActivity(10000);
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -71,6 +86,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
+    isHidden: !isUserActive || (!isEditing && isSmallScreen),
   });
 
   /**
@@ -115,12 +131,17 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
         {...sidebarContext.outerWrapperProps}
       >
-        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+        <div
+          className={cx(styles.scrollContainer, !isUserActive && styles.scrollContainerNoSidebar)}
+          ref={onBodyRef}
+          onPointerDown={onClearSelection}
+          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+        >
           {body}
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
         </Sidebar>
       </div>
     );
@@ -197,6 +218,20 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       position: 'relative',
       flex: '1 1 0',
       overflow: 'hidden',
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('padding', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+
+      [theme.breakpoints.down('sm')]: {
+        flex: 1,
+
+        '> div:nth-child(2)': {
+          zIndex: theme.zIndex.activePanel,
+        },
+      },
     }),
     bodyWrapperKiosk: css({
       padding: theme.spacing(0, 2, 2, 2),
@@ -212,6 +247,15 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('padding', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+    scrollContainerNoSidebar: css({
+      paddingRight: theme.spacing(2),
     }),
     body: css({
       label: 'body',
