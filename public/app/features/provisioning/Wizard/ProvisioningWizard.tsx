@@ -77,9 +77,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
-  const { isHealthy } = useRepositoryStatus(repoName);
+  const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
     isHealthy,
+    healthStatusNotReady,
   });
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName,

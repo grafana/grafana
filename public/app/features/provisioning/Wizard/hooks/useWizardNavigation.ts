@@ -13,7 +13,7 @@ export interface UseWizardNavigationParams {
   steps: Array<Step<WizardStep>>;
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
-  createSyncJob: (requiresMigration: boolean) => Promise<unknown>;
+  createSyncJob: (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => Promise<unknown>;
   getValues: () => WizardFormData;
   repoType: RepoType;
   syncTarget: string;
@@ -91,11 +91,9 @@ export function useWizardNavigation({
       if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2;
 
-        // Fire job in background, don't wait for result
-        createSyncJob(false).catch((error) => {
-          // Log errors for debugging, but don't block navigation
-          console.error('Failed to create background sync job when skipping sync step:', error);
-        });
+        // Fire job in background, don't wait for result - the job will be done in the background
+        // and we don't care about it when skipping sync
+        createSyncJob(false, { skipStatusUpdates: true });
       }
 
       if (nextStepIndex >= steps.length) {

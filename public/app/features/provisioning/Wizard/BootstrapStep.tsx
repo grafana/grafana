@@ -51,6 +51,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     refetch: retryRepositoryStatus,
     isHealthy,
     isUnhealthy,
+    healthStatusNotReady,
   } = useRepositoryStatus(repoName);
 
   const {
@@ -58,7 +59,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     fileCountString,
     resourceCount,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy });
+  } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
   const isQuotaExceeded = Boolean(
     isFreeTierLicense() && selectedTarget === 'folder' && resourceCount > FREE_TIER_FOLDER_RESOURCE_LIMIT
