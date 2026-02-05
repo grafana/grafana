@@ -22,8 +22,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/configprovider"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -39,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -964,13 +963,14 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Add dashboard hits manually
 	if oas.Info.Title == "dashboard.grafana.app/v0alpha1" {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+		refsBase := dashv0.OpenAPIPrefix
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
 
 		// Add any missing definitions
 		//-----------------------------
 		for _, k := range kinds {
-			key := dashv0.OpenAPIPrefix + k
+			key := refsBase + k
 			v := defs[key]
 			if oas.Components.Schemas[key] == nil {
 				switch k {
