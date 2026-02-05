@@ -863,6 +863,7 @@
     "common": {
       "cancel": "Cancelar",
       "clear-filters": "Limpar filtros",
+      "close": "",
       "delete": "Excluir",
       "edit": "Editar",
       "export": "Exportar",
@@ -1585,6 +1586,17 @@
       "action-button": "Importar",
       "additional-settings": "Configurações adicionais",
       "alert-rules": "Regras de alerta",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Importar",
         "loading": "Carregando...",
@@ -1611,13 +1623,15 @@
         "label": "Fonte de dados",
         "required-message": "Selecione uma fonte de dados"
       },
-      "error": "Falha ao importar regras de alerta: {{error}}",
+      "error": "",
       "group": {
         "description": "Digite para pesquisar um grupo existente",
         "label": "Grupo"
       },
       "import-location-and-filters": "Importar localização e filtros",
       "import-source": "Importar fonte",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Digite para pesquisar uma nomenclatura existente",
         "label": "Nomenclatura"
@@ -1629,17 +1643,160 @@
       "pause-recording": {
         "label": "Pausar regras de registro importadas"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Regras de registro",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Regras existentes gerenciadas pela fonte de dados",
         "datasource-description": "Importar regras de fontes de dados existentes",
         "yaml": "Arquivo YAML do Prometheus",
         "yaml-description": "Importar regras de um arquivo YAML do Prometheus."
       },
-      "success": "Regras de alerta importadas com sucesso para as regras gerenciadas pela Grafana.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "A pasta para importar as regras para",
         "label": "Pasta de destino"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Selecione um arquivo YAML compatível com o Prometheus para importar",
@@ -1650,6 +1807,9 @@
         "target-datasource-required": "Selecione uma fonte de dados de destino"
       },
       "yaml-error": "Falha ao analisar o arquivo YAML: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2619,7 +2779,8 @@
       "expand-all": "Expandir tudo"
     },
     "rule-list-v2": {
-      "import-to-gma": "Importar regras de alerta"
+      "import-to-gma": "Importar regras de alerta",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Carregando a regra…",
@@ -3465,6 +3626,10 @@
       "hosted-domain-label": "Domínio hospedado",
       "id-token-attribute-name-description": "O nome da chave usada para extrair o token de ID do token OAuth2 da resposta.",
       "id-token-attribute-name-label": "Nome do atributo do token de ID",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Expressão JMESPath a ser usada para a consulta de login do usuário a partir do token de ID do usuário.",
       "login-attribute-path-label": "Caminho do atributo de login",
       "login-prompt-consent": "Consentimento ",
@@ -3531,6 +3696,8 @@
       "use-refresh-token-label": "Usar token de atualização",
       "validate-hosted-domain-description": "Se estiver habilitado, o Grafana realizará a comparação entre o Domínio Hospedado obtido a partir do token de ID do Google e a lista \"{{ allowedDomainsLabel }}\" especificada pelo usuário.",
       "validate-hosted-domain-label": "Validar domínio hospedado",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "O caminho do arquivo para o arquivo de token usado para se autenticar no provedor OAuth2. Isso só é necessário quando a autenticação do cliente está definida como \"workload_identity\". O padrão é /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "Arquivo de token {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Este campo deve ser definido quando a autenticação do cliente estiver definida como \"Identidade da carga de trabalho\"."
@@ -4869,12 +5036,6 @@
       "message": {
         "edit-dashboard-json": "Editar JSON do painel"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "A validação é fornecida para fins de desenvolvimento e é seguro ignorá-la. Se você é um desenvolvedor da Grafana, considere verificar e atualizar o esquema do painel",
-      "title-checking-dashboard-validity": "Verificando a validade do painel",
-      "title-dashboard-failed-schema-validation": "Falha na validação do esquema do painel",
-      "title-error-checking-dashboard-validity": "Erro ao verificar a validade do painel"
     },
     "default-layout": {
       "description": "Posicione e dimensione cada painel individualmente",
@@ -6480,6 +6641,9 @@
     },
     "query-editor": {
       "query": "Consulta"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -10428,6 +10592,17 @@
       "label-log-stats": "{{label}}: {{total}} de {{rowCount}} linhas apresentam esse rótulo"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Lista de painéis da biblioteca existentes. Esses painéis não são afetados pela importação."
@@ -11944,13 +12119,17 @@
       "description-clear-repository-connection": "Adicione um nome de fácil compreensão para esta conexão de repositório",
       "empty": "Vazio",
       "error-field-required": "Este campo é obrigatório.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Nome de exibição",
       "placeholder-my-repository-connection": "Minha conexão de repositório",
+      "retry-action": "",
       "text-loading-resource-information": "Carregando informações de recursos…",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} painel de controle",
       "dashboards-count_other": "{{count}} painel de controle",
       "files-count_one": "{{count}} arquivos",
@@ -12582,9 +12761,6 @@
       "push-to-existing-branch": ""
     }
   },
-  "provisioning-alert": {
-    "retry": ""
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Antes de tornar público o painel de controle, reconheça o seguinte:",
@@ -12791,9 +12967,30 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
     },
     "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""
