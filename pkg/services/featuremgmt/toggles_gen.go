@@ -35,10 +35,6 @@ const (
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
-	// FlagShowDashboardValidationWarnings
-	// Show warnings when dashboards do not validate against the schema
-	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
@@ -231,6 +227,10 @@ const (
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
 
+	// FlagAnnotationPermissionUpdate
+	// Change the way annotation permissions work by scoping them to folders and dashboards.
+	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
 	// FlagDashboardNewLayouts
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
@@ -378,10 +378,6 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
-
-	// FlagSsoSettingsLDAP
-	// Use the new SSO Settings API to configure LDAP
-	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -789,6 +785,10 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagKubernetesTeamsHandlerRedirect
+	// Redirects the request to teams related endpoints to the app platform API
+	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies

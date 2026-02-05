@@ -1,7 +1,7 @@
 /**
  * A hook to fetch all branches from a given repository.
  * Used to populate the branch dropdown in the repository selection.
- * We can't use the '/ref` endpoint at this point because the repository connection hasn't been created yet.
+ * We can't use the '/ref` endpoint at this point (Gitlab and Bitbucket) because the repository connection hasn't been created yet.
  */
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';

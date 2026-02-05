@@ -84,13 +84,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:        "showDashboardValidationWarnings",
-			Description: "Show warnings when dashboards do not validate against the schema",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -553,20 +546,12 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "dashboardSceneForViewers",
-			Description:  "Enables dashboard rendering using Scenes for viewer roles",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
-			Name:         "dashboardSceneSolo",
-			Description:  "Enables rendering dashboards using scenes for solo panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
+			Name:            "annotationPermissionUpdate",
+			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
+			Stage:           FeatureStageGeneralAvailability,
+			RequiresDevMode: false,
+			Expression:      "true", // enabled by default
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:         "dashboardScene",
@@ -995,14 +980,6 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
-		},
-		{
-			Name:            "ssoSettingsLDAP",
-			Description:     "Use the new SSO Settings API to configure LDAP",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           identityAccessTeam,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "zanzana",
@@ -1536,6 +1513,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "alertingMigrationWizardUI",
+			Description:  "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,
@@ -2041,6 +2026,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "panelStyleActions",
+			Description:  "Enable style actions (copy/paste) in the panel editor",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
 			Stage:        FeatureStageExperimental,
@@ -2255,6 +2248,14 @@ var (
 		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamsHandlerRedirect",
+			Description:  "Redirects the request to teams related endpoints to the app platform API",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

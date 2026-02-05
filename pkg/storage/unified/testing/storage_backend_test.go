@@ -32,8 +32,6 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport: true,
-			// Badger does not support bulk import yet.
-			TestGetResourceLastImportTime: true,
 		},
 	})
 }
@@ -58,8 +56,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	skipTests := map[string]bool{
-		TestBlobSupport:               true,
-		TestGetResourceLastImportTime: true,
+		TestBlobSupport: true,
 	}
 
 	t.Run("Without RvManager", func(t *testing.T) {

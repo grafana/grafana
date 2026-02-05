@@ -3,6 +3,7 @@ import { screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
+import { QueryEditorType } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions, setup } from '../testUtils';
 import { Transformation } from '../types';
@@ -43,6 +44,11 @@ describe('SidebarCard', () => {
           selectedTransformation: transformation,
           setSelectedQuery,
           setSelectedTransformation,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -78,6 +84,11 @@ describe('SidebarCard', () => {
           selectedTransformation: null,
           setSelectedQuery,
           setSelectedTransformation,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Transformation,
         }}
         actions={mockActions}
       >

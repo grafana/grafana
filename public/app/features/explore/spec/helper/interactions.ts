@@ -13,7 +13,7 @@ export const changeDatasource = async (name: string) => {
 };
 
 export const inputQuery = async (query: string, exploreId = 'left') => {
-  const input = withinExplore(exploreId).getByRole('textbox', { name: 'query' });
+  const input = await withinExplore(exploreId).findByRole('textbox', { name: 'query' });
   await userEvent.clear(input);
   await userEvent.type(input, query);
 };

@@ -578,12 +578,13 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		user1 := createUser("tb-user-1", "tb-user1@example.com", "tb-user1")
 		user2 := createUser("tb-user-2", "tb-user2@example.com", "tb-user2")
 
-		createBinding := func(user *unstructured.Unstructured, team *unstructured.Unstructured) {
+		createBinding := func(user *unstructured.Unstructured, team *unstructured.Unstructured, external bool) {
 			toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
 			toCreate.SetName("")
 			toCreate.SetGenerateName("binding-")
 			toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
 			toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+			toCreate.Object["spec"].(map[string]interface{})["external"] = external
 
 			created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -591,10 +592,10 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		}
 
 		// Create 4 bindings
-		createBinding(user1, teamA)
-		createBinding(user2, teamA)
-		createBinding(user1, teamB)
-		createBinding(user2, teamB)
+		createBinding(user1, teamA, false)
+		createBinding(user2, teamA, true)
+		createBinding(user1, teamB, false)
+		createBinding(user2, teamB, true)
 
 		t.Cleanup(func() {
 			cleanupCtx := context.Background()
@@ -632,6 +633,18 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			var actual iamv0alpha1.TeamBinding
 			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
 			require.Equal(t, user1.GetName(), actual.Spec.Subject.Name)
+		}
+
+		// Select by external=true, should return 2 of the 4
+		listByExternal, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.external=true",
+		})
+		require.NoError(t, err)
+		require.Len(t, listByExternal.Items, 2)
+		for _, item := range listByExternal.Items {
+			var actual iamv0alpha1.TeamBinding
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
+			require.True(t, actual.Spec.External)
 		}
 	})
 }
