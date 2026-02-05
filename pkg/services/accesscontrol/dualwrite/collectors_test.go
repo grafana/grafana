@@ -1079,4 +1079,33 @@ func TestZanzanaCollector(t *testing.T) {
 
 		mockClient.AssertExpectations(t)
 	})
+
+	t.Run("should pass correct page size to read request", func(t *testing.T) {
+		mockClient := new(mockZanzanaClient)
+
+		var capturedPageSize int32
+
+		mockClient.On("Read", mock.Anything, mock.MatchedBy(func(req *authzextv1.ReadRequest) bool {
+			if req.PageSize != nil {
+				val := req.PageSize.GetValue()
+				capturedPageSize = val
+			}
+			return true
+		})).Return(
+			&authzextv1.ReadResponse{
+				Tuples:            []*authzextv1.Tuple{},
+				ContinuationToken: "",
+			}, nil,
+		)
+
+		customPageSize := int32(250)
+		collector := zanzanaCollector([]string{"member"}, customPageSize)
+		_, err := collector(context.Background(), mockClient, "team:team1", "org:1")
+		require.NoError(t, err)
+
+		require.NotNil(t, capturedPageSize, "PageSize should be set in ReadRequest")
+		assert.Equal(t, customPageSize, capturedPageSize, "PageSize should match configured value")
+
+		mockClient.AssertExpectations(t)
+	})
 }
