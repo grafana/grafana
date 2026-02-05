@@ -2344,15 +2344,43 @@
     {
       "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770238644779",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-04 20:57:24.779562 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+        "stage": "deprecated",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZResourcePermissionsRedirect",
+        "resourceVersion": "1770238644779",
+        "creationTimestamp": "2026-02-04T20:57:24Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZRolesRedirect",
+        "resourceVersion": "1770238644779",
+        "creationTimestamp": "2026-02-04T20:57:24Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
