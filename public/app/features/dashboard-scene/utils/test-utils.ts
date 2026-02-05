@@ -335,6 +335,8 @@ export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) 
 }
 
 export type TabsTestSetup = {
+  name: string;
+
   /**
    * Spec defining rows and tabs structure:
    * - each string represents tabs in a separate row
@@ -359,22 +361,21 @@ export type TabsTestSetup = {
   /**
    * Expected tabs structure after drag and drop operation, same format as `tabs` input
    */
-  expectedTabs: string[];
+  expected: string[];
 
   /**
    * Used only when dragging between rows to indicate whether to drop before or after the target tab.
    * Dragging within the same row just replaces tabs so it's not used.
    */
-  after: boolean;
+  after?: boolean;
 };
 
 /**
  * Setups a tabs drag and drop test scenario
  */
 export function setupTabsTest(scenario: TabsTestSetup) {
-  let drag = undefined;
+  let drag: TabItem | undefined = undefined;
   let sourceIndex = 0;
-  let sourceManager = undefined;
   let destIndex = 0;
   let destManager = undefined;
 
@@ -393,7 +394,6 @@ export function setupTabsTest(scenario: TabsTestSetup) {
 
       if (title === scenario.drag) {
         drag = tab;
-        sourceManager = layout;
         sourceIndex = index;
       }
 
@@ -431,7 +431,7 @@ export function setupTabsTest(scenario: TabsTestSetup) {
 
   return {
     performDrag: () => {
-      orchestrator.startTabDrag(drag);
+      orchestrator.startTabDrag(drag!);
       orchestrator.endTabDrag(destManager!.state.key!, sourceIndex, destIndex);
     },
     assertExpectedTabs: () => {

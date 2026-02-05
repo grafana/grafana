@@ -321,7 +321,7 @@ describe('DashboardLayoutOrchestrator', () => {
 
         assertExpectedTabs();
 
-        lastUndo();
+        lastUndo?.();
 
         assertInitialTabs();
       });
