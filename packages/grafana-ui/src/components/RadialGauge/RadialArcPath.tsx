@@ -6,7 +6,7 @@ import { FieldDisplay } from '@grafana/data';
 import { RadialArcPathEndpointMarks } from './RadialArcPathEndpointMarks';
 import { getBarEndcapColors, getGradientCss } from './colors';
 import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
-import { drawRadialArcPath, toRad } from './utils';
+import { drawRadialArcPath, toRad, IS_SAFARI } from './utils';
 
 export interface RadialArcPathPropsBase extends SVGProps<SVGGElement> {
   arcLengthDeg: number;
@@ -52,7 +52,7 @@ export const RadialArcPath = memo(
     const { vizWidth, vizHeight, radius, centerX, centerY, barWidth } = dimensions;
     const boxX = Math.round(centerX - radius - barWidth);
     const boxY = Math.round(centerY - radius - barWidth);
-    const boxSize = Math.round((radius + barWidth * (roundedBars ? Math.PI / 2 : 1)) * 2);
+    const boxSize = (radius + barWidth) * 2;
 
     const path = drawRadialArcPath(angle, arcLengthDeg, dimensions);
 
@@ -68,9 +68,15 @@ export const RadialArcPath = memo(
       width: boxSize,
       height: boxSize,
     };
+
     const pathProps: SVGProps<SVGPathElement> = {};
     if (isGradient) {
-      bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
+      let roundedBarOffset: number | undefined;
+      // "over-rotate" the gradient in both directions for rounded bars on gauge, since the rounded endcaps extend beyond the path
+      if (shape === 'gauge' && roundedBars) {
+        roundedBarOffset = (barWidth / (2 * Math.PI * radius)) * 360;
+      }
+      bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape, roundedBarOffset);
       pathProps.fill = 'none';
       pathProps.stroke = 'white';
     } else {
@@ -101,18 +107,28 @@ export const RadialArcPath = memo(
           </defs>
         )}
 
-        <g filter={glowFilter} {...omit(rest, 'color', 'gradient')}>
+        {/* the gradient color can unexpectedly be cut off in Safari when glowFilters are active at certain sizes of the circular gauge */}
+        <g
+          transform="translate(0, 0)"
+          filter={IS_SAFARI && isGradient && shape === 'circle' ? undefined : glowFilter}
+          {...omit(rest, 'color', 'gradient')}
+        >
           {isGradient ? (
-            <foreignObject x={boxX} y={Math.max(boxY, 0)} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
+            <foreignObject
+              transform="translate(0, 0)"
+              x={Math.max(boxX, 0)}
+              y={Math.max(boxY, 0)}
+              width={vizWidth}
+              height={vizHeight}
+              mask={`url(#${id})`}
+            >
               <div style={bgDivStyle} />
             </foreignObject>
           ) : (
             pathEl
           )}
           {barEndcapColors?.[0] && <circle cx={xStart} cy={yStart} r={barWidth / 2} fill={barEndcapColors[0]} />}
-          {barEndcapColors?.[1] && (
-            <circle cx={xEnd} cy={yEnd} r={barWidth / 2} fill={barEndcapColors[1]} opacity={0.5} />
-          )}
+          {barEndcapColors?.[1] && <circle cx={xEnd} cy={yEnd} r={barWidth / 2} fill={barEndcapColors[1]} />}
         </g>
 
         {endpointMarker && (

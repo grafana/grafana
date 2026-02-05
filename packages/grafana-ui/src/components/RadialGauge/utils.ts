@@ -265,3 +265,15 @@ export function getThresholdPercentageValue(
   const [min, max] = getFieldConfigMinMax(fieldDisplay);
   return (threshold.value - min) / (max - min);
 }
+
+export const IS_SAFARI = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  return true;
+})();

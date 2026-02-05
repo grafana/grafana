@@ -227,6 +227,16 @@ describe('RadialGauge color utils', () => {
       const css = getGradientCss(gradient, 'gauge');
       expect(css).toBe('conic-gradient(from 250deg, #ff0000 0deg, #00ff00 110deg, #0000ff 220deg, #0000 0 220deg)');
     });
+
+    it('should should account for rounded bars when an offset is provided', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      const css = getGradientCss(gradient, 'gauge', 5);
+      expect(css).toBe('conic-gradient(from 245deg, #ff0000 0deg, #00ff00 115deg, #0000ff 230deg, #0000 0 230deg)');
+    });
   });
 
   describe('getEndpointMarkerColors', () => {

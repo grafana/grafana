@@ -167,12 +167,16 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
   return [startColor, endColor];
 }
 
-export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
+export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape, arcAngleOffset = 0): string {
   if (shape === 'circle') {
     return `conic-gradient(from 0deg, ${gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`).join(', ')})`;
   }
-  const range = (ARC_END + 360 - ARC_START) % 360;
-  return `conic-gradient(from ${ARC_START}deg, ${gradientStops.map((stop) => `${stop.color} ${stop.percent * range}deg`).join(', ')}, #0000 0 ${range}deg)`;
+
+  const start = ARC_START - arcAngleOffset;
+  const end = ARC_END + arcAngleOffset;
+  const range = (end + 360 - start) % 360;
+
+  return `conic-gradient(from ${start}deg, ${gradientStops.map((stop) => `${stop.color} ${stop.percent * range}deg`).join(', ')}, #0000 0 ${range}deg)`;
 }
 
 // the theme does not make the full palette available to us, and we
