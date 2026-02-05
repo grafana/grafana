@@ -696,7 +696,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require github.com/quic-go/quic-go v0.48.0
+require github.com/quic-go/quic-go v0.49.0
 
 require (
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.5 // indirect
