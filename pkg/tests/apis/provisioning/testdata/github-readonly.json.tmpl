@@ -12,7 +12,7 @@
             "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
             "branch": "{{ or .Branch "integration-test" }}",
             "generateDashboardPreviews": {{ if .GenerateDashboardPreviews }} true {{ else }} false {{ end }},
-            "path": "{{ or .Path "grafana/" }}"
+            "path": "{{ or .Path "" }}"
         },
         "sync": {
             "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
