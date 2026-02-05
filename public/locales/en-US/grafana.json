@@ -6604,6 +6604,8 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "Query editor v2",
+      "query-editor-version-toggle": "Toggle between query editor v1 and v2",
       "table-view-aria-label-toggletableview": "Toggle table view",
       "table-view-label-table-view": "Table view"
     },
@@ -9574,6 +9576,18 @@
       "csv-placeholder": "Enter CSV here...",
       "filter": {
         "add-all": "Add all displayed values to the filter",
+        "button": "Filter {{name}}",
+        "operator": {
+          "contains": "Contains",
+          "equals": "Equals",
+          "expression": "Expression",
+          "expression-description": "Bool Expression (Char $ represents the column value in the expression, e.g. \"$ >= 10 && $ <= 12\")",
+          "greater": "Greater",
+          "greater-or-equal": "Greater or Equal",
+          "less": "Less",
+          "less-or-equal": "Less or Equal",
+          "not-equals": "Not equals"
+        },
         "remove-all": "Remove all displayed values from the filter",
         "select-all": "Select all",
         "selected": "{{ numSelected }} selected",
