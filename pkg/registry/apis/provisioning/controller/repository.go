@@ -714,8 +714,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// If branch is empty, fetch and set the default branch before running health check
-	// We'll persist the change at the end, just before status patching
-	var needsSpecUpdate bool
 	if branchHandler, ok := repo.(repository.BranchHandler); ok {
 		if branchHandler.GetCurrentBranch() == "" {
 			logger.Info("given repository branch is empty, getting default branch")
@@ -726,7 +724,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 
 			branchHandler.SetBranch(defaultBranch)
-			needsSpecUpdate = true
+
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  fmt.Sprintf("/spec/%s/branch", repo.Config().Spec.Type),
+				"value": defaultBranch,
+			})
 		}
 	}
 
@@ -757,14 +760,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
-
-	// Update spec if branch was detected and set (do this before status patch)
-	if needsSpecUpdate {
-		_, err := rc.client.Repositories(obj.Namespace).Update(ctx, repo.Config(), v1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to update repository spec: %w", err)
-		}
-	}
 
 	// Apply all patch operations
 	if len(patchOperations) > 0 {
