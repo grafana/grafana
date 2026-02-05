@@ -63,6 +63,7 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 		URL:                 settingsServiceURL,
 		TokenExchangeClient: tokenClient,
 		TLSClientConfig:     tlsConfig,
+		ServiceName:         "frontend-service",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settings service client: %w", err)
