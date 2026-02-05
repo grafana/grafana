@@ -20,6 +20,9 @@ interface Props {
   interval: string;
 }
 
+/**
+ * @deprecated
+ */
 export const SetInterval = React.memo(({ func, loading, interval: intervalStr }: Props) => {
   const propsSubjectRef = useRef<Subject<Props> | null>(null);
   const subscriptionRef = useRef<Subscription | null>(null);
