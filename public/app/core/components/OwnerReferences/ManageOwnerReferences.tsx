@@ -26,6 +26,17 @@ export const ManageOwnerReferences = ({
     trigger(ownerReference);
   };
 
+  const handleSaveButtonClick = () => {
+    if (pendingReference) {
+      addOwnerReference(pendingReference);
+      setPendingReference(null);
+      onSave();
+      reportInteraction('grafana_owner_reference_modal_save_button_clicked', {
+        actionType: ownerReferences[0]?.uid ? 'reference changed' : 'reference set',
+      });
+    }
+  };
+
   return (
     <Stack direction="column" gap={2}>
       <OwnerReferenceSelector
@@ -39,25 +50,14 @@ export const ManageOwnerReferences = ({
           variant="destructive"
           fill="outline"
           onClick={() => {
+            reportInteraction('grafana_owner_reference_modal_remove_button_clicked');
             removeOwnerReference();
             onRemove();
-            reportInteraction('grafana_owner_reference_modal_remove_button_clicked');
           }}
         >
           <Trans i18nKey="manage-owner-references.remove-owner">Remove owner</Trans>
         </Button>
-        <Button
-          onClick={() => {
-            if (pendingReference) {
-              reportInteraction('grafana_owner_reference_modal_save_button_clicked', {
-                actionType: ownerReferences[0].uid ? 'reference changed' : 'reference set',
-              });
-              addOwnerReference(pendingReference);
-              setPendingReference(null);
-              onSave();
-            }
-          }}
-        >
+        <Button onClick={handleSaveButtonClick}>
           <Trans i18nKey="manage-owner-references.save-owner">Save owner</Trans>
         </Button>
       </Stack>
