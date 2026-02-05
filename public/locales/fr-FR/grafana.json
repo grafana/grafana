@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Rétablir les valeurs par défaut",
-      "title-invalid-configuration": "Configuration non valable",
       "title-more-actions": "Plus d’actions",
       "tooltip-more-actions": "Plus d’actions"
     },
@@ -664,14 +663,18 @@
       "aria-label-group-by": "Regrouper par",
       "aria-label-group-interval": "Intervalle de groupe",
       "aria-label-group-wait": "Attente de groupe",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Intervalle de répétition",
       "create-a-contact-point": "Créer un point de contact",
+      "description-unique-routing": "",
       "label-default-contact-point": "Point de contact par défaut",
+      "label-name": "",
       "label-timing-options": "Options d’horaire",
       "message": {
         "required": "Obligatoire."
       },
-      "or": "ou"
+      "or": "ou",
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Ajouter un élément de correspondance",
@@ -860,6 +863,7 @@
     "common": {
       "cancel": "Annuler",
       "clear-filters": "Supprimer les filtres",
+      "close": "",
       "delete": "Supprimer",
       "edit": "Modifier",
       "export": "Exporter",
@@ -1582,6 +1586,17 @@
       "action-button": "Importer",
       "additional-settings": "Paramètres supplémentaires",
       "alert-rules": "Règles d'alerte",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Importer",
         "loading": "Chargement en cours...",
@@ -1608,13 +1623,15 @@
         "label": "Source de données",
         "required-message": "Veuillez sélectionner une source de données"
       },
-      "error": "Échec de l’importation des règles d’alerte : {{error}}",
+      "error": "",
       "group": {
         "description": "Saisir du texte pour rechercher un groupe existant",
         "label": "Groupe"
       },
       "import-location-and-filters": "Importer l’emplacement et les filtres",
       "import-source": "Importer la source",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Saisir le texte pour rechercher un namespace existant",
         "label": "Namespace"
@@ -1626,17 +1643,160 @@
       "pause-recording": {
         "label": "Suspendre les règles d’enregistrement importées"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Règles d’enregistrement",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-default": "",
+        "routing-imported": "",
+        "routing-manual": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_other": ""
+      },
       "source": {
         "datasource": "Règles existantes gérées par la source de données",
         "datasource-description": "Importer des règles à partir de sources de données existantes",
         "yaml": "Fichier YAML Prometheus",
         "yaml-description": "Importer des règles à partir d’un fichier YAML Prometheus."
       },
-      "success": "Les règles d’alerte ont bien été importées dans les règles gérées par Grafana.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "manual-label-name": "",
+        "manual-label-name-placeholder": "",
+        "manual-label-value": "",
+        "manual-label-value-placeholder": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy": {
+          "default": "",
+          "default-desc": "",
+          "imported": "",
+          "imported-desc": "",
+          "manual": "",
+          "manual-desc": ""
+        },
+        "policy-desc": "",
+        "policy-title": "",
+        "select-group": "",
+        "select-namespace": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Le dossier dans lequel importer les règles",
         "label": "Dossier cible"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Sélectionner un fichier YAML compatible avec Prometheus à importer",
@@ -1647,6 +1807,9 @@
         "target-datasource-required": "Veuillez sélectionner une source de données cible"
       },
       "yaml-error": "Échec de l’analyse du fichier YAML : {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -2136,6 +2299,10 @@
       "new-policy": "Ajouter une nouvelle politique",
       "no-matchers": "Aucun correspondant",
       "reload-policies": "Recharger les politiques",
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Enregistrer la politique",
       "update": {
         "please-wait": "Veuillez patienter pendant que nous mettons à jour vos politiques de notification.",
@@ -2154,6 +2321,54 @@
       },
       "n-more-policies_one": "{{count}} politiques supplémentaires",
       "n-more-policies_other": "{{count}} politiques supplémentaires"
+    },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "policy-header": {
+        "delete": {
+          "aria-label": "",
+          "delete-label": "",
+          "reset-label": ""
+        },
+        "edit": {
+          "text": ""
+        },
+        "export": {
+          "aria-label": "",
+          "label": ""
+        },
+        "more-actions": {
+          "aria-label": ""
+        },
+        "view": {
+          "provisioned-tooltip": "",
+          "text": ""
+        }
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
     },
     "policy": {
       "label-new-child-policy": "Nouvelle politique enfant",
@@ -2328,7 +2543,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Regrouper par",
-      "description-group-by": "Combinez plusieurs alertes en une seule notification en les regroupant avec les mêmes valeurs d’étiquette. Si elle est vide, elle est héritée de la politique de notification par défaut.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -2336,6 +2552,13 @@
       "label-override-grouping": "Remplacer le regroupement",
       "label-override-timings": "Remplacer les horaires",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Modifier",
@@ -2556,7 +2779,8 @@
       "expand-all": "Développer tout"
     },
     "rule-list-v2": {
-      "import-to-gma": "Importer des règles d’alerte"
+      "import-to-gma": "Importer des règles d’alerte",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Chargement de la règle...",
@@ -3102,6 +3326,12 @@
       "label-edit": "Modifier",
       "label-export": "Exporter"
     },
+    "use-create-routing-tree-modal": {
+      "modal-element": {
+        "add-routing-tree": "",
+        "title-create-routing-tree": ""
+      }
+    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Oui, supprimer le point de contact",
       "deleting": "Suppression…",
@@ -3119,6 +3349,15 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Supprimer la politique de notification"
+      }
+    },
+    "use-delete-routing-tree-modal": {
+      "modal-element": {
+        "delete-routing": "",
+        "delete-yes": "",
+        "deleting": "",
+        "deleting-routing-permanently-remove": "",
+        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3387,6 +3626,10 @@
       "hosted-domain-label": "Domaine hébergé",
       "id-token-attribute-name-description": "Le nom de la clé utilisée pour extraire le jeton d'identification du jeton OAuth2 renvoyé.",
       "id-token-attribute-name-label": "Nom d’attribut du jeton d’identification",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Expression JMESPath à utiliser pour la recherche de connexion de l’utilisateur à partir du jeton d’identification de l’utilisateur.",
       "login-attribute-path-label": "Chemin d’attribut de connexion",
       "login-prompt-consent": "Consentement",
@@ -3453,6 +3696,8 @@
       "use-refresh-token-label": "Utiliser le jeton d’actualisation",
       "validate-hosted-domain-description": "Si cette option est activée, Grafana fera correspondre le domaine hébergé récupéré à partir du jeton d’identification Google à la liste « {{ allowedDomainsLabel }} » spécifiée par l’utilisateur.",
       "validate-hosted-domain-label": "Valider le domaine hébergé",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Le chemin du fichier vers le fichier de jeton utilisé pour s’authentifier auprès du fournisseur OAuth2. Ceci n’est nécessaire que lorsque l’authentification du client est définie sur « workload_identity ». La valeur par défaut est /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "Fichier de jeton : {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Ce champ doit être défini lorsque l’authentification du client est définie sur « Workload identity »."
@@ -3629,7 +3874,9 @@
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Cette action supprimera le contenu suivant :",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Supprimer",
@@ -3736,6 +3983,9 @@
       "folder-actions": "Actions sur le dossier",
       "manage-permissions": "Gérer les autorisations",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
@@ -4787,12 +5037,6 @@
         "edit-dashboard-json": "Modifier le JSON du tableau de bord"
       }
     },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "La validation est fournie à des fins de développement et peut être ignorée en toute sécurité. Si vous êtes un développeur Grafana, pensez à vérifier et à mettre à jour le schéma du tableau de bord",
-      "title-checking-dashboard-validity": "Vérification de la validité du tableau de bord",
-      "title-dashboard-failed-schema-validation": "Échec de la validation du schéma du tableau de bord",
-      "title-error-checking-dashboard-validity": "Erreur lors de la vérification de la validité du tableau de bord"
-    },
     "default-layout": {
       "description": "Positionner et dimensionner chaque panneau individuellement",
       "item-options": {
@@ -4944,6 +5188,7 @@
       },
       "variables": {
         "add-variable": "Ajouter une variable",
+        "reorder": "",
         "select-type": "Choisir le type de variable",
         "select-type-card-tooltip": "Cliquer pour sélectionner le type",
         "select-variable": "Sélectionner"
@@ -5151,6 +5396,9 @@
       "panel-data-label": "Données du panneau",
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Sélectionner la source",
       "unknown": "Objet inconnu : {{show}}"
     },
@@ -5481,10 +5729,6 @@
         "title": "",
         "tooltip": ""
       },
-      "edit-schema": {
-        "title": "",
-        "tooltip": ""
-      },
       "export": {
         "title": ""
       },
@@ -5810,7 +6054,7 @@
       "load": "Charger"
     },
     "gcom-field": {
-      "label": "Trouvez et importez des tableaux de bord pour les applications courantes sur <1></1>",
+      "label": "",
       "load-button": "Charger",
       "placeholder": "URL ou ID du tableau de bord Grafana.com",
       "validation-required": "Vous devez renseigner une URL ou un ID de tableau de bord Grafana"
@@ -6233,6 +6477,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Annuler",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Dossier"
     },
     "inspect-data-tab": {
@@ -6240,7 +6486,9 @@
     },
     "inspect-json-tab": {
       "apply": "Appliquer",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6312,6 +6560,11 @@
       "title": {
         "remove-panel": "Supprimer le panneau"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alerte"
@@ -6388,6 +6641,9 @@
     },
     "query-editor": {
       "query": "Requête"
+    },
+    "query-editor-content": {
+      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -6681,6 +6937,16 @@
       },
       "label": "Masquer"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
     "variable-type-select": {
       "name-variable-type": "Type de variable"
     },
@@ -6747,7 +7013,7 @@
       "delete-button": "Supprimer",
       "title": "Supprimer"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "Voulez-vous vraiment supprimer ce tableau de bord ?",
     "general": {
       "auto-refresh-description": "Définissez les intervalles d'actualisation automatique qui doivent être disponibles dans la liste d'actualisation automatique. Utilisez le format « 5s » pour les secondes, « 1m » pour les minutes, « 1h » pour les heures et « 1d » pour les jours (par exemple : « 5s,10s,30s,1m,5m,15m,30m,1h,2h,1d »).",
@@ -8010,6 +8276,43 @@
   "gauge": {
     "category-gauge": "Jauge",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Hauteur minimale des lignes (orientation horizontale)",
     "description-min-width": "Largeur minimale des colonnes (orientation verticale)",
     "description-neutral": "Laisser vide pour utiliser le minimum comme point neutre",
@@ -9733,7 +10036,6 @@
       "error-fetching": "Erreur lors de la récupération des paramètres LDAP",
       "error-saving": "Erreur lors de l'enregistrement des paramètres LDAP",
       "error-validate-form": "Erreur lors de la validation des paramètres LDAP",
-      "feature-flag-disabled": "",
       "saved": "Paramètres LDAP enregistrés"
     },
     "bind-dn": {
@@ -10033,6 +10335,8 @@
       "no-more-logs-available": "Plus de journaux disponibles.",
       "older-logs": "plus ancien",
       "open-in-split-view": "Ouvrir en vue fractionnée",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "Fenêtre temporelle du contexte",
       "time-window-tooltip": "Durée avant et après la ligne de journal référencée",
       "title-log-context": "Contexte des journaux",
@@ -10288,6 +10592,17 @@
       "label-log-stats": "{{label}} : {{total}} lignes sur {{rowCount}} ont cette étiquette"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Liste des panneaux de bibliothèque existants. Ces panneaux ne sont pas affectés par l’importation."
@@ -10307,9 +10622,15 @@
       "options": "Options"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importation du tableau de bord depuis <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Publié par",
       "updated-on": "Mise à niveau le"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Voulez-vous vraiment supprimer « {{snapshotToRemove}} » ?",
@@ -11173,6 +11494,9 @@
     "noOptionsMessage-no-organizations-found": "Aucune organisation trouvée",
     "select-placeholder": "Sélectionner l’organisation"
   },
+  "owner-reference": {
+    "team-members": ""
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Modifier le titre"
@@ -11219,6 +11543,7 @@
     },
     "header-menu": {
       "copy": "Copier",
+      "copy-styles": "",
       "create-library-panel": "Créer un panneau de bibliothèque",
       "duplicate": "Dupliquer",
       "edit": "Modifier",
@@ -11230,11 +11555,13 @@
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "new-alert-rule": "Nouvelle règle d'alerte",
+      "paste-styles": "",
       "query": "Requête",
       "remove": "Supprimer",
       "replace-library-panel": "Remplacer le panneau de bibliothèque",
       "share": "Partager",
       "show-legend": "Afficher la légende",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Dissocier le panneau de la bibliothèque",
       "view": "Afficher"
@@ -11670,6 +11997,7 @@
       "text-installed": "Installé"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Dépendance Grafana",
       "installed-version": "{{versionNumber}} (version installée)",
       "latest-compatible-version": "{{versionNumber}} (dernière version compatible)",
@@ -11791,14 +12119,17 @@
       "description-clear-repository-connection": "Ajoutez un nom clair pour cette connexion de référentiel",
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Pseudo",
       "placeholder-my-repository-connection": "Ma connexion au référentiel",
+      "retry-action": "",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
       "files-count_one": "{{count}} fichiers",
@@ -11817,13 +12148,16 @@
       "alert-repository-settings-updated": "Paramètres du référentiel mis à jour",
       "button-save": "Enregistrer",
       "button-saving": "Enregistrement en cours...",
+      "description-connection": "",
       "description-enabled": "Une fois que la fusion automatique est activée, la cible ne peut pas être modifiée.",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
       "description-title": "Un nom lisible par l’utilisateur pour la configuration",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Ce champ est obligatoire.",
       "error-save-repository": "Échec de l’enregistrement des paramètres du référentiel",
       "label-automatic-pulling": "Fusion automatique",
+      "label-connection": "",
       "label-enabled": "Activé",
       "label-interval-seconds": "Intervalle (secondes)",
       "label-repository-type": "Type de référentiel",
@@ -11849,32 +12183,54 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11888,6 +12244,7 @@
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12161,6 +12518,7 @@
       "jobs": "Missions"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "Paramètres",
       "source-code": "Code source"
     },
@@ -12181,8 +12539,12 @@
         "view-repository": "Afficher le référentiel"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Vérifié :",
+      "connection-status": "",
       "finished": "",
       "health": "Santé",
       "healthy": "Sain",
@@ -12340,23 +12702,27 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
       "check-status-button": "",
       "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Cette action supprimera la configuration du dépôt et vous perdrez toutes vos modifications. Voulez-vous vraiment annuler vos modifications ?",
         "confirm": "Oui, annuler",
         "dismiss": "Continuer",
         "title": "Annuler la configuration du dépôt ?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12368,21 +12734,18 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
       "step-bootstrap": "Choisir ce qui doit être synchronisé",
       "step-configure-repo": "",
       "step-connect": "Connecter",
       "step-finish": "Choisir des paramètres supplémentaires",
-      "step-github-app": "",
       "step-synchronize": "Synchroniser avec un stockage externe",
       "sync-description": "Synchronisez les ressources avec un stockage externe. Après cette étape unique, toutes les futures mises à jour seront automatiquement enregistrées dans le référentiel et mises en service dans l’instance.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Choisir ce qui doit être synchronisé",
       "title-configure-repo": "",
       "title-connect": "Se connecter à un stockage externe",
       "title-finish": "Choisir des paramètres supplémentaires",
-      "title-github-app": "",
       "title-synchronize": "Synchroniser avec un stockage externe"
     },
     "wizard-content": {
@@ -12602,15 +12965,49 @@
       "title-data-source-help": "Aide sur la source de données"
     }
   },
+  "query-editor": {
+    "action": {
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
+    },
+    "edit-query-name": "",
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "",
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12643,52 +13040,13 @@
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
   },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
-  },
   "recently-deleted": {
     "buttons": {
       "restore": "Restaurer"
     },
     "page": {
       "no-deleted-dashboards": "Vous n'avez pas supprimé de tableau de bord récemment.",
-      "no-deleted-dashboards-text": "Lorsque vous supprimez un tableau de bord, il apparaîtra ici pendant 30 jours avant d'être définitivement supprimé. L'administrateur de votre organisation peut restaurer les tableaux de bord récemment supprimés.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "Aucun résultat n'a été trouvé pour votre requête"
     },
     "restore-modal": {
@@ -13547,6 +13905,7 @@
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
     "name-wrap-text": "",
     "placeholder-column-width": "auto",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
@@ -14809,6 +15168,9 @@
       "description": {
         "variable-values-fetched-datasource-query": "Les valeurs des variables sont extraites d’une requête de source de données"
       }
+    },
+    "create-switch-variable-adapter": {
+      "description": ""
     },
     "data-source-variable-slice": {
       "text": {

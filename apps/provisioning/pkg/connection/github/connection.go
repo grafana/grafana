@@ -154,7 +154,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
+						Type:   metav1.CauseTypeFieldValueNotFound,
 						Field:  field.NewPath("spec", "github", "appID").String(),
 						Detail: "app not found",
 					},
@@ -323,6 +323,15 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	// Create an installation access token scoped to this repository
 	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
 	if err != nil {
+		switch {
+		case errors.Is(err, ErrUnprocessableEntity):
+			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrRepositoryAccess)
+		case errors.Is(err, ErrNotFound):
+			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrNotFound)
+		case errors.Is(err, ErrAuthentication):
+			return nil, connection.ErrAuthentication
+		}
+
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 

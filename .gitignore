@@ -264,3 +264,6 @@ public/mockServiceWorker.js
 
 coverage-summary.json
 devenv/blocks/auth/signer/keys/ec_private_key.pem
+
+# Spec-kit files shouldn't be committed without a major design process
+.specs
