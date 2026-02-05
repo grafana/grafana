@@ -453,7 +453,27 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 
 	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
 	args = append(args, args[:initialLength]...)
+var teamFilter *accesscontrol.SQLFilter
+if !query.ExcludeManaged {
+	filter, err := accesscontrol.Filter(
+		query.User,
+		"t.id",
+		"teams:id:",
+		accesscontrol.ActionTeamsRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+	teamFilter = &filter
+}
+
+team := teamSelect + teamFrom + where
+args = append(args, args[:initialLength]...)
+
+if teamFilter != nil {
+	team += " AND " + teamFilter.Where
 	args = append(args, teamFilter.Args...)
+}
 
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)
