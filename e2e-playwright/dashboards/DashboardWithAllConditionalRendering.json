@@ -46,7 +46,10 @@
                         "scenarioId": "server_error_500",
                         "stringInput": "$myVariable"
                       },
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -154,7 +157,10 @@
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -262,7 +268,10 @@
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -370,7 +379,10 @@
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -478,7 +490,10 @@
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -586,7 +601,10 @@
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -694,7 +712,10 @@
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
