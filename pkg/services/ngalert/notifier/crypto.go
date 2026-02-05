@@ -212,6 +212,23 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			}
 
 			if authorizeProtected != nil {
+				var receiverName string
+				if currentConfig != nil {
+				NAME:
+					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
+						for _, intg := range rcv.GrafanaManagedReceivers {
+							if intg.UID == cgmr.UID {
+								receiverName = rcv.Name
+								break NAME
+							}
+						}
+					}
+				}
+				// this is checked only if authorizeProtected is not nil to cover only the path from receiver testing API.
+				if receiverName != r.Name {
+					return UnknownReceiverError{UID: gr.UID} // return error because integration does not belong to the receiver under the requested name
+				}
+
 				incoming, errIn := legacy_storage.PostableGrafanaReceiverToIntegration(gr)
 				existing, errEx := legacy_storage.PostableGrafanaReceiverToIntegration(cgmr)
 				var secure []schema.IntegrationFieldPath
@@ -222,16 +239,6 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 				}
 				// if conversion failed, consider there are changes and authorize
 				if authz && currentConfig != nil {
-					var receiverName string
-				NAME:
-					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
-						for _, intg := range rcv.GrafanaManagedReceivers {
-							if intg.UID == cgmr.UID {
-								receiverName = rcv.Name
-								break NAME
-							}
-						}
-					}
 					if err := authorizeProtected(receiverName, secure); err != nil {
 						return err
 					}

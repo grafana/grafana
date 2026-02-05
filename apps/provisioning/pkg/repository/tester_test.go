@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +14,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-func TestTestRepository(t *testing.T) {
+func TestTester_Test_Cases(t *testing.T) {
 	tests := []struct {
 		name          string
 		repository    *MockRepository
@@ -32,7 +31,6 @@ func TestTestRepository(t *testing.T) {
 						// Missing required title
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedCode: http.StatusUnprocessableEntity,
@@ -51,7 +49,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusOK,
 					Success: true,
@@ -70,7 +67,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(nil, fmt.Errorf("test error"))
 				return m
 			}(),
@@ -85,7 +81,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusBadRequest,
 					Success: false,
@@ -104,10 +99,14 @@ func TestTestRepository(t *testing.T) {
 		},
 	}
 
-	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true))
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	validator := NewValidator(true, mockFactory)
+	// Use basic RepositoryValidator since Tester is used for health checks
+	tester := NewTester(validator)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results, err := tester.TestRepository(context.Background(), tt.repository)
+			results, err := tester.Test(context.Background(), tt.repository)
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
@@ -130,21 +129,24 @@ func TestTestRepository(t *testing.T) {
 	}
 }
 
-func TestTester_TestRepository(t *testing.T) {
+func TestTester_Test(t *testing.T) {
 	repository := NewMockRepository(t)
 	repository.On("Config").Return(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 		},
 	})
-	repository.On("Validate").Return(field.ErrorList{})
 	repository.On("Test", mock.Anything).Return(&provisioning.TestResults{
 		Code:    http.StatusOK,
 		Success: true,
 	}, nil)
 
-	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true))
-	results, err := tester.TestRepository(context.Background(), repository)
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	validator := NewValidator(true, mockFactory)
+	// Use basic RepositoryValidator since Tester is used for health checks
+	tester := NewTester(validator)
+	results, err := tester.Test(context.Background(), repository)
 	require.NoError(t, err)
 	require.NotNil(t, results)
 	require.Equal(t, http.StatusOK, results.Code)

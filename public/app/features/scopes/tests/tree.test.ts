@@ -1,7 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ScopesService } from '../ScopesService';
 
@@ -32,6 +34,7 @@ import {
   expectResultApplicationsCloudPresent,
   expectResultApplicationsGrafanaNotPresent,
   expectResultApplicationsGrafanaPresent,
+  expectResultApplicationsGrafanaPresentAsync,
   expectResultApplicationsGrafanaSelected,
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
@@ -43,17 +46,19 @@ import {
   expectScopesHeadline,
   expectScopesSelectorValue,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Tree', () => {
   let fetchNodesSpy: jest.SpyInstance;
@@ -179,7 +184,7 @@ describe('Tree', () => {
 
     await searchScopes('Grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
     expectResultApplicationsCloudNotPresent();
   });
 
@@ -240,7 +245,7 @@ describe('Tree', () => {
     await searchScopes('grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Does not persist a retrieved scope', async () => {
@@ -262,7 +267,8 @@ describe('Tree', () => {
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectResultApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    // Wait for async operations to complete and nodes to be rendered after clearing search
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Persists nodes from search', async () => {
@@ -279,7 +285,8 @@ describe('Tree', () => {
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    // Wait for async operations to complete and nodes to be rendered after clearing search
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Selects a persisted scope', async () => {
@@ -316,18 +323,24 @@ describe('Tree', () => {
 
     await searchScopes('Applications');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
-    expectScopesHeadline('Results');
+    await waitFor(() => {
+      expectScopesHeadline('Results');
+    });
 
     await searchScopes('unknown');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-    expectScopesHeadline('No results found for your query');
+    await waitFor(() => {
+      expectScopesHeadline('No results found for your query');
+    });
   });
 
   it('Should only show Recommended when there are no leaf container nodes visible', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
-    expectScopesHeadline('Recommended');
+    await waitFor(() => {
+      expectScopesHeadline('Recommended');
+    });
   });
 
   it('Should open to a specific path when scopes and scope_node are applied', async () => {

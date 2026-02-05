@@ -1,8 +1,39 @@
+import { readdirSync, statSync } from 'fs';
+import path from 'path';
+
 import {
   Spec as DashboardV2Spec,
   GridLayoutItemKind,
   RowsLayoutRowKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
+/**
+ * Recursively gets all JSON files from a directory.
+ * Returns an array of objects containing the full file path and relative path from the base directory.
+ */
+export function getFilesRecursively(
+  dir: string,
+  baseDir: string = dir
+): Array<{ filePath: string; relativePath: string }> {
+  const files: Array<{ filePath: string; relativePath: string }> = [];
+  const entries = readdirSync(dir);
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      files.push(...getFilesRecursively(fullPath, baseDir));
+    } else if (entry.endsWith('.json')) {
+      files.push({
+        filePath: fullPath,
+        relativePath: path.relative(baseDir, fullPath),
+      });
+    }
+  }
+
+  return files;
+}
 
 /**
  * Normalizes backend output to match frontend behavior.
@@ -93,4 +124,41 @@ export function normalizeBackendOutputForFrontendComparison(
   }
 
   return normalized;
+}
+
+/**
+ * Recursively removes empty arrays from an object.
+ * This normalizes the difference between frontend (which preserves empty arrays)
+ * and Go backend (which omits empty arrays due to `omitempty`).
+ */
+export function removeEmptyArrays<T>(value: T): T {
+  if (Array.isArray(value)) {
+    // Recursively process array items, but don't remove the array itself here
+    // (parent will handle removal if this array becomes empty after processing)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return value.map((item) => removeEmptyArrays(item)) as T;
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const v = (value as Record<string, unknown>)[key];
+      if (Array.isArray(v)) {
+        // Only include non-empty arrays
+        if (v.length > 0) {
+          result[key] = removeEmptyArrays(v);
+        }
+        // Skip empty arrays (don't add to result)
+      } else if (v !== null && typeof v === 'object') {
+        result[key] = removeEmptyArrays(v);
+      } else {
+        result[key] = v;
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return result as T;
+  }
+
+  return value;
 }

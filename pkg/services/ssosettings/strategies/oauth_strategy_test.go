@@ -106,6 +106,8 @@ var (
 		"org_attribute_path":            "groups",
 		"org_mapping":                   "Group1:*:Editor",
 		"login_prompt":                  "select_account",
+		"jwk_set_url":                   "",
+		"validate_id_token":             false,
 	}
 )
 

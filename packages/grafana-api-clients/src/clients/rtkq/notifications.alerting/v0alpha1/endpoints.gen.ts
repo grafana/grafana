@@ -10,6 +10,9 @@ const injectedRtkApi = api
         query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
+      getIntegrationtypeschemas: build.query<GetIntegrationtypeschemasApiResponse, GetIntegrationtypeschemasApiArg>({
+        query: () => ({ url: `/integrationtypeschemas` }),
+      }),
       listReceiver: build.query<ListReceiverApiResponse, ListReceiverApiArg>({
         query: (queryArg) => ({
           url: `/receivers`,
@@ -117,6 +120,10 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
+        invalidatesTags: ['Receiver'],
+      }),
+      createReceiverTest: build.mutation<CreateReceiverTestApiResponse, CreateReceiverTestApiArg>({
+        query: (queryArg) => ({ url: `/receivers/${queryArg.name}/test`, method: 'POST' }),
         invalidatesTags: ['Receiver'],
       }),
       listRoutingTree: build.query<ListRoutingTreeApiResponse, ListRoutingTreeApiArg>({
@@ -461,6 +468,8 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
+export type GetIntegrationtypeschemasApiResponse = /** status 200 OK */ GetIntegrationtypeschemas;
+export type GetIntegrationtypeschemasApiArg = void;
 export type ListReceiverApiResponse = /** status 200 OK */ ReceiverList;
 export type ListReceiverApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -625,6 +634,11 @@ export type UpdateReceiverApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type CreateReceiverTestApiResponse = /** status 200 OK */ CreateReceiverIntegrationTest;
+export type CreateReceiverTestApiArg = {
+  /** name of the ResourceCallOptions */
+  name: string;
 };
 export type ListRoutingTreeApiResponse = /** status 200 OK */ RoutingTreeList;
 export type ListRoutingTreeApiArg = {
@@ -1157,6 +1171,59 @@ export type ApiResourceList = {
   /** resources contains the name of the resources and if they are namespaced. */
   resources: ApiResource[];
 };
+export type GetIntegrationtypeschemasSelectOption = {
+  description: string;
+  label: string;
+  value: any;
+};
+export type GetIntegrationtypeschemasShowWhen = {
+  field: string;
+  is: string;
+};
+export type GetIntegrationtypeschemasField = {
+  dependsOn: string;
+  description: string;
+  element: string;
+  inputType: string;
+  label: string;
+  placeholder: string;
+  propertyName: string;
+  protected?: boolean;
+  required: boolean;
+  secure: boolean;
+  selectOptions?: GetIntegrationtypeschemasSelectOption[];
+  showWhen: GetIntegrationtypeschemasShowWhen;
+  subformOptions?: GetIntegrationtypeschemasField[];
+  validationRule: string;
+};
+export type GetIntegrationtypeschemasIntegrationTypeSchemaVersion = {
+  canCreate: boolean;
+  deprecated?: boolean;
+  info?: string;
+  options: GetIntegrationtypeschemasField[];
+  typeAlias?: string;
+  version: string;
+};
+export type GetIntegrationtypeschemasIntegrationTypeSchema = {
+  currentVersion: string;
+  deprecated?: boolean;
+  description?: string;
+  heading?: string;
+  info?: string;
+  name: string;
+  type: string;
+  versions: GetIntegrationtypeschemasIntegrationTypeSchemaVersion[];
+};
+export type GetIntegrationtypeschemasIntegrationTypeSchemaResource = {
+  metadata: {
+    name: string;
+    namespace: string;
+  };
+  spec: GetIntegrationtypeschemasIntegrationTypeSchema;
+};
+export type GetIntegrationtypeschemas = {
+  items: GetIntegrationtypeschemasIntegrationTypeSchemaResource[];
+};
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
@@ -1328,6 +1395,15 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type CreateReceiverIntegrationTest = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  duration: string;
+  error?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  status: 'success' | 'failure';
+};
 export type RoutingTreeRouteDefaults = {
   group_by?: string[];
   group_interval?: string;
@@ -1429,6 +1505,8 @@ export type TimeIntervalList = {
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
+  useGetIntegrationtypeschemasQuery,
+  useLazyGetIntegrationtypeschemasQuery,
   useListReceiverQuery,
   useLazyListReceiverQuery,
   useCreateReceiverMutation,
@@ -1438,6 +1516,7 @@ export const {
   useReplaceReceiverMutation,
   useDeleteReceiverMutation,
   useUpdateReceiverMutation,
+  useCreateReceiverTestMutation,
   useListRoutingTreeQuery,
   useLazyListRoutingTreeQuery,
   useCreateRoutingTreeMutation,
