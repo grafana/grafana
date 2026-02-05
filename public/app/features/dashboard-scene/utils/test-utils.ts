@@ -24,13 +24,16 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types/dashboard';
 
+import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
@@ -46,6 +49,7 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jes
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }
+
 export function setupLoadDashboardMockReject(rsp: DeepPartial<FetchError>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockRejectedValue(rsp);
   // disabling type checks since this is a test util
@@ -91,8 +95,11 @@ export function mockResizeObserver() {
         );
       });
     }
+
     observe() {}
+
     disconnect() {}
+
     unobserve() {}
   };
 }
@@ -329,4 +336,125 @@ export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) 
   }
 
   return '';
+}
+
+type TabsTestSetup = {
+  /**
+   * Spec defining rows and tabs structure:
+   * - each string represents tabs in a separate row
+   * - a single letter represents a single tab
+   * - joined letters represent repeated tabs
+   *
+   * Example:
+   * tabs: ["a b cd"] - single row with 3 tabs: "a", "b", and "cd" (where "cd" is a repeated tab with 2 instances)
+   */
+  tabs: string[];
+
+  /**
+   * Single letter representing a drag source tab
+   */
+  drag: string;
+
+  /**
+   * Single letter representing a drag target tab
+   */
+  drop: string;
+
+  /**
+   * Expected tabs structure after drag and drop operation, same format as `tabs` input
+   */
+  expectedTabs: string[];
+
+  /**
+   * Used only when dragging between rows to indicate whether to drop before or after the target tab.
+   * Dragging within the same row just replaces tabs so it's not used.
+   */
+  after: boolean;
+};
+
+/**
+ * Setups a tabs drag and drop test scenario
+ */
+export function setupTabsTest(scenario: TabsTestSetup) {
+  let drag = undefined;
+  let sourceIndex = 0;
+  let sourceManager = undefined;
+  let destIndex = 0;
+  let destManager = undefined;
+
+  const managers: TabsLayoutManager[] = [];
+
+  const rows = scenario.tabs.map((tabsInRow) => {
+    const names = tabsInRow.split(' ');
+    const tabs: TabItem[] = [];
+    const layout = new TabsLayoutManager({ tabs: [] });
+    managers.push(layout);
+
+    let index = 0;
+    names.forEach((name) => {
+      const title = name[0];
+      const tab = new TabItem({ title });
+
+      if (title === scenario.drag) {
+        drag = tab;
+        sourceManager = layout;
+        sourceIndex = index;
+      }
+
+      if (title === scenario.drop) {
+        destManager = layout;
+        destIndex = scenario.after ? index + 1 : index;
+      }
+
+      index++;
+
+      if (name.length > 1) {
+        const repeatedTabs = name
+          .slice(1)
+          .split('')
+          .map((title) => {
+            if (title === scenario.drop) {
+              destManager = layout;
+              destIndex = scenario.after ? index + 1 : index;
+            }
+            index++;
+            return new TabItem({ title, repeatSourceKey: tab.state.key });
+          });
+        tab.setState({ repeatedTabs });
+      }
+
+      tabs.push(tab);
+    });
+    layout.setState({ tabs });
+    return new RowItem({ layout });
+  });
+  const rowsManager = new RowsLayoutManager({ rows });
+  const dashboard = new DashboardScene({ body: rowsManager });
+  dashboard.activate?.();
+  const orchestrator = dashboard.state.layoutOrchestrator!;
+
+  return {
+    performDrag: () => {
+      orchestrator.startTabDrag(drag);
+      orchestrator.endTabDrag(destManager!.state.key!, sourceIndex, destIndex);
+    },
+    assertExpectedTabs: () => {
+      const all = managers.map((manager) =>
+        manager
+          .getTabsIncludingRepeats()
+          .map((t) => t.state.title)
+          .join('')
+      );
+      expect(all).toEqual(scenario.expected.map((t) => t.replace(/ /g, '')));
+    },
+    assertInitialTabs: () => {
+      const all = managers.map((manager) =>
+        manager
+          .getTabsIncludingRepeats()
+          .map((t) => t.state.title)
+          .join('')
+      );
+      expect(all).toEqual(scenario.tabs.map((t) => t.replace(/ /g, '')));
+    },
+  };
 }
