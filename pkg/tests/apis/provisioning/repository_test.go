@@ -149,7 +149,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 					assert.Equal(collect, i.Path, helper.ProvisioningPath)
 				case provisioning.GitHubRepositoryType:
 					assert.Equal(collect, i.URL, "https://github.com/grafana/grafana-git-sync-demo")
-					assert.Equal(collect, i.Path, "")
+					assert.Equal(collect, i.Path, "grafana/")
 				default:
 					assert.NotEmpty(collect, i.Path)
 					assert.NotEmpty(collect, i.URL)
