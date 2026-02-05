@@ -306,6 +306,7 @@ func (s *Service) groupBatchCheckItems(
 		if g, ok := groups[action]; ok {
 			g.items = append(g.items, item)
 			g.checkReqs = append(g.checkReqs, checkReq)
+			// Bypass the cache for the entire group as soon as one check requires fresh data 
 			if requiresFresh {
 				g.requiresFreshData = true
 			}
