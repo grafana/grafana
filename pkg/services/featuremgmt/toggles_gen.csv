@@ -207,7 +207,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-22,alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 2025-04-24,alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 2025-06-18,kubernetesAuthzApis,deprecated,@grafana/identity-access-team,false,false,false
-2025-08-29,kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
+2025-08-29,kubernetesAuthZHandlerRedirect,deprecated,@grafana/identity-access-team,false,false,false
+2026-02-04,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-02-04,kubernetesAuthZRolesRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-08-01,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
