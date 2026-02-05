@@ -31,6 +31,7 @@ var (
 // wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
 // to treat them as warnings rather than hard errors. This includes:
 // - Kubernetes field validation errors
+// - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
 // - Dashboard validation errors (all DashboardErr types)
 // - Duplicate resource errors
 // - Resource already in repository errors
@@ -48,6 +49,12 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 	// Check if it's a field validation error (e.g., missing name)
 	var fieldErr *field.Error
 	if errors.As(err, &fieldErr) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a Kubernetes API BadRequest error (these are usually validation errors)
+	// Dashboard validation errors are wrapped as BadRequest by the dashboard API
+	if apierrors.IsBadRequest(err) {
 		return NewResourceValidationError(err)
 	}
 
