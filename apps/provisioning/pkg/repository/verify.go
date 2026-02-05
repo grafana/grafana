@@ -97,7 +97,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 				}
 
 				// Skip parent/child conflict check when both paths are empty (both at repository root)
-				if !(v.Path() == "" && cfg.Path() == "") {
+				if v.Path() != "" || cfg.Path() != "" {
 					relPath, err := filepath.Rel(v.Path(), cfg.Path())
 					if err != nil {
 						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
