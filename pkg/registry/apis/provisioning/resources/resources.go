@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 var (
@@ -26,6 +28,39 @@ var (
 	ErrDuplicateName       = errors.New("duplicate name in repository")
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
+
+// wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
+// to treat them as warnings rather than hard errors. This includes:
+// - Dashboard validation errors (e.g., refresh interval too low)
+// - Kubernetes field validation errors
+func wrapAsValidationErrorIfNeeded(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// Check if it's already a validation error
+	var validationErr *ResourceValidationError
+	if errors.As(err, &validationErr) {
+		return err
+	}
+
+	// Check if it's a field validation error (e.g., missing name)
+	var fieldErr *field.Error
+	if errors.As(err, &fieldErr) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a dashboard validation error
+	var dashboardErr dashboardaccess.DashboardErr
+	if errors.As(err, &dashboardErr) {
+		// Only wrap specific dashboard validation errors, not all dashboard errors
+		if dashboardErr.Equal(dashboards.ErrDashboardRefreshIntervalTooShort) {
+			return NewResourceValidationError(err)
+		}
+	}
+
+	return err
+}
 
 type WriteOptions struct {
 	Path string
@@ -226,7 +261,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parseSpan.End()
 
 	if parsed.Obj.GetName() == "" {
-		return "", schema.GroupVersionKind{}, ErrMissingName
+		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
 	// Check if the resource already exists
@@ -263,6 +298,8 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	err = parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
+		// Wrap resource validation errors (like dashboard refresh interval) as warnings
+		err = wrapAsValidationErrorIfNeeded(err)
 	}
 	runSpan.End()
 
@@ -296,7 +333,7 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	objName := obj.GetName()
 	if objName == "" {
-		return "", "", schema.GroupVersionKind{}, ErrMissingName
+		return "", "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
 	client, _, err := r.clients.ForKind(ctx, *gvk)

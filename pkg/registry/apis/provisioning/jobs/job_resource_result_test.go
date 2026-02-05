@@ -228,17 +228,18 @@ func TestNewJobResourceResult_WithFieldErrorAsWarning(t *testing.T) {
 	path := "/test/path"
 	action := repository.FileActionCreated
 
-	// Kubernetes field error (e.g., missing name in resource)
+	// Kubernetes field error wrapped as validation error (as done in resources layer)
 	fieldErr := field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
+	validationErr := resources.NewResourceValidationError(fieldErr)
 
-	// Test with field.Error directly (should be a warning)
+	// Test with validation error wrapping field.Error (should be a warning)
 	result := NewResourceResult().
 		WithName(name).
 		WithGroup(group).
 		WithKind(kind).
 		WithPath(path).
 		WithAction(action).
-		WithError(fieldErr).
+		WithError(validationErr).
 		Build()
 
 	assert.Equal(t, name, result.Name())
@@ -246,12 +247,11 @@ func TestNewJobResourceResult_WithFieldErrorAsWarning(t *testing.T) {
 	assert.Equal(t, kind, result.Kind())
 	assert.Equal(t, path, result.Path())
 	assert.Equal(t, action, result.Action())
-	assert.Nil(t, result.Error(), "Field error should be stored as warning, not error")
-	assert.NotNil(t, result.Warning(), "Field error should be stored as warning")
-	assert.Equal(t, fieldErr, result.Warning())
+	assert.Nil(t, result.Error(), "Field error wrapped as validation error should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "Field error wrapped as validation error should be stored as warning")
 
-	// Test with an error that wraps field.Error
-	wrappedErr := fmt.Errorf("failed to parse file: %w", fieldErr)
+	// Test with an error that wraps the validation error
+	wrappedErr := fmt.Errorf("failed to parse file: %w", validationErr)
 
 	result2 := NewResourceResult().
 		WithName(name).
@@ -262,8 +262,8 @@ func TestNewJobResourceResult_WithFieldErrorAsWarning(t *testing.T) {
 		WithError(wrappedErr).
 		Build()
 
-	assert.Nil(t, result2.Error(), "Error wrapping field.Error should be stored as warning, not error")
-	assert.NotNil(t, result2.Warning(), "Error wrapping field.Error should be stored as warning")
+	assert.Nil(t, result2.Error(), "Error wrapping validation error should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping validation error should be stored as warning")
 }
 
 func TestNewJobResourceResult_WithDashboardRefreshIntervalErrorAsWarning(t *testing.T) {
@@ -273,17 +273,18 @@ func TestNewJobResourceResult_WithDashboardRefreshIntervalErrorAsWarning(t *test
 	path := "/test/dashboard.json"
 	action := repository.FileActionCreated
 
-	// Dashboard refresh interval error
+	// Dashboard refresh interval error wrapped as validation error (as done in resources layer)
 	dashboardErr := dashboards.ErrDashboardRefreshIntervalTooShort
+	validationErr := resources.NewResourceValidationError(dashboardErr)
 
-	// Test with dashboard error directly (should be a warning)
+	// Test with validation error wrapping dashboard error (should be a warning)
 	result := NewResourceResult().
 		WithName(name).
 		WithGroup(group).
 		WithKind(kind).
 		WithPath(path).
 		WithAction(action).
-		WithError(dashboardErr).
+		WithError(validationErr).
 		Build()
 
 	assert.Equal(t, name, result.Name())
@@ -291,12 +292,11 @@ func TestNewJobResourceResult_WithDashboardRefreshIntervalErrorAsWarning(t *test
 	assert.Equal(t, kind, result.Kind())
 	assert.Equal(t, path, result.Path())
 	assert.Equal(t, action, result.Action())
-	assert.Nil(t, result.Error(), "Dashboard refresh interval error should be stored as warning, not error")
-	assert.NotNil(t, result.Warning(), "Dashboard refresh interval error should be stored as warning")
-	assert.Equal(t, dashboardErr, result.Warning())
+	assert.Nil(t, result.Error(), "Dashboard refresh interval error wrapped as validation error should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "Dashboard refresh interval error wrapped as validation error should be stored as warning")
 
-	// Test with an error that wraps the dashboard error
-	wrappedErr := fmt.Errorf("writing resource from file: %w", dashboardErr)
+	// Test with an error that wraps the validation error
+	wrappedErr := fmt.Errorf("writing resource from file: %w", validationErr)
 
 	result2 := NewResourceResult().
 		WithName(name).
@@ -307,6 +307,6 @@ func TestNewJobResourceResult_WithDashboardRefreshIntervalErrorAsWarning(t *test
 		WithError(wrappedErr).
 		Build()
 
-	assert.Nil(t, result2.Error(), "Error wrapping dashboard error should be stored as warning, not error")
-	assert.NotNil(t, result2.Warning(), "Error wrapping dashboard error should be stored as warning")
+	assert.Nil(t, result2.Error(), "Error wrapping validation error should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping validation error should be stored as warning")
 }

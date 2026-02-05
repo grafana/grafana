@@ -5,14 +5,13 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // isWarningError checks if the given error should be treated as a warning.
 // It uses errors.As to check if the error is of any of the warning error types.
+// Validation errors (field errors, dashboard errors, etc.) are wrapped as
+// ResourceValidationError at the source in the resources layer.
 func isWarningError(err error) bool {
 	if err == nil {
 		return false
@@ -20,20 +19,12 @@ func isWarningError(err error) bool {
 
 	var validationErr *resources.ResourceValidationError
 	var ownershipErr *resources.ResourceOwnershipConflictError
-	var fieldErr *field.Error
-	var dashboardErr dashboardaccess.DashboardErr
 
 	switch {
 	case errors.As(err, &validationErr):
 		return true
 	case errors.As(err, &ownershipErr):
 		return true
-	case errors.As(err, &fieldErr):
-		// Kubernetes field validation errors (e.g., missing name in resource)
-		return true
-	case errors.As(err, &dashboardErr):
-		// Dashboard validation errors (e.g., refresh interval too low)
-		return dashboardErr.Equal(dashboards.ErrDashboardRefreshIntervalTooShort)
 	default:
 		return false
 	}
