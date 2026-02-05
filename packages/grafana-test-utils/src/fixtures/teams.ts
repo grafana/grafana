@@ -1,10 +1,8 @@
 import { Chance } from 'chance';
 
-import { Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-
 const chance = new Chance('mock-teams');
 
-export const MOCK_TEAMS: Team[] = [
+export const MOCK_TEAMS = [
   {
     metadata: {
       name: chance.string({ length: 14, pool: 'abcdefghijklmnopqrstuvwxyz1234567890' }),
@@ -21,9 +19,8 @@ export const MOCK_TEAMS: Team[] = [
     spec: {
       title: 'Test Team',
       email: 'foo@example.com',
-      externalUID: '1234567890',
-      provisioned: false,
     },
+    status: {},
   },
 ];
 
@@ -32,10 +29,10 @@ export const MOCK_TEAM_GROUPS = [{ groupId: 'cn=users,ou=groups,dc=grafana,dc=or
 export const setupMockTeams = () => {
   mockTeamsMap.clear();
   MOCK_TEAMS.forEach((team) => {
-    mockTeamsMap.set(team.metadata.name!, { team, groups: [...MOCK_TEAM_GROUPS] });
+    mockTeamsMap.set(team.metadata.name, { team, groups: [...MOCK_TEAM_GROUPS] });
   });
 };
 
 export const mockTeamsMap = new Map<string, { team: (typeof MOCK_TEAMS)[number]; groups: Array<{ groupId: string }> }>(
-  MOCK_TEAMS.map((team) => [team.metadata.name!, { team, groups: [...MOCK_TEAM_GROUPS] }])
+  MOCK_TEAMS.map((team) => [team.metadata.name, { team, groups: [...MOCK_TEAM_GROUPS] }])
 );

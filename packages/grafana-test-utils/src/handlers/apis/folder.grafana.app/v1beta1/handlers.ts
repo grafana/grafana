@@ -1,9 +1,6 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
-import { Folder, ObjectMeta } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { OwnerReference } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-
 import { wellFormedTree } from '../../../../fixtures/folders';
 import { getErrorResponse } from '../../../helpers';
 const [mockTree, { folderB }] = wellFormedTree();
@@ -14,7 +11,7 @@ const baseResponse = {
   apiVersion: 'folder.grafana.app/v1beta1',
 };
 
-const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder => {
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string) => {
   return {
     ...baseResponse,
 
@@ -27,12 +24,12 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
         // TODO: Generalise annotations in fixture data
         'grafana.app/createdBy': 'user:1',
         'grafana.app/updatedBy': 'user:2',
-        'grafana.app/managedBy': 'managedBy' in folder && folder.managedBy ? folder.managedBy : 'user',
+        'grafana.app/managedBy': 'managedBy' in folder ? folder.managedBy : 'user',
         'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
-        ...(folder.kind === 'folder' && folder.parentUID ? { 'grafana.app/folder': folder.parentUID } : {}),
+        'grafana.app/folder': folder.kind === 'folder' ? folder.parentUID : undefined,
       },
       labels: {
-        'grafana.app/deprecatedInternalID': String(id) ?? '123',
+        'grafana.app/deprecatedInternalID': id ?? '123',
       },
     },
     spec: { title: folder.title!, description: '' },
@@ -193,9 +190,9 @@ const updateFolderHandler = () =>
 
         // For now, only support /metadata path operations in the mock API,
         body.forEach((patch) => {
-          const path = patch.path.replace('/metadata/', '') as keyof ObjectMeta;
+          const path = patch.path.replace('/metadata/', '');
           if (patch.op === 'replace' && path === 'ownerReferences') {
-            appPlatformFolder.metadata[path] = patch.value as OwnerReference[];
+            (appPlatformFolder.metadata as Record<string, unknown>)[path] = patch.value;
           }
         });
 
