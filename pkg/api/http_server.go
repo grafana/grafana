@@ -518,6 +518,18 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// Recover from panics in quic-go (e.g., "close of closed channel" during shutdown)
+			defer func() {
+				if r := recover(); r != nil {
+					select {
+					case <-ctx.Done():
+						// Expected during shutdown, log at debug level
+						hs.log.Debug("HTTP/3 server recovered from panic during shutdown", "panic", r)
+					default:
+						hs.log.Error("HTTP/3 server panic", "panic", r)
+					}
+				}
+			}()
 			hs.log.Info("HTTP/3 Server Listen", "address", hs.http3Srv.Addr)
 			if err := hs.http3Srv.ListenAndServeTLS(hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
 				// http3.Server doesn't have ErrServerClosed, check if context is done

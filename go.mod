@@ -670,7 +670,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require github.com/quic-go/quic-go v0.48.0
+require github.com/quic-go/quic-go v0.49.0
 
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
