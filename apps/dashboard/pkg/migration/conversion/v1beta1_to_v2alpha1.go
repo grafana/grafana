@@ -1683,11 +1683,17 @@ func transformAdHocFilters(filters []interface{}) []dashv2alpha1.DashboardAdHocF
 		if filterMap, ok := filter.(map[string]interface{}); ok {
 			// Only include filters that don't have an origin or have origin "dashboard"
 			// This matches the frontend validateFiltersOrigin logic
-			if origin, exists := filterMap["origin"]; !exists || origin == "dashboard" {
+			originValue := schemaversion.GetStringValue(filterMap, "origin")
+			if originValue == "" || originValue == "dashboard" {
 				adhocFilter := dashv2alpha1.DashboardAdHocFilterWithLabels{
 					Key:      schemaversion.GetStringValue(filterMap, "key"),
 					Operator: schemaversion.GetStringValue(filterMap, "operator", "="),
 					Value:    schemaversion.GetStringValue(filterMap, "value"),
+				}
+
+				// Preserve the origin field when it's explicitly set to "dashboard"
+				if originValue == "dashboard" {
+					adhocFilter.Origin = &originValue
 				}
 
 				// Handle optional fields
@@ -1823,6 +1829,12 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 
 	// Always set options (matching frontend behavior)
 	groupByVar.Spec.Options = buildVariableOptions(varMap["options"])
+
+	// Handle defaultValue if present
+	if defaultValue, ok := varMap["defaultValue"].(map[string]interface{}); ok {
+		dv := buildVariableCurrent(defaultValue)
+		groupByVar.Spec.DefaultValue = &dv
+	}
 
 	return dashv2alpha1.DashboardVariableKind{
 		GroupByVariableKind: groupByVar,

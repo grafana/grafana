@@ -319,6 +319,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       },
       variable.group
     );
+
+    // Separate filters by origin - filters with origin go to originFilters, others go to filters
+    const originFilters: AdHocFiltersVariable['state']['filters'] = [];
+    const filters: AdHocFiltersVariable['state']['filters'] = [];
+    variable.spec.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
     const adhocVariableState: AdHocFiltersVariable['state'] = {
       ...commonProperties,
       type: 'adhoc',
@@ -327,7 +333,8 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       datasource: ds,
       applyMode: 'auto',
-      filters: variable.spec.filters ?? [],
+      filters,
+      originFilters,
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
@@ -476,6 +483,9 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       // @ts-expect-error
       defaultOptions: variable.options,
+      defaultValue: variable.spec.defaultValue
+        ? { value: variable.spec.defaultValue.value, text: variable.spec.defaultValue.text }
+        : undefined,
     });
   } else if (variable.kind === defaultSwitchVariableKind().kind) {
     return new SwitchVariable({

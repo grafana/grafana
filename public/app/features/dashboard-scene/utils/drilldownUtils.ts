@@ -29,7 +29,8 @@ export async function getDrilldownApplicability(
   }
 
   const datasource = getDatasourceFromQueryRunner(queryRunner);
-  const queries = queryRunner.state.data?.request?.targets;
+  // Use executed queries if available, otherwise fall back to configured queries
+  const queries = queryRunner.state.data?.request?.targets ?? queryRunner.state.queries;
 
   const ds = await getDataSourceSrv().get(datasource?.uid);
 

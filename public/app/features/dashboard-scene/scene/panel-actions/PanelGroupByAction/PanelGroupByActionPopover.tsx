@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { GroupByVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
-import { Button, Checkbox, ClickOutsideWrapper, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Stack, useStyles2 } from '@grafana/ui';
 
 interface Props {
   groupByVariable: GroupByVariable;
@@ -67,12 +67,14 @@ export function PanelGroupByActionPopover({
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
         <Stack direction="column">
-          <div className={styles.searchContainer}>
-            <Input
-              prefix={<Icon name="search" />}
+          <div
+            className={styles.searchContainer}
+          >
+            <FilterInput
               placeholder={t('panel-group-by.search-placeholder', 'Search')}
               value={searchValue}
-              onChange={(e) => setSearchValue(e.currentTarget.value)}
+              onChange={setSearchValue}
+              escapeRegex={false}
             />
           </div>
 
