@@ -24,8 +24,8 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			uidScope := datasources.ScopeProvider.GetResourceScopeUID(attr.GetName())
 
-			// Must have query access to see a connection
-			if attr.GetResource() == b.datasourceResourceInfo.GroupResource().Resource {
+			// all datasource subresources (health, resource, query, proxy) require query access
+			if attr.GetSubresource() != "" {
 				scopes := []string{}
 				if attr.GetName() != "" {
 					scopes = []string{uidScope}
