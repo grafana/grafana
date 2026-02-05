@@ -85,6 +85,8 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		}
 	}
 
+	s.log.Info("Search used for List with field selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "selectable_fields", req.Options.Fields)
+
 	return rsp, nil
 }
 
