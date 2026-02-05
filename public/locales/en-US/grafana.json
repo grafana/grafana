@@ -2564,7 +2564,7 @@
       "aria-label-clear": "clear",
       "aria-label-search-routing-trees": "search routing trees",
       "clear": "Clear",
-      "label-search-by-name-or-receiver": "Search by name or receiver",
+      "label-search-by-name-or-receiver": "Search by policy name or contact point",
       "placeholder-search": "Search"
     },
     "routing-tree-header": {
