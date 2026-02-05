@@ -64,11 +64,6 @@ export interface FeatureToggles {
   */
   cloudWatchCrossAccountQuerying?: boolean;
   /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -970,6 +965,11 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
+  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1426,6 +1426,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamBindings?: boolean;
+  /**
+  * Redirects the request to teams related endpoints to the app platform API
+  * @default false
+  */
+  kubernetesTeamsHandlerRedirect?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false
