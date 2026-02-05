@@ -1,6 +1,8 @@
 package teamapi
 
 import (
+	"github.com/grafana/grafana-app-sdk/resource"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -25,6 +27,12 @@ type TeamAPI struct {
 	ds                     dashboards.DashboardService
 	logger                 log.Logger
 	features               featuremgmt.FeatureToggles
+	teamBindingClient      *iamv0alpha1.TeamBindingClient
+}
+
+// ProvideTeamBindingClient provides a TeamBindingClient using the ClientGenerator
+func ProvideTeamBindingClient(clientGenerator resource.ClientGenerator) (*iamv0alpha1.TeamBindingClient, error) {
+	return iamv0alpha1.NewTeamBindingClientFromGenerator(clientGenerator)
 }
 
 func ProvideTeamAPI(
@@ -39,6 +47,7 @@ func ProvideTeamAPI(
 	preferenceService pref.Service,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
+	teamBindingClient *iamv0alpha1.TeamBindingClient,
 ) *TeamAPI {
 	tapi := &TeamAPI{
 		teamService:            teamService,
@@ -51,6 +60,7 @@ func ProvideTeamAPI(
 		ds:                     ds,
 		logger:                 log.New("team-api"),
 		features:               features,
+		teamBindingClient:      teamBindingClient,
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)
