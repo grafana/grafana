@@ -229,12 +229,9 @@ const FlameGraphContainer = ({
     },
     [resetFocus, setSandwichItem]
   );
-  const onTableSortStable = useCallback(
-    (sort: string) => {
-      onTableSortRef.current?.(sort);
-    },
-    []
-  );
+  const onTableSortStable = useCallback((sort: string) => {
+    onTableSortRef.current?.(sort);
+  }, []);
 
   if (!dataContainer) {
     return null;
