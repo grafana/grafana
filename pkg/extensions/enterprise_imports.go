@@ -28,6 +28,7 @@ import (
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	_ "github.com/hashicorp/go-multierror"
+	_ "github.com/hashicorp/go-plugin"
 	_ "github.com/hashicorp/golang-lru/v2"
 	_ "github.com/phpdave11/gofpdi"
 	_ "github.com/puzpuzpuz/xsync/v4"
