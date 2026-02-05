@@ -621,7 +621,6 @@ func TestBuildMigrationRegistry(t *testing.T) {
 		require.Equal(t, "alpha", all[0].ID)
 		require.Equal(t, "beta", all[1].ID)
 	})
-
 }
 
 func TestProvideMigrationRegistry(t *testing.T) {
