@@ -1,4 +1,4 @@
-import { useId, HTMLAttributes, memo } from 'react';
+import { HTMLAttributes, memo, useId, useMemo } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
@@ -52,7 +52,7 @@ export const RadialArcPath = memo(
     const boxY = Math.round(centerY - radius - barWidth);
     const boxSize = Math.ceil((radius + barWidth) * 2);
 
-    const path = drawRadialArcPath(angle, arcLengthDeg, dimensions);
+    const path = useMemo(() => drawRadialArcPath(angle, arcLengthDeg, radius), [angle, arcLengthDeg, radius]);
 
     const startRadians = toRad(angle);
     const endRadians = toRad(angle + arcLengthDeg);
@@ -100,6 +100,7 @@ export const RadialArcPath = memo(
     const pathEl = (
       <path
         d={path}
+        transform={`translate(${centerX}, ${centerY})`}
         strokeWidth={barWidth}
         strokeLinecap={roundedBars ? 'round' : 'butt'}
         fill="none"

@@ -54,9 +54,8 @@ export function ThresholdsBar({
     const colorProps = gradient ? { gradient } : { color: threshold.color };
 
     paths.push(
-      <g data-testid="radial-gauge-thresholds-bar">
+      <g key={i} data-testid="radial-gauge-thresholds-bar">
         <RadialArcPath
-          key={i}
           arcLengthDeg={lengthDeg}
           barEndcaps={shape === 'circle' && roundedBars}
           dimensions={thresholdDimensions}

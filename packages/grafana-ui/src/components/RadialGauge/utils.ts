@@ -211,9 +211,7 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
   };
 }
 
-export function drawRadialArcPath(startAngle: number, endAngle: number, dimensions: RadialGaugeDimensions): string {
-  const { radius, centerX, centerY } = dimensions;
-
+export function drawRadialArcPath(startAngle: number, endAngle: number, radius: number): string {
   // For some reason a 100% full arc cannot be rendered
   if (endAngle >= 360) {
     endAngle = 359.99;
@@ -224,12 +222,12 @@ export function drawRadialArcPath(startAngle: number, endAngle: number, dimensio
 
   const largeArc = endAngle > 180 ? 1 : 0;
 
-  let x1 = centerX + radius * Math.cos(startRadians);
-  let y1 = centerY + radius * Math.sin(startRadians);
-  let x2 = centerX + radius * Math.cos(endRadians);
-  let y2 = centerY + radius * Math.sin(endRadians);
+  let x1 = radius * Math.cos(startRadians);
+  let y1 = radius * Math.sin(startRadians);
+  let x2 = radius * Math.cos(endRadians);
+  let y2 = radius * Math.sin(endRadians);
 
-  return ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 }
 
 export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {

@@ -214,8 +214,8 @@ describe('RadialGauge color utils', () => {
         { color: '#00ff00', percent: 0.5 },
         { color: '#0000ff', percent: 1 },
       ];
-      const css = getGradientCss(gradient, 'circle');
-      expect(css).toBe('conic-gradient(from 0deg, #ff0000 0.00%, #00ff00 50.00%, #0000ff 100.00%)');
+      const css = getGradientCss(gradient, 0, 360);
+      expect(css).toBe('conic-gradient(from 0deg, #ff0000 0.00deg, #00ff00 180.00deg, #0000ff 360.00deg)');
     });
 
     it('should return conic-gradient CSS for arc shape', () => {
@@ -224,18 +224,10 @@ describe('RadialGauge color utils', () => {
         { color: '#00ff00', percent: 0.5 },
         { color: '#0000ff', percent: 1 },
       ];
-      const css = getGradientCss(gradient, 'gauge');
-      expect(css).toBe('conic-gradient(from 250deg, #ff0000 0deg, #00ff00 110deg, #0000ff 220deg, #0000 0 220deg)');
-    });
-
-    it('should should account for rounded bars when an offset is provided', () => {
-      const gradient = [
-        { color: '#ff0000', percent: 0 },
-        { color: '#00ff00', percent: 0.5 },
-        { color: '#0000ff', percent: 1 },
-      ];
-      const css = getGradientCss(gradient, 'gauge', 5);
-      expect(css).toBe('conic-gradient(from 245deg, #ff0000 0deg, #00ff00 115deg, #0000ff 230deg, #0000 0 230deg)');
+      const css = getGradientCss(gradient, 250, 110);
+      expect(css).toBe(
+        'conic-gradient(from 250deg, #ff0000 0.00deg, #00ff00 110.00deg, #0000ff 220.00deg, #0000 0 220.00deg)'
+      );
     });
   });
 
