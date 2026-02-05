@@ -56,7 +56,7 @@ export const LogsTable = ({
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
-  const styles = useStyles2(getStyles, fieldSelectorWidth, height, width);
+  const styles = useStyles2(getStyles, height, width);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -162,7 +162,7 @@ export const LogsTable = ({
         <>
           <LogsTableFields
             tableWidth={width}
-            sidebarWidth={options.fieldSelectorWidth}
+            fieldSelectorWidth={options.fieldSelectorWidth}
             displayedFields={getDisplayedFields(options, timeFieldName, bodyFieldName)}
             height={height}
             logsFrame={logsFrame}
@@ -170,7 +170,7 @@ export const LogsTable = ({
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
             onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
-            onSidebarWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
+            onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
           />
 
           <TableNGWrap
@@ -193,7 +193,7 @@ export const LogsTable = ({
             replaceVariables={replaceVariables}
             onChangeTimeRange={onChangeTimeRange}
             logOptionsStorageKey={SETTING_KEY_ROOT}
-            sidebarWidth={fieldSelectorWidth}
+            fieldSelectorWidth={fieldSelectorWidth}
             sortOrder={options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending}
           />
         </>
@@ -202,7 +202,7 @@ export const LogsTable = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {
+const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {
     wrapper: css({
       height,

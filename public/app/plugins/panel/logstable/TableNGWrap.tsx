@@ -26,7 +26,7 @@ interface Props extends PanelProps<Options> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
-  sidebarWidth: number;
+  fieldSelectorWidth: number;
   sortOrder: LogsSortOrder;
 }
 
@@ -38,7 +38,7 @@ export function TableNGWrap({
   options,
   onOptionsChange,
   height,
-  width,
+  width: tableWidth,
   transparent,
   fieldConfig,
   renderCounter,
@@ -47,7 +47,7 @@ export function TableNGWrap({
   onFieldConfigChange,
   replaceVariables,
   onChangeTimeRange,
-  sidebarWidth,
+  fieldSelectorWidth,
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
@@ -61,8 +61,7 @@ export function TableNGWrap({
 
   const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
   const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
-  const tableWidth = width;
-  const styles = useStyles2(getStyles, sidebarWidth, height, tableWidth, controlsWidth);
+  const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth);
 
   // Callbacks
   const onTableOptionsChange = useCallback(
@@ -108,7 +107,7 @@ export function TableNGWrap({
       <TablePanel
         initialRowIndex={initialRowIndex}
         data={data}
-        width={tableWidth - sidebarWidth}
+        width={tableWidth - fieldSelectorWidth}
         height={height}
         id={id}
         timeRange={timeRange}
@@ -130,7 +129,7 @@ export function TableNGWrap({
 
 const getStyles = (
   theme: GrafanaTheme2,
-  sidebarWidth: number,
+  fieldSelectorWidth: number,
   height: number,
   tableWidth: number,
   controlsWidth: number
@@ -148,7 +147,7 @@ const getStyles = (
     }),
     tableWrapper: css({
       position: 'relative',
-      paddingLeft: sidebarWidth,
+      paddingLeft: fieldSelectorWidth,
       paddingRight: controlsWidth,
       height,
       width: tableWidth,

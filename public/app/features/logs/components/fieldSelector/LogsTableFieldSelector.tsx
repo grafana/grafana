@@ -21,8 +21,8 @@ interface LogsTableFieldSelectorProps {
   clear(): void;
   dataFrames: DataFrame[];
   reorder(columns: string[]): void;
-  setSidebarWidth(width: number): void;
-  sidebarWidth: number;
+  setWidth(width: number): void;
+  width: number;
   toggle(key: string): void;
   getSuggestedFields?: (dataFrame: DataFrame, columns: string[], defaultColumns: string[]) => FieldWithStats[];
 }
@@ -32,17 +32,17 @@ export const LogsTableFieldSelector = ({
   clear: clearProp,
   dataFrames,
   reorder,
-  setSidebarWidth,
-  sidebarWidth,
+  setWidth,
+  width,
   toggle,
   getSuggestedFields = getSuggestedFieldsFromTable,
 }: LogsTableFieldSelectorProps) => {
   const setSidebarWidthWrapper = useCallback(
     (width: number) => {
-      setSidebarWidth(width);
+      setWidth(width);
       store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, width);
     },
-    [setSidebarWidth]
+    [setWidth]
   );
 
   const collapse = useCallback(() => {
@@ -99,7 +99,7 @@ export const LogsTableFieldSelector = ({
   }, [dataFrames, defaultColumns, displayedColumns, getSuggestedFields]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
-  return sidebarWidth > FIELD_SELECTOR_MIN_WIDTH * 2 ? (
+  return width > FIELD_SELECTOR_MIN_WIDTH * 2 ? (
     <FieldSelector
       activeFields={displayedColumns}
       clear={clear}
