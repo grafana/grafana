@@ -22,13 +22,13 @@ func (s *Server) mutateTeamBindings(ctx context.Context, store *storeInfo, opera
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateTeamBinding:
-			tuple, err := s.getTeamBindingTuple(ctx, op.CreateTeamBinding.GetSubjectName(), op.CreateTeamBinding.GetTeamName(), op.CreateTeamBinding.GetPermission())
+			tuple, err := GetTeamBindingTuple(op.CreateTeamBinding.GetSubjectName(), op.CreateTeamBinding.GetTeamName(), op.CreateTeamBinding.GetPermission())
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuple)
 		case *authzextv1.MutateOperation_DeleteTeamBinding:
-			tuple, err := s.getTeamBindingTuple(ctx, op.DeleteTeamBinding.GetSubjectName(), op.DeleteTeamBinding.GetTeamName(), op.DeleteTeamBinding.GetPermission())
+			tuple, err := GetTeamBindingTuple(op.DeleteTeamBinding.GetSubjectName(), op.DeleteTeamBinding.GetTeamName(), op.DeleteTeamBinding.GetPermission())
 			if err != nil {
 				return err
 			}
@@ -52,7 +52,9 @@ func (s *Server) mutateTeamBindings(ctx context.Context, store *storeInfo, opera
 	return nil
 }
 
-func (s *Server) getTeamBindingTuple(ctx context.Context, subject string, team string, permission string) (*openfgav1.TupleKey, error) {
+// GetTeamBindingTuple maps a team binding subject, team name, and permission to the corresponding
+// Zanzana tuple. This is the canonical mapping used throughout the system.
+func GetTeamBindingTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
 	if subject == "" {
 		return nil, errors.New("subject name cannot be empty")
 	}

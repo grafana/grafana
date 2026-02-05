@@ -11,6 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
+// StoreIdentity contains the basic identifying information for an OpenFGA store.
+// This is used to minimize memory allocation when listing stores.
+type StoreIdentity struct {
+	ID   string
+	Name string
+}
+
 func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo, error) {
 	s.storesMU.Lock()
 	defer s.storesMU.Unlock()
@@ -101,4 +108,35 @@ func (s *Server) loadModel(ctx context.Context, storeID string, modules []transf
 	}
 
 	return writeRes.GetAuthorizationModelId(), nil
+}
+
+// ListAllStores returns all OpenFGA stores with pagination support.
+// Each store name corresponds to a namespace in the system.
+// Returns only ID and Name to minimize memory allocation.
+func (s *Server) ListAllStores(ctx context.Context) ([]StoreIdentity, error) {
+	var stores []StoreIdentity
+	var continuationToken string
+
+	for {
+		res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
+			ContinuationToken: continuationToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list zanzana stores: %w", err)
+		}
+
+		for _, store := range res.GetStores() {
+			stores = append(stores, StoreIdentity{
+				ID:   store.GetId(),
+				Name: store.GetName(),
+			})
+		}
+
+		if res.GetContinuationToken() == "" {
+			break
+		}
+		continuationToken = res.GetContinuationToken()
+	}
+
+	return stores, nil
 }

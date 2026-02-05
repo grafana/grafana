@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,8 +52,9 @@ func NewModule(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
+	restConfigProvider apiserver.RestConfigProvider,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, restConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +78,7 @@ func newModuleServer(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
+	restConfigProvider apiserver.RestConfigProvider,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -85,27 +89,28 @@ func newModuleServer(opts Options,
 	}
 
 	s := &ModuleServer{
-		opts:             opts,
-		apiOpts:          apiOpts,
-		context:          rootCtx,
-		shutdownFn:       shutdownFn,
-		shutdownFinished: make(chan struct{}),
-		log:              log.New("base-server"),
-		features:         features,
-		cfg:              cfg,
-		pidFile:          opts.PidFile,
-		version:          opts.Version,
-		commit:           opts.Commit,
-		buildBranch:      opts.BuildBranch,
-		storageMetrics:   storageMetrics,
-		indexMetrics:     indexMetrics,
-		promGatherer:     promGatherer,
-		registerer:       reg,
-		license:          license,
-		moduleRegisterer: moduleRegisterer,
-		storageBackend:   storageBackend,
-		hooksService:     hooksService,
-		searchClient:     searchClient,
+		opts:               opts,
+		apiOpts:            apiOpts,
+		context:            rootCtx,
+		shutdownFn:         shutdownFn,
+		shutdownFinished:   make(chan struct{}),
+		log:                log.New("base-server"),
+		features:           features,
+		cfg:                cfg,
+		pidFile:            opts.PidFile,
+		version:            opts.Version,
+		commit:             opts.Commit,
+		buildBranch:        opts.BuildBranch,
+		storageMetrics:     storageMetrics,
+		indexMetrics:       indexMetrics,
+		promGatherer:       promGatherer,
+		registerer:         reg,
+		license:            license,
+		moduleRegisterer:   moduleRegisterer,
+		storageBackend:     storageBackend,
+		hooksService:       hooksService,
+		searchClient:       searchClient,
+		restConfigProvider: restConfigProvider,
 	}
 
 	return s, nil
@@ -147,8 +152,9 @@ type ModuleServer struct {
 	searchServerRingClientPool *ringclient.Pool
 
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
-	moduleRegisterer ModuleRegisterer
-	hooksService     *hooks.HooksService
+	moduleRegisterer   ModuleRegisterer
+	hooksService       *hooks.HooksService
+	restConfigProvider apiserver.RestConfigProvider
 }
 
 // init initializes the server and its services.
@@ -228,7 +234,8 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
+		clientFactory := resources.NewClientFactory(s.restConfigProvider)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, clientFactory)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {

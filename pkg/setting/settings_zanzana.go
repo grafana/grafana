@@ -50,6 +50,16 @@ type ZanzanaServerSettings struct {
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
+
+	// Reconciler settings
+	// Enable the Unistore to Zanzana reconciler
+	ReconcilerEnabled bool
+	// Number of worker goroutines for the reconciler
+	ReconcilerWorkers int
+	// Minimum interval between namespace reconciliations
+	ReconcilerInterval time.Duration
+	// Batch size for writing tuples to Zanzana (default: 100)
+	ReconcilerWriteBatchSize int
 }
 
 type OpenFgaServerSettings struct {
@@ -227,6 +237,12 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
+
+	// Reconciler settings
+	zs.ReconcilerEnabled = serverSec.Key("reconciler_enabled").MustBool(false)
+	zs.ReconcilerWorkers = serverSec.Key("reconciler_workers").MustInt(4)
+	zs.ReconcilerInterval = serverSec.Key("reconciler_interval").MustDuration(1 * time.Hour)
+	zs.ReconcilerWriteBatchSize = serverSec.Key("reconciler_write_batch_size").MustInt(100)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))

@@ -81,6 +81,18 @@ func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
 	return err == nil, nil
 }
 
+// GetOpenFGA returns the underlying OpenFGA server for advanced operations.
+// This is used by the reconciler to read tuples directly.
+func (s *Server) GetOpenFGA() OpenFGAServer {
+	return s.openfga
+}
+
+// GetStoreInfo returns store information for a given namespace.
+// This is used by the reconciler to access store IDs for direct operations.
+func (s *Server) GetStoreInfo(ctx context.Context, namespace string) (*storeInfo, error) {
+	return s.getStoreInfo(ctx, namespace)
+}
+
 func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
 	contextuals := make([]*openfgav1.TupleKey, 0)
 
