@@ -67,8 +67,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
-  // Wait for health if: ready but neither healthy nor unhealthy (still reconciling)
-  const isWaitingForHealth = isRepositoryReady && !repositoryStatusError && !isHealthy && !isUnhealthy;
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -115,9 +113,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           external: true,
         },
       });
-    } else if (isWaitingForHealth) {
-      // Show running status while checking repository health
-      setStepStatusInfo({ status: 'running' });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }
@@ -126,7 +121,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setStepStatusInfo,
     repositoryStatusError,
     retryRepositoryStatus,
-    isWaitingForHealth,
     isQuotaExceeded,
     resourceCount,
     isUnhealthy,
@@ -141,16 +135,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
       <Box padding={4}>
         <LoadingPlaceholder
           text={t('provisioning.bootstrap-step.text-loading-resource-information', 'Loading resource information...')}
-        />
-      </Box>
-    );
-  }
-
-  if (isWaitingForHealth) {
-    return (
-      <Box padding={4}>
-        <LoadingPlaceholder
-          text={t('provisioning.bootstrap-step.text-waiting-for-repository-health', 'Checking repository health...')}
         />
       </Box>
     );

@@ -12138,7 +12138,6 @@
       "placeholder-my-repository-connection": "My repository connection",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
-      "text-waiting-for-repository-health": "Checking repository health...",
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
     },
