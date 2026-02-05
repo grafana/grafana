@@ -54,19 +54,20 @@ export function ThresholdsBar({
     const colorProps = gradient ? { gradient } : { color: threshold.color };
 
     paths.push(
-      <RadialArcPath
-        key={i}
-        arcLengthDeg={lengthDeg}
-        barEndcaps={shape === 'circle' && roundedBars}
-        dimensions={thresholdDimensions}
-        fieldDisplay={fieldDisplay}
-        glowFilter={glowFilter}
-        roundedBars={roundedBars}
-        shape={shape}
-        startAngle={currentStart}
-        data-testid="radial-gauge-thresholds-bar"
-        {...colorProps}
-      />
+      <g data-testid="radial-gauge-thresholds-bar">
+        <RadialArcPath
+          key={i}
+          arcLengthDeg={lengthDeg}
+          barEndcaps={shape === 'circle' && roundedBars}
+          dimensions={thresholdDimensions}
+          fieldDisplay={fieldDisplay}
+          glowFilter={glowFilter}
+          roundedBars={roundedBars}
+          shape={shape}
+          startAngle={currentStart}
+          {...colorProps}
+        />
+      </g>
     );
 
     currentStart += lengthDeg;

@@ -12,8 +12,8 @@ import { FieldColorModeId } from '@grafana/schema';
 
 import { getFormattedThresholds } from '../Gauge/utils';
 
-import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
-import { GradientStop, RadialShape } from './types';
+import { DEFAULT_DECIMALS } from './constants';
+import { GradientStop } from './types';
 import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
 
 export function buildGradientColors(
@@ -167,16 +167,18 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
   return [startColor, endColor];
 }
 
-export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape, arcAngleOffset = 0): string {
-  if (shape === 'circle') {
-    return `conic-gradient(from 0deg, ${gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`).join(', ')})`;
+export function getGradientCss(gradientStops: GradientStop[], startAngle: number, endAngle: number): string {
+  const range = (endAngle + 360 - startAngle) % 360 || 360;
+
+  const gradientSections = [
+    `from ${startAngle}deg`,
+    gradientStops.map((stop) => `${stop.color} ${(stop.percent * range).toFixed(2)}deg`).join(', '),
+  ];
+  if (range !== 360) {
+    gradientSections.push(`#0000 0 ${range.toFixed(2)}deg`);
   }
 
-  const start = ARC_START - arcAngleOffset;
-  const end = ARC_END + arcAngleOffset;
-  const range = (end + 360 - start) % 360;
-
-  return `conic-gradient(from ${start}deg, ${gradientStops.map((stop) => `${stop.color} ${stop.percent * range}deg`).join(', ')}, #0000 0 ${range}deg)`;
+  return `conic-gradient(${gradientSections.join(', ')})`;
 }
 
 // the theme does not make the full palette available to us, and we
