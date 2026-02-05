@@ -738,7 +738,7 @@ func TestCheckQuotas(t *testing.T) {
 					}},
 				},
 				OverridesService: overridesService,
-				EnforceQuotas:    true,
+				QuotasConfig:     QuotasConfig{EnforceQuotas: true},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
