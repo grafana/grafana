@@ -16,7 +16,6 @@ import { useSelector } from 'app/types/store';
 
 import { FolderParent } from './FolderParent';
 import { FolderRepo } from './FolderRepo';
-import { TEAM_FOLDERS_UID } from './useTeamOwnedFolder';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
@@ -152,7 +151,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
   const childrenCollections = useSelector(childrenByParentUIDSelector);
-  let children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
+  const children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
   let siblings: DashboardViewItem[] = [];
   // only look for siblings if we're not at the root
   if (item.uid) {
@@ -204,29 +203,6 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   // when just looking at a folders tree should not have parent.
   const isSearchItem = level === 0 && item.parentUID !== undefined;
   const teamOwner = teamFolderOwnersByUid?.[item.uid];
-
-  // Fix up aria and sibling info for the virtual "Team folders" group, as it's not part of browse-dashboards redux state.
-  const teamFoldersParentIndex = items.findIndex((it) => it.item.kind === 'folder' && it.item.uid === TEAM_FOLDERS_UID);
-  if (teamFoldersParentIndex >= 0) {
-    const parentLevel = items[teamFoldersParentIndex].level;
-    const teamFoldersChildren: DashboardViewItem[] = [];
-    for (let i = teamFoldersParentIndex + 1; i < items.length; i++) {
-      const candidate = items[i];
-      if (candidate.level <= parentLevel) {
-        break;
-      }
-      if (candidate.level === parentLevel + 1 && candidate.item.kind === 'folder') {
-        teamFoldersChildren.push(candidate.item);
-      }
-    }
-
-    if (item.kind === 'folder' && item.uid === TEAM_FOLDERS_UID) {
-      children = teamFoldersChildren;
-    }
-    if (parentUID === TEAM_FOLDERS_UID) {
-      siblings = teamFoldersChildren;
-    }
-  }
 
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
