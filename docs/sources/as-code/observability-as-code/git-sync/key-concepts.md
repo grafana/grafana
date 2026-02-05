@@ -83,13 +83,15 @@ Each repository resource creates bidirectional synchronization between a Grafana
 
 ### Git Sync connection resource
 
-If you're setting up Git Sync using a GitHub App, a connection represents the installation of the app so you can connect a group of repositories to your Grafana instance. You don't need to use a Personal Access Token, instead the connection will handle syncing with the repositories.
+A connection is the authentication setup between Grafana and an external Git provider, required when you're not using a Personal Access Token or a static token to authenticate. Use it to authorize access to your external repositories, and to generate or refresh the credentials for Git Sync. A single connection can be reused across multiple repositories.
+
+For example, if you're using GitHub App to authenticate, the connection represents the app installation. Grafana uses this connection to authenticate with GitHub, create access tokens, and authorize repository access on your behalf.
 
 The connection resource includes:
 
-- The GitHub App: The application registered with GitHub that enables authentication and authorization.
-- The GitHub App installation: An instance of the app you've installed.
-- The GitHub repositories the installation can access.
+- The external provider configuration: The authentication mechanism Grafana uses to communicate with the Git provider (for example, a GitHub App).
+- The provider authorization or installation: The authorized entity that allows Grafana to request tokens from the provider.
+- Repository access scope: The set of repositories that the connection (and therefore, Grafana) is authorized to access in the Git provider.
 
 ## How does Git Sync behave?
 

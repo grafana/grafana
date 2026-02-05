@@ -142,6 +142,7 @@ To set up Git Sync from the Grafana UI, follow these steps:
 1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. If you already have an active Git Sync connection, go to the **Getting Started** tab.
 1. Select **Configure with GitHub**.
 1. [Choose the connection type](#choose-the-connection-type). There's two methods to connect Git Sync: with a Personal Access Token or via GitHub App
+1. [Configure the provisioning repository](#configure-repository)
 1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
 1. [Synchronize with external storage](#synchronize-with-external-storage)
 1. [Choose additional settings](#choose-additional-settings)
@@ -162,10 +163,8 @@ If you want to configure your connection with a Personal Access Token, select th
 
 1. Paste your GitHub personal access token into **Enter your access token**.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
-1. Enter a branch to use for provisioning. The default value is `main`.
-1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored.
 
-Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
+Select **Configure repository** to set up your provisioning folder.
 
 #### Connect with GitHub App
 
@@ -180,8 +179,6 @@ If you already have an existing GitHub App connected:
 1. Select **Choose an existing app**.
 1. Click on the existing connection you want to use, and click on **Configure repository** to proceed.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
-1. Enter a branch to use for provisioning. The default value is `main`.
-1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored.
 
 If you want to connect using a new GitHub App:
 
@@ -192,6 +189,13 @@ If you want to connect using a new GitHub App:
    - The Private Key
 1. Click on **Configure repository** to proceed.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
+
+Select **Configure repository** to set up your provisioning folder.
+
+### Configure repository
+
+Configure the repository you want to use for provisioning:
+
 1. Enter a branch to use for provisioning. The default value is `main`.
 1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored.
 
