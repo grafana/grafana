@@ -7,9 +7,12 @@ import (
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	grpccodes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -54,8 +57,13 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 		return nil, err
 	}
 
-	if len(r.GetChecks()) == 0 {
+	checks := r.GetChecks()
+	if len(checks) == 0 {
 		return &authzv1.BatchCheckResponse{Results: make(map[string]*authzv1.BatchCheckResult)}, nil
+	}
+
+	if len(checks) > types.MaxBatchCheckItems {
+		return nil, status.Errorf(grpccodes.InvalidArgument, "batch check exceeds maximum of %d items", types.MaxBatchCheckItems)
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())
@@ -71,8 +79,8 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	subject := r.GetSubject()
 
 	// Initialize batch check items
-	items := make(map[string]*batchCheckItem, len(r.GetChecks()))
-	for _, item := range r.GetChecks() {
+	items := make(map[string]*batchCheckItem, len(checks))
+	for _, item := range checks {
 		relation := common.VerbMapping[item.GetVerb()]
 		resource := common.NewResourceInfoFromBatchCheckItem(item)
 		items[item.GetCorrelationId()] = &batchCheckItem{
