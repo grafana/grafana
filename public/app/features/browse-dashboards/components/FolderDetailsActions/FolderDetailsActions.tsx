@@ -32,7 +32,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   return (
     <Stack alignItems="center">
       {isAdmin && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
-        <FolderOwners ownerReferences={folderDTO.ownerReferences || []} />
+        <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
       {config.featureToggles.restoreDashboards && (
         <LinkButton
@@ -57,7 +57,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   );
 };
 
-const FolderOwners = ({ ownerReferences }: { ownerReferences: OwnerReferenceType[] }) => {
+const FolderOwners = ({ ownerReferences }: { ownerReferences?: OwnerReferenceType[] }) => {
   const styles = useStyles2(getStyles);
   const teamOwnerReferences = ownerReferences?.filter((ref) => ref.kind === 'Team');
 
