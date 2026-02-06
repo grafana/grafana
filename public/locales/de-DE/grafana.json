@@ -673,7 +673,6 @@
       "message": {
         "required": "Erforderlich."
       },
-      "or": "oder",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -864,7 +863,9 @@
       "cancel": "Abbrechen",
       "clear-filters": "Filter zurücksetzen",
       "close": "",
+      "create": "",
       "delete": "Löschen",
+      "deleting": "",
       "edit": "Bearbeiten",
       "export": "Exportieren",
       "export-all": "Alles exportieren",
@@ -1667,9 +1668,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1687,6 +1687,9 @@
         "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "Bestehende von der Datenquelle verwaltete Regeln",
@@ -1737,28 +1740,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2104,7 +2098,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Brauchen Sie Hilfe?"
@@ -2255,6 +2253,11 @@
       "aria-label-expand": "Ausklappen",
       "aria-label-more": "Weitere Aktionen für die Richtlinie",
       "aria-label-more-default": "Weitere Aktionen für die Standardrichtlinie",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Alle Warninstanzen werden von der Standardrichtlinie bearbeitet, wenn keine anderen übereinstimmenden Richtlinien gefunden werden.",
         "title": "Standardrichtlinie",
@@ -2264,6 +2267,14 @@
         "confirm": "Ja, Richtlinie löschen",
         "warning-1": "Wenn Sie diese Benachrichtigungsrichtlinie löschen, wird sie dauerhaft entfernt.",
         "warning-2": "Möchten Sie diese Richtlinie wirklich löschen?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Filtern Sie Benachrichtigungsrichtlinien und trennen Sie die Matchers durch Kommata, z. B.:<1>Schweregrad=kritisch, Region=EMEA</1>",
       "generated-policies": "Automatisch generierte Richtlinien",
@@ -2278,6 +2289,7 @@
         },
         "inherited": "Übernommen",
         "mute-time": "Stummgeschaltet wenn",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Legt fest, wie lange gewartet wird, bevor eine Benachrichtigung über neue Warnungen gesendet wird, die zu einer Gruppe von Warnungen hinzugefügt wurden, für die bereits eine ursprüngliche Benachrichtigung gesendet wurde.",
@@ -2299,6 +2311,12 @@
       "new-policy": "Neue Richtlinie hinzufügen",
       "no-matchers": "Keine Matcher",
       "reload-policies": "Richtlinien erneut laden",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2338,27 +2356,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2374,6 +2371,9 @@
       "label-new-child-policy": "Neue untergeordnete Richtlinie",
       "label-new-sibling-above": "Neues gleichrangiges Element oben",
       "label-new-sibling-below": "Neues gleichrangiges Element unten"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Die Abfragevorschau kann nicht angezeigt werden. Einige der in den Abfragen verwendeten Datenquellen sind nicht verfügbar.",
@@ -2559,6 +2559,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Bearbeiten",
@@ -3167,6 +3170,10 @@
       "misconfigured-warning": "Diese Vorlage ist falsch konfiguriert.",
       "misconfigured-warning-details": "Vorlagen müssen sowohl in den Abschnitten <2></2> als auch <5></5> Ihrer Alertmanager-Konfiguration definiert werden."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Bearbeiten Sie {{name}}",
       "title-drawer": "Bearbeiten Sie {{name}}",
@@ -3211,7 +3218,8 @@
       "error-loading": {
         "description": "Zeitintervalle konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
         "title": "Fehler beim Laden der Zeitintervalle"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Zeitintervalle",
@@ -3229,6 +3237,9 @@
     },
     "timestamp": {
       "time-ago": "(vor {{time}})"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3326,12 +3337,6 @@
       "label-edit": "Bearbeiten",
       "label-export": "Exportieren"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, Kontaktpunkt löschen",
       "deleting": "Löschen...",
@@ -3349,15 +3354,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6595,6 +6591,8 @@
       "title-delete-all-transformations": "Alle Transformationen löschen?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Tabellenansicht umschalten",
       "table-view-label-table-view": "Tabellenansicht"
     },
@@ -6641,9 +6639,6 @@
     },
     "query-editor": {
       "query": "Abfrage"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7825,7 +7820,8 @@
       "loading-placeholder": "Wird geladen …"
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Ohne Abfrage fortfahren"
+      "aria-label-go-queryless": "Ohne Abfrage fortfahren",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Ergebnisreihe: {{numItems}}",
@@ -9565,6 +9561,18 @@
       "csv-placeholder": "CSV hier eingeben …",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -12053,19 +12061,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
-      "description-branch-name-in-git-hub": "Branch-Name in GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Branch",
       "label-comment": "Kommentar",
       "label-path": "Pfad",
-      "label-workflow": "Workflow",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12089,11 +12099,7 @@
       "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
     },
     "bitbucket": {
-      "branch-description": "Der für die Bereitstellung verwendete Branch",
-      "branch-label": "Branch",
       "branch-required": "Branch erforderlich",
-      "path-description": "Optionaler Unterverzeichnispfad innerhalb des Repositorys",
-      "path-label": "Pfad",
       "permissions": {
         "pull-requests-label": "Pull Requests",
         "pull-requests-read-write": "Lesen und schreiben",
@@ -12108,15 +12114,13 @@
       "token-label": "App-Passwort",
       "token-required": "Bitbucket-Token erforderlich",
       "token-user-description": "Der Benutzername, der für den Zugriff auf das Repository mit dem App-Passwort verwendet wird",
-      "token-user-label": "Benutzername",
       "token-user-required": "Benutzername erforderlich",
       "url-description": "Die Bitbucket-Repository-URL",
-      "url-label": "Repository-URL",
       "url-pattern": "Muss eine gültige Bitbucket-Repository-URL sein",
       "url-required": "Repository-URL erforderlich"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Fügen Sie einen eindeutigen Namen für diese Repository-Verbindung hinzu",
+      "description-clear-repository-connection": "",
       "empty": "Leer",
       "error-field-required": "Dieses Feld ist erforderlich.",
       "error-quota-exceeded-message": "",
@@ -12128,6 +12132,7 @@
       "placeholder-my-repository-connection": "Meine Repository-Verbindung",
       "retry-action": "",
       "text-loading-resource-information": "Ressourceninformationen werden geladen ...",
+      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} Dashboard",
@@ -12363,46 +12368,31 @@
       "subtitle-provisioning-feature": "Sehen und verwalten Sie Ihre Bereitstellungsverbindungen"
     },
     "git": {
-      "branch-description": "Der für die Bereitstellung verwendete Branch",
-      "branch-label": "Branch",
       "branch-required": "Branch erforderlich",
-      "path-description": "Optionaler Unterverzeichnispfad innerhalb des Repositorys",
-      "path-label": "Pfad",
       "pr-workflow-description": "Ermöglicht Nutzern die Auswahl, ob beim Speichern von Änderungen ein Pull-Request geöffnet werden soll. Wenn das Repository keine direkten Änderungen am Hauptbranch zulässt, könnte dennoch ein Pull-Request erforderlich sein.",
       "pr-workflow-label": "Pull-Request-Option beim Speichern aktivieren",
       "token-description": "Zugriffstoken oder Passwort für das Git-Repository",
       "token-label": "Zugriffstoken",
       "token-required": "Git-Token erforderlich",
       "token-user-description": "Der Benutzername, der für den Zugriff auf das Repository mit dem Zugriffstoken verwendet wird",
-      "token-user-label": "Benutzername",
       "token-user-required": "Benutzername erforderlich",
       "url-description": "Die Git-Repository-URL",
-      "url-label": "Repository-URL",
       "url-pattern": "Muss eine gültige Git-Repository-URL sein",
       "url-required": "Repository-URL erforderlich"
     },
     "github": {
-      "branch-description": "Der für die Bereitstellung verwendete Branch",
-      "branch-label": "Branch",
       "branch-required": "Branch erforderlich",
-      "path-description": "Optionaler Unterverzeichnispfad innerhalb des Repositorys",
-      "path-label": "Pfad",
       "pr-workflow-description": "Ermöglicht Nutzern die Auswahl, ob beim Speichern von Änderungen ein Pull-Request geöffnet werden soll. Wenn das Repository keine direkten Änderungen am Hauptbranch zulässt, könnte dennoch ein Pull-Request erforderlich sein.",
       "pr-workflow-label": "Pull-Request-Option beim Speichern aktivieren",
       "token-description": "Persönliches Zugriffstoken für GitHub mit Repository-Berechtigungen",
       "token-label": "Persönliches Zugriffstoken",
       "token-required": "GitHub-Token erforderlich",
       "url-description": "Die GitHub-Repository-URL",
-      "url-label": "Repository-URL",
       "url-pattern": "Muss eine gültige GitHub-Repository-URL sein",
       "url-required": "Repository-URL erforderlich"
     },
     "gitlab": {
-      "branch-description": "Der für die Bereitstellung verwendete Branch",
-      "branch-label": "Branch",
       "branch-required": "Branch erforderlich",
-      "path-description": "Optionaler Unterverzeichnispfad innerhalb des Repositorys",
-      "path-label": "Pfad",
       "permissions": {
         "api": "API",
         "api-read-write": "Lesen und schreiben",
@@ -12417,7 +12407,6 @@
       "token-label": "Projektzugriffstoken",
       "token-required": "GitLab-Token erforderlich",
       "url-description": "Die GitLab-Repository-URL",
-      "url-label": "Repository-URL",
       "url-pattern": "Muss eine gültige GitLab-Repository-URL sein",
       "url-required": "Repository-URL erforderlich"
     },
@@ -12634,9 +12623,15 @@
       "previous": "Zurück"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Abgeschlossener Schritt",
@@ -12688,7 +12683,7 @@
         "token-text": "Persönliches GitLab-Zugriffstoken"
       },
       "go-to": "Weiter zu",
-      "make-sure": "Achten Sie darauf, dass diese Berechtigungen berücksichtigt werden"
+      "make-sure": ""
     },
     "warning-title-default": "Warnung",
     "wizard": {
@@ -12755,10 +12750,6 @@
       "button-submitting": "Übertragen …",
       "error-instance-repository-exists": "Das Instanz-Repository existiert bereits",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12978,7 +12969,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",

@@ -1,14 +1,14 @@
-import { omit } from 'lodash';
-import { useId, memo, HTMLAttributes, SVGProps } from 'react';
+import { HTMLAttributes, memo, useId, useMemo } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
 import { RadialArcPathEndpointMarks } from './RadialArcPathEndpointMarks';
 import { getBarEndcapColors, getGradientCss } from './colors';
+import { ARC_END, ARC_START } from './constants';
 import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
-import { drawRadialArcPath, toRad } from './utils';
+import { drawRadialArcPath, toRad, IS_SAFARI } from './utils';
 
-export interface RadialArcPathPropsBase extends SVGProps<SVGGElement> {
+export interface RadialArcPathPropsBase {
   arcLengthDeg: number;
   barEndcaps?: boolean;
   dimensions: RadialGaugeDimensions;
@@ -41,21 +41,18 @@ export const RadialArcPath = memo(
     endpointMarker,
     barEndcaps,
     startAngle: angle,
-    glowFilter,
+    glowFilter: rawGlowFilter,
     endpointMarkerGlowFilter,
     ...rest
   }: RadialArcPathProps) => {
     const id = useId();
 
-    const isGradient = 'gradient' in rest;
+    const { radius, centerX, centerY, barWidth, vizHeight, vizWidth } = dimensions;
+    const boxX = Math.round(centerX - radius - barWidth);
+    const boxY = Math.round(centerY - radius - barWidth);
+    const boxSize = Math.ceil((radius + barWidth) * 2);
 
-    const { vizWidth, vizHeight, radius, centerX, centerY, barWidth } = dimensions;
-    const pad = Math.ceil(Math.max(2, barWidth / 2)); // pad to cover stroke caps and glow in Safari
-    const boxX = Math.round(centerX - radius - barWidth - pad);
-    const boxY = Math.round(centerY - radius - barWidth - pad);
-    const boxSize = Math.round((radius + barWidth) * 2 + pad * 2);
-
-    const path = drawRadialArcPath(angle, arcLengthDeg, dimensions);
+    const path = useMemo(() => drawRadialArcPath(angle, arcLengthDeg, radius), [angle, arcLengthDeg, radius]);
 
     const startRadians = toRad(angle);
     const endRadians = toRad(angle + arcLengthDeg);
@@ -65,27 +62,64 @@ export const RadialArcPath = memo(
     const xEnd = centerX + radius * Math.cos(endRadians);
     const yEnd = centerY + radius * Math.sin(endRadians);
 
-    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
-    const pathProps: SVGProps<SVGPathElement> = {};
+    const isGradient = 'gradient' in rest;
+    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = {
+      width: boxSize,
+      height: boxSize,
+    };
+
     if (isGradient) {
-      bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
-      pathProps.fill = 'none';
-      pathProps.stroke = 'white';
+      let roundedEndcapAngle = 0;
+      // "over-rotate" the gradient in both directions for rounded bars on gauge, since the rounded endcaps extend beyond the path
+      if (shape === 'gauge' && roundedBars) {
+        roundedEndcapAngle = (barWidth / (Math.PI * boxSize)) * 360;
+      }
+      const vizStartAngle = shape === 'circle' ? 0 : ARC_START;
+      const vizEndAngle = shape === 'circle' ? 360 : ARC_END;
+      bgDivStyle.backgroundImage = getGradientCss(
+        rest.gradient,
+        vizStartAngle - roundedEndcapAngle,
+        vizEndAngle + roundedEndcapAngle
+      );
     } else {
       bgDivStyle.backgroundColor = rest.color;
-      pathProps.fill = 'none';
-      pathProps.stroke = rest.color;
     }
 
     let barEndcapColors: [string, string] | undefined;
     if (barEndcaps) {
-      barEndcapColors = isGradient
-        ? getBarEndcapColors(rest.gradient, fieldDisplay.display.percent)
-        : [rest.color, rest.color];
+      if (isGradient) {
+        barEndcapColors = getBarEndcapColors(rest.gradient, fieldDisplay.display.percent);
+      } else {
+        barEndcapColors = [rest.color, rest.color];
+      }
     }
 
+    // in Safari, applying the glow to the group causes a bug where the gradient appears clipped, so we skip the glow in that browser.
+    const glowFilter = IS_SAFARI && isGradient ? undefined : rawGlowFilter;
+
     const pathEl = (
-      <path d={path} strokeWidth={barWidth} strokeLinecap={roundedBars ? 'round' : 'butt'} {...pathProps} />
+      <path
+        d={path}
+        transform={`translate(${centerX}, ${centerY})`}
+        strokeWidth={barWidth}
+        strokeLinecap={roundedBars ? 'round' : 'butt'}
+        fill="none"
+        stroke={isGradient ? 'white' : rest.color}
+      />
+    );
+
+    const vizContent = (
+      <>
+        {isGradient ? (
+          <foreignObject x={boxX} y={Math.max(boxY, 0)} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
+            <div style={bgDivStyle} />
+          </foreignObject>
+        ) : (
+          pathEl
+        )}
+        {barEndcapColors?.[0] && <circle cx={xStart} cy={yStart} r={barWidth / 2} fill={barEndcapColors[0]} />}
+        {barEndcapColors?.[1] && <circle cx={xEnd} cy={yEnd} r={barWidth / 2} fill={barEndcapColors[1]} />}
+      </>
     );
 
     return (
@@ -93,25 +127,13 @@ export const RadialArcPath = memo(
         {isGradient && (
           <defs>
             <mask id={id} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
-              <rect x={boxX} y={boxY} width={boxSize} height={boxSize} fill="black" />
+              <rect x={0} y={0} width={vizWidth} height={vizHeight} fill="black" />
               {pathEl}
             </mask>
           </defs>
         )}
 
-        <g filter={glowFilter} {...omit(rest, 'color', 'gradient')}>
-          {isGradient ? (
-            <foreignObject x={0} y={0} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
-              <div style={bgDivStyle} />
-            </foreignObject>
-          ) : (
-            pathEl
-          )}
-          {barEndcapColors?.[0] && <circle cx={xStart} cy={yStart} r={barWidth / 2} fill={barEndcapColors[0]} />}
-          {barEndcapColors?.[1] && (
-            <circle cx={xEnd} cy={yEnd} r={barWidth / 2} fill={barEndcapColors[1]} opacity={0.5} />
-          )}
-        </g>
+        {glowFilter ? <g filter={glowFilter}>{vizContent}</g> : vizContent}
 
         {endpointMarker && (
           <RadialArcPathEndpointMarks

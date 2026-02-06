@@ -2231,8 +2231,7 @@ export type SetResourcePermissionsForUserApiArg = {
 };
 export type GetSyncStatusApiResponse = /** status 200 (empty) */ ActiveSyncStatusDto;
 export type GetSyncStatusApiArg = void;
-export type ReloadLdapCfgApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type ReloadLdapCfgApiResponse = unknown;
 export type ReloadLdapCfgApiArg = void;
 export type GetLdapStatusApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;

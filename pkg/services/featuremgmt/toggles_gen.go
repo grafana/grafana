@@ -111,10 +111,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagReportingRetries
-	// Enables rendering retries for the reporting feature
-	FlagReportingRetries = "reportingRetries"
-
 	// FlagReportingCsvEncodingOptions
 	// Enables CSV encoding options in the reporting feature
 	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
@@ -530,6 +526,10 @@ const (
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
+
+	// FlagTeamHttpHeadersFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
