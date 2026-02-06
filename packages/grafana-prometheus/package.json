@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.16",
+    "@floating-ui/react": "0.27.17",
     "@grafana/data": "12.4.0-pre",
     "@grafana/e2e-selectors": "12.4.0-pre",
     "@grafana/i18n": "12.4.0-pre",
