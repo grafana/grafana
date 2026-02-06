@@ -4172,7 +4172,6 @@ __metadata:
     lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
     mock-raf: "npm:1.0.1"
-    moment: "npm:2.30.1"
     monaco-editor: "npm:0.34.1"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.5"
