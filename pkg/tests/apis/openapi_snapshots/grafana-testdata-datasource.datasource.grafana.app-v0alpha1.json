@@ -262,11 +262,69 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
+              },
+              "examples": {
+                "": {
+                  "summary": "Empty testdata",
+                  "value": {
+                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "my-testdata-datasource"
+                    },
+                    "spec": {
+                      "title": "My TestData Datasource"
+                    }
+                  }
+                },
+                "with-url": {
+                  "summary": "Testdata with URL (not used)",
+                  "value": {
+                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "testdata-with-url"
+                    },
+                    "spec": {
+                      "title": "TestData with URL",
+                      "url": "http://example.com"
+                    }
+                  }
+                }
               }
             },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
+              },
+              "examples": {
+                "": {
+                  "summary": "Empty testdata",
+                  "value": {
+                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "my-testdata-datasource"
+                    },
+                    "spec": {
+                      "title": "My TestData Datasource"
+                    }
+                  }
+                },
+                "with-url": {
+                  "summary": "Testdata with URL (not used)",
+                  "value": {
+                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "testdata-with-url"
+                    },
+                    "spec": {
+                      "title": "TestData with URL",
+                      "url": "http://example.com"
+                    }
+                  }
+                }
               }
             }
           },
@@ -953,7 +1011,7 @@
           "DataSource"
         ],
         "description": "Query the TestData datasources",
-        "operationId": "createDataSourceQuery",
+        "operationId": "queryDataSource",
         "requestBody": {
           "content": {
             "application/json": {
@@ -986,7 +1044,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "name of the QueryDataResponse",
+          "description": "DataSource identifier",
           "required": true,
           "schema": {
             "type": "string",
@@ -1006,36 +1064,462 @@
       ]
     },
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource": {
+      "summary": "hello world",
       "get": {
         "tags": [
-          "DataSource"
+          "Route"
         ],
-        "description": "Get resources in the datasource plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
-        "operationId": "getDataSourceResource",
+        "operationId": "get_route",
         "responses": {
-          "200": {
-            "description": "OK",
+          "default": {
             "content": {
-              "*/*": {
+              "text/plain": {
                 "schema": {
                   "type": "string"
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Status",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/boom": {
+      "summary": "force a panic",
+      "get": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "get_route_boom",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "post_route_boom",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/scenarios": {
+      "summary": "hello world",
+      "get": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "get_route_scenarios",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/sim/{key}": {
+      "description": "Get list of simulations",
+      "get": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "get_route_sim_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "simulation key (should include hz)"
+          }
+        ],
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "post_route_sim_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "simulation key (should include hz)"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/sims": {
+      "description": "Get list of simulations",
+      "get": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "get_route_sims",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/stream": {
+      "summary": "Get streaming response",
+      "get": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "get_route_stream",
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "description": "number of points that will be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "the start value",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "flush",
+            "in": "query",
+            "description": "How often the result is flushed (1-100%)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 100
+          },
+          {
+            "name": "speed",
+            "in": "query",
+            "description": "the clock cycle",
+            "schema": {
+              "type": "string"
+            },
+            "example": "100ms"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "the response format",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "influx"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/test": {
+      "summary": "Echo any request",
+      "post": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "post_route_test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/test/json": {
+      "summary": "Echo json request",
+      "post": {
+        "tags": [
+          "Route"
+        ],
+        "operationId": "post_route_test_json",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1106,6 +1590,26 @@
   },
   "components": {
     "schemas": {
+      "DataSourceSpec": {
+        "description": "Test data does not require any explicit configuration",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "description": "display name",
+            "type": "string"
+          },
+          "url": {
+            "description": "not used",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "url": "http://xxxx"
+        }
+      },
       "QueryRequestSchema": {
         "description": "Schema for a set of queries sent to the query method",
         "type": "object",
@@ -1226,12 +1730,7 @@
             }
           },
           "spec": {
-            "description": "DataSource configuration -- these properties are all visible to anyone able to query the data source from their browser",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.UnstructuredSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/DataSourceSpec"
           }
         },
         "x-kubernetes-group-version-kind": [
