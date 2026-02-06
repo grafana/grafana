@@ -2301,6 +2301,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "faroSessionReplay",
+			Description:  "Enables session replay recording with Grafana Faro",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 

@@ -1457,4 +1457,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Enables session replay recording with Grafana Faro
+  * @default false
+  */
+  faroSessionReplay?: boolean;
 }
