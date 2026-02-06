@@ -10533,6 +10533,12 @@
         "filter-level": "Filter logs result by level"
       },
       "unwrap-lines": "Unwrap lines",
+      "unwrapped-columns": {
+        "disable": "Disable columns",
+        "disabled": "Columns are not supported with line wrapping enabled",
+        "disabled-label": "Columns not suported",
+        "enable": "Enable columns"
+      },
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -10559,6 +10565,7 @@
     "name-show-controls": "Show controls",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
+    "name-unwrapped-columns": "Enable columns for displayed fields",
     "name-wrap-lines": "Wrap lines",
     "order-options": {
       "label-newest-first": "Newest first",
