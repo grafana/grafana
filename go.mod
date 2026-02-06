@@ -11,7 +11,7 @@ require (
 	connectrpc.com/connect v1.19.1 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.11.1 // @grafana/grafana-as-code
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
-	filippo.io/age v1.2.1 // @grafana/identity-access-team
+	filippo.io/age v1.3.1 // @grafana/identity-access-team
 	github.com/1NCE-GmbH/grpc-go-pool v0.0.0-20231117122434-2a5bb974daa2 // @grafana/grafana-search-and-storage
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/partner-datasources
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1 // @grafana/identity-access-team
@@ -697,6 +697,8 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
+
+require filippo.io/hpke v0.4.0 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
