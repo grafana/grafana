@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/google/go-github/v82/github"
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 )
 
 func TestGithubClient_GetApp(t *testing.T) {

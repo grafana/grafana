@@ -481,7 +481,7 @@ describe('LogLineDetails', () => {
         },
       });
 
-      beforeAll(() => {
+      beforeEach(() => {
         jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
           get: (uid: string) =>
             Promise.resolve(
@@ -534,6 +534,40 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/Parsed field/)).toBeInTheDocument();
         expect(screen.getByText('Structured metadata')).toBeInTheDocument();
       });
+
+      test('should fallback to a single group of Fields if not supported', async () => {
+        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
+          get: (uid: string) => Promise.resolve(undefined),
+        }));
+
+        await setup(
+          undefined,
+          {
+            entry,
+            dataFrame,
+            entryFieldIndex: 0,
+            rowIndex: 0,
+            labels,
+            rowId: '1',
+          },
+          undefined,
+          undefined,
+          'Fields'
+        );
+
+        // Show labels and links
+        expect(screen.getByText('label1')).toBeInTheDocument();
+        expect(screen.getByText('value1')).toBeInTheDocument();
+        expect(screen.getByText('label2')).toBeInTheDocument();
+        expect(screen.getByText('value2')).toBeInTheDocument();
+        expect(screen.getByText('label3')).toBeInTheDocument();
+        expect(screen.getByText('value3')).toBeInTheDocument();
+        expect(screen.queryByText('Fields')).toBeInTheDocument();
+        expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Structured metadata/)).not.toBeInTheDocument();
+      });
+
       test('Should allow to search within fields', async () => {
         await setup(
           undefined,
