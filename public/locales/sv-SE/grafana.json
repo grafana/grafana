@@ -673,7 +673,6 @@
       "message": {
         "required": "Krävs."
       },
-      "or": "eller",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -864,7 +863,9 @@
       "cancel": "Avbryt",
       "clear-filters": "Rensa filter",
       "close": "",
+      "create": "",
       "delete": "Ta bort",
+      "deleting": "",
       "edit": "Redigera",
       "export": "Exportera",
       "export-all": "Exportera alla",
@@ -1667,9 +1668,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1687,6 +1687,9 @@
         "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "Befintliga regler hanterade av datakälla",
@@ -1737,28 +1740,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2104,7 +2098,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Behöver du hjälp?"
@@ -2255,6 +2253,11 @@
       "aria-label-expand": "Expandera",
       "aria-label-more": "fler åtgärder för policy",
       "aria-label-more-default": "fler åtgärder för standardpolicy",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Alla varningsinstanser kommer att hanteras av standardpolicyn om inga andra matchande policyer hittas.",
         "title": "Standardpolicy",
@@ -2264,6 +2267,14 @@
         "confirm": "Ja, ta bort policy",
         "warning-1": "Om du tar bort denna aviseringspolicy tas den bort permanent.",
         "warning-2": "Är du säker på att du vill ta bort denna policy?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Filtrera aviseringspolicyer med hjälp av en kommaseparerad lista över matchare, till exempel:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Automatiskt genererade policyer",
@@ -2278,6 +2289,7 @@
         },
         "inherited": "Ärvda",
         "mute-time": "Tystad när",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Hur länge du ska vänta innan du skickar en avisering om nya varningar som läggs till i en grupp av varningar för vilka en första avisering redan har skickats.",
@@ -2299,6 +2311,12 @@
       "new-policy": "Lägg till ny policy",
       "no-matchers": "Inga matchare",
       "reload-policies": "Ladda om policyer",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2338,27 +2356,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2374,6 +2371,9 @@
       "label-new-child-policy": "Ny underordnad policy",
       "label-new-sibling-above": "Nytt syskon ovanför",
       "label-new-sibling-below": "Nytt syskon nedanför"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Det går inte att visa förhandsgranskningen av frågan. Vissa av de datakällor som används i frågorna är inte tillgängliga.",
@@ -2559,6 +2559,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Redigera",
@@ -3167,6 +3170,10 @@
       "misconfigured-warning": "Den här mallen är felkonfigurerad.",
       "misconfigured-warning-details": "Mallar måste definieras i både avsnitten <2></2> och <5></5> i Alertmanager-konfigurationen."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Redigera {{name}}",
       "title-drawer": "Redigera {{name}}",
@@ -3211,7 +3218,8 @@
       "error-loading": {
         "description": "Kunde inte ladda tidsintervall. Försök igen senare.",
         "title": "Fel vid laddning av tidsintervall"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Tidsintervall",
@@ -3229,6 +3237,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} sedan)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3326,12 +3337,6 @@
       "label-edit": "Redigera",
       "label-export": "Exportera"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, radera kontaktpunkt",
       "deleting": "Tar bort ...",
@@ -3349,15 +3354,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Radera aviseringspolicy"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6595,6 +6591,8 @@
       "title-delete-all-transformations": "Radera alla transformeringar?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Växla tabellvy",
       "table-view-label-table-view": "Tabellvy"
     },
@@ -6641,9 +6639,6 @@
     },
     "query-editor": {
       "query": "Fråga"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7825,7 +7820,8 @@
       "loading-placeholder": "Laddar …"
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Kör utan frågor"
+      "aria-label-go-queryless": "Kör utan frågor",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Resultatserier: {{numItems}}",
@@ -9565,6 +9561,18 @@
       "csv-placeholder": "Ange CSV här…",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -12053,19 +12061,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt)",
-      "description-branch-name-in-git-hub": "Grennamn i GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Gren",
       "label-comment": "Kommentar",
       "label-path": "Sökväg",
-      "label-workflow": "Arbetsflöde",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12089,11 +12099,7 @@
       "message": "Den här funktionen är för närvarande under aktiv utveckling. För den bästa upplevelsen och de senaste förbättringarna rekommenderar vi att du använder <2> nightly-versionen</2> av Grafana."
     },
     "bitbucket": {
-      "branch-description": "Grenen som ska användas för provisionering",
-      "branch-label": "Gren",
       "branch-required": "Gren krävs",
-      "path-description": "Valfri sökväg till underkatalog på lagringsplatsen",
-      "path-label": "Sökväg",
       "permissions": {
         "pull-requests-label": "Pull-begäranden",
         "pull-requests-read-write": "Läsa och skriva",
@@ -12108,15 +12114,13 @@
       "token-label": "App-lösenord",
       "token-required": "Bitbucket-token krävs",
       "token-user-description": "Det användarnamn som kommer att användas för att komma åt lagringsplatsen med appens lösenord",
-      "token-user-label": "Användarnamn",
       "token-user-required": "Användarnamn krävs",
       "url-description": "Webbadress för Bitbucket-lagringsplatsen",
-      "url-label": "Webbadress för lagringsplats",
       "url-pattern": "Måste vara en giltig webbadress för Bitbucket-lagringsplatsen",
       "url-required": "Webbadress för lagringsplats krävs"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Lägg till ett tydligt namn för den här lagringsplatsanslutningen",
+      "description-clear-repository-connection": "",
       "empty": "Tom",
       "error-field-required": "Detta fält är obligatoriskt.",
       "error-quota-exceeded-message": "",
@@ -12128,6 +12132,7 @@
       "placeholder-my-repository-connection": "Min lagringsplatsanslutning",
       "retry-action": "",
       "text-loading-resource-information": "Läser in resursinformation …",
+      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
@@ -12363,46 +12368,31 @@
       "subtitle-provisioning-feature": "Visa och hantera dina provisioneringsanslutningar"
     },
     "git": {
-      "branch-description": "Grenen som ska användas för provisionering",
-      "branch-label": "Gren",
       "branch-required": "Gren krävs",
-      "path-description": "Valfri sökväg till underkatalog på lagringsplatsen",
-      "path-label": "Sökväg",
       "pr-workflow-description": "Tillåter användare att välja om de vill öppna en pull-begäran när de sparar ändringar. Om lagringsplatsen inte tillåter direkta ändringar i huvudgrenen kan en pull-begäran fortfarande krävas.",
       "pr-workflow-label": "Aktivera alternativ för hämtningsbegäran när du sparar",
       "token-description": "Åtkomsttoken eller lösenord för Git-lagringsplats",
       "token-label": "Åtkomsttoken",
       "token-required": "Git-token krävs",
       "token-user-description": "Det användarnamn som kommer att användas för att komma åt lagringsplatsen med åtkomsttoken",
-      "token-user-label": "Användarnamn",
       "token-user-required": "Användarnamn krävs",
       "url-description": "Webbadress för Git-lagringsplatsen",
-      "url-label": "Webbadress för lagringsplats",
       "url-pattern": "Måste vara en giltig webbadress för Git-lagringsplats",
       "url-required": "Webbadress för lagringsplats krävs"
     },
     "github": {
-      "branch-description": "Grenen som ska användas för provisionering",
-      "branch-label": "Gren",
       "branch-required": "Gren krävs",
-      "path-description": "Valfri sökväg till underkatalog på lagringsplatsen",
-      "path-label": "Sökväg",
       "pr-workflow-description": "Tillåter användare att välja om de vill öppna en pull-begäran när de sparar ändringar. Om lagringsplatsen inte tillåter direkta ändringar i huvudgrenen kan en pull-begäran fortfarande krävas.",
       "pr-workflow-label": "Aktivera alternativ för hämtningsbegäran när du sparar",
       "token-description": "Personlig accesskod för GitHub med behörigheter för lagringsplats",
       "token-label": "Personlig accesskod",
       "token-required": "GitHub-token krävs",
       "url-description": "Webbadress för GitHub-lagringsplatsen",
-      "url-label": "Webbadress för lagringsplats",
       "url-pattern": "Måste vara en giltig webbadress för GitHub-lagringsplats",
       "url-required": "Webbadress för lagringsplats krävs"
     },
     "gitlab": {
-      "branch-description": "Grenen som ska användas för provisionering",
-      "branch-label": "Gren",
       "branch-required": "Gren krävs",
-      "path-description": "Valfri sökväg till underkatalog på lagringsplatsen",
-      "path-label": "Sökväg",
       "permissions": {
         "api": "API",
         "api-read-write": "Läsa och skriva",
@@ -12417,7 +12407,6 @@
       "token-label": "Projektåtkomsttoken",
       "token-required": "GitLab-token krävs",
       "url-description": "Webbadress för GitLab-lagringsplatsen",
-      "url-label": "Webbadress för lagringsplats",
       "url-pattern": "Måste vara en giltig webbadress för GitLab-lagringsplats",
       "url-required": "Webbadress för lagringsplats krävs"
     },
@@ -12634,9 +12623,15 @@
       "previous": "Föregående"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Slutfört steg",
@@ -12688,7 +12683,7 @@
         "token-text": "Personlig åtkomsttoken för GitLab"
       },
       "go-to": "Gå till",
-      "make-sure": "Se till att inkludera dessa behörigheter"
+      "make-sure": ""
     },
     "warning-title-default": "Varning",
     "wizard": {
@@ -12755,10 +12750,6 @@
       "button-submitting": "Skickar …",
       "error-instance-repository-exists": "Instanslagringsplatsen finns redan",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12978,7 +12969,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",

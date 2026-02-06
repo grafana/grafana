@@ -61,7 +61,7 @@ Administrators can also [configure the data source via YAML](ref:provisioning-da
 To configure the Elasticsearch data source, you need:
 
 - **Grafana administrator permissions:** Only users with the organization `administrator` role can add data sources.
-- **A supported Elasticsearch version:** v7.17 or later, v8.x, or v9.x. Elastic Cloud Serverless isn't supported.
+- **A supported Elasticsearch version:** v7.17 or later, v8.x, v9.x or Elastic Cloud Serverless.
 - **Elasticsearch server URL:** The HTTP or HTTPS endpoint for your Elasticsearch instance, including the port (default: `9200`).
 - **Authentication credentials:** Depending on your Elasticsearch security configuration, you need one of the following:
   - Username and password for basic authentication

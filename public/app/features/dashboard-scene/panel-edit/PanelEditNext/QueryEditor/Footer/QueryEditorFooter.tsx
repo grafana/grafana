@@ -7,9 +7,10 @@ import { Button, useStyles2 } from '@grafana/ui';
 
 import { TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { QueryOptionField } from '../types';
 
 interface FooterLabelValue {
-  id: string;
+  id: QueryOptionField;
   label: string;
   value: string;
   isActive?: boolean;
@@ -19,7 +20,7 @@ export function QueryEditorFooter() {
   const styles = useStyles2(getStyles);
 
   const { queryOptions } = useQueryEditorUIContext();
-  const { options, setIsQueryOptionsOpen } = queryOptions;
+  const { options, openSidebar } = queryOptions;
   const { data } = useQueryRunnerContext();
   const { datasource } = useDatasourceContext();
 
@@ -32,31 +33,31 @@ export function QueryEditorFooter() {
 
     return [
       {
-        id: 'maxDataPoints',
+        id: QueryOptionField.maxDataPoints,
         label: t('query-editor.footer.label.max-data-points', 'Max data points'),
         value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
         isActive: options.maxDataPoints != null,
       },
       {
-        id: 'minInterval',
+        id: QueryOptionField.minInterval,
         label: t('query-editor.footer.label.min-interval', 'Min interval'),
         value: options.minInterval ?? minIntervalOnDs,
         isActive: options.minInterval != null,
       },
       {
-        id: 'interval',
+        id: QueryOptionField.interval,
         label: t('query-editor.footer.label.interval', 'Interval'),
         value: realInterval ?? '-',
         isActive: false, // Interval is always computed, never user-set
       },
       {
-        id: 'relativeTime',
+        id: QueryOptionField.relativeTime,
         label: t('query-editor.footer.label.relative-time', 'Relative time'),
         value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.from != null,
       },
       {
-        id: 'timeShift',
+        id: QueryOptionField.timeShift,
         label: t('query-editor.footer.label.time-shift', 'Time shift'),
         value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.shift != null,
@@ -64,8 +65,16 @@ export function QueryEditorFooter() {
     ];
   }, [options, data, datasource]);
 
-  const handleOpenSidebar = () => {
-    setIsQueryOptionsOpen(true);
+  const handleItemClick = (event: React.MouseEvent, fieldId?: QueryOptionField) => {
+    // Stop propagation to prevent ClickOutsideWrapper from immediately closing
+    event.stopPropagation();
+
+    // Don't focus interval since it's read-only
+    if (fieldId && fieldId !== QueryOptionField.interval) {
+      openSidebar(fieldId);
+    } else {
+      openSidebar();
+    }
   };
 
   return (
@@ -77,7 +86,7 @@ export function QueryEditorFooter() {
               fill="text"
               size="sm"
               className={styles.itemButton}
-              onClick={handleOpenSidebar}
+              onClick={(e) => handleItemClick(e, item.id)}
               aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
             >
               {item.isActive && <span className={styles.activeIndicator} />}
@@ -92,7 +101,7 @@ export function QueryEditorFooter() {
         size="sm"
         icon="angle-left"
         iconPlacement="right"
-        onClick={handleOpenSidebar}
+        onClick={(e) => handleItemClick(e)}
         aria-label={t('query-editor.footer.query-options', 'Query Options')}
       >
         <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
@@ -123,7 +132,7 @@ function getStyles(theme: GrafanaTheme2) {
     itemsList: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       listStyle: 'none',
       margin: 0,
       padding: 0,
@@ -149,6 +158,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     value: css({
       color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
     }),
     valueActive: css({
       color: theme.colors.success.text,
