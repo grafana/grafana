@@ -1198,7 +1198,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	})
 }
 
-func TestIntegrationListNotificationSettings(t *testing.T) {
+func TestIntegrationListContactPointRoutings(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
@@ -1236,7 +1236,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
 	require.NoError(t, err)
 
-	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
+	result, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{OrgID: 1})
 	require.NoError(t, err)
 	require.Len(t, result, len(orgRules))
 	for _, rule := range rulesWithNotificationsAndReceiver {
@@ -1252,7 +1252,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:        1,
 			ReceiverName: searchName,
 		})
@@ -1268,7 +1268,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			TimeIntervalName: searchName,
 		})
@@ -1279,7 +1279,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		}
 	})
 	t.Run("should return nothing if filter does not match", func(t *testing.T) {
-		result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		result, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			ReceiverName:     "not-found-receiver",
 			TimeIntervalName: "not-found-time-interval",
@@ -1309,7 +1309,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			ReceiverName:     receiver,
 			TimeIntervalName: timeInterval,

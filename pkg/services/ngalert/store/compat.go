@@ -18,9 +18,9 @@ type compactQuery struct {
 // AlertRuleConvertOptions controls which fields to parse during conversion from alertRule to models.AlertRule.
 // By default all fields are included. Set Exclude* to true to skip parsing expensive fields.
 type AlertRuleConvertOptions struct {
-	ExcludeAlertQueries         bool // Only parse datasource UIDs from queries
-	ExcludeNotificationSettings bool
-	ExcludeMetadata             bool
+	ExcludeAlertQueries        bool // Only parse datasource UIDs from queries
+	ExcludeContactPointRouting bool
+	ExcludeMetadata            bool
 }
 
 func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
@@ -119,7 +119,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		}
 	}
 
-	if !opts.ExcludeNotificationSettings && ar.NotificationSettings != "" {
+	if !opts.ExcludeContactPointRouting && ar.NotificationSettings != "" {
 		ns, err := parseNotificationSettings(ar.NotificationSettings)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to parse notification settings: %w", err)

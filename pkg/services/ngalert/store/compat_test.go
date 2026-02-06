@@ -85,9 +85,9 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		}
 
 		compactResult, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
-			ExcludeAlertQueries:         true,
-			ExcludeNotificationSettings: true,
-			ExcludeMetadata:             true,
+			ExcludeAlertQueries:        true,
+			ExcludeContactPointRouting: true,
+			ExcludeMetadata:            true,
 		})
 		require.NoError(t, err)
 
@@ -166,9 +166,9 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		}
 
 		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
-			ExcludeAlertQueries:         true,
-			ExcludeNotificationSettings: false,
-			ExcludeMetadata:             true,
+			ExcludeAlertQueries:        true,
+			ExcludeContactPointRouting: false,
+			ExcludeMetadata:            true,
 		})
 		require.NoError(t, err)
 
@@ -204,9 +204,9 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		}
 
 		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
-			ExcludeAlertQueries:         true,
-			ExcludeNotificationSettings: true,
-			ExcludeMetadata:             false,
+			ExcludeAlertQueries:        true,
+			ExcludeContactPointRouting: true,
+			ExcludeMetadata:            false,
 		})
 		require.NoError(t, err)
 
