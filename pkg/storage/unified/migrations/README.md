@@ -18,11 +18,11 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              MigrationRegistrar (per team)                   │
-│    Each team implements RegisterMigrations() to register     │
-│    their MigrationDefinitions independently.                 │
+│           Migration provider functions (per team)            │
+│    Each team defines a function returning a                  │
+│    MigrationDefinition for their resources.                  │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ RegisterMigrations(registry)
+                           │ MigrationDefinition
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    MigrationRegistry                        │
@@ -44,10 +44,9 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 ### Components
 
-- **`registry.go`**: `MigrationRegistrar` interface, `MigrationDefinition`, and thread-safe `MigrationRegistry`
-- **`registry_builder.go`**: Wire provider `ProvideMigrationRegistry` and `BuildMigrationRegistry` convenience
-- **`pkg/registry/apis/dashboard/migration_registrar.go`**: `DashboardFolderRegistrar` — registers folders and dashboards (owned by the dashboard team)
-- **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistRegistrar` — registers playlists (owned by the playlist team)
+- **`registry.go`**: `MigrationDefinition` and thread-safe `MigrationRegistry`
+- **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — returns the folders and dashboards definition (owned by the dashboard team)
+- **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — returns the playlists definition (owned by the playlist team)
 - **`resource_migration.go`**: `MigrationRunner` (logic) and `ResourceMigration` (SQL migration wrapper)
 - **`resources.go`**: Migration registration and auto-migrate logic
 - **`validator.go`**: `CountValidator` and `FolderTreeValidator` implementations
@@ -117,8 +116,8 @@ SELECT * FROM unifiedstorage_migration_log WHERE migration_id LIKE '%folders-das
 
 ### Adding a new resource type
 
-Follow these steps to add a new resource migration. Each team owns their registrar
-and migrator code, keeping migration logic decentralized.
+Follow these steps to add a new resource migration. Each team owns their
+migration definition function, keeping migration logic decentralized.
 
 #### 1. Implement the migrator function
 
@@ -162,51 +161,44 @@ type MyResourceMigrator interface {
 }
 ```
 
-#### 3. Create a registrar
+#### 3. Create a migration definition function
 
-Create a new file (e.g. `registrar_myresource.go`) in the `migrations` package:
+Create a new file (e.g. `migration_registrar.go`) in your team's package:
 
 ```go
-package migrations
+package myresource
 
 import (
     myresource "github.com/grafana/grafana/apps/myresource/pkg/apis/myresource/v1beta1"
+    "github.com/grafana/grafana/pkg/storage/unified/migrations"
     "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type MyResourceRegistrar struct {
-    migrator MyResourceMigrator
-}
-
-func NewMyResourceRegistrar(migrator MyResourceMigrator) *MyResourceRegistrar {
-    return &MyResourceRegistrar{migrator: migrator}
-}
-
-func (r *MyResourceRegistrar) RegisterMigrations(registry *MigrationRegistry) {
+func MyResourceMigration(migrator MyResourceMigrator) migrations.MigrationDefinition {
     gr := schema.GroupResource{
         Group:    myresource.GROUP,
         Resource: myresource.RESOURCE,
     }
 
-    registry.Register(MigrationDefinition{
+    return migrations.MigrationDefinition{
         ID:          "myresources",
         MigrationID: "myresources migration",
-        Resources: []ResourceInfo{
+        Resources: []migrations.ResourceInfo{
             {GroupResource: gr, LockTable: "my_resource_table"},
         },
-        Migrators: map[schema.GroupResource]MigratorFunc{
-            gr: r.migrator.MigrateMyResources,
+        Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+            gr: migrator.MigrateMyResources,
         },
-        Validators: []ValidatorFactory{
-            CountValidation(gr, "my_resource_table", "org_id = ?"),
+        Validators: []migrations.ValidatorFactory{
+            migrations.CountValidation(gr, "my_resource_table", "org_id = ?"),
         },
-    })
+    }
 }
 ```
 
-#### 4. Wire the registrar
+#### 4. Wire the migration
 
-Add your registrar to the Wire dependency chain:
+Add your migration to the Wire dependency chain:
 
 **a.** Add a provider for your migrator interface (in your legacy package or provider file):
 
@@ -216,26 +208,29 @@ func ProvideMyResourceMigrator(...) MyResourceMigrator {
 }
 ```
 
-**b.** Add the provider and registrar constructor to `wire.go`:
+**b.** Add the provider to `wire.go`:
 
 ```go
 myresource.ProvideMyResourceMigrator,
-unifiedmigrations.NewMyResourceRegistrar,
 ```
 
-**c.** Add the registrar to `ProvideRegistrars` in `registry_builder.go`:
+**c.** Register the definition in `provideMigrationRegistry` in `pkg/server/wire.go`:
 
 ```go
-func ProvideRegistrars(
-    dashFolders *DashboardFolderRegistrar,
-    playlists   *PlaylistRegistrar,
-    myResource  *MyResourceRegistrar,   // <-- add here
-) []MigrationRegistrar {
-    return []MigrationRegistrar{dashFolders, playlists, myResource}
+func provideMigrationRegistry(
+    accessor legacy.MigrationDashboardAccessor,
+    playlistMigrator legacy.PlaylistMigrator,
+    myResourceMigrator myresource.MyResourceMigrator, // <-- add parameter
+) *unifiedmigrations.MigrationRegistry {
+    r := unifiedmigrations.NewMigrationRegistry()
+    r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
+    r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+    r.Register(myresource.MyResourceMigration(myResourceMigrator)) // <-- register
+    return r
 }
 ```
 
-**d.** Regenerate wire: run `make wire` from the repository root.
+**d.** Regenerate wire: run `make gen-go` from the repository root.
 
 #### 5. Configure the resource
 
@@ -251,9 +246,9 @@ dualWriterMode = 0
 
 - [ ] Migrator function implemented and tested
 - [ ] Migrator interface defined
-- [ ] Registrar created in `migrations/` package
-- [ ] Wire provider added and `ProvideRegistrars` updated
-- [ ] `wire_gen.go` regenerated (`make wire`)
+- [ ] Migration definition function created in your team's package
+- [ ] `provideMigrationRegistry` updated in `pkg/server/wire.go`
+- [ ] `wire_gen.go` regenerated (`make gen-go`)
 - [ ] Validators added (at minimum, `CountValidation`)
 - [ ] Configuration added to `conf/defaults.ini`
 - [ ] Integration tested with `grafana-cli datamigrations to-unified-storage`
@@ -279,5 +274,5 @@ type Validator interface {
 }
 ```
 
-Add your validator factory to the `Validators` slice in your registrar's
+Add your validator factory to the `Validators` slice in your migration definition's
 `MigrationDefinition`.
