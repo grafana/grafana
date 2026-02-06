@@ -23,11 +23,11 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
@@ -515,6 +515,32 @@ export const LogListContextProvider = ({
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
+  const onClickShowFieldWrapper = useCallback(
+    (key: string) => {
+      if (!onClickShowField) {
+        return;
+      }
+      onClickShowField(key);
+      reportInteraction('logs_log_list_context_show_field', {
+        key,
+      });
+    },
+    [onClickShowField]
+  );
+
+  const onClickHideFieldWrapper = useCallback(
+    (key: string) => {
+      if (!onClickHideField) {
+        return;
+      }
+      onClickHideField(key);
+      reportInteraction('logs_log_list_context_hide_field', {
+        key,
+      });
+    },
+    [onClickHideField]
+  );
+
   return (
     <LogListContext.Provider
       value={{
@@ -539,8 +565,8 @@ export const LogListContextProvider = ({
         onClickFilterOutLabel,
         onClickFilterString,
         onClickFilterOutString,
-        onClickShowField,
-        onClickHideField,
+        onClickShowField: onClickShowField ? onClickShowFieldWrapper : undefined,
+        onClickHideField: onClickHideField ? onClickHideFieldWrapper : undefined,
         onLogLineHover,
         onPermalinkClick,
         onPinLine,

@@ -11,7 +11,7 @@ import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
-import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { TabItem } from './TabItem';
@@ -21,6 +21,7 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
+  const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
   const { tabs, key } = model.useState();
   const currentTab = model.getCurrentTab();
   const dashboard = getDashboardSceneFor(model);
@@ -61,11 +62,11 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
             )}
           </Droppable>
           {isEditing && !isClone && (
-            <div className="dashboard-canvas-add-button">
+            <div className={cx(styles.tabControls, layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
               <Button
                 icon="plus"
-                variant="primary"
-                fill="text"
+                variant="secondary"
+                size="sm"
                 onClick={() => model.addNewTab()}
                 onPointerUp={(evt) => evt.stopPropagation()}
                 data-testid={selectors.components.CanvasGridAddActions.addTab}
@@ -75,8 +76,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               {hasCopiedTab && (
                 <Button
                   icon="clipboard-alt"
-                  variant="primary"
-                  fill="text"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => model.pasteTab()}
                   onPointerUp={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.pasteTab}
@@ -84,7 +85,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                   <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
                 </Button>
               )}
-              <Button icon="layers-slash" variant="primary" fill="text" onClick={() => model.ungroupTabs()}>
+              <Button
+                icon="layers-slash"
+                variant="secondary"
+                size="sm"
+                onClick={() => model.ungroupTabs()}
+                data-testid={selectors.components.CanvasGridAddActions.ungroup}
+              >
                 <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
               </Button>
             </div>
@@ -116,7 +123,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: '1 1 auto',
   }),
-  tabsBar: css(dashboardCanvasAddButtonHoverStyles),
+  tabsBar: css({
+    ...dashboardCanvasAddButtonHoverStyles,
+  }),
   tabsRow: css({
     display: 'flex',
     width: '100%',
@@ -130,6 +139,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
+  }),
+  tabControls: css({
+    marginLeft: theme.spacing(1),
   }),
   tabsContainerDuringDrag: css({
     // During a tab drag, hello-pangea inserts a placeholder which can temporarily

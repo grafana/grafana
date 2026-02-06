@@ -40,7 +40,7 @@ func (m *mockResponder) Error(err error) {
 func TestUserTeamREST_Connect(t *testing.T) {
 	t.Run("should create handler with default pagination", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -67,7 +67,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse limit query parameter", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -88,7 +88,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse offset query parameter and calculate page", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -111,7 +111,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse page query parameter and calculate offset", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -134,7 +134,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse explain query parameter", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -155,7 +155,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should not enable explain when explain=false", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -176,7 +176,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should return error when identity is missing", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := context.Background()
 		responder := &mockResponder{}
@@ -199,7 +199,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		mockClient := &MockClient{
 			MockError: errors.New("search failed"),
 		}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -226,8 +226,8 @@ func TestUserTeamREST_Connect(t *testing.T) {
 				{
 					Results: &resourcepb.ResourceTable{
 						Columns: []*resourcepb.ResourceTableColumnDefinition{
-							{Name: "subject_name"},
-							{Name: "team_ref"},
+							{Name: "subject"},
+							{Name: "team"},
 							{Name: "permission"},
 							{Name: "external"},
 						},
@@ -253,7 +253,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 				},
 			},
 		}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -288,7 +288,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should include correct fields in search request", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -305,8 +305,8 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		httpHandler.ServeHTTP(w, req)
 
 		expectedFields := []string{
-			resource.SEARCH_FIELD_PREFIX + "subject_name",
-			resource.SEARCH_FIELD_PREFIX + "team_ref",
+			resource.SEARCH_FIELD_PREFIX + "subject",
+			resource.SEARCH_FIELD_PREFIX + "team",
 			resource.SEARCH_FIELD_PREFIX + "permission",
 			resource.SEARCH_FIELD_PREFIX + "external",
 		}
@@ -350,11 +350,11 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		require.Empty(t, result.Items)
 	})
 
-	t.Run("should return error when team_ref column is missing", func(t *testing.T) {
+	t.Run("should return error when team column is missing", func(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "subject_name"},
+					{Name: "subject"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
@@ -363,7 +363,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		}
 		result, err := parseResults(searchResult, 0)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "required column 'team_ref' not found")
+		require.Contains(t, err.Error(), "required column 'team' not found")
 		require.Empty(t, result.Items)
 	})
 
@@ -371,8 +371,8 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "subject_name"},
-					{Name: "team_ref"},
+					{Name: "subject"},
+					{Name: "team"},
 					{Name: "external"},
 				},
 				Rows: []*resourcepb.ResourceTableRow{},
@@ -388,8 +388,8 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "subject_name"},
-					{Name: "team_ref"},
+					{Name: "subject"},
+					{Name: "team"},
 					{Name: "permission"},
 				},
 				Rows: []*resourcepb.ResourceTableRow{},
@@ -401,11 +401,11 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		require.Empty(t, result.Items)
 	})
 
-	t.Run("should return error when subject_name column is missing", func(t *testing.T) {
+	t.Run("should return error when subject column is missing", func(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "team_ref"},
+					{Name: "team"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
@@ -413,7 +413,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		}
 		result, err := parseResults(searchResult, 0)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "required column 'subject_name' not found")
+		require.Contains(t, err.Error(), "required column 'subject' not found")
 		require.Empty(t, result.Items)
 	})
 
@@ -421,8 +421,8 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "subject_name"},
-					{Name: "team_ref"},
+					{Name: "subject"},
+					{Name: "team"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
@@ -465,8 +465,8 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "subject_name"},
-					{Name: "team_ref"},
+					{Name: "subject"},
+					{Name: "team"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
@@ -493,8 +493,8 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					nil,
-					{Name: "subject_name"},
-					{Name: "team_ref"},
+					{Name: "subject"},
+					{Name: "team"},
 					{Name: "permission"},
 					{Name: "external"},
 				},

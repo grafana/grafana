@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +10,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
@@ -21,6 +22,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { rows, key } = model.useState();
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
+  const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
   const { hasCopiedRow } = useClipboardState();
   const soloPanelContext = useSoloPanelContext();
 
@@ -47,11 +49,11 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
           ))}
           {dropProvided.placeholder}
           {isEditing && !isClone && (
-            <div className="dashboard-canvas-add-button">
+            <div className={cx(layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
               <Button
                 icon="plus"
-                variant="primary"
-                fill="text"
+                variant="secondary"
+                size="sm"
                 onClick={() => model.addNewRow()}
                 onPointerUp={(evt) => evt.stopPropagation()}
                 data-testid={selectors.components.CanvasGridAddActions.addRow}
@@ -61,8 +63,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
               {hasCopiedRow && (
                 <Button
                   icon="clipboard-alt"
-                  variant="primary"
-                  fill="text"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => model.pasteRow()}
                   onPointerUp={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.pasteRow}
@@ -72,8 +74,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
               )}
               <Button
                 icon="layers-slash"
-                variant="primary"
-                fill="text"
+                variant="secondary"
+                size="sm"
                 onClick={() => model.ungroupRows()}
                 data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
               >
@@ -109,6 +111,12 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexGrow: 1,
       width: '100%',
+
+      // Show rows layout controls (Add row, etc.) when hovering anywhere in the layout
+      // Using > to only affect direct children, not grid controls inside rows
+      '&:hover > .dashboard-canvas-controls': {
+        opacity: 1,
+      },
     }),
   };
 }

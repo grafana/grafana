@@ -92,7 +92,7 @@ class ScenarioContext {
       timeRange: getDefaultTimeRange(),
     };
 
-    const result = await getAllSuggestions(panelData);
+    const result = await getAllSuggestions(panelData.series);
     this.suggestions = result.suggestions;
   }
 
@@ -546,18 +546,14 @@ describe('sortSuggestions', () => {
 
 describe('Visualization suggestions error handling', () => {
   it('returns result with hasErrors flag', async () => {
-    const result = await getAllSuggestions({
-      series: [
-        toDataFrame({
-          fields: [
-            { name: 'Time', type: FieldType.time, values: [1, 2] },
-            { name: 'Max', type: FieldType.number, values: [1, 10] },
-          ],
-        }),
-      ],
-      state: LoadingState.Done,
-      timeRange: getDefaultTimeRange(),
-    });
+    const result = await getAllSuggestions([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Max', type: FieldType.number, values: [1, 10] },
+        ],
+      }),
+    ]);
 
     expect(result).toHaveProperty('suggestions');
     expect(result).toHaveProperty('hasErrors');

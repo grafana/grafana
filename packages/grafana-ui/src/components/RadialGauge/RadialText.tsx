@@ -105,25 +105,25 @@ export const RadialText = memo(
     const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
 
     // adjust the text up on gauges and when sparklines are present
-    let yOffset = valueFontSize / 4;
+    let yOffset = 0;
     if (shape === 'gauge') {
       // we render from the center of the gauge, so move up by half of half of the total height
-      yOffset -= (valueHeight + nameHeight) / 4;
+      yOffset += (valueHeight + nameHeight) / 4;
     }
     if (sparkline) {
-      yOffset -= SPARKLINE_SPACING;
+      yOffset += SPARKLINE_SPACING;
     }
 
     return (
-      <g transform={`translate(0, ${yOffset})`}>
+      <g>
         {showValue && (
           <text
             x={centerX}
-            y={valueY}
+            y={valueY - yOffset}
             fontSize={valueFontSize}
             fill={theme.colors.text.primary}
             textAnchor="middle"
-            dominantBaseline="text-bottom"
+            dominantBaseline="middle"
           >
             <tspan fontSize={unitFontSize}>{displayValue.prefix ?? ''}</tspan>
             <tspan>{displayValue.text}</tspan>
@@ -134,9 +134,9 @@ export const RadialText = memo(
           <text
             fontSize={nameFontSize}
             x={centerX}
-            y={nameY}
+            y={nameY - yOffset}
             textAnchor="middle"
-            dominantBaseline="text-bottom"
+            dominantBaseline="middle"
             fill={nameColor}
           >
             {displayValue.title}

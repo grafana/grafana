@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "重置为默认值",
-      "title-invalid-configuration": "无效配置",
       "title-more-actions": "更多操作",
       "tooltip-more-actions": "更多操作"
     },
@@ -661,14 +660,17 @@
       "aria-label-group-by": "分组依据",
       "aria-label-group-interval": "组间隔",
       "aria-label-group-wait": "组等待",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "重复间隔",
       "create-a-contact-point": "创建联络点",
+      "description-unique-routing": "",
       "label-default-contact-point": "默认联络点",
+      "label-name": "",
       "label-timing-options": "时间设定选项",
       "message": {
         "required": "必填。"
       },
-      "or": "或"
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "添加匹配器",
@@ -857,7 +859,10 @@
     "common": {
       "cancel": "取消",
       "clear-filters": "清除筛选器",
+      "close": "",
+      "create": "",
       "delete": "删除",
+      "deleting": "",
       "edit": "编辑",
       "export": "导出",
       "export-all": "导出全部",
@@ -1577,6 +1582,17 @@
       "action-button": "导入",
       "additional-settings": "附加设置",
       "alert-rules": "警报规则",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "导入",
         "loading": "加载中...",
@@ -1603,13 +1619,15 @@
         "label": "数据源",
         "required-message": "请选择数据源"
       },
-      "error": "导入警报规则失败：{{error}}",
+      "error": "",
       "group": {
         "description": "键入以搜索现有组",
         "label": "组"
       },
       "import-location-and-filters": "导入位置和筛选器",
       "import-source": "导入源",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "键入以搜索现有命名空间",
         "label": "命名空间"
@@ -1621,17 +1639,148 @@
       "pause-recording": {
         "label": "暂停导入的录制规则"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "录制规则",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-none": "",
+        "routing-tree": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
+      },
       "source": {
         "datasource": "现有数据源管理的规则",
         "datasource-description": "从现有数据源导入规则",
         "yaml": "Prometheus YAML 文件",
         "yaml-description": "从 Prometheus YAML 文件导入规则。"
       },
-      "success": "已成功将警报规则导入到 Grafana 管理的规则。",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy-desc": "",
+        "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
+        "select-group": "",
+        "select-namespace": "",
+        "select-policy": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "要导入规则的文件夹",
         "label": "目标文件夹"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "选择要导入的与 Prometheus 兼容的 YAML 文件",
@@ -1642,6 +1791,9 @@
         "target-datasource-required": "请选择一个目标数据源"
       },
       "yaml-error": "解析 YAML 文件失败：{{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -1935,7 +2087,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "需要帮助吗？"
@@ -2086,6 +2242,11 @@
       "aria-label-expand": "展开",
       "aria-label-more": "策略的更多操作",
       "aria-label-more-default": "默认策略的更多操作",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "如果找不到其他匹配的策略，则所有提醒实例都将由默认策略处理。",
         "title": "默认策略",
@@ -2095,6 +2256,14 @@
         "confirm": "是，删除策略",
         "warning-1": "删除此通知策略将永久移除它。",
         "warning-2": "您确定要删除此策略吗？"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "使用半角逗号分隔的匹配器列表来筛选通知策略，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自动生成的策略",
@@ -2109,6 +2278,7 @@
         },
         "inherited": "继承",
         "mute-time": "静音时间",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "在首次通知发送后，对于新添加到提醒组中的提醒，要等待多久才能再次发送通知。",
@@ -2129,6 +2299,16 @@
       "new-policy": "添加新策略",
       "no-matchers": "没有匹配器",
       "reload-policies": "重新加载策略",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "保存策略",
       "update": {
         "please-wait": "请稍候，我们正在更新您的通知策略。",
@@ -2147,10 +2327,40 @@
       },
       "n-more-policies_other": "其他 {{count}} 个策略"
     },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
+    },
     "policy": {
       "label-new-child-policy": "新的子策略",
       "label-new-sibling-above": "上方的新同级元素",
       "label-new-sibling-below": "下方的新同级元素"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "无法显示查询预览。查询中使用的某些数据源不可用。",
@@ -2329,6 +2539,16 @@
       "label-override-grouping": "覆盖分组",
       "label-override-timings": "覆盖时间设定",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "编辑",
@@ -2547,7 +2767,8 @@
       "expand-all": "展开全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "导入警报规则"
+      "import-to-gma": "导入警报规则",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在加载规则...",
@@ -2933,6 +3154,10 @@
       "misconfigured-warning": "此模板配置错误。",
       "misconfigured-warning-details": "模板必须在 Alertmanager 配置的 <2></2> 和 <5></5> 部分中定义。"
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "编辑 {{name}}",
       "title-drawer": "编辑 {{name}}",
@@ -2977,7 +3202,8 @@
       "error-loading": {
         "description": "无法加载时间间隔。请稍后重试。",
         "title": "加载时间间隔时出错"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "时间间隔",
@@ -2995,6 +3221,9 @@
     },
     "timestamp": {
       "time-ago": "（{{time}}前）"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3377,6 +3606,10 @@
       "hosted-domain-label": "托管域",
       "id-token-attribute-name-description": "用于从返回的 OAuth2 令牌中提取 ID 令牌的密钥的名称。",
       "id-token-attribute-name-label": "ID 令牌属性名称",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "用于从用户 ID 令牌中查找用户登录的 JMESPath 表达式。",
       "login-attribute-path-label": "登录属性路径",
       "login-prompt-consent": "同意",
@@ -3443,6 +3676,8 @@
       "use-refresh-token-label": "使用刷新令牌",
       "validate-hosted-domain-description": "如果启用，Grafana 将把从 Google ID 令牌检索到的托管域与用户指定的“{{ allowedDomainsLabel }}”列表进行匹配。",
       "validate-hosted-domain-label": "验证托管域",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "用于对 OAuth2 提供程序进行身份验证的令牌文件的文件路径。仅当客户端身份验证设置为“workload_identity”时，才需要此项。默认值为 /var/run/secrets/azure/tokens/azure-identity-token。",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} 令牌文件",
       "workload-identity-token-file-required": "当客户端身份验证设置为“工作负载标识”时，必须设置此字段。"
@@ -4773,12 +5008,6 @@
       "message": {
         "edit-dashboard-json": "编辑数据面板 JSON"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "验证是为了开发目的而提供的，应该可以正常忽略。如果您是 Grafana 开发人员，请考虑检查和更新数据面板架构",
-      "title-checking-dashboard-validity": "检查数据面板有效性",
-      "title-dashboard-failed-schema-validation": "数据面板架构验证失败",
-      "title-error-checking-dashboard-validity": "检查数据面板有效性时出错"
     },
     "default-layout": {
       "description": "单独放置每个面板并调整大小",
@@ -6218,6 +6447,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "取消",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "文件夹"
     },
     "inspect-data-tab": {
@@ -6333,6 +6564,8 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "切换表格视图",
       "table-view-label-table-view": "表视图"
     },
@@ -7558,7 +7791,8 @@
       "loading-placeholder": "正在加载…"
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "转为无查询"
+      "aria-label-go-queryless": "转为无查询",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "结果序列：{{numItems}}",
@@ -9286,6 +9520,18 @@
       "csv-placeholder": "在此处输入 CSV...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -9755,7 +10001,6 @@
       "error-fetching": "获取 LDAP 设置时出错",
       "error-saving": "保存 LDAP 设置时出错",
       "error-validate-form": "验证 LDAP 设置时出错",
-      "feature-flag-disabled": "",
       "saved": "LDAP 设置已保存"
     },
     "bind-dn": {
@@ -10304,6 +10549,17 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该字段",
       "label-log-stats": "{{label}}：{{total}} 行（共 {{rowCount}} 行）含有该标签"
+    }
+  },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
     }
   },
   "manage-dashbaords": {
@@ -11243,6 +11499,7 @@
     },
     "header-menu": {
       "copy": "复制",
+      "copy-styles": "",
       "create-library-panel": "创建库面板",
       "duplicate": "复制",
       "edit": "编辑",
@@ -11254,11 +11511,13 @@
       "inspect-json": "面板 JSON",
       "more": "更多...",
       "new-alert-rule": "新建警报规则",
+      "paste-styles": "",
       "query": "查询",
       "remove": "删除",
       "replace-library-panel": "替换库面板",
       "share": "分享",
       "show-legend": "显示图例",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "取消链接库面板",
       "view": "查看"
@@ -11750,19 +12009,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名称",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "分支",
       "label-comment": "评论",
       "label-path": "路径",
-      "label-workflow": "工作流程",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11786,11 +12047,7 @@
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
     },
     "bitbucket": {
-      "branch-description": "用于预置的分支",
-      "branch-label": "分支",
       "branch-required": "分支为必填项",
-      "path-description": "存储库内的可选子目录路径",
-      "path-label": "路径",
       "permissions": {
         "pull-requests-label": "拉取请求",
         "pull-requests-read-write": "读和写",
@@ -11805,27 +12062,27 @@
       "token-label": "应用密码",
       "token-required": "Bitbucket 令牌为必填项",
       "token-user-description": "将用于使用应用密码访问存储库的用户名",
-      "token-user-label": "用户名",
       "token-user-required": "用户名为必填项",
       "url-description": "Bitbucket 存储库 URL",
-      "url-label": "存储库 URL",
       "url-pattern": "必须是有效的 Bitbucket 存储库 URL",
       "url-required": "存储库 URL 为必填项"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "为此存储库连接添加明确的名称",
+      "description-clear-repository-connection": "",
       "empty": "空",
       "error-field-required": "此字段是必填字段。",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "显示名称",
       "placeholder-my-repository-connection": "我的存储库连接",
+      "retry-action": "",
       "text-loading-resource-information": "正在加载资源信息...",
-      "unavailable-options": {
-        "title": ""
-      },
+      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
       "folders-count_other": "{{count}} 个文件夹"
@@ -11876,6 +12133,9 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
     "connection": {
       "disconnected-message": "",
       "disconnected-title": ""
@@ -11889,6 +12149,7 @@
       "button-save": "",
       "button-saving": "",
       "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12049,46 +12310,31 @@
       "subtitle-provisioning-feature": "查看和管理您的预配连接"
     },
     "git": {
-      "branch-description": "用于预置的分支",
-      "branch-label": "分支",
       "branch-required": "分支为必填项",
-      "path-description": "存储库内的可选子目录路径",
-      "path-label": "路径",
       "pr-workflow-description": "允许用户选择在保存更改时是否打开拉取请求。如果存储库不允许直接更改主分支，则仍可能需要拉取请求。",
       "pr-workflow-label": "保存时启用拉取请求选项",
       "token-description": "Git 存储库访问令牌或密码",
       "token-label": "访问令牌",
       "token-required": "Git 令牌为必填项",
       "token-user-description": "将用于使用访问令牌访问存储库的用户名",
-      "token-user-label": "用户名",
       "token-user-required": "用户名为必填项",
       "url-description": "Git 存储库 URL",
-      "url-label": "存储库 URL",
       "url-pattern": "必须是有效的 Git 存储库 URL",
       "url-required": "存储库 URL 为必填项"
     },
     "github": {
-      "branch-description": "用于预置的分支",
-      "branch-label": "分支",
       "branch-required": "分支为必填项",
-      "path-description": "存储库内的可选子目录路径",
-      "path-label": "路径",
       "pr-workflow-description": "允许用户选择在保存更改时是否打开拉取请求。如果存储库不允许直接更改主分支，则仍可能需要拉取请求。",
       "pr-workflow-label": "保存时启用拉取请求选项",
       "token-description": "具有存储库权限的 GitHub 个人访问令牌",
       "token-label": "个人访问令牌",
       "token-required": "GitHub 令牌为必填项",
       "url-description": "GitHub 存储库 URL",
-      "url-label": "存储库 URL",
       "url-pattern": "必须是有效的 GitHub 存储库 URL",
       "url-required": "存储库 URL 为必填项"
     },
     "gitlab": {
-      "branch-description": "用于预置的分支",
-      "branch-label": "分支",
       "branch-required": "分支为必填项",
-      "path-description": "存储库内的可选子目录路径",
-      "path-label": "路径",
       "permissions": {
         "api": "API",
         "api-read-write": "读和写",
@@ -12103,7 +12349,6 @@
       "token-label": "项目访问令牌",
       "token-required": "GitLab 令牌为必填项",
       "url-description": "GitLab 存储库 URL",
-      "url-label": "存储库 URL",
       "url-pattern": "必须是有效的 GitLab 存储库 URL",
       "url-required": "存储库 URL 为必填项"
     },
@@ -12225,6 +12470,9 @@
         "view-repository": "查看存储库"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "已检查：",
       "connection-status": "",
@@ -12317,9 +12565,15 @@
       "previous": "上一个"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "已完成的步骤",
@@ -12371,7 +12625,7 @@
         "token-text": "GitLab 个人访问令牌"
       },
       "go-to": "前往",
-      "make-sure": "务必包含以下权限"
+      "make-sure": ""
     },
     "warning-title-default": "警告",
     "wizard": {
@@ -12418,7 +12672,6 @@
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
       "github-app-select-connection": "",
-      "github-app-sync-connection": "",
       "step-bootstrap": "选择要同步的内容",
       "step-configure-repo": "",
       "step-connect": "连接",
@@ -12439,14 +12692,7 @@
       "button-submitting": "正在提交...",
       "error-instance-repository-exists": "实例存储库已存在",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
-  },
-  "provisioning-alert": {
-    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12653,9 +12899,62 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
+    },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
     },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""
@@ -13566,6 +13865,7 @@
     "name-wrap-header-text": "表头文字换行",
     "name-wrap-text": "",
     "placeholder-column-width": "自动",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
