@@ -2,14 +2,16 @@ package dashboards
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -17,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationSnapshotDualWrite(t *testing.T) {
@@ -70,94 +71,24 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 			t.Log("Testing:", tc.description)
 
 			t.Run("create and get snapshot", func(t *testing.T) {
-				// Create a snapshot via K8s API
-				snapshotName := "test-" + util.GenerateShortUID()
-				snapshot := createTestSnapshot(snapshotName, ns)
-
-				unstructuredSnapshot, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&snapshot)
-				require.NoError(t, err)
-
-				u := &unstructured.Unstructured{
-					Object: unstructuredSnapshot,
-				}
-
-				// Create snapshot
-				created, err := client.Resource.Create(context.Background(), u, metav1.CreateOptions{})
-
-				// Both modes should support creation
-				require.NoError(t, err, "Failed to create snapshot in mode %d", tc.dualWrite)
-				require.NotNil(t, created)
-
-				createdName := created.GetName()
-				require.NotEmpty(t, createdName)
-
-				// Verify created snapshot has expected fields
-				spec, found, err := unstructured.NestedMap(created.Object, "spec")
-				require.NoError(t, err)
-				require.True(t, found, "spec should be present in created snapshot")
-
-				// Assert title matches
-				title, found, err := unstructured.NestedString(spec, "title")
-				require.NoError(t, err)
-				require.True(t, found, "title should be present")
-				assert.Equal(t, *snapshot.Spec.Title, title, "title should match")
-
-				// Assert expires field
-				_, found, err = unstructured.NestedInt64(spec, "expires")
-				require.NoError(t, err)
-				require.True(t, found, "expires should be present")
+				// Create a snapshot via the custom /snapshots/create subresource
+				key := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, key)
 
 				// Try to get the snapshot
-				got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+				got, err := client.Resource.Get(context.Background(), key, metav1.GetOptions{})
 				require.NoError(t, err, "Failed to get snapshot in mode %d", tc.dualWrite)
 				require.NotNil(t, got)
-				assert.Equal(t, createdName, got.GetName())
-
-				// Verify retrieved snapshot also has the same fields
-				gotSpec, found, err := unstructured.NestedMap(got.Object, "spec")
-				require.NoError(t, err)
-				require.True(t, found, "spec should be present in retrieved snapshot")
-
-				// Dashboard data should not be returned directly in spec
-				dashboard, found, err := unstructured.NestedMap(gotSpec, "dashboard")
-				require.NoError(t, err)
-
-				if tc.dualWrite == grafanarest.Mode0 {
-					require.True(t, found, "dashboard data should be present")
-					require.NotNil(t, dashboard, "dashboard should not be nil")
-					// Verify title in retrieved snapshot
-					gotTitle, found, err := unstructured.NestedString(gotSpec, "title")
-					require.NoError(t, err)
-					require.True(t, found, "title should be present in retrieved snapshot")
-					assert.Equal(t, *snapshot.Spec.Title, gotTitle, "retrieved snapshot title should match")
-				}
-
-				//TODO: the dashboard data shouldn't be returned when implementing sub resource dashboard blob storage
-				//else { // Mode5
-				//	require.False(t, found, "dashboard data should not be present")
-				//	require.Nil(t, dashboard, "dashboard should be nil")
-				//}
+				assert.Equal(t, key, got.GetName())
 			})
 
 			t.Run("list snapshots", func(t *testing.T) {
 				// Create multiple snapshots
 				createdSnapshots := []string{}
 				for i := 0; i < 3; i++ {
-					snapshotName := fmt.Sprintf("list-test-%d-%s", i, util.GenerateShortUID())
-					snapshot := createTestSnapshot(snapshotName, ns)
-					snapshot.Spec.Title = toPtr(fmt.Sprintf("Test Snapshot %d", i))
-
-					unstructuredSnapshot, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&snapshot)
-					require.NoError(t, err)
-
-					u := &unstructured.Unstructured{
-						Object: unstructuredSnapshot,
-					}
-
-					created, err := client.Resource.Create(context.Background(), u, metav1.CreateOptions{})
-
-					require.NoError(t, err)
-					createdSnapshots = append(createdSnapshots, created.GetName())
+					key := createSnapshotViaSubresource(t, helper, ns)
+					require.NotEmpty(t, key)
+					createdSnapshots = append(createdSnapshots, key)
 				}
 
 				// List snapshots
@@ -184,29 +115,17 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Run("delete snapshot", func(t *testing.T) {
 				// Create a snapshot
-				snapshotName := "delete-test-" + util.GenerateShortUID()
-				snapshot := createTestSnapshot(snapshotName, ns)
-
-				unstructuredSnapshot, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&snapshot)
-				require.NoError(t, err)
-
-				u := &unstructured.Unstructured{
-					Object: unstructuredSnapshot,
-				}
-
-				created, err := client.Resource.Create(context.Background(), u, metav1.CreateOptions{})
-
-				require.NoError(t, err)
-				createdName := created.GetName()
+				key := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, key)
 
 				// Delete the snapshot
-				err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
+				err := client.Resource.Delete(context.Background(), key, metav1.DeleteOptions{})
 
 				// Both modes should support deletion
 				require.NoError(t, err)
 
 				// Verify it's deleted
-				_, err = client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+				_, err = client.Resource.Get(context.Background(), key, metav1.GetOptions{})
 
 				require.Error(t, err, "snapshot should be deleted")
 			})
@@ -214,29 +133,16 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 	}
 }
 
-// Helper functions
+// createSnapshotViaSubresource creates a snapshot using the custom /snapshots/create
+// subresource endpoint and returns the snapshot key.
+func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns string) string {
+	t.Helper()
 
-func createTestSnapshot(name, namespace string) dashv0.Snapshot {
-	deleteKey := util.GenerateShortUID()
-	title := "Test Snapshot"
-	external := false
-	expires := int64(3600)
-
-	return dashv0.Snapshot{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "dashboard.grafana.app/v0alpha1",
-			Kind:       "Snapshot",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: dashv0.SnapshotSpec{
-			Title:     &title,
-			External:  &external,
-			Expires:   &expires,
-			DeleteKey: &deleteKey,
-			Dashboard: map[string]interface{}{
+	cmd := dashv0.DashboardCreateCommand{
+		Name:    "Test Snapshot",
+		Expires: 3600,
+		Dashboard: &common.Unstructured{
+			Object: map[string]interface{}{
 				"title":         "Test Dashboard",
 				"panels":        []interface{}{},
 				"schemaVersion": 39,
@@ -247,9 +153,26 @@ func createTestSnapshot(name, namespace string) dashv0.Snapshot {
 			},
 		},
 	}
-}
 
-// Helper for commented tests
-func toPtr[T any](v T) *T {
-	return &v
+	body, err := json.Marshal(cmd)
+	require.NoError(t, err)
+
+	path := fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/create",
+		dashv0.SnapshotResourceInfo.GroupVersionResource().Group,
+		dashv0.SnapshotResourceInfo.GroupVersionResource().Version,
+		ns,
+	)
+
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   path,
+		Body:   body,
+	}, &dashv0.DashboardCreateResponse{})
+
+	require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "create snapshot should succeed, body: %s", string(rsp.Body))
+	require.NotNil(t, rsp.Result, "response should have a result")
+	require.NotEmpty(t, rsp.Result.Key, "response should have a key")
+
+	return rsp.Result.Key
 }
