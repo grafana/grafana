@@ -10,7 +10,7 @@ import {
 import { t } from '@grafana/i18n';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { getInstanceState } from '../state/selectors';
+import { getInstanceState } from '../state/getInstanceState';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 

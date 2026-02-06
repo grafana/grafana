@@ -7,11 +7,11 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
     "percent": 0,
   },
   {
-    "color": "#73BF69",
+    "color": "#FADE2A",
     "percent": 0.5,
   },
   {
-    "color": "#FADE2A",
+    "color": "#F2495C",
     "percent": 0.8,
   },
   {
@@ -28,11 +28,11 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
     "percent": 0,
   },
   {
-    "color": "#73BF69",
+    "color": "#FADE2A",
     "percent": 0.5,
   },
   {
-    "color": "#FADE2A",
+    "color": "#F2495C",
     "percent": 0.8,
   },
   {
@@ -49,11 +49,11 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
     "percent": 0,
   },
   {
-    "color": "#73BF69",
+    "color": "#FADE2A",
     "percent": 0.5,
   },
   {
-    "color": "#FADE2A",
+    "color": "#F2495C",
     "percent": 0.8,
   },
   {

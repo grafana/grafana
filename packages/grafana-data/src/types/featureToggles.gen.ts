@@ -875,6 +875,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+  * @default false
+  */
+  teamHttpHeadersFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
