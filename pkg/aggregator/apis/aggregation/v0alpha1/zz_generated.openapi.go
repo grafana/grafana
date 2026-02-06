@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -303,7 +304,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_QueryDataResponse(ref common.Re
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana-plugin-sdk-go/backend.DataResponse"),
+										Ref:     ref(backend.DataResponse{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -314,7 +315,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_QueryDataResponse(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana-plugin-sdk-go/backend.DataResponse"},
+			backend.DataResponse{}.OpenAPIModelName()},
 	}
 }
 

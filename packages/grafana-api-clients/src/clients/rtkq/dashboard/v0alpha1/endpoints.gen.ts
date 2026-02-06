@@ -1019,7 +1019,7 @@ export type DashboardWithAccessInfo = {
   spec: Unstructured;
   status: DashboardStatus;
 };
-export type GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1DataSourceRef = {
+export type DataSourceRef = {
   /** The apiserver version */
   apiVersion?: string;
   /** The datasource plugin type */
@@ -1033,7 +1033,7 @@ export type GridPos = {
   x: number;
   y: number;
 };
-export type GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1DataQuery = {
+export type DataResponse = {
   /** The datasource */
   datasource?: {
     /** The apiserver version */
@@ -1108,7 +1108,7 @@ export type GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1
 };
 export type LibraryPanelSpec = {
   /** The default datasource type */
-  datasource?: GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1DataSourceRef;
+  datasource?: DataSourceRef;
   /** Library panel description */
   description?: string;
   /** The fieldConfig schema depends on the panel type */
@@ -1124,7 +1124,7 @@ export type LibraryPanelSpec = {
   /** The panel type */
   pluginVersion?: string;
   /** The datasource queries */
-  targets?: GithubCom1Grafana1GrafanaPluginSdkGo1Experimental1Apis1Data1V0Alpha1DataQuery[];
+  targets?: DataResponse[];
   /** The title of the library panel */
   title?: string;
   /** Whether the panel is transparent */

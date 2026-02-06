@@ -15,12 +15,12 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource":            schema_pkg_apis_datasource_v0alpha1_DataSource(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceList":        schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref),
-		DatasourceAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_datasource_v0alpha1_DatasourceAccessInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceSpec": schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref),
-		HealthCheckResult{}.OpenAPIModelName():                                          schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec":      UnstructuredSpec{}.OpenAPIDefinition(),
+		DataSource{}.OpenAPIModelName():            schema_pkg_apis_datasource_v0alpha1_DataSource(ref),
+		DataSourceList{}.OpenAPIModelName():        schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref),
+		DatasourceAccessInfo{}.OpenAPIModelName():  schema_pkg_apis_datasource_v0alpha1_DatasourceAccessInfo(ref),
+		GenericDataSourceSpec{}.OpenAPIModelName(): schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref),
+		HealthCheckResult{}.OpenAPIModelName():     schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
+		UnstructuredSpec{}.OpenAPIModelName():      UnstructuredSpec{}.OpenAPIDefinition(),
 	}
 }
 
@@ -53,7 +53,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DataSource configuration -- these properties are all visible to anyone able to query the data source from their browser",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec"),
+							Ref:         ref(UnstructuredSpec{}.OpenAPIModelName()),
 						},
 					},
 					"secure": {
@@ -76,7 +76,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), UnstructuredSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -113,7 +113,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource"),
+										Ref:     ref(DataSource{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -124,7 +124,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			DataSource{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
