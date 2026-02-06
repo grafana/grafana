@@ -68,7 +68,7 @@ function mockSelectedItems() {
   });
 }
 
-function renderCell(
+function setup(
   item: DashboardsTreeItem<DashboardViewItemWithUIItems> = dashboardItem,
   overrides?: {
     isSelected?: (item: DashboardViewItem | '$all') => SelectionState;
@@ -111,7 +111,7 @@ describe('CheckboxCell', () => {
     const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-1' } };
     const onItemSelectionChange = jest.fn();
 
-    const { user } = renderCell(item, {
+    const { user } = setup(item, {
       isSelected: () => SelectionState.Unselected,
       onItemSelectionChange,
     });
@@ -124,7 +124,7 @@ describe('CheckboxCell', () => {
   });
 
   it('renders a spacer when isSelected function is not provided', () => {
-    renderCell(dashboardItem, { includeIsSelected: false });
+    setup(dashboardItem, { includeIsSelected: false });
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
@@ -140,7 +140,7 @@ describe('CheckboxCell', () => {
       isOpen: false,
     };
 
-    renderCell(item);
+    setup(item);
 
     expect(screen.getByRole('checkbox')).toBeDisabled();
   });
@@ -156,7 +156,7 @@ describe('CheckboxCell', () => {
       isOpen: false,
     };
 
-    renderCell(item);
+    setup(item);
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
@@ -166,14 +166,14 @@ describe('CheckboxCell', () => {
       ...folderItem,
       item: { ...folderItem.item, uid: sharedWithMeUid, url: undefined },
     };
-    renderCell(item, { isSelected: () => SelectionState.Unselected });
+    setup(item, { isSelected: () => SelectionState.Unselected });
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
   it('renders a disabled checkbox for read-only repo items', () => {
     const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-readonly' } };
-    renderCell(item, {
+    setup(item, {
       permissions: {
         ...defaultPermissions,
         isReadOnlyRepo: true,
@@ -186,7 +186,7 @@ describe('CheckboxCell', () => {
 
   it('renders a spacer when user cannot edit the item type', () => {
     const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-no-perms' } };
-    renderCell(item, {
+    setup(item, {
       permissions: {
         ...defaultPermissions,
         canEditDashboards: false,
@@ -206,7 +206,7 @@ describe('CheckboxCell', () => {
       isUidInReadOnlyRepo: () => false,
     });
 
-    renderCell(item);
+    setup(item);
 
     expect(
       screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(item.item.uid))
@@ -219,7 +219,7 @@ describe('CheckboxCell', () => {
       ...folderItem,
       item: { ...folderItem.item, managedBy: ManagerKind.Repo, parentUID: undefined },
     };
-    renderCell(item);
+    setup(item);
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
