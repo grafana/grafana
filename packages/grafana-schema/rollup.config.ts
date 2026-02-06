@@ -2,6 +2,7 @@ import { glob } from 'glob';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
+import copy from 'rollup-plugin-copy';
 
 import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.parts';
 
@@ -16,7 +17,7 @@ export default [
     treeshake: false,
   },
   {
-    // TODO: replace by adding these entries as exported to the `index.gen.ts` files
+    // Files that should be exported but not included in the `entryPoint`.
     input: Object.fromEntries(
       glob
         .sync('src/raw/composable/**/*.ts')
@@ -25,8 +26,29 @@ export default [
           fileURLToPath(new URL(file, import.meta.url)),
         ])
     ),
-    plugins,
-    output: [cjsOutput(pkg, 'grafana-schema'), esmOutput(pkg, 'grafana-schema')],
+    plugins: [
+      ...plugins,
+      copy({
+        targets: [
+          {
+            src: 'dist/types/raw/composable/**/*.d.ts',
+            dest: 'dist/esm/raw/composable',
+            rename: (_name, _extension, fullpath) => fullpath.split(path.sep).slice(4).join('/'),
+          },
+        ],
+        hook: 'writeBundle',
+      }),
+    ],
+    output: [
+      {
+        format: 'esm',
+        dir: path.dirname(pkg.module),
+      },
+      {
+        format: 'cjs',
+        dir: path.dirname(pkg.main),
+      },
+    ],
     treeshake: false,
   },
 ];
