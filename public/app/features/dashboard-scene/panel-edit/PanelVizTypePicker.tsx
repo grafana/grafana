@@ -122,36 +122,36 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
         ))}
       </TabsBar>
       <div className={styles.stickySearchWrapper}>
-      <Field
-        className={styles.searchField}
-        noMargin
-        htmlFor={filterId}
-        aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-      >
-        <Stack direction="row" gap={1}>
-          {showBackButton && (
-            <Button
-              aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
-              fill="text"
-              variant="secondary"
-              icon="arrow-left"
-              className={styles.backButton}
-              data-testid={selectors.components.PanelEditor.toggleVizPicker}
-              onClick={handleBackButtonClick}
-            >
-              <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
-            </Button>
-          )}
-          <FilterInput
-            id={filterId}
-            autoFocus={!isMobile}
-            className={styles.filter}
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-          />
-        </Stack>
-      </Field>
+        <Field
+          className={styles.searchField}
+          noMargin
+          htmlFor={filterId}
+          aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+        >
+          <Stack direction="row" gap={1}>
+            {showBackButton && (
+              <Button
+                aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+                fill="text"
+                variant="secondary"
+                icon="arrow-left"
+                className={styles.backButton}
+                data-testid={selectors.components.PanelEditor.toggleVizPicker}
+                onClick={handleBackButtonClick}
+              >
+                <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
+              </Button>
+            )}
+            <FilterInput
+              id={filterId}
+              autoFocus={!isMobile}
+              className={styles.filter}
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+            />
+          </Stack>
+        </Field>
       </div>
       <ScrollContainer marginTop={1}>
         <TabContent className={styles.tabContent}>
