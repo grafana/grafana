@@ -39,7 +39,9 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   };
 
   const handleTeamSelectorChange = (ownerRef: OwnerReference) => {
-    setSelectedTeam(ownerRef);
+    if (ownerRef) {
+      setSelectedTeam(ownerRef);
+    }
   };
 
   const translatedFolderNameRequiredPhrase = t(
