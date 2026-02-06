@@ -252,13 +252,13 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
                           className={styles.applySuggestionButton}
                           data-testid={selectors.components.VisualizationPreview.confirm(suggestion.name)}
                           aria-label={t(
-                            'panel.visualization-suggestions.apply-suggestion-aria-label',
-                            'Apply {{suggestionName}} visualization',
+                            'panel.visualization-suggestions.edit-aria-label',
+                            'Edit {{suggestionName}} visualization',
                             { suggestionName: suggestion.name }
                           )}
                           onClick={() => applySuggestion(suggestion, suggestionIndex)}
                         >
-                          {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                          {t('panel.visualization-suggestions.edit', 'Edit')}
                         </Button>
                       )}
                       <VisualizationSuggestionCard

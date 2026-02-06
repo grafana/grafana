@@ -11604,7 +11604,8 @@
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "edit": "Edit",
+      "edit-aria-label": "Edit {{suggestionName}} visualization",
       "error-loading-some-suggestions": {
         "message": "Some suggestions could not be loaded"
       },
@@ -11614,8 +11615,7 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
-      "unknown-viz-type": "Unknown visualization type",
-      "use-this-suggestion": "Use this suggestion"
+      "unknown-viz-type": "Unknown visualization type"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
