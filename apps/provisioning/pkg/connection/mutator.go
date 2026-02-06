@@ -3,6 +3,7 @@ package connection
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/apiserver/pkg/admission"
 
@@ -31,6 +32,11 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	c, ok := obj.(*provisioning.Connection)
 	if !ok {
 		return fmt.Errorf("expected connection configuration, got %T", obj)
+	}
+
+	repositoryNamePrefix := fmt.Sprintf("%s-", c.Spec.Type)
+	if !strings.Contains(c.GetName(), repositoryNamePrefix) {
+		c.Name = repositoryNamePrefix + c.GetName()
 	}
 
 	return m.factory.Mutate(ctx, c)
