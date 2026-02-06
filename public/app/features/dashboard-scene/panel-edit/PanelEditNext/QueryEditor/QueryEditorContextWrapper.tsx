@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import { v4 } from 'uuid';
 
@@ -12,12 +12,14 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
-import { Transformation } from './types';
+import { QueryOptionField, Transformation } from './types';
+import { useQueryOptions } from './useQueryOptions';
 import { getEditorType, isDataTransformerConfig } from './utils';
 
 /**
@@ -37,6 +39,8 @@ export function QueryEditorContextWrapper({
   const queryRunnerState = queryRunner?.useState();
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
+  const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
+  const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
   const transformations: Transformation[] = useMemo(() => {
@@ -89,6 +93,21 @@ export function QueryEditorContextWrapper({
       transformations,
     };
   }, [panel, transformations]);
+
+  const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
+
+  // Callbacks to open/close sidebar with optional focus
+  const openSidebar = useCallback((focusField?: QueryOptionField) => {
+    setIsQueryOptionsOpen(true);
+    if (focusField) {
+      setFocusedField(focusField);
+    }
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setIsQueryOptionsOpen(false);
+    setFocusedField(null);
+  }, []);
 
   const selectedQuery = useMemo(() => {
     const queries = queryRunnerState?.queries ?? [];
@@ -153,13 +172,31 @@ export function QueryEditorContextWrapper({
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },
+      queryOptions: {
+        options: queryOptions,
+        isQueryOptionsOpen,
+        openSidebar,
+        closeSidebar,
+        focusedField,
+      },
       selectedQueryDsData: selectedQueryDsData ?? null,
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
       cardType: getEditorType(selectedQuery || selectedTransformation),
     }),
-    [selectedQuery, selectedTransformation, selectedQueryDsData, selectedQueryDsLoading, showingDatasourceHelp]
+    [
+      selectedQuery,
+      selectedTransformation,
+      queryOptions,
+      isQueryOptionsOpen,
+      openSidebar,
+      closeSidebar,
+      focusedField,
+      selectedQueryDsData,
+      selectedQueryDsLoading,
+      showingDatasourceHelp,
+    ]
   );
 
   const actions = useMemo(
@@ -176,6 +213,7 @@ export function QueryEditorContextWrapper({
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
+      onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
     }),
     [dataPane]
   );

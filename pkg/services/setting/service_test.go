@@ -12,6 +12,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -254,6 +257,83 @@ func TestRemoteSettingService_List(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "connection refused")
+	})
+
+	t.Run("should set user-agent header on requests", func(t *testing.T) {
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Contains(t, capturedUserAgent, "settings-client")
+		assert.Contains(t, capturedUserAgent, apiVersion)
+	})
+
+	t.Run("should include custom service name in user-agent", func(t *testing.T) {
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			ServiceName:   "my-custom-service",
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (my-custom-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should propagate trace context in requests", func(t *testing.T) {
+		// Set up OpenTelemetry with W3C trace context propagator
+		tp := sdktrace.NewTracerProvider()
+		otel.SetTracerProvider(tp)
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+		t.Cleanup(func() {
+			_ = tp.Shutdown(context.Background())
+		})
+
+		var capturedTraceparent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedTraceparent = r.Header.Get("Traceparent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+
+		// Create a context with a span
+		tracer := otel.Tracer("test")
+		ctx, span := tracer.Start(context.Background(), "test-list-operation")
+		defer span.End()
+
+		traceID := span.SpanContext().TraceID().String()
+		ctx = request.WithNamespace(ctx, "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.NotEmpty(t, capturedTraceparent, "Traceparent header should be set")
+		assert.Contains(t, capturedTraceparent, traceID, "Traceparent should contain the trace ID")
 	})
 }
 
