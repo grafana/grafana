@@ -46,6 +46,7 @@ runs:
       id: changed-files
       if: github.event_name == 'pull_request'
       uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+      continue-on-error: true # if we hit limits in GH, just default everything to changed
       with:
         files_yaml: |
           self:
