@@ -28,9 +28,10 @@ type alertRule struct {
 	Annotations                 string
 	Labels                      string
 	IsPaused                    bool
-	NotificationSettings        string `xorm:"notification_settings"`
-	Metadata                    string `xorm:"metadata"`
-	MissingSeriesEvalsToResolve *int64 `xorm:"missing_series_evals_to_resolve"`
+	NotificationSettings        string  `xorm:"notification_settings"`
+	AlertRoutingPolicy          *string `xorm:"alert_routing_policy"`
+	Metadata                    string  `xorm:"metadata"`
+	MissingSeriesEvalsToResolve *int64  `xorm:"missing_series_evals_to_resolve"`
 }
 
 func (a alertRule) TableName() string {
@@ -66,9 +67,10 @@ type alertRuleVersion struct {
 	Annotations                 string
 	Labels                      string
 	IsPaused                    bool
-	NotificationSettings        string `xorm:"notification_settings"`
-	Metadata                    string `xorm:"metadata"`
-	MissingSeriesEvalsToResolve *int64 `xorm:"missing_series_evals_to_resolve"`
+	NotificationSettings        string  `xorm:"notification_settings"`
+	AlertRoutingPolicy          *string `xorm:"alert_routing_policy"`
+	Metadata                    string  `xorm:"metadata"`
+	MissingSeriesEvalsToResolve *int64  `xorm:"missing_series_evals_to_resolve"`
 	Message                     string
 }
 
