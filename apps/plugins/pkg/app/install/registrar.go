@@ -130,7 +130,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		metrics.RegistrationDurationSeconds.WithLabelValues("register").Observe(time.Since(start).Seconds())
 	}()
 
-	logger := r.logger.With("namespace", namespace, "pluginId", install.ID, "version", install.Version)
+	logger := r.logger.WithContext(ctx).With("namespace", namespace, "pluginId", install.ID, "version", install.Version)
 
 	client, err := r.GetClient()
 	if err != nil {
@@ -182,7 +182,7 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 		metrics.RegistrationDurationSeconds.WithLabelValues("unregister").Observe(time.Since(start).Seconds())
 	}()
 
-	logger := r.logger.With("namespace", namespace, "pluginId", name, "source", source)
+	logger := r.logger.WithContext(ctx).With("namespace", namespace, "pluginId", name, "source", source)
 
 	client, err := r.GetClient()
 	if err != nil {

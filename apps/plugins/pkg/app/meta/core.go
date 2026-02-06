@@ -82,7 +82,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 
 	if !p.initialized {
 		if err := p.loadPlugins(ctx); err != nil {
-			p.logger.Error("Could not load core plugins", "error", err)
+			p.logger.WithContext(ctx).Error("Could not load core plugins", "error", err)
 			// Mark as initialized even on failure so we don't keep trying
 			p.initialized = true
 			return nil, ErrMetaNotFound
@@ -107,7 +107,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	pluginsPath, err := p.pluginsPathFunc()
 	if err != nil {
-		p.logger.Warn("Could not get core plugins path", "error", err)
+		p.logger.WithContext(ctx).Warn("Could not get core plugins path", "error", err)
 		return err
 	}
 
@@ -118,7 +118,7 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	}
 
 	if len(loadedPlugins) == 0 {
-		p.logger.Warn("No core plugins found during loading")
+		p.logger.WithContext(ctx).Warn("No core plugins found during loading")
 		return nil
 	}
 

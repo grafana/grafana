@@ -54,7 +54,7 @@ func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaC
 // If ParentID is set in the query, it fetches the parent plugin's version and
 // filters for the child plugin ID in the children field.
 func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
-	logger := p.logger
+	logger := p.logger.WithContext(ctx)
 	if ns, nsErr := request.NamespaceInfoFrom(ctx, false); nsErr == nil && ns.Value != "" {
 		logger = logger.With("namespace", ns.Value)
 	}
