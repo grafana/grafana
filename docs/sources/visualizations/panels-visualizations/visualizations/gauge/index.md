@@ -183,7 +183,7 @@ If you enter a neutral value of `0`, the visualization looks like this and is ea
 If you want to visualize the list of values as a time series along with the calculated gauge value, toggle on the **Show sparkline** switch.
 Each gauge displays the sparkline inside the circle or arc:
 
-![Gauge with a sparkline](screenshot-gauge-w-sparkline-v12.4.png)
+![Gauge with a sparkline](/media/docs/grafana/panels-visualizations/screenshot-gauge-w-sparkline-v12.4.png)
 
 #### Show thresholds {#show-threshold-markers}
 
