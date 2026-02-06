@@ -389,6 +389,17 @@ func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// WriteToProvisioningPath writes content directly to a file in the provisioning path.
+func (h *provisioningTestHelper) WriteToProvisioningPath(t *testing.T, to string, content []byte) {
+	fullPath := path.Join(h.ProvisioningPath, to)
+	t.Logf("Writing to provisioning path '%s'", fullPath)
+	err := os.MkdirAll(path.Dir(fullPath), 0o750)
+	require.NoError(t, err, "failed to create directories for provisioning path")
+
+	err = os.WriteFile(fullPath, content, 0o600)
+	require.NoError(t, err, "failed to write file to provisioning path")
+}
+
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
 func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
 	t.Helper()
