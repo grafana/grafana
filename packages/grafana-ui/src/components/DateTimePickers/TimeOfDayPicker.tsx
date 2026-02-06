@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
 import RcPicker, { PickerProps } from '@rc-component/picker';
-import generateConfig from '@rc-component/picker/lib/generate/moment';
+import generateConfig from '@rc-component/picker/lib/generate/dateFns';
 import locale from '@rc-component/picker/lib/locale/en_US';
-import { Moment } from 'moment';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+import { dateTime, DateTime, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
@@ -63,7 +62,7 @@ export const TimeOfDayPicker = ({
   const allowClear = restProps.allowEmpty ?? false;
 
   return (
-    <RcPicker<Moment>
+    <RcPicker<Date>
       id={id}
       generateConfig={generateConfig}
       locale={locale}
@@ -78,7 +77,7 @@ export const TimeOfDayPicker = ({
           container: cx(styles.picker, POPUP_CLASS_NAME),
         },
       }}
-      defaultValue={restProps.allowEmpty ? undefined : dateTimeAsMoment()}
+      defaultValue={restProps.allowEmpty ? undefined : new Date()}
       disabled={disabled}
       disabledTime={() => ({
         disabledHours,
@@ -88,12 +87,10 @@ export const TimeOfDayPicker = ({
       format={generateFormat(showHour, showSeconds)}
       minuteStep={minuteStep}
       onChange={(value) => {
-        if (isDateTimeInput(value)) {
-          if (restProps.allowEmpty) {
-            return restProps.onChange(value ? dateTime(value) : undefined);
-          } else {
-            return restProps.onChange(dateTime(value));
-          }
+        if (value && !Array.isArray(value)) {
+          restProps.onChange(dateTime(value));
+        } else if (restProps.allowEmpty) {
+          restProps.onChange(undefined);
         }
       }}
       picker="time"
@@ -101,7 +98,7 @@ export const TimeOfDayPicker = ({
       showNow={false}
       needConfirm={false}
       suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      value={value ? dateTimeAsMoment(value) : value}
+      value={value?.toDate()}
     />
   );
 };
