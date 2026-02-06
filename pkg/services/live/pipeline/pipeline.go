@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -20,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
+	stdurl "net/url"
 )
 
 const (
@@ -29,12 +32,30 @@ const (
 )
 
 // tracerProvider returns an OpenTelemetry TracerProvider configured to use
-// the Jaeger exporter that will send spans to the provided url. The returned
-// TracerProvider will also use a Resource configured with all the information
+// the OTLP HTTP exporter that will send spans to the provided url (Jaeger collector).
+// The returned TracerProvider will also use a Resource configured with all the information
 // about the application.
 func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
-	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+	// Create the OTLP HTTP exporter for Jaeger (Jaeger supports OTLP natively)
+	var opts []otlptracehttp.Option
+
+	// Extract host:port from URL and handle secure/insecure
+	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+		u, err := stdurl.Parse(url)
+		if err != nil {
+			return nil, fmt.Errorf("invalid tracer URL: %s", url)
+		}
+		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
+		if strings.HasPrefix(url, "http://") {
+			opts = append(opts, otlptracehttp.WithInsecure())
+		}
+	} else {
+		// Assume host:port format, default to insecure
+		opts = append(opts, otlptracehttp.WithEndpoint(url), otlptracehttp.WithInsecure())
+	}
+
+	client := otlptracehttp.NewClient(opts...)
+	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
 	}
