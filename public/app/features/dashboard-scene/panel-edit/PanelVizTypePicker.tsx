@@ -121,6 +121,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
           />
         ))}
       </TabsBar>
+      <div className={styles.stickySearchWrapper}>
       <Field
         className={styles.searchField}
         noMargin
@@ -151,6 +152,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
           />
         </Stack>
       </Field>
+      </div>
       <ScrollContainer marginTop={1}>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
@@ -191,6 +193,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%', // full size search area
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
     paddingBottom: theme.spacing(0.75),
+  }),
+  stickySearchWrapper: css({
+    boxShadow: theme.shadows.z1,
   }),
   tabs: css({
     width: '100%',
