@@ -510,8 +510,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		}
 
 		oldState, oldReason := s.State, s.StateReason
-		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
-		if isStale {
+		if stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve) {
 			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 
 			s.State = eval.Normal
