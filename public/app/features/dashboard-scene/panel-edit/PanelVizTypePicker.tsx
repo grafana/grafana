@@ -191,6 +191,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(2, 1.5, 0.1, 0), // input glow with the boundary without this
     width: '100%', // full size search area
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
+    paddingBottom: theme.spacing(0.75)
   }),
   ghostDiv: css({
     width: '100%',
