@@ -60,17 +60,6 @@ func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts le
 	return r.client.BulkProcess(ctx)
 }
 
-// bulkStoreClientStreamProvider creates streams using resourcepb.BulkStoreClient
-type bulkStoreClientStreamProvider struct {
-	client resourcepb.BulkStoreClient
-}
-
-func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts, registry)
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	return b.client.BulkProcess(ctx)
-}
-
 // This can migrate Folders, Dashboards and LibraryPanels
 func ProvideUnifiedMigrator(
 	dashboardAccess legacy.MigrationDashboardAccessor,
@@ -82,20 +71,6 @@ func ProvideUnifiedMigrator(
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
-		registry,
-	)
-}
-
-func ProvideUnifiedMigratorParquet(
-	dashboardAccess legacy.MigrationDashboardAccessor,
-	client resourcepb.BulkStoreClient,
-	registry *MigrationRegistry,
-) UnifiedMigrator {
-	return newUnifiedMigrator(
-		dashboardAccess,
-		&bulkStoreClientStreamProvider{client: client},
-		nil,
-		log.New("storage.unified.migrator.parquet"),
 		registry,
 	)
 }
