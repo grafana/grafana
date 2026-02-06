@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -66,4 +67,100 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 	}
 	require.True(t, found,
 		"should have warning message mentioning the malformed dashboard file or validation failure")
+}
+
+func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+
+	// Create a test repository with a dashboard file missing the name field
+	const repo = "job-warning-missing-name-repo"
+	testRepo := TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/dashboard-missing-name.json": "dashboard-no-name.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	}
+	helper.CreateRepo(t, testRepo)
+
+	// Execute a pull job - this should process the dashboard and result in a warning
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	// Verify the job completed with warning state
+	jobObj := &provisioning.Job{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+	require.NoError(t, err)
+
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"job should complete with warning state for missing name validation error")
+	require.NotEmpty(t, jobObj.Status.Warnings,
+		"job should have warnings for the missing name error")
+	require.Empty(t, jobObj.Status.Errors,
+		"missing name validation error should be treated as warning, not error")
+
+	// Verify the warning message contains the missing name error
+	found := false
+	for _, warningMsg := range jobObj.Status.Warnings {
+		if strings.Contains(warningMsg, "missing name in resource") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found,
+		"should have warning message mentioning missing name validation error")
+}
+
+func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+
+	// Create a test repository with a dashboard file with refresh interval too low
+	const repo = "job-warning-refresh-interval-repo"
+	testRepo := TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	}
+	helper.CreateRepo(t, testRepo)
+
+	// Execute a pull job - this should process the dashboard and result in a warning
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	// Verify the job completed with warning state
+	jobObj := &provisioning.Job{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+	require.NoError(t, err)
+
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"job should complete with warning state for refresh interval validation error")
+	require.NotEmpty(t, jobObj.Status.Warnings,
+		"job should have warnings for the refresh interval error")
+	require.Empty(t, jobObj.Status.Errors,
+		"refresh interval validation error should be treated as warning, not error")
+
+	// Verify the warning message contains the refresh interval error
+	found := false
+	for _, warningMsg := range jobObj.Status.Warnings {
+		if strings.Contains(warningMsg, "Dashboard refresh interval is too low") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found,
+		"should have warning message mentioning refresh interval validation error")
 }

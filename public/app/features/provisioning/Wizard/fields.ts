@@ -33,8 +33,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         'provisioning.shared.path-description',
         'Optional. Path to the subdirectory with the resources you want to sync.'
       ),
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      placeholder: 'grafana/',
+      placeholder: '',
     },
     url: {
       label: t('provisioning.shared.url-label', 'Repository URL'),
