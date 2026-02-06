@@ -1599,7 +1599,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		jj, err := json.MarshalIndent(res, "", "  ")
+		jj, _ := json.MarshalIndent(res, "", "  ")
 		//fmt.Printf("%s", string(jj))
 		require.JSONEq(t, `{
 			"kind": "DataSourceConnectionList",
@@ -1637,7 +1637,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		jj, err := json.MarshalIndent(res, "", "  ")
+		jj, _ := json.MarshalIndent(res, "", "  ")
 		require.JSONEq(t, `{
 			"kind": "DataSourceConnectionList",
 			"apiVersion": "query.grafana.app/v0alpha1",
@@ -1660,7 +1660,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		jj, err := json.MarshalIndent(res, "", "  ")
+		jj, _ := json.MarshalIndent(res, "", "  ")
 		require.JSONEq(t, `{
 			"kind": "DataSourceConnectionList",
 			"apiVersion": "query.grafana.app/v0alpha1",
@@ -1684,7 +1684,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		jj, err := json.MarshalIndent(res, "", "  ")
+		jj, _ := json.MarshalIndent(res, "", "  ")
 		require.JSONEq(t, `{
 			"kind": "DataSourceConnectionList",
 			"apiVersion": "query.grafana.app/v0alpha1",
