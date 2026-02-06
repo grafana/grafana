@@ -2,11 +2,11 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Drawer, Dropdown, Icon, Menu, MenuItem, Modal, Stack, Text } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
-import { ManageOwnerReferences } from 'app/core/components/OwnerReferences/ManageOwnerReferences';
+import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
@@ -144,7 +144,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
   // For now, only admins can manage folder owners
-  const showManageOwners = isAdmin && !isProvisionedFolder;
+  const showManageOwners = config.featureToggles.teamFolders && isAdmin && !isProvisionedFolder;
 
   const menu = (
     <Menu>
@@ -199,36 +199,13 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
         </Drawer>
       )}
       {showManageOwnersModal && (
-        <Modal
-          title={t('manage-owner-references.manage-folder-owner', 'Manage folder owner')}
-          isOpen={showManageOwnersModal}
+        <FolderOwnerModal
           onDismiss={() => setShowManageOwnersModal(false)}
-        >
-          <Stack gap={1} direction="column">
-            <Text element="p">
-              <Trans i18nKey="manage-owner-references.manage-folder-owner-alert-title">
-                Select a team to own this folder to help organise your resources.
-              </Trans>
-            </Text>
-            <Text element="p">
-              <Trans i18nKey="manage-owner-references.manage-folder-owner-alert-text">
-                Folders owned by teams that you belong to will be prioritised for you in the folder picker and other
-                locations.
-              </Trans>
-            </Text>
-            <Box paddingTop={1}>
-              <ManageOwnerReferences
-                resourceId={folder.uid}
-                onSave={() => {
-                  setShowManageOwnersModal(false);
-                }}
-                onRemove={() => {
-                  setShowManageOwnersModal(false);
-                }}
-              />
-            </Box>
-          </Stack>
-        </Modal>
+          onSave={() => setShowManageOwnersModal(false)}
+          onCancel={() => setShowManageOwnersModal(false)}
+          isOpen={showManageOwnersModal}
+          resourceId={folder.uid}
+        />
       )}
       {showDeleteProvisionedFolderDrawer && (
         <Drawer

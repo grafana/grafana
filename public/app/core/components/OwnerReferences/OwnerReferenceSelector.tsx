@@ -21,10 +21,10 @@ export const OwnerReferenceSelector = ({
   onChange,
   defaultTeamUid,
 }: {
-  onChange: (ownerRef: OwnerReference) => void;
+  onChange: (ownerRef: OwnerReference | null) => void;
   defaultTeamUid?: string;
 }) => {
-  const [selectedTeam, setSelectedTeam] = useState<ComboboxOption<string> | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<ComboboxOption<string> | string | null>(defaultTeamUid || null);
   const { data: teams, isLoading } = useListTeamQuery({});
   const teamsOptions = (teams?.items || []).map((team) => ({
     label: team.spec.title,
@@ -35,14 +35,22 @@ export const OwnerReferenceSelector = ({
       <Label htmlFor="owner-reference-selector">
         <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team</Trans>
       </Label>
+
       <Combobox
         id="owner-reference-selector"
+        isClearable
+        value={selectedTeam}
         loading={isLoading}
         options={teamsOptions}
-        value={selectedTeam || defaultTeamUid}
         placeholder={t('manage-owner-references.select-owner', 'Select an owner')}
         onChange={(team) => {
           setSelectedTeam(team);
+
+          if (!team) {
+            onChange(null);
+            return;
+          }
+
           onChange({
             apiVersion: OWNER_REFERENCE_API_VERSION,
             kind: OWNER_REFERENCE_KIND,
