@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDuration } from 'date-fns';
-import * as React from 'react';
+import { memo } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -29,11 +29,6 @@ export interface Props {
   isOnCanvas?: boolean;
 }
 
-/**
- * This component is used on dashboards to refresh visualizations.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-refreshpicker--docs
- */
 const offOption = {
   label: 'Off',
   value: '',
@@ -50,7 +45,12 @@ const autoOption = {
   ariaLabel: 'Select refresh from the query range',
 };
 
-const RefreshPickerComponent = React.memo((props: Props) => {
+/**
+ * This component is used on dashboards to refresh visualizations.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-refreshpicker--docs
+ */
+const RefreshPickerComponent = memo((props: Props) => {
   const {
     intervals,
     onRefresh,
