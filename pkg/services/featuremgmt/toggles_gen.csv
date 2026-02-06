@@ -264,7 +264,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-11-12,newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
-2026-02-06,excludeRedundantManagedPermissions,GA,@grafana/identity-access-team,false,false,false
+2026-02-06,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 2025-12-15,elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false

@@ -1349,7 +1349,7 @@ export interface FeatureToggles {
   onlyStoreActionSets?: boolean;
   /**
   * Exclude redundant individual dashboard/folder permissions from managed roles at query time
-  * @default true
+  * @default false
   */
   excludeRedundantManagedPermissions?: boolean;
   /**
