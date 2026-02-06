@@ -100,7 +100,7 @@ func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 	// Respond with a 410 Gone status code
 	return response.Error(
 		http.StatusGone,
-		"this endpoint has been removed, it is no longer needed after the LDAP configuration is loaded from the SSO settings",
+		"This endpoint has been removed. LDAP configuration is now loaded from SSO settings.",
 		nil,
 	)
 }

@@ -667,10 +667,10 @@ Content-Type: application/json
 ## Reload LDAP configuration
 
 {{% admonition type="warning" %}}
-This endpoint has been made obsolete in Grafana 12.4.0.
+Starting with Grafana 12.4.0, this endpoint is removed.
 {{% /admonition %}}
 
-This endpoint is obsolete and has been removed from the Admin API. It is no longer needed because SSO settings automatically reloads the LDAP settings from the database or from the .toml file.
+This endpoint has been removed from the Admin API. Starting with Grafana 12.4.0, SSO settings automatically reload the LDAP settings from the database or from the .toml file.
 
 `POST /api/admin/ldap/reload`
 
@@ -680,7 +680,7 @@ This endpoint is obsolete and has been removed from the Admin API. It is no long
 HTTP/1.1 410
 Content-Type: application/json
 
-{"message":"this endpoint has been removed, it is no longer needed after the LDAP configuration is loaded from the SSO settings"}
+{"message":"This endpoint has been removed. LDAP configuration is now loaded from SSO settings."}
 ```
 
 ## Rotate data encryption keys
