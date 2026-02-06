@@ -418,6 +418,7 @@ const Policy = (props: PolicyComponentProps) => {
 interface MetadataRowProps {
   matchingInstancesPreview: { groupsMap?: Map<string, AlertmanagerGroup[]>; enabled: boolean };
   numberOfAlertInstances?: number;
+  numberOfSubpolicies?: number;
   contactPoint?: string;
   groupBy?: string[];
   muteTimings?: string[];
@@ -438,6 +439,7 @@ interface MetadataRowProps {
 
 export function MetadataRow({
   numberOfAlertInstances,
+  numberOfSubpolicies,
   isDefaultPolicy,
   timingOptions,
   groupBy,
@@ -464,6 +466,8 @@ export function MetadataRow({
   const hasMuteTimings = Boolean(muteTimings.length);
   const hasActiveTimings = Boolean(activeTimings.length);
 
+  const numberOfSubpoliciesEnabled = numberOfSubpolicies !== undefined;
+
   return (
     <div className={styles.metadataRow}>
       <Stack direction="row" alignItems="center" gap={1}>
@@ -481,6 +485,14 @@ export function MetadataRow({
               <Trans i18nKey="alerting.policies.metadata.n-instances" count={numberOfAlertInstances ?? 0}>
                 instance
               </Trans>
+            </span>
+          </MetaText>
+        )}
+        {numberOfSubpoliciesEnabled && (
+          <MetaText icon="sitemap" data-testid="subpolicy-count">
+            <Text color="primary">{numberOfSubpolicies ?? '-'}</Text>{' '}
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.subpolicies">Subpolicies</Trans>
             </span>
           </MetaText>
         )}
