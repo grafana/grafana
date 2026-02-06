@@ -136,8 +136,8 @@ func (s *Server) runGroupResourcePhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) error {
-	var checks []*openfgav1.BatchCheckItem
-	checkIDToCorrelation := make(map[string]string)
+	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
+	checkIDToCorrelation := make(map[string]string, len(items))
 
 	for _, item := range items {
 		if item.resolved {
@@ -197,8 +197,8 @@ func (s *Server) runFolderPermissionPhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) error {
-	var checks []*openfgav1.BatchCheckItem
-	checkIDToCorrelation := make(map[string]string)
+	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
+	checkIDToCorrelation := make(map[string]string, len(items))
 
 	for _, item := range items {
 		if item.resolved {
@@ -270,8 +270,8 @@ func (s *Server) runFolderSubresourcePhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) error {
-	var checks []*openfgav1.BatchCheckItem
-	checkIDToCorrelation := make(map[string]string)
+	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
+	checkIDToCorrelation := make(map[string]string, len(items))
 
 	for _, item := range items {
 		if item.resolved {
