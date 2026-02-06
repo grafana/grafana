@@ -240,6 +240,70 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			require.EqualValues(t, 1, count) // only the current version
 		})
 	})
+
+	t.Run("updated rules should have FolderFullpath populated", func(t *testing.T) {
+		// Create a fake folder service for this test
+		fakeFolderService := foldertest.NewFakeService()
+		testStore := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
+
+		// Create two folders with known fullpaths
+		folderAUID := util.GenerateShortUID()
+		folderATitle := "Folder A"
+		folderBUID := util.GenerateShortUID()
+		folderBTitle := "Folder B"
+
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderAUID,
+			Title:    folderATitle,
+			OrgID:    1,
+			Fullpath: folderATitle,
+		})
+
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderBUID,
+			Title:    folderBTitle,
+			OrgID:    1,
+			Fullpath: folderBTitle,
+		})
+
+		// Create a rule in folder A using the low-level createRule helper
+		ruleGen := gen.With(gen.WithNamespaceUID(folderAUID), gen.WithOrgID(1))
+		rule := createRule(t, testStore, ruleGen)
+
+		// Manually set the folder_fullpath to simulate existing rule
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE alert_rule SET folder_fullpath = ? WHERE uid = ?", folderATitle, rule.UID)
+			return err
+		})
+		require.NoError(t, err)
+
+		// Fetch the rule to get current state
+		existingRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, folderATitle, existingRule.FolderFullpath, "Initial folder fullpath should be Folder A")
+
+		// Move the rule to folder B by updating NamespaceUID
+		newRule := models.CopyRule(existingRule)
+		newRule.NamespaceUID = folderBUID
+
+		err = testStore.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: existingRule,
+			New:      *newRule,
+		}})
+		require.NoError(t, err)
+
+		// Retrieve the rule and verify FolderFullpath is updated
+		updatedRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
+		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -905,6 +969,37 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, insertedRule.UpdatedBy)
+	})
+
+	t.Run("inserted rules should have FolderFullpath populated", func(t *testing.T) {
+		// Create a fake folder service for this test
+		fakeFolderService := foldertest.NewFakeService()
+		testStore := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
+
+		// Create a folder with a known fullpath
+		folderUID := util.GenerateShortUID()
+		folderTitle := "Test Folder"
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderUID,
+			Title:    folderTitle,
+			OrgID:    orgID,
+			Fullpath: folderTitle,
+		})
+
+		// Create an alert rule in this folder
+		rule := gen.With(gen.WithNamespaceUID(folderUID)).Generate()
+		insertedRules, err := testStore.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rule}})
+		require.NoError(t, err)
+		require.Len(t, insertedRules, 1)
+
+		// Retrieve the rule and verify FolderFullpath is populated
+		savedRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: orgID,
+			UID:   insertedRules[0].UID,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, savedRule.FolderFullpath, "FolderFullpath should be populated")
+		assert.Equal(t, folderTitle, savedRule.FolderFullpath, "FolderFullpath should match folder fullpath")
 	})
 }
 
@@ -2945,6 +3040,101 @@ func createTestStore(
 		Bus:            bus,
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
+}
+
+func Test_collectNamespaceUIDsByOrg(t *testing.T) {
+	t.Run("empty rules slice returns empty result", func(t *testing.T) {
+		result := collectNamespaceUIDsByOrg([]*models.AlertRule{})
+		require.Empty(t, result)
+	})
+
+	t.Run("rules with empty NamespaceUID are skipped", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: ""},
+			{OrgID: 1, NamespaceUID: ""},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Empty(t, result)
+	})
+
+	t.Run("single rule returns single entry", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple rules in same org/folder are deduplicated", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-1"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple folders in same org", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 1, NamespaceUID: "folder-1"}, // duplicate
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple orgs produce separate orgNamespaces entries", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 2, NamespaceUID: "folder-3"},
+			{OrgID: 2, NamespaceUID: "folder-4"},
+			{OrgID: 3, NamespaceUID: "folder-5"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 3)
+
+		// Sort by OrgID for consistent testing
+		slices.SortFunc(result, func(a, b orgNamespaces) int {
+			if a.OrgID < b.OrgID {
+				return -1
+			}
+			if a.OrgID > b.OrgID {
+				return 1
+			}
+			return 0
+		})
+
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+
+		assert.Equal(t, int64(2), result[1].OrgID)
+		assert.ElementsMatch(t, []string{"folder-3", "folder-4"}, result[1].NamespaceUIDs)
+
+		assert.Equal(t, int64(3), result[2].OrgID)
+		assert.ElementsMatch(t, []string{"folder-5"}, result[2].NamespaceUIDs)
+	})
+
+	t.Run("mix of empty and non-empty namespace UIDs", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: ""},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 1, NamespaceUID: ""},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+	})
 }
 
 type fakeBus struct {
