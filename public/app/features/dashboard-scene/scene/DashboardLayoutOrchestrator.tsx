@@ -303,61 +303,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
     // moving to a different TabsLayoutManager
     else {
-      const realDestinationIndex = this._mapTabInsertIndex(destinationManager, destinationIndex);
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(destinationIndex);
       // When moving a tab into a new tab group, make it the active tab.
       this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
     }
-  }
-
-  /**
-   * Calculates the correct index to insert a tab when dragging within the same TabsLayoutManager, accounting for repeated tabs.
-   * @param {TabsLayoutManager} destination - the TabsLayoutManager where the tab is being dragged over
-   * @param {number } destinationIndexIncludingRepeats - the index where the tab would be inserted if repeated tabs were included as separate entries
-   * @private
-   */
-  private _mapTabInsertIndex(destination: TabsLayoutManager, destinationIndexIncludingRepeats: number): number {
-    const allTabs = destination.getTabsIncludingRepeats();
-    const ranges = new Map<string, { start: number; end: number }>();
-
-    for (let i = 0; i < allTabs.length; i++) {
-      const t = allTabs[i];
-      const originalKey = t.state.repeatSourceKey ?? t.state.key;
-      if (!originalKey) {
-        continue;
-      }
-      const existing = ranges.get(originalKey);
-      if (!existing) {
-        ranges.set(originalKey, { start: i, end: i + 1 });
-      } else {
-        existing.end = i + 1;
-      }
-    }
-
-    const originalTabs = destination.state.tabs;
-    const insertAt = Math.max(0, Math.min(destinationIndexIncludingRepeats, allTabs.length));
-
-    for (let originalIndex = 0; originalIndex < originalTabs.length; originalIndex++) {
-      const originalKey = originalTabs[originalIndex].state.key;
-      if (!originalKey) {
-        continue;
-      }
-      const range = ranges.get(originalKey);
-      if (!range) {
-        continue;
-      }
-
-      // If inserting before the group, insert before this original tab.
-      if (insertAt <= range.start) {
-        return originalIndex;
-      }
-
-      // If inserting inside the group (between original and its repeats), insert after the group.
-      if (insertAt < range.end) {
-        return originalIndex + 1;
-      }
-    }
-
-    return originalTabs.length;
   }
 
   private _moveTabBetweenManagers(
