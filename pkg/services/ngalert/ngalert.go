@@ -601,7 +601,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
 		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
 
-		// Existing: Increment version for all rules
+		// Increment version for all rules
 		updatedKeys, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
 		if err != nil {
 			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
@@ -609,7 +609,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 		}
 		logger.Info("Updated version for alert rules", "keys", updatedKeys)
 
-		// NEW: Update folder fullpaths for all rules
+		// Update folder fullpaths for all rules
 		if err := dbStore.UpdateFolderFullpathsForFolders(ctx, evt.OrgID, evt.UIDs); err != nil {
 			logger.Error("Failed to update folder fullpaths for alert rules", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
 			return err
