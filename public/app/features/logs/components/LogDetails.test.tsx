@@ -16,8 +16,6 @@ import {
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 
-import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../logsFrame';
-
 import { LogDetails, Props } from './LogDetails';
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -358,12 +356,12 @@ describe('LogDetails', () => {
         { name: 'body', type: FieldType.string, values: [entry] },
         { name: 'id', type: FieldType.string, values: ['1'] },
         {
-          name: DATAPLANE_LABELS_NAME,
+          name: 'labels',
           type: FieldType.other,
           values: [labels],
         },
         {
-          name: DATAPLANE_LABEL_TYPES_NAME,
+          name: 'labelTypes',
           type: FieldType.other,
           values: [
             {

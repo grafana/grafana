@@ -2,7 +2,7 @@ import { invert } from 'lodash';
 
 import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
 
-import { DATAPLANE_LABEL_TYPES_NAME, LabelType } from './types';
+import { LabelType } from './types';
 
 function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
@@ -99,7 +99,7 @@ export function isBytesString(string: string) {
  * @param frame
  * @param index - if null, will check every value in the data frame for a match.
  */
-export function getLokiLabelTypeFromFrame(
+export function getLabelTypeFromFrame(
   labelKey: string,
   frame: DataFrame | undefined,
   index: number | null
@@ -108,7 +108,7 @@ export function getLokiLabelTypeFromFrame(
     return null;
   }
 
-  const typeField = frame.fields.find((field) => field.name === DATAPLANE_LABEL_TYPES_NAME);
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes');
 
   if (!typeField) {
     return null;

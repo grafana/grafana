@@ -2,18 +2,12 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  DataFrameType,
-  DataSourceWithLogsLabelTypesSupport,
-  GrafanaTheme2,
-  hasLogsLabelTypesSupport,
-  store,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
+import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
@@ -41,7 +35,6 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
-    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -58,15 +51,12 @@ export const LogLineDetailsComponent = memo(
       };
     }, [log.entryFieldIndex, log.fields]);
 
-    const fieldsWithoutLinks = useMemo(
-      () =>
-        log.dataFrame.meta?.type === DataFrameType.LogLines
-          ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-            []
-          : // for other frames, do not show the log message unless there is a link attached
-            log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
-      [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
-    );
+    const fieldsWithoutLinks =
+      log.dataFrame.meta?.type === DataFrameType.LogLines
+        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+          []
+        : // for other frames, do not show the log message unless there is a link attached
+          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
 
     const labelsWithLinks: LabelWithLinks[] = useMemo(
       () =>
@@ -82,16 +72,10 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const groupedLabels = useMemo(() => {
-      if (!ds) {
-        return {};
-      }
-      return groupBy(
-        labelsWithLinks,
-        (label) => ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? ''
-      );
-    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex]);
-
+    const groupedLabels = useMemo(
+      () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
+      [labelsWithLinks, log]
+    );
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
@@ -155,17 +139,6 @@ export const LogLineDetailsComponent = memo(
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    useEffect(() => {
-      const setDatasource = async () => {
-        const datasource = await getDataSourceSrv().get(log.datasourceUid);
-        if (datasource && hasLogsLabelTypesSupport(datasource)) {
-          setDs(datasource);
-        }
-      };
-
-      setDatasource();
-    }, [log.datasourceUid]);
 
     return (
       <>

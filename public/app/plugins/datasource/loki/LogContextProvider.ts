@@ -32,7 +32,7 @@ import {
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
-import { escapeLabelValueInExactSelector, getLokiLabelTypeFromFrame } from './languageUtils';
+import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
   getNodePositionsFromQuery,
@@ -372,7 +372,7 @@ export class LogContextProvider {
 
     const contextFilters: ContextFilter[] = [];
     Object.entries(rowLabels).forEach(([label, value]) => {
-      const labelType = getLokiLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
+      const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
       const filter: ContextFilter = {
         label,
         value: value,

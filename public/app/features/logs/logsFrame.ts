@@ -33,8 +33,7 @@ export const LOGS_DATAPLANE_TIMESTAMP_NAME = 'timestamp';
 export const LOGS_DATAPLANE_BODY_NAME = 'body';
 const DATAPLANE_SEVERITY_NAME = 'severity';
 export const DATAPLANE_ID_NAME = 'id';
-export const DATAPLANE_LABELS_NAME = 'labels';
-export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
+const DATAPLANE_LABELS_NAME = 'labels';
 
 // NOTE: this is a hot fn, we need to avoid allocating new objects here
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {

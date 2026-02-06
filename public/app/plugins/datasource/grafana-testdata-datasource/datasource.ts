@@ -18,11 +18,9 @@ import {
   AnnotationQuery,
   getSearchFilterScopedVar,
   FieldType,
-  DataSourceWithLogsLabelTypesSupport,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { DATAPLANE_LABEL_TYPES_NAME } from './constants';
 import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
@@ -30,10 +28,7 @@ import { runStream } from './runStreams';
 import { flameGraphData, flameGraphDataDiff } from './testData/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
 
-export class TestDataDataSource
-  extends DataSourceWithBackend<TestDataDataQuery>
-  implements DataSourceWithLogsLabelTypesSupport
-{
+export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery> {
   scenariosCache?: Promise<Scenario[]>;
 
   constructor(
@@ -60,24 +55,6 @@ export class TestDataDataSource
         };
       },
     };
-  }
-
-  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): string | null {
-    if (!frame) {
-      return null;
-    }
-
-    const typeField = frame.fields.find((field) => field.name === DATAPLANE_LABEL_TYPES_NAME);
-
-    if (!typeField) {
-      return null;
-    }
-
-    if (index === null) {
-      index = typeField.values.findIndex((typeFieldValue) => typeFieldValue[labelKey]);
-    }
-
-    return typeField?.values[index]?.[labelKey] ?? null;
   }
 
   getDefaultQuery(): Partial<TestDataDataQuery> {
