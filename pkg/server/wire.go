@@ -244,10 +244,7 @@ var wireBasicSet = wire.NewSet(
 	provisioning.ProvideStubProvisioningService,
 	legacy.ProvideMigratorDashboardAccessor,
 	legacy.ProvidePlaylistMigrator,
-	dashboardmigration.NewDashboardFolderRegistrar,
-	playlistmigration.NewPlaylistRegistrar,
-	provideMigrationRegistrars,
-	unifiedmigrations.ProvideMigrationRegistry,
+	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
@@ -580,15 +577,16 @@ func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSuppl
 }
 
 /*
-provideMigrationRegistrars collects all migration registrars for Wire.
-This function lives in the server package because it imports concrete
-registrar types from multiple packages (migrations, playlist, etc.).
-When adding a new resource migration, add the registrar parameter here
-and append it to the returned slice.
+provideMigrationRegistry builds the MigrationRegistry directly from the
+underlying dependencies. When adding a new resource migration, add the
+dependency parameter here and register it with the registry.
 */
-func provideMigrationRegistrars(
-	dashFolders *dashboardmigration.DashboardFolderRegistrar,
-	playlists *playlistmigration.PlaylistRegistrar,
-) []unifiedmigrations.MigrationRegistrar {
-	return []unifiedmigrations.MigrationRegistrar{dashFolders, playlists}
+func provideMigrationRegistry(
+	accessor legacy.MigrationDashboardAccessor,
+	playlistMigrator legacy.PlaylistMigrator,
+) *unifiedmigrations.MigrationRegistry {
+	r := unifiedmigrations.NewMigrationRegistry()
+	r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
+	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	return r
 }

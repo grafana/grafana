@@ -11,33 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-/*
-MigrationRegistrar allows teams to independently register their resource migrations
-with the MigrationRegistry. Each team implements this interface in their own package,
-wiring their specific dependencies (e.g., database accessors) and registering one or
-more MigrationDefinitions.
-
-Example implementation for a new resource:
-
-	type MyResourceRegistrar struct {
-	    migrator MyResourceMigrator
-	}
-
-	func (r *MyResourceRegistrar) RegisterMigrations(registry *MigrationRegistry) {
-	    gr := schema.GroupResource{Group: "mygroup.grafana.app", Resource: "myresources"}
-	    registry.Register(MigrationDefinition{
-	        ID:          "myresources",
-	        MigrationID: "myresources migration",
-	        Resources:   []ResourceInfo{{GroupResource: gr, LockTable: "my_resource"}},
-	        Migrators:   map[schema.GroupResource]MigratorFunc{gr: r.migrator.MigrateMyResources},
-	        Validators:  []ValidatorFactory{CountValidation(gr, "my_resource", "org_id = ?")},
-	    })
-	}
-*/
-type MigrationRegistrar interface {
-	RegisterMigrations(r *MigrationRegistry)
-}
-
 // Validator interface validates migration results.
 type Validator interface {
 	Name() string

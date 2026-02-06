@@ -9,23 +9,15 @@ import (
 )
 
 /*
-DashboardFolderRegistrar registers the folders and dashboards migration.
+FoldersDashboardsMigration returns the migration definition for folders and dashboards.
 This is owned by the dashboard team and uses the MigrationDashboardAccessor
 to stream folder and dashboard resources from legacy SQL storage.
 */
-type DashboardFolderRegistrar struct {
-	accessor legacy.MigrationDashboardAccessor
-}
-
-func NewDashboardFolderRegistrar(accessor legacy.MigrationDashboardAccessor) *DashboardFolderRegistrar {
-	return &DashboardFolderRegistrar{accessor: accessor}
-}
-
-func (r *DashboardFolderRegistrar) RegisterMigrations(registry *migrations.MigrationRegistry) {
+func FoldersDashboardsMigration(accessor legacy.MigrationDashboardAccessor) migrations.MigrationDefinition {
 	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
 	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
 
-	registry.Register(migrations.MigrationDefinition{
+	return migrations.MigrationDefinition{
 		ID:          "folders-dashboards",
 		MigrationID: "folders and dashboards migration",
 		Resources: []migrations.ResourceInfo{
@@ -33,13 +25,13 @@ func (r *DashboardFolderRegistrar) RegisterMigrations(registry *migrations.Migra
 			{GroupResource: dashboardGR, LockTable: "dashboard"},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
-			folderGR:    r.accessor.MigrateFolders,
-			dashboardGR: r.accessor.MigrateDashboards,
+			folderGR:    accessor.MigrateFolders,
+			dashboardGR: accessor.MigrateDashboards,
 		},
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(folderGR, "dashboard", "org_id = ? AND is_folder = true AND deleted IS NULL"),
 			migrations.CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
 			migrations.FolderTreeValidation(folderGR),
 		},
-	})
+	}
 }

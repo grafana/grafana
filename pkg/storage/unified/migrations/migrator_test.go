@@ -439,10 +439,9 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			// Create migrator with mock client
 			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
 			mockPlaylist := &legacy.MockPlaylistMigrator{}
-			registry := migrations.BuildMigrationRegistry(
-				dashboardpkg.NewDashboardFolderRegistrar(mockAccessor),
-				playlistpkg.NewPlaylistRegistrar(mockPlaylist),
-			)
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 			migrator := migrations.ProvideUnifiedMigrator(
 				mockAccessor,
 				mockClient,
@@ -498,10 +497,9 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	// Create migrator with mock client
 	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
 	mockPlaylist := &legacy.MockPlaylistMigrator{}
-	registry := migrations.BuildMigrationRegistry(
-		dashboardpkg.NewDashboardFolderRegistrar(mockAccessor),
-		playlistpkg.NewPlaylistRegistrar(mockPlaylist),
-	)
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 	migrator := migrations.ProvideUnifiedMigrator(
 		mockAccessor,
 		mockClient,
@@ -689,10 +687,9 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			// Create migrator with mock client
 			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
 			mockPlaylist := &legacy.MockPlaylistMigrator{}
-			registry := migrations.BuildMigrationRegistry(
-				dashboardpkg.NewDashboardFolderRegistrar(mockAccessor),
-				playlistpkg.NewPlaylistRegistrar(mockPlaylist),
-			)
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 			migrator := migrations.ProvideUnifiedMigrator(
 				mockAccessor,
 				mockClient,
@@ -764,10 +761,9 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	// Create migrator with mock client
 	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
 	mockPlaylist := &legacy.MockPlaylistMigrator{}
-	registry := migrations.BuildMigrationRegistry(
-		dashboardpkg.NewDashboardFolderRegistrar(mockAccessor),
-		playlistpkg.NewPlaylistRegistrar(mockPlaylist),
-	)
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 	migrator := migrations.ProvideUnifiedMigrator(
 		mockAccessor,
 		mockClient,
