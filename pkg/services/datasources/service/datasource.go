@@ -243,55 +243,48 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 		Items: []queryV0.DataSourceConnection{},
 	}
 
+	var dss []*datasources.DataSource
 	if query.Name != "" {
-		dss, err := s.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		ds, err := s.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 			OrgID: ns.OrgID,
 			UID:   query.Name,
 		})
 		if err != nil {
 			return nil, err
 		}
-		if dss != nil {
+		if ds != nil {
 			// If both name+plugin exist, we need to verify the type
-			if query.Plugin != "" && dss.Type != query.Plugin {
-				p, _ := s.pluginStore.Plugin(ctx, dss.Type)
+			if query.Plugin != "" && ds.Type != query.Plugin {
+				p, _ := s.pluginStore.Plugin(ctx, ds.Type)
 				if !(slices.Contains(p.AliasIDs, query.Plugin)) {
 					return result, nil
 				}
 			}
-
-			// TODO! Check permissions
-			// s.ac.Evaluate()
-
-			v, err := s.asConnection(dss)
-			if err != nil {
-				return nil, err
-			}
-			result.Items = append(result.Items, *v)
+			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
-		return result, nil
-	}
-
-	var dss []*datasources.DataSource
-	if query.Plugin != "" {
+	} else if query.Plugin != "" {
 		dss, err = s.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
 			OrgID: ns.OrgID,
-			Type:  query.Plugin,
+			Type:  query.Plugin, // will support alias
 		})
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,
 			DataSourceLimit: 10000, // Do a full query
-			//User:            user,
 		})
 	}
 	if err != nil {
 		return nil, err
 	}
+
 	for _, ds := range dss {
-		if query.Plugin != "" && ds.Type != query.Plugin {
+		// Skip datasources they can not see
+		evaluator := accesscontrol.EvalPermission(datasources.ActionRead,
+			datasources.ScopeProvider.GetResourceScopeUID(ds.UID))
+		if ok, _ := s.ac.Evaluate(ctx, user, evaluator); !ok {
 			continue
 		}
+
 		v, err := s.asConnection(ds)
 		if err != nil {
 			return nil, err
