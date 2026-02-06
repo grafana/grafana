@@ -121,7 +121,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(2),
-      backgroundColor: theme.colors.background.secondary,
+      backgroundColor: '#1e2939',
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
