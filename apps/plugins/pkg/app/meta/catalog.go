@@ -109,7 +109,10 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		return p.findChildMeta(ctx, ref.ID, gcomMeta, logger)
 	}
 
-	metaSpec := grafanaComPluginVersionMetaToMetaSpec(ctx, logger, gcomMeta, "")
+	metaSpec, err := grafanaComPluginVersionMetaToMetaSpec(logger, gcomMeta, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert plugin metadata: %w", err)
+	}
 	return &Result{
 		Meta: metaSpec,
 		TTL:  p.ttl,
@@ -120,7 +123,10 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, parentMeta grafanaComPluginVersionMeta, logger logging.Logger) (*Result, error) {
 	for _, child := range parentMeta.Children {
 		if child.JSON.Id == childID {
-			metaSpec := grafanaComChildPluginVersionToMetaSpec(ctx, logger, child, parentMeta)
+			metaSpec, err := grafanaComChildPluginVersionToMetaSpec(logger, child, parentMeta)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert child plugin metadata: %w", err)
+			}
 			return &Result{
 				Meta: metaSpec,
 				TTL:  p.ttl,

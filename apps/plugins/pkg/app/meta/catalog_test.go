@@ -176,9 +176,16 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug: "test-plugin",
-				Version:    "1.0.0",
-				JSON:       expectedMeta,
+				PluginSlug:          "test-plugin",
+				Version:             "1.0.0",
+				JSON:                expectedMeta,
+				CDNURL:              "https://cdn.grafana.com",
+				CreatePluginVersion: "4.15.0",
+				Manifest: grafanaComPluginManifest{
+					Files: map[string]string{
+						"module.js": "hash123",
+					},
+				},
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -228,9 +235,16 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			assert.Equal(t, "Bearer "+expectedToken, r.Header.Get("Authorization"))
 
 			response := grafanaComPluginVersionMeta{
-				PluginSlug: "test-plugin",
-				Version:    "1.0.0",
-				JSON:       expectedMeta,
+				PluginSlug:          "test-plugin",
+				Version:             "1.0.0",
+				JSON:                expectedMeta,
+				CDNURL:              "https://cdn.grafana.com",
+				CreatePluginVersion: "4.15.0",
+				Manifest: grafanaComPluginManifest{
+					Files: map[string]string{
+						"module.js": "hash123",
+					},
+				},
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -272,8 +286,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result.Meta.Module)
-		require.NotNil(t, result.Meta.Module.Hash)
-		assert.Equal(t, "", *result.Meta.Module.Hash)
+		assert.Nil(t, result.Meta.Module.Hash)
 	})
 
 	t.Run("calculates loading strategy correctly", func(t *testing.T) {
@@ -299,7 +312,9 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 						CDNURL:              "https://cdn.grafana.com",
 						CreatePluginVersion: tc.createPluginVersion,
 						Manifest: grafanaComPluginManifest{
-							Files: map[string]string{"/module.js": "hash123"},
+							Files: map[string]string{
+								"module.js": "hash123",
+							},
 						},
 					}
 
@@ -332,7 +347,9 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CDNURL:              "https://cdn.grafana.com",
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{"/module.js": "hash123"},
+					Files: map[string]string{
+						"module.js": "hash123",
+					},
 				},
 				Children: []grafanaComChildPluginVersion{},
 			}
@@ -359,7 +376,9 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CDNURL:              "https://cdn.grafana.com",
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{"/module.js": "hash123"},
+					Files: map[string]string{
+						"module.js": "hash123",
+					},
 				},
 			}
 
@@ -388,7 +407,9 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CDNURL:              "https://cdn.grafana.com",
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{"/module.js": "hash123"},
+					Files: map[string]string{
+						"module.js": "hash123",
+					},
 				},
 				Children: []grafanaComChildPluginVersion{
 					{Slug: "other-child", JSON: pluginsv0alpha1.MetaJSONData{Id: "other-child"}},

@@ -422,7 +422,7 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 	metaManager := meta.NewProviderManager(mockProv)
 
 	mockReg := newMockPluginRegistrar()
-	reconciler := NewChildPluginReconciler(metaManager, mockReg)
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
 
 	plugin := &pluginsv0alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
