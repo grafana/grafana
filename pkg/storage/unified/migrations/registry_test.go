@@ -689,3 +689,7 @@ func (m *mockMigrationAccessor) MigrateLibraryPanels(ctx context.Context, orgId 
 func (m *mockMigrationAccessor) MigratePlaylists(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	return nil
 }
+
+func (m *mockMigrationAccessor) MigrateShortURLs(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	return nil
+}

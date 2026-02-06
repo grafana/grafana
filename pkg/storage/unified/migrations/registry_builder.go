@@ -4,6 +4,7 @@ import (
 	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -53,6 +54,22 @@ func BuildMigrationRegistry(accessor legacy.MigrationDashboardAccessor) *Migrati
 		},
 		Validators: []ValidatorFactory{
 			CountValidation(playlistGR, "playlist", "org_id = ?"),
+		},
+	})
+
+	shortUrlGR := schema.GroupResource{Group: shorturl.APIGroup, Resource: "shorturls"}
+
+	r.Register(MigrationDefinition{
+		ID:          "shorturls",
+		MigrationID: "shorturls migration",
+		Resources: []ResourceInfo{
+			{GroupResource: shortUrlGR, LockTable: "short_url"},
+		},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			shortUrlGR: accessor.MigrateShortURLs,
+		},
+		Validators: []ValidatorFactory{
+			CountValidation(shortUrlGR, "short_url", "org_id = ?"),
 		},
 	})
 
