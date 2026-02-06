@@ -1,4 +1,3 @@
-import { isPlainObject } from 'lodash';
 import { useCallback } from 'react';
 import * as React from 'react';
 
@@ -68,7 +67,7 @@ export function CellActions({
                 let inspectValue = cell.value;
                 try {
                   const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
-                  if (Array.isArray(parsed) || isPlainObject(parsed)) {
+                  if (Array.isArray(parsed) || (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed))) {
                     inspectValue = JSON.stringify(parsed, null, 2);
                     mode = TableCellInspectorMode.code;
                   }
