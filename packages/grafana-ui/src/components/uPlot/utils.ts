@@ -105,7 +105,7 @@ export function getStackingGroups(frame: DataFrame) {
       return;
     }
 
-    let { stacking } = custom;
+    let { stacking, clusteredStacking } = custom;
 
     if (stacking == null) {
       return;
@@ -114,7 +114,7 @@ export function getStackingGroups(frame: DataFrame) {
     let { mode: stackingMode, group: stackingGroup } = stacking;
 
     // not stacking
-    if (stackingMode === StackingMode.None) {
+    if (stackingMode === StackingMode.None && !clusteredStacking) {
       return;
     }
 
@@ -156,7 +156,7 @@ export function getStackingGroups(frame: DataFrame) {
 export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
-  onStackMeta?: (meta: StackMeta) => void
+  onStackMeta?: (meta: StackMeta) => void,
 ): AlignedData {
   let data = Array(frame.fields.length);
 
@@ -225,8 +225,8 @@ export function preparePlotData2(
     }
 
     let stackingMode = custom.stacking?.mode;
-
-    if (!stackingMode || stackingMode === StackingMode.None) {
+    let clusteredStacking = custom.clusteredStacking.mode;
+    if ((!stackingMode || stackingMode === StackingMode.None) && !clusteredStacking) {
       data[i] = vals;
     } else {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
