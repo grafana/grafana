@@ -95,13 +95,13 @@ func TestFolderTree_Ancestors(t *testing.T) {
 		assert.Len(t, ancestors, 0)
 	})
 
-	//t.Run("top-level folder has general as ancestor", func(t *testing.T) {
-	//	var ancestors []string
-	//	for node := range tree.Ancestors("root") {
-	//		ancestors = append(ancestors, node.UID)
-	//	}
-	//	assert.Equal(t, []string{GeneralFolderUID}, ancestors)
-	//})
+	t.Run("top-level folder has general as ancestor", func(t *testing.T) {
+		var ancestors []string
+		for node := range tree.Ancestors("root") {
+			ancestors = append(ancestors, node.UID)
+		}
+		assert.Equal(t, []string{GeneralFolderUID}, ancestors)
+	})
 
 	t.Run("leaf folder has all ancestors including general", func(t *testing.T) {
 		var ancestors []string
