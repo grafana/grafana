@@ -1717,6 +1717,20 @@
     },
     {
       "metadata": {
+        "name": "excludeRedundantManagedPermissions",
+        "resourceVersion": "1770369083602",
+        "creationTimestamp": "2026-02-06T09:11:23Z"
+      },
+      "spec": {
+        "description": "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "experimentRecentlyViewedDashboards",
         "resourceVersion": "1768214542023",
         "creationTimestamp": "2026-01-13T15:22:20Z"
