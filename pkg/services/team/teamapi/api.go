@@ -30,7 +30,6 @@ type TeamAPI struct {
 	teamBindingClient      *iamv0alpha1.TeamBindingClient
 }
 
-// ProvideTeamBindingClient provides a TeamBindingClient using the ClientGenerator
 func ProvideTeamBindingClient(clientGenerator resource.ClientGenerator) (*iamv0alpha1.TeamBindingClient, error) {
 	return iamv0alpha1.NewTeamBindingClientFromGenerator(clientGenerator)
 }

@@ -178,6 +178,23 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 		defaultShouldRedirect = false
 	)
 
+	cmd := team.SetTeamMembershipsCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+	orgID := c.GetOrgID()
+
+	// Validate the team
+	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
+
 	shouldRedirect := openfeature.NewDefaultClient().Boolean(
 		ctx,
 		featuremgmt.FlagKubernetesTeamsHandlerRedirect,
@@ -186,26 +203,10 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 	)
 
 	if shouldRedirect {
-		// Call the TeamBinding API to update team memberships
-		return tapi.setTeamMembershipsViaK8s(c)
+		return tapi.setTeamMembershipsViaK8s(c, teamID, cmd)
 	}
 
-	cmd := team.SetTeamMembershipsCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
-	}
-	orgId := c.GetOrgID()
-
-	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
-	if resp != nil {
-		return resp
-	}
-
-	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgId, teamId, cmd, c.SignedInUser)
+	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgID, teamID, cmd, c.SignedInUser)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) || errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, err.Error(), nil)
@@ -213,7 +214,7 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusInternalServerError, "Failed to parse team membership updates", err)
 	}
 
-	_, err = tapi.teamPermissionsService.SetPermissions(c.Req.Context(), orgId, strconv.FormatInt(teamId, 10), teamMemberships...)
+	_, err = tapi.teamPermissionsService.SetPermissions(c.Req.Context(), orgID, strconv.FormatInt(teamID, 10), teamMemberships...)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) || errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, err.Error(), nil)
@@ -410,28 +411,15 @@ type GetTeamMembersResponse struct {
 }
 
 // setTeamMembershipsViaK8s updates team memberships using the TeamBinding K8s API
-func (tapi *TeamAPI) setTeamMembershipsViaK8s(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) setTeamMembershipsViaK8s(
+	c *contextmodel.ReqContext,
+	teamID int64,
+	cmd team.SetTeamMembershipsCommand,
+) response.Response {
 	ctx := c.Req.Context()
-
-	cmd := team.SetTeamMembershipsCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
-	}
-
 	orgID := c.GetOrgID()
 	namespace := fmt.Sprintf("org-%d", orgID)
 	teamName := strconv.FormatInt(teamID, 10)
-
-	// Validate the team
-	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
-	if resp != nil {
-		return resp
-	}
 
 	// Build map of desired memberships
 	adminEmails := make(map[string]struct{}, len(cmd.Admins))
@@ -443,19 +431,86 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(c *contextmodel.ReqContext) respon
 		memberEmails[member] = struct{}{}
 	}
 
+	// Validate all users exist upfront before making any changes
+	if err := tapi.validateUsersExist(ctx, adminEmails, memberEmails); err != nil {
+		return response.Error(http.StatusNotFound, "User validation failed", err)
+	}
+
 	// Get all existing TeamBindings for this team
-	existingBindings, err := tapi.teamBindingClient.List(ctx, namespace, resource.ListOptions{
-		FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", teamName)},
-	})
+	existingBindings, err := tapi.teamBindingClient.List(
+		ctx,
+		namespace, resource.ListOptions{
+			FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", teamName)},
+		})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list existing team bindings", err)
 	}
 
 	// Track which bindings need to be updated vs deleted
-	bindingsToUpdate := make(map[string]*iamv0alpha1.TeamBinding)
-	bindingsToDelete := make([]*iamv0alpha1.TeamBinding, 0)
+	bindingsToUpdate, bindingsToDelete := tapi.processExistingBindings(
+		ctx,
+		existingBindings,
+		adminEmails,
+		memberEmails,
+	)
 
-	// Process existing bindings
+	// Update existing bindings
+	for _, binding := range bindingsToUpdate {
+		_, err := tapi.teamBindingClient.Update(ctx, binding, resource.UpdateOptions{})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to update team binding for user %s", binding.Spec.Subject.Name), err)
+		}
+	}
+
+	// Create new bindings for admins
+	if err := tapi.createTeamBindingsForUsers(
+		ctx,
+		namespace,
+		teamName,
+		adminEmails,
+		iamv0alpha1.TeamBindingTeamPermissionAdmin,
+	); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for admins", err)
+	}
+
+	// Create new bindings for members
+	if err := tapi.createTeamBindingsForUsers(
+		ctx,
+		namespace,
+		teamName,
+		memberEmails,
+		iamv0alpha1.TeamBindingTeamPermissionMember,
+	); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for members", err)
+	}
+
+	// Delete bindings that are no longer needed
+	for _, binding := range bindingsToDelete {
+		err := tapi.teamBindingClient.Delete(ctx, resource.Identifier{
+			Namespace: binding.Namespace,
+			Name:      binding.Name,
+		}, resource.DeleteOptions{})
+		if err != nil {
+			tapi.logger.Error("Failed to delete team binding", "name", binding.Name, "error", err)
+			return response.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to delete team binding %s", binding.Name), err)
+		}
+	}
+
+	return response.Success("Team memberships have been updated")
+}
+
+// processExistingBindings iterates through existing TeamBindings and determines which ones
+// need to be updated or deleted based on the desired admin and member emails.
+// It modifies adminEmails and memberEmails maps by removing processed entries.
+func (tapi *TeamAPI) processExistingBindings(
+	ctx context.Context,
+	existingBindings *iamv0alpha1.TeamBindingList,
+	adminEmails map[string]struct{},
+	memberEmails map[string]struct{},
+) (bindingsToUpdate map[string]*iamv0alpha1.TeamBinding, bindingsToDelete []*iamv0alpha1.TeamBinding) {
+	bindingsToUpdate = make(map[string]*iamv0alpha1.TeamBinding)
+	bindingsToDelete = make([]*iamv0alpha1.TeamBinding, 0)
+
 	for i := range existingBindings.Items {
 		binding := &existingBindings.Items[i]
 
@@ -498,95 +553,79 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(c *contextmodel.ReqContext) respon
 		bindingsToDelete = append(bindingsToDelete, binding)
 	}
 
-	// Update existing bindings
-	for _, binding := range bindingsToUpdate {
-		_, err := tapi.teamBindingClient.Update(ctx, binding, resource.UpdateOptions{})
+	return bindingsToUpdate, bindingsToDelete
+}
+
+func (tapi *TeamAPI) createTeamBindingsForUsers(
+	ctx context.Context,
+	namespace string,
+	teamName string,
+	userEmails map[string]struct{},
+	permission iamv0alpha1.TeamBindingTeamPermission,
+) error {
+	for email := range userEmails {
+		user, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to update team binding for user %s", binding.Spec.Subject.Name), err)
+			return fmt.Errorf("user with email %s not found: %w", email, err)
+		}
+
+		binding := &iamv0alpha1.TeamBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+				Kind:       "TeamBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: namespace,
+				Name:      fmt.Sprintf("tb-%s-%d", teamName, user.ID),
+			},
+			Spec: iamv0alpha1.TeamBindingSpec{
+				Subject: iamv0alpha1.TeamBindingspecSubject{
+					Name: strconv.FormatInt(user.ID, 10),
+				},
+				TeamRef: iamv0alpha1.TeamBindingTeamRef{
+					Name: teamName,
+				},
+				Permission: permission,
+				External:   false,
+			},
+		}
+
+		if _, err = tapi.teamBindingClient.Create(ctx, binding, resource.CreateOptions{}); err != nil {
+			return fmt.Errorf("create team binding for user %s: %w", email, err)
 		}
 	}
 
-	// Create new bindings for admins
+	return nil
+}
+
+// validateUsersExist checks that all users in the provided email maps exist before making any changes.
+// This provides fail-fast behavior to avoid partial updates.
+func (tapi *TeamAPI) validateUsersExist(
+	ctx context.Context,
+	adminEmails map[string]struct{},
+	memberEmails map[string]struct{},
+) error {
+	// Collect all emails to validate
+	allEmails := make([]string, 0, len(adminEmails)+len(memberEmails))
 	for email := range adminEmails {
-		user, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
-		if err != nil {
-			tapi.logger.Error("Failed to find user", "email", email, "error", err)
-			return response.Error(http.StatusNotFound, fmt.Sprintf("User with email %s not found", email), err)
-		}
-
-		binding := &iamv0alpha1.TeamBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-				Kind:       "TeamBinding",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace:    namespace,
-				GenerateName: fmt.Sprintf("team-%s-user-%d-", teamName, user.ID),
-			},
-			Spec: iamv0alpha1.TeamBindingSpec{
-				Subject: iamv0alpha1.TeamBindingspecSubject{
-					Name: strconv.FormatInt(user.ID, 10),
-				},
-				TeamRef: iamv0alpha1.TeamBindingTeamRef{
-					Name: teamName,
-				},
-				Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
-				External:   false,
-			},
-		}
-
-		_, err = tapi.teamBindingClient.Create(ctx, binding, resource.CreateOptions{})
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to create team binding for user %s", email), err)
-		}
+		allEmails = append(allEmails, email)
 	}
-
-	// Create new bindings for members
 	for email := range memberEmails {
-		user, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
-		if err != nil {
-			tapi.logger.Error("Failed to find user", "email", email, "error", err)
-			return response.Error(http.StatusNotFound, fmt.Sprintf("User with email %s not found", email), err)
-		}
+		allEmails = append(allEmails, email)
+	}
 
-		binding := &iamv0alpha1.TeamBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-				Kind:       "TeamBinding",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace:    namespace,
-				GenerateName: fmt.Sprintf("team-%s-user-%d-", teamName, user.ID),
-			},
-			Spec: iamv0alpha1.TeamBindingSpec{
-				Subject: iamv0alpha1.TeamBindingspecSubject{
-					Name: strconv.FormatInt(user.ID, 10),
-				},
-				TeamRef: iamv0alpha1.TeamBindingTeamRef{
-					Name: teamName,
-				},
-				Permission: iamv0alpha1.TeamBindingTeamPermissionMember,
-				External:   false,
-			},
-		}
-
-		_, err = tapi.teamBindingClient.Create(ctx, binding, resource.CreateOptions{})
+	// Validate all users exist
+	var missingUsers []string
+	for _, email := range allEmails {
+		_, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to create team binding for user %s", email), err)
+			missingUsers = append(missingUsers, email)
 		}
 	}
 
-	// Delete bindings that are no longer needed
-	for _, binding := range bindingsToDelete {
-		err := tapi.teamBindingClient.Delete(ctx, resource.Identifier{
-			Namespace: binding.Namespace,
-			Name:      binding.Name,
-		}, resource.DeleteOptions{})
-		if err != nil {
-			tapi.logger.Error("Failed to delete team binding", "name", binding.Name, "error", err)
-			return response.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to delete team binding %s", binding.Name), err)
-		}
+	if len(missingUsers) > 0 {
+		return fmt.Errorf("users not found: %v", missingUsers)
 	}
 
-	return response.Success("Team memberships have been updated")
+	return nil
 }
