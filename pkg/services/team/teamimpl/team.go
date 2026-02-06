@@ -35,7 +35,8 @@ type Service struct {
 func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (team.Service, error) {
 	// Initialize member cache based on feature flag and configuration
 	var memberCache membercache.Cache
-	if features.IsEnabledGlobally(featuremgmt.FlagTeamMembershipQueryCache) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabled(context.Background(), featuremgmt.FlagTeamMembershipQueryCache) {
 		memberCache = membercache.NewCache(
 			cfg.TeamMemberCache.MaxSize,
 			cfg.TeamMemberCache.TTL,

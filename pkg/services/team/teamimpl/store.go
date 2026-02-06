@@ -420,7 +420,8 @@ func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, is
 // It checks the cache before performing database operations and updates the cache on changes
 func AddOrUpdateTeamMemberHookWithCache(ctx context.Context, sess *db.Session, memberCache membercache.Cache, tracer tracing.Tracer, features featuremgmt.FeatureToggles, userID, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
 	// Check if caching is enabled
-	cacheEnabled := features != nil && features.IsEnabledGlobally(featuremgmt.FlagTeamMembershipQueryCache) && memberCache != nil
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	cacheEnabled := features != nil && features.IsEnabled(ctx, featuremgmt.FlagTeamMembershipQueryCache) && memberCache != nil
 
 	// Start tracing span
 	var span trace.Span
