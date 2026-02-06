@@ -155,6 +155,7 @@ runs:
             - 'devenv/**'
             - '${{ inputs.self }}'
     - name: Print all change groups
+      if: ${{ steps.changed-files.outputs.all_changed_files_count <= 1000 }}
       shell: bash
       run: |
         echo "Self: ${{ steps.changed-files.outputs.self_any_changed || 'true' }}"
