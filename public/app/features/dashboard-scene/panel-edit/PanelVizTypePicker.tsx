@@ -151,10 +151,9 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
           />
         </Stack>
       </Field>
-      <ScrollContainer>
+      <ScrollContainer marginTop={1}>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
-            <div className={styles.ghostDiv}></div>
             {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions
                 onChange={onChange}
@@ -191,11 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(2, 1.5, 0.1, 0), // input glow with the boundary without this
     width: '100%', // full size search area
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
-    paddingBottom: theme.spacing(0.75)
-  }),
-  ghostDiv: css({
-    width: '100%',
-    height: theme.spacing(0.5),
+    paddingBottom: theme.spacing(0.75),
   }),
   tabs: css({
     width: '100%',
