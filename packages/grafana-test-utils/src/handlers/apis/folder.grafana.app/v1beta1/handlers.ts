@@ -2,14 +2,26 @@ import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
+import { MOCK_TEAMS } from '../../../../fixtures/teams';
 import { getErrorResponse } from '../../../helpers';
-const [mockTree, { folderB }] = wellFormedTree();
+const [mockTree, { folderA, folderB }] = wellFormedTree();
 // folderD is included in mockTree and will be returned by the handlers with managedBy: 'repo'
 
 const baseResponse = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
 };
+
+const specialCaseOwnerRef = [
+  {
+    apiVersion: 'iam.grafana.com/v0alpha1',
+    kind: 'Team',
+    name: MOCK_TEAMS[0].metadata.name,
+    uid: MOCK_TEAMS[0].metadata.name,
+    controller: true,
+    blockOwnerDeletion: false,
+  },
+];
 
 const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string) => {
   return {
@@ -31,6 +43,7 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
       labels: {
         'grafana.app/deprecatedInternalID': id ?? '123',
       },
+      ...(folder.uid === folderA.item.uid ? { ownerReferences: specialCaseOwnerRef } : {}),
     },
     spec: { title: folder.title!, description: '' },
   };

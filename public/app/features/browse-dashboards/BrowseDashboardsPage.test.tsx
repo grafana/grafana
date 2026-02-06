@@ -3,7 +3,7 @@ import { ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
-import { render as testRender, screen, waitFor } from 'test/test-utils';
+import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -21,6 +21,7 @@ setupMockServer();
 const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
 
 comboboxTestSetup();
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
@@ -204,12 +205,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     describe('folder owner', () => {
+      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI', 'teamFolders'] });
       beforeEach(() => {
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
-        (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
       });
 
       it('allows choosing a team to own the folder', async () => {
+        (useParams as jest.Mock).mockReturnValue({ uid: folderA_folderA.item.uid });
         const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
 
         await user.click(await screen.findByRole('button', { name: 'Folder actions' }));
@@ -221,20 +223,23 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         await user.click(await screen.findByText(/test team/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
-
         expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
       });
 
       it('allows removing the team that owns the folder', async () => {
+        (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
         const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
+
+        await screen.findByText(/owned by/i);
 
         await user.click(await screen.findByRole('button', { name: 'Folder actions' }));
         await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owner' }));
 
         expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
 
-        await user.click(screen.getByRole('button', { name: 'Remove owner' }));
+        await user.click(await screen.findByTitle(/clear value/i));
 
+        await user.click(screen.getByRole('button', { name: 'Save owner' }));
         expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
       });
     });
