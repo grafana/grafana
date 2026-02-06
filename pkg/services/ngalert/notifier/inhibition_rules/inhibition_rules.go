@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -36,11 +37,13 @@ type alertmanagerConfigStore interface {
 type provenanceValidator func(from, to models.Provenance) error
 
 type Service struct {
-	configStore     alertmanagerConfigStore
-	provenanceStore routeProvenanceStore
-	xact            transactionManager
-	log             log.Logger
-	validator       validation.ProvenanceStatusTransitionValidator
+	configStore             alertmanagerConfigStore
+	provenanceStore         routeProvenanceStore
+	xact                    transactionManager
+	log                     log.Logger
+	validator               validation.ProvenanceStatusTransitionValidator
+	features                featuremgmt.FeatureToggles
+	multiplePoliciesEnabled bool
 }
 
 func NewService(
@@ -48,13 +51,15 @@ func NewService(
 	prov routeProvenanceStore,
 	xact transactionManager,
 	log log.Logger,
+	multiplePoliciesEnabled bool,
 ) *Service {
 	return &Service{
-		configStore:     config,
-		provenanceStore: prov,
-		xact:            xact,
-		log:             log,
-		validator:       validation.ValidateProvenanceRelaxed,
+		configStore:             config,
+		provenanceStore:         prov,
+		xact:                    xact,
+		log:                     log,
+		validator:               validation.ValidateProvenanceRelaxed,
+		multiplePoliciesEnabled: multiplePoliciesEnabled,
 	}
 }
 
@@ -288,7 +293,7 @@ func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) 
 		return nil
 	}
 
-	inhibitRules, err := imported.GetInhibitRules()
+	inhibitRules, err := imported.GetInhibitRules(svc.multiplePoliciesEnabled)
 	if err != nil {
 		svc.log.Warn("failed to get imported inhibition rules", "error", err)
 		return nil
