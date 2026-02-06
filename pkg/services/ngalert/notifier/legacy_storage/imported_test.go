@@ -338,12 +338,6 @@ receivers:
 	})
 }
 
-func withManagedRoutes(routes map[string]*definition.Route) opt {
-	return func(rev *ConfigRevision) {
-		rev.Config.ManagedRoutes = routes
-	}
-}
-
 func extraConfig(yamlString string) definitions.ExtraConfiguration {
 	return definitions.ExtraConfiguration{
 		Identifier: "test",
