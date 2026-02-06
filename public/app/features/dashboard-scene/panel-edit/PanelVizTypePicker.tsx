@@ -153,7 +153,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
           </Stack>
         </Field>
       </div>
-      <ScrollContainer marginTop={1}>
+      <ScrollContainer>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
             {listMode === VisualizationSelectPaneTab.Suggestions && (
@@ -189,13 +189,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   searchField: css({
-    margin: theme.spacing(2, 1.5, 0.1, 0), // input glow with the boundary without this
+    margin: theme.spacing(2, 1.5, 0, 0), // input glow with the boundary without this
     width: '100%', // full size search area
     borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
     paddingBottom: theme.spacing(0.75),
   }),
   stickySearchWrapper: css({
     boxShadow: theme.shadows.z1,
+    zIndex: 1,
   }),
   tabs: css({
     width: '100%',
@@ -206,6 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
   }),
   tabContent: css({
+    paddingTop: theme.spacing(1),
     paddingInline: theme.spacing(2),
   }),
   backButton: css({
