@@ -196,7 +196,7 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	s.rolesMu.RUnlock()
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets)
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	// Fetch managed role permissions assigned to basic roles
 	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -215,7 +215,7 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 	defer span.End()
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets)
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	teamPermissions, err := s.store.GetTeamsPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		TeamIDs:                            teamIDs,
@@ -246,7 +246,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets)
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	permissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:                              user.GetOrgID(),
