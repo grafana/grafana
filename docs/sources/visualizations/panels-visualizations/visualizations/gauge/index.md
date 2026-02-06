@@ -172,7 +172,7 @@ This option is especially useful in cases where the range of data values include
 For example, you want to display the storage of several batteries and the power range is from -2.5 kW (discharging) to 2.5 kW.
 When the minimum value is used as the starting point for the gauges, the visualization looks like this:
 
-![Gauge using min as neutral](screenshot-gauge-neutral-min-v12.4.png)
+![Gauge using min as neutral](/media/docs/grafana/panels-visualizations/screenshot-gauge-neutral-min-v12.4.png)
 
 If you enter a neutral value of `0`, the visualization looks like this and is easier to reason about:
 
