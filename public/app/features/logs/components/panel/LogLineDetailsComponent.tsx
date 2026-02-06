@@ -84,7 +84,9 @@ export const LogLineDetailsComponent = memo(
 
     const groupedLabels = useMemo(() => {
       if (!ds) {
-        return {};
+        return {
+          '': labelsWithLinks
+        };
       }
       return groupBy(
         labelsWithLinks,
