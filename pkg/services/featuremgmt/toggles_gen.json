@@ -1859,6 +1859,20 @@
     },
     {
       "metadata": {
+        "name": "faroSessionReplay",
+        "resourceVersion": "1770368597618",
+        "creationTimestamp": "2026-02-06T09:03:17Z"
+      },
+      "spec": {
+        "description": "Enables session replay recording with Grafana Faro",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "favoriteDatasources",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-07-31T22:56:50Z",
