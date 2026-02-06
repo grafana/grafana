@@ -57,9 +57,14 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 		}
 	}
 
-	if branch == "" {
+	// Require branch for non-GitHub repositories
+	// (GitHub repositories allow empty branches - they can retrieve the default branch)
+	if branch == "" && repo.Spec.Type != provisioning.GitHubRepositoryType {
 		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(branch) {
+	}
+
+	// Validate branch name format if a branch is provided (applies to all repository types)
+	if branch != "" && !IsValidGitBranchName(branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), branch, "invalid branch name"))
 	}
 

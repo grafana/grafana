@@ -758,11 +758,6 @@
       "count": 6
     }
   },
-  "packages/grafana-ui/src/components/SetInterval/SetInterval.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -3138,7 +3133,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/variables/pickers/OptionsPicker/OptionsPicker.tsx": {

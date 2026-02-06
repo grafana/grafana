@@ -18,6 +18,26 @@ import (
 
 const DEFAULT_RESOURCE_LIMIT = 1000
 
+type QuotasConfig struct {
+	EnforceQuotas  bool
+	SupportMessage string
+}
+
+type QuotaExceededError struct {
+	Resource       string
+	Used           int64
+	Limit          int
+	SupportMessage string
+}
+
+func (e QuotaExceededError) Error() string {
+	return fmt.Sprintf("limit reached for resource %s", e.Resource)
+}
+
+func (e QuotaExceededError) Message() string {
+	return fmt.Sprintf("Limit reached for resource %s: %d/%d %s", e.Resource, e.Used, e.Limit, e.SupportMessage)
+}
+
 type OverridesService struct {
 	manager *runtimeconfig.Manager
 	logger  log.Logger

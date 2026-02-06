@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.25.6
+go 1.25.7
 
 replace github.com/grafana/grafana => ../../
 
@@ -478,6 +478,7 @@ require (
 	k8s.io/component-base v0.34.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kms v0.34.3 // indirect
+	k8s.io/kube-aggregator v0.34.3 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

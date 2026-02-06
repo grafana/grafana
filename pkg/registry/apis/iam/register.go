@@ -558,17 +558,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateCoreRolesAPIGroup(
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
 ) error {
-	coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.CoreRoleInfo, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// write to zanzana on unified storage writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
 		h := NewRoleHooks(b.zClient, b.zTickets, b.logger)
-		coreRoleStore.AfterCreate = h.AfterRoleCreate
-		coreRoleStore.AfterDelete = h.AfterRoleDelete
-		coreRoleStore.BeginUpdate = h.BeginRoleUpdate
+		uniStore.AfterCreate = h.AfterRoleCreate
+		uniStore.AfterDelete = h.AfterRoleDelete
+		uniStore.BeginUpdate = h.BeginRoleUpdate
 	}
+
+	var coreRoleStore storewrapper.K8sStorage = uniStore
+
+	if b.coreRolesStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.CoreRoleInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		coreRoleStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
+	}
+
 	storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 	return nil
 }
@@ -579,16 +602,39 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
 ) error {
-	roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.RoleBindingInfo, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// write to zanzana on unified storage writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
-		roleBindingStore.AfterCreate = b.AfterRoleBindingCreate
-		roleBindingStore.AfterDelete = b.AfterRoleBindingDelete
-		roleBindingStore.BeginUpdate = b.BeginRoleBindingUpdate
+		uniStore.AfterCreate = b.AfterRoleBindingCreate
+		uniStore.AfterDelete = b.AfterRoleBindingDelete
+		uniStore.BeginUpdate = b.BeginRoleBindingUpdate
 	}
+
+	var roleBindingStore storewrapper.K8sStorage = uniStore
+
+	if b.roleBindingsStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.RoleBindingInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		roleBindingStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
+	}
+
 	storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	return nil
 }
@@ -603,37 +649,33 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	if err != nil {
 		return err
 	}
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = uniStore
 
-	if b.resourcePermissionsStorage == nil {
-		// No legacy storage configured, nothing more to do
-		return nil
-	}
-
-	legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
-	if err != nil {
-		return err
-	}
-
-	// Register the hooks for Zanzana sync
-	// FIXME: The hooks are registered on the legacy store
-	// Once we fully migrate to unified storage, we can move these hooks to the unified store
+	// trigger zanzana hooks on unistore writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
-		legacyStore.AfterCreate = b.AfterResourcePermissionCreate
-		legacyStore.BeginUpdate = b.BeginResourcePermissionUpdate
-		legacyStore.AfterDelete = b.AfterResourcePermissionDelete
+		uniStore.AfterCreate = b.AfterResourcePermissionCreate
+		uniStore.BeginUpdate = b.BeginResourcePermissionUpdate
+		uniStore.AfterDelete = b.AfterResourcePermissionDelete
 	}
 
-	dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
-	if err != nil {
-		return err
-	}
+	var regStoreDW storewrapper.K8sStorage = uniStore
 
-	// Not ideal, the alternative is to wrap both stores that dualwrite uses
-	regStoreDW, ok := dw.(storewrapper.K8sStorage)
-	if !ok {
-		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+	if b.resourcePermissionsStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		regStoreDW, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
 
 	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
@@ -892,16 +934,42 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.MutateOnCreate(ctx, typedObj)
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
+		case *iamv0.Role:
+			oldObj, ok := a.GetOldObject().(*iamv0.Role)
+			if !ok {
+				return fmt.Errorf("old object is not a Role")
+			}
+			return b.roleApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.GlobalRole:
+			oldObj, ok := a.GetOldObject().(*iamv0.GlobalRole)
+			if !ok {
+				return fmt.Errorf("old object is not a GlobalRole")
+			}
+			return b.globalRoleApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
-		return nil
+		switch oldObj := a.GetOldObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnDelete(ctx, oldObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnDelete(ctx, oldObj)
+		}
 	case admission.Connect:
-		return nil
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.MutateOnConnect(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.MutateOnConnect(ctx, typedObj)
+		}
 	}
 
 	return nil

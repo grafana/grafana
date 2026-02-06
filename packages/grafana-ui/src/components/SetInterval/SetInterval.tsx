@@ -1,5 +1,5 @@
-import { isEqual } from 'lodash';
-import { PureComponent } from 'react';
+import { useEffect, useRef } from 'react';
+import * as React from 'react';
 import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 
@@ -20,20 +20,17 @@ interface Props {
   interval: string;
 }
 
-export class SetInterval extends PureComponent<Props> {
-  private propsSubject: Subject<Props>;
-  private subscription: Subscription | null;
+/**
+ * @deprecated
+ */
+export const SetInterval = React.memo(({ func, loading, interval: intervalStr }: Props) => {
+  const propsSubjectRef = useRef<Subject<Props> | null>(null);
+  const subscriptionRef = useRef<Subscription | null>(null);
+  const prevPropsRef = useRef<Props>({ func, loading, interval: intervalStr });
 
-  constructor(props: Props) {
-    super(props);
-    this.propsSubject = new Subject<Props>();
-    this.subscription = null;
-  }
-
-  componentDidMount() {
-    // Creating a subscription to propsSubject. This subject pushes values every time
-    // SetInterval's props change
-    this.subscription = this.propsSubject
+  useEffect(() => {
+    propsSubjectRef.current = new Subject<Props>();
+    subscriptionRef.current = propsSubjectRef.current
       .pipe(
         // switchMap creates a new observables based on the input stream,
         // which becomes part of the propsSubject stream
@@ -43,44 +40,45 @@ export class SetInterval extends PureComponent<Props> {
           if (RefreshPicker.isLive(props.interval)) {
             return of({});
           }
-
           // When query is loading, a new stream is merged. But it's a stream that emits no values(NEVER),
           // hence next call of this function will happen when query changes, and new props are passed into this component
           // When query is NOT loading, a new value is emitted, this time it's an interval value,
           // which makes tap function below execute on that interval basis.
           return props.loading ? NEVER : interval(stringToMs(props.interval));
         }),
-        // tap will execute function passed via func prop
+        // tap will execute function passed by props
         // * on value from `of` stream merged if query is live
         // * on specified interval (triggered by values emitted by interval)
-        tap(() => this.props.func())
+        tap(() => {
+          propsSubjectRef.current && func();
+        })
       )
       .subscribe();
 
-    // When component has mounted, propsSubject emits its first value
-    this.propsSubject.next(this.props);
-  }
+    propsSubjectRef.current.next({ func, loading, interval: intervalStr });
 
-  componentDidUpdate(prevProps: Props) {
-    if (
-      (RefreshPicker.isLive(prevProps.interval) && RefreshPicker.isLive(this.props.interval)) ||
-      isEqual(prevProps, this.props)
-    ) {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+      if (propsSubjectRef.current) {
+        propsSubjectRef.current.complete();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const prev = prevPropsRef.current;
+    const currentProps: Props = { func, loading, interval: intervalStr };
+    if (RefreshPicker.isLive(prev.interval) && RefreshPicker.isLive(currentProps.interval)) {
       return;
     }
-    // if props changed, a new value is emitted from propsSubject
-    this.propsSubject.next(this.props);
-  }
 
-  componentWillUnmount() {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    propsSubjectRef.current && propsSubjectRef.current.next(currentProps);
+    prevPropsRef.current = currentProps;
+  }, [func, loading, intervalStr]);
+  return null;
+});
 
-    this.propsSubject.unsubscribe();
-  }
-
-  render(): null {
-    return null;
-  }
-}
+SetInterval.displayName = 'SetInterval';
