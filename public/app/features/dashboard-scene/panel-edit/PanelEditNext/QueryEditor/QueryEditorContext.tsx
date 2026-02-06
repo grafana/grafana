@@ -60,6 +60,9 @@ export interface QueryEditorActions {
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
+  deleteTransformation: (transformId: string) => void;
+  duplicateTransformation: (transformId: string) => void;
+  toggleTransformationDisabled: (transformId: string) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

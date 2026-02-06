@@ -1,6 +1,7 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef, getNextRefId } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  SceneDataTransformer,
   sceneGraph,
   SceneObjectBase,
   SceneObjectRef,
@@ -8,7 +9,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceRef, DataTransformerConfig } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -17,6 +18,7 @@ import { getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { isDataTransformerConfig } from './QueryEditor/utils';
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -180,6 +182,71 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (queryRunner) {
       queryRunner.runQueries();
     }
+  };
+
+  // Transformation Operations
+  private getSceneDataTransformer(): SceneDataTransformer | undefined {
+    const panel = this.state.panelRef.resolve();
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      return panel.state.$data;
+    }
+    return undefined;
+  }
+
+  public deleteTransformation = (index: number) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+
+    const transformations = [...transformer.state.transformations];
+    if (index < 0 || index >= transformations.length) {
+      return;
+    }
+
+    transformations.splice(index, 1);
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public duplicateTransformation = (index: number) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+
+    const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
+      isDataTransformerConfig(t)
+    );
+    if (index < 0 || index >= transformations.length) {
+      return;
+    }
+
+    const original = transformations[index];
+    const duplicate = { ...original };
+    transformations.splice(index + 1, 0, duplicate);
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public toggleTransformationDisabled = (index: number) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+
+    const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
+      isDataTransformerConfig(t)
+    );
+
+    if (index < 0 || index >= transformations.length) {
+      return;
+    }
+
+    const transform = transformations[index];
+    transformations[index] = { ...transform, disabled: !transform.disabled };
+    transformer.setState({ transformations });
+    this.runQueries();
   };
 
   public changeDataSource = async (dsRef: DataSourceRef, queryRefId: string) => {

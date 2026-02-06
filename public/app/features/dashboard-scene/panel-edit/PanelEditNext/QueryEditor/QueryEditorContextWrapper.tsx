@@ -1,6 +1,5 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
-import { v4 } from 'uuid';
 
 import {
   DataSourceInstanceSettings,
@@ -41,25 +40,24 @@ export function QueryEditorContextWrapper({
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
+  // TODO: review all this garbage
+  const sceneDataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : undefined;
+  const transformerState = sceneDataTransformer?.useState();
+
   const transformations: Transformation[] = useMemo(() => {
-    if (panel.state.$data instanceof SceneDataTransformer) {
-      // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-      const transformationList = panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
-        isDataTransformerConfig(t)
-      );
+    const rawTransformations = transformerState?.transformations ?? [];
+    // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
+    const transformationList = rawTransformations.filter((t): t is DataTransformerConfig => isDataTransformerConfig(t));
 
-      const transformationsList: Transformation[] = transformationList.map((t) => {
-        return {
-          transformConfig: t,
-          registryItem: standardTransformersRegistry.getIfExists(t.id),
-          transformId: v4(),
-        };
-      });
-
-      return transformationsList;
-    }
-    return [];
-  }, [panel]);
+    return transformationList.map((t, index) => {
+      return {
+        transformConfig: t,
+        registryItem: standardTransformersRegistry.getIfExists(t.id),
+        // Use a stable ID based on the index and config id to avoid regenerating UUIDs on every render
+        transformId: `${index}-${t.id}`,
+      };
+    });
+  }, [transformerState?.transformations]);
 
   // NOTE: This is the datasource for the panel, not the query
   const dsState = useMemo(
@@ -180,6 +178,13 @@ export function QueryEditorContextWrapper({
     ]
   );
 
+  const findTransformationIndex = useCallback(
+    (transformId: string) => {
+      return transformations.findIndex((t) => t.transformId === transformId);
+    },
+    [transformations]
+  );
+
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
@@ -195,8 +200,26 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      deleteTransformation: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.deleteTransformation(index);
+        }
+      },
+      duplicateTransformation: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.duplicateTransformation(index);
+        }
+      },
+      toggleTransformationDisabled: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.toggleTransformationDisabled(index);
+        }
+      },
     }),
-    [dataPane]
+    [dataPane, findTransformationIndex]
   );
 
   return (

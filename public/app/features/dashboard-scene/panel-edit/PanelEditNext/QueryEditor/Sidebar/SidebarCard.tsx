@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorTypeConfig } from '../../constants';
@@ -15,13 +14,26 @@ interface SidebarCardProps {
   id: string;
   children: React.ReactNode;
   onClick: () => void;
-  query?: DataQuery;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onToggleHide: () => void;
+  isHidden: boolean;
 }
 
-export const SidebarCard = ({ config, isSelected, id, children, onClick, query }: SidebarCardProps) => {
+export const SidebarCard = ({
+  config,
+  isSelected,
+  id,
+  children,
+  onClick,
+  onDuplicate,
+  onDelete,
+  onToggleHide,
+  isHidden,
+}: SidebarCardProps) => {
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
-  const isHidden = !!query?.hide;
+
   return (
     <button
       className={cx(styles.card, { [styles.hidden]: isHidden })}
@@ -37,11 +49,9 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick, query }
             {typeText}
           </Text>
         </Stack>
-        {query && (
-          <div className={styles.hoverActions}>
-            <HoverActions query={query} />
-          </div>
-        )}
+        <div className={styles.hoverActions}>
+          <HoverActions onDuplicate={onDuplicate} onDelete={onDelete} onToggleHide={onToggleHide} isHidden={isHidden} />
+        </div>
       </div>
       <div className={styles.cardContent}>{children}</div>
     </button>
