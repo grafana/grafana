@@ -115,6 +115,17 @@ func ProvidePlaylistMigrator(
 	return newMigratorAccess(sql, provisioning, accessControl)
 }
 
+// ProvideShortURLMigrator creates a ShortURLMigrator for migration purposes.
+// This is wired separately from MigrationDashboardAccessor so that short URL
+// migrations are decoupled from the dashboard accessor interface.
+func ProvideShortURLMigrator(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+) ShortURLMigrator {
+	return newMigratorAccess(sql, provisioning, accessControl)
+}
+
 func newMigratorAccess(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
