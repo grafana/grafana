@@ -277,7 +277,7 @@ receivers:
 		require.NoError(t, err)
 		assert.Nil(t, imported.importedConfig)
 
-		result, err := imported.GetInhibitRules()
+		result, err := imported.GetInhibitRules(true)
 		require.NoError(t, err)
 		require.Empty(t, result)
 	})
@@ -302,42 +302,39 @@ receivers:
 		imported, err := rev.Imported()
 		require.NoError(t, err)
 
-		result, err := imported.GetInhibitRules()
+		result, err := imported.GetInhibitRules(true)
 		require.NoError(t, err)
 		require.Empty(t, result)
 	})
 
-	t.Run("should return imported inhibition rules with SubtreeMatchers added", func(t *testing.T) {
+	t.Run("should return imported inhibition rules with managed route matchers added", func(t *testing.T) {
 		rev := getConfigRevisionForTest(
 			withExtraConfig(extraConfig(extraConfigurationYaml)),
-			withManagedRoutes(nil), // Clear default managed routes
 		)
 		imported, err := rev.Imported()
 		require.NoError(t, err)
 
-		result, err := imported.GetInhibitRules()
+		result, err := imported.GetInhibitRules(true)
 		require.NoError(t, err)
-		require.Len(t, result, 2)
+		// 2 rules * 2 managed routes (named_route, other_route) = 4 total rules
+		require.Len(t, result, 4)
 
-		// Check first rule
-		assert.Len(t, result[0].SourceMatchers, 2) // Original + SubtreeMatcher
-		assert.Len(t, result[0].TargetMatchers, 2) // Original + SubtreeMatcher
+		// Check first rule (first imported rule with first managed route)
+		assert.Len(t, result[0].SourceMatchers, 2) // Original + managed route matcher
+		assert.Len(t, result[0].TargetMatchers, 2) // Original + managed route matcher
 		assert.Equal(t, []string{"cluster"}, result[0].Equal)
 
-		// Verify SubtreeMatcher was added
-		hasSubtreeMatcher := false
-		for _, m := range result[0].SourceMatchers {
-			if m.Name == "__imported" && m.Value == "test" {
-				hasSubtreeMatcher = true
-				break
+		// Verify managed route matcher was added
+		for _, ms := range []config.Matchers{result[0].SourceMatchers, result[0].TargetMatchers} {
+			hasManagedRouteMatcher := false
+			for _, m := range ms {
+				if m.Name == "__grafana_managed_route__" {
+					hasManagedRouteMatcher = true
+					break
+				}
 			}
+			assert.True(t, hasManagedRouteMatcher, "Managed route matcher should be added to matcher")
 		}
-		assert.True(t, hasSubtreeMatcher, "SubtreeMatcher should be added to SourceMatchers")
-
-		// Check second rule
-		assert.Len(t, result[1].SourceMatchers, 2)
-		assert.Len(t, result[1].TargetMatchers, 2)
-		assert.Equal(t, []string{"instance"}, result[1].Equal)
 	})
 }
 
