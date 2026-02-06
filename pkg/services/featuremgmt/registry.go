@@ -952,6 +952,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingNotifiersApiMigration",
+			Description:  "Use the new k8s API for fetching integration type schemas",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "preserveDashboardStateWhenNavigating",
 			Description:  "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
 			Stage:        FeatureStageExperimental,

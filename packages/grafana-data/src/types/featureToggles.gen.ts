@@ -609,6 +609,11 @@ export interface FeatureToggles {
   */
   alertingDisableSendAlertsExternal?: boolean;
   /**
+  * Use the new k8s API for fetching integration type schemas
+  * @default false
+  */
+  alertingNotifiersApiMigration?: boolean;
+  /**
   * Enables possibility to preserve dashboard variables and time range when navigating between dashboards
   * @default false
   */
