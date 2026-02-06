@@ -36,21 +36,27 @@ type Provider interface {
 }
 
 type gPRCServerService struct {
-	cfg         setting.GRPCServerSettings
-	logger      log.Logger
-	server      *grpc.Server
-	address     string
-	enabled     bool
-	startedChan chan struct{}
+	cfg           setting.GRPCServerSettings
+	logger        log.Logger
+	server        *grpc.Server
+	address       string
+	enabled       bool
+	startedChan   chan struct{}
+	delayShutdown bool
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
+	return provideService(cfg, features, authenticator, tracer, registerer, false)
+}
+
+func provideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool) (*gPRCServerService, error) {
 	s := &gPRCServerService{
 		cfg:    cfg.GRPCServer,
 		logger: log.New("grpc-server"),
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
-		startedChan: make(chan struct{}),
+		enabled:       features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
+		startedChan:   make(chan struct{}),
+		delayShutdown: separateShutdown,
 	}
 
 	// Register the metric here instead of an init() function so that we do
@@ -166,9 +172,15 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	case err := <-serveErrCh:
 		return err
 	case <-ctx.Done():
-		// Context cancelled, proceed with graceful shutdown
+		if !s.delayShutdown {
+			s.shutdown()
+		}
+		return nil
 	}
+}
 
+// shutdown gracefully stops the gRPC server.
+func (s *gPRCServerService) shutdown() {
 	s.logger.Info("GRPC server: initiating graceful shutdown")
 	gracefulStopDone := make(chan struct{})
 	go func() {
@@ -183,8 +195,6 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 		s.logger.Warn("GRPC server: graceful shutdown timed out, forcing stop")
 		s.server.Stop()
 	}
-
-	return nil
 }
 
 func (s *gPRCServerService) IsDisabled() bool {
@@ -200,15 +210,55 @@ func (s *gPRCServerService) GetAddress() string {
 	return s.address
 }
 
+// ServiceResolver is a function that resolves a module name to its service.
+type ServiceResolver func(moduleName string) services.Service
+
 // DSKitService is a wrapper around a dskit BasicService and a Provider.
 type DSKitService struct {
 	*services.BasicService
 	Provider
+
+	dependentModules []string
+	serviceResolver  ServiceResolver
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
-func ProvideDSKitService(handler Provider, serviceName string) *DSKitService {
-	svc := &DSKitService{Provider: handler}
-	svc.BasicService = services.NewBasicService(nil, handler.Run, nil).WithName(serviceName)
-	return svc
+func ProvideDSKitService(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	authenticator interceptors.Authenticator,
+	tracer trace.Tracer,
+	registerer prometheus.Registerer,
+	serviceName string,
+	dependentModules []string,
+	serviceResolver ServiceResolver,
+) (*DSKitService, error) {
+	grpcService, err := provideService(cfg, features, authenticator, tracer, registerer, true)
+	if err != nil {
+		return nil, err
+	}
+	svc := &DSKitService{
+		Provider:         grpcService,
+		dependentModules: dependentModules,
+		serviceResolver:  serviceResolver,
+	}
+	svc.BasicService = services.NewBasicService(nil, grpcService.Run, func(_ error) error {
+		svc.waitForDependents()
+		grpcService.shutdown()
+		return nil
+	}).WithName(serviceName)
+	return svc, nil
+}
+
+// waitForDependents waits for all dependent modules to reach Terminated or Failed state.
+func (s *DSKitService) waitForDependents() {
+	if s.serviceResolver == nil {
+		return
+	}
+
+	for _, moduleName := range s.dependentModules {
+		if svc := s.serviceResolver(moduleName); svc != nil {
+			_ = svc.AwaitTerminated(context.Background())
+		}
+	}
 }

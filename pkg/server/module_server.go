@@ -13,12 +13,11 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
-
-	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -199,21 +198,35 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
 		tracer := otel.Tracer("grpc-server")
-		switch {
-		case m.IsModuleEnabled(modules.StorageServer), m.IsModuleEnabled(modules.SearchServer):
+
+		// Determine which modules depend on the gRPC server
+		dependentModules := []string{modules.StorageServer, modules.SearchServer, modules.SearchServerDistributor}
+		var enabledModules []string
+		for _, mod := range dependentModules {
+			if m.IsModuleEnabled(mod) {
+				enabledModules = append(enabledModules, mod)
+			}
+		}
+		if len(enabledModules) == 0 {
+			return nil, nil
+		}
+
+		// SearchServerDistributor forwards to search, no authentication needed
+		var authn interceptors.Authenticator
+		if m.IsModuleEnabled(modules.StorageServer) || m.IsModuleEnabled(modules.SearchServer) {
 			// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 			// grpcutils.NewGrpcAuthenticator should be used instead.
-			authn := interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+			authn = interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
 				auth := resourcegrpc.Authenticator{Tracer: tracer}
 				return auth.Authenticate(ctx)
 			}))
-			return s.initGRPCServer(authn, tracer)
-		case m.IsModuleEnabled(modules.SearchServerDistributor):
-			// Distributor forwards to search, no authentication needed
-			return s.initGRPCServer(nil, tracer)
-		default:
-			return nil, nil
 		}
+		var err error
+		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, authn, tracer, s.registerer, modules.GRPCServer, enabledModules, m.GetService)
+		if err != nil {
+			return nil, err
+		}
+		return s.grpcService, nil
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)

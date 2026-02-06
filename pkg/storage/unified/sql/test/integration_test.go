@@ -205,7 +205,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	grpcService, err := provideTestGRPCService(cfg, features, prometheus.NewPedanticRegistry())
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, nil, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
 	require.NoError(t, err)
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
@@ -282,16 +282,6 @@ func resourceKey(name string) *resourcepb.ResourceKey {
 	}
 }
 
-// provideTestGRPCService creates a gRPC service for testing purposes.
-func provideTestGRPCService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (*grpcserver.DSKitService, error) {
-	tracer := otel.Tracer("test-grpc-server")
-	handler, err := grpcserver.ProvideService(cfg, features, nil, tracer, reg)
-	if err != nil {
-		return nil, err
-	}
-	return grpcserver.ProvideDSKitService(handler, "test-grpc-server"), nil
-}
-
 func TestIntegrationSearchClientServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -314,7 +304,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		},
 	}
 
-	grpcService, err := provideTestGRPCService(cfg, features, prometheus.NewPedanticRegistry())
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, nil, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
 	require.NoError(t, err)
 
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)

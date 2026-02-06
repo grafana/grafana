@@ -141,14 +141,15 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		handler, grpcErr := grpcserver.ProvideService(env.Cfg, env.FeatureToggles, nil, tracer, prometheus.NewPedanticRegistry())
-		require.NoError(t, grpcErr)
-		grpcService = grpcserver.ProvideDSKitService(handler, "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, nil, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
+		require.NoError(t, err)
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
 			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 		require.NoError(t, err)
 		require.NoError(t, storage.RegisterGRPCServices(grpcService.GetServer()))
 		err = grpcService.StartAsync(ctx)
+		require.NoError(t, err)
+		err = grpcService.AwaitRunning(ctx)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
