@@ -1,5 +1,5 @@
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { NOOP_PROVIDER, OpenFeature, Provider, ProviderEvents } from '@openfeature/web-sdk';
+import { NOOP_PROVIDER, OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
 
 import { FeatureToggles } from '@grafana/data';
 
@@ -8,9 +8,8 @@ import { logError } from '../../utils/logging';
 
 export type FeatureFlagName = keyof FeatureToggles;
 
-let provider: Provider = NOOP_PROVIDER;
 function checkDefaultProvider() {
-  if (OpenFeature.getProvider() !== provider) {
+  if (OpenFeature.getProvider() !== NOOP_PROVIDER) {
     // If a plugin has incorrectly called setProvider without a domain, log an error so we can track it.
     const err = new Error(
       'OpenFeature default domain provider has been unexpectedly changed. This may be caused by a plugin that is incorrectly using the default domain.',
@@ -18,12 +17,6 @@ function checkDefaultProvider() {
     );
     console.error(err);
     logError(err);
-
-    // Reset the provider to the correct one to avoid further issues.
-    OpenFeature.setProvider(provider, {
-      targetingKey: config.namespace,
-      ...config.openFeatureContext,
-    });
   }
 }
 
@@ -39,13 +32,13 @@ export async function initOpenFeature() {
   OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
   OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
 
-  provider = new OFREPWebProvider({
+  const ofProvider = new OFREPWebProvider({
     baseUrl: `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`,
     pollInterval: -1, // disable polling
     timeoutMs: 5_000,
   });
 
-  await OpenFeature.setProviderAndWait(provider, {
+  await OpenFeature.setProviderAndWait(ofProvider, {
     targetingKey: config.namespace,
     ...config.openFeatureContext,
   });
