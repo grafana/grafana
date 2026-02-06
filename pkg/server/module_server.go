@@ -212,7 +212,7 @@ func (s *ModuleServer) Run() error {
 			// Distributor forwards to search, no authentication needed
 			return s.initGRPCServer(nil, tracer)
 		default:
-			return services.NewBasicService(nil, nil, nil).WithName(modules.GRPCServer), nil
+			return nil, nil
 		}
 	})
 
@@ -253,7 +253,6 @@ func (s *ModuleServer) Run() error {
 		if err := svc.RegisterGRPCServices(s.grpcService.GetServer()); err != nil {
 			return nil, err
 		}
-		s.grpcService.StartListening()
 		return svc, nil
 	})
 
@@ -269,7 +268,6 @@ func (s *ModuleServer) Run() error {
 		if err := svc.RegisterGRPCServices(s.grpcService.GetServer()); err != nil {
 			return nil, err
 		}
-		s.grpcService.StartListening()
 		return svc, nil
 	})
 

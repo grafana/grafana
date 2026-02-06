@@ -12,6 +12,5 @@ func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) 
 	if err := distributor.RegisterGRPCServices(ms.grpcService.GetServer()); err != nil {
 		return nil, err
 	}
-	ms.grpcService.StartListening()
 	return distributor, nil
 }

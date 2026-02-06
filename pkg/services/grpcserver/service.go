@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -202,37 +201,14 @@ func (s *gPRCServerService) GetAddress() string {
 }
 
 // DSKitService is a wrapper around a dskit BasicService and a Provider.
-// It starts listening for connections after StartListening is called.
 type DSKitService struct {
 	*services.BasicService
 	Provider
-	readyChan chan struct{}
-	readyOnce sync.Once
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
 func ProvideDSKitService(handler Provider, serviceName string) *DSKitService {
-	svc := &DSKitService{
-		Provider:  handler,
-		readyChan: make(chan struct{}),
-	}
-	svc.BasicService = services.NewBasicService(svc.starting, handler.Run, nil).WithName(serviceName)
+	svc := &DSKitService{Provider: handler}
+	svc.BasicService = services.NewBasicService(nil, handler.Run, nil).WithName(serviceName)
 	return svc
-}
-
-func (s *DSKitService) starting(ctx context.Context) error {
-	select {
-	case <-s.readyChan:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-}
-
-// StartListening signals that all gRPC services have been registered
-// and the server can start accepting connections.
-func (s *DSKitService) StartListening() {
-	s.readyOnce.Do(func() {
-		close(s.readyChan)
-	})
 }
