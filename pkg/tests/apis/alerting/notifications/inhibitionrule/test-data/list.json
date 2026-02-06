@@ -1,0 +1,89 @@
+{
+  "kind": "InhibitionRuleList",
+  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "metadata": {},
+  "items": [
+    {
+      "metadata": {
+        "name": "640a43850b49c58a",
+        "namespace": "default",
+        "uid": "ml9XcAPh2R5JYU4PSXiupOmdbWBZjVWXpUL4jmEqftwX",
+        "resourceVersion": "640a43850b49c58a",
+        "annotations": {
+          "grafana.com/canUse": "false",
+          "grafana.com/provenance": "converted_prometheus"
+        }
+      },
+      "spec": {
+        "source_matchers": [
+          {
+            "type": "=",
+            "label": "alertname",
+            "value": "HighCPU"
+          },
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "test-managed-route"
+          }
+        ],
+        "target_matchers": [
+          {
+            "type": "=",
+            "label": "alertname",
+            "value": "CPUWarning"
+          },
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "test-managed-route"
+          }
+        ],
+        "equal": [
+          "instance"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "0915a19664449b5c",
+        "namespace": "default",
+        "uid": "AZv96oujNJqsvqXa8pwcuQpioFeDar0aqX6dgAXxHG8X",
+        "resourceVersion": "0915a19664449b5c",
+        "annotations": {
+          "grafana.com/canUse": "false",
+          "grafana.com/provenance": "converted_prometheus"
+        }
+      },
+      "spec": {
+        "source_matchers": [
+          {
+            "type": "=",
+            "label": "severity",
+            "value": "critical"
+          },
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "test-managed-route"
+          }
+        ],
+        "target_matchers": [
+          {
+            "type": "=",
+            "label": "severity",
+            "value": "warning"
+          },
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "test-managed-route"
+          }
+        ],
+        "equal": [
+          "cluster"
+        ]
+      }
+    }
+  ]
+}
