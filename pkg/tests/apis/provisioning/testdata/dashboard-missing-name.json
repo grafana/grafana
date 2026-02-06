@@ -1,0 +1,7 @@
+{
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "kind": "Dashboard",
+  "spec": {
+    "title": "Dashboard Without Name"
+  }
+}

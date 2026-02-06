@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/shorturl
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/grafana/grafana-app-sdk v0.50.1
