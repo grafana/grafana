@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206122322-4bdeafb90992
+	github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206141233-a9a2ebeafc15
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20260118065639-60cb766a97d6
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
