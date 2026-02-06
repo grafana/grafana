@@ -1050,7 +1050,11 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 				variables = append(variables, groupByVar)
 			}
 		default:
-			// Skip unknown variable types
+			// Log and skip unsupported variable type
+			getLogger().Warn("Variable skipped during conversion: unsupported variable type",
+				"variableName", commonProps.Name,
+				"variableType", varType,
+			)
 			continue
 		}
 	}

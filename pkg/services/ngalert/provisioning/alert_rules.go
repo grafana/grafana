@@ -819,7 +819,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return err
 	}
-	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+	if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 		return errProvenanceMismatch.Build(errutil.TemplateData{
 			Public: map[string]interface{}{
 				"ProvidedProvenance": provenance,

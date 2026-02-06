@@ -31,17 +31,18 @@ type unifiedMigration struct {
 	streamProvider streamProvider
 	client         resource.SearchClient
 	log            log.Logger
+	registry       *MigrationRegistry
 }
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
+func buildCollectionSettings(opts legacy.MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.Namespace)
+		key := buildResourceKey(res, opts.Namespace, registry)
 		if key != nil {
 			settings.Collection = append(settings.Collection, key)
 		}
@@ -53,45 +54,24 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts)
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
+	settings := buildCollectionSettings(opts, registry)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
-}
-
-// bulkStoreClientStreamProvider creates streams using resourcepb.BulkStoreClient
-type bulkStoreClientStreamProvider struct {
-	client resourcepb.BulkStoreClient
-}
-
-func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts)
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	return b.client.BulkProcess(ctx)
 }
 
 // This can migrate Folders, Dashboards and LibraryPanels
 func ProvideUnifiedMigrator(
 	dashboardAccess legacy.MigrationDashboardAccessor,
 	client resource.ResourceClient,
+	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
 		dashboardAccess,
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
-	)
-}
-
-func ProvideUnifiedMigratorParquet(
-	dashboardAccess legacy.MigrationDashboardAccessor,
-	client resourcepb.BulkStoreClient,
-) UnifiedMigrator {
-	return newUnifiedMigrator(
-		dashboardAccess,
-		&bulkStoreClientStreamProvider{client: client},
-		nil,
-		log.New("storage.unified.migrator.parquet"),
+		registry,
 	)
 }
 
@@ -100,12 +80,14 @@ func newUnifiedMigrator(
 	streamProvider streamProvider,
 	client resource.SearchClient,
 	log log.Logger,
+	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return &unifiedMigration{
 		MigrationDashboardAccessor: dashboardAccess,
 		streamProvider:             streamProvider,
 		client:                     client,
 		log:                        log,
+		registry:                   registry,
 	}
 }
 
@@ -126,14 +108,14 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 		return m.CountResources(ctx, opts)
 	}
 
-	stream, err := m.streamProvider.createStream(ctx, opts)
+	stream, err := m.streamProvider.createStream(ctx, opts, m.registry)
 	if err != nil {
 		return nil, err
 	}
 
 	migratorFuncs := []MigratorFunc{}
 	for _, res := range opts.Resources {
-		fn := Registry.GetMigratorFunc(m.MigrationDashboardAccessor, res)
+		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
 		}
@@ -193,16 +175,10 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndex
 func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
 	keys := []*resourcepb.ResourceKey{}
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.NamespaceInfo.Value)
+		key := buildResourceKey(res, opts.NamespaceInfo.Value, m.registry)
 		if key != nil {
 			keys = append(keys, key)
 		}
-	}
-
-	if m.client == nil {
-		// skip if no client is available (e.g., parquet migrator)
-		m.log.Warn("skipping rebuilding index as no search client is available", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-		return nil
 	}
 
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
