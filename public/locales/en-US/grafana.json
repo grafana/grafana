@@ -10671,10 +10671,11 @@
     }
   },
   "manage-owner-references": {
+    "folder-owner-removed": "Folder owner removed",
+    "folder-owner-updated": "Folder owner updated",
     "manage-folder-owner": "Manage folder owner",
     "manage-folder-owner-alert-text": "Folders owned by teams that you belong to will be prioritised for you in the folder picker and other locations.",
     "manage-folder-owner-alert-title": "Select a team to own this folder to help organise your resources.",
-    "remove-owner": "Remove owner",
     "save-owner": "Save owner",
     "select-owner": "Select an owner"
   },
@@ -11518,9 +11519,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
-  },
-  "owner-reference": {
-    "team-members": "Team members:"
   },
   "page": {
     "editable-title": {
