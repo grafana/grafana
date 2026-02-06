@@ -999,6 +999,41 @@ describe('GrafanaReceiverForm', () => {
       });
     });
   });
+
+  describe('with alertingNotifiersApiMigration flag enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingNotifiersApiMigration = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.alertingNotifiersApiMigration = false;
+    });
+
+    it('should load notifiers from k8s API and render form correctly', async () => {
+      renderWithProvider(<GrafanaReceiverForm />);
+
+      await waitFor(() => {
+        expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+      });
+
+      // Verify integration type selector is populated
+      expect(ui.integrationType.get()).toBeInTheDocument();
+    });
+
+    it('should render options correctly when selecting an integration type', async () => {
+      renderWithProvider(<GrafanaReceiverForm />);
+
+      await waitFor(() => {
+        expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+      });
+
+      // Select Slack notifier type and verify options from versions are rendered
+      await clickSelectOption(ui.typeSelector.get(), 'Slack');
+
+      // Verify that options from the version are displayed
+      expect(ui.slack.recipient.get()).toBeInTheDocument();
+    });
+  });
 });
 
 function getAmCortexConfig(configure: (builder: AlertmanagerConfigBuilder) => void): AlertManagerCortexConfig {
