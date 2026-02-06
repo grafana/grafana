@@ -485,30 +485,24 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// processMissingSeriesStates receives the updated state transitions
-// that we got from the alert rule, and checks the cache for any states
-// that are not in the current evaluation. The missing states are
-// for series that are no longer present in the current evaluation.
-// For each missing state, we check if it is stale, and if so, we resolve it.
-// At the end we return the missing states so that later they can be sent
-// to the alertmanager if needed.
+// processMissingSeriesStates finds cached states missing from the current evaluation,
+// resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
 func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int64) {
 	missingTransitions := []StateTransition{}
 	var staleStatesCount int64 = 0
 
 	toDelete := func(s *State) bool {
-		// We need only states that are not present in the current evaluation, so
-		// skip the state if it was just evaluated.
+		// Skip states that were just evaluated. They're not missing.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
 			return false
 		}
 		// After this point, we know that the state is not in the current evaluation.
-		// Now we need check if it's stale, and if so, we need to resolve it.
+		// Check if it's stale, and if so, resolve it.
 		oldState := s.State
 		oldReason := s.StateReason
 
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
-		// Error state should be resolved after 1 missing evaluation instead of waiting
+		// 'Error' and 'NoData' states should be resolved after 1 missing evaluation instead of waiting
 		// for the configured missing series evaluations. This ensures resolved notifications are sent
 		// immediately when the alert transitions from these states.
 		if s.State == eval.Error || s.State == eval.NoData {
@@ -524,7 +518,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			s.LastEvaluationTime = evaluatedAt
 			s.EndsAt = evaluatedAt
 
-			// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
 				image := takeImageFn("stale state")
@@ -535,8 +529,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 
 			staleStatesCount++
 		} else if s.State == eval.Alerting {
-			// We need to update EndsAt for the state so that it will not be resolved by the
-			// Alertmanager automatically.
+			// Update 'EndsAt' so the Alertmanager won't auto-resolve this alert.
 			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 
