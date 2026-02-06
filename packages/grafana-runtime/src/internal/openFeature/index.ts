@@ -1,9 +1,10 @@
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
 import { NOOP_PROVIDER, OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
 
-import { FeatureToggles } from '@grafana/data';
+import { AppEvents, FeatureToggles } from '@grafana/data';
 
 import { config } from '../../config';
+import { getAppEvents } from '../../services';
 import { logError } from '../../utils/logging';
 
 export type FeatureFlagName = keyof FeatureToggles;
@@ -17,6 +18,11 @@ function checkDefaultProvider() {
     );
     console.error(err);
     logError(err);
+
+    getAppEvents().publish({
+      type: AppEvents.alertWarning.name,
+      payload: [err.message],
+    });
   }
 }
 
