@@ -24,7 +24,8 @@ const (
 
 	ManagedRolePrefix = "managed:"
 
-	PluginRolePrefix = "plugins:"
+	PluginRolePrefix    = "plugins:"
+	PluginRoleUIDPrefix = "plugins_"
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
