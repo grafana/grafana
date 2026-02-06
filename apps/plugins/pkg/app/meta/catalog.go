@@ -56,7 +56,7 @@ func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaC
 func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
 	logger := p.logger.WithContext(ctx)
 	if ns, nsErr := request.NamespaceInfoFrom(ctx, false); nsErr == nil && ns.Value != "" {
-		logger = logger.With("request_namespace", ns.Value)
+		logger = logger.With("requestNamespace", ns.Value)
 	}
 
 	u, err := url.Parse(p.grafanaComAPIURL)
