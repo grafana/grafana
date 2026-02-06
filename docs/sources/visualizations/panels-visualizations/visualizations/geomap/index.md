@@ -496,8 +496,27 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
   - Custom MapServer (see [XYZ](#xyz-tile-layer) for formatting)
     - URL template
     - Attribution
+    - Refresh on update (reload tiles when dashboard refreshes)
+  - Custom Dynamic MapServer
+    - URL template (URL to ArcGIS MapServer, for example `https://mapservices.weather.noaa.gov/.../MapServer`)
+    - Attribution
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
+
+##### Custom Dynamic MapServer
+
+Custom Dynamic MapServer renders map images on-demand rather than using pre-cached tiles.
+This is useful for real-time data that updates frequently, such as weather radar or other dynamic datasets.
+
+Dynamic services automatically refresh when the dashboard updates, ensuring you always see the latest data.
+This differs from the Custom MapServer option, which uses pre-cached tiles and requires the "Refresh on update" option to be enabled for updates.
+
+**Example use cases:**
+
+- NOAA weather radar services
+- Real-time traffic data
+- Live sensor data overlays
+- Any ArcGIS MapServer or ImageServer without tile caching
 
 ##### More Information
 
