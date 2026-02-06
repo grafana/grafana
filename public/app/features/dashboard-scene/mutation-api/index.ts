@@ -6,24 +6,19 @@
  *
  * @example
  * ```typescript
- * import { getDashboardMutationAPI } from '@grafana/runtime';
+ * import { DashboardMutationAPI } from '@grafana/runtime';
  *
- * const api = getDashboardMutationAPI();
- * if (api && api.canEdit()) {
- *   // Simple: just title and vizType
+ * const api = DashboardMutationAPI.getDashboardMutationAPI();
+ * if (api) {
  *   const result = await api.execute({
  *     type: 'ADD_PANEL',
- *     payload: { title: 'CPU Usage', vizType: 'timeseries' },
- *   });
- *
- *   // Advanced: with full spec
- *   const result2 = await api.execute({
- *     type: 'ADD_PANEL',
  *     payload: {
- *       title: 'Memory Usage',
- *       spec: {
- *         vizConfig: { kind: 'VizConfig', spec: { pluginId: 'stat' } },
- *         data: { kind: 'QueryGroup', spec: { queries: [] } },
+ *       panel: {
+ *         kind: 'Panel',
+ *         spec: {
+ *           title: 'CPU Usage',
+ *           vizConfig: { kind: 'VizConfig', group: 'timeseries', version: '', spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } } },
+ *         },
  *       },
  *     },
  *   });
@@ -31,10 +26,8 @@
  * ```
  */
 
-// Types - intentionally re-exported as public API surface
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export type {
-  // Mutation types
   MutationType,
   Mutation,
   MutationPayloadMap,
@@ -42,35 +35,30 @@ export type {
   MutationChange,
   MutationTransaction,
   MutationEvent,
-
-  // Payload types (use schema types directly where possible)
   AddPanelPayload,
   RemovePanelPayload,
   UpdatePanelPayload,
-  MovePanelPayload,
-  DuplicatePanelPayload,
   AddVariablePayload,
   RemoveVariablePayload,
   UpdateVariablePayload,
-  AddRowPayload,
-  RemoveRowPayload,
-  CollapseRowPayload,
   UpdateTimeSettingsPayload,
   UpdateDashboardMetaPayload,
-
-  // Supporting types
-  LayoutPosition,
-
-  // MCP types
-  MCPToolDefinition,
-  MCPResourceDefinition,
-  MCPPromptDefinition,
+  CommandSchemaDefinition,
+  ResourceSchemaDefinition,
+  PromptSchemaDefinition,
 } from './types';
 
-// Mutation Executor
+/**
+ * @internal Not part of the public API surface.
+ */
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { MutationExecutor } from './MutationExecutor';
 
-// MCP Tool Definitions
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { DASHBOARD_MCP_TOOLS, DASHBOARD_MCP_RESOURCES, DASHBOARD_MCP_PROMPTS } from './mcpTools';
+export {
+  DASHBOARD_COMMAND_SCHEMAS,
+  DASHBOARD_RESOURCE_SCHEMAS,
+  DASHBOARD_PROMPT_SCHEMAS,
+  getCommandSchemaByName,
+  getResourceSchemaByUri,
+} from './commandSchemas';

@@ -2,9 +2,14 @@
  * Mutation Executor
  *
  * Executes dashboard mutations with transaction support and event emission.
+ *
+ * @internal This class is not part of the public API surface.
+ * Use the DashboardMutationClient via getDashboardMutationAPI() instead.
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
+import { DashboardMutationAPI } from '@grafana/runtime';
 
 import type { DashboardScene } from '../scene/DashboardScene';
 
@@ -12,28 +17,38 @@ import {
   handleAddPanel,
   handleRemovePanel,
   handleUpdatePanel,
-  handleMovePanel,
   handleAddVariable,
   handleRemoveVariable,
-  handleAddRow,
+  handleUpdateVariable,
+  handleListVariables,
   handleUpdateTimeSettings,
   handleUpdateDashboardMeta,
   handleGetDashboardInfo,
-  type MutationContext,
-  type MutationTransactionInternal,
-  type MutationHandler,
+  handleEnterEditMode,
+  requiresEdit,
+  readOnly,
+  MutationContext,
+  MutationTransactionInternal,
+  MutationHandler,
+  PermissionCheck,
 } from './handlers';
-import {
-  type Mutation,
-  type MutationType,
-  type MutationResult,
-  type MutationEvent,
-  type MutationPayloadMap,
-} from './types';
+import { validatePayload } from './schemas';
+import { Mutation, MutationType, MutationResult, MutationEvent, MUTATION_TYPES } from './types';
 
-// ============================================================================
-// Event Bus
-// ============================================================================
+/**
+ * Type guard that validates a string is a valid MutationType.
+ */
+function isMutationType(type: string): type is MutationType {
+  return MUTATION_TYPES.some((t) => t === type);
+}
+
+/**
+ * A registered command: handler + permission check.
+ */
+interface CommandRegistration {
+  handler: MutationHandler;
+  canExecute: PermissionCheck;
+}
 
 type MutationEventListener = (event: MutationEvent) => void;
 
@@ -56,13 +71,9 @@ class MutationEventBus {
   }
 }
 
-// ============================================================================
-// Mutation Executor
-// ============================================================================
-
 export class MutationExecutor {
   private scene!: DashboardScene;
-  private handlers: Map<MutationType, MutationHandler> = new Map();
+  private commands: Map<MutationType, CommandRegistration> = new Map();
   private eventBus = new MutationEventBus();
   private _currentTransaction: MutationTransactionInternal | null = null;
 
@@ -85,22 +96,42 @@ export class MutationExecutor {
   }
 
   /**
-   * Execute a single mutation
+   * Execute a single mutation.
+   * Accepts the loose public API input type and validates at runtime.
    */
-  async execute(mutation: Mutation): Promise<MutationResult> {
+  async execute(mutation: DashboardMutationAPI.MutationRequest): Promise<MutationResult> {
     const results = await this.executeBatch([mutation]);
     return results[0];
   }
 
   /**
-   * Execute multiple mutations atomically
+   * Execute multiple mutations atomically.
+   * Accepts the loose public API input type and validates at runtime.
    */
-  async executeBatch(mutations: Mutation[]): Promise<MutationResult[]> {
+  async executeBatch(requests: DashboardMutationAPI.MutationRequest[]): Promise<MutationResult[]> {
     if (!this.scene) {
       throw new Error('No scene set. Call setScene() first.');
     }
 
-    // Create transaction
+    // Normalize request types to UPPER_CASE (schemas may use different casing)
+    const normalizedRequests = requests.map((r) => ({
+      ...r,
+      type: r.type.toUpperCase(),
+    }));
+
+    // Convert requests to internal mutations, validating types
+    const mutations: Mutation[] = [];
+    for (const request of normalizedRequests) {
+      if (!isMutationType(request.type)) {
+        return normalizedRequests.map(() => ({
+          success: false,
+          error: `Unknown command type: ${request.type}`,
+          changes: [],
+        }));
+      }
+      mutations.push({ type: request.type, payload: request.payload });
+    }
+
     const transaction: MutationTransactionInternal = {
       id: uuidv4(),
       mutations,
@@ -115,14 +146,43 @@ export class MutationExecutor {
     const context: MutationContext = { scene: this.scene, transaction };
 
     try {
-      // Execute each mutation
-      for (const mutation of mutations) {
-        const handler = this.handlers.get(mutation.type);
-        if (!handler) {
-          throw new Error(`No handler registered for mutation type: ${mutation.type}`);
+      for (let i = 0; i < mutations.length; i++) {
+        const mutation = mutations[i];
+
+        const registration = this.commands.get(mutation.type);
+        if (!registration) {
+          results.push({
+            success: false,
+            error: `No handler registered for command type: ${mutation.type}`,
+            changes: [],
+          });
+          throw new Error(`No handler registered for command type: ${mutation.type}`);
         }
 
-        const result = await handler(mutation.payload, context);
+        // Check command-level permissions
+        const permissionResult = registration.canExecute(this.scene);
+        if (!permissionResult.allowed) {
+          results.push({
+            success: false,
+            error: permissionResult.error,
+            changes: [],
+          });
+          throw new Error(permissionResult.error);
+        }
+
+        // Validate payload using schema validators
+        const validationResult = validatePayload(mutation.type, mutation.payload);
+        if (!validationResult.success) {
+          results.push({
+            success: false,
+            error: validationResult.error,
+            changes: [],
+          });
+          throw new Error(validationResult.error);
+        }
+
+        // Execute the handler with validated payload
+        const result = await registration.handler(validationResult.data, context);
         results.push(result);
 
         if (!result.success) {
@@ -149,28 +209,31 @@ export class MutationExecutor {
 
       return results;
     } catch (error) {
-      // Probably need a rollback mechanism here... but skipping this for POC
       console.error('Mutation batch failed:', error);
 
-      transaction.status = 'rolled_back';
+      transaction.status = 'failed';
       transaction.completedAt = Date.now();
 
-      // Emit failure event
-      this.eventBus.emit({
-        type: 'mutation_rolled_back',
-        mutation: mutations[0],
-        result: { success: false, error: String(error), changes: [] },
-        transaction,
-        timestamp: Date.now(),
-        source: 'assistant',
-      });
-
-      // Return error results for remaining mutations
       const errorMessage = error instanceof Error ? error.message : String(error);
-      while (results.length < mutations.length) {
+
+      // Emit failure event
+      if (mutations.length > 0) {
+        this.eventBus.emit({
+          type: 'mutation_failed',
+          mutation: mutations[0],
+          result: { success: false, error: errorMessage, changes: [] },
+          transaction,
+          timestamp: Date.now(),
+          source: 'assistant',
+        });
+      }
+
+      // Mark ALL results as failed
+      results.length = 0;
+      for (const _mutation of mutations) {
         results.push({
           success: false,
-          error: errorMessage,
+          error: `Transaction failed: ${errorMessage}`,
           changes: [],
         });
       }
@@ -188,101 +251,33 @@ export class MutationExecutor {
     return this._currentTransaction;
   }
 
-  // ==========================================================================
-  // Handler Registration
-  // ==========================================================================
-
   private registerDefaultHandlers(): void {
     // Panel operations
-    this.registerHandler('ADD_PANEL', handleAddPanel);
-    this.registerHandler('REMOVE_PANEL', handleRemovePanel);
-    this.registerHandler('UPDATE_PANEL', handleUpdatePanel);
-    this.registerHandler('MOVE_PANEL', handleMovePanel);
-    this.registerHandler('DUPLICATE_PANEL', this.notImplemented('DUPLICATE_PANEL'));
+    this.registerCommand('ADD_PANEL', handleAddPanel, requiresEdit);
+    this.registerCommand('REMOVE_PANEL', handleRemovePanel, requiresEdit);
+    this.registerCommand('UPDATE_PANEL', handleUpdatePanel, requiresEdit);
 
     // Variable operations
-    this.registerHandler('ADD_VARIABLE', handleAddVariable);
-    this.registerHandler('REMOVE_VARIABLE', handleRemoveVariable);
-    this.registerHandler('UPDATE_VARIABLE', this.notImplemented('UPDATE_VARIABLE'));
-
-    // Row operations
-    this.registerHandler('ADD_ROW', handleAddRow);
-    this.registerHandler('REMOVE_ROW', this.notImplemented('REMOVE_ROW'));
-    this.registerHandler('COLLAPSE_ROW', this.notImplemented('COLLAPSE_ROW'));
-
-    // Tab operations
-    this.registerHandler('ADD_TAB', this.notImplemented('ADD_TAB'));
-    this.registerHandler('REMOVE_TAB', this.notImplemented('REMOVE_TAB'));
-
-    // Library panel operations
-    this.registerHandler('ADD_LIBRARY_PANEL', this.notImplemented('ADD_LIBRARY_PANEL'));
-    this.registerHandler('UNLINK_LIBRARY_PANEL', this.notImplemented('UNLINK_LIBRARY_PANEL'));
-    this.registerHandler('SAVE_AS_LIBRARY_PANEL', this.notImplemented('SAVE_AS_LIBRARY_PANEL'));
-
-    // Repeat configuration
-    this.registerHandler('CONFIGURE_PANEL_REPEAT', this.notImplemented('CONFIGURE_PANEL_REPEAT'));
-    this.registerHandler('CONFIGURE_ROW_REPEAT', this.notImplemented('CONFIGURE_ROW_REPEAT'));
-
-    // Conditional rendering
-    this.registerHandler('SET_CONDITIONAL_RENDERING', this.notImplemented('SET_CONDITIONAL_RENDERING'));
-
-    // Layout
-    this.registerHandler('CHANGE_LAYOUT_TYPE', this.notImplemented('CHANGE_LAYOUT_TYPE'));
-
-    // Annotation operations
-    this.registerHandler('ADD_ANNOTATION', this.notImplemented('ADD_ANNOTATION'));
-    this.registerHandler('UPDATE_ANNOTATION', this.notImplemented('UPDATE_ANNOTATION'));
-    this.registerHandler('REMOVE_ANNOTATION', this.notImplemented('REMOVE_ANNOTATION'));
-
-    // Link operations
-    this.registerHandler('ADD_DASHBOARD_LINK', this.notImplemented('ADD_DASHBOARD_LINK'));
-    this.registerHandler('REMOVE_DASHBOARD_LINK', this.notImplemented('REMOVE_DASHBOARD_LINK'));
-    this.registerHandler('ADD_PANEL_LINK', this.notImplemented('ADD_PANEL_LINK'));
-    this.registerHandler('ADD_DATA_LINK', this.notImplemented('ADD_DATA_LINK'));
-
-    // Field configuration
-    this.registerHandler('ADD_FIELD_OVERRIDE', this.notImplemented('ADD_FIELD_OVERRIDE'));
-    this.registerHandler('ADD_VALUE_MAPPING', this.notImplemented('ADD_VALUE_MAPPING'));
-    this.registerHandler('ADD_TRANSFORMATION', this.notImplemented('ADD_TRANSFORMATION'));
+    this.registerCommand('ADD_VARIABLE', handleAddVariable, requiresEdit);
+    this.registerCommand('REMOVE_VARIABLE', handleRemoveVariable, requiresEdit);
+    this.registerCommand('UPDATE_VARIABLE', handleUpdateVariable, requiresEdit);
+    this.registerCommand('LIST_VARIABLES', handleListVariables, readOnly);
 
     // Dashboard settings
-    this.registerHandler('UPDATE_TIME_SETTINGS', handleUpdateTimeSettings);
-    this.registerHandler('UPDATE_DASHBOARD_META', handleUpdateDashboardMeta);
+    this.registerCommand('UPDATE_TIME_SETTINGS', handleUpdateTimeSettings, requiresEdit);
+    this.registerCommand('UPDATE_DASHBOARD_META', handleUpdateDashboardMeta, requiresEdit);
 
-    // Dashboard management (backend operations)
-    this.registerHandler('MOVE_TO_FOLDER', this.notImplemented('MOVE_TO_FOLDER'));
-    this.registerHandler('TOGGLE_FAVORITE', this.notImplemented('TOGGLE_FAVORITE'));
+    // Read-only
+    this.registerCommand('GET_DASHBOARD_INFO', handleGetDashboardInfo, readOnly);
 
-    // Version management (backend operations)
-    this.registerHandler('LIST_VERSIONS', this.notImplemented('LIST_VERSIONS'));
-    this.registerHandler('COMPARE_VERSIONS', this.notImplemented('COMPARE_VERSIONS'));
-    this.registerHandler('RESTORE_VERSION', this.notImplemented('RESTORE_VERSION'));
-
-    // Read-only operations
-    this.registerHandler('GET_DASHBOARD_INFO', handleGetDashboardInfo);
+    // Edit mode
+    this.registerCommand('ENTER_EDIT_MODE', handleEnterEditMode, requiresEdit);
   }
 
   /**
-   * Create a stub handler for not-yet-implemented mutations
+   * Register a command with its handler and permission check.
    */
-  private notImplemented(mutationType: string): MutationHandler {
-    return async (): Promise<MutationResult> => {
-      return {
-        success: false,
-        changes: [],
-        error: `${mutationType} is not fully implemented in POC`,
-      };
-    };
-  }
-
-  /**
-   * Register a mutation handler
-   */
-  private registerHandler<T extends MutationType>(
-    type: T,
-    handler: (payload: MutationPayloadMap[T], context: MutationContext) => Promise<MutationResult>
-  ): void {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    this.handlers.set(type, handler as MutationHandler);
+  private registerCommand(type: MutationType, handler: MutationHandler, canExecute: PermissionCheck): void {
+    this.commands.set(type, { handler, canExecute });
   }
 }

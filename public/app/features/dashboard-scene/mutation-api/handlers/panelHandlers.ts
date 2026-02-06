@@ -1,64 +1,93 @@
 /**
  * Panel mutation handlers
+ *
+ * Uses existing serialization utilities from layoutSerializers/utils.ts and
+ * transformSceneToSaveModelSchemaV2.ts to convert between schema types and scene objects.
  */
 
-import type { MutationResult, MutationChange, AddPanelPayload, RemovePanelPayload, UpdatePanelPayload } from '../types';
+import { VizPanel } from '@grafana/scenes';
+import { PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import type { MutationContext } from './types';
+import { buildVizPanel, createPanelDataProvider } from '../../serialization/layoutSerializers/utils';
+import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
+import { transformMappingsToV1 } from '../../serialization/transformToV1TypesUtils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import type { MutationChange, AddPanelPayload, RemovePanelPayload, UpdatePanelPayload } from '../types';
+
+import { createHandler } from '.';
 
 /**
- * Add a new panel to the dashboard
+ * Find a panel by elementName or panelId in the dashboard body.
  */
-export async function handleAddPanel(payload: AddPanelPayload, context: MutationContext): Promise<MutationResult> {
+function findPanel(panels: VizPanel[], elementName?: string, panelId?: number): VizPanel | null {
+  for (const panel of panels) {
+    const state = panel.state;
+    if (elementName && state.key === elementName) {
+      return panel;
+    }
+    if (panelId !== undefined && state.key) {
+      const keyMatch = String(state.key).match(/^panel-(\d+)$/);
+      if (keyMatch && parseInt(keyMatch[1], 10) === panelId) {
+        return panel;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Add a new panel to the dashboard.
+ *
+ * The payload already contains a PanelKind -- we just assign an id and pass it
+ * through buildVizPanel from the serialization layer.
+ */
+export const handleAddPanel = createHandler<AddPanelPayload>(async (payload, context) => {
   const { scene, transaction } = context;
 
   try {
-    // Extract values with defaults
-    // Top-level fields take precedence, then spec fields, then defaults
-    const title = payload.title ?? payload.spec?.title ?? 'New Panel';
-    // VizConfigKind.group contains the plugin ID
-    const vizType = payload.vizType ?? payload.spec?.vizConfig?.group ?? 'timeseries';
-    const description = payload.description ?? payload.spec?.description ?? '';
-
-    // Position is for future layout placement (not yet implemented)
-    const _position = payload.position;
-    void _position; // Suppress unused variable warning until layout positioning is implemented
-
-    // Generate unique element name
-    const elementName = `panel-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
-
-    // Use scene's addPanel method (simplified for POC)
     const body = scene.state.body;
     if (!body) {
       throw new Error('Dashboard has no body');
     }
 
-    // For POC: Create a basic panel using VizPanel directly
-    // Real implementation would use proper panel building utilities
-    const { VizPanel } = await import('@grafana/scenes');
+    const panelId = dashboardSceneGraph.getNextPanelId(scene);
+    const elementName = getVizPanelKeyForPanelId(panelId);
 
-    const vizPanel = new VizPanel({
-      title,
-      pluginId: vizType,
-      description,
-      options: {},
-      fieldConfig: { defaults: {}, overrides: [] },
-      key: elementName,
-    });
+    // The payload is already a PanelKind -- just inject the generated id
+    const panelKind: PanelKind = {
+      ...payload.panel,
+      spec: {
+        ...payload.panel.spec,
+        id: panelId,
+        title: payload.panel.spec.title || 'New Panel',
+        description: payload.panel.spec.description ?? '',
+        links: payload.panel.spec.links ?? [],
+        data: payload.panel.spec.data ?? {
+          kind: 'QueryGroup',
+          spec: { queries: [], transformations: [], queryOptions: {} },
+        },
+      },
+    };
+    const vizPanel = buildVizPanel(panelKind, panelId);
 
-    // Add panel to scene
     scene.addPanel(vizPanel);
 
     const changes: MutationChange[] = [
-      { path: `/elements/${elementName}`, previousValue: undefined, newValue: { title, vizType } },
+      {
+        path: `/elements/${elementName}`,
+        previousValue: undefined,
+        newValue: { title: panelKind.spec.title, pluginId: panelKind.spec.vizConfig.group, panelId },
+      },
     ];
     transaction.changes.push(...changes);
 
     return {
       success: true,
+      data: { panelId, elementName },
       inverseMutation: {
         type: 'REMOVE_PANEL',
-        payload: { elementName },
+        payload: { elementName, panelId },
       },
       changes,
     };
@@ -69,64 +98,44 @@ export async function handleAddPanel(payload: AddPanelPayload, context: Mutation
       changes: [],
     };
   }
-}
+});
 
 /**
- * Remove a panel from the dashboard
+ * Remove a panel from the dashboard.
+ *
+ * Captures the full PanelKind before removal for a structurally correct inverse mutation.
  */
-export async function handleRemovePanel(
-  payload: RemovePanelPayload,
-  context: MutationContext
-): Promise<MutationResult> {
+export const handleRemovePanel = createHandler<RemovePanelPayload>(async (payload, context) => {
   const { scene, transaction } = context;
   const { elementName, panelId } = payload;
 
   try {
-    // Find the panel
     const body = scene.state.body;
     if (!body) {
       throw new Error('Dashboard has no body');
     }
 
-    // Find panel by element name or ID
-    const { VizPanel } = await import('@grafana/scenes');
-    let panelToRemove: InstanceType<typeof VizPanel> | null = null;
-    let panelState: Record<string, unknown> = {};
-
-    // Search through the scene's panels
-    const panels = body.getVizPanels?.() || [];
-    for (const panel of panels) {
-      const state = panel.state;
-      if (elementName && state.key === elementName) {
-        panelToRemove = panel;
-        panelState = { ...state };
-        break;
-      }
-      // panelId is stored internally, use key for matching
-      if (panelId !== undefined && state.key && String(state.key).includes(String(panelId))) {
-        panelToRemove = panel;
-        panelState = { ...state };
-        break;
-      }
-    }
+    const panels = body.getVizPanels();
+    const panelToRemove = findPanel(panels, elementName, panelId);
 
     if (!panelToRemove) {
-      throw new Error(`Panel not found: ${elementName || panelId}`);
+      throw new Error(`Panel not found: ${elementName ?? `panelId=${panelId}`}`);
     }
 
-    // Remove the panel
+    const panelKind = vizPanelToSchemaV2(panelToRemove);
+
     scene.removePanel(panelToRemove);
 
     const changes: MutationChange[] = [
-      { path: `/elements/${elementName || panelId}`, previousValue: panelState, newValue: undefined },
+      { path: `/elements/${elementName || panelId}`, previousValue: panelKind, newValue: undefined },
     ];
     transaction.changes.push(...changes);
 
     return {
       success: true,
       inverseMutation: {
-        type: 'REMOVE_PANEL',
-        payload: { elementName: String(panelState.key) },
+        type: 'ADD_PANEL',
+        payload: { panel: panelKind },
       },
       changes,
     };
@@ -137,60 +146,84 @@ export async function handleRemovePanel(
       changes: [],
     };
   }
-}
+});
 
 /**
- * Update an existing panel
+ * Update an existing panel.
+ *
+ * Captures the panel's current schema state before applying updates,
+ * and uses createPanelDataProvider for query/transformation updates.
  */
-export async function handleUpdatePanel(
-  payload: UpdatePanelPayload,
-  context: MutationContext
-): Promise<MutationResult> {
+export const handleUpdatePanel = createHandler<UpdatePanelPayload>(async (payload, context) => {
   const { scene, transaction } = context;
   const { elementName, panelId, updates } = payload;
 
   try {
-    // Find the panel
     const body = scene.state.body;
     if (!body) {
       throw new Error('Dashboard has no body');
     }
 
-    const { VizPanel } = await import('@grafana/scenes');
-    const panels = body.getVizPanels?.() || [];
-    let panelToUpdate: InstanceType<typeof VizPanel> | null = null;
-
-    for (const panel of panels) {
-      const state = panel.state;
-      if (elementName && state.key === elementName) {
-        panelToUpdate = panel;
-        break;
-      }
-      // panelId is stored internally, use key for matching
-      if (panelId !== undefined && state.key && String(state.key).includes(String(panelId))) {
-        panelToUpdate = panel;
-        break;
-      }
-    }
+    const panels = body.getVizPanels();
+    const panelToUpdate = findPanel(panels, elementName, panelId);
 
     if (!panelToUpdate) {
-      throw new Error(`Panel not found: ${elementName || panelId}`);
+      throw new Error(`Panel not found: ${elementName ?? `panelId=${panelId}`}`);
     }
 
-    // Store previous state for rollback
-    const previousState = { ...panelToUpdate.state };
+    // Capture previous state as schema-compatible PanelKind for inverse mutation
+    const previousPanelKind = vizPanelToSchemaV2(panelToUpdate);
 
-    // Apply updates from PanelSpec
+    // Build batched state updates
+    const stateUpdate: Partial<Record<string, unknown>> = {};
+
     if (updates.title !== undefined) {
-      panelToUpdate.setState({ title: updates.title });
+      stateUpdate.title = updates.title;
     }
     if (updates.description !== undefined) {
-      panelToUpdate.setState({ description: updates.description });
+      stateUpdate.description = updates.description;
     }
-    // More updates would be handled here based on PanelSpec fields
+    if (updates.transparent !== undefined) {
+      stateUpdate.displayMode = updates.transparent ? 'transparent' : 'default';
+    }
+
+    if (updates.vizConfig !== undefined) {
+      const vizConfig = updates.vizConfig;
+      if (vizConfig.group !== undefined) {
+        stateUpdate.pluginId = vizConfig.group;
+      }
+      if (vizConfig.version !== undefined) {
+        stateUpdate.pluginVersion = vizConfig.version;
+      }
+      if (vizConfig.spec?.options !== undefined) {
+        stateUpdate.options = {
+          ...panelToUpdate.state.options,
+          ...vizConfig.spec.options,
+        };
+      }
+      if (vizConfig.spec?.fieldConfig !== undefined) {
+        stateUpdate.fieldConfig = transformMappingsToV1(vizConfig.spec.fieldConfig);
+      }
+    }
+
+    if (Object.keys(stateUpdate).length > 0) {
+      panelToUpdate.setState(stateUpdate);
+    }
+
+    // Handle data updates using serialization utils
+    if (updates.data !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const currentPanelKind = vizPanelToSchemaV2(panelToUpdate) as PanelKind;
+      const updatedPanelKind: PanelKind = {
+        ...currentPanelKind,
+        spec: { ...currentPanelKind.spec, data: updates.data },
+      };
+      const dataProvider = createPanelDataProvider(updatedPanelKind);
+      panelToUpdate.setState({ $data: dataProvider });
+    }
 
     const changes: MutationChange[] = [
-      { path: `/elements/${elementName || panelId}`, previousValue: previousState, newValue: updates },
+      { path: `/elements/${elementName || panelId}`, previousValue: previousPanelKind, newValue: updates },
     ];
     transaction.changes.push(...changes);
 
@@ -198,8 +231,17 @@ export async function handleUpdatePanel(
       success: true,
       inverseMutation: {
         type: 'UPDATE_PANEL',
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        payload: { elementName, panelId, updates: previousState as UpdatePanelPayload['updates'] },
+        payload: {
+          elementName,
+          panelId,
+          updates: {
+            title: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.title : undefined,
+            description: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.description : undefined,
+            transparent: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.transparent : undefined,
+            vizConfig: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.vizConfig : undefined,
+            data: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.data : undefined,
+          },
+        },
       },
       changes,
     };
@@ -210,15 +252,4 @@ export async function handleUpdatePanel(
       changes: [],
     };
   }
-}
-
-/**
- * Move a panel (stub - not fully implemented)
- */
-export async function handleMovePanel(): Promise<MutationResult> {
-  return {
-    success: true,
-    changes: [],
-    warnings: ['Move panel is not fully implemented in POC'],
-  };
-}
+});

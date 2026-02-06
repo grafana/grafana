@@ -5,33 +5,40 @@
  *
  * The API is registered by DashboardScene when a dashboard is loaded and
  * cleared when the dashboard is deactivated.
+ *
+ * IMPORTANT: This is a singleton -- only one dashboard's API is active at a time.
+ * If Grafana supports multiple simultaneous dashboards in the future (e.g., split views),
+ * this pattern will need to be replaced with a Map keyed by dashboardUid or sceneId.
+ *
+ * All types are exported via `DashboardMutationAPI` to minimize
+ * the public API surface of @grafana/runtime.
+ *
+ * @example
+ * ```typescript
+ * import { DashboardMutationAPI } from '@grafana/runtime';
+ *
+ * const api = DashboardMutationAPI.getDashboardMutationAPI();
+ * if (api) {
+ *   const request: DashboardMutationAPI.MutationRequest = {
+ *     type: 'ADD_PANEL',
+ *     payload: { title: 'My Panel', vizType: 'timeseries' }
+ *   };
+ *   const result: DashboardMutationAPI.MutationResult = await api.execute(request);
+ * }
+ * ```
  */
 
-/**
- * MCP Tool Definition - describes a tool that can be invoked
- * @see https://spec.modelcontextprotocol.io/specification/server/tools/
- */
-export interface MCPToolDefinition {
-  name: string;
-  description: string;
-  inputSchema: {
-    type: 'object';
-    properties: Record<string, unknown>;
-    required?: string[];
-  };
-  annotations?: {
-    title?: string;
-    readOnlyHint?: boolean;
-    destructiveHint?: boolean;
-    idempotentHint?: boolean;
-    confirmationHint?: boolean;
-  };
+/** The input to execute() */
+export interface MutationRequest {
+  /** Type of mutation (e.g., 'ADD_PANEL', 'REMOVE_PANEL', 'UPDATE_PANEL') */
+  type: string;
+  /** Payload specific to the mutation type */
+  payload: unknown;
 }
 
+/** The output from execute() */
 export interface MutationResult {
   success: boolean;
-  /** ID of the affected panel (for panel operations) */
-  panelId?: string;
   /** Error message if success is false */
   error?: string;
   /** List of changes made by the mutation */
@@ -42,6 +49,7 @@ export interface MutationResult {
   data?: unknown;
 }
 
+/** Describes a single change made by a mutation */
 export interface MutationChange {
   /** JSON path to the changed value */
   path: string;
@@ -51,74 +59,49 @@ export interface MutationChange {
   newValue: unknown;
 }
 
-export interface MutationRequest {
-  /** Type of mutation (e.g., 'ADD_PANEL', 'REMOVE_PANEL', 'UPDATE_PANEL') */
-  type: string;
-  /** Payload specific to the mutation type */
-  payload: unknown;
+/** A command definition with its schema */
+export interface MutationCommand {
+  command: string;
+  description: string;
+  inputSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
 }
 
 /**
- * Dashboard info returned by getDashboardMutationAPI().getDashboardInfo()
+ * The Dashboard Mutation API client interface.
+ *
+ * Common mutation types:
+ * - GET_DASHBOARD_INFO: Get dashboard state (canEdit, isEditing, uid, title)
+ * - ENTER_EDIT_MODE: Enter edit mode
+ * - ADD_PANEL, REMOVE_PANEL, UPDATE_PANEL: Panel operations
+ * - ADD_VARIABLE, REMOVE_VARIABLE: Variable operations
+ * - UPDATE_DASHBOARD_META: Update title, description, tags
+ * - UPDATE_TIME_SETTINGS: Update time range
  */
-export interface DashboardMutationInfo {
-  available: boolean;
-  uid?: string;
-  title?: string;
-  canEdit: boolean;
-  isEditing: boolean;
-  availableTools: string[];
-}
+export interface MutationClient {
+  /** UID of the dashboard this client is bound to. Use to verify the target dashboard. */
+  readonly uid: string | undefined;
 
-export interface DashboardMutationAPI {
-  /**
-   * Execute a mutation on the dashboard
-   */
+  /** Execute a mutation on the dashboard. */
   execute(mutation: MutationRequest): Promise<MutationResult>;
 
   /**
-   * Check if the current user can edit the dashboard
+   * Get the command definition for a command (for validation).
+   * Returns null if command is not found.
    */
-  canEdit(): boolean;
-
-  /**
-   * Get the UID of the currently loaded dashboard
-   */
-  getDashboardUID(): string | undefined;
-
-  /**
-   * Get the title of the currently loaded dashboard
-   */
-  getDashboardTitle(): string | undefined;
-
-  /**
-   * Check if the dashboard is in edit mode
-   */
-  isEditing(): boolean;
-
-  /**
-   * Enter edit mode if not already editing
-   */
-  enterEditMode(): void;
-
-  /**
-   * Get the available MCP tool definitions for this dashboard
-   */
-  getTools(): MCPToolDefinition[];
-
-  /**
-   * Get comprehensive dashboard info in a single call
-   */
-  getDashboardInfo(): DashboardMutationInfo;
+  getSchema(command: string): MutationCommand | null;
 }
 
 // Singleton instance
-let _dashboardMutationAPI: DashboardMutationAPI | null = null;
+let _dashboardMutationAPI: MutationClient | null = null;
 
 // Expose on window for cross-bundle access (plugins use different bundle)
 declare global {
   interface Window {
-    __grafanaDashboardMutationAPI?: DashboardMutationAPI | null;
+    __grafanaDashboardMutationAPI?: MutationClient | null;
   }
 }
 
@@ -129,7 +112,7 @@ declare global {
  * @param api - The mutation API instance, or null to clear
  * @internal
  */
-export function setDashboardMutationAPI(api: DashboardMutationAPI | null): void {
+export function setDashboardMutationAPI(api: MutationClient | null): void {
   _dashboardMutationAPI = api;
   // Also expose on window for plugins that use a different @grafana/runtime bundle
   if (typeof window !== 'undefined') {
@@ -141,20 +124,14 @@ export function setDashboardMutationAPI(api: DashboardMutationAPI | null): void 
  * Get the dashboard mutation API for the currently loaded dashboard.
  *
  * @returns The mutation API, or null if no dashboard is loaded
- *
- * @example
- * ```typescript
- * import { getDashboardMutationAPI } from '@grafana/runtime';
- *
- * const api = getDashboardMutationAPI();
- * if (api && api.canEdit()) {
- *   await api.execute({
- *     type: 'ADD_PANEL',
- *     payload: { ... }
- *   });
- * }
- * ```
  */
-export function getDashboardMutationAPI(): DashboardMutationAPI | null {
-  return _dashboardMutationAPI;
+export function getDashboardMutationAPI(): MutationClient | null {
+  if (_dashboardMutationAPI) {
+    return _dashboardMutationAPI;
+  }
+  // Fallback to window for cross-bundle access (plugins use different bundle)
+  if (typeof window !== 'undefined' && window.__grafanaDashboardMutationAPI) {
+    return window.__grafanaDashboardMutationAPI;
+  }
+  return null;
 }

@@ -2,31 +2,21 @@
  * Dashboard settings mutation handlers
  */
 
+import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import type { TimeSettingsSpec } from '@grafana/schema/src/schema/dashboard/v2beta1/types.spec.gen';
 
-import { DASHBOARD_MCP_TOOLS } from '../mcpTools';
-import type { MutationResult, MutationChange, UpdateDashboardMetaPayload, AddRowPayload } from '../types';
+import type { MutationChange, UpdateDashboardMetaPayload } from '../types';
 
-import type { MutationContext } from './types';
-
-/**
- * Add a row (stub - not fully implemented)
- */
-export async function handleAddRow(_payload: AddRowPayload, _context: MutationContext): Promise<MutationResult> {
-  return {
-    success: true,
-    changes: [],
-    warnings: ['Add row is not fully implemented in POC - requires RowsLayout'],
-  };
-}
+import { createHandler } from '.';
 
 /**
- * Update dashboard time settings
+ * Update dashboard time settings.
+ *
+ * Maps TimeSettingsSpec fields to the correct scene objects:
+ * - from/to/timezone -> SceneTimeRange
+ * - autoRefresh -> SceneRefreshPicker
  */
-export async function handleUpdateTimeSettings(
-  payload: Partial<TimeSettingsSpec>,
-  context: MutationContext
-): Promise<MutationResult> {
+export const handleUpdateTimeSettings = createHandler<Partial<TimeSettingsSpec>>(async (payload, context) => {
   const { scene, transaction } = context;
   const { from, to, timezone, autoRefresh } = payload;
 
@@ -36,35 +26,64 @@ export async function handleUpdateTimeSettings(
       throw new Error('Dashboard has no time range');
     }
 
-    const previousState = { ...timeRange.state };
+    const previousTimeState = {
+      from: timeRange.state.from,
+      to: timeRange.state.to,
+      timezone: timeRange.state.timeZone,
+    };
 
-    // Apply updates based on TimeSettingsSpec fields
-    const updates: Record<string, unknown> = {};
+    const timeRangeUpdates: Record<string, unknown> = {};
     if (from !== undefined) {
-      updates.from = from;
+      timeRangeUpdates.from = from;
     }
     if (to !== undefined) {
-      updates.to = to;
+      timeRangeUpdates.to = to;
     }
     if (timezone !== undefined) {
-      updates.timeZone = timezone;
+      timeRangeUpdates.timeZone = timezone;
+    }
+
+    if (Object.keys(timeRangeUpdates).length > 0) {
+      timeRange.setState(timeRangeUpdates);
+    }
+
+    let previousAutoRefresh: string | undefined;
+    if (autoRefresh !== undefined) {
+      try {
+        const refreshPicker = sceneGraph.findObject(scene, (obj) => obj instanceof SceneRefreshPicker);
+        if (refreshPicker && refreshPicker instanceof SceneRefreshPicker) {
+          previousAutoRefresh = refreshPicker.state.refresh;
+          refreshPicker.setState({ refresh: autoRefresh });
+        }
+      } catch {
+        // SceneRefreshPicker may not exist on all dashboards
+      }
+    }
+
+    const inversePreviousState: Partial<TimeSettingsSpec> = {};
+    if (from !== undefined) {
+      inversePreviousState.from = previousTimeState.from;
+    }
+    if (to !== undefined) {
+      inversePreviousState.to = previousTimeState.to;
+    }
+    if (timezone !== undefined) {
+      inversePreviousState.timezone = previousTimeState.timezone;
     }
     if (autoRefresh !== undefined) {
-      // autoRefresh would be applied to the dashboard refresh interval
-      updates.refreshInterval = autoRefresh;
+      inversePreviousState.autoRefresh = previousAutoRefresh;
     }
 
-    timeRange.setState(updates);
-
-    const changes: MutationChange[] = [{ path: '/timeSettings', previousValue: previousState, newValue: updates }];
+    const changes: MutationChange[] = [
+      { path: '/timeSettings', previousValue: inversePreviousState, newValue: payload },
+    ];
     transaction.changes.push(...changes);
 
     return {
       success: true,
       inverseMutation: {
         type: 'UPDATE_TIME_SETTINGS',
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        payload: previousState as Partial<TimeSettingsSpec>,
+        payload: inversePreviousState,
       },
       changes,
     };
@@ -75,27 +94,23 @@ export async function handleUpdateTimeSettings(
       changes: [],
     };
   }
-}
+});
 
 /**
  * Update dashboard metadata (title, description, tags, etc.)
  */
-export async function handleUpdateDashboardMeta(
-  payload: UpdateDashboardMetaPayload,
-  context: MutationContext
-): Promise<MutationResult> {
+export const handleUpdateDashboardMeta = createHandler<UpdateDashboardMetaPayload>(async (payload, context) => {
   const { scene, transaction } = context;
   const { title, description, tags, editable } = payload;
 
   try {
-    const previousState = {
+    const previousState: UpdateDashboardMetaPayload = {
       title: scene.state.title,
       description: scene.state.description,
       tags: scene.state.tags,
       editable: scene.state.editable,
     };
 
-    // Apply updates
     const updates: Partial<UpdateDashboardMetaPayload> = {};
     if (title !== undefined) {
       updates.title = title;
@@ -130,25 +145,24 @@ export async function handleUpdateDashboardMeta(
       changes: [],
     };
   }
-}
+});
 
 /**
- * Get dashboard info (read-only operation)
+ * Get dashboard info (read-only operation).
+ * Filters availableCommands to only include implemented commands.
  */
-export async function handleGetDashboardInfo(
-  _payload: Record<string, never>,
-  context: MutationContext
-): Promise<MutationResult> {
+export const handleGetDashboardInfo = createHandler<Record<string, never>>(async (_payload, context) => {
   const { scene } = context;
 
-  // Return dashboard info in the result's data field
+  const { DASHBOARD_COMMAND_SCHEMAS } = await import('../commandSchemas');
+
   const info = {
     available: true,
     uid: scene.state.uid,
     title: scene.state.title,
     canEdit: scene.canEditDashboard(),
     isEditing: scene.state.isEditing ?? false,
-    availableTools: DASHBOARD_MCP_TOOLS.map((t) => t.name),
+    availableCommands: DASHBOARD_COMMAND_SCHEMAS.map((cmd) => cmd.name),
   };
 
   return {
@@ -156,4 +170,43 @@ export async function handleGetDashboardInfo(
     changes: [],
     data: info,
   };
-}
+});
+
+/**
+ * Enter edit mode.
+ */
+export const handleEnterEditMode = createHandler<Record<string, never>>(async (_payload, context) => {
+  const { scene, transaction } = context;
+
+  try {
+    const wasEditing = scene.state.isEditing ?? false;
+
+    if (!wasEditing) {
+      scene.onEnterEditMode();
+    }
+
+    const changes: MutationChange[] = [
+      {
+        path: '/isEditing',
+        previousValue: wasEditing,
+        newValue: true,
+      },
+    ];
+    transaction.changes.push(...changes);
+
+    return {
+      success: true,
+      changes,
+      data: {
+        wasAlreadyEditing: wasEditing,
+        isEditing: true,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+      changes: [],
+    };
+  }
+});
