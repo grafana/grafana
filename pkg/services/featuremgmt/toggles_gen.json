@@ -1077,21 +1077,6 @@
     },
     {
       "metadata": {
-        "name": "colorblindThemes",
-        "resourceVersion": "1770393695324",
-        "creationTimestamp": "2026-02-06T16:01:35Z"
-      },
-      "spec": {
-        "description": "Enables the new colorblind-friendly themes",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-frontend-platform",
-        "requiresRestart": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-07-26T16:44:12Z",

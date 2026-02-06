@@ -797,8 +797,4 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
-
-	// FlagColorblindThemes
-	// Enables the new colorblind-friendly themes
-	FlagColorblindThemes = "colorblindThemes"
 )
