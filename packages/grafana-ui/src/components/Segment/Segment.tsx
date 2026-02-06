@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import { isObject } from 'lodash';
 import { HTMLProps } from 'react';
 import * as React from 'react';
 
@@ -44,7 +43,7 @@ export function Segment<T>({
   const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
-    const label = isObject(value) ? value.label : value;
+    const label = typeof value === 'object' && value !== null ? value.label : value;
     const labelAsString = label != null ? String(label) : undefined;
 
     return (
@@ -73,7 +72,7 @@ export function Segment<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !isObject(value) ? { value } : value}
+      value={value && !(typeof value === 'object' && value !== null) ? { value } : value}
       placeholder={inputPlaceholder}
       options={options}
       width={width}

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { PropsWithChildren, RefCallback, type JSX } from 'react';
 import * as React from 'react';
 
@@ -33,7 +32,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (!isString(data.value)) {
+  if (typeof data.value !== 'string') {
     return null;
   }
 
@@ -72,7 +71,7 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (!isString(data.value)) {
+  if (typeof data.value !== 'string') {
     return null;
   }
 

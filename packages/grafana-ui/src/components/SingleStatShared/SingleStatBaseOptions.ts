@@ -1,4 +1,4 @@
-import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
+import { cloneDeep, omit, pickBy } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
@@ -101,7 +101,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
       }
 
       if (legendConfig.values) {
-        const enabledLegendValues = pickBy(legendConfig, identity);
+        const enabledLegendValues = pickBy(legendConfig, (v) => v);
         options.legend.calcs = getReducersFromLegend(enabledLegendValues);
       }
 
@@ -288,17 +288,17 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const config = panel.fieldConfig?.defaults;
     let unit = config?.unit;
     if (unit === 'percent') {
-      if (!isNumber(config.min)) {
+      if (typeof config.min !== 'number') {
         config.min = 0;
       }
-      if (!isNumber(config.max)) {
+      if (typeof config.max !== 'number') {
         config.max = 100;
       }
     } else if (unit === 'percentunit') {
-      if (!isNumber(config.min)) {
+      if (typeof config.min !== 'number') {
         config.min = 0;
       }
-      if (!isNumber(config.max)) {
+      if (typeof config.max !== 'number') {
         config.max = 1;
       }
     }

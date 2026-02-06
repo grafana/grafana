@@ -1,4 +1,3 @@
-import { isArray, negate } from 'lodash';
 import { ComponentProps, useCallback, useEffect, useRef, useState, useImperativeHandle } from 'react';
 import * as React from 'react';
 import {
@@ -311,7 +310,7 @@ export function SelectBase<T, Rest = {}>({
   const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
 
   let toggleAllState = ToggleAllState.noneSelected;
-  if (toggleAllOptions?.enabled && isArray(selectedValue)) {
+  if (toggleAllOptions?.enabled && Array.isArray(selectedValue)) {
     if (toggleAllOptions?.determineToggleAllState) {
       toggleAllState = toggleAllOptions.determineToggleAllState(selectedValue, options);
     } else {
@@ -325,7 +324,7 @@ export function SelectBase<T, Rest = {}>({
       toSelect =
         toggleAllState === ToggleAllState.noneSelected
           ? options.filter(toggleAllOptions.optionsFilter)
-          : options.filter(negate(toggleAllOptions.optionsFilter));
+          : options.filter((opt) => !toggleAllOptions.optionsFilter!(opt));
     }
 
     onChange(toSelect, {
@@ -402,7 +401,7 @@ export function SelectBase<T, Rest = {}>({
           toggleAllOptions?.enabled && {
             state: toggleAllState,
             selectAllClicked: toggleAll,
-            selectedCount: isArray(selectedValue) ? selectedValue.length : undefined,
+            selectedCount: Array.isArray(selectedValue) ? selectedValue.length : undefined,
           }
         }
         styles={selectStyles}
