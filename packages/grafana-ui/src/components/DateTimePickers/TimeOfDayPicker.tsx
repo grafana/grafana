@@ -86,9 +86,9 @@ export const TimeOfDayPicker = ({
       })}
       format={generateFormat(showHour, showSeconds)}
       minuteStep={minuteStep}
-      onChange={(value) => {
-        if (value && !Array.isArray(value)) {
-          restProps.onChange(dateTime(value));
+      onChange={(pickedDate) => {
+        if (pickedDate && !Array.isArray(pickedDate)) {
+          restProps.onChange(dateTime(pickedDate));
         } else if (restProps.allowEmpty) {
           restProps.onChange(undefined);
         }
@@ -98,7 +98,7 @@ export const TimeOfDayPicker = ({
       showNow={false}
       needConfirm={false}
       suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      value={value?.toDate()}
+      value={value ? new Date(0, 0, 0, value.hour?.() ?? 0, value.minute?.() ?? 0) : undefined}
     />
   );
 };
