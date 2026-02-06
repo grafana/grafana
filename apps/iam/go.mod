@@ -50,7 +50,7 @@ require (
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
 	k8s.io/apimachinery v0.35.0
-	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
+	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 )
 
 require (

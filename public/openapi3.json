@@ -15118,17 +15118,8 @@
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
         "operationId": "reloadLDAPCfg",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
+          "410": {
+            "$ref": "#/components/responses/goneError"
           }
         },
         "security": [
