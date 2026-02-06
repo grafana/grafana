@@ -52,7 +52,7 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
-	connections            DataSourceConnectionProvider
+	connections            query.DataSourceConnectionProvider
 }
 
 func NewQueryAPIBuilder(
@@ -63,7 +63,7 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
-	connections DataSourceConnectionProvider,
+	connections query.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
@@ -134,8 +134,6 @@ func RegisterAPIService(
 			return authorizer.DecisionAllow, "", nil
 		})
 
-	reg := client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService)
-
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -144,7 +142,7 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		&connectionsProvider{dsService: dataSourcesService, registry: reg},
+		dataSourcesService, // query.DataSourceConnectionProvider
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	)
 	apiregistration.RegisterAPI(builder)
@@ -159,7 +157,6 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
-		&query.DataSourceConnection{},
 		&query.DataSourceConnectionList{},
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
@@ -183,15 +180,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	gv := query.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
-
-	// Get a list of all datasource instances
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
-		// Eventually this would be backed either by search or reconciler pattern
-		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
-			connections: b.connections,
-		}
-	}
 
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
@@ -308,6 +296,11 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	if !ok || query.Post == nil || query.Post.RequestBody == nil {
 		return nil, fmt.Errorf("could not find query path")
 	}
+	if len(query.Parameters) != 2 && query.Parameters[0].Name != "name" {
+		return nil, fmt.Errorf("expected name parameter in query service")
+	}
+	query.Parameters = []*spec3.Parameter{query.Parameters[1]}
+
 	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
 	if ok && sqlschemas.Post != nil {
 		sqlschemas.Post.RequestBody = query.Post.RequestBody
