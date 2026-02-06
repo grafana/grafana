@@ -1,4 +1,4 @@
-import { intervalsToOptions } from './RefreshPicker';
+import { intervalsToOptions, RefreshPicker, translateOption } from './RefreshPicker';
 
 describe('RefreshPicker', () => {
   describe('intervalsToOptions', () => {
@@ -45,6 +45,38 @@ describe('RefreshPicker', () => {
         { value: '10s', label: '10s', ariaLabel: '10 seconds' },
         { value: '1m 30s', label: '1m 30s', ariaLabel: '1 minute 30 seconds' },
       ]);
+    });
+  });
+  describe('translateOption', () => {
+    it('returns LIVE, Off, auto, and custom options correctly', () => {
+      const live = translateOption(RefreshPicker.liveOption.value);
+      expect(live).toMatchObject({ value: 'LIVE', label: expect.any(String), ariaLabel: expect.any(String) });
+
+      const off = translateOption(RefreshPicker.offOption.value);
+      expect(off).toMatchObject({ value: '', label: expect.any(String), ariaLabel: expect.any(String) });
+
+      const auto = translateOption(RefreshPicker.autoOption.value);
+      expect(auto).toMatchObject({ value: 'auto', label: expect.any(String), ariaLabel: expect.any(String) });
+
+      const custom = translateOption('7s');
+      expect(custom).toMatchObject({ value: '7s', label: '7s' });
+    });
+  });
+  describe('assign to itself', () => {
+    it('isLive, and it returns true only for LIVE', () => {
+      expect(RefreshPicker.isLive('LIVE')).toBe(true);
+      expect(RefreshPicker.isLive('')).toBe(false);
+      expect(RefreshPicker.isLive('5s')).toBe(false);
+      expect(RefreshPicker.isLive(undefined)).toBe(false);
+    });
+    it('offOption, liveOption and autoOption', () => {
+      expect(RefreshPicker.offOption).toEqual({ value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' });
+      expect(RefreshPicker.liveOption).toEqual({ value: 'LIVE', label: 'Live', ariaLabel: 'Turn on live streaming' });
+      expect(RefreshPicker.autoOption).toEqual({
+        value: 'auto',
+        label: 'Auto',
+        ariaLabel: 'Select refresh from the query range',
+      });
     });
   });
 });
