@@ -647,12 +647,12 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		opts := AlertRuleConvertOptions{}
 		if query.Compact {
 			opts.ExcludeAlertQueries = true
-			opts.ExcludeNotificationSettings = true
+			opts.ExcludeContactPointRouting = true
 			opts.ExcludeMetadata = true
 
 			if query.ReceiverName != "" || query.TimeIntervalName != "" {
-				// Need NotificationSettings for these filters
-				opts.ExcludeNotificationSettings = false
+				// Need ContactPointRouting for these filters
+				opts.ExcludeContactPointRouting = false
 			}
 
 			if query.HasPrometheusRuleDefinition != nil {
@@ -1331,8 +1331,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	return nil
 }
 
-// ListNotificationSettings fetches all notification settings for given organization
-func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
+// ListContactPointRoutings fetches all notification settings for given organization
+func (st DBstore) ListContactPointRoutings(ctx context.Context, q ngmodels.ListContactPointRoutingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
 	var rules []alertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(alertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)

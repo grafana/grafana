@@ -378,7 +378,7 @@ func TestReceiverService_Delete(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &fakeAlertRuleNotificationStore{}
-			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+			store.ListContactPointRoutingsFn = func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 				return tc.storeSettings, nil
 			}
 			sut := createReceiverServiceSut(t, &secretsService, tc.opts...)
@@ -1701,7 +1701,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &fakeAlertRuleNotificationStore{}
-			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+			store.ListContactPointRoutingsFn = func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 				return tc.storeSettings, nil
 			}
 

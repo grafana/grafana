@@ -19,7 +19,7 @@ const GroupByAll = "..."
 // DefaultNotificationSettingsGroupBy are the default required GroupBy fields for notification settings.
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 
-type ListNotificationSettingsQuery struct {
+type ListContactPointRoutingsQuery struct {
 	OrgID            int64
 	ReceiverName     string
 	TimeIntervalName string

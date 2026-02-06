@@ -44,7 +44,7 @@ type fakeConfigStore struct {
 	notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting
 }
 
-func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+func (f *fakeConfigStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	settings, ok := f.notificationSettings[q.OrgID]
 	if !ok {
 		return nil, nil
@@ -428,7 +428,7 @@ type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
 	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
+	ListContactPointRoutingsFn             func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
@@ -446,15 +446,15 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 	return nil, nil, nil
 }
 
-func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	call := call{
-		Method: "ListNotificationSettings",
+		Method: "ListContactPointRoutings",
 		Args:   []interface{}{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 
-	if f.ListNotificationSettingsFn != nil {
-		return f.ListNotificationSettingsFn(ctx, q)
+	if f.ListContactPointRoutingsFn != nil {
+		return f.ListContactPointRoutingsFn(ctx, q)
 	}
 
 	// Default values when no function hook is provided
