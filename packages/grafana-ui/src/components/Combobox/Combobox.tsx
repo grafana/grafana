@@ -70,6 +70,11 @@ interface ComboboxStaticProps<T extends string | number>
    * Icon to display at the start of the ComboBox input
    */
   prefixIcon?: ComponentProps<typeof Icon>['name'];
+
+  /**
+   * Custom CSS class name to apply to the input component.
+   */
+  className?: string;
 }
 
 interface ClearableProps<T extends string | number> {
@@ -151,6 +156,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     portalContainer,
     invalid,
     prefixIcon,
+    className,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -393,7 +399,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         prefix={prefixIcon && <Icon name={prefixIcon} />}
         disabled={disabled}
         invalid={invalid}
-        className={styles.input}
+        className={className}
         suffix={inputSuffix}
         {...getInputProps({
           ref: inputRef,

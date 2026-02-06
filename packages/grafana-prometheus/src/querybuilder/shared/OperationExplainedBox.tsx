@@ -18,7 +18,7 @@ export function OperationExplainedBox({ title, stepNumber, markdown, children }:
   return (
     <div className={styles.box}>
       {stepNumber !== undefined && <div className={styles.stepNumber}>{stepNumber}</div>}
-      <div className={styles.boxInner}>
+      <div>
         {title && (
           <div className={styles.header}>
             <span>{title}</span>
@@ -40,26 +40,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       borderRadius: theme.shape.radius.default,
       position: 'relative',
-    }),
-    boxInner: css({
-      marginLeft: theme.spacing(4),
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1.5),
     }),
     stepNumber: css({
       fontWeight: theme.typography.fontWeightMedium,
       background: theme.colors.secondary.main,
-      width: '20px',
-      height: '20px',
+      minWidth: '20px',
+      minHeight: '20px',
       borderRadius: theme.shape.radius.circle,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      position: 'absolute',
-      top: '10px',
-      left: '11px',
       fontSize: theme.typography.bodySmall.fontSize,
     }),
     header: css({
-      paddingBottom: theme.spacing(0.5),
       display: 'flex',
       alignItems: 'center',
       fontFamily: theme.typography.fontFamilyMonospace,

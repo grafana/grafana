@@ -47,10 +47,10 @@ export function LokiQueryCodeEditor({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
       maxWidth: '100%',
-      '.gf-form': {
-        marginBottom: 0.5,
-      },
     }),
     buttonGroup: css({
       border: `1px solid ${theme.colors.border.medium}`,

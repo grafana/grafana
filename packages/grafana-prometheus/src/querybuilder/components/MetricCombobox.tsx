@@ -1,10 +1,11 @@
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
-import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
+import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
+import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption, useTheme2 } from '@grafana/ui';
 
 import { METRIC_LABEL } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
@@ -36,6 +37,7 @@ export function MetricCombobox({
   timeRange,
 }: Readonly<MetricComboboxProps>) {
   const [metricsModalOpen, setMetricsModalOpen] = useState(false);
+  const styles = getStyles(useTheme2());
 
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
@@ -77,12 +79,13 @@ export function MetricCombobox({
 
   const asyncSelect = () => {
     return (
-      <InputGroup>
+      <div className={styles.wrapper}>
         <Combobox
           placeholder={t(
             'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric',
             'Select metric'
           )}
+          className={styles.combobox}
           width="auto"
           minWidth={25}
           options={loadOptions}
@@ -102,9 +105,10 @@ export function MetricCombobox({
           )}
           variant="secondary"
           icon="book-open"
+          className={styles.button}
           onClick={() => setMetricsModalOpen(true)}
         />
-      </InputGroup>
+      </div>
     );
   };
 
@@ -146,3 +150,15 @@ export function MetricCombobox({
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({ display: 'flex' }),
+    combobox: css({
+      borderRadius: `${theme.shape.radius.default} ` + `0px 0px ` + `${theme.shape.radius.default}`,
+    }),
+    button: css({
+      borderRadius: `0px ` + `${theme.shape.radius.default} ${theme.shape.radius.default} ` + `0px`,
+    }),
+  };
+};
