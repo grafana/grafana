@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -74,6 +76,10 @@ func (c *Calculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSB
 		return "", nil
 	}
 
+	if p.ModuleHash != "" {
+		return convertHashForSRI(p.ModuleHash)
+	}
+
 	if p.Parent != nil {
 		// The module hash is contained within the parent's MANIFEST.txt file.
 		// For example, the parent's MANIFEST.txt will contain an entry similar to this:
@@ -98,7 +104,29 @@ func (c *Calculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSB
 		return "", nil
 	}
 
-	return convertHashForSRI(p.ModuleHash)
+	manifest, err := c.signature.ReadPluginManifestFromFS(ctx, p.FS)
+	if err != nil {
+		return "", fmt.Errorf("read plugin manifest: %w", err)
+	}
+	if !manifest.IsV2() {
+		return "", nil
+	}
+
+	var childPath string
+	if childFSBase != "" {
+		// Calculate the relative path of the child plugin folder from the parent plugin folder.
+		childPath, err = p.FS.Rel(childFSBase)
+		if err != nil {
+			return "", fmt.Errorf("rel path: %w", err)
+		}
+		// MANIFETS.txt uses forward slashes as path separators.
+		childPath = filepath.ToSlash(childPath)
+	}
+	moduleHash, ok := manifest.Files[path.Join(childPath, "module.js")]
+	if !ok {
+		return "", nil
+	}
+	return convertHashForSRI(moduleHash)
 }
 
 func (c *Calculator) cdnEnabled(pluginID string, fs plugins.FS) bool {
