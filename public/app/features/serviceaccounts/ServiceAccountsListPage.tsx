@@ -177,7 +177,11 @@ export const ServiceAccountsListPageUnconnected = ({
   const subTitle = (
     <span>
       <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
-        Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+        Service accounts authenticate applications with the Grafana HTTP API to manage dashboards, users, and data sources. For sending or querying telemetry data (metrics, logs, traces), use{' '}
+        <TextLink href="https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/" external>
+          Cloud Access Policies
+        </TextLink>{' '}
+        instead. Find out more in our{' '}
         <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
           documentation.
         </TextLink>
