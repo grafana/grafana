@@ -35,9 +35,8 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		ListWithFieldSelectors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "storage_server",
-			Name:      "field_selector_search_count",
-			Help:      "number of times List was served by field selector search",
+			Name: "storage_server_field_selector_search_count",
+			Help: "number of times List was served by field selector search",
 		}, []string{"resource", "served_by"}),
 	}
 }

@@ -58,6 +58,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		ResourceVersion: listRv,
 	}
 
+	s.log.Info("Search used for List with field selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields)
 	// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
 	for _, row := range searchResp.GetResults().GetRows() {
 		// TODO: use batch reads
@@ -91,8 +92,6 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 			return rsp, nil
 		}
 	}
-
-	s.log.Info("Search used for List with field selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "selectable_fields", req.Options.Fields)
 
 	return rsp, nil
 }
