@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -54,6 +55,8 @@ import (
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -241,7 +244,8 @@ var wireBasicSet = wire.NewSet(
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
 	legacy.ProvideMigratorDashboardAccessor,
-	unifiedmigrations.ProvideMigrationRegistry,
+	legacy.ProvidePlaylistMigrator,
+	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
@@ -571,4 +575,21 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
 	wire.Build(wireExtsSet)
 	return &unifiedsearch.StandardDocumentBuilders{}, nil
+}
+
+/*
+provideMigrationRegistry builds the MigrationRegistry directly from the
+underlying dependencies. When adding a new resource migration, add the
+dependency parameter here and register it with the registry.
+*/
+func provideMigrationRegistry(
+	accessor legacy.MigrationDashboardAccessor,
+	playlistMigrator legacy.PlaylistMigrator,
+	shortURLMigrator legacy.ShortURLMigrator,
+) *unifiedmigrations.MigrationRegistry {
+	r := unifiedmigrations.NewMigrationRegistry()
+	r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
+	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	r.Register(shroturlmigration.ShortURLMigration(shortURLMigrator))
+	return r
 }

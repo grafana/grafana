@@ -101,6 +101,25 @@ func ProvideMigratorDashboardAccessor(
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) MigrationDashboardAccessor {
+	return newMigratorAccess(sql, provisioning, accessControl)
+}
+
+// ProvidePlaylistMigrator creates a PlaylistMigrator for migration purposes.
+// This is wired separately from MigrationDashboardAccessor so that playlist
+// migrations are decoupled from the dashboard accessor interface.
+func ProvidePlaylistMigrator(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+) PlaylistMigrator {
+	return newMigratorAccess(sql, provisioning, accessControl)
+}
+
+func newMigratorAccess(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+) *dashboardSqlAccess {
 	return &dashboardSqlAccess{
 		sql:                    sql,
 		namespacer:             claims.OrgNamespaceFormatter,
@@ -109,7 +128,7 @@ func ProvideMigratorDashboardAccessor(
 		dashboardPermissionSvc: nil, // not needed for migration
 		libraryPanelSvc:        nil, // not needed for migration
 		accessControl:          accessControl,
-		log:                    log.New("legacy.dashboard.migrator.accessor"),
+		log:                    log.New("legacy.migrator.accessor"),
 	}
 }
 
