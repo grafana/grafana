@@ -1,0 +1,7 @@
+# Editor
+.idea
+.vscode
+.idea/
+*.iml
+
+mock-data

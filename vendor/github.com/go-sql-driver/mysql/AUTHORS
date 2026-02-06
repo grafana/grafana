@@ -1,0 +1,126 @@
+# This is the official list of Go-MySQL-Driver authors for copyright purposes.
+
+# If you are submitting a patch, please add your name or the name of the
+# organization which holds the copyright to this list in alphabetical order.
+
+# Names should be added to this file as
+#	Name <email address>
+# The email address is not required for organizations.
+# Please keep the list sorted.
+
+
+# Individual Persons
+
+Aaron Hopkins <go-sql-driver at die.net>
+Achille Roussel <achille.roussel at gmail.com>
+Alex Snast <alexsn at fb.com>
+Alexey Palazhchenko <alexey.palazhchenko at gmail.com>
+Andrew Reid <andrew.reid at tixtrack.com>
+Animesh Ray <mail.rayanimesh at gmail.com>
+Arne Hormann <arnehormann at gmail.com>
+Ariel Mashraki <ariel at mashraki.co.il>
+Asta Xie <xiemengjun at gmail.com>
+Bulat Gaifullin <gaifullinbf at gmail.com>
+Caine Jette <jette at alum.mit.edu>
+Carlos Nieto <jose.carlos at menteslibres.net>
+Chris Kirkland <chriskirkland at github.com>
+Chris Moos <chris at tech9computers.com>
+Craig Wilson <craiggwilson at gmail.com>
+Daniel Montoya <dsmontoyam at gmail.com>
+Daniel Nichter <nil at codenode.com>
+Daniël van Eeden <git at myname.nl>
+Dave Protasowski <dprotaso at gmail.com>
+DisposaBoy <disposaboy at dby.me>
+Egor Smolyakov <egorsmkv at gmail.com>
+Erwan Martin <hello at erwan.io>
+Evan Shaw <evan at vendhq.com>
+Frederick Mayle <frederickmayle at gmail.com>
+Gustavo Kristic <gkristic at gmail.com>
+Hajime Nakagami <nakagami at gmail.com>
+Hanno Braun <mail at hannobraun.com>
+Henri Yandell <flamefew at gmail.com>
+Hirotaka Yamamoto <ymmt2005 at gmail.com>
+Huyiguang <hyg at webterren.com>
+ICHINOSE Shogo <shogo82148 at gmail.com>
+Ilia Cimpoes <ichimpoesh at gmail.com>
+INADA Naoki <songofacandy at gmail.com>
+Jacek Szwec <szwec.jacek at gmail.com>
+James Harr <james.harr at gmail.com>
+Janek Vedock <janekvedock at comcast.net>
+Jeff Hodges <jeff at somethingsimilar.com>
+Jeffrey Charles <jeffreycharles at gmail.com>
+Jerome Meyer <jxmeyer at gmail.com>
+Jiajia Zhong <zhong2plus at gmail.com>
+Jian Zhen <zhenjl at gmail.com>
+Joshua Prunier <joshua.prunier at gmail.com>
+Julien Lefevre <julien.lefevr at gmail.com>
+Julien Schmidt <go-sql-driver at julienschmidt.com>
+Justin Li <jli at j-li.net>
+Justin Nuß <nuss.justin at gmail.com>
+Kamil Dziedzic <kamil at klecza.pl>
+Kei Kamikawa <x00.x7f.x86 at gmail.com>
+Kevin Malachowski <kevin at chowski.com>
+Kieron Woodhouse <kieron.woodhouse at infosum.com>
+Lance Tian <lance6716 at gmail.com>
+Lennart Rudolph <lrudolph at hmc.edu>
+Leonardo YongUk Kim <dalinaum at gmail.com>
+Linh Tran Tuan <linhduonggnu at gmail.com>
+Lion Yang <lion at aosc.xyz>
+Luca Looz <luca.looz92 at gmail.com>
+Lucas Liu <extrafliu at gmail.com>
+Lunny Xiao <xiaolunwen at gmail.com>
+Luke Scott <luke at webconnex.com>
+Maciej Zimnoch <maciej.zimnoch at codilime.com>
+Michael Woolnough <michael.woolnough at gmail.com>
+Nathanial Murphy <nathanial.murphy at gmail.com>
+Nicola Peduzzi <thenikso at gmail.com>
+Olivier Mengué <dolmen at cpan.org>
+oscarzhao <oscarzhaosl at gmail.com>
+Paul Bonser <misterpib at gmail.com>
+Peter Schultz <peter.schultz at classmarkets.com>
+Phil Porada <philporada at gmail.com>
+Rebecca Chin <rchin at pivotal.io>
+Reed Allman <rdallman10 at gmail.com>
+Richard Wilkes <wilkes at me.com>
+Robert Russell <robert at rrbrussell.com>
+Runrioter Wung <runrioter at gmail.com>
+Samantha Frank <hello at entropy.cat>
+Santhosh Kumar Tekuri <santhosh.tekuri at gmail.com>
+Sho Iizuka <sho.i518 at gmail.com>
+Sho Ikeda <suicaicoca at gmail.com>
+Shuode Li <elemount at qq.com>
+Simon J Mudd <sjmudd at pobox.com>
+Soroush Pour <me at soroushjp.com>
+Stan Putrya <root.vagner at gmail.com>
+Stanley Gunawan <gunawan.stanley at gmail.com>
+Steven Hartland <steven.hartland at multiplay.co.uk>
+Tan Jinhua <312841925 at qq.com>
+Thomas Wodarek <wodarekwebpage at gmail.com>
+Tim Ruffles <timruffles at gmail.com>
+Tom Jenkinson <tom at tjenkinson.me>
+Vladimir Kovpak <cn007b at gmail.com>
+Vladyslav Zhelezniak <zhvladi at gmail.com>
+Xiangyu Hu <xiangyu.hu at outlook.com>
+Xiaobing Jiang <s7v7nislands at gmail.com>
+Xiuming Chen <cc at cxm.cc>
+Xuehong Chan <chanxuehong at gmail.com>
+Zhenye Xie <xiezhenye at gmail.com>
+Zhixin Wen <john.wenzhixin at gmail.com>
+Ziheng Lyu <zihenglv at gmail.com>
+
+# Organizations
+
+Barracuda Networks, Inc.
+Counting Ltd.
+DigitalOcean Inc.
+dyves labs AG
+Facebook Inc.
+GitHub Inc.
+Google Inc.
+InfoSum Ltd.
+Keybase Inc.
+Multiplay Ltd.
+Percona LLC
+Pivotal Inc.
+Stripe Inc.
+Zendesk Inc.

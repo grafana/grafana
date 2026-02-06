@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package resultscache;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/grafana/loki/v3/pkg/storage/chunk/cache/resultscache";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// Defined here to prevent circular imports between logproto & queryrangebase
+message CachingOptions {
+  bool disabled = 1;
+}
+
+message CachedResponse {
+  string key = 1 [(gogoproto.jsontag) = "key"];
+
+  // List of cached responses; non-overlapping and in order.
+  repeated Extent extents = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "extents"
+  ];
+}
+
+message Extent {
+  int64 start = 1 [(gogoproto.jsontag) = "start"];
+  int64 end = 2 [(gogoproto.jsontag) = "end"];
+  // reserved the previous key to ensure cache transition
+  reserved 3;
+  string trace_id = 4 [(gogoproto.jsontag) = "-"];
+  google.protobuf.Any response = 5 [(gogoproto.jsontag) = "response"];
+}

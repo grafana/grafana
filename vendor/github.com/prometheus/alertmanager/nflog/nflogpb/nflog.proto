@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package nflogpb;
+
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+
+message Receiver {
+  // Configured name of the receiver group.
+  string group_name = 1;
+  // Name of the integration of the receiver.
+  string integration = 2;
+  // Index of the receiver with respect to the integration.
+  // Every integration in a group may have 0..N configurations.
+  uint32 idx = 3;
+}
+
+// Entry holds information about a successful notification
+// sent to a receiver.
+message Entry {
+  // The key identifying the dispatching group.
+  bytes group_key = 1;
+  // The receiver that was notified.
+  Receiver receiver = 2;
+  // Hash over the state of the group at notification time.
+  // Deprecated in favor of FiringAlerts field, but kept for compatibility.
+  bytes group_hash = 3;
+  // Whether the notification was about a resolved alert.
+  // Deprecated in favor of ResolvedAlerts field, but kept for compatibility.
+  bool resolved = 4;
+  // Timestamp of the succeeding notification.
+  google.protobuf.Timestamp timestamp = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  // FiringAlerts list of hashes of firing alerts at the last notification time.
+  repeated uint64 firing_alerts = 6;
+  // ResolvedAlerts list of hashes of resolved alerts at the last notification time.
+  repeated uint64 resolved_alerts = 7;
+}
+
+// MeshEntry is a wrapper message to communicate a notify log
+// entry through a mesh network.
+message MeshEntry {
+  // The original raw notify log entry.
+  Entry entry = 1;
+  // A timestamp indicating when the mesh peer should evict
+  // the log entry from its state.
+  google.protobuf.Timestamp expires_at = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}

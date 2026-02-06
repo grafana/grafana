@@ -1,0 +1,19 @@
+version: "2"
+
+linters:
+  enable:
+    - dupl
+    - goconst
+    - gocyclo
+    - godox
+    - gosec
+    - lll
+    - misspell
+    - prealloc
+    - staticcheck
+    - unconvert
+    - unparam
+
+formatters:
+  enable:
+    - gofmt

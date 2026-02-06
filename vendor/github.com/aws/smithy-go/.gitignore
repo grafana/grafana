@@ -1,0 +1,29 @@
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Maven
+target/
+**/dependency-reduced-pom.xml
+
+# Gradle
+/.gradle
+build/
+*/out/
+*/*/out/
+
+# VS Code
+bin/
+.vscode/
+
+# make
+c.out

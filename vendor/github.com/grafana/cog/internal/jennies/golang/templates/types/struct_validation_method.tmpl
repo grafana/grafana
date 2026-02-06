@@ -1,0 +1,110 @@
+// Validate checks all the validation constraints that may be defined on `{{ .def.Name|formatObjectName }}` fields for violations and returns them.
+func (resource {{ .def.Name|formatObjectName }}) Validate() error {
+	{{- if resolvesToConstraints .def.Type }}
+	{{- $cog := importPkg "cog" }}
+	var errs cog.BuildErrors
+	{{- template "type_validate_check" (dict "ConstraintPath" "" "Type" .def.Type "Nullable" .def.Type.Nullable "Dereference" false "SelfName" "resource" "Depth" 0) }}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return errs
+	{{- else }}
+	return nil
+	{{- end }}
+}
+
+{{/* arguments: ConstraintPath, Type, Nullable, Dereference, SelfName */}}
+{{- define "type_validate_check" }}
+	{{- if .Type.IsAny }}
+		{{/* no constraints on any */}}
+	{{- else if resolvesToArray .Type }}
+		{{- $needsDereference := and .Type.IsRef .Type.Nullable }}
+		{{- $dereference := ternary "*" "" $needsDereference }}
+		{{- $depth := default 1 .Depth }}
+		{{- if $needsDereference }}
+		if {{ .SelfName }} != nil {
+		{{- end }}
+
+		for i{{ $depth }} := range {{ $dereference }}{{ .SelfName }} {
+			{{- $selfKey := print (ternary (print "(*" .SelfName ")") .SelfName $needsDereference) "[i" $depth "]" }}
+			{{- $constraintPath := print .ConstraintPath "[\"+strconv.Itoa(i" $depth ")+\"]" }}
+			{{- $strconv := importStdPkg "strconv" -}}
+			{{- template "type_validate_check" (dict "ConstraintPath" $constraintPath "Type" (resolveRefs .Type).Array.ValueType "Nullable" (resolveRefs .Type).Array.ValueType.Nullable "Dereference" false "SelfName" $selfKey "Depth" (add1 $depth)) }}
+		}
+		{{- if $needsDereference }}}{{ end }}
+	{{- else if resolvesToMap .Type }}
+		{{- $needsDereference := and .Type.IsRef .Type.Nullable }}
+		{{- $dereference := ternary "*" "" $needsDereference }}
+		{{- $depth := default 1 .Depth }}
+		{{- if $needsDereference }}
+		if {{ .SelfName }} != nil {
+		{{- end }}
+
+		for key{{ $depth }} := range {{ $dereference }}{{ .SelfName }} {
+			{{- $selfKey := print (ternary (print "(*" .SelfName ")") .SelfName $needsDereference) "[key" $depth "]" }}
+			{{- $constraintPath := print .ConstraintPath "[\"+key" $depth "+\"]" }}
+			{{- template "type_validate_check" (dict "ConstraintPath" $constraintPath "Type" (resolveRefs .Type).Map.ValueType "Nullable" (resolveRefs .Type).Map.ValueType.Nullable "Dereference" false "SelfName" $selfKey "Depth" (add1 $depth)) }}
+		}
+		{{- if $needsDereference }}}{{ end }}
+	{{- else if .Nullable }}
+		if {{ .SelfName }} != nil {
+			{{- template "type_validate_check" (dict "ConstraintPath" .ConstraintPath "Type" .Type "Nullable" false "Dereference" true "SelfName" .SelfName "Depth" .Depth) }}
+		}
+	{{- else if and .Type.IsRef (resolvesToStruct .Type) }}
+		{{- $dereference := ternary "*" "" .Dereference }}
+		if err := {{ .SelfName }}.Validate(); err != nil {
+			errs = append(errs, cog.MakeBuildErrors("{{ .ConstraintPath }}", err)...)
+		}
+	{{- else if .Type.IsStruct }}
+		{{- range $field := .Type.Struct.Fields }}
+			{{- if resolvesToConstraints $field.Type -}}
+				{{- $fieldName := $field.Name|formatFieldName -}}
+				{{- $selfKey := print $.SelfName "." $fieldName }}
+				{{- $constraintPath := $field.Name }}
+				{{- if ne $.ConstraintPath "" -}}
+					{{- $constraintPath = print $.ConstraintPath "." $constraintPath -}}
+				{{- end -}}
+
+				{{- template "type_validate_check" (dict "ConstraintPath" $constraintPath "Type" $field.Type "Nullable" $field.Type.Nullable "Dereference" false "SelfName" $selfKey "Depth" $.Depth) }}
+			{{- end -}}
+		{{- end }}
+	{{- else if .Type.IsDataqueryComposableSlot }}
+		if err := {{ .SelfName }}.Validate(); err != nil {
+			errs = append(errs, cog.MakeBuildErrors("{{ .ConstraintPath }}", err)...)
+		}
+	{{- else if .Type.IsScalar }}
+		{{- template "type_constraints" (dict "ConstraintPath" .ConstraintPath "Type" .Type "Constraints" .Type.Scalar.Constraints "SelfName" .SelfName) }}
+	{{- else if .Type.IsConstantRef }}
+    if {{ .SelfName }} != "{{ .Type.ConstantReference.ReferenceValue }}" {
+        errs = append(errs, cog.MakeBuildErrors("{{ .ConstraintPath }}", errors.New("must be {{ .Type.ConstantReference.ReferenceValue }}"))...)
+    }
+	{{- else }}
+		found an unimplemented validate case // intentionally left uncommented, to trigger a failure during codegen
+	{{- end }}
+{{- end }}
+
+{{- define "type_constraints" }}
+	{{- $dereference := ternary "*" "" .Type.Nullable }}
+	{{- $errors := importStdPkg "errors" -}}
+	{{- range .Constraints }}
+		{{- $leftOperand := print $dereference $.SelfName }}
+		{{- $rightOperand := .Args | first }}
+		{{- $operator := .Op }}
+		{{- if eq .Op "minLength" }}
+			{{- $leftOperand = print "len([]rune(" $leftOperand "))" }}
+			{{- $operator = ">=" }}
+		{{- end }}
+		{{- if eq .Op "maxLength" }}
+			{{- $leftOperand = print "len([]rune(" $leftOperand "))" }}
+			{{- $operator = "<=" }}
+		{{- end }}
+		if !({{ $leftOperand }} {{ $operator }} {{ $rightOperand|formatScalar }}) {
+			errs = append(errs, cog.MakeBuildErrors(
+				"{{ $.ConstraintPath }}",
+				errors.New("must be {{ $operator }} {{ $rightOperand }}"),
+			)...)
+		}
+	{{- end }}
+{{- end }}

@@ -1,0 +1,40 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "timeseries-wide",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "TimeseriesWide with 1 items. There is no name or labels.",
+            "itemCount": 1,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "t",
+          "type": "time",
+          "typeInfo": {
+            "frame": "time.Time"
+          }
+        },
+        {
+          "type": "number",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        [1664901845976, 1664902845976],
+        [3, 5]
+      ]
+    }
+  }
+]

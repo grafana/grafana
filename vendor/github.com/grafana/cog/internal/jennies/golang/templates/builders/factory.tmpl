@@ -1,0 +1,28 @@
+{{- define "factory" }}
+{{- range .Factory.Comments }}
+// {{ . }}
+{{- end }}
+func {{ .Factory.Name|formatFunctionName}}({{- template "args" .Factory.Args }}) *{{ .Builder.Name|formatObjectName }}Builder {
+	builder := New{{ .Builder.Name|formatObjectName }}Builder()
+
+{{- range $call := .Factory.OptionCalls }}
+    builder.{{ $call.Name|formatFunctionName }}({{- range $i, $param := $call.Parameters }}{{- if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $param) -}}{{- end }})
+{{- end }}
+
+	return builder
+}
+{{- end }}
+
+{{- define "factory_parameter_value" }}
+	{{- if not (eq .Value.Constant nil) -}}
+		{{- formatValue .Value.Constant.Type .Value.Constant.Value }}
+	{{- end }}
+	{{- with .Value.Argument -}}
+		{{- .Name|formatArgName -}}
+	{{- end -}}
+	{{- with .Value.Factory -}}
+		{{- $pkg := .Ref.Package|importPkg -}}
+		{{- if ne $pkg "" -}}{{ $pkg }}.{{- end -}}
+		{{ .Ref.Factory|formatFunctionName }}({{ range $i, $arg := .Parameters }}{{- if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $arg)}}{{ end }})
+	{{- end -}}
+{{- end }}

@@ -1,0 +1,37 @@
+<?php
+
+namespace {{ .NamespaceRoot }}\{{ .Builder.Package | formatPackageName }};
+
+{{ .Builder.For.Comments|formatDocsBlock -}}
+class {{ .Builder.Name|formatObjectName }}Builder implements \{{ .NamespaceRoot }}\Cog\Builder
+{
+    protected {{ .Builder.For.SelfRef.AsType|formatRawType }} $internal;
+    {{- range .Builder.Properties }}
+    private {{ .Type | formatType }} ${{ .Name }};
+    {{- end }}
+
+    public function __construct({{- template "args" .Builder.Constructor.Args }})
+    {
+    	$this->internal = new {{ .Builder.For.SelfRef.AsType|formatRawType }}();
+        {{- range .Builder.Constructor.Assignments }}
+        {{- template "assignment" (dict "Assignment" . "Builder" $.Builder "Option" (dict "Name" "")) }}
+        {{- end }}
+        {{- range .Builder.Properties }}
+        $this->{{ .Name }} = {{ .Type | defaultForType }};
+        {{- end }}
+    }
+
+    /**
+     * Builds the object.
+     * @return {{ .Builder.For.SelfRef.AsType|formatRawType }}
+     */
+    public function build()
+    {
+        return $this->internal;
+    }
+{{- $customMethodsTmpl := print "builder_" .Builder.Package "_" .Builder.Name "_custom_methods" }}
+{{ includeIfExists $customMethodsTmpl (dict) | indent 4 }}
+{{- range .Builder.Options }}
+{{ include "option" (dict "Builder" $.Builder "Option" .) | indent 4}}
+{{ end }}
+}

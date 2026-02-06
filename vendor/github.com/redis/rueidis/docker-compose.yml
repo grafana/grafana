@@ -1,0 +1,125 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+  redislock:
+    image: redis:7.4-alpine
+    ports:
+      - "6376:6379"
+  redis5:
+    image: redis:5-alpine
+    ports:
+      - "6355:6379"
+  keydb6:
+    image: eqalpha/keydb:alpine_x86_64_v6.3.1
+    ports:
+      - "6344:6379"
+  dragonflydb:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.20.1
+    ports:
+      - "6333:6379"
+  kvrocks:
+    image: apache/kvrocks:2.2.0
+    ports:
+      - "6666:6666"
+  redisearch:
+    image: redislabs/redisearch:2.8.4
+    ports:
+      - "6377:6379"
+  compat:
+    image: redis/redis-stack:7.4.0-v0
+    ports:
+      - "6378:6379"
+  compat5:
+    image: redis:5-alpine
+    ports:
+      - "6356:6379"
+  compat-redisearch:
+    image: redis/redis-stack:7.4.0-v0
+    ports:
+      - "6381:6379"
+  sentinel:
+    image: redis:7.4-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --save "" --appendonly no --port 6380 &
+        echo "sentinel monitor test 127.0.0.1 6380 2\n" > sentinel.conf
+        redis-server sentinel.conf --sentinel
+    ports:
+      - "6380:6380"
+      - "26379:26379"
+  sentinel5:
+    image: redis:5-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --save "" --appendonly no --port 6385 &
+        echo "sentinel monitor test5 127.0.0.1 6385 2\n" > sentinel.conf
+        redis-server sentinel.conf --sentinel
+    ports:
+      - "6385:6385"
+      - "26355:26379"
+  cluster:
+    image: redis:7.4-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf &
+        redis-server --port 7002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7002.conf &
+        redis-server --port 7003 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7003.conf &
+        while ! redis-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "7001:7001"
+      - "7002:7002"
+      - "7003:7003"
+  cluster5:
+    image: redis:5-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --port 7004 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7004.conf &
+        redis-server --port 7005 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7005.conf &
+        redis-server --port 7006 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7006.conf &
+        while ! redis-cli --cluster create 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7006 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "7004:7004"
+      - "7005:7005"
+      - "7006:7006"
+  cluster5adapter:
+    image: redis:5-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --port 7007 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7007.conf &
+        redis-server --port 7008 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7008.conf &
+        redis-server --port 7009 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7009.conf &
+        while ! redis-cli --cluster create 127.0.0.1:7007 127.0.0.1:7008 127.0.0.1:7009 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "7007:7007"
+      - "7008:7008"
+      - "7009:7009"
+  clusteradapter:
+    image: redis:7.4-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --port 7010 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7010.conf &
+        redis-server --port 7011 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7011.conf &
+        redis-server --port 7012 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7012.conf &
+        while ! redis-cli --cluster create 127.0.0.1:7010 127.0.0.1:7011 127.0.0.1:7012 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "7010:7010"
+      - "7011:7011"
+      - "7012:7012"

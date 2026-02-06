@@ -1,0 +1,64 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "numeric-multi",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "NumericMulti with 2 empty items. There is 1 item name (avgSlothCount) and 1 dimension (city). But with 0 rows there are no items.",
+            "itemCount": 2,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "type": "number",
+          "name": "avgSlothCount",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {
+            "city": "LGA"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [[]]
+    }
+  },
+  {
+    "schema": {
+      "meta": {
+        "type": "numeric-multi",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "type": "number",
+          "name": "avgSlothCount",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {
+            "city": "MIA"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [[]]
+    }
+  }
+]

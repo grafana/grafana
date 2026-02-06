@@ -1,0 +1,13 @@
+{{- define "type_map_check" }}
+{{- if .IsRef }}
+{{- .Ref.ReferredType }}.class
+{{- else if or .IsArray }}
+{{- $list := importStdPkg "java.util" "List" -}}
+new TypeReference<{{ formatType . }}>() {}
+{{- else if or .IsMap }}
+{{- $map := importStdPkg "java.util" "Map" -}}
+new TypeReference<{{ formatType . }}>() {}
+{{- else  }}
+{{- formatType . }}.class
+{{- end }}
+{{- end }}

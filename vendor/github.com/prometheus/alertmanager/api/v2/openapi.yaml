@@ -1,0 +1,529 @@
+---
+
+swagger: '2.0'
+
+info:
+  version: 0.0.1
+  title: Alertmanager API
+  description: API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+
+basePath: "/api/v2/"
+
+paths:
+  /status:
+    get:
+      tags:
+        - general
+      operationId: getStatus
+      description: Get current status of an Alertmanager instance and its cluster
+      responses:
+        '200':
+          description: Get status response
+          schema:
+            $ref: '#/definitions/alertmanagerStatus'
+  /receivers:
+    get:
+      tags:
+        - receiver
+      operationId: getReceivers
+      description: Get list of all receivers (name of notification integrations)
+      responses:
+        '200':
+          description: Get receivers response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/receiver'
+  /silences:
+    get:
+      tags:
+        - silence
+      operationId: getSilences
+      description: Get a list of silences
+      responses:
+        '200':
+          description: Get silences response
+          schema:
+            $ref: '#/definitions/gettableSilences'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+      parameters:
+        - name: filter
+          in: query
+          description: A list of matchers to filter silences by
+          required: false
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
+    post:
+      tags:
+        - silence
+      operationId: postSilences
+      description: Post a new silence or update an existing one
+      parameters:
+        - in: body
+          name: silence
+          description: The silence to create
+          required: true
+          schema:
+            $ref: '#/definitions/postableSilence'
+      responses:
+        '200':
+          description: Create / update silence response
+          schema:
+            type: object
+            properties:
+              silenceID:
+                type: string
+        '400':
+          $ref: '#/responses/BadRequest'
+        '404':
+          description: A silence with the specified ID was not found
+          schema:
+            type: string
+  /silence/{silenceID}:
+    parameters:
+      - in: path
+        name: silenceID
+        type: string
+        format: uuid
+        required: true
+        description: ID of the silence to get
+    get:
+      tags:
+        - silence
+      operationId: getSilence
+      description: Get a silence by its ID
+      responses:
+        '200':
+          description: Get silence response
+          schema:
+            $ref: '#/definitions/gettableSilence'
+        '404':
+          description: A silence with the specified ID was not found
+        '500':
+          $ref: '#/responses/InternalServerError'
+    delete:
+      tags:
+        - silence
+      operationId: deleteSilence
+      description: Delete a silence by its ID
+      parameters:
+        - in: path
+          name: silenceID
+          type: string
+          format: uuid
+          required: true
+          description: ID of the silence to get
+      responses:
+        '200':
+          description: Delete silence response
+        '404':
+          description: A silence with the specified ID was not found
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /alerts:
+    get:
+      tags:
+        - alert
+      operationId: getAlerts
+      description: Get a list of alerts
+      parameters:
+        - in: query
+          name: active
+          type: boolean
+          description: Show active alerts
+          default: true
+        - in: query
+          name: silenced
+          type: boolean
+          description: Show silenced alerts
+          default: true
+        - in: query
+          name: inhibited
+          type: boolean
+          description: Show inhibited alerts
+          default: true
+        - in: query
+          name: unprocessed
+          type: boolean
+          description: Show unprocessed alerts
+          default: true
+        - name: filter
+          in: query
+          description: A list of matchers to filter alerts by
+          required: false
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
+        - name: receiver
+          in: query
+          description: A regex matching receivers to filter alerts by
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Get alerts response
+          schema:
+            '$ref': '#/definitions/gettableAlerts'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    post:
+      tags:
+        - alert
+      operationId: postAlerts
+      description: Create new Alerts
+      parameters:
+        - in: body
+          name: alerts
+          description: The alerts to create
+          required: true
+          schema:
+            $ref: '#/definitions/postableAlerts'
+      responses:
+        '200':
+          description: Create alerts response
+        '500':
+          $ref: '#/responses/InternalServerError'
+        '400':
+          $ref: '#/responses/BadRequest'
+  /alerts/groups:
+    get:
+      tags:
+        - alertgroup
+      operationId: getAlertGroups
+      description: Get a list of alert groups
+      parameters:
+        - in: query
+          name: active
+          type: boolean
+          description: Show active alerts
+          default: true
+        - in: query
+          name: silenced
+          type: boolean
+          description: Show silenced alerts
+          default: true
+        - in: query
+          name: inhibited
+          type: boolean
+          description: Show inhibited alerts
+          default: true
+        - name: filter
+          in: query
+          description: A list of matchers to filter alerts by
+          required: false
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
+        - name: receiver
+          in: query
+          description: A regex matching receivers to filter alerts by
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Get alert groups response
+          schema:
+            '$ref': '#/definitions/alertGroups'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+
+responses:
+  BadRequest:
+    description: Bad request
+    schema:
+      type: string
+  InternalServerError:
+    description: Internal server error
+    schema:
+      type: string
+
+
+definitions:
+  alertmanagerStatus:
+    type: object
+    properties:
+      cluster:
+        $ref: '#/definitions/clusterStatus'
+      versionInfo:
+        $ref: '#/definitions/versionInfo'
+      config:
+        $ref: '#/definitions/alertmanagerConfig'
+      uptime:
+        type: string
+        format: date-time
+    required:
+      - cluster
+      - versionInfo
+      - config
+      - uptime
+  clusterStatus:
+    type: object
+    properties:
+      name:
+        type: string
+      status:
+        type: string
+        enum: ["ready", "settling", "disabled"]
+      peers:
+        type: array
+        items:
+          $ref: '#/definitions/peerStatus'
+    required:
+      - status
+  alertmanagerConfig:
+    type: object
+    properties:
+      original:
+        type: string
+    required:
+      - original
+  versionInfo:
+    type: object
+    properties:
+      version:
+        type: string
+      revision:
+        type: string
+      branch:
+        type: string
+      buildUser:
+        type: string
+      buildDate:
+        type: string
+      goVersion:
+        type: string
+    required:
+      - version
+      - revision
+      - branch
+      - buildUser
+      - buildDate
+      - goVersion
+  peerStatus:
+    type: object
+    properties:
+      name:
+        type: string
+      address:
+        type: string
+    required:
+      - name
+      - address
+  silence:
+    type: object
+    properties:
+      matchers:
+        $ref: '#/definitions/matchers'
+      startsAt:
+        type: string
+        format: date-time
+      endsAt:
+        type: string
+        format: date-time
+      createdBy:
+        type: string
+      comment:
+        type: string
+    required:
+      - matchers
+      - startsAt
+      - endsAt
+      - createdBy
+      - comment
+  gettableSilence:
+    allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+          status:
+            $ref: '#/definitions/silenceStatus'
+          updatedAt:
+            type: string
+            format: date-time
+        required:
+          - id
+          - status
+          - updatedAt
+      - $ref: '#/definitions/silence'
+  postableSilence:
+    allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+      - $ref: '#/definitions/silence'
+  silenceStatus:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ["expired", "active", "pending"]
+    required:
+      - state
+  gettableSilences:
+    type: array
+    items:
+      $ref: '#/definitions/gettableSilence'
+  matchers:
+    type: array
+    items:
+      $ref: '#/definitions/matcher'
+    minItems: 1
+  matcher:
+    type: object
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+      isRegex:
+        type: boolean
+      isEqual:
+        type: boolean
+        default: true
+    required:
+      - name
+      - value
+      - isRegex
+  alert:
+    type: object
+    properties:
+      labels:
+        $ref: '#/definitions/labelSet'
+      generatorURL:
+        type: string
+        format: uri
+    required:
+      - labels
+  gettableAlerts:
+    type: array
+    items:
+      $ref: '#/definitions/gettableAlert'
+  gettableAlert:
+    allOf:
+      - type: object
+        properties:
+          annotations:
+            $ref: '#/definitions/labelSet'
+          receivers:
+            type: array
+            items:
+              $ref: '#/definitions/receiver'
+          fingerprint:
+            type: string
+          startsAt:
+            type: string
+            format: date-time
+          updatedAt:
+            type: string
+            format: date-time
+          endsAt:
+            type: string
+            format: date-time
+          status:
+            $ref: '#/definitions/alertStatus'
+        required:
+          - receivers
+          - fingerprint
+          - startsAt
+          - updatedAt
+          - endsAt
+          - annotations
+          - status
+      - $ref: '#/definitions/alert'
+  postableAlerts:
+    type: array
+    items:
+      $ref: '#/definitions/postableAlert'
+  postableAlert:
+    allOf:
+      - type: object
+        properties:
+          startsAt:
+            type: string
+            format: date-time
+          endsAt:
+            type: string
+            format: date-time
+          annotations:
+            $ref: '#/definitions/labelSet'
+      - $ref: '#/definitions/alert'
+  alertGroups:
+    type: array
+    items:
+      $ref: '#/definitions/alertGroup'
+  alertGroup:
+    type: object
+    properties:
+      labels:
+        $ref: '#/definitions/labelSet'
+      receiver:
+        $ref: '#/definitions/receiver'
+      alerts:
+        type: array
+        items:
+          $ref: '#/definitions/gettableAlert'
+    required:
+      - labels
+      - receiver
+      - alerts
+  alertStatus:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ['unprocessed', 'active', 'suppressed']
+      silencedBy:
+        type: array
+        items:
+          type: string
+      inhibitedBy:
+        type: array
+        items:
+          type: string
+    required:
+      - state
+      - silencedBy
+      - inhibitedBy
+  receiver:
+    type: object
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  labelSet:
+    type: object
+    additionalProperties:
+      type: string
+
+
+tags:
+  - name: general
+    description: General Alertmanager operations
+  - name: receiver
+    description: Everything related to Alertmanager receivers
+  - name: silence
+    description: Everything related to Alertmanager silences
+  - name: alert
+    description: Everything related to Alertmanager alerts

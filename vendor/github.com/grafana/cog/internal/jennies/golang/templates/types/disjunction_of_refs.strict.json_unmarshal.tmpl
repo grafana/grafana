@@ -1,0 +1,41 @@
+{{- $json := importStdPkg "encoding/json" -}}
+{{- $fmt := importStdPkg "fmt" -}}
+{{- $struct := .def.Type.Struct -}}
+// UnmarshalJSONStrict implements a custom JSON unmarshalling logic to decode `{{ .def.Name|formatObjectName }}` from JSON.
+// Note: the unmarshalling done by this function is strict. It will fail over required fields being absent from the input, fields having an incorrect type, unexpected fields being present, …
+func (resource *{{ .def.Name|formatObjectName }}) UnmarshalJSONStrict(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	{{- $hint := index .def.Type.Hints "disjunction_of_refs" }}
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]{{ formatAny }})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["{{ $hint.Discriminator }}"]
+	if !found {
+		return fmt.Errorf("discriminator field '{{ $hint.Discriminator }}' not found in payload")
+	}
+
+	switch discriminator {
+	{{- range $discriminatorValue, $typeName := $hint.DiscriminatorMapping }}
+		{{- if eq $discriminatorValue "cog_discriminator_catch_all" }}
+		default:
+		{{- else }}
+		case "{{ $discriminatorValue }}":
+		{{- end }}
+		{{ $typeName|formatVarName }} := &{{ $typeName|formatObjectName }}{}
+		if err := {{ $typeName|formatVarName }}.UnmarshalJSONStrict(raw); err != nil {
+			return err
+		}
+
+		resource.{{ ($struct.FieldByRefName $typeName).Name|formatFieldName }} = {{ $typeName|formatVarName }}
+		return nil
+	{{- end }}
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `{{ $hint.Discriminator }} = %v`", discriminator)
+}

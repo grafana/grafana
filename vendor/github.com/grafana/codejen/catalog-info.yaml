@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: codejen
+  title: codejen
+  annotations:
+    github.com/project-slug: grafana/codejen
+  links:
+    - title: Slack Channel
+      url: https://raintank-corp.slack.com/archives/C018SLDD5MW
+  description: |
+    Modular code generation framework 
+spec:
+  type: library
+  owner: group:default/platform-monitoring
+  lifecycle: production

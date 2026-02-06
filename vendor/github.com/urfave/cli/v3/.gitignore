@@ -1,0 +1,11 @@
+*.coverprofile
+*.exe
+*.orig
+.*envrc
+.envrc
+.idea
+/.local/
+/site/
+coverage.txt
+examples/*/built-example
+vendor

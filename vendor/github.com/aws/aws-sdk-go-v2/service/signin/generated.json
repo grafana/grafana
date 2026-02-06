@@ -1,0 +1,34 @@
+{
+    "dependencies": {
+        "github.com/aws/aws-sdk-go-v2": "v1.4.0",
+        "github.com/aws/aws-sdk-go-v2/internal/configsources": "v0.0.0-00010101000000-000000000000",
+        "github.com/aws/aws-sdk-go-v2/internal/endpoints/v2": "v2.0.0-00010101000000-000000000000",
+        "github.com/aws/smithy-go": "v1.4.0"
+    },
+    "files": [
+        "api_client.go",
+        "api_client_test.go",
+        "api_op_CreateOAuth2Token.go",
+        "auth.go",
+        "deserializers.go",
+        "doc.go",
+        "endpoints.go",
+        "endpoints_config_test.go",
+        "endpoints_test.go",
+        "generated.json",
+        "internal/endpoints/endpoints.go",
+        "internal/endpoints/endpoints_test.go",
+        "options.go",
+        "protocol_test.go",
+        "serializers.go",
+        "snapshot_test.go",
+        "sra_operation_order_test.go",
+        "types/enums.go",
+        "types/errors.go",
+        "types/types.go",
+        "validators.go"
+    ],
+    "go": "1.23",
+    "module": "github.com/aws/aws-sdk-go-v2/service/signin",
+    "unstable": false
+}

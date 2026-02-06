@@ -1,0 +1,10 @@
+<?php
+
+namespace {{ .NamespaceRoot }}\{{ .Package | formatPackageName }};
+
+final class {{ .ClassName|formatObjectName }}
+{
+{{ range $factory := .Factories }}
+{{ include "factory" (dict "Builder" $factory.Builder "Factory" $factory.Factory) | indent 4 }}
+{{ end }}
+}

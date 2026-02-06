@@ -1,0 +1,5 @@
+# Minimal TLS configuration example. Additionally, a certificate and a key file
+# are needed.
+tls_server_config:
+  cert_file: server.crt
+  key_file: server.key

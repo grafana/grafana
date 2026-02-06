@@ -1,0 +1,50 @@
+run:
+  timeout: 10m
+  concurrency: 10
+  allow-parallel-runners: true
+linters-settings:
+  exhaustive:
+    default-signifies-exhaustive: true
+  revive:
+    ignore-generated-header: false
+    severity: warning
+    confidence: 3
+  gocritic:
+    enabled-checks:
+      - ruleguard
+    settings:
+      ruleguard:
+        rules: pkg/ruleguard.rules.go
+  nakedret:
+    max-func-lines: 60
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - bodyclose
+    - dogsled
+    - errcheck
+    - errorlint
+    - exhaustive
+    - goimports
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unused
+    - whitespace
+issues:
+  exclude-rules:
+    - linters:
+      - gosec
+      text: '404'
+    - linters:
+        - gosec
+      text: G115

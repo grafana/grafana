@@ -1,0 +1,50 @@
+changesDir: .changes
+unreleasedDir: unreleased
+headerPath: header.tpl.md
+changelogPath: CHANGELOG.md
+versionExt: md
+versionFormat: '## sdk/go/{{.Version}} - {{.Time.Format "2006-01-02"}}'
+kindFormat: '### {{.Kind}}'
+changeFormat: |
+  {{- $lines := .Body | splitn "\n" 2 -}}
+  - {{ $lines._0 | trimSuffix "." }} by @{{.Custom.Author}} in https://github.com/dagger/dagger/pull/{{.Custom.PR}}
+  {{- with $lines._1 -}}
+    {{ " " }}\{{ "\n" }}
+    {{- . | trim | indent 2 }}
+  {{- end -}}
+body:
+  block: true
+custom:
+  - key: PR
+    label: GitHub PR
+    type: int
+  - key: Author
+    label: GitHub Author
+    type: string
+kinds:
+  - label: Breaking
+    format: '### 🔥 Breaking Changes'
+  - label: Added
+  - label: Changed
+  - label: Deprecated
+  - label: Removed
+  - label: Fixed
+  - label: Experimental
+  - label: Security
+  - label: Dependencies
+headerFormat: |-
+  This SDK uses 🚙 Engine + 🚗 CLI version `{{.Env.ENGINE_VERSION}}`. [See what changed in that release](https://github.com/dagger/dagger/releases/tag/{{.Env.ENGINE_VERSION}}).
+
+  🐹 https://pkg.go.dev/dagger.io/dagger@{{.Version}}
+footerFormat: |-
+  ### What to do next
+  - Read the [documentation](https://docs.dagger.io/sdk/go)
+  - Join our [Discord server](https://discord.gg/dagger-io)
+  - Follow us on [Twitter](https://twitter.com/dagger_io)
+newlines:
+  beforeChangelogVersion: 1
+  beforeKind: 1
+  beforeFooterTemplate: 1
+  beforeHeaderTemplate: 1
+  endOfVersion: 1
+envPrefix: CHANGIE_

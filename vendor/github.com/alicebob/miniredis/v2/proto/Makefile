@@ -1,0 +1,2 @@
+test:
+	go test

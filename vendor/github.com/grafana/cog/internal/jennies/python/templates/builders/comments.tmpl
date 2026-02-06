@@ -1,0 +1,7 @@
+{{- define "comments" }}
+{{- with .Comments }}
+"""
+{{ . | join "\n" }}
+"""
+{{ end }}
+{{- end -}}

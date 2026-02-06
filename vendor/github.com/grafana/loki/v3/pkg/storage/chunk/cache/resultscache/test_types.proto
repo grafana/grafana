@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package resultscache;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "types.proto";
+
+option go_package = "github.com/grafana/loki/v3/pkg/storage/chunk/cache/resultscache";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message MockRequest {
+  string path = 1;
+  google.protobuf.Timestamp start = 2 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+  google.protobuf.Timestamp end = 3 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+  int64 step = 4;
+  string query = 6;
+  CachingOptions cachingOptions = 7 [(gogoproto.nullable) = false];
+}
+
+message MockResponse {
+  repeated MockLabelsPair labels = 1;
+  repeated MockSample samples = 2;
+}
+
+message MockLabelsPair {
+  string name = 1;
+  string value = 2;
+}
+
+message MockSample {
+  double value = 1;
+  int64 timestamp_ms = 2;
+}

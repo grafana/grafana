@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package clusterpb;
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+
+message Part {
+  string key = 1;
+  bytes data = 2;
+}
+  
+message FullState {
+  repeated Part parts = 1 [(gogoproto.nullable) = false];
+}
+
+message MemberlistMessage {
+  string version = 1;
+  enum Kind {
+    STREAM = 0;
+    PACKET = 1;
+  }
+  Kind kind = 2;
+  string from_addr = 3;
+  bytes msg = 4;
+}

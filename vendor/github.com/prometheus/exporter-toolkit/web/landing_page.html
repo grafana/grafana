@@ -1,0 +1,45 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Name}}</title>
+    <style>{{.CSS}}</style>
+  </head>
+  <body>
+    <header>
+      <h1>{{.Name}}</h1>
+    </header>
+    <main>
+      {{if .Description}}<h2>{{.Description}}</h2>{{end}}
+      {{if .Version}}<div>Version: {{.Version}}</div>{{end}}
+      <div>
+        <ul>
+          {{ range .Links }}
+          <li><a href="{{if $.RoutePrefix}}{{ $.RoutePrefix }}{{end}}{{ .Address }}">{{.Text}}</a>{{if .Description}}: {{.Description}}{{end}}</li>
+          {{ end }}
+        </ul>
+      </div>
+      {{ if .Form.Action }}
+      <div>
+      <form action="{{if $.RoutePrefix}}{{ $.RoutePrefix }}{{end}}{{ .Form.Action }}">
+      {{ range .Form.Inputs }}
+      <label>{{ .Label }}:</label>&nbsp;<input type="{{ .Type }}" name="{{ .Name }}" placeholder="{{ .Placeholder }}" value="{{ .Value }}"><br>
+      {{ end }}
+      <input type="submit" value="Submit">
+      </form>
+      </div>
+      {{ end }}
+      {{ .ExtraHTML }}
+      {{ if eq .Profiling "true" }}
+      <div id="pprof">
+      Download a detailed report of resource usage (pprof format, from the Go runtime):
+      <ul>
+        <li><a href="{{if $.RoutePrefix}}{{ $.RoutePrefix }}{{end}}debug/pprof/heap">heap usage (memory)</a>
+        <li><a href="{{if $.RoutePrefix}}{{ $.RoutePrefix }}{{end}}debug/pprof/profile?seconds=60">CPU usage (60 second profile)</a>
+      </ul>
+      To visualize and share profiles you can upload to <a href="https://pprof.me" target="_blank" rel="noopener noreferrer">pprof.me</a>
+      </div>
+      {{ end }}
+    </main>
+  </body>
+</html>

@@ -1,0 +1,58 @@
+linters:
+  enable-all: true
+  disable:
+    - exhaustruct
+    - wrapcheck
+    - nolintlint
+    - wastedassign
+    - varnamelen
+    - forcetypeassert
+    - err113
+    - ireturn
+    - funlen
+    - forbidigo
+    - godot
+    - godox
+    - cyclop
+    - prealloc
+    - dupl
+    - lll
+    - goconst
+    - depguard
+    - exhaustive
+    - wsl
+    - unparam
+    - gomoddirectives
+    - gofumpt
+    - nestif
+    - paralleltest
+    - testpackage
+    - gocognit
+    - gomnd
+    - tagliatelle
+    - nlreturn
+    - gocyclo
+    # added from 1.60.3
+    - revive
+    - govet
+    - intrange
+    - mnd
+    - perfsprint
+    - musttag
+    - testifylint
+
+    - testableexamples
+
+linters-settings:
+  errcheck:
+    exclude-functions: 
+     - fmt:.*
+
+issues:
+  exclude-dirs:
+    - generated
+
+run:
+  modules-download-mode: vendor
+  timeout: 3m
+  go: '1.23'

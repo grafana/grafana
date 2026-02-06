@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package silencepb;
+
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+
+// Matcher specifies a rule, which can match or set of labels or not.
+message Matcher {
+  // Type specifies how the given name and pattern are matched
+  // against a label set.
+  enum Type {
+    EQUAL = 0;
+    REGEXP = 1;
+    NOT_EQUAL = 2;
+    NOT_REGEXP = 3;
+  };
+  Type type = 1;
+
+  // The label name in a label set to against which the matcher
+  // checks the pattern.
+  string name = 2;
+  // The pattern being checked according to the matcher's type.
+  string pattern = 3;
+}
+
+// DEPRECATED: A comment can be attached to a silence.
+message Comment {
+  string author = 1;
+  string comment = 2;
+  google.protobuf.Timestamp timestamp = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// Silence specifies an object that ignores alerts based
+// on a set of matchers during a given time frame.
+message Silence {
+  // A globally unique identifier.
+  string id = 1;
+
+  // A set of matchers all of which have to be true for a silence
+  // to affect a given label set.
+  repeated Matcher matchers = 2;
+
+  // The time range during which the silence is active.
+  google.protobuf.Timestamp starts_at = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  google.protobuf.Timestamp ends_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+  // The last notification made to the silence.
+  google.protobuf.Timestamp updated_at = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+  // DEPRECATED: A set of comments made on the silence.
+  repeated Comment comments = 7;
+  // Comment for the silence.
+  string created_by = 8;
+  string comment = 9;
+}
+
+// MeshSilence wraps a regular silence with an expiration timestamp
+// after which the silence may be garbage collected.
+message MeshSilence {
+  Silence silence = 1;
+  google.protobuf.Timestamp expires_at = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}

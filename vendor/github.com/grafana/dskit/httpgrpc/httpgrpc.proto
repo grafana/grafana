@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package httpgrpc;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.gostring_all) =  true;
+option (gogoproto.stringer_all) =  true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_sizecache_all) = false;
+
+service HTTP {
+  rpc Handle(HTTPRequest) returns (HTTPResponse) {};
+}
+
+message HTTPRequest {
+  string method = 1;
+  string url = 2;
+  repeated Header headers = 3;
+  bytes body = 4;
+}
+
+message HTTPResponse {
+  int32 Code = 1;
+  repeated Header headers = 2;
+  bytes body = 3;
+}
+
+message Header {
+  string key = 1;
+  repeated string values = 2;
+}

@@ -1,0 +1,11 @@
+# GoLand
+/.idea/
+
+/vendor/
+
+/cmd/cmd.exe
+/cmd/cmd
+
+/artifacts/
+/test/
+/cmd/test/

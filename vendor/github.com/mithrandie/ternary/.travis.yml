@@ -1,0 +1,7 @@
+language: go
+sudo: false
+
+go:
+  - 1.x
+  - 1.16.x
+  - 1.17.x

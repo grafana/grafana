@@ -1,0 +1,6 @@
+{{- define "args" }}
+    {{- range $i, $arg := .Arguments }}
+         {{- if gt $i 0 }}, {{- end }}
+         {{- if $.IsBuilder }}{{- $arg.Type | formatBuilderFieldType }}{{ else }}{{ $arg.Type | formatType }}{{ end }} {{ $arg.Name | escapeVar | lowerCamelCase }}
+    {{- end }}
+{{- end }}

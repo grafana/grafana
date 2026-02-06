@@ -1,0 +1,8 @@
+#*
+*.sublime-*
+*~
+.#*
+.project
+.settings
+.DS_Store
+/testdata

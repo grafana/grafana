@@ -1,0 +1,28 @@
+language: go
+sudo: true
+dist: bionic
+
+branches:
+  only:
+    - main
+
+os:
+  - linux
+  - osx
+  # Travis doesn't work with windows and Go tip
+  #- windows
+
+go:
+  - tip
+
+matrix:
+  allow_failures:
+    - go: tip
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; fi
+  - (cd /tmp/; go get golang.org/x/lint/golint)
+
+script:
+  - make go test -v ./...;
+

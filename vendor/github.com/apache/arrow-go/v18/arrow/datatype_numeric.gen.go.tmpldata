@@ -1,0 +1,66 @@
+[
+  {
+    "Name": "Int8",
+    "Type": "int8",
+    "Size": 8
+  },
+  {
+    "Name": "Int16",
+    "Type": "int16",
+    "Size": 16
+  },
+  {
+    "Name": "Int32",
+    "Type": "int32",
+    "Size": 32
+  },
+  {
+    "Name": "Int64",
+    "Type": "int64",
+    "Size": 64
+  },
+  {
+    "Name": "Uint8",
+    "Type": "uint8",
+    "Size": 8
+  },
+  {
+    "Name": "Uint16",
+    "Type": "uint16",
+    "Size": 16
+  },
+  {
+    "Name": "Uint32",
+    "Type": "uint32",
+    "Size": 32
+  },
+  {
+    "Name": "Uint64",
+    "Type": "uint64",
+    "Size": 64
+  },
+  {
+    "Name": "Float32",
+    "Type": "float32",
+    "Size": 32
+  },
+  {
+    "Name": "Float64",
+    "Type": "float64",
+    "Size": 64
+  },
+  {
+    "Name": "Date32",
+    "Type": "date32",
+    "QualifiedType": "arrow.Date32",
+    "InternalType": "int32",
+    "Size": 32
+  },
+  {
+    "Name": "Date64",
+    "Type": "date64",
+    "QualifiedType": "arrow.Date64",
+    "InternalType": "int64",
+    "Size": 64
+  }
+]

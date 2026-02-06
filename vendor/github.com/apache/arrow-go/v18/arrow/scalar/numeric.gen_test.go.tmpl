@@ -1,0 +1,63 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package scalar_test
+
+import (
+	"testing"
+
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/scalar"
+	"github.com/stretchr/testify/assert"
+)
+
+
+{{range .In}}
+func TestBasic{{.Name}}Scalars(t *testing.T) {
+	value := {{.Type}}(1)
+
+	scalarVal := scalar.New{{.Name}}Scalar(value)
+	assert.Equal(t, value, scalarVal.Value)
+	assert.True(t, scalarVal.IsValid())
+	assert.NoError(t, scalarVal.ValidateFull())
+
+	expectedType := arrow.PrimitiveTypes.{{.Name}}
+	assert.True(t, arrow.TypeEqual(scalarVal.DataType(), expectedType))
+
+	other := {{.Type}}(2)
+	scalarOther := scalar.New{{.Name}}Scalar(other)
+	assert.NotEqual(t, scalarVal, scalarOther)
+	assert.False(t, scalar.Equals(scalarVal, scalarOther))
+
+	scalarVal.Value = other
+	assert.Equal(t, other, scalarVal.Value)
+	assert.Equal(t, scalarVal, scalarOther)
+	assert.True(t, scalar.Equals(scalarVal, scalarOther))
+
+	nullVal := scalar.MakeNullScalar(arrow.PrimitiveTypes.{{.Name}})
+	assert.False(t, nullVal.IsValid())
+	assert.NoError(t, nullVal.ValidateFull())
+}
+
+func TestMakeScalar{{.Name}}(t *testing.T) {
+	three := scalar.MakeScalar({{.Type}}(3))	
+	assert.NoError(t, three.ValidateFull())
+	assert.Equal(t, scalar.New{{.Name}}Scalar(3), three)
+
+	assertMakeScalar(t, scalar.New{{.Name}}Scalar(3), {{.Type}}(3))
+	assertParseScalar(t, arrow.PrimitiveTypes.{{.Name}}, "3", scalar.New{{.Name}}Scalar(3))
+}
+{{end}}

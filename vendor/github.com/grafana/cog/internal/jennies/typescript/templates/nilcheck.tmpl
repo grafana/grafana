@@ -1,0 +1,5 @@
+{{- define "nil_check" }}
+        if (!this.internal.{{ .Path|formatPath }}) {
+            this.internal.{{ .Path|formatPath }} = {{ .|emptyValueForGuard }};
+        }
+{{- end }}

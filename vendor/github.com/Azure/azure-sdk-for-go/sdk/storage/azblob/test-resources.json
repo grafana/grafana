@@ -1,0 +1,579 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "baseName": {
+        "type": "String"
+      },
+      "tenantId": {
+        "type": "string",
+        "defaultValue": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+        "metadata": {
+          "description": "The tenant ID to which the application and resources belong."
+        }
+      },
+      "testApplicationOid": {
+        "type": "string",
+        "metadata": {
+          "description": "The principal to assign the role to. This is application object id."
+        }
+      }
+    },
+    "variables": {
+      "mgmtApiVersion": "2022-09-01",
+      "authorizationApiVersion": "2018-09-01-preview",
+      "blobDataContributorRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+      "contributorRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+      "blobDataOwnerRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
+      "primaryAccountName": "[concat(parameters('baseName'), 'prim')]",
+      "immutableAccountName": "[concat(parameters('baseName'), 'imm')]",
+      "primaryEncryptionScopeName": "encryptionScope",
+      "primaryEncryptionScope": "[concat(parameters('baseName'), 'prim', concat('/', variables('primaryEncryptionScopeName')))]",
+      "secondaryAccountName": "[concat(parameters('baseName'), 'sec')]",
+      "premiumAccountName": "[concat(parameters('baseName'), 'prem')]",
+      "dataLakeAccountName": "[concat(parameters('baseName'), 'dtlk')]",
+      "softDeleteAccountName": "[concat(parameters('baseName'), 'sftdl')]",
+      "premiumFileAccountName": "[concat(parameters('baseName'), 'pfile')]",
+      "webjobsPrimaryAccountName": "[concat(parameters('baseName'), 'wjprim')]",
+      "webjobsSecondaryAccountName": "[concat(parameters('baseName'), 'wjsec')]",
+      "location": "[resourceGroup().location]",
+      "resourceGroupName": "[resourceGroup().name]",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "encryption": {
+        "services": {
+          "file": {
+            "enabled": true
+          },
+          "blob": {
+            "enabled": true
+          }
+        },
+        "keySource": "Microsoft.Storage"
+      },
+      "networkAcls": {
+        "bypass": "AzureServices",
+        "virtualNetworkRules": [],
+        "ipRules": [],
+        "defaultAction": "Allow"
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Authorization/roleAssignments",
+        "apiVersion": "[variables('authorizationApiVersion')]",
+        "name": "[guid(concat('dataContributorRoleId', resourceGroup().id))]",
+        "properties": {
+          "roleDefinitionId": "[variables('blobDataContributorRoleId')]",
+          "principalId": "[parameters('testApplicationOid')]"
+        }
+      },
+      {
+        "type": "Microsoft.Authorization/roleAssignments",
+        "apiVersion": "[variables('authorizationApiVersion')]",
+        "name": "[guid(concat('contributorRoleId', resourceGroup().id))]",
+        "properties": {
+          "roleDefinitionId": "[variables('contributorRoleId')]",
+          "principalId": "[parameters('testApplicationOid')]"
+        }
+      },
+      {
+        "type": "Microsoft.Authorization/roleAssignments",
+        "apiVersion": "[variables('authorizationApiVersion')]",
+        "name": "[guid(concat('blobDataOwnerRoleId', resourceGroup().id))]",
+        "properties": {
+          "roleDefinitionId": "[variables('blobDataOwnerRoleId')]",
+          "principalId": "[parameters('testApplicationOid')]"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('primaryAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/blobServices",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[concat(variables('primaryAccountName'), '/default')]",
+        "properties": {
+          "isVersioningEnabled": true,
+          "lastAccessTimeTrackingPolicy": {
+            "enable": true,
+            "name": "AccessTimeTracking",
+            "trackingGranularityInDays": 1,
+            "blobType": [
+              "blockBlob"
+            ]
+          }
+        },
+        "dependsOn": [
+          "[variables('primaryAccountName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('immutableAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot",
+          "immutableStorageWithVersioning": {
+            "enabled": true
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/blobServices",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[concat(variables('immutableAccountName'), '/default')]",
+        "properties": {
+          "isVersioningEnabled": true,
+          "lastAccessTimeTrackingPolicy": {
+            "enable": true,
+            "name": "AccessTimeTracking",
+            "trackingGranularityInDays": 1,
+            "blobType": [
+              "blockBlob"
+            ]
+          }
+        },
+        "dependsOn": [
+          "[variables('immutableAccountName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/encryptionScopes",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('primaryEncryptionScope')]",
+        "properties": {
+          "source": "Microsoft.Storage",
+          "state": "Enabled"
+        },
+        "dependsOn": [
+          "[variables('primaryAccountName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('secondaryAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('premiumAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Premium_LRS",
+          "tier": "Premium"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('dataLakeAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "isHnsEnabled": true,
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/blobServices",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[concat(variables('dataLakeAccountName'), '/default')]",
+        "properties": {
+          "containerDeleteRetentionPolicy": {
+            "enabled": true,
+            "days": 1
+          }
+        },
+        "dependsOn": [
+          "[variables('dataLakeAccountName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('softDeleteAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/blobServices",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[concat(variables('softDeleteAccountName'), '/default')]",
+        "properties": {
+          "isVersioningEnabled": true,
+          "deleteRetentionPolicy": {
+            "allowPermanentDelete": true,
+            "enabled": true,
+            "days": 1
+          },
+          "containerDeleteRetentionPolicy": {
+            "enabled": true,
+            "days": 1
+          }
+        },
+        "dependsOn": [
+          "[variables('softDeleteAccountName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/fileServices",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[concat(variables('softDeleteAccountName'), '/default')]",
+        "properties": {
+          "shareDeleteRetentionPolicy": {
+            "enabled": true,
+            "days": 1
+          }
+        },
+        "dependsOn": [
+          "[variables('softDeleteAccountName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('premiumFileAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Premium_LRS",
+          "tier": "Premium"
+        },
+        "kind": "FileStorage",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('webjobsPrimaryAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "[variables('mgmtApiVersion')]",
+        "name": "[variables('webjobsSecondaryAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "Standard_RAGRS",
+          "tier": "Standard"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "networkAcls": "[variables('networkAcls')]",
+          "supportsHttpsTrafficOnly": true,
+          "encryption": "[variables('encryption')]",
+          "accessTier": "Hot"
+        }
+      }
+    ],
+    "functions": [
+      {
+        "namespace": "url",
+        "members": {
+          "serviceEndpointSuffix": {
+            "parameters": [
+              {
+                "name": "endpoint",
+                "type": "string"
+              }
+            ],
+            "output": {
+              "type": "string",
+              "value": "[substring(parameters('endpoint'), add(indexOf(parameters('endpoint'), '.'),1), sub(length(parameters('endpoint')), add(indexOf(parameters('endpoint'), '.'),2)))]"
+            }
+          }
+        }
+      },
+      {
+        "namespace": "connectionString",
+        "members": {
+          "create": {
+            "parameters": [
+              {
+                "name": "accountName",
+                "type": "string"
+              },
+              {
+                "name": "accountKey",
+                "type": "string"
+              },
+              {
+                "name": "blobEndpoint",
+                "type": "string"
+              },
+              {
+                "name": "queueEndpoint",
+                "type": "string"
+              },
+              {
+                "name": "fileEndpoint",
+                "type": "string"
+              },
+              {
+                "name": "tableEndpoint",
+                "type": "string"
+              }
+            ],
+            "output": {
+              "type": "string",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('accountName'), ';AccountKey=', parameters('accountKey'), ';BlobEndpoint=', parameters('blobEndpoint'), ';QueueEndpoint=', parameters('queueEndpoint'), ';FileEndpoint=', parameters('fileEndpoint'), ';TableEndpoint=', parameters('tableEndpoint'))]"
+            }
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "AZURE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('primaryAccountName')]"
+      },
+      "AZURE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "PRIMARY_STORAGE_ACCOUNT_BLOB_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob)]"
+      },
+      "PRIMARY_STORAGE_ACCOUNT_FILE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file)]"
+      },
+      "PRIMARY_STORAGE_ACCOUNT_QUEUE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue)]"
+      },
+      "PRIMARY_STORAGE_ACCOUNT_TABLE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "SECONDARY_AZURE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('secondaryAccountName')]"
+      },
+      "SECONDARY_AZURE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('secondaryAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "SECONDARY_STORAGE_ACCOUNT_BLOB_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('secondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob)]"
+      },
+      "SECONDARY_STORAGE_ACCOUNT_FILE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('secondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file)]"
+      },
+      "SECONDARY_STORAGE_ACCOUNT_QUEUE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('secondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue)]"
+      },
+      "SECONDARY_STORAGE_ACCOUNT_TABLE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('secondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "BLOB_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('secondaryAccountName')]"
+      },
+      "BLOB_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('secondaryAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "PREMIUM_AZURE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('premiumAccountName')]"
+      },
+      "PREMIUM_AZURE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('premiumAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "PREMIUM_STORAGE_ACCOUNT_BLOB_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('premiumAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob)]"
+      },
+      "DATALAKE_AZURE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('dataLakeAccountName')]"
+      },
+      "DATALAKE_AZURE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('dataLakeAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "DATALAKE_STORAGE_ACCOUNT_BLOB_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('dataLakeAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob)]"
+      },
+      "DATALAKE_STORAGE_ACCOUNT_FILE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('dataLakeAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file)]"
+      },
+      "DATALAKE_STORAGE_ACCOUNT_QUEUE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('dataLakeAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue)]"
+      },
+      "DATALAKE_STORAGE_ACCOUNT_TABLE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('dataLakeAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "IMMUTABLE_AZURE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('immutableAccountName')]"
+      },
+      "IMMUTABLE_AZURE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('immutableAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "IMMUTABLE_AZURE_STORAGE_ACCOUNT_BLOB_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('immutableAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob)]"
+      },
+      "IMMUTABLE_STORAGE_ACCOUNT_FILE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('immutableAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file)]"
+      },
+      "IMMUTABLE_AZURE_STORAGE_ACCOUNT_QUEUE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('immutableAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue)]"
+      },
+      "IMMUTABLE_AZURE_STORAGE_ACCOUNT_TABLE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('immutableAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "SOFT_DELETE_AZURE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('softDeleteAccountName')]"
+      },
+      "SOFT_DELETE_AZURE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('softDeleteAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "SOFT_DELETE_AZURE_STORAGE_ACCOUNT_BLOB_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('softDeleteAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob)]"
+      },
+      "SOFT_DELETE_AZURE_STORAGE_ACCOUNT_FILE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('softDeleteAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file)]"
+      },
+      "SOFT_DELETE_AZURE_STORAGE_ACCOUNT_QUEUE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('softDeleteAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue)]"
+      },
+      "SOFT_DELETE_AZURE_STORAGE_ACCOUNT_TABLE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('softDeleteAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "PREMIUM_FILE_STORAGE_ACCOUNT_NAME": {
+        "type": "string",
+        "value": "[variables('premiumFileAccountName')]"
+      },
+      "PREMIUM_FILE_STORAGE_ACCOUNT_KEY": {
+        "type": "string",
+        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('premiumFileAccountName')), variables('mgmtApiVersion')).keys[0].value]"
+      },
+      "PREMIUM_FILE_STORAGE_ACCOUNT_FILE_ENDPOINT_SUFFIX": {
+        "type": "string",
+        "value": "[url.serviceEndpointSuffix(reference(resourceId('Microsoft.Storage/storageAccounts', variables('premiumFileAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file)]"
+      },
+      "AZUREWEBJOBSSTORAGE": {
+        "type": "string",
+        "value": "[connectionString.create(variables('webjobsPrimaryAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsPrimaryAccountName')), variables('mgmtApiVersion')).keys[0].value, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsPrimaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsPrimaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsPrimaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsPrimaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "AZUREWEBJOBSSECONDARYSTORAGE": {
+        "type": "string",
+        "value": "[connectionString.create(variables('webjobsSecondaryAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsSecondaryAccountName')), variables('mgmtApiVersion')).keys[0].value, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsSecondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.blob, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsSecondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.queue, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsSecondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.file, reference(resourceId('Microsoft.Storage/storageAccounts', variables('webjobsSecondaryAccountName')), variables('mgmtApiVersion')).primaryEndpoints.table)]"
+      },
+      "RESOURCE_GROUP_NAME": {
+        "type": "string",
+        "value": "[variables('resourceGroupName')]"
+      },
+      "SUBSCRIPTION_ID": {
+        "type": "string",
+        "value": "[variables('subscriptionId')]"
+      },
+      "LOCATION": {
+        "type": "string",
+        "value": "[variables('location')]"
+      },
+      "AZURE_STORAGE_ENCRYPTION_SCOPE": {
+        "type": "string",
+        "value": "[variables('primaryEncryptionScopeName')]"
+      }
+    }
+  }
+  

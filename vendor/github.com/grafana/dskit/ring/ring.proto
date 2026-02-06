@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package ring;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// Desc is the top-level type used to model a ring, containing information for individual instances.
+message Desc {
+	map<string,InstanceDesc> ingesters = 1 [(gogoproto.nullable) = false];
+	reserved 2;
+}
+
+// InstanceDesc is the top-level type used to model per-instance information in a ring.
+message InstanceDesc {
+	reserved 4, 5; // old, deprecated fields
+
+	string addr = 1;
+
+	// Unix timestamp (with seconds precision) of the last heartbeat sent
+	// by this instance.
+	int64 timestamp = 2;
+
+	InstanceState state = 3;
+	repeated uint32 tokens = 6;
+	string zone = 7;
+
+	// Unix timestamp (with seconds precision) of when the instance has been registered
+	// to the ring. This field has not been called "joined_timestamp" intentionally, in order
+	// to not introduce any misunderstanding with the instance's "joining" state.
+	//
+	// This field is used to find out subset of instances that could have possibly owned a
+	// specific token in the past. Because of this, it's important that either this timestamp
+	// is set to the real time the instance has been registered to the ring or it's left
+	// 0 (which means unknown).
+	//
+	// When an instance is already registered in the ring with a value of 0 it's NOT safe to
+	// update the timestamp to "now" because it would break the contract, given the instance
+	// was already registered before "now". If unknown (0), it should be left as is, and the
+	// code will properly deal with that.
+	int64 registered_timestamp = 8;
+
+	// ID of the instance. This value is the same as the key in the ingesters map in Desc.
+	string id = 9;
+
+	// Unix timestamp (with seconds precision) of when the read_only flag was updated. This
+	// is used to find other instances that could have possibly owned a specific token in
+	// the past on the write path, due to *this* instance being read-only. This value should
+	// only increase.
+	int64 read_only_updated_timestamp = 10;
+
+	// Indicates whether this instance is read only.
+	// Read-only instances go through standard state changes, and special handling is applied to them
+	// during shuffle shards.
+	bool read_only = 11;
+
+  // Map of component / feature identifiers to version number.
+  // The component / feature identifiers are specific to the application (ie. aren't defined in dskit).
+  // We use a uint64 for the version number itself as versions are expected to increase and be
+  // sortable.
+  map<uint64, uint64> versions = 12;
+}
+
+enum InstanceState {
+	ACTIVE = 0;
+	LEAVING = 1;
+
+	PENDING = 2;
+	JOINING = 3;
+
+	// This state is only used by gossiping code to distribute information about
+	// instances that have been removed from the ring. Ring users should not use it directly.
+	LEFT = 4;
+}

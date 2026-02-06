@@ -1,0 +1,6 @@
+{
+  "AssetsRepo": "Azure/azure-sdk-assets",
+  "AssetsRepoPrefixPath": "go",
+  "TagPrefix": "go/azidentity",
+  "Tag": "go/azidentity_530ea4279b"
+}

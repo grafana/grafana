@@ -1,0 +1,125 @@
+{{- define "assignment" }}
+    {{- range .Assignment.NilChecks }}
+        {{- template "nil_check" . }}
+    {{- end }}
+
+    {{- template "assignment_setup" (dict "Assignment" .Assignment "Value" .Assignment.Value) -}}
+
+    {{- $value := include "assignment_value" (dict "Assignment" .Assignment "Value" .Assignment.Value) -}}
+
+    {{- $preTmpl := print "pre_assignment_" (.Builder.Name|formatObjectName) "_" .Option.Name }}
+    {{- includeIfExists $preTmpl (dict) -}}
+
+    {{- template "assignment_method" (dict "Method" .Assignment.Method "Path" .Assignment.Path "Value" $value) }}
+
+    {{- $postTmpl := print "post_assignment_" (.Builder.Name|formatObjectName) "_" .Option.Name }}
+    {{- includeIfExists $postTmpl (dict) -}}
+{{- end }}
+
+{{- define "assignment_value" }}
+    {{- if not (eq .Value.Constant nil) }}
+        {{- if isNullableNonArray .Assignment.Path.Last.Type }}
+            {{- print "&val" (.Assignment.Path.Last.Identifier | upperCamelCase) }}
+        {{- else }}
+            {{- formatScalar .Value.Constant }}
+        {{- end }}
+    {{- end }}
+    {{- with .Value.Argument }}
+        {{- $argName := formatArgName .Name }}
+
+        {{- if or (typeHasBuilder .Type) (resolvesToComposableSlot .Type) }}
+            {{- $argName = .Type.IsArray | ternary (print $argName "Resources") (print $argName "Resource") }}
+        {{- end }}
+
+        {{- maybeAsPointer $.Assignment.Path.Last.Type $argName }}
+    {{- end }}
+    {{- with .Value.Envelope }}
+        {{- template "value_envelope" (dict "Assignment" $.Assignment "Envelope" .) }}
+    {{- end }}
+{{- end }}
+
+{{- define "assignment_setup" }}
+    {{- if not (eq .Value.Constant nil) }}
+        {{- if .Assignment.Path.Last.Type.Nullable }}
+            val{{ .Assignment.Path.Last.Identifier | upperCamelCase }} := {{ formatValue .Assignment.Path.Last.Type .Value.Constant }}
+        {{- end }}
+    {{- end }}
+    {{- with .Value.Argument }}
+        {{- if or (typeHasBuilder .Type) (resolvesToComposableSlot .Type) }}
+        {{- $builtResultName := (print (formatArgName .Name) "Resource") }}
+        {{- if .Type.IsArray }}
+        {{ formatArgName .Name}}Resources := make({{ .Type | formatTypeNoBuilder }}, 0, len({{ formatArgName .Name}}))
+        {{- $builtResultName = (print (formatArgName .Name) "Resources") }}
+        {{- end }}
+
+        {{- template "unfold_builders" (dict "Depth" 1 "InputType" .Type "OriginalInputVar" (formatArgName .Name) "InputVar" (formatArgName .Name) "AssignmentPath" $.Assignment.Path "ResultVar" $builtResultName) }}
+        {{- end }}
+    {{- end }}
+    {{- with .Value.Envelope }}
+        {{- range .Values }}
+        {{- template "assignment_setup" (dict "Assignment" $.Assignment "Value" .Value) }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+
+
+{{- define "unfold_builders" }}
+    {{- if .InputType.IsArray }}
+        for _, r{{ .Depth }} := range {{ .InputVar}} {
+            {{- if .InputType.Array.ValueType.IsArray }}
+                {{ .OriginalInputVar }}Depth{{ .Depth }} := make({{ .InputType.Array.ValueType | formatTypeNoBuilder }}, 0)
+
+                {{- template "unfold_builders" (dict "Depth" (add1 .Depth) "InputType" .InputType.Array.ValueType "OriginalInputVar" .OriginalInputVar "InputVar" (print "r" .Depth) "AssignmentPath" $.AssignmentPath "ResultVar" (print .OriginalInputVar "Depth" .Depth)) }}
+
+                {{ .ResultVar }} = append({{ .ResultVar}}, {{ .OriginalInputVar }}Depth{{ .Depth }})
+            {{- else }}
+                {{ .OriginalInputVar }}Depth{{ .Depth }}, err := r{{ .Depth }}.Build()
+                if err != nil {
+                    builder.errors = append(builder.errors, err.(cog.BuildErrors)...)
+                    return builder
+                }
+                {{ .ResultVar }} = append({{ .ResultVar}}, {{ .OriginalInputVar }}Depth{{ .Depth }})
+            {{- end }}
+        }
+    {{- else if .InputType.IsMap }}
+        {{ .ResultVar }} := make({{ .InputType | formatTypeNoBuilder }})
+        for key{{ .Depth }}, val{{ .Depth }} := range {{ .InputVar}} {
+            {{- if .InputType.Map.ValueType.IsArray }}
+                {{- template "unfold_builders" (dict "Depth" (add1 .Depth) "InputType" .InputType.Map.ValueType "OriginalInputVar" .OriginalInputVar "InputVar" (print "val" .Depth) "AssignmentPath" $.AssignmentPath "ResultVar" (print .OriginalInputVar "Depth" .Depth)) }}
+
+                {{ .ResultVar }}[key{{ .Depth }}] = {{ .OriginalInputVar }}Depth{{ .Depth }}
+            {{- else }}
+                {{ .OriginalInputVar }}Depth{{ .Depth }}, err := val{{ .Depth }}.Build()
+                if err != nil {
+                    builder.errors = append(builder.errors, err.(cog.BuildErrors)...)
+                    return builder
+                }
+                {{ .ResultVar }}[key{{ .Depth }}] = {{ .OriginalInputVar }}Depth{{ .Depth }}
+            {{- end }}
+        }
+    {{- else }}
+    {{ .ResultVar }}, err := {{ .InputVar}}.Build()
+    if err != nil {
+        builder.errors = append(builder.errors, err.(cog.BuildErrors)...)
+        return builder
+    }
+    {{- end }}
+{{- end }}
+
+{{- define "value_envelope" }}
+    {{- .Envelope.Type | formatTypeNoBuilder }}{
+        {{- range .Envelope.Values }}
+        {{- $value := include "assignment_value" (dict "Assignment" $.Assignment "Value" .Value) }}
+        {{- $value = maybeAsPointer (.Path.Last.Type) $value }}
+        {{ (index .Path 0).Identifier | formatFieldName }}: {{ $value }},
+        {{- end }}
+    }
+{{- end }}
+
+{{- define "assignment_method" }}
+    {{ if eq .Method "append" -}}
+        builder.internal.{{ .Path|formatPath }} = append(builder.internal.{{ .Path|formatPath }}, {{ .Value }})
+    {{- else -}}
+        builder.internal.{{ .Path|formatPath }} = {{ .Value }}
+    {{- end -}}
+{{- end }}

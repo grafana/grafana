@@ -1,0 +1,80 @@
+{{- define "assignment" }}
+{{- include "constraints" .Assignment.Constraints }}
+
+{{- range .Assignment.NilChecks }}
+{{ template "nil_check" . }}
+{{- end }}
+
+{{- template "assignment_setup" (dict "Value" .Assignment.Value) -}}
+{{- $value := include "assignment_value" (dict "Assignment" .Assignment "IntoType" .Assignment.Path.Last.Type "Value" .Assignment.Value) -}}
+
+{{- $preTmpl := print "pre_assignment_" (.Builder.Name|formatObjectName) "_" .Option.Name }}
+{{- includeIfExists $preTmpl (dict) -}}
+
+{{ template "assignment_method" (dict "Method" .Assignment.Method "Path" .Assignment.Path "Value" $value) }}
+
+{{- $postTmpl := print "post_assignment_" (.Builder.Name|formatObjectName) "_" .Option.Name }}
+{{- includeIfExists $postTmpl (dict) -}}
+{{- end }}
+
+{{- define "assignment_setup" }}
+{{- with .Value.Argument }}
+{{- if or (resolvesToBuilder .Type) (resolvesToComposableSlot .Type) }}
+{{- $builtResultSuffix := ternary "_resources" "_resource" (or .Type.IsArray .Type.IsMap) }}
+{{- $name := print (.Name|formatIdentifier) $builtResultSuffix }}
+{{ $name }} = {{ template "unfold_builders" (dict "InputType" .Type "InputVar" (formatIdentifier .Name) "Depth" 1) }}
+{{- if and .Type.IsDisjunction (not (isDisjunctionOfBuilders .Type)) }}
+{{ $branchesCount := sub1 (len .Type.Disjunction.Branches) -}}
+assert {{ range $i, $branch := .Type.Disjunction.Branches }}isinstance({{ $name }}, {{ $branch|formatRawType}}){{ if ne $i $branchesCount }} or {{ end }}{{ end -}}
+{{- end -}}
+{{- end }}
+{{- end }}
+{{- with .Value.Envelope }}
+{{- range .Values }}
+{{- template "assignment_setup" (dict "Value" .Value) }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "unfold_builders" }}
+{{- if .InputType.IsArray -}}
+[{{ template "unfold_builders" (dict "InputType" .InputType.Array.ValueType "InputVar" (print "r" .Depth ) "Depth" (add1 .Depth)) }} for r{{ .Depth }} in {{ .InputVar }}]
+{{- else if .InputType.IsMap -}}
+{ key{{.Depth}}: {{ template "unfold_builders" (dict "InputType" .InputType.Map.ValueType "InputVar" (print "val" .Depth ) "Depth" (add1 .Depth)) }} for (key{{.Depth}}, val{{ .Depth }}) in {{ .InputVar }}.items() }
+{{- else if and .InputType.IsDisjunction (not (isDisjunctionOfBuilders .InputType)) -}}
+{{ .InputVar }}.build() if hasattr({{ .InputVar }}, 'build') and callable({{ .InputVar }}.build) else {{ .InputVar }}
+{{- else -}}
+{{ .InputVar }}.build()
+{{- end -}}
+{{- end }}
+
+{{- define "assignment_value" }}
+{{- if not (eq .Value.Constant nil) }}
+{{- formatValue .IntoType .Value.Constant }}
+{{- end }}
+{{- with .Value.Argument }}
+{{- if or (resolvesToBuilder .Type) (resolvesToComposableSlot .Type) }}
+{{- .Name|formatIdentifier }}{{- (or .Type.IsArray .Type.IsMap) | ternary "_resources" "_resource" }}
+{{- else }}
+{{- .Name|formatIdentifier }}
+{{- end }}
+{{- end }}
+{{- with .Value.Envelope }}
+{{- template "value_envelope" (dict "Assignment" $.Assignment "Envelope" .) }}
+{{- end }}
+{{- end }}
+
+{{- define "value_envelope" }}
+{{- .Envelope.Type | formatRawType }}(
+{{- range .Envelope.Values }}
+    {{- $value := include "assignment_value" (dict "Assignment" $.Assignment "IntoType" .Path.Last.Type "Value" .Value) }}
+    {{ (index .Path 0).Identifier | formatIdentifier }}={{ $value }},
+{{- end }}
+)
+{{- end }}
+
+{{- define "assignment_method" }}
+{{ if eq .Method "direct" }}self._internal.{{ .Path|formatPath }} = {{ .Value }}{{ end -}}
+{{ if eq .Method "index" }}self._internal.{{ .Path|formatPath }} = {{ .Value }}{{ end -}}
+{{ if eq .Method "append" }}self._internal.{{ .Path|formatPath }}.append({{ .Value }}){{ end -}}
+{{- end }}

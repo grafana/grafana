@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - 1.12
+
+notificaitons:
+  email:
+    recipients: barkimedes+github@gmail.com
+    on_success: change
+    on_failure: always
+
+go_import_path: github.com/barkimedes/go-deepcopy
+
+script:
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -1,0 +1,71 @@
+version: 1.0.{build}
+
+image:
+  - Visual Studio 2015
+
+clone_folder: c:\gopath\src\github.com\microsoft\go-mssqldb
+
+environment:
+  GOPATH: c:\gopath
+  HOST: localhost
+  SQLUSER: sa
+  SQLPASSWORD: Password12!
+  DATABASE: test
+  GOVERSION: 123
+  COLUMNENCRYPTION:
+  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+
+  TAGS:
+  matrix:
+    - SQLINSTANCE: SQL2017
+    - GOVERSION: 123
+      SQLINSTANCE: SQL2017
+    - GOVERSION: 123
+      SQLINSTANCE: SQL2019
+      COLUMNENCRYPTION: 1
+      # Cover 32bit and named pipes protocol
+    - GOVERSION: 123-x86
+      SQLINSTANCE: SQL2017
+      GOARCH: 386
+      PROTOCOL: np
+      TAGS: -tags np
+      # Cover SSPI and lpc protocol
+    - GOVERSION: 123
+      SQLINSTANCE: SQL2019
+      PROTOCOL: lpc
+      TAGS: -tags sm
+      SQLUSER:
+      SQLPASSWORD:
+install:
+  - set GOROOT=c:\go%GOVERSION%
+  - set PATH=%GOPATH%\bin;%GOROOT%\bin;%PATH%
+  - go version
+  - go env
+
+build_script:
+  - go build
+
+before_test:
+  # setup SQL Server
+  - ps: |
+      [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo") | Out-Null
+      [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement") | Out-Null
+      $smo = 'Microsoft.SqlServer.Management.Smo.'
+      $wmi = new-object ($smo + 'Wmi.ManagedComputer')
+      $serverName = $env:COMPUTERNAME
+      $instanceName = $env:SQLINSTANCE
+      # Enable named pipes
+      $uri = "ManagedComputer[@Name='$serverName']/ServerInstance[@Name='$instanceName']/ServerProtocol[@Name='Np']"
+      $Np = $wmi.GetSmoObject($uri)
+      $Np.IsEnabled = $true
+      $Np.Alter()
+      Start-Service "SQLBrowser"
+      Start-Service "MSSQL`$$instanceName"
+      Start-Sleep -Seconds 10
+  - sqlcmd -S "(local)\%SQLINSTANCE%" -Q "Use [master]; CREATE DATABASE test;"
+  - sqlcmd -S "np:.\%SQLINSTANCE%" -h -1 -Q "set nocount on; Select @@version"
+  - pip install codecov
+
+test_script:
+  - go test -coverprofile=coverage.txt -covermode=atomic %TAGS%
+  - codecov -f coverage.txt

@@ -1,0 +1,23 @@
+body {
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
+  margin: 0;
+}
+header {
+  background-color: {{.HeaderColor}};
+  color: #fff;
+  font-size: 1rem;
+  padding: 1rem;
+}
+main {
+  padding: 1rem;
+}
+label {
+  display: inline-block;
+  width: {{.Form.Width}}em;
+}
+#pprof {
+  border: black 2px solid;
+  padding: 1rem;
+  width: fit-content;
+}
+{{.ExtraCSS}}

@@ -1,0 +1,160 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+# List from https://golangci-lint.run/usage/linters/
+linters:
+  enable:
+    # Default linters
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Other linters
+    - asasalint
+    - asciicheck
+    - bidichk
+    - containedctx
+    - decorder
+    - dogsled
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
+    - gci
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocritic
+    - godot
+    - gofmt
+    - gofumpt
+    - goheader
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - grouper
+    - iface
+    - importas
+    - interfacebloat
+    - lll
+    - loggercheck
+    - makezero
+    - mirror
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - revive
+    - stylecheck
+    - tagalign
+    - tenv
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+
+  disable:
+    - bodyclose
+    - canonicalheader
+    - contextcheck # Re-enable in V2
+    - copyloopvar
+    - cyclop
+    - depguard
+    - dupl
+    - dupword
+    - err113
+    - exhaustruct
+    - funlen
+    - ginkgolinter
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocyclo
+    - godox
+    - goimports
+    - gomoddirectives
+    - inamedparam
+    - intrange
+    - ireturn
+    - maintidx
+    - mnd
+    - musttag
+    - nestif # TODO: Re-enable in V2
+    - nilnil
+    - nlreturn
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - promlinter
+    - protogetter
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - tagliatelle
+    - unparam
+    - varnamelen
+    - wrapcheck
+    - wsl
+    - zerologlint
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+    skip-generated: false
+    custom-order: true
+  gosec:
+    excludes:
+      - G402 # InsecureSkipVerify
+      - G102 # Binds to all network interfaces
+      - G403 # RSA keys should be at least 2048 bits
+      - G115 # Integer overflow conversion (uint64 -> int64)
+      - G404 # Use of weak random number generator (math/rand)
+      - G204 # Subprocess launched with a potential tainted input or cmd arguments
+
+issues:
+  exclude-rules:
+    - linters:
+        - gocritic
+      text: "ifElseChain"
+    - linters:
+        - lll
+      source: "^// "
+    - linters:
+        - revive
+      text: "add-constant: "
+    - linters:
+        - revive
+      text: "unused-parameter: "
+    - linters:
+        - revive
+      text: "empty-block: "
+    - linters:
+        - revive
+      text: "var-naming: " # TODO: Re-enable in V2
+    - linters:
+        - stylecheck
+      text: " should be " # TODO: Re-enable in V2
+    - linters:
+        - stylecheck
+      text: "ST1003: should not use ALL_CAPS in Go names; use CamelCase instead" # TODO: Re-enable in V2

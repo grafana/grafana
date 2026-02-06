@@ -1,0 +1,545 @@
+package text
+
+import (
+	"unicode"
+)
+
+var FullWidthTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x1100, Hi: 0x115f, Stride: 1}, // HANGUL CHOSEONG KIYEOK..HANGUL CHOSEONG FILLER
+		{Lo: 0x231a, Hi: 0x231b, Stride: 1}, // WATCH..HOURGLASS
+		{Lo: 0x2329, Hi: 0x2329, Stride: 1}, // LEFT-POINTING ANGLE BRACKET
+		{Lo: 0x232a, Hi: 0x232a, Stride: 1}, // RIGHT-POINTING ANGLE BRACKET
+		{Lo: 0x23e9, Hi: 0x23ec, Stride: 1}, // BLACK RIGHT-POINTING DOUBLE TRIANGLE..BLACK DOWN-POINTING DOUBLE TRIANGLE
+		{Lo: 0x23f0, Hi: 0x23f0, Stride: 1}, // ALARM CLOCK
+		{Lo: 0x23f3, Hi: 0x23f3, Stride: 1}, // HOURGLASS WITH FLOWING SAND
+		{Lo: 0x25fd, Hi: 0x25fe, Stride: 1}, // WHITE MEDIUM SMALL SQUARE..BLACK MEDIUM SMALL SQUARE
+		{Lo: 0x2614, Hi: 0x2615, Stride: 1}, // UMBRELLA WITH RAIN DROPS..HOT BEVERAGE
+		{Lo: 0x2648, Hi: 0x2653, Stride: 1}, // ARIES..PISCES
+		{Lo: 0x267f, Hi: 0x267f, Stride: 1}, // WHEELCHAIR SYMBOL
+		{Lo: 0x2693, Hi: 0x2693, Stride: 1}, // ANCHOR
+		{Lo: 0x26a1, Hi: 0x26a1, Stride: 1}, // HIGH VOLTAGE SIGN
+		{Lo: 0x26aa, Hi: 0x26ab, Stride: 1}, // MEDIUM WHITE CIRCLE..MEDIUM BLACK CIRCLE
+		{Lo: 0x26bd, Hi: 0x26be, Stride: 1}, // SOCCER BALL..BASEBALL
+		{Lo: 0x26c4, Hi: 0x26c5, Stride: 1}, // SNOWMAN WITHOUT SNOW..SUN BEHIND CLOUD
+		{Lo: 0x26ce, Hi: 0x26ce, Stride: 1}, // OPHIUCHUS
+		{Lo: 0x26d4, Hi: 0x26d4, Stride: 1}, // NO ENTRY
+		{Lo: 0x26ea, Hi: 0x26ea, Stride: 1}, // CHURCH
+		{Lo: 0x26f2, Hi: 0x26f3, Stride: 1}, // FOUNTAIN..FLAG IN HOLE
+		{Lo: 0x26f5, Hi: 0x26f5, Stride: 1}, // SAILBOAT
+		{Lo: 0x26fa, Hi: 0x26fa, Stride: 1}, // TENT
+		{Lo: 0x26fd, Hi: 0x26fd, Stride: 1}, // FUEL PUMP
+		{Lo: 0x2705, Hi: 0x2705, Stride: 1}, // WHITE HEAVY CHECK MARK
+		{Lo: 0x270a, Hi: 0x270b, Stride: 1}, // RAISED FIST..RAISED HAND
+		{Lo: 0x2728, Hi: 0x2728, Stride: 1}, // SPARKLES
+		{Lo: 0x274c, Hi: 0x274c, Stride: 1}, // CROSS MARK
+		{Lo: 0x274e, Hi: 0x274e, Stride: 1}, // NEGATIVE SQUARED CROSS MARK
+		{Lo: 0x2753, Hi: 0x2755, Stride: 1}, // BLACK QUESTION MARK ORNAMENT..WHITE EXCLAMATION MARK ORNAMENT
+		{Lo: 0x2757, Hi: 0x2757, Stride: 1}, // HEAVY EXCLAMATION MARK SYMBOL
+		{Lo: 0x2795, Hi: 0x2797, Stride: 1}, // HEAVY PLUS SIGN..HEAVY DIVISION SIGN
+		{Lo: 0x27b0, Hi: 0x27b0, Stride: 1}, // CURLY LOOP
+		{Lo: 0x27bf, Hi: 0x27bf, Stride: 1}, // DOUBLE CURLY LOOP
+		{Lo: 0x2b1b, Hi: 0x2b1c, Stride: 1}, // BLACK LARGE SQUARE..WHITE LARGE SQUARE
+		{Lo: 0x2b50, Hi: 0x2b50, Stride: 1}, // WHITE MEDIUM STAR
+		{Lo: 0x2b55, Hi: 0x2b55, Stride: 1}, // HEAVY LARGE CIRCLE
+		{Lo: 0x2e80, Hi: 0x2e99, Stride: 1}, // CJK RADICAL REPEAT..CJK RADICAL RAP
+		{Lo: 0x2e9b, Hi: 0x2ef3, Stride: 1}, // CJK RADICAL CHOKE..CJK RADICAL C-SIMPLIFIED TURTLE
+		{Lo: 0x2f00, Hi: 0x2fd5, Stride: 1}, // KANGXI RADICAL ONE..KANGXI RADICAL FLUTE
+		{Lo: 0x2ff0, Hi: 0x2ffb, Stride: 1}, // IDEOGRAPHIC DESCRIPTION CHARACTER LEFT TO RIGHT..IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID
+		{Lo: 0x3000, Hi: 0x3000, Stride: 1}, // IDEOGRAPHIC SPACE
+		{Lo: 0x3001, Hi: 0x3003, Stride: 1}, // IDEOGRAPHIC COMMA..DITTO MARK
+		{Lo: 0x3004, Hi: 0x3004, Stride: 1}, // JAPANESE INDUSTRIAL STANDARD SYMBOL
+		{Lo: 0x3005, Hi: 0x3005, Stride: 1}, // IDEOGRAPHIC ITERATION MARK
+		{Lo: 0x3006, Hi: 0x3006, Stride: 1}, // IDEOGRAPHIC CLOSING MARK
+		{Lo: 0x3007, Hi: 0x3007, Stride: 1}, // IDEOGRAPHIC NUMBER ZERO
+		{Lo: 0x3008, Hi: 0x3008, Stride: 1}, // LEFT ANGLE BRACKET
+		{Lo: 0x3009, Hi: 0x3009, Stride: 1}, // RIGHT ANGLE BRACKET
+		{Lo: 0x300a, Hi: 0x300a, Stride: 1}, // LEFT DOUBLE ANGLE BRACKET
+		{Lo: 0x300b, Hi: 0x300b, Stride: 1}, // RIGHT DOUBLE ANGLE BRACKET
+		{Lo: 0x300c, Hi: 0x300c, Stride: 1}, // LEFT CORNER BRACKET
+		{Lo: 0x300d, Hi: 0x300d, Stride: 1}, // RIGHT CORNER BRACKET
+		{Lo: 0x300e, Hi: 0x300e, Stride: 1}, // LEFT WHITE CORNER BRACKET
+		{Lo: 0x300f, Hi: 0x300f, Stride: 1}, // RIGHT WHITE CORNER BRACKET
+		{Lo: 0x3010, Hi: 0x3010, Stride: 1}, // LEFT BLACK LENTICULAR BRACKET
+		{Lo: 0x3011, Hi: 0x3011, Stride: 1}, // RIGHT BLACK LENTICULAR BRACKET
+		{Lo: 0x3012, Hi: 0x3013, Stride: 1}, // POSTAL MARK..GETA MARK
+		{Lo: 0x3014, Hi: 0x3014, Stride: 1}, // LEFT TORTOISE SHELL BRACKET
+		{Lo: 0x3015, Hi: 0x3015, Stride: 1}, // RIGHT TORTOISE SHELL BRACKET
+		{Lo: 0x3016, Hi: 0x3016, Stride: 1}, // LEFT WHITE LENTICULAR BRACKET
+		{Lo: 0x3017, Hi: 0x3017, Stride: 1}, // RIGHT WHITE LENTICULAR BRACKET
+		{Lo: 0x3018, Hi: 0x3018, Stride: 1}, // LEFT WHITE TORTOISE SHELL BRACKET
+		{Lo: 0x3019, Hi: 0x3019, Stride: 1}, // RIGHT WHITE TORTOISE SHELL BRACKET
+		{Lo: 0x301a, Hi: 0x301a, Stride: 1}, // LEFT WHITE SQUARE BRACKET
+		{Lo: 0x301b, Hi: 0x301b, Stride: 1}, // RIGHT WHITE SQUARE BRACKET
+		{Lo: 0x301c, Hi: 0x301c, Stride: 1}, // WAVE DASH
+		{Lo: 0x301d, Hi: 0x301d, Stride: 1}, // REVERSED DOUBLE PRIME QUOTATION MARK
+		{Lo: 0x301e, Hi: 0x301f, Stride: 1}, // DOUBLE PRIME QUOTATION MARK..LOW DOUBLE PRIME QUOTATION MARK
+		{Lo: 0x3020, Hi: 0x3020, Stride: 1}, // POSTAL MARK FACE
+		{Lo: 0x3021, Hi: 0x3029, Stride: 1}, // HANGZHOU NUMERAL ONE..HANGZHOU NUMERAL NINE
+		{Lo: 0x302a, Hi: 0x302d, Stride: 1}, // IDEOGRAPHIC LEVEL TONE MARK..IDEOGRAPHIC ENTERING TONE MARK
+		{Lo: 0x302e, Hi: 0x302f, Stride: 1}, // HANGUL SINGLE DOT TONE MARK..HANGUL DOUBLE DOT TONE MARK
+		{Lo: 0x3030, Hi: 0x3030, Stride: 1}, // WAVY DASH
+		{Lo: 0x3031, Hi: 0x3035, Stride: 1}, // VERTICAL KANA REPEAT MARK..VERTICAL KANA REPEAT MARK LOWER HALF
+		{Lo: 0x3036, Hi: 0x3037, Stride: 1}, // CIRCLED POSTAL MARK..IDEOGRAPHIC TELEGRAPH LINE FEED SEPARATOR SYMBOL
+		{Lo: 0x3038, Hi: 0x303a, Stride: 1}, // HANGZHOU NUMERAL TEN..HANGZHOU NUMERAL THIRTY
+		{Lo: 0x303b, Hi: 0x303b, Stride: 1}, // VERTICAL IDEOGRAPHIC ITERATION MARK
+		{Lo: 0x303c, Hi: 0x303c, Stride: 1}, // MASU MARK
+		{Lo: 0x303d, Hi: 0x303d, Stride: 1}, // PART ALTERNATION MARK
+		{Lo: 0x303e, Hi: 0x303e, Stride: 1}, // IDEOGRAPHIC VARIATION INDICATOR
+		{Lo: 0x3041, Hi: 0x3096, Stride: 1}, // HIRAGANA LETTER SMALL A..HIRAGANA LETTER SMALL KE
+		{Lo: 0x3099, Hi: 0x309a, Stride: 1}, // COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK..COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK
+		{Lo: 0x309b, Hi: 0x309c, Stride: 1}, // KATAKANA-HIRAGANA VOICED SOUND MARK..KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK
+		{Lo: 0x309d, Hi: 0x309e, Stride: 1}, // HIRAGANA ITERATION MARK..HIRAGANA VOICED ITERATION MARK
+		{Lo: 0x309f, Hi: 0x309f, Stride: 1}, // HIRAGANA DIGRAPH YORI
+		{Lo: 0x30a0, Hi: 0x30a0, Stride: 1}, // KATAKANA-HIRAGANA DOUBLE HYPHEN
+		{Lo: 0x30a1, Hi: 0x30fa, Stride: 1}, // KATAKANA LETTER SMALL A..KATAKANA LETTER VO
+		{Lo: 0x30fb, Hi: 0x30fb, Stride: 1}, // KATAKANA MIDDLE DOT
+		{Lo: 0x30fc, Hi: 0x30fe, Stride: 1}, // KATAKANA-HIRAGANA PROLONGED SOUND MARK..KATAKANA VOICED ITERATION MARK
+		{Lo: 0x30ff, Hi: 0x30ff, Stride: 1}, // KATAKANA DIGRAPH KOTO
+		{Lo: 0x3105, Hi: 0x312f, Stride: 1}, // BOPOMOFO LETTER B..BOPOMOFO LETTER NN
+		{Lo: 0x3131, Hi: 0x318e, Stride: 1}, // HANGUL LETTER KIYEOK..HANGUL LETTER ARAEAE
+		{Lo: 0x3190, Hi: 0x3191, Stride: 1}, // IDEOGRAPHIC ANNOTATION LINKING MARK..IDEOGRAPHIC ANNOTATION REVERSE MARK
+		{Lo: 0x3192, Hi: 0x3195, Stride: 1}, // IDEOGRAPHIC ANNOTATION ONE MARK..IDEOGRAPHIC ANNOTATION FOUR MARK
+		{Lo: 0x3196, Hi: 0x319f, Stride: 1}, // IDEOGRAPHIC ANNOTATION TOP MARK..IDEOGRAPHIC ANNOTATION MAN MARK
+		{Lo: 0x31a0, Hi: 0x31ba, Stride: 1}, // BOPOMOFO LETTER BU..BOPOMOFO LETTER ZY
+		{Lo: 0x31c0, Hi: 0x31e3, Stride: 1}, // CJK STROKE T..CJK STROKE Q
+		{Lo: 0x31f0, Hi: 0x31ff, Stride: 1}, // KATAKANA LETTER SMALL KU..KATAKANA LETTER SMALL RO
+		{Lo: 0x3200, Hi: 0x321e, Stride: 1}, // PARENTHESIZED HANGUL KIYEOK..PARENTHESIZED KOREAN CHARACTER O HU
+		{Lo: 0x3220, Hi: 0x3229, Stride: 1}, // PARENTHESIZED IDEOGRAPH ONE..PARENTHESIZED IDEOGRAPH TEN
+		{Lo: 0x322a, Hi: 0x3247, Stride: 1}, // PARENTHESIZED IDEOGRAPH MOON..CIRCLED IDEOGRAPH KOTO
+		{Lo: 0x3250, Hi: 0x3250, Stride: 1}, // PARTNERSHIP SIGN
+		{Lo: 0x3251, Hi: 0x325f, Stride: 1}, // CIRCLED NUMBER TWENTY ONE..CIRCLED NUMBER THIRTY FIVE
+		{Lo: 0x3260, Hi: 0x327f, Stride: 1}, // CIRCLED HANGUL KIYEOK..KOREAN STANDARD SYMBOL
+		{Lo: 0x3280, Hi: 0x3289, Stride: 1}, // CIRCLED IDEOGRAPH ONE..CIRCLED IDEOGRAPH TEN
+		{Lo: 0x328a, Hi: 0x32b0, Stride: 1}, // CIRCLED IDEOGRAPH MOON..CIRCLED IDEOGRAPH NIGHT
+		{Lo: 0x32b1, Hi: 0x32bf, Stride: 1}, // CIRCLED NUMBER THIRTY SIX..CIRCLED NUMBER FIFTY
+		{Lo: 0x32c0, Hi: 0x32fe, Stride: 1}, // IDEOGRAPHIC TELEGRAPH SYMBOL FOR JANUARY..CIRCLED KATAKANA WO
+		{Lo: 0x3300, Hi: 0x33ff, Stride: 1}, // SQUARE APAATO..SQUARE GAL
+		{Lo: 0x3400, Hi: 0x4db5, Stride: 1}, // CJK UNIFIED IDEOGRAPH-3400..CJK UNIFIED IDEOGRAPH-4DB5
+		{Lo: 0x4db6, Hi: 0x4dbf, Stride: 1}, // <reserved-4DB6>..<reserved-4DBF>
+		{Lo: 0x4e00, Hi: 0x9fef, Stride: 1}, // CJK UNIFIED IDEOGRAPH-4E00..CJK UNIFIED IDEOGRAPH-9FEF
+		{Lo: 0x9ff0, Hi: 0x9fff, Stride: 1}, // <reserved-9FF0>..<reserved-9FFF>
+		{Lo: 0xa000, Hi: 0xa014, Stride: 1}, // YI SYLLABLE IT..YI SYLLABLE E
+		{Lo: 0xa015, Hi: 0xa015, Stride: 1}, // YI SYLLABLE WU
+		{Lo: 0xa016, Hi: 0xa48c, Stride: 1}, // YI SYLLABLE BIT..YI SYLLABLE YYR
+		{Lo: 0xa490, Hi: 0xa4c6, Stride: 1}, // YI RADICAL QOT..YI RADICAL KE
+		{Lo: 0xa960, Hi: 0xa97c, Stride: 1}, // HANGUL CHOSEONG TIKEUT-MIEUM..HANGUL CHOSEONG SSANGYEORINHIEUH
+		{Lo: 0xac00, Hi: 0xd7a3, Stride: 1}, // HANGUL SYLLABLE GA..HANGUL SYLLABLE HIH
+		{Lo: 0xf900, Hi: 0xfa6d, Stride: 1}, // CJK COMPATIBILITY IDEOGRAPH-F900..CJK COMPATIBILITY IDEOGRAPH-FA6D
+		{Lo: 0xfa6e, Hi: 0xfa6f, Stride: 1}, // <reserved-FA6E>..<reserved-FA6F>
+		{Lo: 0xfa70, Hi: 0xfad9, Stride: 1}, // CJK COMPATIBILITY IDEOGRAPH-FA70..CJK COMPATIBILITY IDEOGRAPH-FAD9
+		{Lo: 0xfada, Hi: 0xfaff, Stride: 1}, // <reserved-FADA>..<reserved-FAFF>
+		{Lo: 0xfe10, Hi: 0xfe16, Stride: 1}, // PRESENTATION FORM FOR VERTICAL COMMA..PRESENTATION FORM FOR VERTICAL QUESTION MARK
+		{Lo: 0xfe17, Hi: 0xfe17, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT WHITE LENTICULAR BRACKET
+		{Lo: 0xfe18, Hi: 0xfe18, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET
+		{Lo: 0xfe19, Hi: 0xfe19, Stride: 1}, // PRESENTATION FORM FOR VERTICAL HORIZONTAL ELLIPSIS
+		{Lo: 0xfe30, Hi: 0xfe30, Stride: 1}, // PRESENTATION FORM FOR VERTICAL TWO DOT LEADER
+		{Lo: 0xfe31, Hi: 0xfe32, Stride: 1}, // PRESENTATION FORM FOR VERTICAL EM DASH..PRESENTATION FORM FOR VERTICAL EN DASH
+		{Lo: 0xfe33, Hi: 0xfe34, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LOW LINE..PRESENTATION FORM FOR VERTICAL WAVY LOW LINE
+		{Lo: 0xfe35, Hi: 0xfe35, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT PARENTHESIS
+		{Lo: 0xfe36, Hi: 0xfe36, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT PARENTHESIS
+		{Lo: 0xfe37, Hi: 0xfe37, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT CURLY BRACKET
+		{Lo: 0xfe38, Hi: 0xfe38, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT CURLY BRACKET
+		{Lo: 0xfe39, Hi: 0xfe39, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT TORTOISE SHELL BRACKET
+		{Lo: 0xfe3a, Hi: 0xfe3a, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT TORTOISE SHELL BRACKET
+		{Lo: 0xfe3b, Hi: 0xfe3b, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT BLACK LENTICULAR BRACKET
+		{Lo: 0xfe3c, Hi: 0xfe3c, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT BLACK LENTICULAR BRACKET
+		{Lo: 0xfe3d, Hi: 0xfe3d, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT DOUBLE ANGLE BRACKET
+		{Lo: 0xfe3e, Hi: 0xfe3e, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT DOUBLE ANGLE BRACKET
+		{Lo: 0xfe3f, Hi: 0xfe3f, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT ANGLE BRACKET
+		{Lo: 0xfe40, Hi: 0xfe40, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT ANGLE BRACKET
+		{Lo: 0xfe41, Hi: 0xfe41, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT CORNER BRACKET
+		{Lo: 0xfe42, Hi: 0xfe42, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT CORNER BRACKET
+		{Lo: 0xfe43, Hi: 0xfe43, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT WHITE CORNER BRACKET
+		{Lo: 0xfe44, Hi: 0xfe44, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT WHITE CORNER BRACKET
+		{Lo: 0xfe45, Hi: 0xfe46, Stride: 1}, // SESAME DOT..WHITE SESAME DOT
+		{Lo: 0xfe47, Hi: 0xfe47, Stride: 1}, // PRESENTATION FORM FOR VERTICAL LEFT SQUARE BRACKET
+		{Lo: 0xfe48, Hi: 0xfe48, Stride: 1}, // PRESENTATION FORM FOR VERTICAL RIGHT SQUARE BRACKET
+		{Lo: 0xfe49, Hi: 0xfe4c, Stride: 1}, // DASHED OVERLINE..DOUBLE WAVY OVERLINE
+		{Lo: 0xfe4d, Hi: 0xfe4f, Stride: 1}, // DASHED LOW LINE..WAVY LOW LINE
+		{Lo: 0xfe50, Hi: 0xfe52, Stride: 1}, // SMALL COMMA..SMALL FULL STOP
+		{Lo: 0xfe54, Hi: 0xfe57, Stride: 1}, // SMALL SEMICOLON..SMALL EXCLAMATION MARK
+		{Lo: 0xfe58, Hi: 0xfe58, Stride: 1}, // SMALL EM DASH
+		{Lo: 0xfe59, Hi: 0xfe59, Stride: 1}, // SMALL LEFT PARENTHESIS
+		{Lo: 0xfe5a, Hi: 0xfe5a, Stride: 1}, // SMALL RIGHT PARENTHESIS
+		{Lo: 0xfe5b, Hi: 0xfe5b, Stride: 1}, // SMALL LEFT CURLY BRACKET
+		{Lo: 0xfe5c, Hi: 0xfe5c, Stride: 1}, // SMALL RIGHT CURLY BRACKET
+		{Lo: 0xfe5d, Hi: 0xfe5d, Stride: 1}, // SMALL LEFT TORTOISE SHELL BRACKET
+		{Lo: 0xfe5e, Hi: 0xfe5e, Stride: 1}, // SMALL RIGHT TORTOISE SHELL BRACKET
+		{Lo: 0xfe5f, Hi: 0xfe61, Stride: 1}, // SMALL NUMBER SIGN..SMALL ASTERISK
+		{Lo: 0xfe62, Hi: 0xfe62, Stride: 1}, // SMALL PLUS SIGN
+		{Lo: 0xfe63, Hi: 0xfe63, Stride: 1}, // SMALL HYPHEN-MINUS
+		{Lo: 0xfe64, Hi: 0xfe66, Stride: 1}, // SMALL LESS-THAN SIGN..SMALL EQUALS SIGN
+		{Lo: 0xfe68, Hi: 0xfe68, Stride: 1}, // SMALL REVERSE SOLIDUS
+		{Lo: 0xfe69, Hi: 0xfe69, Stride: 1}, // SMALL DOLLAR SIGN
+		{Lo: 0xfe6a, Hi: 0xfe6b, Stride: 1}, // SMALL PERCENT SIGN..SMALL COMMERCIAL AT
+		{Lo: 0xff01, Hi: 0xff03, Stride: 1}, // FULLWIDTH EXCLAMATION MARK..FULLWIDTH NUMBER SIGN
+		{Lo: 0xff04, Hi: 0xff04, Stride: 1}, // FULLWIDTH DOLLAR SIGN
+		{Lo: 0xff05, Hi: 0xff07, Stride: 1}, // FULLWIDTH PERCENT SIGN..FULLWIDTH APOSTROPHE
+		{Lo: 0xff08, Hi: 0xff08, Stride: 1}, // FULLWIDTH LEFT PARENTHESIS
+		{Lo: 0xff09, Hi: 0xff09, Stride: 1}, // FULLWIDTH RIGHT PARENTHESIS
+		{Lo: 0xff0a, Hi: 0xff0a, Stride: 1}, // FULLWIDTH ASTERISK
+		{Lo: 0xff0b, Hi: 0xff0b, Stride: 1}, // FULLWIDTH PLUS SIGN
+		{Lo: 0xff0c, Hi: 0xff0c, Stride: 1}, // FULLWIDTH COMMA
+		{Lo: 0xff0d, Hi: 0xff0d, Stride: 1}, // FULLWIDTH HYPHEN-MINUS
+		{Lo: 0xff0e, Hi: 0xff0f, Stride: 1}, // FULLWIDTH FULL STOP..FULLWIDTH SOLIDUS
+		{Lo: 0xff10, Hi: 0xff19, Stride: 1}, // FULLWIDTH DIGIT ZERO..FULLWIDTH DIGIT NINE
+		{Lo: 0xff1a, Hi: 0xff1b, Stride: 1}, // FULLWIDTH COLON..FULLWIDTH SEMICOLON
+		{Lo: 0xff1c, Hi: 0xff1e, Stride: 1}, // FULLWIDTH LESS-THAN SIGN..FULLWIDTH GREATER-THAN SIGN
+		{Lo: 0xff1f, Hi: 0xff20, Stride: 1}, // FULLWIDTH QUESTION MARK..FULLWIDTH COMMERCIAL AT
+		{Lo: 0xff21, Hi: 0xff3a, Stride: 1}, // FULLWIDTH LATIN CAPITAL LETTER A..FULLWIDTH LATIN CAPITAL LETTER Z
+		{Lo: 0xff3b, Hi: 0xff3b, Stride: 1}, // FULLWIDTH LEFT SQUARE BRACKET
+		{Lo: 0xff3c, Hi: 0xff3c, Stride: 1}, // FULLWIDTH REVERSE SOLIDUS
+		{Lo: 0xff3d, Hi: 0xff3d, Stride: 1}, // FULLWIDTH RIGHT SQUARE BRACKET
+		{Lo: 0xff3e, Hi: 0xff3e, Stride: 1}, // FULLWIDTH CIRCUMFLEX ACCENT
+		{Lo: 0xff3f, Hi: 0xff3f, Stride: 1}, // FULLWIDTH LOW LINE
+		{Lo: 0xff40, Hi: 0xff40, Stride: 1}, // FULLWIDTH GRAVE ACCENT
+		{Lo: 0xff41, Hi: 0xff5a, Stride: 1}, // FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH LATIN SMALL LETTER Z
+		{Lo: 0xff5b, Hi: 0xff5b, Stride: 1}, // FULLWIDTH LEFT CURLY BRACKET
+		{Lo: 0xff5c, Hi: 0xff5c, Stride: 1}, // FULLWIDTH VERTICAL LINE
+		{Lo: 0xff5d, Hi: 0xff5d, Stride: 1}, // FULLWIDTH RIGHT CURLY BRACKET
+		{Lo: 0xff5e, Hi: 0xff5e, Stride: 1}, // FULLWIDTH TILDE
+		{Lo: 0xff5f, Hi: 0xff5f, Stride: 1}, // FULLWIDTH LEFT WHITE PARENTHESIS
+		{Lo: 0xff60, Hi: 0xff60, Stride: 1}, // FULLWIDTH RIGHT WHITE PARENTHESIS
+		{Lo: 0xffe0, Hi: 0xffe1, Stride: 1}, // FULLWIDTH CENT SIGN..FULLWIDTH POUND SIGN
+		{Lo: 0xffe2, Hi: 0xffe2, Stride: 1}, // FULLWIDTH NOT SIGN
+		{Lo: 0xffe3, Hi: 0xffe3, Stride: 1}, // FULLWIDTH MACRON
+		{Lo: 0xffe4, Hi: 0xffe4, Stride: 1}, // FULLWIDTH BROKEN BAR
+		{Lo: 0xffe5, Hi: 0xffe6, Stride: 1}, // FULLWIDTH YEN SIGN..FULLWIDTH WON SIGN
+	},
+	R32: []unicode.Range32{
+		{Lo: 0x16fe0, Hi: 0x16fe1, Stride: 1}, // TANGUT ITERATION MARK..NUSHU ITERATION MARK
+		{Lo: 0x17000, Hi: 0x187f1, Stride: 1}, // TANGUT IDEOGRAPH-17000..TANGUT IDEOGRAPH-187F1
+		{Lo: 0x18800, Hi: 0x18af2, Stride: 1}, // TANGUT COMPONENT-001..TANGUT COMPONENT-755
+		{Lo: 0x1b000, Hi: 0x1b0ff, Stride: 1}, // KATAKANA LETTER ARCHAIC E..HENTAIGANA LETTER RE-2
+		{Lo: 0x1b100, Hi: 0x1b11e, Stride: 1}, // HENTAIGANA LETTER RE-3..HENTAIGANA LETTER N-MU-MO-2
+		{Lo: 0x1b170, Hi: 0x1b2fb, Stride: 1}, // NUSHU CHARACTER-1B170..NUSHU CHARACTER-1B2FB
+		{Lo: 0x1f004, Hi: 0x1f004, Stride: 1}, // MAHJONG TILE RED DRAGON
+		{Lo: 0x1f0cf, Hi: 0x1f0cf, Stride: 1}, // PLAYING CARD BLACK JOKER
+		{Lo: 0x1f18e, Hi: 0x1f18e, Stride: 1}, // NEGATIVE SQUARED AB
+		{Lo: 0x1f191, Hi: 0x1f19a, Stride: 1}, // SQUARED CL..SQUARED VS
+		{Lo: 0x1f200, Hi: 0x1f202, Stride: 1}, // SQUARE HIRAGANA HOKA..SQUARED KATAKANA SA
+		{Lo: 0x1f210, Hi: 0x1f23b, Stride: 1}, // SQUARED CJK UNIFIED IDEOGRAPH-624B..SQUARED CJK UNIFIED IDEOGRAPH-914D
+		{Lo: 0x1f240, Hi: 0x1f248, Stride: 1}, // TORTOISE SHELL BRACKETED CJK UNIFIED IDEOGRAPH-672C..TORTOISE SHELL BRACKETED CJK UNIFIED IDEOGRAPH-6557
+		{Lo: 0x1f250, Hi: 0x1f251, Stride: 1}, // CIRCLED IDEOGRAPH ADVANTAGE..CIRCLED IDEOGRAPH ACCEPT
+		{Lo: 0x1f260, Hi: 0x1f265, Stride: 1}, // ROUNDED SYMBOL FOR FU..ROUNDED SYMBOL FOR CAI
+		{Lo: 0x1f300, Hi: 0x1f320, Stride: 1}, // CYCLONE..SHOOTING STAR
+		{Lo: 0x1f32d, Hi: 0x1f335, Stride: 1}, // HOT DOG..CACTUS
+		{Lo: 0x1f337, Hi: 0x1f37c, Stride: 1}, // TULIP..BABY BOTTLE
+		{Lo: 0x1f37e, Hi: 0x1f393, Stride: 1}, // BOTTLE WITH POPPING CORK..GRADUATION CAP
+		{Lo: 0x1f3a0, Hi: 0x1f3ca, Stride: 1}, // CAROUSEL HORSE..SWIMMER
+		{Lo: 0x1f3cf, Hi: 0x1f3d3, Stride: 1}, // CRICKET BAT AND BALL..TABLE TENNIS PADDLE AND BALL
+		{Lo: 0x1f3e0, Hi: 0x1f3f0, Stride: 1}, // HOUSE BUILDING..EUROPEAN CASTLE
+		{Lo: 0x1f3f4, Hi: 0x1f3f4, Stride: 1}, // WAVING BLACK FLAG
+		{Lo: 0x1f3f8, Hi: 0x1f3fa, Stride: 1}, // BADMINTON RACQUET AND SHUTTLECOCK..AMPHORA
+		{Lo: 0x1f3fb, Hi: 0x1f3ff, Stride: 1}, // EMOJI MODIFIER FITZPATRICK TYPE-1-2..EMOJI MODIFIER FITZPATRICK TYPE-6
+		{Lo: 0x1f400, Hi: 0x1f43e, Stride: 1}, // RAT..PAW PRINTS
+		{Lo: 0x1f440, Hi: 0x1f440, Stride: 1}, // EYES
+		{Lo: 0x1f442, Hi: 0x1f4fc, Stride: 1}, // EAR..VIDEOCASSETTE
+		{Lo: 0x1f4ff, Hi: 0x1f53d, Stride: 1}, // PRAYER BEADS..DOWN-POINTING SMALL RED TRIANGLE
+		{Lo: 0x1f54b, Hi: 0x1f54e, Stride: 1}, // KAABA..MENORAH WITH NINE BRANCHES
+		{Lo: 0x1f550, Hi: 0x1f567, Stride: 1}, // CLOCK FACE ONE OCLOCK..CLOCK FACE TWELVE-THIRTY
+		{Lo: 0x1f57a, Hi: 0x1f57a, Stride: 1}, // MAN DANCING
+		{Lo: 0x1f595, Hi: 0x1f596, Stride: 1}, // REVERSED HAND WITH MIDDLE FINGER EXTENDED..RAISED HAND WITH PART BETWEEN MIDDLE AND RING FINGERS
+		{Lo: 0x1f5a4, Hi: 0x1f5a4, Stride: 1}, // BLACK HEART
+		{Lo: 0x1f5fb, Hi: 0x1f5ff, Stride: 1}, // MOUNT FUJI..MOYAI
+		{Lo: 0x1f600, Hi: 0x1f64f, Stride: 1}, // GRINNING FACE..PERSON WITH FOLDED HANDS
+		{Lo: 0x1f680, Hi: 0x1f6c5, Stride: 1}, // ROCKET..LEFT LUGGAGE
+		{Lo: 0x1f6cc, Hi: 0x1f6cc, Stride: 1}, // SLEEPING ACCOMMODATION
+		{Lo: 0x1f6d0, Hi: 0x1f6d2, Stride: 1}, // PLACE OF WORSHIP..SHOPPING TROLLEY
+		{Lo: 0x1f6eb, Hi: 0x1f6ec, Stride: 1}, // AIRPLANE DEPARTURE..AIRPLANE ARRIVING
+		{Lo: 0x1f6f4, Hi: 0x1f6f9, Stride: 1}, // SCOOTER..SKATEBOARD
+		{Lo: 0x1f910, Hi: 0x1f93e, Stride: 1}, // ZIPPER-MOUTH FACE..HANDBALL
+		{Lo: 0x1f940, Hi: 0x1f970, Stride: 1}, // WILTED FLOWER..SMILING FACE WITH SMILING EYES AND THREE HEARTS
+		{Lo: 0x1f973, Hi: 0x1f976, Stride: 1}, // FACE WITH PARTY HORN AND PARTY HAT..FREEZING FACE
+		{Lo: 0x1f97a, Hi: 0x1f97a, Stride: 1}, // FACE WITH PLEADING EYES
+		{Lo: 0x1f97c, Hi: 0x1f9a2, Stride: 1}, // LAB COAT..SWAN
+		{Lo: 0x1f9b0, Hi: 0x1f9b9, Stride: 1}, // EMOJI COMPONENT RED HAIR..SUPERVILLAIN
+		{Lo: 0x1f9c0, Hi: 0x1f9c2, Stride: 1}, // CHEESE WEDGE..SALT SHAKER
+		{Lo: 0x1f9d0, Hi: 0x1f9ff, Stride: 1}, // FACE WITH MONOCLE..NAZAR AMULET
+		{Lo: 0x20000, Hi: 0x2a6d6, Stride: 1}, // CJK UNIFIED IDEOGRAPH-20000..CJK UNIFIED IDEOGRAPH-2A6D6
+		{Lo: 0x2a6d7, Hi: 0x2a6ff, Stride: 1}, // <reserved-2A6D7>..<reserved-2A6FF>
+		{Lo: 0x2a700, Hi: 0x2b734, Stride: 1}, // CJK UNIFIED IDEOGRAPH-2A700..CJK UNIFIED IDEOGRAPH-2B734
+		{Lo: 0x2b735, Hi: 0x2b73f, Stride: 1}, // <reserved-2B735>..<reserved-2B73F>
+		{Lo: 0x2b740, Hi: 0x2b81d, Stride: 1}, // CJK UNIFIED IDEOGRAPH-2B740..CJK UNIFIED IDEOGRAPH-2B81D
+		{Lo: 0x2b81e, Hi: 0x2b81f, Stride: 1}, // <reserved-2B81E>..<reserved-2B81F>
+		{Lo: 0x2b820, Hi: 0x2cea1, Stride: 1}, // CJK UNIFIED IDEOGRAPH-2B820..CJK UNIFIED IDEOGRAPH-2CEA1
+		{Lo: 0x2cea2, Hi: 0x2ceaf, Stride: 1}, // <reserved-2CEA2>..<reserved-2CEAF>
+		{Lo: 0x2ceb0, Hi: 0x2ebe0, Stride: 1}, // CJK UNIFIED IDEOGRAPH-2CEB0..CJK UNIFIED IDEOGRAPH-2EBE0
+		{Lo: 0x2ebe1, Hi: 0x2f7ff, Stride: 1}, // <reserved-2EBE1>..<reserved-2F7FF>
+		{Lo: 0x2f800, Hi: 0x2fa1d, Stride: 1}, // CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
+		{Lo: 0x2fa1e, Hi: 0x2fa1f, Stride: 1}, // <reserved-2FA1E>..<reserved-2FA1F>
+		{Lo: 0x2fa20, Hi: 0x2fffd, Stride: 1}, // <reserved-2FA20>..<reserved-2FFFD>
+		{Lo: 0x30000, Hi: 0x3fffd, Stride: 1}, // <reserved-30000>..<reserved-3FFFD>
+	},
+}
+
+var AmbiguousTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x00a1, Hi: 0x00a1, Stride: 1}, // INVERTED EXCLAMATION MARK
+		{Lo: 0x00a4, Hi: 0x00a4, Stride: 1}, // CURRENCY SIGN
+		{Lo: 0x00a7, Hi: 0x00a7, Stride: 1}, // SECTION SIGN
+		{Lo: 0x00a8, Hi: 0x00a8, Stride: 1}, // DIAERESIS
+		{Lo: 0x00aa, Hi: 0x00aa, Stride: 1}, // FEMININE ORDINAL INDICATOR
+		{Lo: 0x00ad, Hi: 0x00ad, Stride: 1}, // SOFT HYPHEN
+		{Lo: 0x00ae, Hi: 0x00ae, Stride: 1}, // REGISTERED SIGN
+		{Lo: 0x00b0, Hi: 0x00b0, Stride: 1}, // DEGREE SIGN
+		{Lo: 0x00b1, Hi: 0x00b1, Stride: 1}, // PLUS-MINUS SIGN
+		{Lo: 0x00b2, Hi: 0x00b3, Stride: 1}, // SUPERSCRIPT TWO..SUPERSCRIPT THREE
+		{Lo: 0x00b4, Hi: 0x00b4, Stride: 1}, // ACUTE ACCENT
+		{Lo: 0x00b6, Hi: 0x00b7, Stride: 1}, // PILCROW SIGN..MIDDLE DOT
+		{Lo: 0x00b8, Hi: 0x00b8, Stride: 1}, // CEDILLA
+		{Lo: 0x00b9, Hi: 0x00b9, Stride: 1}, // SUPERSCRIPT ONE
+		{Lo: 0x00ba, Hi: 0x00ba, Stride: 1}, // MASCULINE ORDINAL INDICATOR
+		{Lo: 0x00bc, Hi: 0x00be, Stride: 1}, // VULGAR FRACTION ONE QUARTER..VULGAR FRACTION THREE QUARTERS
+		{Lo: 0x00bf, Hi: 0x00bf, Stride: 1}, // INVERTED QUESTION MARK
+		{Lo: 0x00c6, Hi: 0x00c6, Stride: 1}, // LATIN CAPITAL LETTER AE
+		{Lo: 0x00d0, Hi: 0x00d0, Stride: 1}, // LATIN CAPITAL LETTER ETH
+		{Lo: 0x00d7, Hi: 0x00d7, Stride: 1}, // MULTIPLICATION SIGN
+		{Lo: 0x00d8, Hi: 0x00d8, Stride: 1}, // LATIN CAPITAL LETTER O WITH STROKE
+		{Lo: 0x00de, Hi: 0x00e1, Stride: 1}, // LATIN CAPITAL LETTER THORN..LATIN SMALL LETTER A WITH ACUTE
+		{Lo: 0x00e6, Hi: 0x00e6, Stride: 1}, // LATIN SMALL LETTER AE
+		{Lo: 0x00e8, Hi: 0x00ea, Stride: 1}, // LATIN SMALL LETTER E WITH GRAVE..LATIN SMALL LETTER E WITH CIRCUMFLEX
+		{Lo: 0x00ec, Hi: 0x00ed, Stride: 1}, // LATIN SMALL LETTER I WITH GRAVE..LATIN SMALL LETTER I WITH ACUTE
+		{Lo: 0x00f0, Hi: 0x00f0, Stride: 1}, // LATIN SMALL LETTER ETH
+		{Lo: 0x00f2, Hi: 0x00f3, Stride: 1}, // LATIN SMALL LETTER O WITH GRAVE..LATIN SMALL LETTER O WITH ACUTE
+		{Lo: 0x00f7, Hi: 0x00f7, Stride: 1}, // DIVISION SIGN
+		{Lo: 0x00f8, Hi: 0x00fa, Stride: 1}, // LATIN SMALL LETTER O WITH STROKE..LATIN SMALL LETTER U WITH ACUTE
+		{Lo: 0x00fc, Hi: 0x00fc, Stride: 1}, // LATIN SMALL LETTER U WITH DIAERESIS
+		{Lo: 0x00fe, Hi: 0x00fe, Stride: 1}, // LATIN SMALL LETTER THORN
+		{Lo: 0x0101, Hi: 0x0101, Stride: 1}, // LATIN SMALL LETTER A WITH MACRON
+		{Lo: 0x0111, Hi: 0x0111, Stride: 1}, // LATIN SMALL LETTER D WITH STROKE
+		{Lo: 0x0113, Hi: 0x0113, Stride: 1}, // LATIN SMALL LETTER E WITH MACRON
+		{Lo: 0x011b, Hi: 0x011b, Stride: 1}, // LATIN SMALL LETTER E WITH CARON
+		{Lo: 0x0126, Hi: 0x0127, Stride: 1}, // LATIN CAPITAL LETTER H WITH STROKE..LATIN SMALL LETTER H WITH STROKE
+		{Lo: 0x012b, Hi: 0x012b, Stride: 1}, // LATIN SMALL LETTER I WITH MACRON
+		{Lo: 0x0131, Hi: 0x0133, Stride: 1}, // LATIN SMALL LETTER DOTLESS I..LATIN SMALL LIGATURE IJ
+		{Lo: 0x0138, Hi: 0x0138, Stride: 1}, // LATIN SMALL LETTER KRA
+		{Lo: 0x013f, Hi: 0x0142, Stride: 1}, // LATIN CAPITAL LETTER L WITH MIDDLE DOT..LATIN SMALL LETTER L WITH STROKE
+		{Lo: 0x0144, Hi: 0x0144, Stride: 1}, // LATIN SMALL LETTER N WITH ACUTE
+		{Lo: 0x0148, Hi: 0x014b, Stride: 1}, // LATIN SMALL LETTER N WITH CARON..LATIN SMALL LETTER ENG
+		{Lo: 0x014d, Hi: 0x014d, Stride: 1}, // LATIN SMALL LETTER O WITH MACRON
+		{Lo: 0x0152, Hi: 0x0153, Stride: 1}, // LATIN CAPITAL LIGATURE OE..LATIN SMALL LIGATURE OE
+		{Lo: 0x0166, Hi: 0x0167, Stride: 1}, // LATIN CAPITAL LETTER T WITH STROKE..LATIN SMALL LETTER T WITH STROKE
+		{Lo: 0x016b, Hi: 0x016b, Stride: 1}, // LATIN SMALL LETTER U WITH MACRON
+		{Lo: 0x01ce, Hi: 0x01ce, Stride: 1}, // LATIN SMALL LETTER A WITH CARON
+		{Lo: 0x01d0, Hi: 0x01d0, Stride: 1}, // LATIN SMALL LETTER I WITH CARON
+		{Lo: 0x01d2, Hi: 0x01d2, Stride: 1}, // LATIN SMALL LETTER O WITH CARON
+		{Lo: 0x01d4, Hi: 0x01d4, Stride: 1}, // LATIN SMALL LETTER U WITH CARON
+		{Lo: 0x01d6, Hi: 0x01d6, Stride: 1}, // LATIN SMALL LETTER U WITH DIAERESIS AND MACRON
+		{Lo: 0x01d8, Hi: 0x01d8, Stride: 1}, // LATIN SMALL LETTER U WITH DIAERESIS AND ACUTE
+		{Lo: 0x01da, Hi: 0x01da, Stride: 1}, // LATIN SMALL LETTER U WITH DIAERESIS AND CARON
+		{Lo: 0x01dc, Hi: 0x01dc, Stride: 1}, // LATIN SMALL LETTER U WITH DIAERESIS AND GRAVE
+		{Lo: 0x0251, Hi: 0x0251, Stride: 1}, // LATIN SMALL LETTER ALPHA
+		{Lo: 0x0261, Hi: 0x0261, Stride: 1}, // LATIN SMALL LETTER SCRIPT G
+		{Lo: 0x02c4, Hi: 0x02c4, Stride: 1}, // MODIFIER LETTER UP ARROWHEAD
+		{Lo: 0x02c7, Hi: 0x02c7, Stride: 1}, // CARON
+		{Lo: 0x02c9, Hi: 0x02cb, Stride: 1}, // MODIFIER LETTER MACRON..MODIFIER LETTER GRAVE ACCENT
+		{Lo: 0x02cd, Hi: 0x02cd, Stride: 1}, // MODIFIER LETTER LOW MACRON
+		{Lo: 0x02d0, Hi: 0x02d0, Stride: 1}, // MODIFIER LETTER TRIANGULAR COLON
+		{Lo: 0x02d8, Hi: 0x02db, Stride: 1}, // BREVE..OGONEK
+		{Lo: 0x02dd, Hi: 0x02dd, Stride: 1}, // DOUBLE ACUTE ACCENT
+		{Lo: 0x02df, Hi: 0x02df, Stride: 1}, // MODIFIER LETTER CROSS ACCENT
+		{Lo: 0x0300, Hi: 0x036f, Stride: 1}, // COMBINING GRAVE ACCENT..COMBINING LATIN SMALL LETTER X
+		{Lo: 0x0391, Hi: 0x03a1, Stride: 1}, // GREEK CAPITAL LETTER ALPHA..GREEK CAPITAL LETTER RHO
+		{Lo: 0x03a3, Hi: 0x03a9, Stride: 1}, // GREEK CAPITAL LETTER SIGMA..GREEK CAPITAL LETTER OMEGA
+		{Lo: 0x03b1, Hi: 0x03c1, Stride: 1}, // GREEK SMALL LETTER ALPHA..GREEK SMALL LETTER RHO
+		{Lo: 0x03c3, Hi: 0x03c9, Stride: 1}, // GREEK SMALL LETTER SIGMA..GREEK SMALL LETTER OMEGA
+		{Lo: 0x0401, Hi: 0x0401, Stride: 1}, // CYRILLIC CAPITAL LETTER IO
+		{Lo: 0x0410, Hi: 0x044f, Stride: 1}, // CYRILLIC CAPITAL LETTER A..CYRILLIC SMALL LETTER YA
+		{Lo: 0x0451, Hi: 0x0451, Stride: 1}, // CYRILLIC SMALL LETTER IO
+		{Lo: 0x2010, Hi: 0x2010, Stride: 1}, // HYPHEN
+		{Lo: 0x2013, Hi: 0x2015, Stride: 1}, // EN DASH..HORIZONTAL BAR
+		{Lo: 0x2016, Hi: 0x2016, Stride: 1}, // DOUBLE VERTICAL LINE
+		{Lo: 0x2018, Hi: 0x2018, Stride: 1}, // LEFT SINGLE QUOTATION MARK
+		{Lo: 0x2019, Hi: 0x2019, Stride: 1}, // RIGHT SINGLE QUOTATION MARK
+		{Lo: 0x201c, Hi: 0x201c, Stride: 1}, // LEFT DOUBLE QUOTATION MARK
+		{Lo: 0x201d, Hi: 0x201d, Stride: 1}, // RIGHT DOUBLE QUOTATION MARK
+		{Lo: 0x2020, Hi: 0x2022, Stride: 1}, // DAGGER..BULLET
+		{Lo: 0x2024, Hi: 0x2027, Stride: 1}, // ONE DOT LEADER..HYPHENATION POINT
+		{Lo: 0x2030, Hi: 0x2030, Stride: 1}, // PER MILLE SIGN
+		{Lo: 0x2032, Hi: 0x2033, Stride: 1}, // PRIME..DOUBLE PRIME
+		{Lo: 0x2035, Hi: 0x2035, Stride: 1}, // REVERSED PRIME
+		{Lo: 0x203b, Hi: 0x203b, Stride: 1}, // REFERENCE MARK
+		{Lo: 0x203e, Hi: 0x203e, Stride: 1}, // OVERLINE
+		{Lo: 0x2074, Hi: 0x2074, Stride: 1}, // SUPERSCRIPT FOUR
+		{Lo: 0x207f, Hi: 0x207f, Stride: 1}, // SUPERSCRIPT LATIN SMALL LETTER N
+		{Lo: 0x2081, Hi: 0x2084, Stride: 1}, // SUBSCRIPT ONE..SUBSCRIPT FOUR
+		{Lo: 0x20ac, Hi: 0x20ac, Stride: 1}, // EURO SIGN
+		{Lo: 0x2103, Hi: 0x2103, Stride: 1}, // DEGREE CELSIUS
+		{Lo: 0x2105, Hi: 0x2105, Stride: 1}, // CARE OF
+		{Lo: 0x2109, Hi: 0x2109, Stride: 1}, // DEGREE FAHRENHEIT
+		{Lo: 0x2113, Hi: 0x2113, Stride: 1}, // SCRIPT SMALL L
+		{Lo: 0x2116, Hi: 0x2116, Stride: 1}, // NUMERO SIGN
+		{Lo: 0x2121, Hi: 0x2122, Stride: 1}, // TELEPHONE SIGN..TRADE MARK SIGN
+		{Lo: 0x2126, Hi: 0x2126, Stride: 1}, // OHM SIGN
+		{Lo: 0x212b, Hi: 0x212b, Stride: 1}, // ANGSTROM SIGN
+		{Lo: 0x2153, Hi: 0x2154, Stride: 1}, // VULGAR FRACTION ONE THIRD..VULGAR FRACTION TWO THIRDS
+		{Lo: 0x215b, Hi: 0x215e, Stride: 1}, // VULGAR FRACTION ONE EIGHTH..VULGAR FRACTION SEVEN EIGHTHS
+		{Lo: 0x2160, Hi: 0x216b, Stride: 1}, // ROMAN NUMERAL ONE..ROMAN NUMERAL TWELVE
+		{Lo: 0x2170, Hi: 0x2179, Stride: 1}, // SMALL ROMAN NUMERAL ONE..SMALL ROMAN NUMERAL TEN
+		{Lo: 0x2189, Hi: 0x2189, Stride: 1}, // VULGAR FRACTION ZERO THIRDS
+		{Lo: 0x2190, Hi: 0x2194, Stride: 1}, // LEFTWARDS ARROW..LEFT RIGHT ARROW
+		{Lo: 0x2195, Hi: 0x2199, Stride: 1}, // UP DOWN ARROW..SOUTH WEST ARROW
+		{Lo: 0x21b8, Hi: 0x21b9, Stride: 1}, // NORTH WEST ARROW TO LONG BAR..LEFTWARDS ARROW TO BAR OVER RIGHTWARDS ARROW TO BAR
+		{Lo: 0x21d2, Hi: 0x21d2, Stride: 1}, // RIGHTWARDS DOUBLE ARROW
+		{Lo: 0x21d4, Hi: 0x21d4, Stride: 1}, // LEFT RIGHT DOUBLE ARROW
+		{Lo: 0x21e7, Hi: 0x21e7, Stride: 1}, // UPWARDS WHITE ARROW
+		{Lo: 0x2200, Hi: 0x2200, Stride: 1}, // FOR ALL
+		{Lo: 0x2202, Hi: 0x2203, Stride: 1}, // PARTIAL DIFFERENTIAL..THERE EXISTS
+		{Lo: 0x2207, Hi: 0x2208, Stride: 1}, // NABLA..ELEMENT OF
+		{Lo: 0x220b, Hi: 0x220b, Stride: 1}, // CONTAINS AS MEMBER
+		{Lo: 0x220f, Hi: 0x220f, Stride: 1}, // N-ARY PRODUCT
+		{Lo: 0x2211, Hi: 0x2211, Stride: 1}, // N-ARY SUMMATION
+		{Lo: 0x2215, Hi: 0x2215, Stride: 1}, // DIVISION SLASH
+		{Lo: 0x221a, Hi: 0x221a, Stride: 1}, // SQUARE ROOT
+		{Lo: 0x221d, Hi: 0x2220, Stride: 1}, // PROPORTIONAL TO..ANGLE
+		{Lo: 0x2223, Hi: 0x2223, Stride: 1}, // DIVIDES
+		{Lo: 0x2225, Hi: 0x2225, Stride: 1}, // PARALLEL TO
+		{Lo: 0x2227, Hi: 0x222c, Stride: 1}, // LOGICAL AND..DOUBLE INTEGRAL
+		{Lo: 0x222e, Hi: 0x222e, Stride: 1}, // CONTOUR INTEGRAL
+		{Lo: 0x2234, Hi: 0x2237, Stride: 1}, // THEREFORE..PROPORTION
+		{Lo: 0x223c, Hi: 0x223d, Stride: 1}, // TILDE OPERATOR..REVERSED TILDE
+		{Lo: 0x2248, Hi: 0x2248, Stride: 1}, // ALMOST EQUAL TO
+		{Lo: 0x224c, Hi: 0x224c, Stride: 1}, // ALL EQUAL TO
+		{Lo: 0x2252, Hi: 0x2252, Stride: 1}, // APPROXIMATELY EQUAL TO OR THE IMAGE OF
+		{Lo: 0x2260, Hi: 0x2261, Stride: 1}, // NOT EQUAL TO..IDENTICAL TO
+		{Lo: 0x2264, Hi: 0x2267, Stride: 1}, // LESS-THAN OR EQUAL TO..GREATER-THAN OVER EQUAL TO
+		{Lo: 0x226a, Hi: 0x226b, Stride: 1}, // MUCH LESS-THAN..MUCH GREATER-THAN
+		{Lo: 0x226e, Hi: 0x226f, Stride: 1}, // NOT LESS-THAN..NOT GREATER-THAN
+		{Lo: 0x2282, Hi: 0x2283, Stride: 1}, // SUBSET OF..SUPERSET OF
+		{Lo: 0x2286, Hi: 0x2287, Stride: 1}, // SUBSET OF OR EQUAL TO..SUPERSET OF OR EQUAL TO
+		{Lo: 0x2295, Hi: 0x2295, Stride: 1}, // CIRCLED PLUS
+		{Lo: 0x2299, Hi: 0x2299, Stride: 1}, // CIRCLED DOT OPERATOR
+		{Lo: 0x22a5, Hi: 0x22a5, Stride: 1}, // UP TACK
+		{Lo: 0x22bf, Hi: 0x22bf, Stride: 1}, // RIGHT TRIANGLE
+		{Lo: 0x2312, Hi: 0x2312, Stride: 1}, // ARC
+		{Lo: 0x2460, Hi: 0x249b, Stride: 1}, // CIRCLED DIGIT ONE..NUMBER TWENTY FULL STOP
+		{Lo: 0x249c, Hi: 0x24e9, Stride: 1}, // PARENTHESIZED LATIN SMALL LETTER A..CIRCLED LATIN SMALL LETTER Z
+		{Lo: 0x24eb, Hi: 0x24ff, Stride: 1}, // NEGATIVE CIRCLED NUMBER ELEVEN..NEGATIVE CIRCLED DIGIT ZERO
+		{Lo: 0x2500, Hi: 0x254b, Stride: 1}, // BOX DRAWINGS LIGHT HORIZONTAL..BOX DRAWINGS HEAVY VERTICAL AND HORIZONTAL
+		{Lo: 0x2550, Hi: 0x2573, Stride: 1}, // BOX DRAWINGS DOUBLE HORIZONTAL..BOX DRAWINGS LIGHT DIAGONAL CROSS
+		{Lo: 0x2580, Hi: 0x258f, Stride: 1}, // UPPER HALF BLOCK..LEFT ONE EIGHTH BLOCK
+		{Lo: 0x2592, Hi: 0x2595, Stride: 1}, // MEDIUM SHADE..RIGHT ONE EIGHTH BLOCK
+		{Lo: 0x25a0, Hi: 0x25a1, Stride: 1}, // BLACK SQUARE..WHITE SQUARE
+		{Lo: 0x25a3, Hi: 0x25a9, Stride: 1}, // WHITE SQUARE CONTAINING BLACK SMALL SQUARE..SQUARE WITH DIAGONAL CROSSHATCH FILL
+		{Lo: 0x25b2, Hi: 0x25b3, Stride: 1}, // BLACK UP-POINTING TRIANGLE..WHITE UP-POINTING TRIANGLE
+		{Lo: 0x25b6, Hi: 0x25b6, Stride: 1}, // BLACK RIGHT-POINTING TRIANGLE
+		{Lo: 0x25b7, Hi: 0x25b7, Stride: 1}, // WHITE RIGHT-POINTING TRIANGLE
+		{Lo: 0x25bc, Hi: 0x25bd, Stride: 1}, // BLACK DOWN-POINTING TRIANGLE..WHITE DOWN-POINTING TRIANGLE
+		{Lo: 0x25c0, Hi: 0x25c0, Stride: 1}, // BLACK LEFT-POINTING TRIANGLE
+		{Lo: 0x25c1, Hi: 0x25c1, Stride: 1}, // WHITE LEFT-POINTING TRIANGLE
+		{Lo: 0x25c6, Hi: 0x25c8, Stride: 1}, // BLACK DIAMOND..WHITE DIAMOND CONTAINING BLACK SMALL DIAMOND
+		{Lo: 0x25cb, Hi: 0x25cb, Stride: 1}, // WHITE CIRCLE
+		{Lo: 0x25ce, Hi: 0x25d1, Stride: 1}, // BULLSEYE..CIRCLE WITH RIGHT HALF BLACK
+		{Lo: 0x25e2, Hi: 0x25e5, Stride: 1}, // BLACK LOWER RIGHT TRIANGLE..BLACK UPPER RIGHT TRIANGLE
+		{Lo: 0x25ef, Hi: 0x25ef, Stride: 1}, // LARGE CIRCLE
+		{Lo: 0x2605, Hi: 0x2606, Stride: 1}, // BLACK STAR..WHITE STAR
+		{Lo: 0x2609, Hi: 0x2609, Stride: 1}, // SUN
+		{Lo: 0x260e, Hi: 0x260f, Stride: 1}, // BLACK TELEPHONE..WHITE TELEPHONE
+		{Lo: 0x261c, Hi: 0x261c, Stride: 1}, // WHITE LEFT POINTING INDEX
+		{Lo: 0x261e, Hi: 0x261e, Stride: 1}, // WHITE RIGHT POINTING INDEX
+		{Lo: 0x2640, Hi: 0x2640, Stride: 1}, // FEMALE SIGN
+		{Lo: 0x2642, Hi: 0x2642, Stride: 1}, // MALE SIGN
+		{Lo: 0x2660, Hi: 0x2661, Stride: 1}, // BLACK SPADE SUIT..WHITE HEART SUIT
+		{Lo: 0x2663, Hi: 0x2665, Stride: 1}, // BLACK CLUB SUIT..BLACK HEART SUIT
+		{Lo: 0x2667, Hi: 0x266a, Stride: 1}, // WHITE CLUB SUIT..EIGHTH NOTE
+		{Lo: 0x266c, Hi: 0x266d, Stride: 1}, // BEAMED SIXTEENTH NOTES..MUSIC FLAT SIGN
+		{Lo: 0x266f, Hi: 0x266f, Stride: 1}, // MUSIC SHARP SIGN
+		{Lo: 0x269e, Hi: 0x269f, Stride: 1}, // THREE LINES CONVERGING RIGHT..THREE LINES CONVERGING LEFT
+		{Lo: 0x26bf, Hi: 0x26bf, Stride: 1}, // SQUARED KEY
+		{Lo: 0x26c6, Hi: 0x26cd, Stride: 1}, // RAIN..DISABLED CAR
+		{Lo: 0x26cf, Hi: 0x26d3, Stride: 1}, // PICK..CHAINS
+		{Lo: 0x26d5, Hi: 0x26e1, Stride: 1}, // ALTERNATE ONE-WAY LEFT WAY TRAFFIC..RESTRICTED LEFT ENTRY-2
+		{Lo: 0x26e3, Hi: 0x26e3, Stride: 1}, // HEAVY CIRCLE WITH STROKE AND TWO DOTS ABOVE
+		{Lo: 0x26e8, Hi: 0x26e9, Stride: 1}, // BLACK CROSS ON SHIELD..SHINTO SHRINE
+		{Lo: 0x26eb, Hi: 0x26f1, Stride: 1}, // CASTLE..UMBRELLA ON GROUND
+		{Lo: 0x26f4, Hi: 0x26f4, Stride: 1}, // FERRY
+		{Lo: 0x26f6, Hi: 0x26f9, Stride: 1}, // SQUARE FOUR CORNERS..PERSON WITH BALL
+		{Lo: 0x26fb, Hi: 0x26fc, Stride: 1}, // JAPANESE BANK SYMBOL..HEADSTONE GRAVEYARD SYMBOL
+		{Lo: 0x26fe, Hi: 0x26ff, Stride: 1}, // CUP ON BLACK SQUARE..WHITE FLAG WITH HORIZONTAL MIDDLE BLACK STRIPE
+		{Lo: 0x273d, Hi: 0x273d, Stride: 1}, // HEAVY TEARDROP-SPOKED ASTERISK
+		{Lo: 0x2776, Hi: 0x277f, Stride: 1}, // DINGBAT NEGATIVE CIRCLED DIGIT ONE..DINGBAT NEGATIVE CIRCLED NUMBER TEN
+		{Lo: 0x2b56, Hi: 0x2b59, Stride: 1}, // HEAVY OVAL WITH OVAL INSIDE..HEAVY CIRCLED SALTIRE
+		{Lo: 0x3248, Hi: 0x324f, Stride: 1}, // CIRCLED NUMBER TEN ON BLACK SQUARE..CIRCLED NUMBER EIGHTY ON BLACK SQUARE
+		{Lo: 0xe000, Hi: 0xf8ff, Stride: 1}, // <private-use-E000>..<private-use-F8FF>
+		{Lo: 0xfe00, Hi: 0xfe0f, Stride: 1}, // VARIATION SELECTOR-1..VARIATION SELECTOR-16
+		{Lo: 0xfffd, Hi: 0xfffd, Stride: 1}, // REPLACEMENT CHARACTER
+	},
+	R32: []unicode.Range32{
+		{Lo: 0x1f100, Hi: 0x1f10a, Stride: 1},   // DIGIT ZERO FULL STOP..DIGIT NINE COMMA
+		{Lo: 0x1f110, Hi: 0x1f12d, Stride: 1},   // PARENTHESIZED LATIN CAPITAL LETTER A..CIRCLED CD
+		{Lo: 0x1f130, Hi: 0x1f169, Stride: 1},   // SQUARED LATIN CAPITAL LETTER A..NEGATIVE CIRCLED LATIN CAPITAL LETTER Z
+		{Lo: 0x1f170, Hi: 0x1f18d, Stride: 1},   // NEGATIVE SQUARED LATIN CAPITAL LETTER A..NEGATIVE SQUARED SA
+		{Lo: 0x1f18f, Hi: 0x1f190, Stride: 1},   // NEGATIVE SQUARED WC..SQUARE DJ
+		{Lo: 0x1f19b, Hi: 0x1f1ac, Stride: 1},   // SQUARED THREE D..SQUARED VOD
+		{Lo: 0xe0100, Hi: 0xe01ef, Stride: 1},   // VARIATION SELECTOR-17..VARIATION SELECTOR-256
+		{Lo: 0xf0000, Hi: 0xffffd, Stride: 1},   // <private-use-F0000>..<private-use-FFFFD>
+		{Lo: 0x100000, Hi: 0x10fffd, Stride: 1}, // <private-use-100000>..<private-use-10FFFD>
+	},
+}
+
+var DiacriticalSignTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x0300, Hi: 0x036f, Stride: 1}, // COMBINING GRAVE ACCENT..COMBINING LATIN SMALL LETTER X
+		{Lo: 0x0591, Hi: 0x05af, Stride: 1}, // Hebrew Cantillation Marks
+		{Lo: 0x05b0, Hi: 0x05bd, Stride: 1}, // Hebrew Points
+		{Lo: 0x05bf, Hi: 0x05bf, Stride: 1}, // Hebrew Points
+		{Lo: 0x05c1, Hi: 0x05c2, Stride: 1}, // Hebrew Points
+		{Lo: 0x05c4, Hi: 0x05c5, Stride: 1}, // Hebrew Points
+		{Lo: 0x05c7, Hi: 0x05c7, Stride: 1}, // Hebrew Points
+		{Lo: 0x064b, Hi: 0x0652, Stride: 1}, // Arabic Tashkil from ISO 8859-6
+		{Lo: 0x0653, Hi: 0x065f, Stride: 1}, // Arabic Combining Marks
+		{Lo: 0x0670, Hi: 0x0670, Stride: 1}, // Arabic Tashkil
+		{Lo: 0x08a0, Hi: 0x08ff, Stride: 1}, // Arabic Extended-A
+		{Lo: 0x1ab0, Hi: 0x1aff, Stride: 1}, // Combining Diacritical Marks Extended
+		{Lo: 0x1dc0, Hi: 0x1dff, Stride: 1}, // Combining Diacritical Marks Supplement
+		{Lo: 0x20d0, Hi: 0x20ff, Stride: 1}, // Combining Diacritical Marks for Symbols
+		{Lo: 0xfbb2, Hi: 0xfbc1, Stride: 1}, // Arabic pedagogical symbols
+		{Lo: 0xfe20, Hi: 0xfe2f, Stride: 1}, // Combining Half Marks
+	},
+}
+
+var FormatCharTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x034f, Hi: 0x034f, Stride: 1},
+		{Lo: 0x200c, Hi: 0x200f, Stride: 1},
+		{Lo: 0x2028, Hi: 0x202e, Stride: 1},
+		{Lo: 0x2061, Hi: 0x2069, Stride: 1},
+	},
+}
+
+var ZeroWidthSpaceTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x200b, Hi: 0x200b, Stride: 1},
+		{Lo: 0x2060, Hi: 0x2063, Stride: 1},
+		{Lo: 0xfeff, Hi: 0xfeff, Stride: 1},
+	},
+}
+
+var RightToLeftTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x0590, Hi: 0x05ff, Stride: 1}, // Hebrew
+		{Lo: 0x0600, Hi: 0x06ff, Stride: 1}, // Arabic
+		{Lo: 0x0700, Hi: 0x074f, Stride: 1}, // Syriac
+		{Lo: 0x0750, Hi: 0x077f, Stride: 1}, // Arabic Supplement
+		{Lo: 0x0860, Hi: 0x086f, Stride: 1}, // Syriac Supplement
+		{Lo: 0x08a0, Hi: 0x08ff, Stride: 1}, // Arabic Extended-A
+		{Lo: 0xfb50, Hi: 0xfdff, Stride: 1}, // Arabic Presentation Forms-A
+		{Lo: 0xfe70, Hi: 0xfeff, Stride: 1}, // Arabic Presentation Forms-B
+	},
+	R32: []unicode.Range32{
+		{Lo: 0x10ac0, Hi: 0x10aff, Stride: 1}, // Manichaean
+		{Lo: 0x10c00, Hi: 0x10c4f, Stride: 1}, // Old Turkic
+		{Lo: 0x10f00, Hi: 0x10f2f, Stride: 1}, // Old Sogdian
+		{Lo: 0x10f30, Hi: 0x10f6f, Stride: 1}, // Sogdian
+		{Lo: 0x1ee00, Hi: 0x1eeff, Stride: 1}, // Arabic Mathematical Alphabetic Symbols
+	},
+}
+
+var SJISSingleByteTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x0020, Hi: 0x007e, Stride: 1}, // ASCII
+		{Lo: 0xff61, Hi: 0xff9f, Stride: 1}, // Half Width Katakana
+	},
+}

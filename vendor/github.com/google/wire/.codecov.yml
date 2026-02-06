@@ -1,0 +1,13 @@
+comment: off
+coverage:
+  status:
+    project:
+      default:
+        target: 0
+        threshold: null
+        base: auto
+    patch:
+      default:
+        target: 0
+        threshold: null
+        base: auto

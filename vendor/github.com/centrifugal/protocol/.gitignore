@@ -1,0 +1,6 @@
+.vscode/
+.idea/
+.claude/
+vendor/
+build/
+*.orig

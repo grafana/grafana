@@ -1,0 +1,49 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "timeseries-long",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "TimeseriesLong with 2 items. 1 name (slothCount) and 1 dimension (city).",
+            "itemCount": 2,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "t",
+          "type": "time",
+          "typeInfo": {
+            "frame": "time.Time"
+          }
+        },
+        {
+          "type": "number",
+          "name": "slothCount",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        },
+        {
+          "type": "string",
+          "name": "city",
+          "typeInfo": {
+            "frame": "string"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        [1664901845976, 1664901845976, 1664902845976, 1664902845976],
+        [3, 6, 5, 9],
+        ["LGA", "MIA", "LGA", "MIA"]
+      ]
+    }
+  }
+]

@@ -1,0 +1,4 @@
+status:
+  class: pkg
+  codeowners:
+    active: [odubajDT]

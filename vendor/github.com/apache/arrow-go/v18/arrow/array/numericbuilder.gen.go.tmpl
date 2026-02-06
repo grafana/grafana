@@ -1,0 +1,451 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package array
+
+import (
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/bitutil"
+	"github.com/apache/arrow-go/v18/arrow/internal/debug"
+	"github.com/apache/arrow-go/v18/arrow/memory"
+	"github.com/apache/arrow-go/v18/internal/json"
+)
+
+{{range .In}}
+
+type {{.Name}}Builder struct {
+	builder
+
+{{if .Opt.Parametric -}}
+	dtype    *arrow.{{.Name}}Type
+{{end -}}
+	data    *memory.Buffer
+	rawData []{{or .QualifiedType .Type}}
+}
+
+{{if .Opt.Parametric}}
+func New{{.Name}}Builder(mem memory.Allocator, dtype *arrow.{{.Name}}Type) *{{.Name}}Builder {
+	b := &{{.Name}}Builder{builder: builder{mem: mem}, dtype: dtype}
+	b.refCount.Add(1)
+	return b
+}
+
+func (b *{{.Name}}Builder) Type() arrow.DataType { return b.dtype }
+
+{{else}}
+func New{{.Name}}Builder(mem memory.Allocator) *{{.Name}}Builder {
+	b := &{{.Name}}Builder{builder: builder{mem: mem}}
+	b.refCount.Add(1)
+	return b
+}
+
+func (b *{{.Name}}Builder) Type() arrow.DataType { return arrow.PrimitiveTypes.{{.Name}} }
+{{end}}
+
+// Release decreases the reference count by 1.
+// When the reference count goes to zero, the memory is freed.
+func (b *{{.Name}}Builder) Release() {
+	debug.Assert(b.refCount.Load() > 0, "too many releases")
+
+	if b.refCount.Add(-1) == 0 {
+		if b.nullBitmap != nil {
+			b.nullBitmap.Release()
+			b.nullBitmap = nil
+		}
+		if b.data != nil {
+			b.data.Release()
+			b.data = nil
+			b.rawData = nil
+		}
+	}
+}
+
+func (b *{{.Name}}Builder) Append(v {{or .QualifiedType .Type}}) {
+	b.Reserve(1)
+	b.UnsafeAppend(v)
+}
+
+func (b *{{.Name}}Builder) AppendNull() {
+	b.Reserve(1)
+	b.UnsafeAppendBoolToBitmap(false)
+}
+
+func (b *{{.Name}}Builder) AppendNulls(n int) {
+	for i := 0; i < n; i++ {
+		b.AppendNull()
+	}
+}
+
+func (b *{{.Name}}Builder) AppendEmptyValue() {
+	b.Append(0)
+}
+
+func (b *{{.Name}}Builder) AppendEmptyValues(n int) {
+	for i := 0; i < n; i ++ {
+		b.AppendEmptyValue()
+	}
+}
+
+func (b *{{.Name}}Builder) UnsafeAppend(v {{or .QualifiedType .Type}}) {
+	bitutil.SetBit(b.nullBitmap.Bytes(), b.length)
+	b.rawData[b.length] = v
+	b.length++
+}
+
+func (b *{{.Name}}Builder) UnsafeAppendBoolToBitmap(isValid bool) {
+	if isValid {
+		bitutil.SetBit(b.nullBitmap.Bytes(), b.length)
+	} else {
+		b.nulls++
+	}
+	b.length++
+}
+
+// AppendValues will append the values in the v slice. The valid slice determines which values
+// in v are valid (not null). The valid slice must either be empty or be equal in length to v. If empty,
+// all values in v are appended and considered valid.
+func (b *{{.Name}}Builder) AppendValues(v []{{or .QualifiedType .Type}}, valid []bool) {
+	if len(v) != len(valid) && len(valid) != 0 {
+		panic("len(v) != len(valid) && len(valid) != 0")
+	}
+
+	if len(v) == 0 {
+		return
+	}
+
+	b.Reserve(len(v))
+	arrow.{{.Name}}Traits.Copy(b.rawData[b.length:], v)
+	b.builder.unsafeAppendBoolsToBitmap(valid, len(v))
+}
+
+func (b *{{.Name}}Builder) init(capacity int) {
+	b.builder.init(capacity)
+
+	b.data = memory.NewResizableBuffer(b.mem)
+	bytesN := arrow.{{.Name}}Traits.BytesRequired(capacity)
+	b.data.Resize(bytesN)
+	b.rawData = arrow.{{.Name}}Traits.CastFromBytes(b.data.Bytes())
+}
+
+// Reserve ensures there is enough space for appending n elements
+// by checking the capacity and calling Resize if necessary.
+func (b *{{.Name}}Builder) Reserve(n int) {
+	b.builder.reserve(n, b.Resize)
+}
+
+// Resize adjusts the space allocated by b to n elements. If n is greater than b.Cap(),
+// additional memory will be allocated. If n is smaller, the allocated memory may reduced.
+func (b *{{.Name}}Builder) Resize(n int) {
+	nBuilder := n
+	if n < minBuilderCapacity {
+		n = minBuilderCapacity
+	}
+
+	if b.capacity == 0 {
+		b.init(n)
+	} else {
+		b.builder.resize(nBuilder, b.init)
+		b.data.Resize(arrow.{{.Name}}Traits.BytesRequired(n))
+		b.rawData = arrow.{{.Name}}Traits.CastFromBytes(b.data.Bytes())
+	}
+}
+
+func (b *{{.Name}}Builder) Value(i int) {{or .QualifiedType .Type}} {
+	return b.rawData[i]
+}
+
+// NewArray creates a {{.Name}} array from the memory buffers used by the builder and resets the {{.Name}}Builder
+// so it can be used to build a new array.
+func (b *{{.Name}}Builder) NewArray() arrow.Array {
+	return b.New{{.Name}}Array()
+}
+
+// New{{.Name}}Array creates a {{.Name}} array from the memory buffers used by the builder and resets the {{.Name}}Builder
+// so it can be used to build a new array.
+func (b *{{.Name}}Builder) New{{.Name}}Array() (a *{{.Name}}) {
+	data := b.newData()
+	a = New{{.Name}}Data(data)
+	data.Release()
+	return
+}
+
+func (b *{{.Name}}Builder) newData() (data *Data) {
+	bytesRequired := arrow.{{.Name}}Traits.BytesRequired(b.length)
+	if bytesRequired > 0 && bytesRequired < b.data.Len() {
+		// trim buffers
+		b.data.Resize(bytesRequired)
+	}
+{{if .Opt.Parametric -}}
+	data = NewData(b.dtype, b.length, []*memory.Buffer{b.nullBitmap, b.data}, nil, b.nulls, 0)
+{{else -}}
+	data = NewData(arrow.PrimitiveTypes.{{.Name}}, b.length, []*memory.Buffer{b.nullBitmap, b.data}, nil, b.nulls, 0)
+{{end -}}
+	b.reset()
+
+	if b.data != nil {
+		b.data.Release()
+		b.data = nil
+		b.rawData = nil
+	}
+
+	return
+}
+
+func (b *{{.Name}}Builder) AppendValueFromString(s string) error {
+	if s == NullValueStr {
+		b.AppendNull()
+		return nil
+	}
+  {{if or (eq .Name "Date32") -}}
+  	tm, err := time.Parse("2006-01-02", s)
+    if err != nil {
+      b.AppendNull()
+      return err
+    }
+    b.Append(arrow.Date32FromTime(tm))
+  {{else if or (eq .Name "Date64") -}}
+  	tm, err := time.Parse("2006-01-02", s)
+    if err != nil {
+      b.AppendNull()
+      return err
+    }
+    b.Append(arrow.Date64FromTime(tm))
+  {{else if or (eq .Name "Time32") -}}
+  	val, err := arrow.Time32FromString(s, b.dtype.Unit)
+    if err != nil {
+      b.AppendNull()
+      return err
+    }
+    b.Append(val)
+  {{else if or (eq .Name "Time64") -}}
+    val, err := arrow.Time64FromString(s, b.dtype.Unit)
+    if err != nil {
+      b.AppendNull()
+      return err
+    }
+    b.Append(val)
+  {{else if (eq .Name "Duration") -}}
+	dur, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+
+	b.Append(arrow.Duration(dur / b.dtype.Unit.Multiplier()))
+  {{else if or (eq .Name "Int8") (eq .Name "Int16") (eq .Name "Int32") (eq .Name "Int64") -}}
+    v, err := strconv.ParseInt(s, 10, {{.Size}} * 8)
+    if err != nil {
+        b.AppendNull()
+        return err
+    }
+    b.Append({{.name}}(v))
+  {{else if or (eq .Name "Uint8") (eq .Name "Uint16") (eq .Name "Uint32") (eq .Name "Uint64") -}}
+    v, err := strconv.ParseUint(s, 10, {{.Size}} * 8)
+    if err != nil {
+        b.AppendNull()
+        return err
+    }
+    b.Append({{.name}}(v))
+  {{else if or (eq .Name "Float32") (eq .Name "Float64") -}}
+    v, err := strconv.ParseFloat(s, {{.Size}} * 8)
+    if err != nil {
+      b.AppendNull()
+      return err
+    }
+    b.Append({{.name}}(v))
+  {{end -}}
+	return nil
+}
+
+func (b *{{.Name}}Builder) UnmarshalOne(dec *json.Decoder) error {
+	t, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	switch v := t.(type) {
+	case nil:
+		b.AppendNull()
+{{if or (eq .Name "Date32") (eq .Name "Date64") -}}
+	case string:
+		tm, err := time.Parse("2006-01-02", v)
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v,
+				Type: reflect.TypeOf({{.QualifiedType}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+
+		b.Append({{.QualifiedType}}FromTime(tm))
+	case json.Number:
+		n, err := v.Int64()
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v.String(),
+				Type: reflect.TypeOf({{.QualifiedType}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+		b.Append({{.QualifiedType}}(n))
+	case float64:
+		b.Append({{.QualifiedType}}(v))
+{{else if or (eq .Name "Time32") (eq .Name "Time64") -}}
+	case string:
+		tm, err := {{.QualifiedType}}FromString(v, b.dtype.Unit)
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v,
+				Type: reflect.TypeOf({{.QualifiedType}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+
+		b.Append(tm)
+	case json.Number:
+		n, err := v.Int64()
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v.String(),
+				Type: reflect.TypeOf({{.QualifiedType}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+		b.Append({{.QualifiedType}}(n))
+	case float64:
+		b.Append({{.QualifiedType}}(v))
+{{else if eq .Name "Duration" -}}
+	case json.Number:
+		n, err := v.Int64()
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v.String(),
+				Type: reflect.TypeOf({{.QualifiedType}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+		b.Append({{.QualifiedType}}(n))
+	case float64:
+		b.Append({{.QualifiedType}}(v))
+	case string:
+		// be flexible for specifying durations by accepting forms like
+		// 3h2m0.5s regardless of the unit and converting it to the proper
+		// precision.
+		val, err := time.ParseDuration(v)
+		if err != nil {
+			// if we got an error, maybe it was because the attempt to create
+			// a time.Duration (int64) in nanoseconds would overflow. check if
+			// the string is just a large number followed by the unit suffix
+			if strings.HasSuffix(v, b.dtype.Unit.String()) {
+				value, err := strconv.ParseInt(v[:len(v)-len(b.dtype.Unit.String())], 10, 64)
+				if err == nil {
+					b.Append(arrow.Duration(value))
+					break
+				}
+			}
+
+			return &json.UnmarshalTypeError{
+				Value: v,
+				Type: reflect.TypeOf({{.QualifiedType}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+
+		switch b.dtype.Unit {
+		case arrow.Nanosecond:
+			b.Append({{.QualifiedType}}(val.Nanoseconds()))
+		case arrow.Microsecond:
+			b.Append({{.QualifiedType}}(val.Microseconds()))
+		case arrow.Millisecond:
+			b.Append({{.QualifiedType}}(val.Milliseconds()))
+		case arrow.Second:
+			b.Append({{.QualifiedType}}(val.Seconds()))
+		}
+{{else}}
+	case string:
+{{if or (eq .Name "Float32") (eq .Name "Float64") -}}
+		f, err := strconv.ParseFloat(v, {{.Size}}*8)
+{{else if eq (printf "%.1s" .Name) "U" -}}
+		f, err := strconv.ParseUint(v, 10, {{.Size}}*8)
+{{else -}}
+		f, err := strconv.ParseInt(v, 10, {{.Size}}*8)
+{{end -}}
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v,
+				Type: reflect.TypeOf({{.name}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+		b.Append({{.name}}(f))
+	case float64:
+		b.Append({{.name}}(v))
+	case json.Number:
+{{if or (eq .Name "Float32") (eq .Name "Float64") -}}
+		f, err := strconv.ParseFloat(v.String(), {{.Size}}*8)
+{{else if eq (printf "%.1s" .Name) "U" -}}
+		f, err := strconv.ParseUint(v.String(), 10, {{.Size}}*8)
+{{else -}}
+		f, err := strconv.ParseInt(v.String(), 10, {{.Size}}*8)
+{{end -}}
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: v.String(),
+				Type: reflect.TypeOf({{.name}}(0)),
+				Offset: dec.InputOffset(),
+			}
+		}
+		b.Append({{.name}}(f))
+{{end}}
+	default:
+		return &json.UnmarshalTypeError{
+			Value: fmt.Sprint(t),
+			Type: reflect.TypeOf({{or .QualifiedType .Type}}(0)),
+			Offset: dec.InputOffset(),
+		}
+	}
+
+	return nil
+}
+
+func (b *{{.Name}}Builder) Unmarshal(dec *json.Decoder) error {
+	for dec.More() {
+		if err := b.UnmarshalOne(dec); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *{{.Name}}Builder) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	t, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	if delim, ok := t.(json.Delim); !ok || delim != '[' {
+		return fmt.Errorf("binary builder must unpack from json array, found %s", delim)
+	}
+
+	return b.Unmarshal(dec)
+}
+{{end}}
+
+var (
+{{- range .In}}
+	_ Builder = (*{{.Name}}Builder)(nil)
+{{- end}}
+)

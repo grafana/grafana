@@ -1,0 +1,17 @@
+/.env
+__debug_bin*
+vendor
+coverage.txt
+unit.cov
+integration.cov
+node_modules
+yarn.lock
+reports
+perf.test
+
+# VitePress
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# Documentation files copied during build (source of truth is in root)
+docs/changelog.md

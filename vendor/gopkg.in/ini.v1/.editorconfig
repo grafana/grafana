@@ -1,0 +1,12 @@
+# http://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*_test.go]
+trim_trailing_whitespace = false

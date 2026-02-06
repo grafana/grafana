@@ -1,0 +1,41 @@
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+linters:
+  enable:
+    - errcheck
+    - errorlint
+    - gofumpt
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - revive
+    - staticcheck
+    - testifylint
+    - unused
+linters-settings:
+  goimports:
+    local-prefixes: github.com/prometheus/sigv4
+  revive:
+    rules:
+      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-parameter
+      - name: unused-parameter
+        severity: warning
+        disabled: true
+  testifylint:
+    disable:
+      - float-compare
+      - go-require
+    enable:
+      - bool-compare
+      - compares
+      - empty
+      - error-is-as
+      - error-nil
+      - expected-actual
+      - len
+      - require-error
+      - suite-dont-use-pkg
+      - suite-extra-assert-call

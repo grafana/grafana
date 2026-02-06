@@ -1,0 +1,62 @@
+package pgtype_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/jackc/pgx/v5/pgtype/testutil"
+	"github.com/jackc/pgx/v5"
+)
+
+<%
+  [
+    ["int4", ["int16", "int32", "int64", "uint64", "pgtype.Int4"], [[1, 1], [1, 10], [10, 1], [100, 10]]],
+    ["numeric", ["int64", "float64", "pgtype.Numeric"], [[1, 1], [1, 10], [10, 1], [100, 10]]],
+  ].each do |pg_type, go_types, rows_columns|
+%>
+<% go_types.each do |go_type| %>
+<% rows_columns.each do |rows, columns| %>
+<% [["Text", "pgx.TextFormatCode"], ["Binary", "pgx.BinaryFormatCode"]].each do |format_name, format_code| %>
+func BenchmarkQuery<%= format_name %>FormatDecode_PG_<%= pg_type %>_to_Go_<%= go_type.gsub(/\W/, "_") %>_<%= rows %>_rows_<%= columns %>_columns(b *testing.B) {
+  defaultConnTestRunner.RunTest(context.Background(), b, func(ctx context.Context, _ testing.TB, conn *pgx.Conn) {
+    b.ResetTimer()
+    var v [<%= columns %>]<%= go_type %>
+    for i := 0; i < b.N; i++ {
+      rows, _ := conn.Query(
+        ctx,
+        `select <% columns.times do |col_idx| %><% if col_idx != 0 %>, <% end %>n::<%= pg_type %> + <%= col_idx%><% end %> from generate_series(1, <%= rows %>) n`,
+        pgx.QueryResultFormats{<%= format_code %>},
+      )
+      _, err := pgx.ForEachRow(rows, []any{<% columns.times do |col_idx| %><% if col_idx != 0 %>, <% end %>&v[<%= col_idx%>]<% end %>},  func() error { return nil })
+      if err != nil {
+        b.Fatal(err)
+      }
+    }
+  })
+}
+<% end %>
+<% end %>
+<% end %>
+<% end %>
+
+<% [10, 100, 1000].each do |array_size| %>
+<% [["Text", "pgx.TextFormatCode"], ["Binary", "pgx.BinaryFormatCode"]].each do |format_name, format_code| %>
+func BenchmarkQuery<%= format_name %>FormatDecode_PG_Int4Array_With_Go_Int4Array_<%= array_size %>(b *testing.B) {
+  defaultConnTestRunner.RunTest(context.Background(), b, func(ctx context.Context, _ testing.TB, conn *pgx.Conn) {
+    b.ResetTimer()
+    var v []int32
+    for i := 0; i < b.N; i++ {
+      rows, _ := conn.Query(
+        ctx,
+        `select array_agg(n) from generate_series(1, <%= array_size %>) n`,
+        pgx.QueryResultFormats{<%= format_code %>},
+      )
+      _, err := pgx.ForEachRow(rows, []any{&v},  func() error { return nil })
+      if err != nil {
+        b.Fatal(err)
+      }
+    }
+  })
+}
+<% end %>
+<% end %>

@@ -1,0 +1,25 @@
+output:
+  format: line-number
+
+linters:
+  enable:
+    - goimports
+    - gofmt
+    - misspell
+    - revive
+
+linters-settings:
+  errcheck:
+    # path to a file containing a list of functions to exclude from checking
+    # see https://github.com/kisielk/errcheck#excluding-functions for details
+    exclude: ./.errcheck-exclude
+  goimports:
+    local-prefixes: "github.com/grafana/e2e"
+
+run:
+  timeout: 5m
+
+  # List of build tags, all linters use it.
+  build-tags:
+    - netgo
+    - requires_docker

@@ -1,0 +1,14 @@
+language: go
+
+sudo: false
+
+go:
+  - master
+
+os:
+  - linux
+            
+script: go test -v
+
+notifications:
+  email: false

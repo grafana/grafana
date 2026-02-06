@@ -1,0 +1,104 @@
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/prometheus/otlptranslator)
+    gofumpt:
+      extra-rules: true
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+linters:
+  # Keep this list sorted alphabetically
+  enable:
+    - depguard
+    - errorlint
+    - exptostd
+    - gocritic
+    - godot
+    - loggercheck
+    - misspell
+    - nilnesserr
+    # TODO: Enable once https://github.com/golangci/golangci-lint/issues/3228 is fixed.
+    # - nolintlint
+    - perfsprint
+    - predeclared
+    - revive
+    - sloglint
+    - testifylint
+    - unconvert
+    - unused
+    - usestdlibvars
+    - whitespace
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: sync/atomic
+              desc: Use go.uber.org/atomic instead of sync/atomic
+            - pkg: github.com/stretchr/testify/assert
+              desc: Use github.com/stretchr/testify/require instead of github.com/stretchr/testify/assert
+            - pkg: io/ioutil
+              desc: Use corresponding 'os' or 'io' functions instead.
+            - pkg: github.com/pkg/errors
+              desc: Use 'errors' or 'fmt' instead of github.com/pkg/errors
+            - pkg: golang.org/x/exp/slices
+              desc: Use 'slices' instead.
+    perfsprint:
+      # Optimizes `fmt.Errorf`.
+      errorf: true
+    revive:
+      # By default, revive will enable only the linting rules that are named in the configuration file.
+      # So, it's needed to explicitly enable all required rules here.
+      rules:
+        # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md
+        - name: blank-imports
+        - name: comment-spacings
+        - name: context-as-argument
+          arguments:
+            # Allow functions with test or bench signatures.
+            - allowTypesBefore: '*testing.T,testing.TB'
+        - name: context-keys-type
+        - name: dot-imports
+        - name: early-return
+          arguments:
+            - preserveScope
+        # A lot of false positives: incorrectly identifies channel draining as "empty code block".
+        # See https://github.com/mgechev/revive/issues/386
+        - name: empty-block
+          disabled: true
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: exported
+        - name: increment-decrement
+        - name: indent-error-flow
+          arguments:
+            - preserveScope
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+          arguments:
+            - preserveScope
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: var-naming
+    testifylint:
+      disable:
+        - float-compare
+        - go-require
+      enable-all: true
+run:
+  timeout: 15m
+version: "2"

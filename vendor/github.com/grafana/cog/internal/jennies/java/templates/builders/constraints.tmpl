@@ -1,0 +1,17 @@
+{{- define "constraints" }}
+{{- range . }}
+    {{- $leftOperand := .Argument.Name | escapeVar | lowerCamelCase }}
+    {{- $operator := .Op }}
+    {{- if eq .Op "minLength" }}
+        {{- $leftOperand = print $leftOperand ".length()" }}
+        {{- $operator = ">=" }}
+    {{- end }}
+    {{- if eq .Op "maxLength" }}
+        {{- $leftOperand = print $leftOperand ".length()" }}
+        {{- $operator = "<=" }}
+    {{- end }}
+        if (!({{ $leftOperand }} {{ $operator }} {{ .Parameter }})) {
+            throw new IllegalArgumentException("{{ $leftOperand }} must be {{ $operator }} {{ .Parameter }}");
+        }
+{{- end }}
+{{- end }}

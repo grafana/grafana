@@ -1,0 +1,6 @@
+/.devenv/
+/.direnv/
+/.pre-commit-config.yaml
+/bin/
+/build/
+/var/

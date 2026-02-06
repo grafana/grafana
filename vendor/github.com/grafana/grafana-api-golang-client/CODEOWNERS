@@ -1,0 +1,7 @@
+# Docs on CODEOWNERS:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Later codeowner matches take precedence over earlier ones.
+
+# Default owner
+* @grafana/platform-cat

@@ -1,0 +1,30 @@
+linters:
+  enable:
+    - megacheck
+    - revive
+    - govet
+    - unconvert
+    - megacheck
+    - gas
+    - gocyclo
+    - dupl
+    - misspell
+    - unparam
+    - unused
+    - typecheck
+    - ineffassign
+    - stylecheck
+    - exportloopref
+    - gocritic
+    - nakedret
+    - gosimple
+    - prealloc
+  fast: false
+  disable-all: true
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl
+  exclude-use-default: false

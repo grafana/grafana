@@ -1,0 +1,165 @@
+{{- /*gotype: github.com/grafana/dskit/kv/memberlist.StatusPageData */ -}}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Memberlist Status</title>
+</head>
+<body>
+<h1>Memberlist Status</h1>
+<p>Current time: {{ .Now }}</p>
+
+<ul>
+    <li>Health Score: {{ .Memberlist.GetHealthScore }} (lower = better, 0 = healthy)</li>
+    <li>Members: {{ .Memberlist.NumMembers }}</li>
+    <li>Zone-aware routing: {{ if .ZoneAwareRouting.Enabled }}enabled{{ else }}disabled{{ end }}</li>
+</ul>
+
+<h2>KV Store</h2>
+
+<table width="100%" border="1">
+    <thead>
+    <tr>
+        <th>Key</th>
+        <th>Codec</th>
+        <th>Version</th>
+        <th>Deleted</th>
+        <th>Update Time</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {{ range $k, $v := .Store }}
+        <tr>
+            <td>{{ $k }}</td>
+            <td>{{ $v.CodecID }}</td>
+            <td>{{ $v.Version }}</td>
+            <td>{{ $v.Deleted }}</td>
+            <td>{{ $v.UpdateTime }}</td>
+            <td>
+                <a href="?viewKey={{ $k }}&format=json">json</a>
+                | <a href="?viewKey={{ $k }}&format=json-pretty">json-pretty</a>
+                | <a href="?viewKey={{ $k }}&format=struct">struct</a>
+                | <a href="?downloadKey={{ $k }}">download</a>
+            </td>
+        </tr>
+    {{ end }}
+    </tbody>
+</table>
+
+<p>Note that value "version" is node-specific. It starts with 0 (on restart), and increases on each received update.
+    Size is in bytes.</p>
+
+<h2>Memberlist Cluster Members</h2>
+
+<table width="100%" border="1">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Address</th>
+        <th>State</th>
+        {{ if .ZoneAwareRouting.Enabled }}
+            <th>Zone</th>
+            <th>Role</th>
+        {{ end }}
+    </tr>
+    </thead>
+
+    <tbody>
+    {{ range .SortedMembers }}
+        <tr>
+            <td>{{ .Name }}</td>
+            <td>{{ .Address }}</td>
+            <td>{{ .State }}</td>
+            {{ if $.ZoneAwareRouting.Enabled }}
+                <td>{{ GetZoneFromMeta .Meta }}</td>
+                <td>{{ GetRoleFromMeta .Meta }}</td>
+            {{ end }}
+        </tr>
+    {{ end }}
+    </tbody>
+</table>
+
+<p>State: 0 = Alive, 1 = Suspect, 2 = Dead, 3 = Left</p>
+
+<h2>Message History</h2>
+
+{{ if .MessageHistoryBufferBytes }}
+
+    <h3>Received Messages</h3>
+
+    <a href="?deleteMessages=true">Delete All Messages (received and sent)</a>
+
+    <table width="100%" border="1">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Time</th>
+            <th>Key</th>
+            <th>Value in the Message</th>
+            <th>Version After Update (0 = no change)</th>
+            <th>Changes</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {{ range .ReceivedMessages }}
+            <tr>
+                <td>{{ .ID }}</td>
+                <td>{{ .Time.Format "15:04:05.000" }}</td>
+                <td>{{ .Pair.Key }}</td>
+                <td>size: {{ .Pair.Value | len }}, codec: {{ .Pair.Codec }}</td>
+                <td>{{ .Version }}</td>
+                <td>{{ StringsJoin .Changes ", " }}</td>
+                <td>
+                    <a href="?viewMsg={{ .ID }}&format=json">json</a>
+                    | <a href="?viewMsg={{ .ID }}&format=json-pretty">json-pretty</a>
+                    | <a href="?viewMsg={{ .ID }}&format=struct">struct</a>
+                </td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+
+    <h3>Sent Messages</h3>
+
+    <a href="?deleteMessages=true">Delete All Messages (received and sent)</a>
+
+    <table width="100%" border="1">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Time</th>
+            <th>Key</th>
+            <th>Value</th>
+            <th>Version</th>
+            <th>Changes</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {{ range .SentMessages }}
+            <tr>
+                <td>{{ .ID }}</td>
+                <td>{{ .Time.Format "15:04:05.000" }}</td>
+                <td>{{ .Pair.Key }}</td>
+                <td>size: {{ .Pair.Value | len }}, codec: {{ .Pair.Codec }}</td>
+                <td>{{ .Version }}</td>
+                <td>{{ StringsJoin .Changes ", " }}</td>
+                <td>
+                    <a href="?viewMsg={{ .ID }}&format=json">json</a>
+                    | <a href="?viewMsg={{ .ID }}&format=json-pretty">json-pretty</a>
+                    | <a href="?viewMsg={{ .ID }}&format=struct">struct</a>
+                </td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+{{ else }}
+    <p><i>Message history buffer is disabled, refer to the configuration to enable it in order to troubleshoot the message history.</i></p>
+{{ end }}
+</body>
+</html>

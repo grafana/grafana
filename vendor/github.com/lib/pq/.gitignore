@@ -1,0 +1,6 @@
+.db
+*.test
+*~
+*.swp
+.idea
+.vscode

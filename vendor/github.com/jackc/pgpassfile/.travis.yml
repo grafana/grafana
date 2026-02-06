@@ -1,0 +1,9 @@
+language: go
+
+go:
+  - 1.x
+  - tip
+
+matrix:
+  allow_failures:
+    - go: tip

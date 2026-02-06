@@ -1,0 +1,9 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 85%    # the required coverage value
+        threshold: 5%  # the leniency in hitting the target
+
+ignore:
+  - "internal/nvm/preallocate"

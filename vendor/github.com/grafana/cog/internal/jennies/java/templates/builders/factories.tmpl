@@ -1,0 +1,44 @@
+package {{ .Package }};
+
+{{- $class := include "factories" . }}
+
+{{ .Imports }}
+
+{{- $class -}}
+
+{{- define "factories" -}}
+public class {{ .ClassName|formatObjectName }} {
+{{ range $factory := .Factories }}
+{{ include "factory" (dict "Builder" $factory.Builder "Factory" $factory.Factory) | indent 4 }}
+{{ end -}}
+}
+{{- end }}
+
+{{- define "factory" }}
+{{- with .Factory.Comments }}
+/**
+{{- range . }}
+ * {{ . }}
+{{- end }}
+ */
+{{- end }}
+public static {{ .Builder.Name|formatObjectName }}Builder {{ .Factory.Name|lowerCamelCase|escapeVar }}({{- template "args" (dict "Arguments" .Factory.Args "IsBuilder" true) }}) {
+    {{ .Builder.Name|formatObjectName }}Builder builder = new {{ .Builder.Name|formatObjectName }}Builder();
+{{- range $call := .Factory.OptionCalls }}
+    builder.{{ $call.Name|lowerCamelCase|escapeVar }}({{- range $i, $param := $call.Parameters }}{{ if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $param) }}{{- end }});
+{{- end }}
+	return builder;
+}
+{{- end }}
+
+{{- define "factory_parameter_value" }}
+	{{- if not (eq .Value.Constant nil) -}}
+		{{- formatRefType .Value.Constant.Type .Value.Constant.Value }}
+	{{- end }}
+	{{- with .Value.Argument -}}
+		{{- .Name | formatArgName -}}
+	{{- end -}}
+	{{- with .Value.Factory -}}
+		{{ formatRawRef .Ref.Package .Ref.Package|factoryClassForPkg}}.{{ .Ref.Factory|lowerCamelCase|escapeVar }}({{ range $i, $arg := .Parameters }}{{- if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $arg)}}{{ end }})
+	{{- end -}}
+{{- end }}

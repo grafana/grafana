@@ -1,0 +1,195 @@
+package {{ .Converter.Package | formatPackageName }};
+
+{{ $converter := include "converter" . }}
+{{- .Imports }}
+{{ $converter }}
+
+{{- define "guard" }}
+    {{- $leftOperand := print (.Path | formatGuardPath) -}}
+    {{- $type := .Path.Last.Type }}
+    {{- if and (eq .Op "!=") (eq .Value nil) -}}
+        {{ $leftOperand }} != null
+    {{- else if and $type.IsScalar (eq $type.AsScalar.ScalarKind "bool") -}}
+        {{- if not $type.Nullable }}
+        {{- $leftOperand }} != null && !{{- $leftOperand }}
+        {{- else }}!{{- $leftOperand }}
+        {{- end }}
+    {{- else if and $type.IsScalar (eq $type.AsScalar.ScalarKind "string") -}}
+        {{- if .Value }}!{{- $leftOperand }}.equals("{{ cleanString .Value }}")
+        {{- else if not $type.Nullable }}
+            {{- $reflect := importStdPkg "java.util" "Objects" -}}
+            {{- $leftOperand }} != null && !Objects.equals({{- $leftOperand }}, "")
+        {{- else }}
+            {{- $reflect := importStdPkg "java.util" "Objects" -}}
+            !Objects.equals({{- $leftOperand }}, "")
+        {{- end }}
+    {{- else if $type.IsRef }}
+        {{ $leftOperand }} {{ .Op }} {{ formatRefType $type .Value }}
+    {{- else if $type.IsArray }}
+        {{- if not $type.Nullable }}
+        {{- $leftOperand }} != null && !{{- $leftOperand }}.isEmpty()
+        {{- else }}!{{- $leftOperand }}.isEmpty()
+        {{- end }}
+    {{- else -}}
+        {{- $operator := .Op -}} 
+        {{- if eq .Op "minLength" -}}
+            !{{- $leftOperand }}.isEmpty()
+        {{- else }}
+            {{- if eq .Op "maxLength" -}}
+                {{- $leftOperand = print $leftOperand ".size()" -}}
+                {{- $operator = "<=" -}}
+            {{- end }}
+    
+            {{- $leftOperand }} {{ $operator }} {{ .Value | formatScalar -}}
+        {{- end }}
+    {{- end -}}
+{{- end }}
+
+{{- define "value_formatter" -}}
+    {{- if .IsMapEntry }}
+    {{- .Path | formatGuardPath }}
+    {{- else if .Type.IsScalar }}
+        {{- if and (eq .Type.AsScalar.ScalarKind "string") -}}
+        {{- $reflect := importStdPkg "cog" "Runtime" -}}
+        Runtime.escapeString({{- .Path | formatGuardPath }})
+        {{- else }}
+        {{- .Path | formatGuardPath }} + "{{ formatIntegerLetter .Type }}"
+        {{- end }}
+    {{- else if resolvesToEnum .Type -}}
+        {{- $runtime := importStdPkg "cog" "Runtime" -}}
+        {{- $reflect := importStdPkg .Type.AsRef.ReferredPkg .Type.AsRef.ReferredType -}}
+        Runtime.formatEnum({{ .Type.AsRef.ReferredType }}.class, {{- .Path | formatGuardPath }})
+    {{- else }}
+        {{- $runtime := importStdPkg "cog" "Runtime" -}}
+        Runtime.dump({{ .Path | formatGuardPath }})
+    {{- end }}
+{{- end }}
+
+{{- define "guards" }}
+    {{- $guardsCount := sub1 (len .) -}}
+    {{- range $i, $guard := . }}{{- template "guard" $guard }}{{ if ne $i $guardsCount }} && {{ end }}{{ end }}
+{{- end }}
+
+{{- define "prepare_arg" -}}
+    {{- with .Arg.Builder -}}
+        String {{ $.IntoVar }} = {{ formatRawRef .BuilderPkg (print .BuilderName "Converter") }}.convert({{ .ValuePath | formatGuardPath }}{{ if $.IsMapEntry }}.getValue(){{ end }});
+    {{- end -}}
+    {{- with .Arg.BuilderDisjunction -}}
+            String {{ $.IntoVar }} = "";        
+            switch ({{ (first (first .).Guards).Path }}) {
+            {{- range $builderChoice := . }}
+                case {{ upper (index $builderChoice.Guards 0).Value }}:
+                    {{- if ne (len $builderChoice.Guards) 1 }}
+                    if ({{ template "guards" (slice $builderChoice.Guards 1) }}) {
+                    {{- end }}
+                    {{ $.IntoVar }} = {{ formatRawRef $builderChoice.Builder.BuilderPkg (print $builderChoice.Builder.BuilderName "Converter") }}.convert({{ $builderChoice.Builder.ValuePath }});
+                    {{- if ne (len $builderChoice.Guards) 1 }}
+                    }
+                    {{- end }}
+            {{- end }}
+            }
+    {{- end -}}
+    {{- with .Arg.Array -}}
+        {{- $reflect := importStdPkg "java.util" "StringJoiner" -}}
+        StringJoiner tmp{{ $.IntoVar | upperCamelCase }} = new StringJoiner(", ");
+        for ({{ .ValueType | formatType }} {{ .ValueAs | formatPath }} : {{ .For | formatGuardPath }}) {
+            {{- $subIntoVar := print "tmp" .For.Last.Identifier (.ValueAs | formatPath) }}
+            {{ template "prepare_arg" (dict "IntoVar" $subIntoVar "Arg" .ForArg "IsMapEntry" false) }}
+            {{- if and .ValueType.IsScalar (not (eq .ValueType.AsScalar.ScalarKind "string")) }}
+            tmp{{ $.IntoVar | upperCamelCase }}.add({{ $subIntoVar }}.toString());
+            {{- else if or (resolvesToBuilder .ValueType) (resolvesToComposableSlot .ValueType) }}
+            tmp{{ $.IntoVar | upperCamelCase }}.add({{ $subIntoVar }} + ".build()");
+            {{- else }}
+            tmp{{ $.IntoVar | upperCamelCase }}.add({{ $subIntoVar }});
+            {{- end }}
+        }
+        {{- if or (resolvesToBuilder .ValueType) (resolvesToComposableSlot .ValueType) }}
+        String {{ $.IntoVar }} = "() -> List.of("+ tmp{{ $.IntoVar | upperCamelCase }} +")";
+        {{- else }}
+        String {{ $.IntoVar }} = "List.of("+ tmp{{ $.IntoVar | upperCamelCase }} +")";
+        {{- end }}
+    {{- end -}}
+    {{- with .Arg.Map -}}
+        {{- $_ := importStdPkg "java.util" "StringJoiner" -}}
+        {{- $_ = importStdPkg "java.util" "Map" -}}
+        StringJoiner tmp{{ $.IntoVar | upperCamelCase }} = new StringJoiner(", ");
+        for (Map.Entry<{{ .IndexType | formatType }}, {{ .ValueType | formatType }}> {{ .ValueAs | formatPath }} : {{ .For }}.entrySet()) {
+            {{- $subIntoVar := print "tmp" .For.Last.Identifier (.ValueAs) }}
+            {{ template "prepare_arg" (dict "IntoVar" $subIntoVar "Arg" .ForArg "IsMapEntry" true) }}
+            tmp{{ $.IntoVar | upperCamelCase }}.add("Map.entry(" + {{ .ValueAs | formatPath }}.getKey() + ", " + {{ $subIntoVar }} + ")");
+        }
+        
+        String {{ $.IntoVar }} = "Map.ofEntries(" + tmp{{ $.IntoVar | upperCamelCase }} +")";
+    {{- end -}}
+    {{- with .Arg.Runtime -}}
+        {{- $reflect := importStdPkg "cog.variants" "Registry" -}}
+        String {{ $.IntoVar }} = Registry.{{ .FuncName | lowerCamelCase }}({{ range $i, $runtimeArg := .Args }}{{ if gt $i 0 }}, {{ end }}{{ $runtimeArg.ValuePath | formatPath }}{{ end }});
+    {{- end -}}
+    {{- with .Arg.Direct -}}
+        {{ if and .ValueType.IsScalar (eq .ValueType.AsScalar.ScalarKind "any") }}{{ .ValueType | formatType }}{{ else }}String{{ end }} {{ $.IntoVar }} = {{- template "value_formatter" (dict "Type" .ValueType "Path" .ValuePath "IsMapEntry" $.IsMapEntry) -}}{{ if $.IsMapEntry }}.getValue(){{ end }};
+    {{- end -}}
+{{- end }}
+
+{{- define "option_mapping" -}}
+    {{- $argsCount := sub1 (len .Args) -}}
+    {{- with .ArgumentGuards -}}if ({{ template "guards" . }}) { {{- end }}
+    {{- if and (eq (len .Guards) 0) (eq (len .ArgumentGuards) 0) -}} { {{- end }}
+        sb.append(".{{ .Option.Name | escapeVar | lowerCamelCase }}(");
+    {{- range $i, $arg := .Args }}
+        {{- $intoVar := print "arg" $i }}
+        {{ template "prepare_arg" (dict "IntoVar" $intoVar "Arg" $arg "IsMapEntry" false) }}
+        sb.append({{ $intoVar }});
+        {{ if ne $i $argsCount }}sb.append(", ");{{- end }}
+    {{- end }}
+        sb.append(")");
+    {{ with .ArgumentGuards -}} } {{- end }}
+    {{- if and (eq (len .Guards) 0) (eq (len .ArgumentGuards) 0) -}} } {{- end }}
+{{- end }}
+
+{{- define "conversion_mapping" -}}
+    {{- $firstOpt := .Options | first }}
+    {{- with $firstOpt.Guards -}}if ({{ template "guards" . }}) { {{- end }}
+    {{- if ne .RepeatFor nil -}}
+        {{- if .RepeatFor.Last.Type.IsArray -}}
+        {{ $repeatFor := .RepeatFor.Last.Type.AsArray.ValueType | formatType }}
+        for ({{ $repeatFor }} {{ .RepeatAs }} : {{ .RepeatFor }}) {
+        {{- else -}}
+        for (var entry : {{ .RepeatFor }}.entrySet()) {
+            var {{ .RepeatAs }} = entry.getValue();
+            {{- if ne .RepeatIndex "" }}
+            var {{ .RepeatIndex }} = entry.getKey();
+            {{- end -}}
+        {{- end -}}
+    {{ end }}
+    {{- range $optMapping := .Options }}
+        {{ template "option_mapping" $optMapping }}
+    {{- end }}
+    {{ if ne .RepeatFor nil -}} } {{- end }}
+    {{- with $firstOpt.Guards -}} } {{- end }}
+{{- end }}
+
+{{- define "converter" -}}
+{{- $reflect := ternary (importStdPkg "cog" "Converter") "" .IsPanel -}}
+public class {{ .Converter.BuilderName | upperCamelCase }}Converter {{ if .IsPanel }}implements Converter<Panel> {{ end }}{
+    public{{ if not .IsPanel }} static{{ end }} String convert({{ formatRawRef .Converter.Input.TypeRef.ReferredPkg .Converter.Input.TypeRef.ReferredType | upperCamelCase }} input) {
+        StringBuilder sb = new StringBuilder();
+        {{- $constructorArgsCount := sub1 (len .Converter.ConstructorArgs) }}
+        sb.append("new {{ .BuilderNameFormat }}(");
+        {{- with .Converter.ConstructorArgs }}
+        {{- range $i, $arg := . }}
+        sb.append({{- template "value_formatter" (dict "Type" $arg.ValueType "Path" $arg.ValuePath "IsMapEntry" false) -}});
+        {{- if ne $i $constructorArgsCount }}
+        sb.append(","); 
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        sb.append(")");
+    
+     {{- range .Converter.Mappings }}
+        {{ template "conversion_mapping" . }}
+     {{- end }}
+     
+     return sb.toString();
+     }
+}
+{{- end }}

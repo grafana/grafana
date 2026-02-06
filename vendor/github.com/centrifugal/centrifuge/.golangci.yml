@@ -1,0 +1,30 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - gosec
+  settings:
+    staticcheck:
+      checks:
+        - "all"
+        - "-ST1003"  # Excludes bad variable names check.
+        - "-QF1008"  # Prefer explicit access to fields.
+        - "-ST1000"  # No need in package comment check.
+        - "-QF1003"  # Tagged switch cases.
+    gosec:
+      excludes:
+        - "G115"  # Integer overflow check - sth to fix.
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters:
+          - gosec # Disable in tests, sth to fix.
+    paths:
+      - internal/websocket/examples/*

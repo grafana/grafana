@@ -1,0 +1,46 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+linters:
+  fast: false
+  disable-all: true
+  enable:
+    - revive
+    - megacheck
+    - govet
+    - unconvert
+    - gas
+    - gocyclo
+    - dupl
+    - misspell
+    - unparam
+    - unused
+    - typecheck
+    - ineffassign
+    # - stylecheck
+    - exportloopref
+    - gocritic
+    - nakedret
+    - gosimple
+    - prealloc
+
+# golangci-lint configuration file
+linters-settings:
+  revive:
+    ignore-generated-header: true
+    severity: warning
+    rules:
+      - name: package-comments
+        severity: warning
+        disabled: true
+      - name: exported
+        severity: warning
+        disabled: false
+        arguments: ["checkPrivateReceivers", "disableStutteringCheck"]
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl

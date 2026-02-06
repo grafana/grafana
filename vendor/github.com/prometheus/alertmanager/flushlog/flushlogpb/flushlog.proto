@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package flushlogpb;
+
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+
+// FlushLog holds information about a flush operation for a given alert group.
+message FlushLog {
+  // The fingerprint identifying the dispatching group.
+  uint64 group_fingerprint = 1;
+  // Timestamp of the flush.
+  google.protobuf.Timestamp timestamp = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// MeshFlushLog is a wrapper message to communicate a flush log
+// entry through a mesh network.
+message MeshFlushLog {
+  // The original raw flush log entry.
+  FlushLog flushLog = 1;
+  // A timestamp indicating when the mesh peer should evict
+  // the log entry from its state.
+  google.protobuf.Timestamp expires_at = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}

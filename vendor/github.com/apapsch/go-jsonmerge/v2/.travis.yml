@@ -1,0 +1,19 @@
+language: go
+
+go:
+- 1.x
+
+install:
+- mkdir -p artifacts
+
+env:
+  - GO111MODULE=on
+
+script:
+- go test -cover -v -coverprofile="./artifacts/cover.out" ./
+- go tool cover -html="./artifacts/cover.out" -o "./artifacts/cover.htm"
+- go test -cover -v -coverprofile="./artifacts/cover_cmd.out" ./cmd/jsonmerge
+- go tool cover -html="./artifacts/cover_cmd.out" -o "./artifacts/cover_cmd.htm"
+- GOARCH=amd64 GOOS=linux go build -o artifacts/jsonmerge ./cmd/jsonmerge
+- GOARCH=amd64 GOOS=windows go build -o artifacts/jsonmerge.exe ./cmd/jsonmerge
+- GOARCH=amd64 GOOS=darwin go build -o artifacts/jsonmerge_darwin ./cmd/jsonmerge

@@ -1,0 +1,131 @@
+# NOTE: this file is used by the tool defined in
+# ./cmd/urfave-cli-genflags/main.go which uses the
+# `Spec` type that maps to this file structure.
+flag_types:
+  bool:
+    struct_fields:
+      - name: Count
+        type: int
+        pointer: true
+      - name: DisableDefaultText
+        type: bool
+      - name: Action
+        type: "func(*Context, bool) error"
+  float64:
+    struct_fields:
+      - name: Action
+        type: "func(*Context, float64) error"
+  Float64Slice:
+    value_pointer: true
+    skip_interfaces:
+      - fmt.Stringer
+    struct_fields:
+      - name: separator
+        type: separatorSpec
+      - name: Action
+        type: "func(*Context, []float64) error"
+  int:
+    struct_fields:
+      - name: Base
+        type: int
+      - name: Action
+        type: "func(*Context, int) error"
+  IntSlice:
+    value_pointer: true
+    skip_interfaces:
+      - fmt.Stringer
+    struct_fields:
+      - name: separator
+        type: separatorSpec
+      - name: Action
+        type: "func(*Context, []int) error"
+  int64:
+    struct_fields:
+      - name: Base
+        type: int
+      - name: Action
+        type: "func(*Context, int64) error"
+  Int64Slice:
+    value_pointer: true
+    skip_interfaces:
+      - fmt.Stringer
+    struct_fields:
+      - name: separator
+        type: separatorSpec
+      - name: Action
+        type: "func(*Context, []int64) error"
+  uint:
+    struct_fields:
+      - name: Base
+        type: int
+      - name: Action
+        type: "func(*Context, uint) error"
+  UintSlice:
+    value_pointer: true
+    skip_interfaces:
+      - fmt.Stringer
+    struct_fields:
+      - name: separator
+        type: separatorSpec
+      - name: Action
+        type: "func(*Context, []uint) error"
+  uint64:
+    struct_fields:
+      - name: Base
+        type: int
+      - name: Action
+        type: "func(*Context, uint64) error"
+  Uint64Slice:
+    value_pointer: true
+    skip_interfaces:
+      - fmt.Stringer
+    struct_fields:
+      - name: separator
+        type: separatorSpec
+      - name: Action
+        type: "func(*Context, []uint64) error"
+  string:
+    struct_fields:
+      - name: TakesFile
+        type: bool
+      - name: Action
+        type: "func(*Context, string) error"
+  StringSlice:
+    value_pointer: true
+    skip_interfaces:
+      - fmt.Stringer
+    struct_fields:
+      - name: separator
+        type: separatorSpec
+      - name: TakesFile
+        type: bool
+      - name: Action
+        type: "func(*Context, []string) error"
+      - name: KeepSpace
+        type: bool
+  time.Duration:
+    struct_fields:
+      - name: Action
+        type: "func(*Context, time.Duration) error"
+  Timestamp:
+    value_pointer: true
+    struct_fields:
+      - name: Layout
+        type: string
+      - name: Timezone
+        type: "*time.Location"
+      - name: Action
+        type: "func(*Context, *time.Time) error"
+  Generic:
+    no_destination_pointer: true
+    struct_fields:
+      - name: TakesFile
+        type: bool
+      - name: Action
+        type: "func(*Context, interface{}) error"
+  Path:
+    struct_fields:
+      - name: TakesFile
+        type: bool
+      - name: Action
+        type: "func(*Context, Path) error"

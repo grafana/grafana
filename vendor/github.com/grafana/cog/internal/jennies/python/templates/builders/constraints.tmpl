@@ -1,0 +1,16 @@
+{{- define "constraints" }}
+{{- range . }}
+{{- $leftOperand := .Argument.Name|formatIdentifier }}
+{{- $operator := .Op }}
+{{- if eq .Op "minLength" }}
+    {{- $leftOperand = print "len(" $leftOperand ")" }}
+    {{- $operator = ">=" }}
+{{- end }}
+{{- if eq .Op "maxLength" }}
+    {{- $leftOperand = print "len(" $leftOperand ")" }}
+    {{- $operator = "<=" }}
+{{- end }}
+if not {{ $leftOperand }} {{ $operator }} {{ .Parameter }}:
+    raise ValueError("{{ $leftOperand }} must be {{ $operator }} {{ .Parameter }}")
+{{- end }}
+{{- end }}

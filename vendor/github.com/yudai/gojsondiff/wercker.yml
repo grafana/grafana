@@ -1,0 +1,11 @@
+box: golang:1.6.3
+
+build:
+  steps:
+    - setup-go-workspace
+    - script:
+        name: tools
+        code: make tools
+    - script:
+        name: test
+        code: make test

@@ -1,0 +1,13 @@
+vendor/
+.vscode
+.idea
+.rocks/
+*.snap
+*.xlog
+*.snap.inprogress
+devdata/
+*.orig
+.luarc.json
+_examples/benchmark/bench_server/bench_server
+_examples/benchmark/bench_client/bench_client
+.claude

@@ -1,0 +1,45 @@
+final class {{ .Object.Name|formatObjectName }} implements \JsonSerializable, \Stringable {
+    /**
+     * @var {{ .EnumType|formatType }}
+     */
+    private $value;
+
+    /**
+     * @var array<string, {{ .Object.Name|formatObjectName }}>
+     */
+    private static $instances = [];
+
+    private function __construct({{ .EnumType|formatType }} $value)
+    {
+        $this->value = $value;
+    }
+{{ range .Object.Type.Enum.Values }}
+    public static function {{ .Name|formatEnumMemberName }}(): self
+    {
+        if (!isset(self::$instances["{{ .Name }}"])) {
+            self::$instances["{{ .Name }}"] = new self({{ .Value|formatScalar }});
+        }
+
+        return self::$instances["{{ .Name }}"];
+    }
+{{ end }}
+    public static function fromValue({{ .EnumType|formatType }} $value): self
+    {
+{{- range .Object.Type.Enum.Values }}
+        if ($value === {{ .Value|formatScalar }}) {
+            return self::{{ .Name|formatEnumMemberName }}();
+        }
+{{ end }}
+        throw new \UnexpectedValueException("Value '$value' is not part of the enum {{ .Object.Name|formatObjectName }}");
+    }
+
+    public function jsonSerialize(): {{ .EnumType|formatType }}
+    {
+        return $this->value;
+    }
+
+    public function __toString(): string
+    {
+        return {{ if ne .EnumType.Scalar.ScalarKind "string" }}(string) {{ end }}$this->value;
+    }
+}
