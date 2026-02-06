@@ -17,7 +17,8 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
-import { Transformation } from './types';
+import { QueryOptionField, Transformation } from './types';
+import { useQueryOptions } from './useQueryOptions';
 import { getEditorType, isDataTransformerConfig } from './utils';
 
 /**
@@ -38,6 +39,7 @@ export function QueryEditorContextWrapper({
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
+  const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
   // TODO: review all this garbage
@@ -89,6 +91,21 @@ export function QueryEditorContextWrapper({
       transformations,
     };
   }, [panel, transformations]);
+
+  const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
+
+  // Callbacks to open/close sidebar with optional focus
+  const openSidebar = useCallback((focusField?: QueryOptionField) => {
+    setIsQueryOptionsOpen(true);
+    if (focusField) {
+      setFocusedField(focusField);
+    }
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setIsQueryOptionsOpen(false);
+    setFocusedField(null);
+  }, []);
 
   const selectedQuery = useMemo(() => {
     const queries = queryRunnerState?.queries ?? [];
@@ -154,9 +171,11 @@ export function QueryEditorContextWrapper({
         setSelectedQueryRefId(null);
       },
       queryOptions: {
-        options: dataPane.buildQueryOptions(),
+        options: queryOptions,
         isQueryOptionsOpen,
-        setIsQueryOptionsOpen,
+        openSidebar,
+        closeSidebar,
+        focusedField,
       },
       selectedQueryDsData: selectedQueryDsData ?? null,
       selectedQueryDsLoading,
@@ -164,14 +183,14 @@ export function QueryEditorContextWrapper({
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
       cardType: getEditorType(selectedQuery || selectedTransformation),
     }),
-    // Re-compute when queryRunner state changes (maxDataPoints, minInterval, etc.)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       selectedQuery,
       selectedTransformation,
-      dataPane,
-      queryRunnerState,
+      queryOptions,
       isQueryOptionsOpen,
+      openSidebar,
+      closeSidebar,
+      focusedField,
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,

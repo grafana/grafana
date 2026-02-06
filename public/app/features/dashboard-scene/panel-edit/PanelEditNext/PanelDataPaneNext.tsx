@@ -2,7 +2,6 @@ import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef, g
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneDataTransformer,
-  sceneGraph,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -292,48 +291,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   };
 
   // Query Options Operations
-  public buildQueryOptions = (): QueryGroupOptions => {
-    const panel = this.state.panelRef.resolve();
-    const queryRunner = getQueryRunnerFor(panel);
-    const { dsSettings } = this.state;
-
-    if (!queryRunner) {
-      return {
-        queries: [],
-        dataSource: { type: undefined, uid: undefined },
-      };
-    }
-
-    const timeRangeObj = sceneGraph.getTimeRange(panel);
-
-    let timeRangeOpts: QueryGroupOptions['timeRange'] = {
-      from: undefined,
-      shift: undefined,
-      hide: undefined,
-    };
-
-    if (timeRangeObj instanceof PanelTimeRange) {
-      timeRangeOpts = {
-        from: timeRangeObj.state.timeFrom,
-        shift: timeRangeObj.state.timeShift,
-        hide: timeRangeObj.state.hideTimeOverride,
-      };
-    }
-
-    return {
-      cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? queryRunner.state.cacheTimeout : undefined,
-      queryCachingTTL: dsSettings?.cachingConfig?.enabled ? queryRunner.state.queryCachingTTL : undefined,
-      dataSource: {
-        default: dsSettings?.isDefault,
-        ...(dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined }),
-      },
-      queries: queryRunner.state.queries,
-      maxDataPoints: queryRunner.state.maxDataPoints,
-      minInterval: queryRunner.state.minInterval,
-      timeRange: timeRangeOpts,
-    };
-  };
-
   public onQueryOptionsChange = (options: QueryGroupOptions) => {
     const panel = this.state.panelRef.resolve();
     const queryRunner = getQueryRunnerFor(panel);
