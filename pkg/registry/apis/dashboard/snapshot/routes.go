@@ -153,11 +153,9 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					cmd.UserID, _ = identity.UserIdentifier(user.GetID())
 
 					// TODO: add logic for external and internal snapshots
-					if cmd.External {
-						// TODO: if it is an external dashboard make a POST to the public snapshot server
-					} else {
-
-					}
+					//if cmd.External {
+					//	// TODO: if it is an external dashboard make a POST to the public snapshot server
+					//}
 
 					// Handle local snapshot creation
 					originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)

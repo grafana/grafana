@@ -89,8 +89,8 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 		UserID: userID,
 	}
 
-	if snap.ObjectMeta.Name != "" {
-		cmd.Key = snap.ObjectMeta.Name
+	if snap.Name != "" {
+		cmd.Key = snap.Name
 	}
 
 	if snap.Spec.DeleteKey != nil {
@@ -156,7 +156,7 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 	}
 
 	if cmd.Key != "" {
-		snap.ObjectMeta.Name = cmd.Key
+		snap.Name = cmd.Key
 	}
 
 	if cmd.DeleteKey != "" {
