@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func TestService_GetInhibitionRules_WithImported(t *testing.T) {
+func TestService_GetInhibitionRules(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
 
@@ -75,20 +75,20 @@ func TestService_GetInhibitionRules_WithImported(t *testing.T) {
 		assert.Equal(t, "GrafanaAlert", grafanaRule.SourceMatchers[0].Value)
 		assert.Equal(t, models.ProvenanceNone, grafanaRule.Provenance)
 
-		// Verify imported rule has SubtreeMatcher added
-		assert.Len(t, importedRule.SourceMatchers, 2) // Original + SubtreeMatcher
+		// Verify imported rule has managed route matcher added
+		assert.Len(t, importedRule.SourceMatchers, 2) // Original + managed route matcher
 		assert.Len(t, importedRule.TargetMatchers, 2)
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, importedRule.Provenance)
 
-		// Check for SubtreeMatcher
-		hasSubtree := false
+		// Check for managed route matcher
+		hasManagedRouteMatcher := false
 		for _, m := range importedRule.SourceMatchers {
-			if m.Name == "__imported" && m.Value == "test" {
-				hasSubtree = true
+			if m.Name == "__grafana_managed_route__" && m.Value == "default-route" {
+				hasManagedRouteMatcher = true
 				break
 			}
 		}
-		assert.True(t, hasSubtree, "Imported rule should have SubtreeMatcher")
+		assert.True(t, hasManagedRouteMatcher, "Imported rule should have managed route matcher")
 	})
 
 	t.Run("returns only Grafana rules when no imported config", func(t *testing.T) {
@@ -141,7 +141,7 @@ func TestService_GetInhibitionRule_WithImported(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, importedUID, result.UID)
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, result.Provenance)
-		assert.Len(t, result.SourceMatchers, 2) // Original + SubtreeMatcher
+		assert.Len(t, result.SourceMatchers, 2) // Original + managed route matcher
 	})
 
 	t.Run("returns not found for non-existent UID", func(t *testing.T) {
@@ -234,7 +234,7 @@ func createInhibitionRuleSvcSut() (*Service, *legacy_storage.AlertmanagerConfigS
 	prov := &MockProvisioningStore{}
 	xact := newNopTransactionManager()
 	logger := log.NewNopLogger()
-	return NewService(store, prov, xact, logger), store, prov
+	return NewService(store, prov, xact, logger, true), store, prov
 }
 
 func createConfigWithImportedInhibitRules(grafanaRules, importedRules []config.InhibitRule) *legacy_storage.ConfigRevision {
@@ -246,6 +246,9 @@ func createConfigWithImportedInhibitRules(grafanaRules, importedRules []config.I
 					Receiver: "default",
 				},
 			},
+		},
+		ManagedRoutes: map[string]*definitions.Route{
+			"default-route": {Receiver: "default"},
 		},
 	}
 
