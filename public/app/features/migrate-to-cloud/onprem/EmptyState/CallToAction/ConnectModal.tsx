@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
+import { CreateSessionApiArg } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
-import { CreateSessionApiArg } from '../../../api';
 import { maybeAPIError } from '../../../api/errors';
 
 interface Props {
