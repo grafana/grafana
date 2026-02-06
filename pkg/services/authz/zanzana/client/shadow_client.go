@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -137,5 +136,58 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 }
 
 func (c *ShadowClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+	acResChan := make(chan authlib.BatchCheckResponse, 1)
+	acErrChan := make(chan error, 1)
+
+	go func() {
+		if c.zanzanaClient == nil {
+			return
+		}
+
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
+		timer := prometheus.NewTimer(c.metrics.batchCheckSeconds.WithLabelValues("zanzana"))
+		res, err := c.zanzanaClient.BatchCheck(zanzanaCtxTimeout, id, req)
+		if err != nil {
+			c.logger.Error("Failed to run zanzana batch check", "error", err)
+		}
+		timer.ObserveDuration()
+
+		acRes := <-acResChan
+		acErr := <-acErrChan
+
+		if acErr == nil {
+			c.compareBatchCheckResults(acRes, res, id, req)
+		}
+	}()
+
+	timer := prometheus.NewTimer(c.metrics.batchCheckSeconds.WithLabelValues("rbac"))
+	res, err := c.accessClient.BatchCheck(ctx, id, req)
+	timer.ObserveDuration()
+	acResChan <- res
+	acErrChan <- err
+
+	return res, err
+}
+
+// compareBatchCheckResults compares the results from RBAC and Zanzana batch checks
+// and logs any discrepancies.
+func (c *ShadowClient) compareBatchCheckResults(acRes, zanzanaRes authlib.BatchCheckResponse, id authlib.AuthInfo, req authlib.BatchCheckRequest) {
+	for key, acResult := range acRes.Results {
+		zanzanaResult, ok := zanzanaRes.Results[key]
+		if !ok {
+			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+			c.logger.Warn("Zanzana batch check missing result", "key", key, "user", id.GetUID())
+			continue
+		}
+
+		if acResult.Allowed != zanzanaResult.Allowed {
+			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+			c.logger.Warn("Zanzana batch check result does not match", "key", key, "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "user", id.GetUID())
+		} else {
+			c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+		}
+	}
 }
