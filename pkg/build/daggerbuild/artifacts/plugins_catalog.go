@@ -104,6 +104,11 @@ func (c *CatalogPlugins) VerifyDirectory(ctx context.Context, client *dagger.Cli
 	return nil
 }
 
+// String returns the name of this artifact handler.
+func (c *CatalogPlugins) String() string {
+	return "catalog-plugins"
+}
+
 // Filename returns a deterministic path for caching purposes.
 func (c *CatalogPlugins) Filename(ctx context.Context) (string, error) {
 	// Create a unique filename based on plugins and distribution
