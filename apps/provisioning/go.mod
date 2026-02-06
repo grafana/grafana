@@ -5,7 +5,6 @@ go 1.25.7
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/google/go-github/v70 v70.0.0
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
