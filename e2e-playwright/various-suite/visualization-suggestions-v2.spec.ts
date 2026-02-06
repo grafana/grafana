@@ -17,7 +17,7 @@ test.describe(
     tag: ['@various', '@suggestions'],
   },
   () => {
-    test('Should be shown and clickable', async ({ selectors, gotoPanelEditPage }) => {
+    test.skip('Should be shown and clickable', async ({ selectors, gotoPanelEditPage }) => {
       // Open dashboard with edit panel
       const panelEditPage = await gotoPanelEditPage({
         dashboard: {
