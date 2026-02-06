@@ -65,6 +65,7 @@ runs:
             - 'go.sum'
             - 'go.work'
             - 'go.work.sum'
+            - 'vendor/**'
             - '**.go'
             - 'pkg/**'
             - '!pkg/**.md'
