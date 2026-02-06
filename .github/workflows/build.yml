@@ -31,6 +31,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: jfrog-ci
     steps:
+      - name: Free up disk space
+        run: |
+          df -h
+          sudo docker image prune -a --force
+          sudo docker builder prune -a --force
+          df -h
       - uses: actions/checkout@v2
       - name: Login to Artifactory
         uses: docker/login-action@v1

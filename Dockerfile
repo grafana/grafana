@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.4-alpine
+ARG GO_IMAGE=golang:1.24.9-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -14,9 +14,6 @@ ARG JS_SRC=js-builder
 
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
-
-# NI fork: update base image packages
-RUN apk update && apk upgrade
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -39,13 +36,14 @@ COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV=production
-RUN yarn build
-
+RUN yarn build && \
+    # NI Fork: Clean up to reduce image size
+    rm -rf node_modules/.cache && \
+    yarn cache clean && \
+    find . -name "*.map" -type f -delete && \
+    (find . -name "*.ts" -not -name "*.d.ts" -type f -delete 2>/dev/null || true)
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
-
-# NI fork: update base image packages
-RUN apk update && apk upgrade
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -87,10 +85,13 @@ COPY apps/alerting/notifications apps/alerting/notifications
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 
-RUN go mod download
+RUN go mod download && \
+    # NI Fork: Clean up Go module cache to reduce disk usage
+    go clean -modcache -cache || true
 RUN if [[ "$BINGO" = "true" ]]; then \
       go install github.com/bwplotka/bingo@latest && \
-      bingo get -v; \
+      bingo get -v && \
+      go clean -cache; \
     fi
 
 COPY embed.go Makefile build.go package.json ./
@@ -108,13 +109,13 @@ COPY .github .github
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
 
-RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS} && \
+    # NI Fork: Clean up Go build cache to reduce disk usage
+    go clean -cache -testcache && \
+    rm -rf /root/.cache/go-build /tmp/go-*
 
 # From-tarball build stage
 FROM ${BASE_IMAGE} AS tgz-builder
-
-# NI fork: update base image packages
-RUN apk update && apk upgrade
 
 WORKDIR /tmp/grafana
 
@@ -123,7 +124,9 @@ ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # add -v to make tar print every file it extracts
-RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1 && \
+   # NI Fork: Clean up tarball to reduce disk usage
+    rm /tmp/grafana.tar.gz
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -131,10 +134,6 @@ FROM ${JS_SRC} AS js-src
 
 # Final stage
 FROM ${BASE_IMAGE}
-
-# NI fork: update base image packages
-RUN apk update && apk upgrade
-
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
 LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
