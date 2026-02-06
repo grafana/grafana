@@ -679,7 +679,6 @@
       "message": {
         "required": "Обязательно."
       },
-      "or": "или",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -870,7 +869,9 @@
       "cancel": "Отмена",
       "clear-filters": "Очистить фильтры",
       "close": "",
+      "create": "",
       "delete": "Удалить",
+      "deleting": "",
       "edit": "Редактировать",
       "export": "Экспорт",
       "export-all": "Экспортировать всё",
@@ -1677,9 +1678,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1703,6 +1703,9 @@
         "will-import-rules-count_few": "",
         "will-import-rules-count_many": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "Существующие правила, управляемые источником данных",
@@ -1757,28 +1760,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2126,7 +2120,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Нужна помощь?"
@@ -2277,6 +2275,11 @@
       "aria-label-expand": "Развернуть",
       "aria-label-more": "другие действия для политики",
       "aria-label-more-default": "другие действия для стандартной политики",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Все экземпляры оповещений будут обрабатываться политикой по умолчанию, если не будут найдены другие подходящие политики.",
         "title": "Политика по умолчанию",
@@ -2286,6 +2289,14 @@
         "confirm": "Да, удалить политику",
         "warning-1": "Политика уведомления будет безвозвратно удалена.",
         "warning-2": "Действительно удалить политику?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Фильтруйте политики уведомления, используя список сопоставлений, разделенных запятыми, например, <1>серьезность=критическая, регион=EMEA</1>",
       "generated-policies": "Автоматически генерируемые политики",
@@ -2300,6 +2311,7 @@
         },
         "inherited": "Унаследованные",
         "mute-time": "Отключение звука, когда",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Время ожидания перед отправкой уведомления о новых оповещениях, добавленных в группу тех, для которых уже было отправлено первоначальное уведомление.",
@@ -2323,6 +2335,12 @@
       "new-policy": "Добавить новую политику",
       "no-matchers": "Нет средств сопоставления",
       "reload-policies": "Перезагрузить политики",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2364,27 +2382,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2400,6 +2397,9 @@
       "label-new-child-policy": "Новая дочерняя политика",
       "label-new-sibling-above": "Новый элемент того же уровня выше",
       "label-new-sibling-below": "Новый элемент того же уровня ниже"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Невозможно отобразить предварительный просмотр запроса. Некоторые источники данных, используемые в запросах, недоступны.",
@@ -2585,6 +2585,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Редактировать",
@@ -3199,6 +3202,10 @@
       "misconfigured-warning": "Неправильно настроенный шаблон.",
       "misconfigured-warning-details": "Шаблоны должны задаваться в разделах <2></2> и <5></5> конфигурации вашего обработчика оповещений."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Редактировать {{name}}",
       "title-drawer": "Редактирование {{name}}",
@@ -3243,7 +3250,8 @@
       "error-loading": {
         "description": "Не удалось загрузить временные интервалы. Повторите попытку позже.",
         "title": "Ошибка при загрузке временных интервалов"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Временные интервалы",
@@ -3261,6 +3269,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} назад)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3358,12 +3369,6 @@
       "label-edit": "Редактировать",
       "label-export": "Экспорт"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Да, удалить точку контакта",
       "deleting": "Удаление...",
@@ -3381,15 +3386,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Удаление политики уведомления"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6649,6 +6645,8 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Переключить табличное представление",
       "table-view-label-table-view": "Табличное представление"
     },
@@ -6695,9 +6693,6 @@
     },
     "query-editor": {
       "query": "Запрос"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7883,7 +7878,8 @@
       "loading-placeholder": "Загрузка…"
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Не выполнять запрос"
+      "aria-label-go-queryless": "Не выполнять запрос",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Ряды результатов: {{numItems}}",
@@ -9647,6 +9643,18 @@
       "csv-placeholder": "Ввести CSV...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -12157,19 +12165,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Добавить примечание с описанием изменений (необязательно)",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
       "label-path": "Путь",
-      "label-workflow": "Рабочий процесс",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12193,11 +12203,7 @@
       "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
     },
     "bitbucket": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "permissions": {
         "pull-requests-label": "Запросы на включение изменений",
         "pull-requests-read-write": "Чтение и запись",
@@ -12212,15 +12218,13 @@
       "token-label": "Пароль приложения",
       "token-required": "Требуется токен Bitbucket",
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с паролем приложения",
-      "token-user-label": "Имя пользователя",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория Bitbucket",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
+      "description-clear-repository-connection": "",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
       "error-quota-exceeded-message": "",
@@ -12232,6 +12236,7 @@
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
       "retry-action": "",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
+      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} дашборд",
@@ -12479,46 +12484,31 @@
       "subtitle-provisioning-feature": "Просмотр подключений для подготовки и управлением ими"
     },
     "git": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "pr-workflow-description": "Позволяет пользователям выбрать, следует ли открывать запрос на включение изменений при их сохранении. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, всё равно может потребоваться запрос на включение изменений.",
       "pr-workflow-label": "Включить параметр запроса на включение изменений при сохранении",
       "token-description": "Токен или пароль доступа к репозиторию Git",
       "token-label": "Токен доступа",
       "token-required": "Требуется токен Git",
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном доступа",
-      "token-user-label": "Имя пользователя",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Git",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория Git",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "github": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "pr-workflow-description": "Позволяет пользователям выбрать, следует ли открывать запрос на включение изменений при их сохранении. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, всё равно может потребоваться запрос на включение изменений.",
       "pr-workflow-label": "Включить параметр запроса на включение изменений при сохранении",
       "token-description": "Персональный токен доступа GitHub с правами доступа к репозиторию",
       "token-label": "Персональный токен доступа",
       "token-required": "Требуется токен GitHub",
       "url-description": "URL-адрес репозитория GitHub",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория GitHub",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "gitlab": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "permissions": {
         "api": "API",
         "api-read-write": "Чтение и запись",
@@ -12533,7 +12523,6 @@
       "token-label": "Токен доступа к проекту",
       "token-required": "Требуется токен GitLab",
       "url-description": "URL-адрес репозитория GitLab",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория GitLab",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
@@ -12750,9 +12739,15 @@
       "previous": "Назад"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Выполненный шаг",
@@ -12804,7 +12799,7 @@
         "token-text": "Токен личного доступа GitLab"
       },
       "go-to": "Перейти к",
-      "make-sure": "Обязательно включите эти разрешения"
+      "make-sure": ""
     },
     "warning-title-default": "Предупреждение",
     "wizard": {
@@ -12871,10 +12866,6 @@
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -13096,7 +13087,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",
