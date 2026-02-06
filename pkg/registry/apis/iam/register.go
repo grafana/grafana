@@ -603,37 +603,33 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	if err != nil {
 		return err
 	}
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = uniStore
 
-	if b.resourcePermissionsStorage == nil {
-		// No legacy storage configured, nothing more to do
-		return nil
-	}
-
-	legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
-	if err != nil {
-		return err
-	}
-
-	// Register the hooks for Zanzana sync
-	// FIXME: The hooks are registered on the legacy store
-	// Once we fully migrate to unified storage, we can move these hooks to the unified store
+	// trigger zanzana hooks on unistore writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
-		legacyStore.AfterCreate = b.AfterResourcePermissionCreate
-		legacyStore.BeginUpdate = b.BeginResourcePermissionUpdate
-		legacyStore.AfterDelete = b.AfterResourcePermissionDelete
+		uniStore.AfterCreate = b.AfterResourcePermissionCreate
+		uniStore.BeginUpdate = b.BeginResourcePermissionUpdate
+		uniStore.AfterDelete = b.AfterResourcePermissionDelete
 	}
 
-	dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
-	if err != nil {
-		return err
-	}
+	var regStoreDW storewrapper.K8sStorage = uniStore
 
-	// Not ideal, the alternative is to wrap both stores that dualwrite uses
-	regStoreDW, ok := dw.(storewrapper.K8sStorage)
-	if !ok {
-		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+	if b.resourcePermissionsStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		regStoreDW, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
 
 	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
