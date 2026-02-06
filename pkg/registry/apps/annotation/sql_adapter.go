@@ -79,6 +79,18 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		return nil, err
 	}
 
+	offset := int64(0)
+	if opts.Continue != "" {
+		token, err := decodeContinueToken(opts.Continue)
+		if err != nil {
+			return nil, err
+		}
+		if token.Limit != opts.Limit {
+			return nil, fmt.Errorf("continue token limit does not match the request limit")
+		}
+		offset = token.Offset
+	}
+
 	query := &annotations.ItemQuery{
 		SignedInUser: user,
 		OrgID:        orgID,
@@ -87,6 +99,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		From:         opts.From,
 		To:           opts.To,
 		Limit:        opts.Limit,
+		Offset:       offset,
 		AlertID:      -1,
 	}
 
@@ -100,10 +113,11 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		result = append(result, *a.toK8sResource(item, namespace))
 	}
 
-	return &AnnotationList{
-		Items:    result,
-		Continue: "",
-	}, nil
+	list := &AnnotationList{Items: result}
+	if int64(len(items)) == opts.Limit {
+		list.Continue = encodeContinueToken(offset+opts.Limit, opts.Limit)
+	}
+	return list, nil
 }
 
 func (a *sqlAdapter) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
