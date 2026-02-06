@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -1531,6 +1533,171 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, configuredOpts)
 		require.NotNil(t, configuredOpts.SigV4)
 		require.Equal(t, "es", configuredOpts.SigV4.Service)
+	})
+}
+
+func TestIntegrationService_getConnections(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	plugins := &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{
+				ID:       "test",
+				AliasIDs: []string{"grafana-testdata-datasource"},
+			}},
+			{JSONData: plugins.JSONData{
+				ID: "graphite",
+			}},
+		},
+	}
+	features := featuremgmt.WithFeatures()
+	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, plugins, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+	require.NoError(t, err)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+		OrgID: 1,
+		Name:  "AAA",
+		UID:   "aaa",
+		Type:  "graphite",
+	})
+	require.NoError(t, err)
+	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+		OrgID: 1,
+		Name:  "BBB",
+		UID:   "bbb",
+		Type:  "graphite",
+	})
+	require.NoError(t, err)
+	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+		OrgID: 1,
+		Name:  "CCC",
+		UID:   "ccc",
+		Type:  "test",
+	})
+	require.NoError(t, err)
+
+	t.Run("Should list all datasources", func(t *testing.T) {
+		res, err := dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+		require.NoError(t, err)
+		ids := make([]string, 0, len(res))
+		for _, ds := range res {
+			ids = append(ids, ds.UID)
+		}
+		require.ElementsMatch(t, []string{"aaa", "bbb", "ccc"}, ids)
+	})
+
+	t.Run("Should list all connections", func(t *testing.T) {
+		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
+			Namespace: "default",
+		})
+		require.NoError(t, err)
+
+		jj, err := json.MarshalIndent(res, "", "  ")
+		//fmt.Printf("%s", string(jj))
+		require.JSONEq(t, `{
+			"kind": "DataSourceConnectionList",
+			"apiVersion": "query.grafana.app/v0alpha1",
+			"items": [
+				{
+					"title": "AAA",
+					"name": "aaa",
+					"group": "graphite.datasource.grafana.app",
+					"version": "v0alpha1",
+					"plugin": "graphite"
+				},
+				{
+					"title": "BBB",
+					"name": "bbb",
+					"group": "graphite.datasource.grafana.app",
+					"version": "v0alpha1",
+					"plugin": "graphite"
+				},
+				{
+					"title": "CCC",
+					"name": "ccc",
+					"group": "test.datasource.grafana.app",
+					"version": "v0alpha1",
+					"plugin": "test"
+				}
+			]
+		}`, string(jj))
+	})
+
+	t.Run("Should find connection by UID alone", func(t *testing.T) {
+		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
+			Namespace: "default",
+			Name:      "bbb",
+		})
+		require.NoError(t, err)
+
+		jj, err := json.MarshalIndent(res, "", "  ")
+		require.JSONEq(t, `{
+			"kind": "DataSourceConnectionList",
+			"apiVersion": "query.grafana.app/v0alpha1",
+			"items": [
+				{
+					"title": "BBB",
+					"name": "bbb",
+					"group": "graphite.datasource.grafana.app",
+					"version": "v0alpha1",
+					"plugin": "graphite"
+				}
+			]
+		}`, string(jj))
+	})
+
+	t.Run("Should find connection by plugin alone", func(t *testing.T) {
+		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
+			Namespace: "default",
+			Plugin:    "test",
+		})
+		require.NoError(t, err)
+
+		jj, err := json.MarshalIndent(res, "", "  ")
+		require.JSONEq(t, `{
+			"kind": "DataSourceConnectionList",
+			"apiVersion": "query.grafana.app/v0alpha1",
+			"items": [
+				{
+					"title": "CCC",
+					"name": "ccc",
+					"group": "test.datasource.grafana.app",
+					"version": "v0alpha1",
+					"plugin": "test"
+				}
+			]
+		}`, string(jj))
+	})
+
+	t.Run("Should query with uid and plugin", func(t *testing.T) {
+		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
+			Namespace: "default",
+			Name:      "ccc",
+			Plugin:    "grafana-testdata-datasource", // an alias
+		})
+		require.NoError(t, err)
+
+		jj, err := json.MarshalIndent(res, "", "  ")
+		require.JSONEq(t, `{
+			"kind": "DataSourceConnectionList",
+			"apiVersion": "query.grafana.app/v0alpha1",
+			"items": [
+				{
+					"title": "CCC",
+					"name": "ccc",
+					"group": "test.datasource.grafana.app",
+					"version": "v0alpha1",
+					"plugin": "test"
+				}
+			]
+		}`, string(jj))
 	})
 }
 

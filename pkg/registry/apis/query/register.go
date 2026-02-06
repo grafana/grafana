@@ -142,7 +142,7 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		dataSourcesService, // duplicate?
+		dataSourcesService, // query.DataSourceConnectionProvider
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	)
 	apiregistration.RegisterAPI(builder)

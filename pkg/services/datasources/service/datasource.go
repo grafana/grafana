@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -217,10 +219,22 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 
 // ListConnections implements v0alpha1.DataSourceConnectionProvider.
 func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceConnectionQuery) (*queryV0.DataSourceConnectionList, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	ns, err := authlib.ParseNamespace(query.Namespace)
 	if err != nil {
 		return nil, err
 	}
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("missing valid namespace")
+	}
+	if ns.OrgID != user.GetOrgID() { // We may allow services to access other orgs in the future
+		return nil, fmt.Errorf("user must be in the requested namespace")
+	}
+
 	result := &queryV0.DataSourceConnectionList{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: queryV0.SchemeGroupVersion.String(),
@@ -238,6 +252,17 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			return nil, err
 		}
 		if dss != nil {
+			// If both name+plugin exist, we need to verify the type
+			if query.Plugin != "" && dss.Type != query.Plugin {
+				p, _ := s.pluginStore.Plugin(ctx, dss.Type)
+				if !(slices.Contains(p.AliasIDs, query.Plugin)) {
+					return result, nil
+				}
+			}
+
+			// TODO! Check permissions
+			// s.ac.Evaluate()
+
 			v, err := s.asConnection(dss)
 			if err != nil {
 				return nil, err
@@ -247,11 +272,19 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 		return result, nil
 	}
 
-	// Do a full query
-	dss, err := s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
-		OrgID:           ns.OrgID,
-		DataSourceLimit: 10000,
-	})
+	var dss []*datasources.DataSource
+	if query.Plugin != "" {
+		dss, err = s.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+			OrgID: ns.OrgID,
+			Type:  query.Plugin,
+		})
+	} else {
+		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+			OrgID:           ns.OrgID,
+			DataSourceLimit: 10000, // Do a full query
+			//User:            user,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +301,7 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 	return result, nil
 }
 
-func (s *Service) asConnection(ds *datasources.DataSource) (v *queryV0.DataSourceConnection, err error) {
+func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
 	g, _ := plugins.GetDatasourceGroupNameFromPluginID(ds.Type)
 	return &queryV0.DataSourceConnection{
 		Title:      ds.Name,
