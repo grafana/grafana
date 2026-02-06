@@ -25,6 +25,13 @@ type Dummy struct {
 	Status DummyStatus `json:"status" yaml:"status"`
 }
 
+func NewDummy() *Dummy {
+	return &Dummy{
+		Spec:   *NewDummySpec(),
+		Status: *NewDummyStatus(),
+	}
+}
+
 func (o *Dummy) GetSpec() any {
 	return o.Spec
 }

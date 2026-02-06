@@ -85,6 +85,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
+	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
@@ -116,6 +117,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// quotas/limits config
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
+	cfg.EnforceQuotas = section.Key("enforce_quotas").MustBool(false)
+	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)

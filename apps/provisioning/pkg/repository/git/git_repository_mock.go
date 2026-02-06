@@ -618,6 +618,39 @@ func (_c *MockGitRepository_ReadTree_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// SetBranch provides a mock function with given fields: branch
+func (_m *MockGitRepository) SetBranch(branch string) {
+	_m.Called(branch)
+}
+
+// MockGitRepository_SetBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetBranch'
+type MockGitRepository_SetBranch_Call struct {
+	*mock.Call
+}
+
+// SetBranch is a helper method to define mock.On call
+//   - branch string
+func (_e *MockGitRepository_Expecter) SetBranch(branch interface{}) *MockGitRepository_SetBranch_Call {
+	return &MockGitRepository_SetBranch_Call{Call: _e.mock.On("SetBranch", branch)}
+}
+
+func (_c *MockGitRepository_SetBranch_Call) Run(run func(branch string)) *MockGitRepository_SetBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockGitRepository_SetBranch_Call) Return() *MockGitRepository_SetBranch_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockGitRepository_SetBranch_Call) RunAndReturn(run func(string)) *MockGitRepository_SetBranch_Call {
+	_c.Run(run)
+	return _c
+}
+
 // Stage provides a mock function with given fields: ctx, opts
 func (_m *MockGitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	ret := _m.Called(ctx, opts)

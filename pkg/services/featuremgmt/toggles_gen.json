@@ -396,6 +396,34 @@
     },
     {
       "metadata": {
+        "name": "alertingMigrationWizardUI",
+        "resourceVersion": "1769514396967",
+        "creationTimestamp": "2026-01-27T11:46:36Z"
+      },
+      "spec": {
+        "description": "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingMultiplePolicies",
+        "resourceVersion": "1769532687968",
+        "creationTimestamp": "2026-01-27T16:51:27Z"
+      },
+      "spec": {
+        "description": "Enables the ability to create multiple alerting policies",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNavigationV2",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2026-01-14T10:58:11Z",
@@ -739,7 +767,8 @@
       "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-10-31T13:30:13Z"
+        "creationTimestamp": "2023-10-31T13:30:13Z",
+        "deletionTimestamp": "2026-01-31T00:02:02Z"
       },
       "spec": {
         "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
@@ -1227,7 +1256,8 @@
       "metadata": {
         "name": "dashboardSceneForViewers",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-11-02T19:02:25Z"
+        "creationTimestamp": "2023-11-02T19:02:25Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
@@ -1241,7 +1271,8 @@
       "metadata": {
         "name": "dashboardSceneSolo",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-02-11T08:08:47Z"
+        "creationTimestamp": "2024-02-11T08:08:47Z",
+        "deletionTimestamp": "2026-01-29T16:02:04Z"
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
@@ -1381,6 +1412,38 @@
     },
     {
       "metadata": {
+        "name": "datasourceDisableIdApi",
+        "resourceVersion": "1769095508888",
+        "creationTimestamp": "2026-01-22T15:24:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-22 15:25:08.888626 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Does not register datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceIdBasedAPIEnabled",
+        "resourceVersion": "1769095222868",
+        "creationTimestamp": "2026-01-22T15:20:22Z",
+        "deletionTimestamp": "2026-01-22T15:23:04Z"
+      },
+      "spec": {
+        "description": "Registers datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceQueryTypes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T16:46:28Z",
@@ -1392,6 +1455,24 @@
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceRemoveDeprecatedIdApi",
+        "resourceVersion": "1769095435732",
+        "creationTimestamp": "2026-01-22T15:23:04Z",
+        "deletionTimestamp": "2026-01-22T15:24:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-22 15:23:55.732998 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Does not registers datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -1418,7 +1499,8 @@
       "metadata": {
         "name": "disableEnvelopeEncryption",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2022-05-24T08:34:47Z"
+        "creationTimestamp": "2022-05-24T08:34:47Z",
+        "deletionTimestamp": "2026-01-29T15:12:34Z"
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
@@ -2312,15 +2394,43 @@
     {
       "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770238644779",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-04 20:57:24.779562 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+        "stage": "deprecated",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZResourcePermissionsRedirect",
+        "resourceVersion": "1770238644779",
+        "creationTimestamp": "2026-02-04T20:57:24Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZRolesRedirect",
+        "resourceVersion": "1770238644779",
+        "creationTimestamp": "2026-02-04T20:57:24Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2671,6 +2781,20 @@
       },
       "spec": {
         "description": "Enables search for team bindings in the app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamsHandlerRedirect",
+        "resourceVersion": "1770222039889",
+        "creationTimestamp": "2026-02-04T16:20:39Z"
+      },
+      "spec": {
+        "description": "Redirects the request to teams related endpoints to the app platform API",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -3171,18 +3295,18 @@
     {
       "metadata": {
         "name": "newTimeRangeZoomShortcuts",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769547504177",
         "creationTimestamp": "2025-11-20T21:14:27Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 20:58:24.177524 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables new keyboard shortcuts for time range zoom operations",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3292,6 +3416,20 @@
         "description": "Enables a group by action per panel",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelStyleActions",
+        "resourceVersion": "1769620237787",
+        "creationTimestamp": "2026-01-28T17:10:37Z"
+      },
+      "spec": {
+        "description": "Enable style actions (copy/paste) in the panel editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -3949,6 +4087,7 @@
         "name": "reportingRetries",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-08-31T07:47:47Z",
+        "deletionTimestamp": "2026-02-04T09:25:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4165,6 +4304,7 @@
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-14T13:51:05Z",
+        "deletionTimestamp": "2026-02-02T11:38:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4246,7 +4386,8 @@
       "metadata": {
         "name": "ssoSettingsLDAP",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "deletionTimestamp": "2026-01-31T01:56:50Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
@@ -4353,6 +4494,22 @@
     },
     {
       "metadata": {
+        "name": "teamHttpHeadersFromAppPlatform",
+        "resourceVersion": "1770314407036",
+        "creationTimestamp": "2026-02-05T17:51:52Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-05 18:00:07.036855 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "teamHttpHeadersTempo",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-05-22T19:13:31Z",
@@ -4418,18 +4575,18 @@
     {
       "metadata": {
         "name": "timeRangePan",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769547328567",
         "creationTimestamp": "2025-11-05T01:39:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 20:55:28.567609 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables time range panning functionality",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

@@ -149,7 +149,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
-  const isQueryEditorNext = Boolean(config.featureToggles.queryEditorNext);
+  const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
@@ -257,8 +257,9 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const canEditDashboard = dashboard.canEditDashboard();
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
-  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
 
   return (
     <>
@@ -301,28 +302,28 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     // Original controls style
     controls: css({
       gap: theme.spacing(1),
-      padding: isQueryEditorNext ? 0 : theme.spacing(2, 2, 1, 2),
+      padding: theme.spacing(2, 2, 1, 2),
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
       display: 'inline-block',
-      ...(isQueryEditorNext && {
-        marginBottom: theme.spacing(-1),
-      }),
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
-      '&:hover .dashboard-canvas-add-button': {
+
+      '&:hover .dashboard-canvas-controls': {
         opacity: 1,
-        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
-      // In panel edit we do not need any right padding as the splitter is providing it
+      ...(isQueryEditorNext && {
+        padding: 0,
+        marginBottom: theme.spacing(1),
+      }),
       paddingRight: 0,
     }),
     // New layout styles (used when feature toggle is on)

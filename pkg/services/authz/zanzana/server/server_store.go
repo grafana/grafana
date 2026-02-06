@@ -40,7 +40,7 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
-	res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
+	res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
 	if err != nil {
 		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
 	}
@@ -51,7 +51,7 @@ func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openf
 		}
 	}
 
-	createStoreRes, err := s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
+	createStoreRes, err := s.openFGAClient.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *Server) loadModel(ctx context.Context, storeID string, modules []transf
 
 	// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
 	// So with a pageSize of 1 we will get the latest model.
-	res, err := s.openfga.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
+	res, err := s.openFGAClient.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
 		StoreId:           storeID,
 		PageSize:          &wrapperspb.Int32Value{Value: 1},
 		ContinuationToken: continuationToken,
@@ -89,7 +89,7 @@ func (s *Server) loadModel(ctx context.Context, storeID string, modules []transf
 		}
 	}
 
-	writeRes, err := s.openfga.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
+	writeRes, err := s.openFGAClient.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
 		StoreId:         storeID,
 		TypeDefinitions: model.GetTypeDefinitions(),
 		SchemaVersion:   model.GetSchemaVersion(),

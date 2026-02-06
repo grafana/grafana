@@ -114,7 +114,11 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 	// Convert each Plugin to Meta
 	metaItems := make([]pluginsv0alpha1.Meta, 0, len(plugins.Items))
 	for _, plugin := range plugins.Items {
-		result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+		result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
+			ID:       plugin.Spec.Id,
+			Version:  plugin.Spec.Version,
+			ParentID: plugin.Spec.ParentId,
+		})
 		if err != nil {
 			// Log error but continue with other plugins
 			logging.FromContext(ctx).Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
@@ -166,7 +170,11 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 
-	result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+	result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
+		ID:       plugin.Spec.Id,
+		Version:  plugin.Spec.Version,
+		ParentID: plugin.Spec.ParentId,
+	})
 	if err != nil {
 		if errors.Is(err, meta.ErrMetaNotFound) {
 			gr := schema.GroupResource{
