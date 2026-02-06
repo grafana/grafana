@@ -138,177 +138,14 @@ This Terraform configuration configures the [Grafana provider](https://registry.
    }
    ```
 
-## Create a Fleet Management collector
-
-This section tells you how to preregister Alloy collectors with Fleet Management.
-Preregistration isn't possible with OpenTelemetry Collectors.
-Refer to the OpenTelemetry tab for more information.
-
-{{< tabs >}}
-{{< tab-content name="Alloy" >}}
-This Terraform configuration creates an Alloy collector with a remote attribute, using [`grafana_fleet_management_collector` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/fleet_management_collector).
-
-This configuration only preregisters the collector.
-You must complete the [Run Alloy](#run-alloy) step for the collector to register with Fleet Management and be assigned remote attributes.
-
-1. Create a file named `fm-collector.tf` and add the following code block:
-
-   ```terraform
-   resource "grafana_fleet_management_collector" "fm_collector" {
-     provider = grafana.fm
-
-     id = "prod_collector"
-     remote_attributes = {
-       "env" = "PROD"
-     }
-     enabled = true
-   }
-   ```
-
-{{< /tab-content >}}
-{{< tab-content name="OpenTelemetry" >}}
-Each collector in your fleet must have a universally unique identifier (UUID) to make its health data distinguishable from others and prevent misconfiguration.
-For this reason, preregistration isn't possible with OpenTelemetry Collectors because users can't set UUIDs with the OpAMP Supervisor.
-Instead, the Supervisor generates a UUID on startup and registers with Fleet Management using this ID.
-To manage an OpenTelemetry Collector as a Terraform resource, you must start the Supervisor, wait until the Collector registers with Fleet Management, and then import it to Terraform.
-Continue following the OpenTelemetry steps in this guide to learn how to start the Supervisor and import the Collector.
-{{< /tab-content >}}
-{{< /tabs >}}
-
-## Create a Fleet Management pipeline
-
-This Terraform configuration creates a configuration pipeline for profiling with a matcher for the collector declared in the previous step, using [`grafana_fleet_management_pipeline` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/fleet_management_pipeline).
-The pipeline writes the profiles to [Grafana Cloud Profiles](https://grafana.com/docs/grafana-cloud/monitor-applications/profiles/).
-
-TODO: There are a lot of mentions of Alloy in this step, but no mentions of changes in the Google doc. Is this not needed at all for OTel? Can we create an example configuration for OTel?
-1. Create a file named `profiling.alloy.tftpl` and add the following content:
-
-   ```alloy
-   // This pipeline scrapes pprof Go profiles from Alloy and sends them to Pyroscope.
-   //
-   // It requires the following environment variables to be set where Alloy is running:
-   //   Required:
-   //     * GCLOUD_RW_API_KEY: The Grafana Cloud API key with write access to Pyroscope.
-   //   Optional:
-   //     * ALLOY_ADDRESS: The address Alloy listens on. Defaults to 127.0.0.1:12345.
-   pyroscope.scrape "alloy" {
-       targets = [
-           {
-               "__address__" = coalesce(
-                   sys.env("ALLOY_ADDRESS"),
-                   "127.0.0.1:12345",
-               ),
-               "service_name" = "alloy",
-           },
-       ]
-       forward_to = [pyroscope.write.grafana_cloud.receiver]
-
-       profiling_config {
-           profile.process_cpu {
-               enabled = true
-           }
-
-           profile.memory {
-               enabled = true
-           }
-
-           profile.mutex {
-               enabled = true
-           }
-
-           profile.block {
-               enabled = true
-           }
-
-           profile.goroutine {
-               enabled = true
-           }
-       }
-   }
-
-   pyroscope.write "grafana_cloud" {
-       endpoint {
-           url = "${profiles_url}"
-
-           basic_auth {
-               username = "${profiles_id}"
-               password = sys.env("GCLOUD_RW_API_KEY")
-           }
-       }
-   }
-   ```
-
-2. Create a file named `fm-pipeline.tf` and add the following code block:
-
-   {{< tabs >}}
-   {{< tab-content name="Alloy" >}}
-
-   ```terraform
-   locals {
-     profiles_id  = data.grafana_cloud_stack.stack.profiles_user_id
-     profiles_url = data.grafana_cloud_stack.stack.profiles_url
-   }
-
-   resource "grafana_fleet_management_pipeline" "pipeline" {
-     provider = grafana.fm
-
-     name = "profiling"
-     contents = templatefile(
-       "profiling.alloy.tftpl",
-       {
-         profiles_id  = local.profiles_id,
-         profiles_url = local.profiles_url,
-       },
-     )
-     matchers = [
-       "env=\"PROD\""
-     ]
-     enabled = true
-   }
-   ```
-
-   {{< /tab-content >}}
-   {{< tab-content name="OpenTelemetry" >}}
-
-If your pipeline requires a token to authenticate to Fleet Management, use `${var.otel_token}` as a placeholder.
-Authentication will fail until you export this variable in the next step.
-
-   ```terraform
-   resource "grafana_fleet_management_pipeline" "pipeline" {
-     provider = grafana.fm
-
-     name = "profiling"
-     config_type = "OTEL" // Must be set!
-     contents = `service: TODO: Can we make this a profiling pipeline to match the Alloy example?
-     telemetry:
-       metrics:
-         readers:
-           - periodic:
-               exporter:
-                 otlp:
-                   protocol: http/protobuf
-                   endpoint: "https://otlp-gateway-prod-us-east-0.grafana.net/otlp/v1/metrics"
-                   headers:
-                     - name: Authorization
-                       value: "Basic ${key}"
-`
-     matchers = [
-       "env=\"PROD\""
-     ]
-     enabled = true
-   }
-
-{{< /tab-content >}}
-{{< /tabs >}}
-
-## Create an access policy and token
+## Create an access policy and token for the collector
 
 This Terraform configuration creates the following:
 
-- An access policy 
+- An access policy:
   - For Alloy collectors, the policy is named `alloy-policy` with `set:alloy-data-write` scope, using [`grafana_cloud_access_policy` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy)
   - For OpenTelemetry Collectors, the policy is named `otel-policy` with `otel-data-write` scope using [`grafana_cloud_access_policy` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy)
-- A token
+- A token:
   - For Alloy collectors, the token is named `alloy-token`, using [`grafana_cloud_access_policy_token` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy_token)
   - For OpenTelemetry Collectors, the token is named `otel-token`, using [`grafana_cloud_access_policy_token` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy_token)
 
@@ -388,9 +225,9 @@ This Terraform configuration creates the following:
    {{< /tab-content >}}
    {{< /tabs >}}
 
-## Create a configuration file
+## Create a local configuration file
 
-This step creates a configuration file for Fleet Management, using [`local_file` (Resource)](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file).
+This step creates a local configuration file for the collector or Supervisor, using [`local_file` (Resource)](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file).
 
 {{< tabs >}}
 {{< tab-content name="Alloy" >}}
@@ -410,7 +247,7 @@ This step creates a configuration file for Fleet Management, using [`local_file`
    }
    ```
 
-2. Create a file named `alloy-config.tf` and add the following code block:
+1. Create a file named `alloy-config.tf` and add the following code block:
 
    ```terraform
    resource "local_file" "alloy_config" {
@@ -428,7 +265,7 @@ This step creates a configuration file for Fleet Management, using [`local_file`
    }
    ```
 
-3. Replace the following field values:
+1. Replace the following field values:
    - `<ALLOY_CONFIG_PATH>` with the path the Alloy configuration file should be written to, for example `config.alloy`
 
 {{< /tab-content >}}
@@ -476,8 +313,214 @@ This step creates a configuration file for Fleet Management, using [`local_file`
 
 1. Run the command `terraform output -raw otel_token` to output the Fleet Management token.
 1. Run the command `export TF_VAR_otel_token=<FM_TOKEN>`, replacing <FM_TOKEN> with the output of the previous command.
-   Terraform fetches the variable and injects it into `${var.otel_token}` so that you can authenticate the Supervisor TODO: Supervisor or Collector?.
+   Terraform fetches the variable and injects it into `${var.otel_token}` so that you can authenticate the Supervisor and its Collector.
    Use `${var.otel_token}` to authenticate any OpenTelemetry pipelines and collectors that are needed for Fleet Management.
+
+{{< /tab-content >}}
+{{< /tabs >}}
+
+## Create a Fleet Management collector
+
+This section tells you how to preregister Alloy collectors with Fleet Management.
+Preregistration isn't possible with OpenTelemetry Collectors.
+Refer to the OpenTelemetry tab for more information.
+
+{{< tabs >}}
+{{< tab-content name="Alloy" >}}
+This Terraform configuration creates an Alloy collector with a remote attribute, using [`grafana_fleet_management_collector` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/fleet_management_collector).
+
+This configuration only preregisters the collector.
+You must complete the [Run Alloy](#run-the-collector) step for the collector to register with Fleet Management and be assigned remote attributes.
+
+1. Create a file named `fm-collector.tf` and add the following code block:
+
+   ```terraform
+   resource "grafana_fleet_management_collector" "fm_collector" {
+     provider = grafana.fm
+
+     id = "prod_collector"
+     remote_attributes = {
+       "env" = "PROD"
+     }
+     enabled = true
+   }
+   ```
+
+{{< /tab-content >}}
+{{< tab-content name="OpenTelemetry" >}}
+Fleet Management requires each collector in your fleet to have a universally unique identifier (UUID) so its health data is distinguishable from others and to prevent misconfiguration.
+Users can't set UUIDs with the OpAMP Supervisor, which means preregistration isn't possible with OpenTelemetry Collectors.
+Instead, the Supervisor generates a UUID on startup and registers its Collector with Fleet Management using this ID.
+To manage an OpenTelemetry Collector as a Terraform resource, you must start the Supervisor, wait until the Collector registers with Fleet Management, and then import it to Terraform.
+Continue following the OpenTelemetry steps in this guide to learn how to start the Supervisor and import the Collector.
+{{< /tab-content >}}
+{{< /tabs >}}
+
+## Create a Fleet Management pipeline
+
+This Terraform configuration creates a configuration pipeline with a matcher for the collector declared in the previous step, using [`grafana_fleet_management_pipeline` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/fleet_management_pipeline).
+The Alloy pipeline writes the profiles to [Grafana Cloud Profiles](https://grafana.com/docs/grafana-cloud/monitor-applications/profiles/).
+The OpenTelemetry pipeline collects host metrics and writes them to Grafana Cloud.
+
+   {{< tabs >}}
+   {{< tab-content name="Alloy" >}}
+
+1. Create a file named `profiling.alloy.tftpl` and add the following content:
+
+   ```alloy
+   // This pipeline scrapes pprof Go profiles from Alloy and sends them to Pyroscope.
+   //
+   // It requires the following environment variables to be set where Alloy is running:
+   //   Required:
+   //     * GCLOUD_RW_API_KEY: The Grafana Cloud API key with write access to Pyroscope.
+   //   Optional:
+   //     * ALLOY_ADDRESS: The address Alloy listens on. Defaults to 127.0.0.1:12345.
+   pyroscope.scrape "alloy" {
+       targets = [
+           {
+               "__address__" = coalesce(
+                   sys.env("ALLOY_ADDRESS"),
+                   "127.0.0.1:12345",
+               ),
+               "service_name" = "alloy",
+           },
+       ]
+       forward_to = [pyroscope.write.grafana_cloud.receiver]
+
+       profiling_config {
+           profile.process_cpu {
+               enabled = true
+           }
+
+           profile.memory {
+               enabled = true
+           }
+
+           profile.mutex {
+               enabled = true
+           }
+
+           profile.block {
+               enabled = true
+           }
+
+           profile.goroutine {
+               enabled = true
+           }
+       }
+   }
+
+   pyroscope.write "grafana_cloud" {
+       endpoint {
+           url = "${profiles_url}"
+
+           basic_auth {
+               username = "${profiles_id}"
+               password = sys.env("GCLOUD_RW_API_KEY")
+           }
+       }
+   }
+   ```
+
+1. Create a file named `fm-pipeline.tf` and add the following code block:
+
+   ```terraform
+   locals {
+     profiles_id  = data.grafana_cloud_stack.stack.profiles_user_id
+     profiles_url = data.grafana_cloud_stack.stack.profiles_url
+   }
+
+   resource "grafana_fleet_management_pipeline" "pipeline" {
+     provider = grafana.fm
+
+     name = "profiling"
+     contents = templatefile(
+       "profiling.alloy.tftpl",
+       {
+         profiles_id  = local.profiles_id,
+         profiles_url = local.profiles_url,
+       },
+     )
+     matchers = [
+       "env=\"PROD\""
+     ]
+     enabled = true
+   }
+   ```
+
+   {{< /tab-content >}}
+   {{< tab-content name="OpenTelemetry" >}}
+
+1. Create a file named `hostmetrics.otel.tftpl` and add the following content:
+
+   ```yaml
+   exporters:
+     otlphttp/grafana_cloud:
+       auth:
+         authenticator: basicauth/grafana_cloud
+       endpoint: https://otlp-gateway-prod-ca-east-0.grafana.net/otlp
+   extensions:
+     basicauth/grafana_cloud:
+       client_auth:
+         password: "${fm_token}"
+         username: "${fm_user_id}"
+   processors:
+     batch: null
+     resourcedetection:
+       detectors:
+         - env
+         - system
+       override: false
+     transform/add_host_metric_attributes:
+       error_mode: ignore
+       metric_statements:
+         - context: datapoint
+           statements:
+             - set(attributes["host.name"], resource.attributes["host.name"])
+             - set(attributes["os.type"], resource.attributes["os.type"])
+   receivers:
+     hostmetrics:
+       scrapers:
+         load: null
+         memory: null
+   service:
+     extensions:
+       - basicauth/grafana_cloud
+     pipelines:
+       metrics/hostmetrics:
+         exporters:
+           - otlphttp/grafana_cloud
+         processors:
+           - resourcedetection
+           - transform/add_host_metric_attributes
+           - batch
+         receivers:
+           - hostmetrics
+   ```
+
+1. Create a file named `fm-pipeline.tf` and add the following code block.
+   If your pipeline requires a token to authenticate to Fleet Management, use `${var.otel_token}` as a placeholder.
+   Authentication will fail until you export this variable in the next step.
+
+   ```terraform
+   resource "grafana_fleet_management_pipeline" "host_metrics" {
+     provider = grafana.fm
+
+     name = "host_metrics"
+     config_type = "OTEL"
+     contents = templatefile(
+       "hostmetrics.otel.tfpl",
+       {
+         fm_token  = var.otel_token,
+         fm_user_id = local.fm_id,
+       },
+     )
+     matchers = [
+       "env=\"PROD\""
+     ]
+     enabled = true
+   }
+   ```
 
 {{< /tab-content >}}
 {{< /tabs >}}
@@ -504,7 +547,13 @@ In a terminal, run the following commands from the directory where all of the co
    terraform apply
    ```
 
-## Run Alloy
+## Run the collector
+
+For a collector to register with Fleet Management, it must be running.
+This step shows you how to run Alloy or the OpAMP Supervisor, which creates a running OpenTelemetry Collector.
+
+{{< tabs >}}
+{{< tab-content name="Alloy" >}}
 
 To learn how to start or restart Alloy, refer to [Run Grafana Alloy](https://grafana.com/docs/alloy/latest/set-up/run/).
 
@@ -521,9 +570,59 @@ The variable `GCLOUD_RW_API_KEY` must be set in the environment where Alloy is r
 1. Set the environment variable `GCLOUD_RW_API_KEY` to the value from the first step.
 1. Run Alloy.
 
+{{< /tab-content >}}
+{{< tab-content name="OpenTelemetry" >}}
+
+When you run the OpAMP Supervisor, it creates a Collector instance.
+
+TODO: Which env var need to be set? This is the list in the google doc:
+Set the following environment variables:
+GCLOUD_FM_URL to the Fleet Management URL used by your Grafana Cloud stack. You can find the URL in Grafana Cloud: navigate to the page Home > Connections > Collector > Fleet Management, select the tab API, and scroll to the section Base URLs.
+GCLOUD_OTLP_URL to the OTLP gateway URL used by your Grafana Cloud stack. You can find the URL in Grafana Cloud Portal: scroll to the section Your stacks, select Details for your stack, configure the card OpenTelemetry, and scroll to the section OTLP Endpoint.
+GCLOUD_INSTANCE_ID to your Grafana Cloud instance ID. You can find your instance ID in Grafana Cloud: navigate to the page Home > Connections > Collector > Fleet Management, select the tab API, and scroll to the section API Authentication.
+GCLOUD_RW_API_KEY to the cloud access policy token that you created in Step 1.
+GCLOUD_BASIC_AUTH to the base64-encoded representation of your basic authentication in username:password format, where the username is your cloud instance ID, and the password is the cloud access policy token.
+
+Run the Supervisor with the following command:
+
+```
+opampsupervisor --config=supervisor-config.yaml <<<TODO: what is the file name we should put here?
+```
+
+{{< /tab-content >}}
+{{< /tabs >}}
+
+## [OpenTelemetry only] Import the Collectors
+
+The OpAMP Supervisor has created a running Collector.
+Before you can manage it in Fleet Management, however, you must import it.
+
+1. Create a file named `fm-collector.tf` and add the following content:
+
+   ```terraform
+   resource "grafana_fleet_management_collector" "otel_collector" {
+     provider = grafana.fm
+
+     id = "<COLLECTOR_ID>"
+     collector_type = "OTEL"
+     remote_attributes = {
+       "env" = "PROD"
+     }
+     enabled = true
+   }
+   ```
+
+   Replace <COLLECTOR_ID> with the UUID generated by the Supervisor. TODO: Where do they find this ID?
+
+1. Run the following command, replacing the <COLLECTOR_ID> placeholder with the same UUID in the previous step:
+
+   ```
+   terraform import grafana_fleet_management_collector.otel_collector <COLLECTOR_ID>
+   ```
+
 ## Validation
 
-After you apply the changes in the Terraform configurations and run Alloy, you should be able to verify the following:
+After you apply the changes in the Terraform configurations and run the collector, you should be able to verify the following:
 
 - A collector is added to the Fleet Management **Inventory tab**:
 
@@ -533,12 +632,12 @@ After you apply the changes in the Terraform configurations and run Alloy, you s
 
   {{< figure alt="The Remote configuration screen in the Fleet Management interface in Grafana Cloud which shows that a new configuration pipeline called `profiling` is active and was last modified a few seconds ago." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-pipeline.png" >}}
 
-- Alloy profiles are being exported to Grafana Cloud Profiles:
+- Telemetry is being exported to Grafana Cloud:
 
   {{< figure alt="A dashboard in Grafana Cloud which shows Alloy profiling data, including graphs for CPU and memory." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-profiles.png" >}}
 
 ## Conclusion
 
-In this guide, you created an access policy and a token for Fleet Management and Alloy, a collector with remote attributes, and a pipeline for profiling Alloy, all using Terraform.
+In this guide, you created an access policy and a token for Fleet Management and a collector, a collector with remote attributes, and a configuration pipeline, all using Terraform.
 
 To learn more about managing Grafana Cloud using Terraform, refer to [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
