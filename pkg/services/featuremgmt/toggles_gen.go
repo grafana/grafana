@@ -187,6 +187,10 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
+	// FlagDatasourceDisableIdApi
+	// Does not register datasource apis that use the numeric id
+	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
@@ -527,6 +531,10 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
+	// FlagTeamHttpHeadersFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -603,8 +611,16 @@ const (
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
 	// FlagKubernetesAuthZHandlerRedirect
-	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
 	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
+
+	// FlagKubernetesAuthZResourcePermissionsRedirect
+	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
+
+	// FlagKubernetesAuthZRolesRedirect
+	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
