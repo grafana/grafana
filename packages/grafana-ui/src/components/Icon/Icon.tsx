@@ -75,6 +75,10 @@ export const Icon = React.memo(
 
       return (
         <SVG
+          // The SVG can become 'stuck' if it's changed quickly before the previous icon finished loading.
+          // See https://github.com/gilbarbara/react-inlinesvg/issues/247
+          // By using the svgPath as the key, we ensure that the component is re-mounted and the new icon is loaded correctly.
+          key={svgPath}
           aria-hidden={
             rest.tabIndex === undefined &&
             !title &&
