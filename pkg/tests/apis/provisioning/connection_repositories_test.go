@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -21,18 +22,22 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	connectionName := "connection-repositories-test"
+	connectionType := provisioning.GithubConnectionType
+	namePrefix := fmt.Sprintf("%s-", connectionType)
+	fullName := namePrefix + connectionName
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",
 		"kind":       "Connection",
 		"metadata": map[string]any{
-			"name":      "connection-repositories-test",
+			"name":      connectionName,
 			"namespace": "default",
 		},
 		"spec": map[string]any{
 			"title": "Test Connection",
-			"type":  "github",
+			"type":  connectionType,
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -53,7 +58,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(fullName).
 			SubResource("repositories").
 			Do(ctx).
 			StatusCode(&statusCode)
@@ -88,7 +93,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.EditorREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(fullName).
 			SubResource("repositories").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -102,7 +107,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.ViewerREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(fullName).
 			SubResource("repositories").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -118,7 +123,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(fullName).
 			SubResource("repositories").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").

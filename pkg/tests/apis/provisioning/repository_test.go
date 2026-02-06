@@ -1213,11 +1213,13 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		c, err := helper.Connections.Resource.Get(ctx, "test-connection", metav1.GetOptions{})
+		c, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		conn := unstructuredToConnection(t, c)
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
@@ -1246,7 +1248,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 				"branch": "main",
 			},
 			"connection": map[string]any{
-				"name": "test-connection",
+				"name": connectionName,
 			},
 		},
 	}}
@@ -1374,11 +1376,13 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		},
 	}}
 
-	_, err = helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, "test-connection-invalid-repo", metav1.DeleteOptions{})
+		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 	})
 
 	t.Run("repository with non-existent branch becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1402,7 +1406,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "non-existent-branch-12345", // This branch doesn't exist
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}
@@ -1471,7 +1475,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "main",
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}

@@ -33,39 +33,50 @@ func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) a
 	)
 }
 
-func TestNewAdmissionMutator(t *testing.T) {
-	factory := NewMockFactory(t)
-	m := NewAdmissionMutator(factory)
-	require.NotNil(t, m)
-	assert.Equal(t, factory, m.factory)
-}
-
 func TestAdmissionMutator_Mutate(t *testing.T) {
 	tests := []struct {
 		name            string
 		obj             runtime.Object
 		factoryErr      error
+		wantObject      runtime.Object
 		wantErr         bool
 		wantErrContains string
 	}{
 		{
-			name: "calls factory mutate for connection",
+			name: "doesn't update name with prefix and calls factory mutate for connection",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "github-test"},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			wantObject: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "github-test"},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			wantErr: false,
+		},
+		{
+			name: "updates name with prefix and calls factory mutate for connection",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
 			},
+			wantObject: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "github-test"},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
 			wantErr: false,
+		},
+		{
+			name:       "returns nil for nil object",
+			obj:        nil,
+			wantObject: nil,
+			wantErr:    false,
 		},
 		{
 			name:            "returns error for non-connection object",
 			obj:             &provisioning.Repository{},
 			wantErr:         true,
 			wantErrContains: "expected connection configuration",
-		},
-		{
-			name:    "returns nil for nil object",
-			obj:     nil,
-			wantErr: false,
 		},
 		{
 			name: "propagates factory mutate error",
@@ -104,6 +115,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+			require.Equal(t, tt.wantObject, tt.obj)
 		})
 	}
 }
