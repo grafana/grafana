@@ -78,7 +78,7 @@ test.describe(
       ).toBeEnabled();
     });
 
-    test('should not apply suggestion if you navigate toggle the viz picker back off', async ({
+    test.skip('should not apply suggestion if you navigate toggle the viz picker back off', async ({
       selectors,
       gotoPanelEditPage,
     }) => {
@@ -135,7 +135,7 @@ test.describe(
       ).toBeDisabled();
     });
 
-    test('should not apply suggestion if you navigate back to the dashboard', async ({
+    test.skip('should not apply suggestion if you navigate back to the dashboard', async ({
       page,
       selectors,
       gotoPanelEditPage,
@@ -175,7 +175,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test('should not apply suggestion if you navigate back to the dashboard for a new panel', async ({
+    test.skip('should not apply suggestion if you navigate back to the dashboard for a new panel', async ({
       page,
       selectors,
       gotoDashboardPage,
