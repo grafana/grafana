@@ -118,22 +118,31 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return map;
   }, [suggestions]);
 
+  /**
+   * @TODO cleanup isAutoSelected, redo analytics
+   * */
   const applySuggestion = useCallback(
-    (suggestion: PanelPluginVisualizationSuggestion, suggestionIndex: number, isAutoSelected = false) => {
-      // @TODO Analytics??
-      VizSuggestionsInteractions.suggestionPreviewed({
-        pluginId: suggestion.pluginId,
-        suggestionName: suggestion.name,
-        panelState,
-        isAutoSelected,
-      });
-
-      // VizSuggestionsInteractions.suggestionAccepted({
-      //   pluginId: suggestion.pluginId,
-      //   suggestionName: suggestion.name,
-      //   panelState,
-      //   suggestionIndex: suggestionIndex + 1,
-      // });
+    (
+      suggestion: PanelPluginVisualizationSuggestion,
+      suggestionIndex: number,
+      isAutoSelected = false,
+      shouldCloseVizPicker = false
+    ) => {
+      if (shouldCloseVizPicker) {
+        VizSuggestionsInteractions.suggestionAccepted({
+          pluginId: suggestion.pluginId,
+          suggestionName: suggestion.name,
+          panelState,
+          suggestionIndex: suggestionIndex + 1,
+        });
+      } else {
+        VizSuggestionsInteractions.suggestionPreviewed({
+          pluginId: suggestion.pluginId,
+          suggestionName: suggestion.name,
+          panelState,
+          isAutoSelected,
+        });
+      }
 
       setSuggestionHash(suggestion.hash);
 
@@ -142,7 +151,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
           pluginId: suggestion.pluginId,
           options: suggestion.options,
           fieldConfig: suggestion.fieldConfig,
-          withModKey: true,
+          withModKey: !shouldCloseVizPicker, // close picker if shouldCloseVizPicker is true @TODO revisit
           fromSuggestions: true,
         },
         undefined
@@ -256,7 +265,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
                             'Edit {{suggestionName}} visualization',
                             { suggestionName: suggestion.name }
                           )}
-                          onClick={() => applySuggestion(suggestion, suggestionIndex)}
+                          onClick={() => applySuggestion(suggestion, suggestionIndex, false, true)}
                         >
                           {t('panel.visualization-suggestions.edit', 'Edit')}
                         </Button>
