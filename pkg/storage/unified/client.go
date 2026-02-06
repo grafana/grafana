@@ -2,7 +2,9 @@ package unified
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
@@ -365,7 +368,50 @@ func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOp
 		}, []grpc.StreamClientInterceptor{
 			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
 			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+			watchShutdownTrailerInterceptor(),
 		}
+}
+
+func watchShutdownTrailerInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		stream, err := streamer(ctx, desc, cc, method, opts...)
+		if err != nil || method != resourcepb.ResourceStore_Watch_FullMethodName {
+			return stream, err
+		}
+
+		return &watchShutdownTrailerStream{
+			ClientStream: stream,
+		}, nil
+	}
+}
+
+type watchShutdownTrailerStream struct {
+	grpc.ClientStream
+}
+
+func (s *watchShutdownTrailerStream) RecvMsg(m interface{}) error {
+	err := s.ClientStream.RecvMsg(m)
+	if err == nil || errors.Is(err, io.EOF) {
+		return err
+	}
+
+	if isWatchShutdownTrailer(s.ClientStream.Trailer()) {
+		return io.EOF
+	}
+
+	return err
+}
+
+func isWatchShutdownTrailer(md metadata.MD) bool {
+	if md == nil {
+		return false
+	}
+	for _, value := range md.Get(resource.WatchShutdownTrailerKey) {
+		if value == resource.WatchShutdownTrailerValue {
+			return true
+		}
+	}
+	return false
 }
 
 func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
