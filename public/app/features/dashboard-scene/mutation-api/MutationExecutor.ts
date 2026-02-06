@@ -13,34 +13,23 @@ import { DashboardMutationAPI } from '@grafana/runtime';
 
 import type { DashboardScene } from '../scene/DashboardScene';
 
-import {
-  handleAddPanel,
-  handleRemovePanel,
-  handleUpdatePanel,
-  handleAddVariable,
-  handleRemoveVariable,
-  handleUpdateVariable,
-  handleListVariables,
-  handleUpdateTimeSettings,
-  handleUpdateDashboardMeta,
-  handleGetDashboardInfo,
-  handleEnterEditMode,
-  requiresEdit,
-  readOnly,
+import { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
+import type {
+  CommandDefinition,
   MutationContext,
   MutationTransactionInternal,
-  MutationHandler,
   PermissionCheck,
-} from './handlers';
-import { validatePayload } from './schemas';
-import { Mutation, MutationType, MutationResult, MutationEvent, MUTATION_TYPES } from './types';
+} from './commands/types';
+import type { Mutation, MutationResult, MutationEvent } from './types';
 
 /**
- * Type guard that validates a string is a valid MutationType.
+ * Type guard that validates a string is a valid command name.
  */
-function isMutationType(type: string): type is MutationType {
-  return MUTATION_TYPES.some((t) => t === type);
+function isValidCommandType(type: string): boolean {
+  return MUTATION_TYPES.includes(type);
 }
+
+type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
 /**
  * A registered command: handler + permission check.
@@ -73,7 +62,7 @@ class MutationEventBus {
 
 export class MutationExecutor {
   private scene!: DashboardScene;
-  private commands: Map<MutationType, CommandRegistration> = new Map();
+  private commands: Map<string, CommandRegistration> = new Map();
   private eventBus = new MutationEventBus();
   private _currentTransaction: MutationTransactionInternal | null = null;
 
@@ -82,14 +71,14 @@ export class MutationExecutor {
   }
 
   /**
-   * Set the dashboard scene to operate on
+   * Set the dashboard scene to operate on.
    */
   setScene(scene: DashboardScene): void {
     this.scene = scene;
   }
 
   /**
-   * Subscribe to mutation events
+   * Subscribe to mutation events.
    */
   onMutation(listener: MutationEventListener): () => void {
     return this.eventBus.subscribe(listener);
@@ -97,7 +86,6 @@ export class MutationExecutor {
 
   /**
    * Execute a single mutation.
-   * Accepts the loose public API input type and validates at runtime.
    */
   async execute(mutation: DashboardMutationAPI.MutationRequest): Promise<MutationResult> {
     const results = await this.executeBatch([mutation]);
@@ -106,14 +94,13 @@ export class MutationExecutor {
 
   /**
    * Execute multiple mutations atomically.
-   * Accepts the loose public API input type and validates at runtime.
    */
   async executeBatch(requests: DashboardMutationAPI.MutationRequest[]): Promise<MutationResult[]> {
     if (!this.scene) {
       throw new Error('No scene set. Call setScene() first.');
     }
 
-    // Normalize request types to UPPER_CASE (schemas may use different casing)
+    // Normalize request types to UPPER_CASE
     const normalizedRequests = requests.map((r) => ({
       ...r,
       type: r.type.toUpperCase(),
@@ -122,7 +109,7 @@ export class MutationExecutor {
     // Convert requests to internal mutations, validating types
     const mutations: Mutation[] = [];
     for (const request of normalizedRequests) {
-      if (!isMutationType(request.type)) {
+      if (!isValidCommandType(request.type)) {
         return normalizedRequests.map(() => ({
           success: false,
           error: `Unknown command type: ${request.type}`,
@@ -170,7 +157,7 @@ export class MutationExecutor {
           throw new Error(permissionResult.error);
         }
 
-        // Validate payload using schema validators
+        // Validate payload using Zod schema
         const validationResult = validatePayload(mutation.type, mutation.payload);
         if (!validationResult.success) {
           results.push({
@@ -245,39 +232,23 @@ export class MutationExecutor {
   }
 
   /**
-   * Get current transaction (for debugging)
+   * Get current transaction (for debugging).
    */
   get currentTransaction(): MutationTransactionInternal | null {
     return this._currentTransaction;
   }
 
   private registerDefaultHandlers(): void {
-    // Panel operations
-    this.registerCommand('ADD_PANEL', handleAddPanel, requiresEdit);
-    this.registerCommand('REMOVE_PANEL', handleRemovePanel, requiresEdit);
-    this.registerCommand('UPDATE_PANEL', handleUpdatePanel, requiresEdit);
-
-    // Variable operations
-    this.registerCommand('ADD_VARIABLE', handleAddVariable, requiresEdit);
-    this.registerCommand('REMOVE_VARIABLE', handleRemoveVariable, requiresEdit);
-    this.registerCommand('UPDATE_VARIABLE', handleUpdateVariable, requiresEdit);
-    this.registerCommand('LIST_VARIABLES', handleListVariables, readOnly);
-
-    // Dashboard settings
-    this.registerCommand('UPDATE_TIME_SETTINGS', handleUpdateTimeSettings, requiresEdit);
-    this.registerCommand('UPDATE_DASHBOARD_META', handleUpdateDashboardMeta, requiresEdit);
-
-    // Read-only
-    this.registerCommand('GET_DASHBOARD_INFO', handleGetDashboardInfo, readOnly);
-
-    // Edit mode
-    this.registerCommand('ENTER_EDIT_MODE', handleEnterEditMode, requiresEdit);
+    for (const cmd of ALL_COMMANDS) {
+      this.registerCommand(cmd);
+    }
   }
 
-  /**
-   * Register a command with its handler and permission check.
-   */
-  private registerCommand(type: MutationType, handler: MutationHandler, canExecute: PermissionCheck): void {
-    this.commands.set(type, { handler, canExecute });
+  private registerCommand(cmd: CommandDefinition): void {
+    this.commands.set(cmd.name, {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: executor validates with Zod before dispatch
+      handler: cmd.handler as MutationHandler,
+      canExecute: cmd.permission,
+    });
   }
 }

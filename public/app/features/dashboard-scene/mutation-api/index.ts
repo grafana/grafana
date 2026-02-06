@@ -27,38 +27,16 @@
  */
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export type {
-  MutationType,
-  Mutation,
-  MutationPayloadMap,
-  MutationResult,
-  MutationChange,
-  MutationTransaction,
-  MutationEvent,
-  AddPanelPayload,
-  RemovePanelPayload,
-  UpdatePanelPayload,
-  AddVariablePayload,
-  RemoveVariablePayload,
-  UpdateVariablePayload,
-  UpdateTimeSettingsPayload,
-  UpdateDashboardMetaPayload,
-  CommandSchemaDefinition,
-  ResourceSchemaDefinition,
-  PromptSchemaDefinition,
-} from './types';
+export type { Mutation, MutationResult, MutationChange, MutationTransaction, MutationEvent } from './types';
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { ALL_COMMANDS, MUTATION_TYPES, getZodSchema, getJSONSchema, validatePayload } from './commands/registry';
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export type { CommandDefinition } from './commands/types';
 
 /**
  * @internal Not part of the public API surface.
  */
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { MutationExecutor } from './MutationExecutor';
-
-// eslint-disable-next-line no-barrel-files/no-barrel-files
-export {
-  DASHBOARD_COMMAND_SCHEMAS,
-  DASHBOARD_RESOURCE_SCHEMAS,
-  DASHBOARD_PROMPT_SCHEMAS,
-  getCommandSchemaByName,
-  getResourceSchemaByUri,
-} from './commandSchemas';

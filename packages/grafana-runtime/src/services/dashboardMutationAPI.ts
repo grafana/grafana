@@ -19,11 +19,9 @@
  *
  * const api = DashboardMutationAPI.getDashboardMutationAPI();
  * if (api) {
- *   const request: DashboardMutationAPI.MutationRequest = {
- *     type: 'ADD_PANEL',
- *     payload: { title: 'My Panel', vizType: 'timeseries' }
- *   };
- *   const result: DashboardMutationAPI.MutationResult = await api.execute(request);
+ *   const result = await api.execute({ type: 'ADD_PANEL', payload: { ... } });
+ *   const zodSchema = api.getZodSchema('ADD_PANEL');
+ *   const jsonSchema = api.getJSONSchema('ADD_PANEL');
  * }
  * ```
  */
@@ -45,7 +43,7 @@ export interface MutationResult {
   changes?: MutationChange[];
   /** Warnings (non-fatal issues) */
   warnings?: string[];
-  /** Data returned by read-only operations (e.g., GET_DASHBOARD_INFO) */
+  /** Data returned by read-only operations (e.g., GET_DASHBOARD_SETTINGS) */
   data?: unknown;
 }
 
@@ -59,27 +57,51 @@ export interface MutationChange {
   newValue: unknown;
 }
 
-/** A command definition with its schema */
-export interface MutationCommand {
-  command: string;
-  description: string;
-  inputSchema: {
-    type: 'object';
-    properties: Record<string, unknown>;
-    required?: string[];
+/** Response data from GET_DASHBOARD_SETTINGS */
+export interface DashboardSettings {
+  uid: string | undefined;
+  title: string;
+  description?: string;
+  tags?: string[];
+  editable?: boolean;
+  preload?: boolean;
+  liveNow?: boolean;
+  cursorSync?: 'Off' | 'Crosshair' | 'Tooltip';
+  links?: DashboardSettingsLink[];
+  timeSettings: {
+    from?: string;
+    to?: string;
+    timezone?: string;
+    autoRefresh?: string;
   };
+  canEdit: boolean;
+  isEditing: boolean;
+  availableCommands: string[];
+}
+
+/** Dashboard link as returned by GET_DASHBOARD_SETTINGS */
+export interface DashboardSettingsLink {
+  title: string;
+  type: string;
+  url?: string;
+  icon?: string;
+  tooltip?: string;
+  tags?: string[];
+  asDropdown?: boolean;
+  targetBlank?: boolean;
+  includeVars?: boolean;
+  keepTime?: boolean;
 }
 
 /**
  * The Dashboard Mutation API client interface.
  *
  * Common mutation types:
- * - GET_DASHBOARD_INFO: Get dashboard state (canEdit, isEditing, uid, title)
+ * - GET_DASHBOARD_SETTINGS: Get dashboard state and all settings
  * - ENTER_EDIT_MODE: Enter edit mode
  * - ADD_PANEL, REMOVE_PANEL, UPDATE_PANEL: Panel operations
  * - ADD_VARIABLE, REMOVE_VARIABLE: Variable operations
- * - UPDATE_DASHBOARD_META: Update title, description, tags
- * - UPDATE_TIME_SETTINGS: Update time range
+ * - UPDATE_DASHBOARD_SETTINGS: Update title, description, tags, time settings
  */
 export interface MutationClient {
   /** UID of the dashboard this client is bound to. Use to verify the target dashboard. */
@@ -89,10 +111,19 @@ export interface MutationClient {
   execute(mutation: MutationRequest): Promise<MutationResult>;
 
   /**
-   * Get the command definition for a command (for validation).
+   * Get the Zod schema for a command (for validation/composition).
+   * Returns null if command is not found.
+   *
+   * The return type is `unknown` to avoid coupling @grafana/runtime to Zod.
+   * Consumers can cast: `api.getZodSchema('ADD_PANEL') as z.ZodType`.
+   */
+  getZodSchema(command: string): unknown | null;
+
+  /**
+   * Get JSON Schema for a command, computed from Zod via z.toJSONSchema().
    * Returns null if command is not found.
    */
-  getSchema(command: string): MutationCommand | null;
+  getJSONSchema(command: string): Record<string, unknown> | null;
 }
 
 // Singleton instance
