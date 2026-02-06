@@ -2,9 +2,7 @@ package inhibition_rules
 
 import (
 	"context"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -14,10 +12,6 @@ type NopTransactionManager struct{}
 
 func newNopTransactionManager() *NopTransactionManager {
 	return &NopTransactionManager{}
-}
-
-func assertInTransaction(t *testing.T, ctx context.Context) {
-	assert.Truef(t, ctx.Value(NopTransactionManager{}) != nil, "Expected to be executed in transaction but there is none")
 }
 
 func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {

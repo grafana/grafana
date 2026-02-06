@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -34,15 +33,12 @@ type alertmanagerConfigStore interface {
 	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
 }
 
-type provenanceValidator func(from, to models.Provenance) error
-
 type Service struct {
 	configStore             alertmanagerConfigStore
 	provenanceStore         routeProvenanceStore
 	xact                    transactionManager
 	log                     log.Logger
 	validator               validation.ProvenanceStatusTransitionValidator
-	features                featuremgmt.FeatureToggles
 	multiplePoliciesEnabled bool
 }
 
