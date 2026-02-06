@@ -1,7 +1,7 @@
 import type { AppPluginConfig } from '@grafana/data';
 
 import { config } from '../../config';
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { getFeatureFlagClient } from '../../internal/openFeature';
 
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
@@ -14,7 +14,7 @@ function initialized(): boolean {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!evaluateBooleanFlag('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     // eslint-disable-next-line no-restricted-syntax
     apps = config.apps;
     return;
