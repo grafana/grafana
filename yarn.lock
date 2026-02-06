@@ -6567,6 +6567,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openfeature/react-sdk@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@openfeature/react-sdk@npm:1.2.0"
+  peerDependencies:
+    "@openfeature/web-sdk": ^1.5.0
+    react: ">=16.8.0"
+  checksum: 10/56411b9e6fbf79e13b2cbe2f45a632ba933127cad9b0e59bc714646d95516b51173e9aadd51fb829f27aba1f29383f2a5cd4d3cd97ae49a673e3175453e30c6e
+  languageName: node
+  linkType: hard
+
 "@openfeature/web-sdk@npm:^1.6.1":
   version: 1.7.2
   resolution: "@openfeature/web-sdk@npm:1.7.2"
@@ -20686,6 +20696,7 @@ __metadata:
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^6.0.0"
     "@openfeature/ofrep-web-provider": "npm:^0.3.3"
+    "@openfeature/react-sdk": "npm:^1.2.0"
     "@openfeature/web-sdk": "npm:^1.6.1"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"

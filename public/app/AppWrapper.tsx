@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment, ReactNode } from 'react';
@@ -6,6 +7,7 @@ import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -119,33 +121,35 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     return (
       <Provider store={store}>
         <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
-          <GrafanaContext.Provider value={context}>
-            <ThemeProvider value={config.theme2}>
-              <CacheProvider name={this.iconCacheID}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <MaybeTimeRangeProvider>
-                    <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={registries}>
-                        <ExtensionSidebarContextProvider>
-                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                            <GlobalStyles />
-                            <div className="grafana-app">
-                              <RouterWrapper {...routerWrapperProps} />
-                              <LiveConnectionWarning />
-                              <PortalContainer />
-                            </div>
-                          </UNSAFE_PortalProvider>
-                        </ExtensionSidebarContextProvider>
-                      </ExtensionRegistriesProvider>
-                    </ScopesContextProvider>
-                  </MaybeTimeRangeProvider>
-                </KBarProvider>
-              </CacheProvider>
-            </ThemeProvider>
-          </GrafanaContext.Provider>
+          <OpenFeatureProvider client={getFeatureFlagClient()}>
+            <GrafanaContext.Provider value={context}>
+              <ThemeProvider value={config.theme2}>
+                <CacheProvider name={this.iconCacheID}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <MaybeTimeRangeProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={registries}>
+                          <ExtensionSidebarContextProvider>
+                            <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                              <GlobalStyles />
+                              <div className="grafana-app">
+                                <RouterWrapper {...routerWrapperProps} />
+                                <LiveConnectionWarning />
+                                <PortalContainer />
+                              </div>
+                            </UNSAFE_PortalProvider>
+                          </ExtensionSidebarContextProvider>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
+                    </MaybeTimeRangeProvider>
+                  </KBarProvider>
+                </CacheProvider>
+              </ThemeProvider>
+            </GrafanaContext.Provider>
+          </OpenFeatureProvider>
         </ErrorBoundaryAlert>
       </Provider>
     );
