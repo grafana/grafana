@@ -696,9 +696,15 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+require github.com/quic-go/quic-go v0.49.0
+
 require (
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.5 // indirect
+	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
+	github.com/quic-go/qpack v0.5.1 // indirect
 )
 
 replace (
