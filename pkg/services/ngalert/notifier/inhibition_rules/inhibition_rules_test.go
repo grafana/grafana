@@ -1,4 +1,4 @@
-package provisioning
+package inhibition_rules
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func TestInhibitionRuleService_GetInhibitionRules_WithImported(t *testing.T) {
+func TestService_GetInhibitionRules_WithImported(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
 
@@ -106,7 +106,7 @@ func TestInhibitionRuleService_GetInhibitionRules_WithImported(t *testing.T) {
 	})
 }
 
-func TestInhibitionRuleService_GetInhibitionRule_WithImported(t *testing.T) {
+func TestService_GetInhibitionRule_WithImported(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
 
@@ -154,11 +154,11 @@ func TestInhibitionRuleService_GetInhibitionRule_WithImported(t *testing.T) {
 
 		_, err := sut.GetInhibitionRule(ctx, "non-existent-uid", orgID)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrInhibitionRuleNotFound)
+		assert.ErrorIs(t, err, models.ErrInhibitionRuleNotFound)
 	})
 }
 
-func TestInhibitionRuleService_UpdateInhibitionRule_RejectsImported(t *testing.T) {
+func TestService_UpdateInhibitionRule_RejectsImported(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
 
@@ -189,10 +189,10 @@ func TestInhibitionRuleService_UpdateInhibitionRule_RejectsImported(t *testing.T
 	// Try to update it
 	_, err = sut.UpdateInhibitionRule(ctx, importedRuleWithUID, orgID)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrInhibitionRuleOrigin)
+	assert.ErrorIs(t, err, models.ErrInhibitionRuleOrigin)
 }
 
-func TestInhibitionRuleService_DeleteInhibitionRule_RejectsImported(t *testing.T) {
+func TestService_DeleteInhibitionRule_RejectsImported(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
 
@@ -224,17 +224,17 @@ func TestInhibitionRuleService_DeleteInhibitionRule_RejectsImported(t *testing.T
 	err = sut.DeleteInhibitionRule(ctx, importedUID, orgID, models.ProvenanceAPI, "")
 
 	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrInhibitionRuleOrigin)
+	assert.ErrorIs(t, err, models.ErrInhibitionRuleOrigin)
 }
 
 // Test helpers
 
-func createInhibitionRuleSvcSut() (*InhibitionRuleService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
+func createInhibitionRuleSvcSut() (*Service, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
 	store := &legacy_storage.AlertmanagerConfigStoreFake{}
 	prov := &MockProvisioningStore{}
-	xact := &NopTransactionManager{}
+	xact := newNopTransactionManager()
 	logger := log.NewNopLogger()
-	return NewInhibitionRuleService(store, prov, xact, logger), store, prov
+	return NewService(store, prov, xact, logger), store, prov
 }
 
 func createConfigWithImportedInhibitRules(grafanaRules, importedRules []config.InhibitRule) *legacy_storage.ConfigRevision {

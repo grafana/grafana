@@ -15,7 +15,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 var (
@@ -81,7 +80,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 
 	rule, err := s.service.GetInhibitionRule(ctx, uid, info.OrgID)
 	if err != nil {
-		if stderrors.Is(err, provisioning.ErrInhibitionRuleNotFound) {
+		if stderrors.Is(err, ngmodels.ErrInhibitionRuleNotFound) {
 			return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
 		}
 		return nil, err
