@@ -353,6 +353,9 @@ type Cfg struct {
 	// Service Accounts
 	SATokenExpirationDayLimit int
 
+	// Team Member Cache
+	TeamMemberCache TeamMemberCacheSettings
+
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
 	AnnotationMaximumTagsLength        int64
@@ -1415,6 +1418,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+	cfg.TeamMemberCache = readTeamMemberCacheSettings(iniFile)
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
