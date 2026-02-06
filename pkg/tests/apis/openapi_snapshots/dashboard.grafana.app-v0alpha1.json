@@ -1737,19 +1737,27 @@
           {
             "name": "ownerReference",
             "in": "query",
-            "description": "filter by owner reference in the format {Group}/{Kind}/{Name}",
+            "description": "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "examples": {
               "": {},
               "team": {
-                "summary": "Team owner reference",
-                "value": "iam.grafana.app/Team/xyz"
+                "summary": "Owner references of team xyz or abc",
+                "value": [
+                  "iam.grafana.app/Team/xyz",
+                  "iam.grafana.app/Team/abc"
+                ]
               },
               "user": {
                 "summary": "User owner reference",
-                "value": "iam.grafana.app/User/abc"
+                "value": [
+                  "iam.grafana.app/User/abc"
+                ]
               }
             }
           },

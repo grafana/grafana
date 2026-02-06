@@ -111,10 +111,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagReportingRetries
-	// Enables rendering retries for the reporting feature
-	FlagReportingRetries = "reportingRetries"
-
 	// FlagReportingCsvEncodingOptions
 	// Enables CSV encoding options in the reporting feature
 	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"

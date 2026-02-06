@@ -688,8 +688,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
-  /** filter by owner reference in the format {Group}/{Kind}/{Name} */
-  ownerReference?: string;
+  /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
+  ownerReference?: string[];
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
   /** [experimental] optionally include matches from panel titles */

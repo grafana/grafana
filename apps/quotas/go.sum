@@ -663,8 +663,8 @@ github.com/grafana/grafana-aws-sdk v1.4.3 h1:Gwm7f2zyVTfVRmYS0GuZPe46aoQxVejb2/9
 github.com/grafana/grafana-aws-sdk v1.4.3/go.mod h1:tFJTBtW+0kmPqnPUaWch48aUSeZgnOCx+Lrf2/fiBP8=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 h1:FFcEA01tW+SmuJIuDbHOdgUBL+d7DPrZ2N4zwzPhfGk=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1/go.mod h1:Oi4anANlCuTCc66jCyqIzfVbgLXFll8Wja+Y4vfANlc=
-github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206110612-f4c45260a42a h1:pXsUVBFwhiPSg6k5FcX7Ac0sChXNj/8YzxFgPzxT9yc=
-github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206110612-f4c45260a42a/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
+github.com/grafana/grafana-plugin-sdk-go v0.287.0 h1:CEiNZidjZ0b711cYcwPK8+mbVUWVQYSEJTkizySNwD0=
+github.com/grafana/grafana-plugin-sdk-go v0.287.0/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
 github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5 h1:TzLUoJylS/aqfCRyJUsrZE6VZVGTQd2PdhA60bOA0hM=
 github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5/go.mod h1:NbjkuzchbQyNeGZ6lKRs4YNHh7JVdXO3UvBKTAl8u2Y=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
