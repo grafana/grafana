@@ -830,8 +830,8 @@ github.com/grafana/grafana-google-sdk-go v0.4.2 h1:F44hQF1y6UVJhlJPi+Mz+GCJsioVg
 github.com/grafana/grafana-google-sdk-go v0.4.2/go.mod h1:U73+w9DlbEtUonhQUzERwlXnzWTtfRoyrtKH8d3VY40=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
-github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206141233-a9a2ebeafc15 h1:HuF8zxGBM+SHFAY+bIQG8LCne/2XpqDCh5WmC3xGPrc=
-github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206141233-a9a2ebeafc15/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
+github.com/grafana/grafana-plugin-sdk-go v0.287.0 h1:CEiNZidjZ0b711cYcwPK8+mbVUWVQYSEJTkizySNwD0=
+github.com/grafana/grafana-plugin-sdk-go v0.287.0/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
 github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260127080522-461c3f3f9fb6 h1:HlRVfkgSQcryeX9ThF48zOTTbME0cJqfhX54Zcbq9RQ=
 github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260127080522-461c3f3f9fb6/go.mod h1:F3SRtonExRQiVqhBz1XYOe19e9luFc7EAELra+vX2RU=
 github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5 h1:TzLUoJylS/aqfCRyJUsrZE6VZVGTQd2PdhA60bOA0hM=

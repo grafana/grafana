@@ -199,7 +199,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206141233-a9a2ebeafc15 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.287.0 // indirect
 	github.com/grafana/grafana/apps/advisor v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/historian v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // indirect
