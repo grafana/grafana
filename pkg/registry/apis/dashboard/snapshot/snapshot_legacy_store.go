@@ -181,3 +181,53 @@ func (s *SnapshotLegacyStore) Update(ctx context.Context, name string, objInfo r
 func (s *SnapshotLegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("delete collection is not supported for snapshots")
 }
+
+// noCreateStorage wraps a rest.Storage and hides the rest.Creater interface
+// so the standard K8s POST endpoint is not registered. Snapshot creation is
+// only allowed through the custom /snapshots/create subresource route.
+type noCreateStorage struct {
+	inner rest.Storage
+}
+
+var (
+	_ rest.Storage              = (*noCreateStorage)(nil)
+	_ rest.Scoper               = (*noCreateStorage)(nil)
+	_ rest.SingularNameProvider = (*noCreateStorage)(nil)
+	_ rest.Getter               = (*noCreateStorage)(nil)
+	_ rest.Lister               = (*noCreateStorage)(nil)
+	_ rest.Updater              = (*noCreateStorage)(nil)
+	_ rest.GracefulDeleter      = (*noCreateStorage)(nil)
+	_ rest.CollectionDeleter    = (*noCreateStorage)(nil)
+	_ rest.TableConvertor       = (*noCreateStorage)(nil)
+)
+
+// NewNoCreateStorage wraps a storage to hide the rest.Creater interface.
+func NewNoCreateStorage(s rest.Storage) rest.Storage {
+	return &noCreateStorage{inner: s}
+}
+
+func (n *noCreateStorage) New() runtime.Object   { return n.inner.New() }
+func (n *noCreateStorage) Destroy()              { n.inner.Destroy() }
+func (n *noCreateStorage) NamespaceScoped() bool { return n.inner.(rest.Scoper).NamespaceScoped() }
+func (n *noCreateStorage) GetSingularName() string {
+	return n.inner.(rest.SingularNameProvider).GetSingularName()
+}
+func (n *noCreateStorage) NewList() runtime.Object { return n.inner.(rest.Lister).NewList() }
+func (n *noCreateStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return n.inner.(rest.TableConvertor).ConvertToTable(ctx, object, tableOptions)
+}
+func (n *noCreateStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return n.inner.(rest.Getter).Get(ctx, name, options)
+}
+func (n *noCreateStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return n.inner.(rest.Lister).List(ctx, options)
+}
+func (n *noCreateStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return n.inner.(rest.Updater).Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+func (n *noCreateStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return n.inner.(rest.GracefulDeleter).Delete(ctx, name, deleteValidation, options)
+}
+func (n *noCreateStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return n.inner.(rest.CollectionDeleter).DeleteCollection(ctx, deleteValidation, options, listOptions)
+}
