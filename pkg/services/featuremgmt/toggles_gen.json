@@ -4525,6 +4525,19 @@
     },
     {
       "metadata": {
+        "name": "teamMembershipQueryCache",
+        "resourceVersion": "1770376598537",
+        "creationTimestamp": "2026-02-06T11:16:38Z"
+      },
+      "spec": {
+        "description": "Enable in-memory caching for team member permission queries to reduce database load",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tempoAlerting",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-07-15T13:36:36Z",

@@ -535,6 +535,10 @@ const (
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
+	// FlagTeamMembershipQueryCache
+	// Enable in-memory caching for team member permission queries to reduce database load
+	FlagTeamMembershipQueryCache = "teamMembershipQueryCache"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
