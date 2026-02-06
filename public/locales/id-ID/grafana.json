@@ -670,7 +670,6 @@
       "message": {
         "required": "Diperlukan."
       },
-      "or": "atau",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -860,7 +859,10 @@
     "common": {
       "cancel": "Batalkan",
       "clear-filters": "Hapus filter",
+      "close": "",
+      "create": "",
       "delete": "Hapus",
+      "deleting": "",
       "edit": "Edit",
       "export": "Ekspor",
       "export-all": "Ekspor semua",
@@ -1580,6 +1582,17 @@
       "action-button": "Impor",
       "additional-settings": "Pengaturan tambahan",
       "alert-rules": "Aturan peringatan",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Impor",
         "loading": "Memuat...",
@@ -1606,13 +1619,15 @@
         "label": "Sumber data",
         "required-message": "Pilih sumber data"
       },
-      "error": "Gagal mengimpor aturan peringatan: {{error}}",
+      "error": "",
       "group": {
         "description": "Ketik untuk mencari grup yang ada",
         "label": "Grup"
       },
       "import-location-and-filters": "Impor lokasi dan filter",
       "import-source": "Impor sumber",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Ketik untuk mencari namespace yang ada",
         "label": "Ruang nama"
@@ -1624,17 +1639,148 @@
       "pause-recording": {
         "label": "Jeda aturan perekaman yang diimpor"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Aturan perekaman",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-none": "",
+        "routing-tree": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
+      },
       "source": {
         "datasource": "Aturan yang dikelola oleh sumber data yang ada",
         "datasource-description": "Impor aturan dari sumber data yang ada",
         "yaml": "File YAML Prometheus",
         "yaml-description": "Impor aturan dari file YAML Prometheus."
       },
-      "success": "Berhasil mengimpor aturan peringatan ke aturan yang dikelola Grafana.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy-desc": "",
+        "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
+        "select-group": "",
+        "select-namespace": "",
+        "select-policy": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Folder tempat mengimpor aturan",
         "label": "Folder target"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Pilih file YAML yang kompatibel dengan Prometheus untuk diimpor",
@@ -1645,6 +1791,9 @@
         "target-datasource-required": "Pilih sumber data target"
       },
       "yaml-error": "Gagal mengurai file YAML: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -1938,7 +2087,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Butuh bantuan?"
@@ -2089,6 +2242,11 @@
       "aria-label-expand": "Perluas",
       "aria-label-more": "tindakan lainnya untuk kebijakan",
       "aria-label-more-default": "tindakan lainnya untuk kebijakan default",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Semua instans peringatan akan ditangani oleh kebijakan default jika tidak ada kebijakan lain yang cocok.",
         "title": "Kebijakan default",
@@ -2098,6 +2256,14 @@
         "confirm": "Ya, hapus kebijakan",
         "warning-1": "Menghapus kebijakan pemberitahuan ini akan menghapusnya secara permanen.",
         "warning-2": "Apa Anda yakin ingin menghapus kebijakan ini?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Filter kebijakan pemberitahuan menggunakan daftar pencocok yang dipisahkan koma, misalnya:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Kebijakan yang dibuat otomatis",
@@ -2112,6 +2278,7 @@
         },
         "inherited": "Turunan",
         "mute-time": "Dibisukan saat",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Berapa lama harus menunggu sebelum mengirim pemberitahuan tentang peringatan baru yang ditambahkan ke grup peringatan yang pemberitahuan awalnya telah dikirim.",
@@ -2132,6 +2299,12 @@
       "new-policy": "Tambah kebijakan baru",
       "no-matchers": "Tidak ada pencocok",
       "reload-policies": "Muat ulang kebijakan",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2170,27 +2343,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2206,6 +2358,9 @@
       "label-new-child-policy": "Kebijakan turunan baru",
       "label-new-sibling-above": "Sibling baru di atas",
       "label-new-sibling-below": "Sibling baru di bawah"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Tidak dapat menampilkan pratinjau kueri. Beberapa sumber data yang digunakan di kueri tidak tersedia.",
@@ -2391,6 +2546,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
@@ -2609,7 +2767,8 @@
       "expand-all": "Perluas semua"
     },
     "rule-list-v2": {
-      "import-to-gma": "Impor aturan peringatan"
+      "import-to-gma": "Impor aturan peringatan",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Memuat aturan...",
@@ -2995,6 +3154,10 @@
       "misconfigured-warning": "Templat ini salah dikonfigurasi.",
       "misconfigured-warning-details": "Templat harus ditentukan di bagian <2></2> dan <5></5> dari konfigurasi alertmanager Anda."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
       "title-drawer": "Edit {{name}}",
@@ -3039,7 +3202,8 @@
       "error-loading": {
         "description": "Tidak dapat memuat interval waktu. Coba lagi nanti.",
         "title": "Terjadi kesalahan saat memuat interval waktu"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Interval waktu",
@@ -3057,6 +3221,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} lalu)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3154,12 +3321,6 @@
       "label-edit": "Edit",
       "label-export": "Ekspor"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ya, hapus titik kontak",
       "deleting": "Menghapus...",
@@ -3177,15 +3338,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Hapus kebijakan pemberitahuan"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3454,6 +3606,10 @@
       "hosted-domain-label": "Domain yang di-hosting",
       "id-token-attribute-name-description": "Nama kunci yang digunakan untuk mengekstrak token ID dari token OAuth2 yang dikembalikan.",
       "id-token-attribute-name-label": "Nama atribut token ID",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian login pengguna dari token ID pengguna.",
       "login-attribute-path-label": "Jalur atribut login",
       "login-prompt-consent": "Persetujuan",
@@ -3520,6 +3676,8 @@
       "use-refresh-token-label": "Gunakan token muat ulang",
       "validate-hosted-domain-description": "Jika diaktifkan, Grafana akan mencocokkan Domain yang Di-hosting yang diambil dari Token ID Google dengan daftar \"{{ allowedDomainsLabel }}\" yang ditentukan oleh pengguna.",
       "validate-hosted-domain-label": "Validasi domain yang di-hosting",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Jalur file ke file token yang digunakan untuk mengautentikasi ke penyedia OAuth2. Ini hanya diperlukan ketika autentikasi klien diatur ke \"workload_identity\". Default ke /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "file token {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Bidang ini harus diatur ketika autentikasi klien diatur ke \"Identitas beban kerja\"."
@@ -4850,12 +5008,6 @@
       "message": {
         "edit-dashboard-json": "Edit JSON Dasbor"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Validasi diberikan untuk tujuan pengembangan dan seharusnya aman untuk diabaikan. Jika Anda adalah developer Grafana, pertimbangkan untuk memeriksa dan memperbarui skema dasbor",
-      "title-checking-dashboard-validity": "Memeriksa validitas dasbor",
-      "title-dashboard-failed-schema-validation": "Validasi skema dasbor gagal",
-      "title-error-checking-dashboard-validity": "Kesalahan saat memeriksa validitas dasbor"
     },
     "default-layout": {
       "description": "Posisikan dan ukur setiap panel secara individu",
@@ -6412,6 +6564,8 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
       "table-view-label-table-view": "Tampilan tabel"
     },
@@ -7637,7 +7791,8 @@
       "loading-placeholder": "Memuat..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Buka tanpa kueri"
+      "aria-label-go-queryless": "Buka tanpa kueri",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Seri hasil: {{numItems}}",
@@ -9365,6 +9520,18 @@
       "csv-placeholder": "Masukkan CSV di sini...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10382,6 +10549,17 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} dari {{rowCount}} baris memiliki bidang tersebut",
       "label-log-stats": "{{label}}: {{total}} dari {{rowCount}} baris memiliki label tersebut"
+    }
+  },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
     }
   },
   "manage-dashbaords": {
@@ -11831,19 +12009,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
-      "description-branch-name-in-git-hub": "Nama cabang di GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
       "label-path": "Jalur",
-      "label-workflow": "Alur kerja",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11867,11 +12047,7 @@
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
     },
     "bitbucket": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "permissions": {
         "pull-requests-label": "Permintaan penggabungan",
         "pull-requests-read-write": "Baca dan tulis",
@@ -11886,24 +12062,27 @@
       "token-label": "Kata Sandi Aplikasi",
       "token-required": "Token Bitbucket diperlukan",
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan kata sandi aplikasi",
-      "token-user-label": "Nama pengguna",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori Bitbucket yang valid",
       "url-required": "URL repositori wajib diisi"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
+      "description-clear-repository-connection": "",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Nama tampilan",
       "placeholder-my-repository-connection": "Koneksi repositori saya",
+      "retry-action": "",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
+      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -12131,46 +12310,31 @@
       "subtitle-provisioning-feature": "Lihat dan kelola koneksi penyediaan Anda"
     },
     "git": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "pr-workflow-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan penarikan saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan penarikan mungkin tetap diperlukan.",
       "pr-workflow-label": "Aktifkan opsi permintaan penarikan saat menyimpan",
       "token-description": "Token atau kata sandi akses repositori Git",
       "token-label": "Token Akses",
       "token-required": "Token Git diperlukan",
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan token akses",
-      "token-user-label": "Nama pengguna",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Git",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori Git yang valid",
       "url-required": "URL repositori wajib diisi"
     },
     "github": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "pr-workflow-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan penarikan saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan penarikan mungkin tetap diperlukan.",
       "pr-workflow-label": "Aktifkan opsi permintaan penarikan saat menyimpan",
       "token-description": "Token Akses Pribadi GitHub dengan izin repositori",
       "token-label": "Token Akses Pribadi",
       "token-required": "Token GitHub diperlukan",
       "url-description": "URL repositori GitHub",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori GitHub yang valid",
       "url-required": "URL repositori wajib diisi"
     },
     "gitlab": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "permissions": {
         "api": "API",
         "api-read-write": "Baca dan tulis",
@@ -12185,7 +12349,6 @@
       "token-label": "Token Akses Proyek",
       "token-required": "Token GitLab diperlukan",
       "url-description": "URL repositori GitLab",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori GitLab yang valid",
       "url-required": "URL repositori wajib diisi"
     },
@@ -12402,9 +12565,15 @@
       "previous": "Sebelumnya"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Langkah selesai",
@@ -12456,7 +12625,7 @@
         "token-text": "Token Akses Pribadi GitLab"
       },
       "go-to": "Buka",
-      "make-sure": "Pastikan Anda menyertakan izin ini"
+      "make-sure": ""
     },
     "warning-title-default": "Peringatan",
     "wizard": {
@@ -12523,14 +12692,7 @@
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
-  },
-  "provisioning-alert": {
-    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12737,9 +12899,62 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
+    },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
     },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

@@ -44,7 +44,7 @@ type gitRepository struct {
 }
 
 func NewRepository(
-	ctx context.Context,
+	_ context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
@@ -76,6 +76,10 @@ func (r *gitRepository) URL() string {
 
 func (r *gitRepository) Branch() string {
 	return r.gitConfig.Branch
+}
+
+func (r *gitRepository) SetBranch(branch string) {
+	r.gitConfig.Branch = branch
 }
 
 func (r *gitRepository) Config() *provisioning.Repository {
