@@ -2,7 +2,14 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, DataSourceApi, GrafanaTheme2, hasLogsLabelTypesSupport, store, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  DataSourceWithLogsLabelTypesSupport,
+  GrafanaTheme2,
+  hasLogsLabelTypesSupport,
+  store,
+  TimeRange,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
@@ -34,7 +41,7 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
-    const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
+    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -76,7 +83,7 @@ export const LogLineDetailsComponent = memo(
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
     const groupedLabels = useMemo(() => {
-      if (!ds || !hasLogsLabelTypesSupport(ds)) {
+      if (!ds) {
         return labelsWithLinks.length > 0
           ? {
               '': labelsWithLinks,
@@ -156,16 +163,13 @@ export const LogLineDetailsComponent = memo(
     useEffect(() => {
       const setDatasource = async () => {
         const datasource = await getDataSourceSrv().get(log.datasourceUid);
-        setDs(datasource ? datasource : null);
+        if (datasource && hasLogsLabelTypesSupport(datasource)) {
+          setDs(datasource);
+        }
       };
 
       setDatasource();
     }, [log.datasourceUid]);
-
-    // Wait for the data source to be resolved before showing fields or labels
-    if (ds === undefined) {
-      return null;
-    }
 
     return (
       <>
