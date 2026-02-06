@@ -16,7 +16,7 @@ import { QueryOptionField } from '../types';
 
 interface OptionFieldProps {
   tooltip: string;
-  label: ReactNode;
+  label: string;
   children: ReactNode;
 }
 
@@ -139,7 +139,7 @@ export function QueryEditorDetailsSidebar() {
                 'query-editor.details-sidebar.max-data-points-tooltip',
                 'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval.'
               )}
-              label={<Trans i18nKey="query-editor.details-sidebar.max-data-points">Max data points</Trans>}
+              label={t('query-editor.details-sidebar.max-data-points', 'Max data points')}
             >
               <Input
                 type="number"
@@ -157,7 +157,7 @@ export function QueryEditorDetailsSidebar() {
                 'query-editor.details-sidebar.min-interval-tooltip',
                 'A lower limit for the interval. Recommended to be set to write frequency, for example 1m if your data is written every minute.'
               )}
-              label={<Trans i18nKey="query-editor.details-sidebar.min-interval">Min interval</Trans>}
+              label={t('query-editor.details-sidebar.min-interval', 'Min interval')}
             >
               <Input
                 type="text"
@@ -175,7 +175,7 @@ export function QueryEditorDetailsSidebar() {
                 'query-editor.details-sidebar.interval-tooltip',
                 'The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.'
               )}
-              label={<Trans i18nKey="query-editor.details-sidebar.interval">Interval</Trans>}
+              label={t('query-editor.details-sidebar.interval', 'Interval')}
             >
               <span className={styles.fieldValue}>{realInterval ?? '-'}</span>
             </OptionField>
@@ -185,7 +185,7 @@ export function QueryEditorDetailsSidebar() {
                 'query-editor.details-sidebar.relative-time-tooltip',
                 'Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.'
               )}
-              label={<Trans i18nKey="query-editor.details-sidebar.relative-time">Relative time</Trans>}
+              label={t('query-editor.details-sidebar.relative-time', 'Relative time')}
             >
               <Input
                 type="text"
@@ -203,7 +203,7 @@ export function QueryEditorDetailsSidebar() {
                 'query-editor.details-sidebar.time-shift-tooltip',
                 'Overrides the time range for individual panels by shifting its start and end relative to the time picker.'
               )}
-              label={<Trans i18nKey="query-editor.details-sidebar.time-shift">Time shift</Trans>}
+              label={t('query-editor.details-sidebar.time-shift', 'Time shift')}
             >
               <Input
                 type="text"
@@ -222,7 +222,7 @@ export function QueryEditorDetailsSidebar() {
                   'query-editor.details-sidebar.cache-timeout-tooltip',
                   'If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.'
                 )}
-                label={<Trans i18nKey="query-editor.details-sidebar.cache-timeout">Cache timeout</Trans>}
+                label={t('query-editor.details-sidebar.cache-timeout', 'Cache timeout')}
               >
                 <Input
                   type="text"
@@ -243,7 +243,7 @@ export function QueryEditorDetailsSidebar() {
                   'query-editor.details-sidebar.cache-ttl-tooltip',
                   'Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.'
                 )}
-                label={<Trans i18nKey="query-editor.details-sidebar.cache-ttl">Cache TTL</Trans>}
+                label={t('query-editor.details-sidebar.cache-ttl', 'Cache TTL')}
               >
                 <Input
                   type="number"
