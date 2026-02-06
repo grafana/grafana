@@ -10,6 +10,7 @@ import {
   ErrorsInstrumentation,
   WebVitalsInstrumentation,
   ViewInstrumentation,
+  NavigationInstrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
@@ -144,20 +145,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     new GrafanaJavascriptAgentBackend(opts);
 
     let lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
-    expect(lastInstrumentations).toHaveLength(5);
-    expect(lastInstrumentations).toEqual(
-      expect.arrayContaining([
-        expect.any(SessionInstrumentation),
-        expect.any(UserActionInstrumentation),
-        expect.any(ErrorsInstrumentation),
-        expect.any(WebVitalsInstrumentation),
-        expect.any(ViewInstrumentation),
-      ])
-    );
-
-    opts.tracingInstrumentalizationEnabled = true;
-    new GrafanaJavascriptAgentBackend(opts);
-    lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
     expect(lastInstrumentations).toHaveLength(6);
     expect(lastInstrumentations).toEqual(
       expect.arrayContaining([
@@ -166,6 +153,22 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
         expect.any(ErrorsInstrumentation),
         expect.any(WebVitalsInstrumentation),
         expect.any(ViewInstrumentation),
+        expect.any(NavigationInstrumentation),
+      ])
+    );
+
+    opts.tracingInstrumentalizationEnabled = true;
+    new GrafanaJavascriptAgentBackend(opts);
+    lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
+    expect(lastInstrumentations).toHaveLength(7);
+    expect(lastInstrumentations).toEqual(
+      expect.arrayContaining([
+        expect.any(SessionInstrumentation),
+        expect.any(UserActionInstrumentation),
+        expect.any(ErrorsInstrumentation),
+        expect.any(WebVitalsInstrumentation),
+        expect.any(ViewInstrumentation),
+        expect.any(NavigationInstrumentation),
         expect.any(TracingInstrumentation),
       ])
     );
