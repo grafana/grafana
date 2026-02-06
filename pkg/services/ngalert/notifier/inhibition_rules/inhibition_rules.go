@@ -1,4 +1,4 @@
-package provisioning
+package inhibition_rules
 
 import (
 	"context"
@@ -17,21 +17,39 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
-type InhibitionRuleService struct {
+type routeProvenanceStore interface {
+	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+}
+
+type transactionManager interface {
+	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
+}
+
+type alertmanagerConfigStore interface {
+	Get(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error)
+	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
+}
+
+type provenanceValidator func(from, to models.Provenance) error
+
+type Service struct {
 	configStore     alertmanagerConfigStore
-	provenanceStore ProvisioningStore
-	xact            TransactionManager
+	provenanceStore routeProvenanceStore
+	xact            transactionManager
 	log             log.Logger
 	validator       validation.ProvenanceStatusTransitionValidator
 }
 
-func NewInhibitionRuleService(
+func NewService(
 	config alertmanagerConfigStore,
-	prov ProvisioningStore,
-	xact TransactionManager,
+	prov routeProvenanceStore,
+	xact transactionManager,
 	log log.Logger,
-) *InhibitionRuleService {
-	return &InhibitionRuleService{
+) *Service {
+	return &Service{
 		configStore:     config,
 		provenanceStore: prov,
 		xact:            xact,
@@ -42,7 +60,7 @@ func NewInhibitionRuleService(
 
 // GetInhibitionRules returns all inhibition rules for the specified org.
 // For app-platform API, this includes both Grafana-managed and imported rules.
-func (svc *InhibitionRuleService) GetInhibitionRules(ctx context.Context, orgID int64) ([]models.InhibitionRule, error) {
+func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]models.InhibitionRule, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -84,7 +102,7 @@ func (svc *InhibitionRuleService) GetInhibitionRules(ctx context.Context, orgID 
 
 // GetInhibitionRule returns a single inhibition rule by UID.
 // Includes both Grafana-managed and imported rules.
-func (svc *InhibitionRuleService) GetInhibitionRule(ctx context.Context, uid string, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) GetInhibitionRule(ctx context.Context, uid string, orgID int64) (models.InhibitionRule, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return models.InhibitionRule{}, err
@@ -98,14 +116,14 @@ func (svc *InhibitionRuleService) GetInhibitionRule(ctx context.Context, uid str
 		return result, nil
 	}
 
-	return models.InhibitionRule{}, ErrInhibitionRuleNotFound.Errorf("")
+	return models.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
 }
 
 // CreateInhibitionRule adds a new inhibition rule
-func (svc *InhibitionRuleService) CreateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
 	// Validate the rule
 	if err := rule.Validate(); err != nil {
-		return models.InhibitionRule{}, MakeErrInhibitionRuleInvalid(err)
+		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
@@ -115,7 +133,7 @@ func (svc *InhibitionRuleService) CreateInhibitionRule(ctx context.Context, rule
 
 	uid := generateInhibitionRuleUID(&rule.InhibitRule)
 	if svc.grafanaInhibitionRuleExists(revision.Config.AlertmanagerConfig.InhibitRules, generateInhibitionRuleUID(&rule.InhibitRule)) {
-		return models.InhibitionRule{}, ErrInhibitionRuleExists.Errorf("")
+		return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
 	revision.Config.AlertmanagerConfig.InhibitRules = append(revision.Config.AlertmanagerConfig.InhibitRules, rule.InhibitRule)
@@ -136,9 +154,9 @@ func (svc *InhibitionRuleService) CreateInhibitionRule(ctx context.Context, rule
 // UpdateInhibitionRule updates an existing inhibition rule
 // Inhibition rules are treated as immutable since they have no stable identifier and updates change
 // the content (and thus UID). Therefore, we delete the existing rule and create a new one with the updated content.
-func (svc *InhibitionRuleService) UpdateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
-		return models.InhibitionRule{}, MakeErrInhibitionRuleInvalid(err)
+		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
@@ -150,11 +168,11 @@ func (svc *InhibitionRuleService) UpdateInhibitionRule(ctx context.Context, rule
 	if err != nil {
 		return models.InhibitionRule{}, err
 	} else if !found {
-		return models.InhibitionRule{}, ErrInhibitionRuleNotFound.Errorf("")
+		return models.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
 	}
 
 	if existing.Provenance == models.ProvenanceConvertedPrometheus {
-		return models.InhibitionRule{}, makeErrInhibitionRuleOrigin(existing, "update")
+		return models.InhibitionRule{}, models.MakeErrInhibitionRuleOrigin(existing, "update")
 	}
 
 	if err := svc.validator(existing.Provenance, rule.Provenance); err != nil {
@@ -187,7 +205,7 @@ func (svc *InhibitionRuleService) UpdateInhibitionRule(ctx context.Context, rule
 }
 
 // DeleteInhibitionRule deletes an inhibition rule by UID
-func (svc *InhibitionRuleService) DeleteInhibitionRule(ctx context.Context, uid string, orgID int64, provenance models.Provenance, version string) error {
+func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid string, orgID int64, provenance models.Provenance, version string) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -201,7 +219,7 @@ func (svc *InhibitionRuleService) DeleteInhibitionRule(ctx context.Context, uid 
 	}
 
 	if existing.Provenance == models.ProvenanceConvertedPrometheus {
-		return makeErrInhibitionRuleOrigin(existing, "delete")
+		return models.MakeErrInhibitionRuleOrigin(existing, "delete")
 	}
 
 	if err := svc.validator(existing.Provenance, provenance); err != nil {
@@ -220,7 +238,7 @@ func (svc *InhibitionRuleService) DeleteInhibitionRule(ctx context.Context, uid 
 
 // Helper functions
 
-func (svc *InhibitionRuleService) getInhibitionRuleByUID(ctx context.Context, rev *legacy_storage.ConfigRevision, uid string, orgID int64) (models.InhibitionRule, bool, error) {
+func (svc *Service) getInhibitionRuleByUID(ctx context.Context, rev *legacy_storage.ConfigRevision, uid string, orgID int64) (models.InhibitionRule, bool, error) {
 	// Check Grafana-managed rules first
 	grafanaInhibitionRules := rev.Config.AlertmanagerConfig.InhibitRules
 
@@ -253,7 +271,7 @@ func (svc *InhibitionRuleService) getInhibitionRuleByUID(ctx context.Context, re
 	return models.InhibitionRule{}, false, nil
 }
 
-func (svc *InhibitionRuleService) grafanaInhibitionRuleExists(inhibitionRules []config.InhibitRule, uid string) bool {
+func (svc *Service) grafanaInhibitionRuleExists(inhibitionRules []config.InhibitRule, uid string) bool {
 	return slices.IndexFunc(inhibitionRules, inhibitionRuleByUID(uid)) != -1
 }
 
@@ -263,7 +281,7 @@ func inhibitionRuleByUID(uid string) func(config.InhibitRule) bool {
 	}
 }
 
-func (svc *InhibitionRuleService) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) []config.InhibitRule {
+func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) []config.InhibitRule {
 	imported, err := rev.Imported()
 	if err != nil {
 		svc.log.Warn("failed to get imported config revision for inhibition rules", "error", err)
