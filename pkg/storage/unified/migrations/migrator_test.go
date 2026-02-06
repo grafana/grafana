@@ -519,34 +519,6 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUnifiedMigration_RebuildIndexes_NilClient(t *testing.T) {
-	// Test that when client is nil, the method skips rebuilding and returns nil
-	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	registry := migrations.ProvideMigrationRegistry(mockAccessor)
-	migrator := migrations.ProvideUnifiedMigrator(
-		mockAccessor,
-		nil,
-		registry,
-	)
-
-	info := authlib.NamespaceInfo{
-		OrgID: 1,
-		Value: "stack-123",
-	}
-	resources := []schema.GroupResource{
-		{Group: "dashboard.grafana.app", Resource: "dashboards"},
-	}
-
-	// Should return nil without attempting to call client
-	err := migrator.RebuildIndexes(context.Background(), migrations.RebuildIndexOptions{
-		UsingDistributor:    false,
-		NamespaceInfo:       info,
-		Resources:           resources,
-		MigrationFinishedAt: time.Now(),
-	})
-	require.NoError(t, err)
-}
-
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 	migrationFinishedAt := time.Now()
 

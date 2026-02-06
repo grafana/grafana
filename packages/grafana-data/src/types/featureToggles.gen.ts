@@ -204,11 +204,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables rendering retries for the reporting feature
-  * @default false
-  */
-  reportingRetries?: boolean;
-  /**
   * Enables CSV encoding options in the reporting feature
   * @default false
   */
@@ -874,6 +869,11 @@ export interface FeatureToggles {
   * @default false
   */
   teamHttpHeadersTempo?: boolean;
+  /**
+  * Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+  * @default false
+  */
+  teamHttpHeadersFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
   * @default false
