@@ -10515,7 +10515,8 @@
       "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
-        "disabled": "Columns are not suported with wrapped logs",
+        "disabled": "Columns are not suported with wrapped enabled",
+        "disabled-label": "Columns not suported",
         "enable": "Enable columns"
       },
       "wrap-lines": "Wrap lines"
