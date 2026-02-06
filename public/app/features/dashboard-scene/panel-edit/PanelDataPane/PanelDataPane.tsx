@@ -24,6 +24,12 @@ import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { PanelDataPaneTab, TabId } from './types';
 
+const VALID_TAB_IDS: Set<string> = new Set(Object.values(TabId));
+
+function isValidTabId(value: string): value is TabId {
+  return VALID_TAB_IDS.has(value);
+}
+
 export interface PanelDataPaneState extends SceneObjectState {
   tabs: PanelDataPaneTab[];
   tab: TabId;
@@ -76,8 +82,8 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     if (!values.tab) {
       return;
     }
-    if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab as TabId });
+    if (typeof values.tab === 'string' && isValidTabId(values.tab)) {
+      this.setState({ tab: values.tab });
     }
   }
 }

@@ -503,6 +503,15 @@
     "alert-rule": {
       "term": "Alert rule"
     },
+    "alert-rule-drawer": {
+      "error-title": "Failed to create alert rule",
+      "error-unexpected": "Received an unexpected response. Please try again.",
+      "error-unknown": "An unexpected error occurred.",
+      "success-message": "Your alert rule has been created successfully.",
+      "success-title": "Alert rule created",
+      "validation-error-message": "Please correct the errors in the form and try again.",
+      "validation-error-title": "Validation error"
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
@@ -522,6 +531,7 @@
       "metric-aria-label-metric": "metric",
       "metric-placeholder-recorded-metric": "Give the name of the new recorded metric",
       "placeholder-name": "Give your {{namePlaceholder}} a name",
+      "recording-rule-pattern": "Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.",
       "title-section": "Enter {{entityName}} name"
     },
     "alert-rules": {
@@ -871,6 +881,8 @@
       "export-all": "Export all",
       "learn-more": "Learn more",
       "loading": "Loading...",
+      "optional": "(optional)",
+      "refresh": "Refresh",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -1977,6 +1989,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "Contact point",
+          "notification-policy": "Notification policy",
           "select-contact-point": "Select contact point",
           "use-notification-policy": "Use notification policy"
         }
@@ -3052,12 +3066,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "Select reducer function",
+      "aria-label-threshold": "Threshold value",
+      "aria-label-threshold-from": "Threshold from value",
+      "aria-label-threshold-to": "Threshold to value",
       "label-of-query": "OF QUERY",
       "label-when": "WHEN",
       "label-when-query": "WHEN QUERY"
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "simplified": {
+      "condition": {
+        "title": "Condition"
+      },
+      "continue-in-alerting": "Continue in Alerting",
+      "create": "Create",
+      "evaluation": {
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
+      },
+      "notification": {
+        "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
+        "description": {
+          "aria-label": "Description",
+          "label": "Description (optional)",
+          "placeholder": "Enter a description of what the alert rule does…"
+        },
+        "manual-routing": {
+          "aria": "Toggle manual routing"
+        },
+        "policy-selected": "Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.",
+        "recipient": {
+          "label": "Recipient"
+        },
+        "refresh-error": "Failed to refresh contact points",
+        "runbook-url": {
+          "aria-label": "Runbook URL",
+          "invalid-format": "Invalid URL format. Please enter a valid URL.",
+          "invalid-protocol": "Invalid URL protocol. Please use http or https.",
+          "label": "Runbook URL (optional)",
+          "placeholder": "Enter the webpage where you keep your runbook for the alert…"
+        },
+        "select-contact-point": "Select a contact point...",
+        "summary": {
+          "aria-label": "Summary",
+          "label": "Summary (optional)",
+          "placeholder": "Enter a summary of what happened and why…"
+        },
+        "title": "Notification"
+      },
+      "rule-definition": "Rule Definition"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",
