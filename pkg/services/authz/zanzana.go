@@ -21,11 +21,14 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
@@ -212,8 +215,8 @@ type ZanzanaService interface {
 
 var _ ZanzanaService = (*Zanzana)(nil)
 
-// ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, clientFactory resources.ClientFactory) (*Zanzana, error) {
+// ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (*Zanzana, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
@@ -224,6 +227,22 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	tracer, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
+	}
+
+	var clientFactory resources.ClientFactory
+	if cfg.ZanzanaServer.ReconcilerEnabled {
+		if cfg.ZanzanaServer.ReconcilerKubeconfig == "" {
+			return nil, fmt.Errorf("reconciler_kubeconfig must be set when reconciler_enabled is true")
+		}
+
+		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.ZanzanaServer.ReconcilerKubeconfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build rest config from kubeconfig %q: %w", cfg.ZanzanaServer.ReconcilerKubeconfig, err)
+		}
+
+		clientFactory = resources.NewClientFactory(apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
+			return restConfig, nil
+		}))
 	}
 
 	s := &Zanzana{
@@ -324,6 +343,7 @@ func (z *Zanzana) running(ctx context.Context) error {
 
 	if z.cfg.ZanzanaServer.ReconcilerEnabled {
 		go func() {
+			reconcilerLogger := log.New("zanzana.mt-reconciler")
 			rec := reconciler.NewReconciler(
 				z.zanzanaServer.(*zServer.Server),
 				z.clientFactory,
@@ -332,11 +352,11 @@ func (z *Zanzana) running(ctx context.Context) error {
 					Interval:       z.cfg.ZanzanaServer.ReconcilerInterval,
 					WriteBatchSize: z.cfg.ZanzanaServer.ReconcilerWriteBatchSize,
 				},
-				z.logger,
+				reconcilerLogger,
 				z.tracer,
 			)
 			if err := rec.Run(ctx); err != nil {
-				z.logger.Error("reconciler stopped with error", "error", err)
+				reconcilerLogger.Error("reconciler stopped with error", "error", err)
 			}
 		}()
 	}

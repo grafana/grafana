@@ -233,6 +233,21 @@ password = password
 address = localhost:4317
 ```
 
+### Reconciler configuration
+
+The reconciler syncs CRDs from Unistore to Zanzana. When running in standalone mode, the reconciler needs a kubeconfig file to connect to the apiserver/Unistore for reading CRDs. The `reconciler_kubeconfig` setting is required when `reconciler_enabled` is true.
+
+```ini
+[zanzana.server]
+reconciler_enabled = true
+reconciler_kubeconfig = /path/to/kubeconfig
+reconciler_workers = 4
+reconciler_interval = 1h
+reconciler_write_batch_size = 100
+```
+
+The kubeconfig file should contain the connection details for the apiserver that hosts the CRDs (folders, roles, rolebindings, resourcepermissions, teambindings, users). This is typically the Grafana apiserver or Unistore endpoint. You can generate a kubeconfig using standard Kubernetes tooling or point to an existing one.
+
 Now you can run zanzana server:
 
 ```sh

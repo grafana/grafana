@@ -56,6 +56,9 @@ type ZanzanaServerSettings struct {
 	// Reconciler settings
 	// Enable the Unistore to Zanzana reconciler
 	ReconcilerEnabled bool
+	// Path to a kubeconfig file used to connect to the apiserver/Unistore for reading CRDs.
+	// Required when reconciler_enabled is true.
+	ReconcilerKubeconfig string
 	// Number of worker goroutines for the reconciler
 	ReconcilerWorkers int
 	// Minimum interval between namespace reconciliations
@@ -247,6 +250,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 
 	// Reconciler settings
 	zs.ReconcilerEnabled = serverSec.Key("reconciler_enabled").MustBool(false)
+	zs.ReconcilerKubeconfig = serverSec.Key("reconciler_kubeconfig").MustString("")
 	zs.ReconcilerWorkers = serverSec.Key("reconciler_workers").MustInt(4)
 	zs.ReconcilerInterval = serverSec.Key("reconciler_interval").MustDuration(1 * time.Hour)
 	zs.ReconcilerWriteBatchSize = serverSec.Key("reconciler_write_batch_size").MustInt(100)
