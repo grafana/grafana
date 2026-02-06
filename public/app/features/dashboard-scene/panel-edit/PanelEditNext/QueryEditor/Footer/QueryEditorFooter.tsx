@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { QUERY_EDITOR_COLORS, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
@@ -121,7 +121,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(2),
-      backgroundColor: '#1e2939',
+      backgroundColor: QUERY_EDITOR_COLORS.footerBackground,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
