@@ -190,8 +190,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   searchField: css({
     margin: theme.spacing(2, 1.5, 0, 0),
-    width: '100%', // full size search area
-    borderBottom: `1px solid ${theme.colors.border.weak}`, // add a border to the bottom of the search field
+    width: '100%',
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
     paddingBottom: theme.spacing(0.75),
   }),
   stickySearchWrapper: css({
