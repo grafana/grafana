@@ -181,12 +181,6 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		}
 	}
 
-	if m.client == nil {
-		// skip if no client is available (e.g., parquet migrator)
-		m.log.Warn("skipping rebuilding index as no search client is available", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-		return nil
-	}
-
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
 		Namespace: opts.NamespaceInfo.Value,
 		Keys:      keys,
