@@ -2292,6 +2292,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:            "colorblindThemes",
+			Description:     "Enables the new colorblind-friendly themes",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaFrontendPlatformSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
 	}
 )
 
