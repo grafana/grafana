@@ -176,7 +176,7 @@ When the minimum value is used as the starting point for the gauges, the visuali
 
 If you enter a neutral value of `0`, the visualization looks like this and is easier to reason about:
 
-![Gauge with zero as neutral](screenshot-gauge-neutral-0-v12.4.png)
+![Gauge with zero as neutral](/media/docs/grafana/panels-visualizations/screenshot-gauge-neutral-0-v12.4.png)
 
 #### Show sparkline
 
