@@ -13,7 +13,7 @@ type GrafanaJavascriptAgent struct {
 	PerformanceInstrumentalizationEnabled bool   `json:"performanceInstrumentalizationEnabled"`
 	CSPInstrumentalizationEnabled         bool   `json:"cspInstrumentalizationEnabled"`
 	TracingInstrumentalizationEnabled     bool   `json:"tracingInstrumentalizationEnabled"`
-	WebVitalsAttributionEnabled           bool   `json:"webVitalsAttributionEnabled"`
+	WebVitalsAttributionEnabled           bool   `json:"-"` // Not serialized - always enabled in Faro v2
 	BotFilterEnabled                      bool   `json:"botFilterEnabled"`
 }
 

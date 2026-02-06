@@ -75,7 +75,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   const options: GrafanaJavascriptAgentBackendOptions = {
     customEndpoint: '/log-grafana-javascript-agent',
 
-    webVitalsAttribution: true,
     consoleInstrumentalizationEnabled: true,
     performanceInstrumentalizationEnabled: true,
     cspInstrumentalizationEnabled: true,
