@@ -176,16 +176,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                expectedMeta,
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{
-						"module.js": "hash123",
-					},
-				},
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       expectedMeta,
+				CDNURL:     "https://cdn.grafana.com",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -235,16 +229,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			assert.Equal(t, "Bearer "+expectedToken, r.Header.Get("Authorization"))
 
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                expectedMeta,
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{
-						"module.js": "hash123",
-					},
-				},
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       expectedMeta,
+				CDNURL:     "https://cdn.grafana.com",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -265,11 +253,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	t.Run("handles missing module hash gracefully", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				CDNURL:     "https://cdn.grafana.com",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{},
 				},
@@ -341,17 +328,11 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	t.Run("handles empty children list", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{
-						"module.js": "hash123",
-					},
-				},
-				Children: []grafanaComChildPluginVersion{},
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				CDNURL:     "https://cdn.grafana.com",
+				Children:   []grafanaComChildPluginVersion{},
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -370,16 +351,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	t.Run("handles missing translations gracefully", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Languages: []string{"en", "fr"}},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{
-						"module.js": "hash123",
-					},
-				},
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Languages: []string{"en", "fr"}},
+				CDNURL:     "https://cdn.grafana.com",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -401,16 +376,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          parentID,
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: parentID},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{
-						"module.js": "hash123",
-					},
-				},
+				PluginSlug: parentID,
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: parentID},
+				CDNURL:     "https://cdn.grafana.com",
 				Children: []grafanaComChildPluginVersion{
 					{Slug: "other-child", JSON: pluginsv0alpha1.MetaJSONData{Id: "other-child"}},
 				},
