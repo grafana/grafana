@@ -32,18 +32,25 @@ type Service struct {
 	features    featuremgmt.FeatureToggles
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (team.Service, error) {
-	// Initialize member cache based on feature flag and configuration
-	var memberCache membercache.Cache
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabled(context.Background(), featuremgmt.FlagTeamMembershipQueryCache) {
-		memberCache = membercache.NewCache(
-			cfg.TeamMemberCache.MaxSize,
-			cfg.TeamMemberCache.TTL,
-			tracer,
-		)
-	} else {
-		memberCache = &membercache.NoOpCache{}
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, features ...featuremgmt.FeatureToggles) (team.Service, error) {
+	// Default to disabled cache
+	var memberCache membercache.Cache = &membercache.NoOpCache{}
+
+	// Override with real cache only if feature flag is enabled
+	var featureFlags featuremgmt.FeatureToggles
+	if len(features) > 0 {
+		featureFlags = features[0]
+	}
+
+	if featureFlags != nil {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if featureFlags.IsEnabled(context.Background(), featuremgmt.FlagTeamMembershipQueryCache) {
+			memberCache = membercache.NewCache(
+				cfg.TeamMemberCache.MaxSize,
+				cfg.TeamMemberCache.TTL,
+				tracer,
+			)
+		}
 	}
 
 	store := &xormStore{
@@ -52,7 +59,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, features 
 		deletes:     []string{},
 		memberCache: memberCache,
 		tracer:      tracer,
-		features:    features,
+		features:    featureFlags,
 	}
 
 	if err := store.teamMemberUidMigration(); err != nil {
@@ -64,7 +71,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, features 
 		memberCache: memberCache,
 		store:       store,
 		tracer:      tracer,
-		features:    features,
+		features:    featureFlags,
 	}, nil
 }
 
