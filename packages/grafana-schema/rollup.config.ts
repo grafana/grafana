@@ -9,21 +9,15 @@ import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.part
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
 
-const [_, noderesolve, esbuild] = plugins;
-
 export default [
   {
     input: entryPoint,
     plugins,
-    output: [
-      // Schema still uses publishConfig to define output directory.
-      // TODO: Migrate this package to use exports.
-      cjsOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.main) }),
-      esmOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.module) }),
-    ],
+    output: [cjsOutput(pkg, 'grafana-schema'), esmOutput(pkg, 'grafana-schema')],
     treeshake: false,
   },
   {
+    // Files that should be exported but not included in the `entryPoint`.
     input: Object.fromEntries(
       glob
         .sync('src/raw/composable/**/*.ts')
@@ -33,9 +27,7 @@ export default [
         ])
     ),
     plugins: [
-      noderesolve,
-      esbuild,
-      // Support @grafana/scenes that pulls in types from nested @grafana/schema files.
+      ...plugins,
       copy({
         targets: [
           {
@@ -47,10 +39,16 @@ export default [
         hook: 'writeBundle',
       }),
     ],
-    output: {
-      format: 'esm',
-      dir: path.dirname(pkg.publishConfig.module),
-    },
+    output: [
+      {
+        format: 'esm',
+        dir: path.dirname(pkg.module),
+      },
+      {
+        format: 'cjs',
+        dir: path.dirname(pkg.main),
+      },
+    ],
     treeshake: false,
   },
 ];
