@@ -338,7 +338,7 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	missingSeriesStates, staleCount := st.findAndResolveMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
+	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int("state_transitions", len(states)),
 		attribute.Int("stale_states", staleCount),
@@ -485,9 +485,9 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// findAndResolveMissingSeriesStates finds cached states missing from the current evaluation,
+// processMissingSeriesStates finds cached states missing from the current evaluation,
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
-func (st *Manager) findAndResolveMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
+func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
 	missingTransitions := []StateTransition{}
 	toDeleteStates := map[data.Fingerprint]struct{}{}
 
