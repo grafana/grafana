@@ -212,23 +212,23 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "ownerReference", // singular
 										In:          "query",
-										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}",
+										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
 										Required:    false,
-										Schema:      spec.StringProperty(),
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
 										Examples: map[string]*spec3.Example{
 											"": {
 												ExampleProps: spec3.ExampleProps{},
 											},
 											"team": {
 												ExampleProps: spec3.ExampleProps{
-													Summary: "Team owner reference",
-													Value:   "iam.grafana.app/Team/xyz",
+													Summary: "Owner references of team xyz or abc",
+													Value:   []string{"iam.grafana.app/Team/xyz", "iam.grafana.app/Team/abc"},
 												},
 											},
 											"user": {
 												ExampleProps: spec3.ExampleProps{
 													Summary: "User owner reference",
-													Value:   "iam.grafana.app/User/abc",
+													Value:   []string{"iam.grafana.app/User/abc"},
 												},
 											},
 										},
