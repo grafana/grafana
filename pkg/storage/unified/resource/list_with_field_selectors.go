@@ -111,6 +111,12 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
+	// Provisioning has no Versions.Kinds[] in its app manifest, so we cant index anything for search.
+	// Keeping this excluded until its app manifest is updated.
+	if req.Options.Key.Group == "provisioning.grafana.app" {
+		return false
+	}
+
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
