@@ -93,6 +93,8 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		reconcileResult, reconcileErr = r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children)
 	case operator.ReconcileActionUnknown:
 		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
+	default:
+		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	}
 
 	status := "success"
