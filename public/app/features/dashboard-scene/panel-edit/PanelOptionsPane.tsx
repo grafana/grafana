@@ -41,6 +41,12 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
+  savedPanelState?: {
+    pluginId: string;
+    options: DeepPartial<{}>;
+    fieldConfig: FieldConfigSource;
+  };
+  hasManuallySelectedSuggestion?: boolean;
 }
 
 interface PluginOptionsCache {
@@ -52,15 +58,32 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
   onToggleVizPicker = () => {
-    const newState = !this.state.isVizPickerOpen;
+    const isOpen = !this.state.isVizPickerOpen;
+    const panel = this.state.panelRef.resolve();
+
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
-      open: newState,
+      open: isOpen,
     });
-    this.setState({
-      isVizPickerOpen: newState,
-      hasPickedViz: this.state.hasPickedViz || newState === false,
-    });
+
+    if (isOpen) {
+      this.setState({
+        isVizPickerOpen: isOpen,
+        hasManuallySelectedSuggestion: false,
+        savedPanelState: {
+          pluginId: panel.state.pluginId,
+          options: panel.state.options,
+          fieldConfig: panel.state.fieldConfig,
+        },
+      });
+    } else {
+      this.setState({
+        isVizPickerOpen: isOpen,
+        hasPickedViz: true,
+        savedPanelState: undefined,
+        hasManuallySelectedSuggestion: false,
+      });
+    }
   };
 
   onChangePanel = (options: VizTypeChangeDetails, panel = this.state.panelRef.resolve()) => {
@@ -72,6 +95,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       plugin_id: pluginId,
       from_suggestions: options.fromSuggestions ?? false,
     });
+
+    if (options.fromSuggestions && options.withModKey && !options.isAutoSelected) {
+      this.setState({ hasManuallySelectedSuggestion: true });
+    }
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
@@ -117,6 +144,23 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
   onSetListMode = (listMode: OptionFilter) => {
     this.setState({ listMode });
+  };
+
+  onRevertAndClose = () => {
+    const panel = this.state.panelRef.resolve();
+    const { savedPanelState, hasManuallySelectedSuggestion } = this.state;
+
+    if (savedPanelState && !hasManuallySelectedSuggestion) {
+      if (savedPanelState.pluginId !== panel.state.pluginId) {
+        panel.changePluginType(savedPanelState.pluginId, savedPanelState.options, savedPanelState.fieldConfig);
+      } else {
+        // @TODO do we need more?
+        panel.onOptionsChange(savedPanelState.options, true);
+        panel.onFieldConfigChange(savedPanelState.fieldConfig, true);
+      }
+    }
+
+    this.onToggleVizPicker();
   };
 
   onOpenPanelJSON = (vizPanel: VizPanel) => {
@@ -231,6 +275,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           panel={panel}
           onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
+          onRevertAndClose={model.onRevertAndClose}
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
           isNewPanel={isNewPanel}

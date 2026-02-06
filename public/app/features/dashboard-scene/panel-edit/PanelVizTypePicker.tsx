@@ -36,6 +36,7 @@ export interface Props {
   panel: VizPanel;
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
+  onRevertAndClose?: () => void;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
 }
@@ -59,6 +60,7 @@ export function PanelVizTypePicker({
   data,
   onChange,
   onClose,
+  onRevertAndClose,
   showBackButton,
   isNewPanel,
   hasPickedViz,
@@ -120,8 +122,13 @@ export function PanelVizTypePicker({
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
     });
-    onClose();
-  }, [listMode, onClose]);
+
+    if (config.featureToggles.newVizSuggestions && onRevertAndClose) {
+      onRevertAndClose();
+    } else {
+      onClose();
+    }
+  }, [listMode, onClose, onRevertAndClose]);
 
   return (
     <div className={styles.wrapper}>

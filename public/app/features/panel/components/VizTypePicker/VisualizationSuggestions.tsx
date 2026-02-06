@@ -151,8 +151,9 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
           pluginId: suggestion.pluginId,
           options: suggestion.options,
           fieldConfig: suggestion.fieldConfig,
-          withModKey: !shouldCloseVizPicker, // close picker if shouldCloseVizPicker is true @TODO revisit
+          withModKey: !shouldCloseVizPicker,
           fromSuggestions: true,
+          isAutoSelected,
         },
         undefined
       );
@@ -174,7 +175,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
       return;
     }
-  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
+  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, applySuggestion]);
 
   if (loading || !data) {
     return (
