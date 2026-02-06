@@ -762,10 +762,10 @@ type grafanaComPluginManifest struct {
 
 // grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
 // It inherits most information from the parent plugin.
-func grafanaComChildPluginVersionToMetaSpec(ctx context.Context, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
+func grafanaComChildPluginVersionToMetaSpec(ctx context.Context, logger logging.Logger, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
 	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
 	if err != nil {
-		logging.FromContext(ctx).Error("Error getting cdn URL for catalog child meta", "child", child.Slug, "parent", parent.PluginSlug, "err", err)
+		logger.Error("Error getting cdn URL for catalog child meta", "child", child.Slug, "parent", parent.PluginSlug, "err", err)
 	}
 
 	// Create a synthetic meta with both parent and child info
@@ -781,11 +781,11 @@ func grafanaComChildPluginVersionToMetaSpec(ctx context.Context, child grafanaCo
 		CDNURL:              cdnURL,
 		CreatePluginVersion: parent.CreatePluginVersion,
 	}
-	return grafanaComPluginVersionMetaToMetaSpec(ctx, childMeta, child.Path)
+	return grafanaComPluginVersionMetaToMetaSpec(ctx, logger, childMeta, child.Path)
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
-func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) pluginsv0alpha1.MetaSpec {
+func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
@@ -823,13 +823,13 @@ func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafana
 
 	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")
 	if err != nil {
-		logging.FromContext(ctx).Error("Error getting module.js URL for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version)
+		logger.Error("Error getting module.js URL for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version)
 	}
 
 	modulePath := path.Join(pluginRelBasePath, "module.js")
 	moduleHash, ok := gcomMeta.Manifest.Files[modulePath]
 	if !ok {
-		logging.FromContext(ctx).Error("Error getting module hash for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "path", pluginRelBasePath)
+		logger.Error("Error getting module hash for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "path", pluginRelBasePath)
 	}
 
 	loadingStrategy := calculateLoadingStrategyFromGcomMeta(gcomMeta.CreatePluginVersion)
@@ -848,7 +848,7 @@ func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafana
 
 	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON)
 	if err != nil {
-		logging.FromContext(ctx).Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
+		logger.Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
 	}
 	metaSpec.Translations = translations
 

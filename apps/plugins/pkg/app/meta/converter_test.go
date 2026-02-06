@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -549,7 +550,7 @@ func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
 			JSON: pluginsv0alpha1.MetaJSONData{Id: "child-plugin", Name: "Child Plugin"},
 		}
 
-		meta := grafanaComChildPluginVersionToMetaSpec(ctx, child, parent)
+		meta := grafanaComChildPluginVersionToMetaSpec(ctx, &logging.NoOpLogger{}, child, parent)
 
 		assert.Equal(t, "child-plugin", meta.PluginJson.Id)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, meta.Class)
@@ -578,7 +579,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 			},
 		}
 
-		meta := grafanaComPluginVersionMetaToMetaSpec(ctx, gcomMeta, "test-plugin")
+		meta := grafanaComPluginVersionMetaToMetaSpec(ctx, &logging.NoOpLogger{}, gcomMeta, "test-plugin")
 		assert.Equal(t, "test-plugin", meta.PluginJson.Id)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, meta.Class)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid, meta.Signature.Status)
@@ -616,7 +617,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 					},
 				}
 
-				meta := grafanaComPluginVersionMetaToMetaSpec(ctx, gcomMeta, "test-plugin")
+				meta := grafanaComPluginVersionMetaToMetaSpec(ctx, &logging.NoOpLogger{}, gcomMeta, "test-plugin")
 				require.NotNil(t, meta.Signature.Type)
 				assert.Equal(t, tc.expected, *meta.Signature.Type)
 			})
@@ -635,7 +636,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 			},
 		}
 
-		meta := grafanaComPluginVersionMetaToMetaSpec(ctx, gcomMeta, "test-plugin")
+		meta := grafanaComPluginVersionMetaToMetaSpec(ctx, &logging.NoOpLogger{}, gcomMeta, "test-plugin")
 		assert.NotNil(t, meta.Module.Hash)
 	})
 }
