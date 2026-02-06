@@ -432,7 +432,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                     wrapLogMessage
                       ? t(
                           'logs.logs-controls.unwrapped-columns.disabled',
-                          'Columns are not suported with wrapped enabled'
+                          'Columns are not supported with line wrapping enabled'
                         )
                       : unwrappedColumns
                         ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns')
