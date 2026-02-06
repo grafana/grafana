@@ -247,7 +247,7 @@ export const LogLineDetailsComponent = memo(
             </ControlledCollapse>
           )}
           {noDetails && (
-            <Box marginTop={1} paddingLeft={1}>
+            <Box marginTop={1} paddingLeft={0.5}>
               <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
             </Box>
           )}
