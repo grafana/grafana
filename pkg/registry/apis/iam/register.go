@@ -558,17 +558,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateCoreRolesAPIGroup(
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
 ) error {
-	coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.CoreRoleInfo, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// write to zanzana on unified storage writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
 		h := NewRoleHooks(b.zClient, b.zTickets, b.logger)
-		coreRoleStore.AfterCreate = h.AfterRoleCreate
-		coreRoleStore.AfterDelete = h.AfterRoleDelete
-		coreRoleStore.BeginUpdate = h.BeginRoleUpdate
+		uniStore.AfterCreate = h.AfterRoleCreate
+		uniStore.AfterDelete = h.AfterRoleDelete
+		uniStore.BeginUpdate = h.BeginRoleUpdate
 	}
+
+	var coreRoleStore storewrapper.K8sStorage = uniStore
+
+	if b.coreRolesStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.CoreRoleInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		coreRoleStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
+	}
+
 	storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 	return nil
 }
