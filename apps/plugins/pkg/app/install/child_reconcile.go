@@ -48,7 +48,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	plugin := req.Object
 	logger := r.logger.WithContext(ctx).With(
 		"pluginId", plugin.Spec.Id,
-		"namespace", plugin.Namespace,
+		"request_namespace", plugin.Namespace,
 		"version", plugin.Spec.Version,
 		"action", req.Action,
 		"parentId", plugin.Spec.ParentId,
@@ -107,7 +107,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 }
 
 func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespace string, children []string) (operator.ReconcileResult, error) {
-	logger := r.logger.WithContext(ctx).With("namespace", namespace)
+	logger := r.logger.WithContext(ctx).With("request_namespace", namespace)
 	retry := false
 	for _, childID := range children {
 		err := r.registrar.Unregister(ctx, namespace, childID, SourceChildPluginReconciler)
@@ -124,7 +124,7 @@ func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespac
 }
 
 func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin, children []string) (operator.ReconcileResult, error) {
-	logger := r.logger.WithContext(ctx).With("namespace", parent.Namespace)
+	logger := r.logger.WithContext(ctx).With("request_namespace", parent.Namespace)
 	retry := false
 	for _, childID := range children {
 		childInstall := &PluginInstall{
