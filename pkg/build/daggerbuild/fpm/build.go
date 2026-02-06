@@ -130,6 +130,7 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 		// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.
 		WithExec([]string{"cp", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
 		WithExec([]string{"cp", "-r", "/src", "/pkg/usr/share/grafana"})
+
 	for _, conf := range opts.ConfigFiles {
 		container = container.WithExec(append([]string{"cp", "-r"}, conf...))
 	}
