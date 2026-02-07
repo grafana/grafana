@@ -83,8 +83,8 @@ export class DefaultGridLayoutManager
     icon: 'window-grid',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeDefaultGridLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeDefaultGridLayout(this, isSnapshot);
   }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
