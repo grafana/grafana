@@ -12,10 +12,10 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
 export interface K8sMetadata {
   name: string;
   namespace: string;
-  uid: string;
+  uid?: string;
   resourceVersion: string;
-  generation: number;
-  creationTimestamp: string;
+  generation?: number;
+  creationTimestamp?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
 }
@@ -53,6 +53,36 @@ export const getDataSourceK8sGroup = (uid: string): string => {
     }
   }
   return '';
+};
+
+export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
+  dsSettings: DataSourceSettings,
+  namespace: string,
+  version: string
+): DataSourceSettingsK8s => {
+  let k8sMetadata: K8sMetadata = {
+    name: dsSettings.uid,
+    namespace: namespace,
+    resourceVersion: 'fortytwo',
+    labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
+    annotations: {},
+  };
+  let k8sSpec: DatasourceInstanceK8sSpec = {
+    access: dsSettings.access,
+    jsonData: dsSettings.jsonData,
+    title: dsSettings.name,
+    url: dsSettings.url,
+    basicAuth: dsSettings.basicAuth,
+    basicAuthUser: dsSettings.basicAuthUser,
+    isDefault: dsSettings.isDefault,
+  };
+  let dsK8sSettings: DataSourceSettingsK8s = {
+    kind: 'DataSource',
+    metadata: k8sMetadata,
+    spec: k8sSpec,
+    apiVersion: dsSettings.type + '.datasource.grafana.app/' + version,
+  };
+  return dsK8sSettings;
 };
 
 export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
@@ -147,6 +177,11 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = (dataSource: DataSourceSettings) => {
+  if (config.featureToggles.queryServiceWithConnections) {
+    return updateDataSourceWithK8sAPI(dataSource, config.namespace).then((dataSource) => {
+      return convertK8sDatasourceSettingsToLegacyDatasourceSettings(dataSource);
+    });
+  }
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
   return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
@@ -157,3 +192,17 @@ export const updateDataSource = (dataSource: DataSourceSettings) => {
 };
 
 export const deleteDataSource = (uid: string) => getBackendSrv().delete(`/api/datasources/uid/${uid}`);
+
+export const updateDataSourceWithK8sAPI = (dataSourceSettings: DataSourceSettings, namespace: string) => {
+  let k8sVersion = 'v0alpha1';
+  let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(dataSourceSettings, namespace, k8sVersion);
+  return getBackendSrv().put(
+    `/apis/${dsK8sSettings.apiVersion}/namespaces/${namespace}/datasources/${dsK8sSettings.metadata.name}`,
+    dsK8sSettings,
+    {
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      validatePath: true,
+    }
+  );
+};
