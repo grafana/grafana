@@ -677,8 +677,18 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
 
   if (spec.variables) {
     spec.variables.forEach((variable) => {
+      const isCustomVariable = variable.kind === 'CustomVariable';
+      const currentOption = 'current' in variable.spec ? variable.spec.current : undefined;
+      const currentValue =
+        typeof currentOption === 'object' && currentOption !== null && 'value' in currentOption
+          ? currentOption.value
+          : undefined;
+      const isAllSelected = Array.isArray(currentValue) ? currentValue[0] === '$__all' : currentValue === '$__all';
+
       if ('query' in variable.spec) {
-        variable.spec.query = '';
+        if (!(isCustomVariable && isAllSelected)) {
+          variable.spec.query = '';
+        }
       }
       if ('options' in variable.spec && 'current' in variable.spec) {
         variable.spec.options =

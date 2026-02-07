@@ -610,6 +610,23 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     };
   }
 
+  if (variable.kind === 'CustomVariable') {
+    snapshotVariable = new SnapshotVariable({
+      name: variable.spec.name,
+      label: variable.spec.label,
+      description: variable.spec.description,
+      value: current?.value ?? '',
+      text: current?.text ?? '',
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
+      query: variable.spec.query,
+      includeAll: variable.spec.includeAll,
+      isMulti: variable.spec.multi,
+      defaultToAll: Boolean(variable.spec.includeAll),
+      ...(variable.spec.allValue !== undefined && { allValue: variable.spec.allValue }),
+    });
+    return snapshotVariable;
+  }
+
   snapshotVariable = new SnapshotVariable({
     name: variable.spec.name,
     label: variable.spec.label,
