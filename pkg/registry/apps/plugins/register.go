@@ -13,7 +13,6 @@ import (
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -38,7 +37,7 @@ type AppInstaller struct {
 func ProvideAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
 	restConfigProvider apiserver.RestConfigProvider,
-	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
+	pluginStore pluginstore.Store,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles,
 ) (*AppInstaller, error) {
@@ -49,7 +48,7 @@ func ProvideAppInstaller(
 		}
 	}
 
-	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
+	localProvider := meta.NewLocalProvider(pluginStore)
 	coreProvider := meta.NewCoreProvider(func() (string, error) {
 		return getPluginsPath(cfgProvider)
 	})

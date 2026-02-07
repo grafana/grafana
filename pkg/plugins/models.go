@@ -264,6 +264,7 @@ type Signature struct {
 	Status     SignatureStatus
 	Type       SignatureType
 	SigningOrg string
+	Files      map[string]string
 }
 
 type PluginMetaDTO struct {

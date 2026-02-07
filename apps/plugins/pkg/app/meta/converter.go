@@ -556,7 +556,7 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 // pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.
 // This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
-func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) pluginsv0alpha1.MetaSpec {
+func pluginStorePluginToMeta(plugin pluginstore.Plugin) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
@@ -573,10 +573,9 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 	if plugin.Module != "" {
 		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
+			Hash: &plugin.ModuleHash,
 		}
-		if moduleHash != "" {
-			module.Hash = &moduleHash
-		}
+
 		if plugin.LoadingStrategy != "" {
 			var ls pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy
 			switch plugin.LoadingStrategy {

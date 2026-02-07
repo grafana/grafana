@@ -63,12 +63,15 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 	if err != nil {
 		return nil, fmt.Errorf("module url: %w", err)
 	}
+	moduleHash := getModuleHash(info, sig)
+
 	plugin := &plugins.Plugin{
 		JSONData:      p.JSONData,
 		Class:         class,
 		FS:            p.FS,
 		BaseURL:       baseURL,
 		Module:        moduleURL,
+		ModuleHash:    moduleHash,
 		Signature:     sig.Status,
 		SignatureType: sig.Type,
 		SignatureOrg:  sig.SigningOrg,
@@ -140,4 +143,27 @@ func getTranslations(assetProvider pluginassets.Provider, n pluginassets.PluginI
 	}
 
 	return translations, nil
+}
+
+func getModuleHash(n pluginassets.PluginInfo, sig plugins.Signature) string {
+	if sig.Files == nil {
+		return ""
+	}
+
+	if n.Parent != nil {
+		childPath, err := n.Parent.FS.Rel(n.FS.Base())
+		if err != nil {
+			return ""
+		}
+		moduleHash, ok := sig.Files[path.Join(childPath, "module.js")]
+		if !ok {
+			return ""
+		}
+		return moduleHash
+	}
+	moduleHash, ok := sig.Files["module.js"]
+	if !ok {
+		return ""
+	}
+	return moduleHash
 }

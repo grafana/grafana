@@ -376,6 +376,49 @@ func TestConvertHashFromSRI(t *testing.T) {
 	}
 }
 
+func Test_ModuleHash_preSetModuleHash(t *testing.T) {
+	const (
+		childID       = "nested-datasource"
+		parentID      = "parent-app"
+		parentHexHash = "abc123"
+		childHexHash  = "def456"
+	)
+	parent := newPlugin(
+		parentID,
+		withSignatureStatus(plugins.SignatureStatusValid),
+		withFS(plugins.NewLocalFS(filepath.Join("../testdata", "module-hash-valid-nested"))),
+		withModuleHash(parentHexHash),
+	)
+	child := newPlugin(
+		childID,
+		withSignatureStatus(plugins.SignatureStatusValid),
+		withFS(plugins.NewLocalFS(filepath.Join("../testdata", "module-hash-valid-nested", "datasource"))),
+		withModuleHash(childHexHash),
+		withParent(parent),
+	)
+
+	pCfg := &config.PluginManagementCfg{
+		PluginsCDNURLTemplate: "http://cdn.example.com",
+		PluginSettings:        config.PluginSettings{},
+		Features:              config.Features{SriChecksEnabled: true},
+	}
+	svc := NewCalculator(
+		pCfg,
+		newPluginRegistry(t, parent, child),
+		pluginscdn.ProvideService(pCfg),
+		signature.ProvideService(pCfg, statickey.New()),
+	)
+
+	t.Run("parent returns pre-set module hash", func(t *testing.T) {
+		mh := svc.ModuleHash(context.Background(), parentID, "")
+		require.Equal(t, newSRIHash(t, parentHexHash), mh)
+	})
+	t.Run("child returns pre-set module hash", func(t *testing.T) {
+		mh := svc.ModuleHash(context.Background(), childID, "")
+		require.Equal(t, newSRIHash(t, childHexHash), mh)
+	})
+}
+
 func newPlugin(pluginID string, cbs ...func(p *plugins.Plugin) *plugins.Plugin) *plugins.Plugin {
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{
@@ -419,6 +462,13 @@ func withParent(parent *plugins.Plugin) func(p *plugins.Plugin) *plugins.Plugin 
 func withClass(class plugins.Class) func(p *plugins.Plugin) *plugins.Plugin {
 	return func(p *plugins.Plugin) *plugins.Plugin {
 		p.Class = class
+		return p
+	}
+}
+
+func withModuleHash(hexHash string) func(p *plugins.Plugin) *plugins.Plugin {
+	return func(p *plugins.Plugin) *plugins.Plugin {
+		p.ModuleHash = hexHash
 		return p
 	}
 }

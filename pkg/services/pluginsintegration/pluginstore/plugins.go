@@ -31,6 +31,7 @@ type Plugin struct {
 
 	// SystemJS fields
 	Module          string
+	ModuleHash      string
 	BaseURL         string
 	LoadingStrategy plugins.LoadingStrategy
 
@@ -77,6 +78,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		SignatureOrg:      p.SignatureOrg,
 		Error:             p.Error,
 		Module:            p.Module,
+		ModuleHash:        p.ModuleHash,
 		LoadingStrategy:   p.LoadingStrategy,
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,

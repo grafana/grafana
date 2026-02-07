@@ -388,6 +388,7 @@ func TestPluginStorePluginToMeta(t *testing.T) {
 			},
 			Class:           plugins.ClassCore,
 			Module:          "module.js",
+			ModuleHash:      "abc123",
 			BaseURL:         "https://example.com",
 			Signature:       plugins.SignatureStatusValid,
 			SignatureType:   plugins.SignatureTypeGrafana,
@@ -397,7 +398,7 @@ func TestPluginStorePluginToMeta(t *testing.T) {
 			Translations:    map[string]string{"en": "https://example.com/locales/en.json"},
 		}
 
-		meta := pluginStorePluginToMeta(plugin, "abc123")
+		meta := pluginStorePluginToMeta(plugin)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassCore, meta.Class)
 		assert.Equal(t, "module.js", meta.Module.Path)
 		assert.Equal(t, "abc123", *meta.Module.Hash)
@@ -415,7 +416,7 @@ func TestPluginStorePluginToMeta(t *testing.T) {
 			JSONData: plugins.JSONData{ID: "test-plugin", Name: "Test Plugin", Type: plugins.TypePanel},
 			Class:    plugins.ClassExternal,
 		}
-		meta := pluginStorePluginToMeta(plugin, "")
+		meta := pluginStorePluginToMeta(plugin)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, meta.Class)
 		assert.Empty(t, meta.Module.Path)
 		assert.Empty(t, meta.BaseURL)
@@ -429,7 +430,7 @@ func TestPluginStorePluginToMeta(t *testing.T) {
 			Module:          "module.js",
 			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
-		meta := pluginStorePluginToMeta(plugin, "")
+		meta := pluginStorePluginToMeta(plugin)
 		assert.Equal(t, "module.js", meta.Module.Path)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript, meta.Module.LoadingStrategy)
 	})

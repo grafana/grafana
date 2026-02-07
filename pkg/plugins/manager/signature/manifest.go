@@ -244,6 +244,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
+		Files:      manifest.Files,
 	}, nil
 }
 

@@ -49,6 +49,7 @@ type Plugin struct {
 
 	// SystemJS fields
 	Module          string
+	ModuleHash      string
 	BaseURL         string
 	LoadingStrategy LoadingStrategy
 
