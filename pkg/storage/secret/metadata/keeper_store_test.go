@@ -360,12 +360,12 @@ func Test_KeeperMetadataStorage_SetAsActive(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, keeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
-	keeperName, _, err := keeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k1.Namespace)
+	keeperName, _, err := keeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k1.Namespace, contracts.ReadOpts{})
 	require.NoError(t, err)
 	require.Equal(t, k1.Name, keeperName)
 
 	require.NoError(t, keeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
-	keeperName, _, err = keeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k2.Namespace)
+	keeperName, _, err = keeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k2.Namespace, contracts.ReadOpts{})
 	require.NoError(t, err)
 	require.Equal(t, k2.Name, keeperName)
 }

@@ -201,13 +201,13 @@ func Test_SetAsActive(t *testing.T) {
 
 		// Set the new keeper as active
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
-		keeperName, _, err := sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), namespace)
+		keeperName, _, err := sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), namespace, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, keeper.Name, keeperName)
 
 		// Set the system keeper as active
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), contracts.SystemKeeperName))
-		keeperName, _, err = sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), namespace)
+		keeperName, _, err = sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), namespace, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, contracts.SystemKeeperName, keeperName)
 	})
@@ -231,11 +231,11 @@ func Test_SetAsActive(t *testing.T) {
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
 
-		keeperName, _, err := sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k1.Namespace)
+		keeperName, _, err := sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k1.Namespace, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, k1.Name, keeperName)
 
-		keeperName, _, err = sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k2.Namespace)
+		keeperName, _, err = sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k2.Namespace, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, k2.Name, keeperName)
 	})

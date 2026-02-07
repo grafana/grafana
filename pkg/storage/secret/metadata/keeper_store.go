@@ -325,33 +325,82 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		s.metrics.KeeperMetadataDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := deleteKeeper{
+	return s.db.Transaction(ctx, func(ctx context.Context) error {
+		// Lock the keeper row
+		_, err := s.read(ctx, namespace.String(), name, contracts.ReadOpts{ForUpdate: true})
+		if err != nil {
+			return fmt.Errorf("reading keeper for update: ns=%+v name=%+v: %w", namespace, name, err)
+		}
+
+		exists, err := s.existsSecureValueUsingKeeper(ctx, namespace, name)
+		if err != nil {
+			return fmt.Errorf("checking if there exists a secure value using the keeper: ns=%+v name=%+v: %w", namespace, name, err)
+		}
+		if exists {
+			return fmt.Errorf("keeper is being used: namespace=%+v name+%+v :%w", namespace, name, contracts.ErrKeeperIsBeingUsedBySecureValue)
+		}
+
+		req := deleteKeeper{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			Namespace:   namespace.String(),
+			Name:        name,
+		}
+
+		query, err := sqltemplate.Execute(sqlKeeperDelete, req)
+		if err != nil {
+			return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
+		}
+
+		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("deleting row: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("getting rows affected: %w", err)
+		}
+		if rowsAffected == 0 {
+			return contracts.ErrKeeperNotFound
+		} else if rowsAffected != 1 {
+			return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
+		}
+
+		return nil
+	})
+}
+
+func (s *keeperMetadataStorage) existsSecureValueUsingKeeper(ctx context.Context, namespace xkube.Namespace, keeperName string) (bool, error) {
+	req := existsSecureValueUsingKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
-		Name:        name,
+		Name:        keeperName,
 	}
 
-	query, err := sqltemplate.Execute(sqlKeeperDelete, req)
+	query, err := sqltemplate.Execute(sqlExistsSecureValueUsingKeeper, req)
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
+		return false, fmt.Errorf("execute template %q: %w", sqlExistsSecureValueUsingKeeper.Name(), err)
 	}
 
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("deleting row: %w", err)
+		return false, fmt.Errorf("querying database to find out if there are secure values using keeper: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("getting rows affected: %w", err)
-	}
-	if rowsAffected == 0 {
-		return contracts.ErrKeeperNotFound
-	} else if rowsAffected != 1 {
-		return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
+	if err := res.Err(); err != nil {
+		return false, fmt.Errorf("read rows error: %w", err)
 	}
 
-	return nil
+	if !res.Next() {
+		return false, nil
+	}
+
+	var count int
+	if err := res.Scan(&count); err != nil {
+		return false, fmt.Errorf("scanning row: %w", err)
+	}
+
+	return count > 0, nil
 }
 
 func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (keeperList []secretv1beta1.Keeper, err error) {
@@ -644,10 +693,11 @@ func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace string) (keeper *secretv1beta1.Keeper, readErr error) {
+func (s *keeperMetadataStorage) getActiveKeeper(ctx context.Context, namespace string, opts contracts.ReadOpts) (keeper *secretv1beta1.Keeper, readErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.GetActiveKeeper", trace.WithAttributes(
 		attribute.String("namespace", namespace),
+		attribute.String("opts", fmt.Sprintf("%+v", opts)),
 	))
 	defer span.End()
 
@@ -673,6 +723,7 @@ func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace s
 	req := &readActiveKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
+		IsForUpdate: opts.ForUpdate,
 	}
 
 	query, err := sqltemplate.Execute(sqlKeeperReadActive, req)
@@ -714,8 +765,8 @@ func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace s
 	return keeper, nil
 }
 
-func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error) {
-	keeper, err := s.GetActiveKeeper(ctx, namespace)
+func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, namespace string, opts contracts.ReadOpts) (string, secretv1beta1.KeeperConfig, error) {
+	keeper, err := s.getActiveKeeper(ctx, namespace, opts)
 	if err != nil {
 		// When there are not active keepers, default to the system keeper
 		if errors.Is(err, contracts.ErrKeeperNotFound) {

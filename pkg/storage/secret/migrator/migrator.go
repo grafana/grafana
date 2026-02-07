@@ -243,4 +243,8 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
+
+	mg.AddMigration("add secret_secure_value {namespace, keeper} index in "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"namespace", "keeper"},
+	}))
 }
