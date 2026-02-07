@@ -52,7 +52,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { PopupCard } from '../../components/HoverCard';
+import { PopupCard } from '../HoverCard';
 
 import { InlineSaveInput } from './InlineSaveInput';
 import { SavedSearchItem } from './SavedSearchItem';
@@ -81,6 +81,8 @@ export interface SavedSearchesProps {
   isLoading?: boolean;
   /** Additional CSS class name */
   className?: string;
+  /** Function to generate the href for a saved search item */
+  getHref?: (search: SavedSearch) => string;
 }
 
 // ============================================================================
@@ -156,6 +158,9 @@ function dropdownReducer(state: DropdownState, action: DropdownAction): Dropdown
   }
 }
 
+// Default href generator for Alert Rules page
+const defaultGetHref = (search: SavedSearch) => `/alerting/list?search=${encodeURIComponent(search.query)}`;
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -170,6 +175,7 @@ export function SavedSearches({
   onSetDefault,
   isLoading = false,
   className,
+  getHref = defaultGetHref,
 }: SavedSearchesProps) {
   const styles = useStyles2(getStyles);
 
@@ -350,6 +356,7 @@ export function SavedSearches({
         onSetDefault={handleSetDefault}
         savedSearches={savedSearches}
         menuPortalRoot={dialogRef.current}
+        getHref={getHref}
       />
     </div>
   );
@@ -405,6 +412,8 @@ interface ListModeProps {
   savedSearches: SavedSearch[];
   /** Portal root for action menus - renders inside the dropdown to prevent useDismiss issues */
   menuPortalRoot: HTMLElement | null;
+  /** Function to generate the href for a saved search item */
+  getHref: (search: SavedSearch) => string;
 }
 
 function ListMode({
@@ -427,6 +436,7 @@ function ListMode({
   onSetDefault,
   savedSearches,
   menuPortalRoot,
+  getHref,
 }: ListModeProps) {
   const styles = useStyles2(getStyles);
 
@@ -490,7 +500,7 @@ function ListMode({
               // Item is disabled if any action is active and this item is not the one being acted upon
               const isItemDisabled = isActionActive && !isRenaming && !isDeleting;
 
-              const href = `/alerting/list?search=${encodeURIComponent(search.query)}`;
+              const href = getHref(search);
 
               return (
                 <SavedSearchItem

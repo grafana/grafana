@@ -19,7 +19,7 @@ Users can:
 The main component that renders a button and dropdown for managing saved searches.
 
 ```tsx
-import { SavedSearches } from './SavedSearches';
+import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 
 <SavedSearches
   savedSearches={savedSearches}
@@ -102,7 +102,8 @@ const handleApply = (search: SavedSearch) => {
 ### Basic Integration
 
 ```tsx
-import { SavedSearches, SavedSearch } from './SavedSearches';
+import { SavedSearches } from '../../components/saved-searches/SavedSearches';
+import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { useSavedSearches, trackSavedSearchApplied } from './useSavedSearches';
 
 function MyFilterComponent() {
@@ -365,12 +366,19 @@ it('should handle malformed JSON gracefully', async () => {
 ## File Structure
 
 ```
-public/app/features/alerting/unified/rule-list/filter/
-├── SavedSearches.tsx          # Main component
-├── SavedSearches.test.tsx     # Component tests
-├── SavedSearches.README.md    # This documentation
-├── useSavedSearches.ts        # Custom hook with persistence
-└── useSavedSearches.test.tsx  # Hook tests
+public/app/features/alerting/unified/
+├── components/saved-searches/    # Shared components
+│   ├── SavedSearches.tsx         # Main component
+│   ├── SavedSearches.test.tsx    # Component tests
+│   ├── SavedSearchItem.tsx       # Individual search item
+│   ├── InlineSaveInput.tsx       # Inline save input
+│   ├── InlineRenameInput.tsx     # Inline rename input
+│   ├── savedSearchesSchema.ts    # Types and validation
+│   └── index.ts                  # Barrel export
+└── rule-list/filter/
+    ├── SavedSearches.README.md   # This documentation
+    ├── useSavedSearches.ts       # Custom hook with persistence
+    └── useSavedSearches.test.tsx # Hook tests
 ```
 
 ## Dependencies
