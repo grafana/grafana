@@ -72,7 +72,7 @@ export function Segment<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !(typeof value === 'object' && value !== null) ? { value } : value}
+      value={value && typeof value !== 'object' ? { value } : value}
       placeholder={inputPlaceholder}
       options={options}
       width={width}

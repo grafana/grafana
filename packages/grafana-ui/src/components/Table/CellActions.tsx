@@ -67,7 +67,12 @@ export function CellActions({
                 let inspectValue = cell.value;
                 try {
                   const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
-                  if (Array.isArray(parsed) || (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed))) {
+                  const isPlainObj =
+                    typeof parsed === 'object' &&
+                    parsed !== null &&
+                    !Array.isArray(parsed) &&
+                    (Object.getPrototypeOf(parsed) === Object.prototype || Object.getPrototypeOf(parsed) === null);
+                  if (Array.isArray(parsed) || isPlainObj) {
                     inspectValue = JSON.stringify(parsed, null, 2);
                     mode = TableCellInspectorMode.code;
                   }
