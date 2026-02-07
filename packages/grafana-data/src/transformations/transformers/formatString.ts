@@ -2,6 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo, FieldMatcher, TransformationApplicabilityLevels } from '../../types/transformations';
+import { stringToJsRegex } from '../../text/string';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -18,12 +19,15 @@ export enum FormatStringOutput {
   KebabCase = 'Kebab Case',
   Trim = 'Trim',
   Substring = 'Substring',
+  RegexReplace = 'Regex Replace',
 }
 
 export interface FormatStringTransformerOptions {
   stringField: string;
   substringStart: number;
   substringEnd: number;
+  regex: string;
+  replacePattern: string;
   outputFormat: FormatStringOutput;
 }
 
@@ -33,6 +37,11 @@ const splitToCapitalWords = (input: string) => {
     arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1).toLowerCase();
   }
   return arr;
+};
+
+const performRegexReplace = (input: string, regexPattern: string, replacePattern: string) => {
+  const regex = stringToJsRegex(regexPattern);
+  return input.replace(regex, replacePattern);
 };
 
 export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
@@ -60,6 +69,8 @@ export const getFormatStringFunction = (options: FormatStringTransformerOptions)
           return value.trim();
         case FormatStringOutput.Substring:
           return value.substring(options.substringStart, options.substringEnd);
+        case FormatStringOutput.RegexReplace:
+          return performRegexReplace(value, options.regex, options.replacePattern);
       }
     });
 };
@@ -68,7 +79,12 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
   id: DataTransformerID.formatString,
   name: 'Format string',
   description: 'Manipulate string fields formatting',
-  defaultOptions: { stringField: '', outputFormat: FormatStringOutput.UpperCase },
+  defaultOptions: {
+    stringField: '',
+    outputFormat: FormatStringOutput.UpperCase,
+    regex: '(.*)',
+    replacePattern: '$1',
+  },
   isApplicable: (data: DataFrame[]) => {
     // Search for a string field
     // if there is one then we can use this transformation
