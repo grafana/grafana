@@ -77,5 +77,6 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export * as DashboardMutationAPI from './services/dashboardMutationAPI';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
 export { useAppPluginInstalled, useAppPluginVersion } from './services/pluginMeta/hooks';
