@@ -4,6 +4,7 @@ import { SkeletonTheme } from 'react-loading-skeleton';
 
 import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
+import { useSystemThemeWatcher } from 'app/core/hooks/useSystemThemeWatcher';
 
 import { appEvents } from '../app_events';
 
@@ -11,6 +12,9 @@ import 'react-loading-skeleton/dist/skeleton.css';
 
 export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
   const [theme, setTheme] = useState(value);
+
+  // Sync theme with system if applicable
+  useSystemThemeWatcher();
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
