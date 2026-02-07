@@ -42,10 +42,15 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
-          use: {
-            loader: 'esbuild-loader',
-            options: esbuildOptions,
-          },
+          use: [
+            {
+              loader: 'esbuild-loader',
+              options: esbuildOptions,
+            },
+            {
+              loader: require.resolve('./interactive-element-id-loader.js'),
+            },
+          ],
         },
         require('./sass.rule.js')({
           sourceMap: false,
