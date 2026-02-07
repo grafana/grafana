@@ -4952,7 +4952,6 @@
       "paste-panel": "Wklej panel",
       "paste-row": "Wklej wiersz",
       "paste-tab": "Wklej kartę",
-      "un-group-panels": "Rozłącz grupę",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10632,6 +10631,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Nie zawijaj wierszy",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Zawijaj wiersze"
     },
     "logs-navigation": {
@@ -10658,6 +10663,7 @@
     "name-show-controls": "Pokaż kontrolki",
     "name-time": "Pokaż znaczniki czasu",
     "name-unique-labels": "Unikalne etykiety",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Zawijaj wiersze",
     "order-options": {
       "label-newest-first": "Od najnowszych",
@@ -12236,7 +12242,6 @@
       "placeholder-my-repository-connection": "Połączenie z moim repozytorium",
       "retry-action": "",
       "text-loading-resource-information": "Wczytywanie informacji o zasobach…",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} pulpit",
@@ -12786,7 +12791,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "i kliknij",
@@ -12823,8 +12829,6 @@
       "button-cancelling": "",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {

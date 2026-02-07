@@ -4880,7 +4880,6 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10485,6 +10484,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "取消換行",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "換行"
     },
     "logs-navigation": {
@@ -10511,6 +10516,7 @@
     "name-show-controls": "顯示控制項",
     "name-time": "顯示時間戳記",
     "name-unique-labels": "唯一標籤",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "換行",
     "order-options": {
       "label-newest-first": "最新排前",
@@ -12080,7 +12086,6 @@
       "placeholder-my-repository-connection": "我的儲存庫連線",
       "retry-action": "",
       "text-loading-resource-information": "正在載入資源資訊…",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} 個儀表板",
@@ -12612,7 +12617,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "然後按一下",
@@ -12649,8 +12655,6 @@
       "button-cancelling": "",
       "button-next": "結束",
       "button-start": "開始同步處理",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {

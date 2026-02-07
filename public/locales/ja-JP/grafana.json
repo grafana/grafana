@@ -4880,7 +4880,6 @@
       "paste-panel": "パネルを貼り付け",
       "paste-row": "行を貼り付け",
       "paste-tab": "タブを貼り付け",
-      "un-group-panels": "グループ解除",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10485,6 +10484,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "行の折り返しを解除",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
@@ -10511,6 +10516,7 @@
     "name-show-controls": "コントロールを表示",
     "name-time": "タイムスタンプを表示",
     "name-unique-labels": "一意のラベル",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "行を折り返す",
     "order-options": {
       "label-newest-first": "新しいものから表示",
@@ -12080,7 +12086,6 @@
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "retry-action": "",
       "text-loading-resource-information": "リソース情報読み込み中...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
@@ -12612,7 +12617,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
@@ -12649,8 +12655,6 @@
       "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {

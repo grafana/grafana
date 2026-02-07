@@ -4904,7 +4904,6 @@
       "paste-panel": "Paneli yapıştır",
       "paste-row": "Satırı yapıştır",
       "paste-tab": "Sekmeyi yapıştır",
-      "un-group-panels": "Gruplandırmayı çöz",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10534,6 +10533,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Satırları çöz",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
@@ -10560,6 +10565,7 @@
     "name-show-controls": "Kontrolleri göster",
     "name-time": "",
     "name-unique-labels": "Benzersiz etiketler",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Satırları kaydır",
     "order-options": {
       "label-newest-first": "Yeniden eskiye",
@@ -12132,7 +12138,6 @@
       "placeholder-my-repository-connection": "Depo bağlantım",
       "retry-action": "",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} pano",
@@ -12670,7 +12675,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "ve şuna tıklayın:",
@@ -12707,8 +12713,6 @@
       "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
