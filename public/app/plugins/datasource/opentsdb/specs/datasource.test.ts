@@ -235,4 +235,62 @@ describe('opentsdb', () => {
       expect(templateSrv.replace).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('When applying template variables', () => {
+    it('should interpolate filter values so no raw template variables are sent', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (value === '${host}') {
+          return String(scopedVars?.host?.value);
+        }
+        return value as string;
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: 'cpu.utilisation',
+        aggregator: 'avg',
+        filters: [
+          {
+            type: 'regexp',
+            tagk: 'host',
+            filter: '${host}',
+            groupBy: true,
+          },
+        ],
+      };
+
+      const scopedVars = { host: { text: 'ABC', value: 'ABC' } };
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.filters?.[0].filter).toBe('ABC');
+      expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+
+    it('should interpolate tags when filters are not used', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (value === '${host}') {
+          return String(scopedVars?.host?.value);
+        }
+        return value as string;
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: 'cpu.utilisation',
+        tags: {
+          host: '${host}',
+        },
+      };
+
+      const scopedVars = { host: { text: 'ABC', value: 'ABC' } };
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.tags?.host).toBe('ABC');
+      expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+  });
 });
