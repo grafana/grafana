@@ -1,6 +1,5 @@
 import { Annotation } from 'slate';
 import { Plugin } from 'slate-react';
-import { v4 as uuidv4 } from 'uuid';
 
 const BRACES: Record<string, string> = {
   '[': ']',
@@ -43,7 +42,7 @@ export function BracesPlugin(): Plugin {
             event.preventDefault();
             const complement = BRACES[event.key];
             const matchAnnotation = {
-              key: `${MATCH_MARK}-${uuidv4()}`,
+              key: `${MATCH_MARK}-${crypto.randomUUID()}`,
               type: `${MATCH_MARK}-${complement}`,
               anchor: {
                 key: startKey,
