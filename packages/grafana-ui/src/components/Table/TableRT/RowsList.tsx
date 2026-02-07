@@ -49,7 +49,7 @@ interface RowsListProps {
   listHeight: number;
   width: number;
   cellHeight?: TableCellHeight;
-  listRef: React.RefObject<VariableSizeList>;
+  listRef: React.RefObject<VariableSizeList | null>;
   tableState: TableState;
   tableStyles: TableStyles;
   nestedDataField?: Field;

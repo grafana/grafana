@@ -11,7 +11,7 @@ import { SaveButton } from './SaveButton';
 import { WarningBadges } from './WarningBadges';
 
 interface HeaderActionsProps {
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   queries: DataQuery[];
 }
 
