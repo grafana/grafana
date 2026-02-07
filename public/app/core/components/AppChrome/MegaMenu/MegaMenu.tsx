@@ -1,18 +1,20 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useCallback } from 'react';
+import { memo, forwardRef, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { usePatchUserPreferencesMutation } from '@grafana/api-clients/rtkq/legacy/preferences';
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2, Box, EmptyState } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { MegaMenuControls } from './MegaMenuControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
@@ -27,7 +29,7 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const navTree = useSelector((state) => state.navBarTree);
+    const rawNavTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
@@ -35,6 +37,11 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+    const { isAvailable: isAssistantAvailable } = useAssistant();
+
+    const [navTree, setFilteredNavTree] = useState<NavModelItem[]>(rawNavTree);
+    const [menuFilterValue, setMenuFilterValue] = useState<string>('');
+    const [allSectionsExpanded, setAllSectionsExpanded] = useState<string>('');
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -102,14 +109,77 @@ export const MegaMenu = memo(
       }
     };
 
+    const onToggleAllSections = (expanded: boolean) => {
+      // Set a new key so we re-render the list when collapsing/expanding all sections
+      // as this is driven from localStorage, so component otherwise doesn't know about it
+      setAllSectionsExpanded(expanded ? 'expanded' : 'collapsed');
+    };
+
+    const navItemHasMatch = (item: NavModelItem, filter: string): boolean => {
+      return (
+        item.text.toLowerCase().includes(filter.toLowerCase()) ||
+        Boolean(item.children?.some((child) => navItemHasMatch(child, filter)))
+      );
+    };
+
+    /**
+     * Filter mega menu items based on filter from MegaMenuControls
+     */
+    const onFilterChange = (filterValue: string) => {
+      setMenuFilterValue(filterValue);
+
+      const initial: NavModelItem[] = [];
+      const filteredNavTree = rawNavTree.reduce((acc, item) => {
+        const thisItemHasMatches = navItemHasMatch(item, filterValue);
+        if (!thisItemHasMatches) {
+          return acc;
+        }
+        const filteredItem = {
+          ...item,
+          children: item.children?.filter((child) => navItemHasMatch(child, filterValue)),
+        };
+        acc.push(filteredItem);
+        return acc;
+      }, initial);
+      setFilteredNavTree(filteredNavTree);
+    };
+
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
+        <MegaMenuControls
+          onToggleAllSections={onToggleAllSections}
+          onFilterChange={onFilterChange}
+          key={allSectionsExpanded}
+        />
+
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
-              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
+              <ul
+                className={styles.itemList}
+                aria-label={t('navigation.megamenu.list-label', 'Navigation')}
+                key={allSectionsExpanded}
+              >
+                {navItems.length === 0 && (
+                  <Box padding={1}>
+                    <EmptyState
+                      variant="not-found"
+                      role="alert"
+                      message={t('command-palette.empty-state.message', 'No results found')}
+                    >
+                      {isAssistantAvailable && (
+                        <OpenAssistantButton
+                          origin="grafana/command-palette-empty-state"
+                          prompt={`Search for ${menuFilterValue}`}
+                          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+                          onClick={() => setMenuFilterValue('')}
+                        />
+                      )}
+                    </EmptyState>
+                  </Box>
+                )}
+                {navItems.map((link) => (
                   <MegaMenuItem
                     key={link.text}
                     link={link}
