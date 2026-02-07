@@ -85,7 +85,7 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !(typeof value === 'object' && value !== null) ? { value } : value}
+      value={value && typeof value !== 'object' ? { value } : value}
       placeholder={inputPlaceholder}
       options={state.value ?? []}
       loadOptions={reloadOptionsOnChange ? fetchOptions : undefined}

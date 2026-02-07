@@ -169,7 +169,10 @@ export const VirtualizedSelectMenu = ({
     );
   }
 
-  let longestOption = Math.max(0, ...flattenedOptions.map((option) => option.label?.length ?? 0));
+  let longestOption = flattenedOptions.reduce((max, option) => {
+    const length = option.label?.length ?? 0;
+    return length > max ? length : max;
+  }, 0);
   if (toggleAllOptions && longestOption < 12) {
     longestOption = 12;
   }
