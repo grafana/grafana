@@ -9,7 +9,7 @@ import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
 import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
-import { mapMouseEventToMode } from './utils';
+import { mapMouseEventToMode, sortLegendItems } from './utils';
 
 /**
  * @public
@@ -24,6 +24,7 @@ export function VizLegend<T>({
   sortBy: sortKey,
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,
+  sortOrder,
   onLabelClick,
   onToggleSort,
   placement,
@@ -126,12 +127,13 @@ export function VizLegend<T>({
     case LegendDisplayMode.List:
       const isThresholdsEnabled = thresholdItems && thresholdItems.length > 1;
       const isValueMappingEnabled = mappingItems && mappingItems.length > 0;
+      const sortedItems = sortLegendItems(items, sortOrder);
       return (
         <>
           {/* render items when single series and there is no thresholds and no value mappings
            * render items when multi series and there is no thresholds
            */}
-          {!isThresholdsEnabled && (!isValueMappingEnabled || items.length > 1) && makeVizLegendList(items)}
+          {!isThresholdsEnabled && (!isValueMappingEnabled || items.length > 1) && makeVizLegendList(sortedItems)}
           {/* render threshold colors if From thresholds scheme selected */}
           {isThresholdsEnabled && makeVizLegendList(thresholdItems)}
           {/* render value mapping colors */}
