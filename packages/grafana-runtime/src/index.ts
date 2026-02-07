@@ -78,4 +78,11 @@ export {
   setCorrelationsService,
 } from './services/CorrelationsService';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
-export { useAppPluginInstalled, useAppPluginVersion } from './services/pluginMeta/hooks';
+export {
+  useAppPluginInstalled,
+  useAppPluginVersion,
+  useListedPanelPluginIds,
+  usePanelPluginInstalled,
+  usePanelPluginVersion,
+} from './services/pluginMeta/hooks';
+export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';

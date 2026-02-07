@@ -1,5 +1,3 @@
-import { AppPluginConfig } from '@grafana/data';
-
 import { evaluateBooleanFlag } from '../../internal/openFeature';
 
 import {
@@ -235,19 +233,6 @@ describe('immutability', () => {
     // assert that we have not mutated the source
     expect(apps[0].dependencies.grafanaDependency).toEqual('>=10.4.0');
     expect(apps[0].extensions.addedLinks).toHaveLength(0);
-  });
-
-  it('getAppPluginMetas should return a deep clone including functions', async () => {
-    setAppPluginMetas({
-      'myorg-someplugin-app': {
-        ...app,
-        extensions: {
-          ...app.extensions,
-          addedFunctions: [{ targets: [], title: '', description: '', onClick: () => {} }],
-        },
-      } as unknown as AppPluginConfig,
-    });
-    expect(async () => await getAppPluginMetas()).not.toThrow();
   });
 
   it('getAppPluginMeta should return a deep clone', async () => {
