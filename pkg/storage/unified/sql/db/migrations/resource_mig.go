@@ -1,10 +1,13 @@
 package migrations
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -231,6 +234,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "IDX_resource_history_resource_action_version_name",
 	}))
 
+	mg.AddMigration("Fix resource dashboard variable quotes in PostgreSQL panels", &FixResourceDashboardVariableQuotesMigration{})
+
 	return marker
 }
 
@@ -367,4 +372,261 @@ func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueR
 	}
 
 	return rows, nil
+}
+
+type FixResourceDashboardVariableQuotesMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *FixResourceDashboardVariableQuotesMigration) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *FixResourceDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	return RunFixResourceDashboardVariableQuotesMigration(sess, mg)
+}
+
+// RunFixResourceDashboardVariableQuotesMigration performs the migration on resource and resource_history tables
+func RunFixResourceDashboardVariableQuotesMigration(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Process resource table
+	if err := processResourceTable(sess, mg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
+	type resource struct {
+		GUID                    string `xorm:"guid"`
+		Group                   string `xorm:"group"`
+		Resource                string `xorm:"resource"`
+		Namespace               string `xorm:"namespace"`
+		Name                    string `xorm:"name"`
+		Folder                  string `xorm:"folder"`
+		ResourceVersion         int64  `xorm:"resource_version"`
+		PreviousResourceVersion int64  `xorm:"previous_resource_version"`
+		LabelSet                string `xorm:"label_set"`
+		Value                   string `xorm:"value"`
+	}
+
+	var resources []resource
+	err := sess.Table("resource").
+		Where("\"group\" = ?", "dashboard.grafana.app").
+		Where("resource = ?", "dashboards").
+		Cols("guid", "group", "resource", "namespace", "name", "folder", "resource_version", "previous_resource_version", "label_set", "value").
+		Find(&resources)
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch resources: %w", err)
+	}
+
+	mg.Logger.Info("Starting resource dashboard variable quotes fix migration", "total_resources", len(resources))
+
+	modifiedCount := 0
+	errorCount := 0
+
+	for _, res := range resources {
+		// Skip empty value
+		if strings.TrimSpace(res.Value) == "" {
+			continue
+		}
+
+		// Parse resource wrapper as generic map to preserve all fields
+		var wrapperMap map[string]any
+		if err := json.Unmarshal([]byte(res.Value), &wrapperMap); err != nil {
+			mg.Logger.Warn("Failed to parse resource wrapper JSON", "resource_guid", res.GUID, "error", err)
+			errorCount++
+			continue
+		}
+
+		// Get the spec field as a map
+		specInterface, ok := wrapperMap["spec"]
+		if !ok {
+			mg.Logger.Debug("Resource has no spec field, skipping", "resource_guid", res.GUID)
+			continue
+		}
+
+		specMap, ok := specInterface.(map[string]any)
+		if !ok {
+			mg.Logger.Warn("Spec field is not an object", "resource_guid", res.GUID)
+			errorCount++
+			continue
+		}
+
+		// Process the spec (dashboard) using shared logic
+		// This directly modifies the specMap in place
+		modified := migrator.ProcessDashboardOrResourceSpecShared(specMap)
+
+		// If modified, update the resource
+		if modified {
+			// Get metadata to extract and increment generation
+			metadataInterface, ok := wrapperMap["metadata"]
+			if !ok {
+				mg.Logger.Warn("Resource has no metadata field", "resource_guid", res.GUID)
+				errorCount++
+				continue
+			}
+
+			metadataMap, ok := metadataInterface.(map[string]any)
+			if !ok {
+				mg.Logger.Warn("Metadata field is not an object", "resource_guid", res.GUID)
+				errorCount++
+				continue
+			}
+
+			// Extract current generation
+			oldGeneration := int64(0)
+			if gen, ok := metadataMap["generation"].(float64); ok {
+				oldGeneration = int64(gen)
+			}
+
+			// Increment generation since we're modifying the spec
+			newGeneration := oldGeneration + 1
+			metadataMap["generation"] = newGeneration
+
+			updateMessage := "Fixed PostgreSQL dashboard variable quotes in repeated panels"
+
+			// Update annotations with migration message
+			annotationsInterface, ok := metadataMap["annotations"]
+			if !ok {
+				// Create annotations if it doesn't exist
+				metadataMap["annotations"] = map[string]any{
+					"grafana.app/updatedBy": "migration",
+					"grafana.app/message":   updateMessage,
+				}
+			} else {
+				annotationsMap, ok := annotationsInterface.(map[string]any)
+				if ok {
+					annotationsMap["grafana.app/updatedBy"] = "migration"
+					annotationsMap["grafana.app/message"] = updateMessage
+				} else {
+					// If annotations is not a map, replace it
+					metadataMap["annotations"] = map[string]any{
+						"grafana.app/updatedBy": "migration",
+						"grafana.app/message":   updateMessage,
+					}
+				}
+			}
+
+			// Get and increment the resource_version for this resource type
+			var currentRV int64
+			sqlGetRV := `SELECT resource_version FROM resource_version WHERE "group" = ? AND resource = ?`
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlGetRV = `SELECT resource_version FROM resource_version WHERE "group" = $1 AND resource = $2`
+			}
+
+			exists, err := sess.SQL(sqlGetRV, res.Group, res.Resource).Get(&currentRV)
+			if err != nil {
+				mg.Logger.Warn("Failed to get resource_version", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			if !exists {
+				mg.Logger.Warn("No resource_version entry found", "resource_guid", res.GUID, "group", res.Group, "resource", res.Resource)
+				errorCount++
+				continue
+			}
+
+			// Increment to get new version
+			oldResourceVersion := res.ResourceVersion
+			newResourceVersion := currentRV + 1
+
+			// Update metadata.resourceVersion to match the new resource_version
+			metadataMap["resourceVersion"] = fmt.Sprintf("%d", newResourceVersion)
+
+			// Now marshal the entire wrapper with updated metadata (generation and resourceVersion)
+			updatedValue, err := json.Marshal(wrapperMap)
+			if err != nil {
+				mg.Logger.Warn("Failed to marshal updated resource wrapper JSON", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the global resource_version counter
+			sqlUpdateRV := `UPDATE resource_version SET resource_version = ? WHERE "group" = ? AND resource = ?`
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlUpdateRV = `UPDATE resource_version SET resource_version = $1 WHERE "group" = $2 AND resource = $3`
+			}
+
+			_, err = sess.Exec(sqlUpdateRV, newResourceVersion, res.Group, res.Resource)
+			if err != nil {
+				mg.Logger.Warn("Failed to update resource_version table", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the resource in the database with new version
+			sqlUpdate := `UPDATE resource SET value = ?, resource_version = ?, previous_resource_version = ? WHERE guid = ?`
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlUpdate = `UPDATE resource SET value = $1, resource_version = $2, previous_resource_version = $3 WHERE guid = $4`
+			}
+
+			_, err = sess.Exec(sqlUpdate, string(updatedValue), newResourceVersion, oldResourceVersion, res.GUID)
+			if err != nil {
+				mg.Logger.Warn("Failed to update resource", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Create a resource_history entry for this change
+			historyGUID := uuid.New().String()
+			action := int64(2) // MODIFIED = 2
+
+			// Compute key_path using the new resource version
+			actionStr := "updated"
+			keyPath := fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s",
+				res.Group, res.Resource, res.Namespace, res.Name,
+				snowflakeFromRv(newResourceVersion), actionStr, res.Folder)
+
+			sqlInsertHistory := `
+				INSERT INTO resource_history
+				(guid, "group", resource, namespace, name, folder, resource_version, previous_resource_version,
+				 label_set, value, action, generation, key_path)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlInsertHistory = `
+					INSERT INTO resource_history
+					(guid, "group", resource, namespace, name, folder, resource_version, previous_resource_version,
+					 label_set, value, action, generation, key_path)
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+			}
+
+			_, err = sess.Exec(sqlInsertHistory,
+				historyGUID,
+				res.Group,
+				res.Resource,
+				res.Namespace,
+				res.Name,
+				res.Folder,
+				newResourceVersion,
+				oldResourceVersion,
+				res.LabelSet,
+				string(updatedValue),
+				action,
+				newGeneration,
+				keyPath,
+			)
+			if err != nil {
+				mg.Logger.Warn("Failed to create resource_history entry", "resource_guid", res.GUID, "error", err)
+				// Don't fail the migration if history creation fails, but log it
+			}
+
+			modifiedCount++
+			mg.Logger.Debug("Fixed resource dashboard variable quotes and created history entry",
+				"resource_guid", res.GUID,
+				"old_version", oldResourceVersion,
+				"new_version", newResourceVersion,
+				"old_generation", oldGeneration,
+				"new_generation", newGeneration)
+		}
+	}
+
+	mg.Logger.Info("Completed resource dashboard variable quotes fix migration",
+		"total_resources", len(resources),
+		"modified", modifiedCount,
+		"errors", errorCount)
+
+	return nil
 }
