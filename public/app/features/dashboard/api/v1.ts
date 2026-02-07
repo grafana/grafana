@@ -43,9 +43,14 @@ export const K8S_V1_DASHBOARD_API_CONFIG = {
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO, Status>;
+  private prefetchedData: Map<string, DashboardWithAccessInfo<DashboardDataDTO>> = new Map();
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
+  }
+
+  setPrefetchedResponse(uid: string, data: DashboardWithAccessInfo<DashboardDataDTO>) {
+    this.prefetchedData.set(uid, data);
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
@@ -142,11 +147,25 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto', params);
+      const prefetched = this.prefetchedData.get(uid);
+      let dash: DashboardWithAccessInfo<DashboardDataDTO>;
+
+      if (prefetched) {
+        this.prefetchedData.delete(uid);
+        dash = prefetched;
+      } else {
+        dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto', params);
+      }
 
       // This could come as conversion error from v0 or v2 to V1.
       if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
-        throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
+        throw new DashboardVersionError(
+          dash.status.conversion.storedVersion,
+          dash.status.conversion.error,
+          dash.status.conversion.source,
+          dash.access,
+          dash.kind
+        );
       }
 
       const result: DashboardDTO = {
