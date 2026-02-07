@@ -2,10 +2,12 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
+import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
+import { contextSrv } from 'app/core/services/context_srv';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
@@ -30,12 +32,14 @@ interface Props {
 export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
+  const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
-
   const deleteFolder = useDeleteFolderMutationFacade();
+
+  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const {
     canEditFolders,
@@ -135,13 +139,28 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   };
 
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
+  const manageOwnersLabel = t('manage-owner-references.manage-folder-owner', 'Manage folder owner');
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
+  // For now, only admins can manage folder owners
+  const showManageOwners = config.featureToggles.teamFolders && isAdmin && !isProvisionedFolder;
+
   const menu = (
     <Menu>
-      {canShowPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
-      {canMoveFolder && (
+      {canViewPermissions && !isProvisionedFolder && (
+        <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
+      )}
+      {showManageOwners && (
+        <MenuItem
+          onClick={() => {
+            reportInteraction('grafana_folder_actions_manage_owners_clicked');
+            setShowManageOwnersModal(true);
+          }}
+          label={manageOwnersLabel}
+        />
+      )}
+      {canMoveFolder && !isReadOnlyRepo && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
           label={moveLabel}
@@ -178,6 +197,15 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
         >
           <Permissions resource="folders" resourceId={folder.uid} canSetPermissions={canSetPermissions} />
         </Drawer>
+      )}
+      {showManageOwnersModal && (
+        <FolderOwnerModal
+          onDismiss={() => setShowManageOwnersModal(false)}
+          onSave={() => setShowManageOwnersModal(false)}
+          onCancel={() => setShowManageOwnersModal(false)}
+          isOpen={showManageOwnersModal}
+          resourceId={folder.uid}
+        />
       )}
       {showDeleteProvisionedFolderDrawer && (
         <Drawer

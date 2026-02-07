@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Text, Tooltip } from '@grafana/ui';
+import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Tooltip } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { FolderDTO } from 'app/types/folders';
 
@@ -39,7 +39,9 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   };
 
   const handleTeamSelectorChange = (ownerRef: OwnerReference) => {
-    setSelectedTeam(ownerRef);
+    if (ownerRef) {
+      setSelectedTeam(ownerRef);
+    }
   };
 
   const translatedFolderNameRequiredPhrase = t(
@@ -101,14 +103,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
               </Tooltip>
             </Box>
 
-            {createTeamFolder && (
-              <Stack gap={1} direction="column">
-                <Text element="p">
-                  <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
-                </Text>
-                <OwnerReferenceSelector onChange={handleTeamSelectorChange} />
-              </Stack>
-            )}
+            {createTeamFolder && <OwnerReferenceSelector onChange={handleTeamSelectorChange} />}
           </>
         )}
       </Stack>
