@@ -263,6 +263,69 @@ describe('TabsLayoutManager', () => {
     });
   });
 
+  describe('mapTabInsertIndex', () => {
+    it('maps indices correctly with no repeated tabs', () => {
+      const a = new TabItem({ title: 'A' });
+      const b = new TabItem({ title: 'B' });
+      const c = new TabItem({ title: 'C' });
+      const manager = new TabsLayoutManager({ tabs: [a, b, c] });
+
+      // allTabs: [A, B, C]
+      expect(manager.mapTabInsertIndex(-5)).toBe(0); // clamped to 0 -> before A
+      expect(manager.mapTabInsertIndex(0)).toBe(0); // before A
+      expect(manager.mapTabInsertIndex(1)).toBe(1); // between A|B -> after A
+      expect(manager.mapTabInsertIndex(2)).toBe(2); // between B|C -> after B
+      expect(manager.mapTabInsertIndex(3)).toBe(3); // after C
+      expect(manager.mapTabInsertIndex(99)).toBe(3); // clamped to length -> after C
+    });
+
+    it('maps before, inside, and after a repeated group', () => {
+      const a = new TabItem({ title: 'A' });
+      const b = new TabItem({ title: 'B' });
+      const c = new TabItem({ title: 'C' });
+
+      // A has two repeats -> A group occupies indices [0,1,2] in allTabs
+      const aClone1 = new TabItem({ title: 'A1', repeatSourceKey: a.state.key });
+      const aClone2 = new TabItem({ title: 'A2', repeatSourceKey: a.state.key });
+      a.setState({ repeatedTabs: [aClone1, aClone2] });
+
+      const manager = new TabsLayoutManager({ tabs: [a, b, c] });
+
+      // allTabs: [A, A1, A2, B, C]
+      expect(manager.mapTabInsertIndex(0)).toBe(0); // before A group -> before A
+      expect(manager.mapTabInsertIndex(1)).toBe(1); // inside A group -> after A
+      expect(manager.mapTabInsertIndex(2)).toBe(1); // inside A group -> after A
+      expect(manager.mapTabInsertIndex(3)).toBe(1); // boundary after A group -> before B (index 1)
+      expect(manager.mapTabInsertIndex(4)).toBe(2); // between B|C -> after B
+      expect(manager.mapTabInsertIndex(5)).toBe(3); // after C -> at end
+    });
+
+    it('handles multiple repeated groups correctly', () => {
+      const a = new TabItem({ title: 'A' });
+      const b = new TabItem({ title: 'B' });
+      const c = new TabItem({ title: 'C' });
+
+      // A x3 total
+      const aClone1 = new TabItem({ title: 'A1', repeatSourceKey: a.state.key });
+      const aClone2 = new TabItem({ title: 'A2', repeatSourceKey: a.state.key });
+      a.setState({ repeatedTabs: [aClone1, aClone2] });
+
+      // B x2 total
+      const bClone1 = new TabItem({ title: 'B1', repeatSourceKey: b.state.key });
+      b.setState({ repeatedTabs: [bClone1] });
+
+      const manager = new TabsLayoutManager({ tabs: [a, b, c] });
+
+      // allTabs: [A, A1, A2, B, B1, C]
+      expect(manager.mapTabInsertIndex(0)).toBe(0); // before A group
+      expect(manager.mapTabInsertIndex(2)).toBe(1); // inside A group -> after A
+      expect(manager.mapTabInsertIndex(3)).toBe(1); // before B group -> before B (index 1)
+      expect(manager.mapTabInsertIndex(4)).toBe(2); // inside B group -> after B (index 2)
+      expect(manager.mapTabInsertIndex(5)).toBe(2); // before C -> index 2
+      expect(manager.mapTabInsertIndex(6)).toBe(3); // after C -> end
+    });
+  });
+
   describe('createFromLayout', () => {
     it('should convert rows with titles to tabs', () => {
       const rowsLayout = new RowsLayoutManager({

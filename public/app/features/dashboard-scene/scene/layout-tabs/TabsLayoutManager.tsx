@@ -243,6 +243,55 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  /**
+   * Calculates the correct index to insert a tab when dragging within the same TabsLayoutManager, accounting for repeated tabs.
+   * @param {number } indexWithRepeats - the index where the tab would be inserted if repeated tabs were included as separate entries
+   */
+  public mapTabInsertIndex(indexWithRepeats: number): number {
+    const allTabs = this.getTabsIncludingRepeats();
+    const ranges = new Map<string, { start: number; end: number }>();
+
+    for (let i = 0; i < allTabs.length; i++) {
+      const t = allTabs[i];
+      const originalKey = t.state.repeatSourceKey ?? t.state.key;
+      if (!originalKey) {
+        continue;
+      }
+      const existing = ranges.get(originalKey);
+      if (!existing) {
+        ranges.set(originalKey, { start: i, end: i + 1 });
+      } else {
+        existing.end = i + 1;
+      }
+    }
+
+    const originalTabs = this.state.tabs;
+    const insertAt = Math.max(0, Math.min(indexWithRepeats, allTabs.length));
+
+    for (let originalIndex = 0; originalIndex < originalTabs.length; originalIndex++) {
+      const originalKey = originalTabs[originalIndex].state.key;
+      if (!originalKey) {
+        continue;
+      }
+      const range = ranges.get(originalKey);
+      if (!range) {
+        continue;
+      }
+
+      // If inserting before the group, insert before this original tab.
+      if (insertAt <= range.start) {
+        return originalIndex;
+      }
+
+      // If inserting inside the group (between original and its repeats), insert after the group.
+      if (insertAt < range.end) {
+        return originalIndex + 1;
+      }
+    }
+
+    return originalTabs.length;
+  }
+
   private _confirmConvertMixedGrids(availableIds: Set<string>) {
     showConvertMixedGridsModal(availableIds, (id: string) => {
       const selected = mapIdToGridLayoutType(id);
