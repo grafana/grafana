@@ -4,6 +4,10 @@ import { UserDTO, UserOrg, UserSession } from 'app/types/user';
 
 import { ChangePasswordFields, ProfileUpdateFields } from './types';
 
+type LoadTeamsOptions = {
+  abortSignal?: AbortSignal;
+};
+
 async function changePassword(payload: ChangePasswordFields): Promise<void> {
   try {
     await getBackendSrv().put('/api/user/password', payload);
@@ -16,8 +20,8 @@ function loadUser(): Promise<UserDTO> {
   return getBackendSrv().get('/api/user');
 }
 
-function loadTeams(): Promise<Team[]> {
-  return getBackendSrv().get('/api/user/teams');
+function loadTeams(options?: LoadTeamsOptions): Promise<Team[]> {
+  return getBackendSrv().get('/api/user/teams', undefined, undefined, { abortSignal: options?.abortSignal });
 }
 
 function loadOrgs(): Promise<UserOrg[]> {
