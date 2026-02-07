@@ -106,10 +106,10 @@ type GrafanaMetaAccessor interface {
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
 
-	// Deprecated: This will be removed in Grafana 13
+	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
 	GetDeprecatedInternalID() int64
 
-	// Deprecated: This will be removed in Grafana 13
+	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
 	SetDeprecatedInternalID(id int64)
 
 	GetFullpath() string
