@@ -28,6 +28,7 @@ export default function CheckboxCell({
   const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
+  // If no isSelected fn passed in, return spacer
   if (!isSelected) {
     return <CheckboxSpacer />;
   }
