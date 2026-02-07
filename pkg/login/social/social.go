@@ -103,6 +103,12 @@ type OAuthInfo struct {
 	ValidateIDToken             bool              `mapstructure:"validate_id_token" toml:"validate_id_token"`
 	JwkSetURL                   string            `mapstructure:"jwk_set_url" toml:"jwk_set_url"`
 	Extra                       map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
+
+	// OIDC Back-Channel Logout support
+	BackChannelLogoutEnabled         bool   `mapstructure:"backchannel_logout_enabled" toml:"backchannel_logout_enabled"`
+	BackChannelLogoutSessionEnabled  bool   `mapstructure:"backchannel_logout_session_enabled" toml:"backchannel_logout_session_enabled"`
+	BackChannelLogoutURI             string `mapstructure:"backchannel_logout_uri" toml:"backchannel_logout_uri"`
+	BackChannelLogoutSessionRequired bool   `mapstructure:"backchannel_logout_session_required" toml:"backchannel_logout_session_required"`
 }
 
 func NewOAuthInfo() *OAuthInfo {
@@ -144,6 +150,7 @@ type BasicUserInfo struct {
 	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
 	Groups         []string
+	SessionID      string // OIDC sid claim for back-channel logout
 }
 
 func (b *BasicUserInfo) String() string {
