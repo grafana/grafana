@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -1393,6 +1394,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	for {
 		select {
 		case <-ctx.Done():
+			if s.ctx.Err() != nil {
+				srv.SetTrailer(metadata.Pairs(WatchShutdownTrailerKey, WatchShutdownTrailerValue))
+			}
 			return nil
 
 		case event, ok := <-stream:
