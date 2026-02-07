@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -729,5 +730,307 @@ func TestCanReadAllRules(t *testing.T) {
 		result, err := svc.CanReadAllRules(context.Background(), createUserWithPermissions(tc.permissions))
 		assert.NoError(t, err)
 		assert.Equalf(t, tc.expected, result, "permissions: %v", tc.permissions)
+	}
+}
+
+func TestHasAccessInFolder(t *testing.T) {
+	folderScope := func(uid string) string {
+		return dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)
+	}
+
+	testCases := []struct {
+		name           string
+		namespace      models.Namespaced
+		permissions    map[string][]string
+		expected       bool
+		expectEvaluate bool
+	}{
+		{
+			name: "with fullpath UIDs and permissions on target folder",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "folder1"},
+				FullpathUIDs:    "folder1",
+			},
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("folder1")},
+				dashboards.ActionFoldersRead: {folderScope("folder1")},
+			},
+			expected:       true,
+			expectEvaluate: false,
+		},
+		{
+			name: "with fullpath UIDs and permissions on parent folder",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "child"},
+				FullpathUIDs:    "parent/child",
+			},
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("parent")},
+				dashboards.ActionFoldersRead: {folderScope("parent")},
+			},
+			expected:       true,
+			expectEvaluate: false,
+		},
+		{
+			name: "with fullpath UIDs, ruleRead on parent and foldersRead on target",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "child"},
+				FullpathUIDs:    "parent/child",
+			},
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("parent")},
+				dashboards.ActionFoldersRead: {folderScope("child")},
+			},
+			expected:       true,
+			expectEvaluate: false,
+		},
+		{
+			name: "with fullpath UIDs, deeply nested folder with permission on root",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "leaf"},
+				FullpathUIDs:    "root/middle/leaf",
+			},
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("root")},
+				dashboards.ActionFoldersRead: {folderScope("root")},
+			},
+			expected:       true,
+			expectEvaluate: false,
+		},
+		{
+			name: "with fullpath UIDs, only ruleRead",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "folder1"},
+				FullpathUIDs:    "folder1",
+			},
+			permissions: map[string][]string{
+				ruleRead: {folderScope("folder1")},
+			},
+			expected:       false,
+			expectEvaluate: true,
+		},
+		{
+			name: "with fullpath UIDs, only foldersRead",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "folder1"},
+				FullpathUIDs:    "folder1",
+			},
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {folderScope("folder1")},
+			},
+			expected:       false,
+			expectEvaluate: true,
+		},
+		{
+			name: "with fullpath UIDs, no permissions",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "child"},
+				FullpathUIDs:    "parent/child",
+			},
+			permissions:    map[string][]string{},
+			expected:       false,
+			expectEvaluate: true,
+		},
+		{
+			name:      "without fullpath UIDs, user has permissions",
+			namespace: models.NewNamespaceUID("folder1"),
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("folder1")},
+				dashboards.ActionFoldersRead: {folderScope("folder1")},
+			},
+			expected:       true,
+			expectEvaluate: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := &recordingAccessControlFake{}
+			svc := NewRuleService(ac)
+
+			result, err := svc.HasAccessInFolder(context.Background(), createUserWithPermissions(tc.permissions), tc.namespace)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, result)
+
+			if tc.expectEvaluate {
+				assert.NotEmpty(t, ac.EvaluateRecordings, "expected Evaluate to be called")
+			} else {
+				assert.Empty(t, ac.EvaluateRecordings, "expected no Evaluate call")
+			}
+		})
+	}
+}
+
+func TestAuthorizeAccessInFolder(t *testing.T) {
+	folderScope := func(uid string) string {
+		return dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)
+	}
+
+	testCases := []struct {
+		name           string
+		namespace      models.Namespaced
+		permissions    map[string][]string
+		expectErr      bool
+		expectEvaluate bool
+	}{
+		{
+			name: "with fullpath UIDs and user has permissions",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "child"},
+				FullpathUIDs:    "parent/child",
+			},
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("parent")},
+				dashboards.ActionFoldersRead: {folderScope("child")},
+			},
+			expectErr:      false,
+			expectEvaluate: false,
+		},
+		{
+			name:      "without fullpath UIDs, user has permissions",
+			namespace: models.NewNamespaceUID("folder1"),
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("folder1")},
+				dashboards.ActionFoldersRead: {folderScope("folder1")},
+			},
+			expectErr:      false,
+			expectEvaluate: true,
+		},
+		{
+			name: "with fullpath UIDs, user lacks permissions",
+			namespace: models.Namespace{
+				FolderReference: folder.FolderReference{UID: "child"},
+				FullpathUIDs:    "parent/child",
+			},
+			permissions:    map[string][]string{},
+			expectErr:      true,
+			expectEvaluate: true,
+		},
+		{
+			name:           "without fullpath UIDs, user lacks permissions",
+			namespace:      models.NewNamespaceUID("folder1"),
+			permissions:    map[string][]string{},
+			expectErr:      true,
+			expectEvaluate: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := &recordingAccessControlFake{}
+			svc := NewRuleService(ac)
+
+			err := svc.AuthorizeAccessInFolder(context.Background(), createUserWithPermissions(tc.permissions), tc.namespace)
+
+			if tc.expectErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrAuthorizationBase)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.expectEvaluate {
+				assert.NotEmpty(t, ac.EvaluateRecordings, "expected Evaluate to be called")
+			} else {
+				assert.Empty(t, ac.EvaluateRecordings, "expected no Evaluate call")
+			}
+		})
+	}
+}
+
+// TestHasAccessInFolderWithScopeResolver verifies that when fullpath UIDs are not available,
+// the fallback to the scope resolver correctly handles folder hierarchy permissions.
+func TestHasAccessInFolderWithScopeResolver(t *testing.T) {
+	folderScope := func(uid string) string {
+		return dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)
+	}
+
+	// Set up folder service that returns parent folder for "child"
+	folderSvc := foldertest.NewFakeService()
+	folderSvc.ExpectedFolders = []*folder.Folder{
+		{UID: "parent", OrgID: 1, Title: "Parent"},
+	}
+
+	// Create real AccessControl with scope resolver
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(folderSvc))
+
+	svc := NewRuleService(ac)
+
+	testCases := []struct {
+		name        string
+		permissions map[string][]string
+		expected    bool
+	}{
+		{
+			name: "both permissions on parent folder",
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("parent")},
+				dashboards.ActionFoldersRead: {folderScope("parent")},
+			},
+			expected: true,
+		},
+		{
+			name: "both permissions on child folder",
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("child")},
+				dashboards.ActionFoldersRead: {folderScope("child")},
+			},
+			expected: true,
+		},
+		{
+			name: "split permissions - ruleRead on parent, foldersRead on child",
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("parent")},
+				dashboards.ActionFoldersRead: {folderScope("child")},
+			},
+			expected: true,
+		},
+		{
+			name: "split permissions - ruleRead on child, foldersRead on parent",
+			permissions: map[string][]string{
+				ruleRead:                     {folderScope("child")},
+				dashboards.ActionFoldersRead: {folderScope("parent")},
+			},
+			expected: true,
+		},
+		{
+			name: "only ruleRead permission",
+			permissions: map[string][]string{
+				ruleRead: {folderScope("parent")},
+			},
+			expected: false,
+		},
+		{
+			name: "only foldersRead permission",
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {folderScope("parent")},
+			},
+			expected: false,
+		},
+		{
+			name:        "no permissions",
+			permissions: map[string][]string{},
+			expected:    false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			usr := &user.SignedInUser{
+				UserID: 1,
+				OrgID:  1,
+				Permissions: map[int64]map[string][]string{
+					1: tc.permissions,
+				},
+			}
+
+			// Use namespace without fullpath - forces fallback to scope resolver
+			namespace := models.NewNamespaceUID("child")
+			result, err := svc.HasAccessInFolder(context.Background(), usr, namespace)
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }

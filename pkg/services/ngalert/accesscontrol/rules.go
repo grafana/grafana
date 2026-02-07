@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
@@ -141,7 +142,10 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 // - ("alert.rules:read") read alert rules in the folder
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
 func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) (bool, error) {
-	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	if ok := checkFolderAccessByFullpath(user, rule); ok {
+		return true, nil
+	}
+	eval := getReadFolderAccessEvaluator(rule.GetNamespaceUID())
 	return r.HasAccess(ctx, user, eval)
 }
 
@@ -151,10 +155,41 @@ func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Reque
 // - ("alert.rules:read") read alert rules in the folder
 // Returns error if at least one permission is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) error {
-	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	if ok := checkFolderAccessByFullpath(user, rule); ok {
+		return nil
+	}
+	eval := getReadFolderAccessEvaluator(rule.GetNamespaceUID())
 	return r.HasAccessOrError(ctx, user, eval, func() string {
 		return fmt.Sprintf("access rules in folder '%s'", rule.GetNamespaceUID())
 	})
+}
+
+// checkFolderAccessByFullpath checks permissions in-memory using fullpath UIDs.
+// Returns true if access is granted, false if unavailable or denied (caller should fall back).
+func checkFolderAccessByFullpath(user identity.Requester, rule models.Namespaced) bool {
+	nf, ok := rule.(models.NamespacedWithFullpath)
+	if !ok {
+		return false
+	}
+	fullpath := nf.GetFullpathUIDs()
+	if fullpath == "" {
+		return false
+	}
+
+	folderUID := rule.GetNamespaceUID()
+	targetScopes := []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
+	for _, uid := range strings.Split(fullpath, "/") {
+		if uid != "" && uid != folderUID {
+			targetScopes = append(targetScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
+		}
+	}
+
+	evaluator := accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, targetScopes...),
+		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, targetScopes...),
+	)
+
+	return evaluator.Evaluate(user.GetPermissions())
 }
 
 // AuthorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
