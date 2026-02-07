@@ -20,8 +20,7 @@ const newTitleBase = 'edited rep - ';
 const repeatOptions = [1, 2, 3, 4];
 
 test.use({
-  featureToggles: {
-    kubernetesDashboards: true,
+  featureToggles: {    
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
