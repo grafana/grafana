@@ -1,14 +1,11 @@
 import { css } from '@emotion/css';
 import RCCascader from '@rc-component/cascader';
-import memoize from 'micro-memoize';
-import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { withTheme2 } from '../../themes/ThemeContext';
-import { Themeable2 } from '../../types/theme';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
@@ -18,7 +15,7 @@ import { Select } from '../Select/Select';
 import { onChangeCascader } from './optionMappings';
 import { getCascaderStyles } from './styles';
 
-export interface CascaderProps extends Themeable2 {
+export interface CascaderProps {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
@@ -86,128 +83,133 @@ const disableDivFocus = css({
 
 const DEFAULT_SEPARATOR = ' / ';
 
-class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
-  constructor(props: CascaderProps) {
-    super(props);
-    const searchableOptions = this.getSearchableOptions(props.options);
-    const { rcValue, activeLabel } = this.setInitialValue(searchableOptions, props.initialValue);
-    this.state = {
-      isSearching: false,
-      focusCascade: false,
-      rcValue,
-      activeLabel,
-      inputValue: '',
-    };
+const flattenOptions = (
+  options: CascaderOption[],
+  optionPath: CascaderOption[] = [],
+  separator: CascaderProps['separator']
+) => {
+  let selectOptions: Array<SelectableValue<string[]>> = [];
+  for (const option of options) {
+    const cpy = [...optionPath];
+    cpy.push(option);
+    if (!option.items || option.items.length === 0) {
+      selectOptions.push({
+        singleLabel: cpy[cpy.length - 1].label,
+        label: cpy.map((o) => o.label).join(separator || DEFAULT_SEPARATOR),
+        value: cpy.map((o) => o.value),
+      });
+    } else {
+      selectOptions = [...selectOptions, ...flattenOptions(option.items, cpy, separator)];
+    }
   }
+  return selectOptions;
+};
 
-  static defaultProps = { changeOnSelect: true };
+const UnthemedCascader = ({
+  separator,
+  placeholder,
+  options,
+  changeOnSelect = true,
+  onSelect,
+  width,
+  initialValue,
+  allowCustomValue,
+  formatCreateLabel,
+  displayAllSelectedLevels,
+  onBlur,
+  autoFocus,
+  alwaysOpen,
+  hideActiveLevelLabel,
+  disabled,
+  id,
+  isClearable,
+}: CascaderProps) => {
+  const searchableOptions = React.useMemo(() => flattenOptions(options, [], separator), [options, separator]);
+  const [isSearching, setIsSearching] = React.useState<CascaderState['isSearching']>(false);
+  const [focusCascade, setFocusCascade] = React.useState<CascaderState['focusCascade']>(false);
+  const [rcValue, setRcValue] = React.useState<CascaderState['rcValue']>({ value: [], label: '' });
+  const [activeLabel, setActiveLabel] = React.useState<CascaderState['activeLabel']>('');
+  const [inputValue, setInputValue] = React.useState<CascaderState['inputValue']>('');
 
-  flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
-    let selectOptions: Array<SelectableValue<string[]>> = [];
-    for (const option of options) {
-      const cpy = [...optionPath];
-      cpy.push(option);
-      if (!option.items || option.items.length === 0) {
-        selectOptions.push({
-          singleLabel: cpy[cpy.length - 1].label,
-          label: cpy.map((o) => o.label).join(this.props.separator || DEFAULT_SEPARATOR),
-          value: cpy.map((o) => o.value),
-        });
-      } else {
-        selectOptions = [...selectOptions, ...this.flattenOptions(option.items, cpy)];
+  const styles = useStyles2(getCascaderStyles);
+
+  const setInitialValue = React.useCallback(
+    (searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) => {
+      if (!initValue) {
+        setRcValue({ value: [], label: '' });
+        setActiveLabel('');
       }
-    }
-    return selectOptions;
-  };
+      for (const option of searchableOptions) {
+        const optionPath = option.value || [];
 
-  getSearchableOptions = memoize((options: CascaderOption[]) => this.flattenOptions(options));
-
-  setInitialValue(searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) {
-    if (!initValue) {
-      return { rcValue: [], activeLabel: '' };
-    }
-    for (const option of searchableOptions) {
-      const optionPath = option.value || [];
-
-      if (optionPath[optionPath.length - 1] === initValue) {
-        return {
-          rcValue: optionPath,
-          activeLabel: this.props.displayAllSelectedLevels ? option.label : option.singleLabel || '',
-        };
+        if (optionPath[optionPath.length - 1] === initValue) {
+          const label = displayAllSelectedLevels ? option.label : option.singleLabel || '';
+          setRcValue({ value: optionPath, label: label });
+          setActiveLabel(label);
+        }
       }
-    }
-    if (this.props.allowCustomValue) {
-      return { rcValue: [], activeLabel: initValue };
-    }
-    return { rcValue: [], activeLabel: '' };
-  }
+      if (allowCustomValue) {
+        setRcValue({ value: [], label: initValue });
+        initValue && setActiveLabel(initValue);
+      }
+    },
+    [allowCustomValue, displayAllSelectedLevels]
+  );
 
-  //For rc-cascader
-  onChange = (value: string[], selectedOptions: CascaderOption[]) => {
-    const activeLabel = this.props.hideActiveLevelLabel
+  React.useEffect(() => {
+    setInitialValue(searchableOptions, initialValue);
+  }, [setInitialValue, searchableOptions, initialValue]);
+
+  // For rc-cascader
+  const handleChange = (value: string[], selectedOptions: CascaderOption[]) => {
+    const activeLabel = hideActiveLevelLabel
       ? ''
-      : this.props.displayAllSelectedLevels
-        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
+      : displayAllSelectedLevels
+        ? selectedOptions.map((option) => option.label).join(separator || DEFAULT_SEPARATOR)
         : selectedOptions[selectedOptions.length - 1].label;
-    const state: CascaderState = {
-      rcValue: { value, label: activeLabel },
-      focusCascade: true,
-      activeLabel,
-      isSearching: false,
-      inputValue: activeLabel,
-    };
-    this.setState(state);
-    this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
+    setRcValue({ value, label: activeLabel });
+    setFocusCascade(true);
+    setActiveLabel(activeLabel);
+    setIsSearching(false);
+    setInputValue(activeLabel);
+    onSelect(selectedOptions[selectedOptions.length - 1].value);
   };
 
   //For select
-  onSelect = (obj: SelectableValue<string[]>) => {
+  const handleSelect = (obj: SelectableValue<string[]>) => {
     const valueArray = obj.value || [];
-    const activeLabel = this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
-    const state: CascaderState = {
-      activeLabel: activeLabel,
-      inputValue: activeLabel,
-      rcValue: { value: valueArray, label: activeLabel },
-      isSearching: false,
-      focusCascade: false,
-    };
-    this.setState(state);
-    this.props.onSelect(valueArray[valueArray.length - 1]);
+    const activeLabel = displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
+    setActiveLabel(activeLabel);
+    setInputValue(activeLabel);
+    setRcValue({ value: valueArray, label: activeLabel });
+    setIsSearching(false);
+    setFocusCascade(false);
+    onSelect(valueArray[valueArray.length - 1]);
   };
 
-  onCreateOption = (value: string) => {
-    this.setState({
-      activeLabel: value,
-      inputValue: value,
-      rcValue: [],
-      isSearching: false,
-    });
-    this.props.onSelect(value);
+  const handleCreateOption = (value: string) => {
+    setActiveLabel(value);
+    setInputValue(value);
+    setRcValue({ value: [], label: value });
+    setIsSearching(false);
+    onSelect(value);
   };
 
-  onBlur = () => {
-    this.setState({
-      isSearching: false,
-      focusCascade: false,
-    });
-
-    if (this.state.activeLabel === '') {
-      this.setState({
-        rcValue: [],
-      });
+  const handleBlur = () => {
+    setIsSearching(false);
+    setFocusCascade(false);
+    if (activeLabel === '') {
+      setRcValue({ value: [], label: '' });
     }
-    this.props.onBlur?.();
+    onBlur?.();
   };
 
-  onBlurCascade = () => {
-    this.setState({
-      focusCascade: false,
-    });
-
-    this.props.onBlur?.();
+  const handleBlurCascade = () => {
+    setFocusCascade(false);
+    onBlur?.();
   };
 
-  onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       return;
     }
@@ -220,110 +222,89 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
       inputValue = inputValue.substring(0, selectionStart ?? 0) + inputValue.substring(selectionEnd ?? 0);
     }
 
-    this.setState({
-      focusCascade: false,
-      isSearching: true,
-      inputValue: inputValue,
-    });
+    setFocusCascade(false);
+    setIsSearching(true);
+    setInputValue(inputValue);
   };
 
-  onSelectInputChange = (value: string) => {
-    this.setState({
-      inputValue: value,
-    });
+  const handleSelectInputChange = (value: string) => {
+    setInputValue(value);
   };
 
-  render() {
-    const {
-      allowCustomValue,
-      formatCreateLabel,
-      placeholder,
-      width,
-      changeOnSelect,
-      options,
-      disabled,
-      id,
-      isClearable,
-      theme,
-    } = this.props;
-    const { focusCascade, isSearching, rcValue, activeLabel, inputValue } = this.state;
-
-    const searchableOptions = this.getSearchableOptions(options);
-    const styles = getCascaderStyles(theme);
-
-    return (
-      <div>
-        {isSearching ? (
-          <Select
-            allowCustomValue={allowCustomValue}
-            placeholder={placeholder}
-            autoFocus={!focusCascade}
-            onChange={this.onSelect}
-            onBlur={this.onBlur}
-            options={searchableOptions}
-            onCreateOption={this.onCreateOption}
-            formatCreateLabel={formatCreateLabel}
-            width={width}
-            onInputChange={this.onSelectInputChange}
-            disabled={disabled}
-            inputValue={inputValue}
-            inputId={id}
-          />
-        ) : (
-          <RCCascader
-            onChange={onChangeCascader(this.onChange)}
-            options={options}
-            changeOnSelect={changeOnSelect}
-            value={rcValue.value}
-            fieldNames={{ label: 'label', value: 'value', children: 'items' }}
-            expandIcon={null}
-            open={this.props.alwaysOpen}
-            disabled={disabled}
-            popupClassName={styles.dropdown}
-          >
-            <div className={disableDivFocus}>
-              <Input
-                autoFocus={this.props.autoFocus}
-                width={width}
-                placeholder={placeholder}
-                onBlur={this.onBlurCascade}
-                value={activeLabel}
-                onFocus={(e) => {
-                  e.currentTarget.select();
-                }}
-                onKeyDown={this.onInputKeyDown}
-                onChange={() => {}}
-                suffix={
-                  <Stack gap={0.5}>
-                    {isClearable && activeLabel !== '' && (
-                      <IconButton
-                        name="times"
-                        aria-label={t('grafana-ui.cascader.clear-button', 'Clear selection')}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          this.setState({ rcValue: [], activeLabel: '', inputValue: '' });
-                          this.props.onSelect('');
-                        }}
-                      />
-                    )}
-                    <Icon name={focusCascade ? 'angle-up' : 'angle-down'} />
-                  </Stack>
-                }
-                disabled={disabled}
-                id={id}
-              />
-            </div>
-          </RCCascader>
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      {isSearching ? (
+        <Select
+          allowCustomValue={allowCustomValue}
+          placeholder={placeholder}
+          autoFocus={!focusCascade}
+          onChange={handleSelect}
+          onBlur={handleBlur}
+          options={searchableOptions}
+          onCreateOption={handleCreateOption}
+          formatCreateLabel={formatCreateLabel}
+          width={width}
+          onInputChange={handleSelectInputChange}
+          disabled={disabled}
+          inputValue={inputValue}
+          inputId={id}
+        />
+      ) : (
+        <RCCascader
+          onChange={onChangeCascader(handleChange)}
+          options={options}
+          changeOnSelect={changeOnSelect}
+          value={rcValue.value}
+          fieldNames={{ label: 'label', value: 'value', children: 'items' }}
+          expandIcon={null}
+          open={alwaysOpen}
+          disabled={disabled}
+          popupClassName={styles.dropdown}
+        >
+          <div className={disableDivFocus}>
+            <Input
+              autoFocus={autoFocus}
+              width={width}
+              placeholder={placeholder}
+              onBlur={handleBlurCascade}
+              value={activeLabel}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              onKeyDown={handleInputKeyDown}
+              onChange={() => {}}
+              suffix={
+                <Stack gap={0.5}>
+                  {isClearable && activeLabel !== '' && (
+                    <IconButton
+                      name="times"
+                      aria-label={t('grafana-ui.cascader.clear-button', 'Clear selection')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setRcValue({ value: [], label: '' });
+                        setActiveLabel('');
+                        setInputValue('');
+                        onSelect('');
+                      }}
+                    />
+                  )}
+                  <Icon name={focusCascade ? 'angle-up' : 'angle-down'} />
+                </Stack>
+              }
+              disabled={disabled}
+              id={id}
+            />
+          </div>
+        </RCCascader>
+      )}
+    </div>
+  );
+};
 
 /**
  * The cascader component is a Select with a cascading flyout menu. When you have lots of options in your select, they can be hard to navigate from a regular dropdown list. In that case you can use the cascader to organize your options into groups hierarchically. Just like in the Select component, the cascader input doubles as a search field to quickly jump to a selection without navigating the list.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-cascader--docs
  */
-export const Cascader = withTheme2(UnthemedCascader);
+export const Cascader = React.memo(UnthemedCascader);
