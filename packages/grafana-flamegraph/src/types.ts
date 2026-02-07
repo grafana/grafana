@@ -17,10 +17,23 @@ export enum SampleUnit {
   Nanoseconds = 'ns',
 }
 
+// Legacy view enum - used by old UI
 export enum SelectedView {
   TopTable = 'topTable',
   FlameGraph = 'flameGraph',
   Both = 'both',
+}
+
+// New view enums - used by new UI with call tree support
+export enum ViewMode {
+  Single = 'single',
+  Split = 'split',
+}
+
+export enum PaneView {
+  TopTable = 'topTable',
+  FlameGraph = 'flameGraph',
+  CallTree = 'callTree',
 }
 
 export interface TableData {

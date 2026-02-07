@@ -3557,6 +3557,7 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
+    "@types/react-table": "npm:^7.7.20"
     "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
@@ -3582,6 +3583,7 @@ __metadata:
     "@grafana/assistant": ^0.1.1
     react: ^18.0.0
     react-dom: ^18.0.0
+    react-table: ^7.8.0
   languageName: unknown
   linkType: soft
 
@@ -11428,7 +11430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.20":
+"@types/react-table@npm:7.7.20, @types/react-table@npm:^7.7.20":
   version: 7.7.20
   resolution: "@types/react-table@npm:7.7.20"
   dependencies:
