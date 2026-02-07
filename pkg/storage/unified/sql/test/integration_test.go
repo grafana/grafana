@@ -10,6 +10,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/authn"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -203,8 +205,12 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, nil, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
+	require.NoError(t, err)
+
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 	require.NoError(t, err)
+	require.NoError(t, svc.RegisterGRPCServices(grpcService.GetServer()))
 	var client resourcepb.ResourceStoreClient
 
 	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
@@ -215,13 +221,15 @@ func TestClientServer(t *testing.T) {
 	}))
 
 	t.Run("Start and stop service", func(t *testing.T) {
+		err = services.StartAndAwaitRunning(ctx, grpcService)
+		require.NoError(t, err)
 		err = services.StartAndAwaitRunning(ctx, svc)
 		require.NoError(t, err)
-		require.NotEmpty(t, svc.GetAddress())
+		require.NotEmpty(t, grpcService.GetAddress())
 	})
 
 	t.Run("Create a client", func(t *testing.T) {
-		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
+		conn, err := unified.GrpcConn(grpcService.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
 		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, conn, resource.RemoteResourceClientConfig{
 			Token:            "some-token",
@@ -296,8 +304,12 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		},
 	}
 
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, nil, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
+	require.NoError(t, err)
+
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
+	require.NoError(t, svc.RegisterGRPCServices(grpcService.GetServer()))
 
 	var client resource.SearchClient
 	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
@@ -312,13 +324,15 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	})
 
 	t.Run("Start service", func(t *testing.T) {
+		err = services.StartAndAwaitRunning(ctx, grpcService)
+		require.NoError(t, err)
 		err = services.StartAndAwaitRunning(ctx, svc)
 		require.NoError(t, err)
-		require.NotEmpty(t, svc.GetAddress())
+		require.NotEmpty(t, grpcService.GetAddress())
 	})
 
 	t.Run("Create client", func(t *testing.T) {
-		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
+		conn, err := unified.GrpcConn(grpcService.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
 		client = newTestSearchClient(conn)
 	})

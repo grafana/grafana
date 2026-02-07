@@ -15,49 +15,53 @@ import (
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	userutils "github.com/grafana/dskit/user"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
-	var err error
-	grpcHandler, err := grpcserver.ProvideService(cfg, features, nil, tracer, registerer)
+type UnifiedStorageGrpcService interface {
+	services.NamedService
+	// RegisterGRPCServices registers the gRPC services on the provided server.
+	RegisterGRPCServices(srv *grpc.Server) error
+}
+
+var (
+	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
+)
+
+func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) UnifiedStorageGrpcService {
+	svc := services.NewBasicService(nil, func(ctx context.Context) error {
+		<-ctx.Done()
+		return nil
+	}, nil).WithName(modules.SearchServerDistributor)
+	return &distributorServer{
+		BasicService: svc,
+		log:          log.New("index-server-distributor"),
+		ring:         ring,
+		clientPool:   ringClientPool,
+		tracing:      tracer,
+	}
+}
+
+func (s *distributorServer) RegisterGRPCServices(srv *grpc.Server) error {
+	healthService, err := ProvideHealthService(s)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	distributorServer := &distributorServer{
-		log:        log.New("index-server-distributor"),
-		ring:       ring,
-		clientPool: ringClientPool,
-		tracing:    tracer,
-	}
+	resourcepb.RegisterResourceIndexServer(srv, s)
+	resourcepb.RegisterManagedObjectIndexServer(srv, s)
+	grpc_health_v1.RegisterHealthServer(srv, healthService)
+	grpcserver.RegisterReflection(srv)
 
-	healthService, err := ProvideHealthService(distributorServer)
-	if err != nil {
-		return nil, err
-	}
-
-	grpcServer := grpcHandler.GetServer()
-
-	resourcepb.RegisterResourceIndexServer(grpcServer, distributorServer)
-	resourcepb.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
-	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
-	_, err = grpcserver.ProvideReflectionService(cfg, grpcHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpcHandler, nil
+	return nil
 }
 
 type RingClient struct {
@@ -84,6 +88,7 @@ const RingHeartbeatTimeout = time.Minute
 const RingNumTokens = 128
 
 type distributorServer struct {
+	*services.BasicService
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
 	log        log.Logger

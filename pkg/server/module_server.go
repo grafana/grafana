@@ -13,12 +13,11 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
-
-	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,11 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"go.opentelemetry.io/otel"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
@@ -146,6 +149,9 @@ type ModuleServer struct {
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
 
+	// grpcService a shared gRPC service/server used by modules to register their gRPC endpoints.
+	grpcService *grpcserver.DSKitService
+
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
@@ -190,6 +196,39 @@ func (s *ModuleServer) Run() error {
 		return s.initInstrumentationServer()
 	})
 
+	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
+		tracer := otel.Tracer("grpc-server")
+
+		// Determine which modules depend on the gRPC server
+		dependentModules := []string{modules.StorageServer, modules.SearchServer, modules.SearchServerDistributor}
+		var enabledModules []string
+		for _, mod := range dependentModules {
+			if m.IsModuleEnabled(mod) {
+				enabledModules = append(enabledModules, mod)
+			}
+		}
+		if len(enabledModules) == 0 {
+			return nil, nil
+		}
+
+		// SearchServerDistributor forwards to search, no authentication needed
+		var authn interceptors.Authenticator
+		if m.IsModuleEnabled(modules.StorageServer) || m.IsModuleEnabled(modules.SearchServer) {
+			// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+			// grpcutils.NewGrpcAuthenticator should be used instead.
+			authn = interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+				auth := resourcegrpc.Authenticator{Tracer: tracer}
+				return auth.Authenticate(ctx)
+			}))
+		}
+		var err error
+		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, authn, tracer, s.registerer, modules.GRPCServer, enabledModules, m.GetService)
+		if err != nil {
+			return nil, err
+		}
+		return s.grpcService, nil
+	})
+
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, s.initSearchServerDistributor)
@@ -208,15 +247,26 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
+		// Only set docBuilders and indexMetrics if enable_search is true
+		var docBuilders resource.DocumentBuilderSupplier
+		var indexMetrics *resource.BleveIndexMetrics
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
-			docBuilders, err := InitializeDocumentBuilders(s.cfg)
+			var err error
+			docBuilders, err = InitializeDocumentBuilders(s.cfg)
 			if err != nil {
 				return nil, err
 			}
-			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+			indexMetrics = s.indexMetrics
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+		if err != nil {
+			return nil, err
+		}
+		if err := svc.RegisterGRPCServices(s.grpcService.GetServer()); err != nil {
+			return nil, err
+		}
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -224,7 +274,14 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
+		if err != nil {
+			return nil, err
+		}
+		if err := svc.RegisterGRPCServices(s.grpcService.GetServer()); err != nil {
+			return nil, err
+		}
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

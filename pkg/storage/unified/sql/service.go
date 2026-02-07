@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/authlib/grpcutils"
@@ -29,25 +30,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 var (
-	_ UnifiedStorageGrpcService = (*service)(nil)
+	_ resource.UnifiedStorageGrpcService = (*service)(nil)
 )
-
-type UnifiedStorageGrpcService interface {
-	services.NamedService
-
-	// Return the address where this service is running
-	GetAddress() string
-}
 
 type service struct {
 	*services.BasicService
@@ -65,9 +57,7 @@ type service struct {
 	db            infraDB.DB
 	log           log.Logger
 	reg           prometheus.Registerer
-	handler       grpcserver.Provider
 	tracing       trace.Tracer
-	authenticator func(ctx context.Context) (context.Context, error)
 
 	// -- Storage Services
 	queue          QOSEnqueueDequeuer
@@ -95,7 +85,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
-) (UnifiedStorageGrpcService, error) {
+) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
@@ -125,7 +115,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
-) (UnifiedStorageGrpcService, error) {
+) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
@@ -178,18 +168,10 @@ func newService(
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
-	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
-		auth := grpc.Authenticator{Tracer: tracer}
-		return auth.Authenticate(ctx)
-	})
-
 	return &service{
 		backend:            backend,
 		cfg:                cfg,
 		features:           features,
-		authenticator:      authn,
 		tracing:            tracer,
 		db:                 db,
 		log:                log,
@@ -302,11 +284,41 @@ func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 }
 
 func (s *service) starting(ctx context.Context) error {
+	if s.serverStopper == nil {
+		return fmt.Errorf("grpc services not registered, call RegisterGRPCServices before starting")
+	}
+
 	if s.subservicesMngr != nil {
 		s.subservicesWatcher.WatchManager(s.subservicesMngr)
 		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr); err != nil {
 			return fmt.Errorf("failed to start subservices: %w", err)
 		}
+	}
+
+	// TODO: move to standalone mode once we use sharding in search servers
+	if s.cfg.EnableSharding {
+		s.log.Info("waiting until resource server is JOINING in the ring")
+		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
+		defer cancel()
+		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
+			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
+		}
+		s.log.Info("resource server is JOINING in the ring")
+
+		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
+		}
+		s.log.Info("resource server is ACTIVE in the ring")
+	}
+
+	return nil
+}
+
+// RegisterGRPCServices creates the resource server and registers the gRPC services on the provided server.
+// This must be called before the service is started.
+func (s *service) RegisterGRPCServices(srv *grpc.Server) error {
+	if s.serverStopper != nil {
+		return fmt.Errorf("grpc services already registered")
 	}
 
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
@@ -346,53 +358,11 @@ func (s *service) starting(ctx context.Context) error {
 		serverOptions.OverridesService = overridesSvc
 	}
 
-	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
-	if err != nil {
-		return err
-	}
-
-	// Create and register the server
-	err = s.createAndRegisterServer(serverOptions)
-	if err != nil {
-		return err
-	}
-
-	// TODO: move to standalone mode once we use sharding in search servers
-	if s.cfg.EnableSharding {
-		s.log.Info("waiting until resource server is JOINING in the ring")
-		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
-		defer cancel()
-		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
-			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
-		}
-		s.log.Info("resource server is JOINING in the ring")
-
-		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
-			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
-		}
-		s.log.Info("resource server is ACTIVE in the ring")
-	}
-
-	return nil
-}
-
-// GetAddress returns the address of the gRPC server.
-func (s *service) GetAddress() string {
-	return s.handler.GetAddress()
+	return s.createAndRegisterServer(srv, serverOptions)
 }
 
 func (s *service) running(ctx context.Context) error {
-	serverErrCh := make(chan error, 1)
-	go func() {
-		serverErrCh <- s.handler.Run(ctx)
-	}()
-
 	select {
-	case err := <-serverErrCh:
-		if err != nil {
-			return err
-		}
-		return nil
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
@@ -407,12 +377,6 @@ func (s *service) running(ctx context.Context) error {
 			}
 		}
 
-		// Now wait for the gRPC server to complete graceful shutdown.
-		s.log.Info("Waiting for gRPC server to complete graceful shutdown")
-		err := <-serverErrCh
-		if err != nil {
-			return err
-		}
 		return nil
 	}
 }
@@ -532,33 +496,31 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 	}, nil
 }
 
-func (s *service) createAndRegisterServer(opts ServerOptions) error {
+func (s *service) createAndRegisterServer(srv *grpc.Server, opts ServerOptions) error {
 	if s.searchStandalone {
 		server, err := NewSearchServer(opts)
 		if err != nil {
 			return err
 		}
 		s.serverStopper = server
-		return s.registerSearchServer(server)
+		return s.registerSearchServer(srv, server)
 	}
 	server, err := NewResourceServer(opts)
 	if err != nil {
 		return err
 	}
 	s.serverStopper = server
-	return s.registerUnifiedResourceServer(server)
+	return s.registerUnifiedResourceServer(srv, server)
 }
 
-func (s *service) registerSearchServer(server resource.SearchServer) error {
-	srv := s.handler.GetServer()
+func (s *service) registerSearchServer(srv *grpc.Server, server resource.SearchServer) error {
 	resourcepb.RegisterResourceIndexServer(srv, server)
 	resourcepb.RegisterManagedObjectIndexServer(srv, server)
 	resourcepb.RegisterDiagnosticsServer(srv, server)
-	return s.registerHealthAndReflection(server)
+	return s.registerHealthAndReflection(srv, server)
 }
 
-func (s *service) registerUnifiedResourceServer(server resource.ResourceServer) error {
-	srv := s.handler.GetServer()
+func (s *service) registerUnifiedResourceServer(srv *grpc.Server, server resource.ResourceServer) error {
 	// Register storage services
 	resourcepb.RegisterResourceStoreServer(srv, server)
 	resourcepb.RegisterBulkStoreServer(srv, server)
@@ -568,23 +530,18 @@ func (s *service) registerUnifiedResourceServer(server resource.ResourceServer) 
 	// Register search services
 	resourcepb.RegisterResourceIndexServer(srv, server)
 	resourcepb.RegisterManagedObjectIndexServer(srv, server)
-	return s.registerHealthAndReflection(server)
+	return s.registerHealthAndReflection(srv, server)
 }
 
 // registerHealthAndReflection registers the health check and reflection services on the gRPC server.
-func (s *service) registerHealthAndReflection(healthChecker resourcepb.DiagnosticsServer) error {
+func (s *service) registerHealthAndReflection(srv *grpc.Server, healthChecker resourcepb.DiagnosticsServer) error {
 	healthService, err := resource.ProvideHealthService(healthChecker)
 	if err != nil {
 		return err
 	}
 
-	grpc_health_v1.RegisterHealthServer(s.handler.GetServer(), healthService)
-
-	// register reflection service
-	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
-	if err != nil {
-		return err
-	}
+	grpc_health_v1.RegisterHealthServer(srv, healthService)
+	grpcserver.RegisterReflection(srv)
 
 	return nil
 }
