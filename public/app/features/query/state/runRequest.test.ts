@@ -20,6 +20,7 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import { getMockDataSource, TestQuery } from './mocks/mockDataSource';
+import { initializeDashboardRunningQueryCount } from './runningQueryCount';
 import { callQueryMethodWithMigration, runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
@@ -55,6 +56,8 @@ class ScenarioCtx {
   request!: DataQueryRequest;
   subscriber!: Subscriber<DataQueryResponse>;
   isUnsubbed = false;
+  countAfterStart?: number;
+  countAfterUnsub?: number;
   setupFn: () => void = () => {};
   results!: PanelData[];
   subscription!: Subscription;
@@ -409,6 +412,46 @@ describe('runRequest', () => {
       expect(ctx.results[0].series.length).toBe(2);
       expect(ctx.results[0].series[0].name).toBe('DataB-1');
       expect(ctx.results[0].series[1].name).toBe('DataB-2');
+    });
+  });
+
+  runRequestScenario('Dashboard running query count tracking', (ctx) => {
+    ctx.setup(() => {
+      initializeDashboardRunningQueryCount([{ id: 10, hasQueries: true }]);
+      ctx.request.app = CoreApp.Dashboard;
+      ctx.request.panelId = 10;
+      ctx.request.requestId = 'req-dashboard';
+      ctx.start();
+      ctx.countAfterStart = window.__grafanaRunningQueryCount;
+
+      ctx.emitPacket({
+        data: [{ name: 'DataA-1' } as DataFrame],
+        key: 'A',
+        state: LoadingState.Done,
+      });
+    });
+
+    it('should track query and panel completion', () => {
+      expect(ctx.countAfterStart).toBe(2);
+      expect(window.__grafanaRunningQueryCount).toBe(0);
+    });
+  });
+
+  runRequestScenario('Dashboard running query count finalizes on unsubscribe', (ctx) => {
+    ctx.setup(() => {
+      initializeDashboardRunningQueryCount([{ id: 11, hasQueries: true }]);
+      ctx.request.app = CoreApp.Dashboard;
+      ctx.request.panelId = 11;
+      ctx.request.requestId = 'req-unsub';
+      ctx.start();
+      ctx.countAfterStart = window.__grafanaRunningQueryCount;
+      ctx.subscription.unsubscribe();
+      ctx.countAfterUnsub = window.__grafanaRunningQueryCount;
+    });
+
+    it('should clear remaining counts when subscription ends', () => {
+      expect(ctx.countAfterStart).toBe(2);
+      expect(ctx.countAfterUnsub).toBe(0);
     });
   });
 });
