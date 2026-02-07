@@ -11,30 +11,67 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/membercache"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// Type aliases for external packages to access
+type MemberCache = membercache.Cache
+type Tracer = tracing.Tracer
 
 // At package level
 const defaultCacheDuration = 5 * time.Minute
 
 type Service struct {
-	cache  *localcache.CacheService
-	store  store
-	tracer tracing.Tracer
+	cache       *localcache.CacheService
+	memberCache membercache.Cache
+	store       store
+	tracer      tracing.Tracer
+	features    featuremgmt.FeatureToggles
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, features ...featuremgmt.FeatureToggles) (team.Service, error) {
+	// Default to disabled cache
+	var memberCache membercache.Cache = &membercache.NoOpCache{}
+
+	// Override with real cache only if feature flag is enabled
+	var featureFlags featuremgmt.FeatureToggles
+	if len(features) > 0 {
+		featureFlags = features[0]
+	}
+
+	if featureFlags != nil {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if featureFlags.IsEnabled(context.Background(), featuremgmt.FlagTeamMembershipQueryCache) {
+			memberCache = membercache.NewCache(
+				cfg.TeamMemberCache.MaxSize,
+				cfg.TeamMemberCache.TTL,
+				tracer,
+			)
+		}
+	}
+
+	store := &xormStore{
+		db:          db,
+		cfg:         cfg,
+		deletes:     []string{},
+		memberCache: memberCache,
+		tracer:      tracer,
+		features:    featureFlags,
+	}
 
 	if err := store.teamMemberUidMigration(); err != nil {
 		return nil, err
 	}
 
 	return &Service{
-		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
-		store:  store,
-		tracer: tracer,
+		cache:       localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
+		memberCache: memberCache,
+		store:       store,
+		tracer:      tracer,
+		features:    featureFlags,
 	}, nil
 }
 
@@ -163,4 +200,14 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 
 func (s *Service) RegisterDelete(query string) {
 	s.store.RegisterDelete(query)
+}
+
+// GetMemberCache returns the team member cache for clearing on login
+func (s *Service) GetMemberCache() MemberCache {
+	return s.memberCache
+}
+
+// GetTracer returns the tracer for adding spans to operations
+func (s *Service) GetTracer() Tracer {
+	return s.tracer
 }

@@ -8,11 +8,17 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/membercache"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -33,9 +39,12 @@ type store interface {
 }
 
 type xormStore struct {
-	db      db.DB
-	cfg     *setting.Cfg
-	deletes []string
+	db          db.DB
+	cfg         *setting.Cfg
+	deletes     []string
+	memberCache membercache.Cache
+	tracer      tracing.Tracer
+	features    featuremgmt.FeatureToggles
 }
 
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
@@ -404,6 +413,42 @@ func isTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (bo
 // AddOrUpdateTeamMemberHook is called from team resource permission service
 // it adds user to a team or updates user permissions in a team within the given transaction session
 func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
+	return AddOrUpdateTeamMemberHookWithCache(context.Background(), sess, nil, nil, nil, userID, orgID, teamID, isExternal, permission)
+}
+
+// AddOrUpdateTeamMemberHookWithCache is the cacheable version of AddOrUpdateTeamMemberHook
+// It checks the cache before performing database operations and updates the cache on changes
+func AddOrUpdateTeamMemberHookWithCache(ctx context.Context, sess *db.Session, memberCache membercache.Cache, tracer tracing.Tracer, features featuremgmt.FeatureToggles, userID, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
+	// Check if caching is enabled
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	cacheEnabled := features != nil && features.IsEnabled(ctx, featuremgmt.FlagTeamMembershipQueryCache) && memberCache != nil
+
+	// Start tracing span
+	var span trace.Span
+	if tracer != nil {
+		ctx, span = tracer.Start(ctx, "team.AddOrUpdateTeamMemberHook", trace.WithAttributes(
+			attribute.Int64("org_id", orgID),
+			attribute.Int64("team_id", teamID),
+			attribute.Int64("user_id", userID),
+			attribute.Bool("cache_enabled", cacheEnabled),
+		))
+		defer span.End()
+	}
+
+	// Check cache if enabled
+	if cacheEnabled {
+		cachedPerm, found := memberCache.Get(ctx, orgID, teamID, userID)
+		if found {
+			if cachedPerm == permission {
+				// Permission hasn't changed, skip database operation
+				if span != nil {
+					span.SetAttributes(attribute.Bool("cache.skip_update", true))
+				}
+				return nil
+			}
+		}
+	}
+
 	isMember, err := isTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
@@ -413,6 +458,11 @@ func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, is
 		err = updateTeamMember(sess, orgID, teamID, userID, permission)
 	} else {
 		err = addTeamMember(sess, orgID, teamID, userID, isExternal, permission)
+	}
+
+	// Update cache if operation succeeded and caching is enabled
+	if err == nil && cacheEnabled {
+		memberCache.Set(ctx, orgID, teamID, userID, permission)
 	}
 
 	return err

@@ -1364,6 +1364,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:        "teamMembershipQueryCache",
+			Description: "Enable in-memory caching for team member permission queries to reduce database load",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,

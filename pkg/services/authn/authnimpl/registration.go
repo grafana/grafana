@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -25,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,6 +47,7 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
+	teamService team.Service,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -155,6 +159,33 @@ func ProvideRegistration(
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 	authnSvc.RegisterPostLoginHook(userSync.CatalogLoginHook, 145)
 	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
+
+	// Clear team member cache on login to ensure fresh session data
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagTeamMembershipQueryCache) {
+		clearCacheHook := func(ctx context.Context, identity *authn.Identity, r *authn.Request, err error) {
+			if err != nil || identity == nil {
+				return
+			}
+
+			// Parse user ID from identity
+			userID, parseErr := strconv.ParseInt(identity.GetID(), 10, 64)
+			if parseErr != nil {
+				logger.Warn("Failed to parse user ID for cache clearing", "id", identity.GetID(), "error", parseErr)
+				return
+			}
+
+			// Get the member cache from team service if it implements the interface
+			if teamSvc, ok := teamService.(interface {
+				GetMemberCache() teamimpl.MemberCache
+			}); ok {
+				memberCache := teamSvc.GetMemberCache()
+				memberCache.ClearUser(ctx, userID)
+				logger.Debug("Cleared team member cache on login", "userID", userID)
+			}
+		}
+		authnSvc.RegisterPostLoginHook(clearCacheHook, 175) // Priority after permission cache clear (170)
+	}
 
 	nsSync := sync.ProvideNamespaceSync(cfg)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)

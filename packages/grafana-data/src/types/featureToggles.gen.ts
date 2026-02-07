@@ -875,6 +875,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
+  * Enable in-memory caching for team member permission queries to reduce database load
+  * @default false
+  */
+  teamMembershipQueryCache?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
