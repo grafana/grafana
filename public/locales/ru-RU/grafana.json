@@ -4952,7 +4952,6 @@
       "paste-panel": "Вставка панели",
       "paste-row": "Вставить строку",
       "paste-tab": "Вставить вкладку",
-      "un-group-panels": "Разгруппировать",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10632,6 +10631,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Не переносить строки",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
@@ -10658,6 +10663,7 @@
     "name-show-controls": "Показывать элементы управления",
     "name-time": "Показать метки времени",
     "name-unique-labels": "Уникальные метки",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Переносить строки",
     "order-options": {
       "label-newest-first": "Сначала новые",
@@ -12236,7 +12242,6 @@
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
       "retry-action": "",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} дашборд",
@@ -12786,7 +12791,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "и нажать",
@@ -12823,8 +12829,6 @@
       "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {

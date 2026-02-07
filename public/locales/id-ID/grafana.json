@@ -4880,7 +4880,6 @@
       "paste-panel": "Tempel panel",
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
-      "un-group-panels": "Pisah grup",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10485,6 +10484,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Batal terapkan wrap pada baris",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
@@ -10511,6 +10516,7 @@
     "name-show-controls": "Tampilkan kontrol",
     "name-time": "Tampilkan stempel waktu",
     "name-unique-labels": "Label unik",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Bungkus baris",
     "order-options": {
       "label-newest-first": "Terbaru lebih dulu",
@@ -12080,7 +12086,6 @@
       "placeholder-my-repository-connection": "Koneksi repositori saya",
       "retry-action": "",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} dasbor",
@@ -12612,7 +12617,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "dan klik",
@@ -12649,8 +12655,6 @@
       "button-cancelling": "",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
