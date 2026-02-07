@@ -29,10 +29,17 @@ const defaultErrorNotification = {
   icon: 'exclamation-triangle',
 };
 
-export const createSuccessNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+export const createSuccessNotification = (
+  title: string,
+  text = '',
+  traceId?: string,
+  component?: ReactElement
+): AppNotification => ({
   ...defaultSuccessNotification,
   title,
   text,
+  traceId,
+  component,
   id: uuidv4(),
   timestamp: Date.now(),
   showing: true,
@@ -56,11 +63,17 @@ export const createErrorNotification = (
   };
 };
 
-export const createWarningNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+export const createWarningNotification = (
+  title: string,
+  text = '',
+  traceId?: string,
+  component?: ReactElement
+): AppNotification => ({
   ...defaultWarningNotification,
   title,
   text,
   traceId,
+  component,
   id: uuidv4(),
   timestamp: Date.now(),
   showing: true,

@@ -10,6 +10,9 @@ import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
+import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
@@ -353,6 +356,9 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
+        const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
+        let deletedCount = 0;
+        const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of dashboardUIDs) {
@@ -365,26 +371,42 @@ export const browseDashboardsAPI = createApi({
                   'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
                 ],
               });
-
               continue;
             }
           }
+          await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
 
-          await getDashboardAPI().deleteDashboard(dashboardUID, true);
+          deletedCount++;
+          deletedDashboardUIDs.push(dashboardUID);
+        }
 
+        if (deletedCount > 0) {
           pageStateManager.clearDashboardCache();
-          pageStateManager.removeSceneCache(dashboardUID);
           deletedDashboardsCache.clear();
+          for (const uid of deletedDashboardUIDs) {
+            pageStateManager.removeSceneCache(uid);
+          }
 
-          // handling success alerts for these feature toggles
-          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
-          if (config.featureToggles.kubernetesDashboards) {
+          // Show success notification after all deletions
+          if (restoreDashboardsEnabled) {
+            // Show notification with button to Recently Deleted
+            const title = t('browse-dashboards.delete.success', 'Dashboard deleted', { count: deletedCount });
+            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
+            const component = buildNotificationButton({
+              title,
+              buttonLabel: buttonText,
+              href: '/dashboard/recently-deleted',
+            });
+            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+          } else if (config.featureToggles.kubernetesDashboards) {
+            // Legacy notification for kubernetes dashboards
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
               payload: ['Dashboard deleted'],
             });
           }
         }
+
         return { data: undefined };
       },
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {

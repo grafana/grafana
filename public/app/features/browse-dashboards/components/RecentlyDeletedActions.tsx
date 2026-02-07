@@ -4,6 +4,9 @@ import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
@@ -110,7 +113,8 @@ export function RecentlyDeletedActions() {
           failed.push({ uid: dashboardUid, error: errorMessage });
         }
       } else if ('data' in result.value && result.value.data?.name) {
-        successful.push(result.value.data.name);
+        // Track the UID of successfully restored dashboards
+        successful.push(dashboardUid);
       }
     });
 
@@ -131,12 +135,21 @@ export function RecentlyDeletedActions() {
     deletedDashboardsCache.clear();
     await stateManager.doSearch();
 
-    const notificationData = getRestoreNotificationData(successful, failed);
+    const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);
     if (notificationData) {
-      appEvents.publish({
-        type: notificationData.alertType,
-        payload: [notificationData.message],
-      });
+      if (notificationData.kind === 'action') {
+        const component = buildNotificationButton({
+          title: notificationData.data.title,
+          buttonLabel: notificationData.data.buttonLabel,
+          href: notificationData.data.targetUrl,
+        });
+        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+      } else {
+        appEvents.publish({
+          type: notificationData.data.alertType,
+          payload: [notificationData.data.message],
+        });
+      }
     }
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
