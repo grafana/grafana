@@ -386,7 +386,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
 function getDefaultNotifierSettings(notifier: Notifier): Record<string, string> {
   const defaultSettings: Record<string, string> = {};
-  notifier.dto.options.forEach((option) => {
+  getOptionsForVersion(notifier.dto).forEach((option) => {
     if (option.defaultValue?.value) {
       defaultSettings[option.propertyName] = option.defaultValue?.value;
     }

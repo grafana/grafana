@@ -132,6 +132,41 @@ describe('useOnCallIntegration', () => {
       expect(notifier.versions![0].options[0].element).toBe('radio');
       expect(notifier.versions![0].options[2].element).toBe('select');
     });
+
+    it('should enhance only versions[].options when notifier has no top-level options', async () => {
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
+
+      await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
+
+      const { extendOnCallNotifierFeatures } = result.current;
+
+      const notifier = extendOnCallNotifierFeatures({
+        name: 'Grafana OnCall',
+        type: 'oncall',
+        // No top-level options (new k8s API shape)
+        versions: [
+          {
+            version: 'v1',
+            label: 'v1',
+            description: 'Version 1',
+            options: [option('url', 'Grafana OnCall', 'Grafana OnCall', { element: 'input' })],
+          },
+        ],
+        currentVersion: 'v1',
+        description: '',
+        heading: '',
+      });
+
+      // Top-level options should remain undefined
+      expect(notifier.options).toBeUndefined();
+
+      // Versions[].options should still be enhanced
+      expect(notifier.versions).toHaveLength(1);
+      expect(notifier.versions![0].options).toHaveLength(3);
+      expect(notifier.versions![0].options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
+      expect(notifier.versions![0].options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
+      expect(notifier.versions![0].options[2].propertyName).toBe('url');
+    });
   });
 
   describe('When OnCall Alerting V2 integration disabled', () => {

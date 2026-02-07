@@ -16,6 +16,7 @@ import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/ale
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { useIntegrationTypeSchemas } from '../../api/integrationSchemasApi';
 import { onCallApi } from '../../api/onCallApi';
 import { useAsync } from '../../hooks/useAsync';
 import { useIrmPlugin } from '../../hooks/usePluginBridge';
@@ -40,7 +41,6 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 const {
   useGetAlertmanagerConfigurationQuery,
   useGetContactPointsStatusQuery,
-  useGrafanaNotifiersQuery,
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
@@ -136,7 +136,7 @@ export const useGrafanaContactPoints = ({
   const irmOrOnCallPlugin = useIrmPlugin(SupportedPlugin.OnCall);
 
   const onCallResponse = useOnCallIntegrations(potentiallySkip);
-  const alertNotifiers = useGrafanaNotifiersQuery(undefined, potentiallySkip);
+  const alertNotifiers = useIntegrationTypeSchemas(potentiallySkip);
   const contactPointsListResponse = useK8sContactPoints({ namespace }, potentiallySkip);
 
   const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {

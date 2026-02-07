@@ -87,19 +87,19 @@ export function isDeprecated(notifier: NotifierDTO, version?: string): boolean {
 export function getOptionsForVersion(notifier: NotifierDTO, version?: string): NotificationChannelOption[] {
   // If no versions array, use default options
   if (!notifier.versions || notifier.versions.length === 0) {
-    return notifier.options;
+    return notifier.options ?? [];
   }
 
   // If version is specified, find the matching version
   if (version) {
     const versionData = notifier.versions.find((v) => v.version === version);
     // Return version-specific options if found, otherwise fall back to default
-    return versionData?.options ?? notifier.options;
+    return versionData?.options ?? notifier.options ?? [];
   }
 
   // If no version specified, find the default creatable version (canCreate !== false)
   const defaultVersion = notifier.versions.find((v) => v.canCreate !== false);
-  return defaultVersion?.options ?? notifier.options;
+  return defaultVersion?.options ?? notifier.options ?? [];
 }
 
 /**

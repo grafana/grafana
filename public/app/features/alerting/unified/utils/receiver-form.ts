@@ -6,6 +6,7 @@ import {
   NotifierDTO,
   NotifierType,
 } from 'app/features/alerting/unified/types/alerting';
+import { getOptionsForVersion } from 'app/features/alerting/unified/utils/notifier-versions';
 import {
   AlertmanagerReceiver,
   GrafanaManagedContactPoint,
@@ -220,7 +221,7 @@ export function getSecureFieldNames(notifier: NotifierDTO): string[] {
     }
   }
 
-  findSecureOptions(notifier.options);
+  findSecureOptions(getOptionsForVersion(notifier));
 
   return secureFieldPaths;
 }
