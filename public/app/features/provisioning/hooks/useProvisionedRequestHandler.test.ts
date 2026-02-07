@@ -133,9 +133,7 @@ describe('useProvisionedRequestHandler', () => {
       );
       expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
       // Branch workflow should not show success alert (PR banner handles it)
-      expect(mockPublish).not.toHaveBeenCalledWith(
-        expect.objectContaining({ type: AppEvents.alertSuccess.name })
-      );
+      expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
     });
 
     it('should call onWriteSuccess for write workflow', () => {
