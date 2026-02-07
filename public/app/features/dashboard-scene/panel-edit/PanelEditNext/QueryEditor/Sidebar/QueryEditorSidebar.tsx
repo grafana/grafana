@@ -83,6 +83,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
+      overflowY: 'auto',
     }),
   };
 }
