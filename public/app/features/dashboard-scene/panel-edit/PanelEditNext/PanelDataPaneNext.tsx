@@ -135,24 +135,44 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     });
   };
 
-  public addQuery = (query?: Partial<DataQuery>) => {
+  public addQuery = (query?: Partial<DataQuery>, afterRefId?: string): string | undefined => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
-      return;
+      return undefined;
     }
 
     const { datasource, dsSettings } = this.state;
     const currentQueries = queryRunner.state.queries;
 
-    // Build new query with defaults
+    // Build new query with defaults.
+    // Preserve the caller-supplied datasource (e.g. ExpressionDatasourceRef)
+    // and only fall back to the panel datasource when none was provided.
     const newQuery: Partial<DataQuery> = {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
       ...query,
-      datasource: dsSettings ? getDataSourceRef(dsSettings) : undefined,
     };
 
+    if (!newQuery.datasource && dsSettings) {
+      newQuery.datasource = getDataSourceRef(dsSettings);
+    }
+
     const updatedQueries = addQuery(currentQueries, newQuery);
+    const newItem = updatedQueries[updatedQueries.length - 1];
+
+    // If afterRefId is specified, move the new query (currently at end) to just after it
+    if (afterRefId) {
+      updatedQueries.pop();
+      const afterIndex = updatedQueries.findIndex((q) => q.refId === afterRefId);
+      if (afterIndex !== -1) {
+        updatedQueries.splice(afterIndex + 1, 0, newItem);
+      } else {
+        updatedQueries.push(newItem); // fallback to append if not found
+      }
+    }
+
     queryRunner.setState({ queries: updatedQueries });
+
+    return newItem?.refId;
   };
 
   public deleteQuery = (refId: string) => {

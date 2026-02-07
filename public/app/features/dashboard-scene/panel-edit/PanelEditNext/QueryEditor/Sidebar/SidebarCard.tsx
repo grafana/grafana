@@ -1,13 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config as grafanaConfig } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { QueryEditorTypeConfig } from '../../constants';
-import { useActionsContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { HoverActions } from './HoverActions';
 
@@ -38,27 +43,49 @@ export const SidebarCard = ({
   const theme = useTheme2();
   const typeText = config.getLabel();
   const { addQuery } = useActionsContext();
+  const { setSelectedQuery } = useQueryEditorUIContext();
+  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
+
+  const canReadQueries = grafanaConfig.featureToggles.savedQueriesRBAC
+    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
+    : contextSrv.isSignedIn;
+
+  /** Add a query after this card and auto-select it in the sidebar. */
+  const addAndSelect = (query?: Partial<DataQuery>) => {
+    const newRefId = addQuery(query, id);
+    if (newRefId) {
+      // setSelectedQuery only needs refId to identify the query;
+      // the full DataQuery will be resolved from the queries array.
+      const selectTarget: DataQuery = { refId: newRefId, hide: false };
+      setSelectedQuery(selectTarget);
+    }
+  };
 
   const addMenu = (
     <Menu>
       <Menu.Item
         label={t('query-editor-next.sidebar.add-query', 'Add query')}
         icon="question-circle"
-        onClick={() => addQuery()}
+        onClick={() => addAndSelect()}
       />
-      <Menu.Item
-        label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
-        icon="book-open"
-        onClick={() => {
-          // TODO: open query library picker
-        }}
-      />
+      {queryLibraryEnabled && canReadQueries && (
+        <Menu.Item
+          label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
+          icon="book-open"
+          onClick={() =>
+            openDrawer({
+              onSelectQuery: (query) => addAndSelect(query),
+              options: { context: CoreApp.PanelEditor },
+            })
+          }
+        />
+      )}
       <Menu.Item
         label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
         icon="calculator-alt"
-        onClick={() => addQuery({ datasource: ExpressionDatasourceRef })}
+        onClick={() => addAndSelect({ datasource: ExpressionDatasourceRef })}
       />
     </Menu>
   );
