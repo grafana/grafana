@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"google.golang.org/grpc/metadata"
 
@@ -36,7 +35,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 
 	// Make sure we have some default port if none is set. This is required for gRPC to work.
 	onlyHost := parsedUrl.Host
-	if !strings.Contains(onlyHost, ":") {
+	if parsedUrl.Port() == "" {
 		if parsedUrl.Scheme == "http" {
 			onlyHost += ":80"
 		} else {
@@ -44,7 +43,9 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 		}
 	}
 
-	dialOpts, err := getDialOpts(ctx, settings, opts)
+	secure := parsedUrl.Scheme == "https"
+
+	dialOpts, err := getDialOpts(ctx, settings, secure, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error getting dial options: %w", err)
 	}
@@ -81,7 +82,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 
 // getDialOpts creates options and interceptors (middleware) this should roughly match what we do in
 // http_client_provider.go for standard http requests.
-func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) ([]grpc.DialOption, error) {
+func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, secure bool, opts httpclient.Options) ([]grpc.DialOption, error) {
 	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
 	//  ResponseLimitMiddleware RedirectLimitMiddleware.
 	// Also User agent but that is set before each rpc call as for decoupled DS we have to get it from request context
@@ -106,16 +107,20 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeBytes)))
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
-		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
+		// If basic authentication is enabled, it sets the basic authentication header for each RPC call.
+		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
+			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
+		}))
+	}
+
+	if secure {
+		// If the connection is secure, it uses TLS transport.
 		tls, err := httpclient.GetTLSConfig(opts)
 		if err != nil {
 			return nil, fmt.Errorf("failure in configuring tls for grpc: %w", err)
 		}
 
 		dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
-		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
-		}))
 	} else {
 		// Otherwise, it uses insecure credentials.
 		dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
