@@ -539,8 +539,8 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 
 		mockSQLStore := dbtest.NewFakeDB()
 
-		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
-			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
+		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/uid/uid/restore",
+			"/api/dashboards/uid/:uid/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				sc.dashboardVersionService = fakeDashboardVersionService
 
 				callRestoreDashboardVersion(sc)
@@ -562,8 +562,8 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 
 		mockSQLStore := dbtest.NewFakeDB()
 
-		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
-			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
+		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/uid/uid/restore",
+			"/api/dashboards/uid/:uid/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				sc.dashboardVersionService = fakeDashboardVersionService
 
 				callRestoreDashboardVersion(sc)
@@ -593,8 +593,8 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 			Version: 1,
 		}
 		mockSQLStore := dbtest.NewFakeDB()
-		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
-			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
+		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/uid/uid/restore",
+			"/api/dashboards/uid/:uid/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
 				assert.Equal(t, http.StatusOK, sc.resp.Code)
 			}, mockSQLStore)
@@ -622,8 +622,8 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 			Version: 1,
 		}
 		mockSQLStore := dbtest.NewFakeDB()
-		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
-			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
+		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/uid/uid/restore",
+			"/api/dashboards/uid/:uid/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
 				assert.Equal(t, http.StatusOK, sc.resp.Code)
 			}, mockSQLStore)
@@ -893,8 +893,8 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 		}
 	}
 
-	loggedInUserScenarioWithRole(t, "When user exists and calling GET on", "GET", "/api/dashboards/id/2/versions",
-		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
+	loggedInUserScenarioWithRole(t, "When user exists and calling GET on", "GET", "/api/dashboards/uid/test-uid/versions",
+		"/api/dashboards/uid/:uid/versions", org.RoleEditor, func(sc *scenarioContext) {
 			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
 				{
 					Version:   1,
@@ -918,8 +918,8 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}
 		}, mockSQLStore)
 
-	loggedInUserScenarioWithRole(t, "When user does not exist and calling GET on", "GET", "/api/dashboards/id/2/versions",
-		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
+	loggedInUserScenarioWithRole(t, "When user does not exist and calling GET on", "GET", "/api/dashboards/uid/test-uid/versions",
+		"/api/dashboards/uid/:uid/versions", org.RoleEditor, func(sc *scenarioContext) {
 			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
 				{
 					Version:   1,
@@ -943,8 +943,8 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}
 		}, mockSQLStore)
 
-	loggedInUserScenarioWithRole(t, "When failing to get user and calling GET on", "GET", "/api/dashboards/id/2/versions",
-		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
+	loggedInUserScenarioWithRole(t, "When failing to get user and calling GET on", "GET", "/api/dashboards/uid/test-uid/versions",
+		"/api/dashboards/uid/:uid/versions", org.RoleEditor, func(sc *scenarioContext) {
 			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
 				{
 					Version:   1,
