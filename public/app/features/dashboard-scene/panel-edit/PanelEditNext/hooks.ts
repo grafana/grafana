@@ -140,8 +140,8 @@ export function usePanelEditorShell(model: PanelEditor) {
 
 export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: number) {
   const CONTROLS_ROW_HEIGHT_PX = 32;
-  const SIDEBAR_MIN_WIDTH = 285;
-  const SIDEBAR_MAX_WIDTH = 380;
+  const SIDEBAR_MIN_WIDTH = 320;
+  const SIDEBAR_MAX_WIDTH = 420;
   const VIZ_MIN_HEIGHT = 200;
   const VIZ_BOTTOM_GAP = 80;
   const SIDEBAR_EXPANDED_PADDING = 16;
