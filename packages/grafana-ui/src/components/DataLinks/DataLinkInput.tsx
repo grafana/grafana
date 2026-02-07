@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import { memo, useEffect, useRef, useState } from 'react';
+import { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 import { Value } from 'slate';
@@ -29,6 +29,7 @@ interface DataLinkInputProps {
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
+  ariaLabelledBy?: string;
 }
 
 const datalinksSyntax: Grammar = {
@@ -75,14 +76,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
-export const DataLinkInput = memo(
-  ({
-    value,
-    onChange,
-    suggestions,
-    placeholder = 'http://your-grafana.com/d/000000010/annotations',
-  }: DataLinkInputProps) => {
+const DataLinkInputComponent = forwardRef<HTMLDivElement, DataLinkInputProps>(
+  (
+    { value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations', ariaLabelledBy },
+    ref
+  ) => {
     const editorRef = useRef<Editor>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useImperativeHandle(ref, () => containerRef.current!, []);
     const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -94,6 +96,16 @@ export const DataLinkInput = memo(
     useEffect(() => {
       scrollRef.current?.scrollTo(0, scrollTop);
     }, [scrollTop]);
+
+    // Apply aria-labelledby to the contenteditable element since Slate doesn't support aria attributes
+    useEffect(() => {
+      if (ariaLabelledBy && containerRef.current) {
+        const editableElement = containerRef.current.querySelector('[contenteditable="true"]');
+        if (editableElement) {
+          editableElement.setAttribute('aria-labelledby', ariaLabelledBy);
+        }
+      }
+    }, [ariaLabelledBy]);
 
     // the order of middleware is important!
     const middleware = [
@@ -206,7 +218,7 @@ export const DataLinkInput = memo(
     return (
       <div className={styles.wrapperOverrides}>
         <div className="slate-query-field__wrapper">
-          <div id="data-link-input" className="slate-query-field">
+          <div id="data-link-input" ref={containerRef} className="slate-query-field">
             {showingSuggestions && (
               <Portal>
                 <div ref={refs.setFloating} style={floatingStyles}>
@@ -249,7 +261,9 @@ export const DataLinkInput = memo(
   }
 );
 
-DataLinkInput.displayName = 'DataLinkInput';
+DataLinkInputComponent.displayName = 'DataLinkInput';
+
+export const DataLinkInput = memo(DataLinkInputComponent);
 
 function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
   return (suggestionElement?.clientHeight ?? 0) * activeIndex;
