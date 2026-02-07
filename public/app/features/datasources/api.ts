@@ -16,8 +16,8 @@ export interface K8sMetadata {
   resourceVersion: string;
   generation: number;
   creationTimestamp: string;
-  labels: Map<string, string>;
-  annotations: Map<string, string>;
+  labels: { [key: string]: string };
+  annotations: { [key: string]: string };
 }
 
 export interface DatasourceInstanceK8sSpec {
@@ -27,6 +27,7 @@ export interface DatasourceInstanceK8sSpec {
   url: string;
   basicAuth: boolean;
   basicAuthUser: string;
+  isDefault?: boolean;
 }
 
 export interface DatasourceAccessK8s {
@@ -54,28 +55,12 @@ export const getDataSourceK8sGroup = (uid: string): string => {
   return '';
 };
 
-export const getDataSourceFromK8sAPI = async (k8sName: string, stackId: string) => {
-  // TODO: read this from backend.
-  let k8sVersion = 'v0alpha1';
-  let k8sGroup = getDataSourceK8sGroup(k8sName);
-  if (k8sGroup === '') {
-    throw Error(`Could not find data source group with uid: "${k8sName}"`);
-  }
-
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<DataSourceSettingsK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${stackId}/datasources/${k8sName}`,
-      showErrorAlert: false,
-    })
-  );
-  if (!response.ok) {
-    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
-  }
-
-  let dsK8sSettings = response.data;
-  let labels = new Map(Object.entries(dsK8sSettings.metadata.labels));
-  let id = parseInt(labels.get('grafana.app/deprecatedInternalID') || '', 10);
+export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
+  dsK8sSettings: DataSourceSettingsK8s
+): DataSourceSettings => {
+  // TODO: remove this once we figure out what code is using the deprecated
+  // id field.
+  let id = parseInt(dsK8sSettings.metadata.labels['grafana.app/deprecatedInternalID'] || '', 10);
   let dsSettings: DataSourceSettings = {
     id: id,
     uid: dsK8sSettings.metadata.name,
@@ -90,17 +75,39 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, stackId: string) 
     database: '',
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
-    isDefault: false,
+    isDefault: dsK8sSettings.spec.isDefault ? true : false,
     jsonData: dsK8sSettings.spec.jsonData,
     secureJsonFields: {},
     readOnly: false,
     withCredentials: false,
   };
+  return dsSettings;
+};
 
+export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
+  // TODO: read this from backend.
+  let k8sVersion = 'v0alpha1';
+  let k8sGroup = getDataSourceK8sGroup(k8sName);
+  if (k8sGroup === '') {
+    throw Error(`Could not find data source group with uid: "${k8sName}"`);
+  }
+
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<DataSourceSettingsK8s>({
+      method: 'GET',
+      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`,
+      showErrorAlert: false,
+    })
+  );
+  if (!response.ok) {
+    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
+  }
+
+  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(response.data);
   const accessResponse = await lastValueFrom(
     getBackendSrv().fetch<DatasourceAccessK8s>({
       method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${stackId}/datasources/${k8sName}/access`,
+      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}/access`,
       showErrorAlert: false,
     })
   );

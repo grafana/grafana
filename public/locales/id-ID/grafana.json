@@ -670,7 +670,6 @@
       "message": {
         "required": "Diperlukan."
       },
-      "or": "atau",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -861,7 +860,9 @@
       "cancel": "Batalkan",
       "clear-filters": "Hapus filter",
       "close": "",
+      "create": "",
       "delete": "Hapus",
+      "deleting": "",
       "edit": "Edit",
       "export": "Ekspor",
       "export-all": "Ekspor semua",
@@ -1662,9 +1663,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1679,6 +1679,9 @@
         "renamed-intervals_other": "",
         "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "Aturan yang dikelola oleh sumber data yang ada",
@@ -1727,28 +1730,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2093,7 +2087,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Butuh bantuan?"
@@ -2244,6 +2242,11 @@
       "aria-label-expand": "Perluas",
       "aria-label-more": "tindakan lainnya untuk kebijakan",
       "aria-label-more-default": "tindakan lainnya untuk kebijakan default",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Semua instans peringatan akan ditangani oleh kebijakan default jika tidak ada kebijakan lain yang cocok.",
         "title": "Kebijakan default",
@@ -2253,6 +2256,14 @@
         "confirm": "Ya, hapus kebijakan",
         "warning-1": "Menghapus kebijakan pemberitahuan ini akan menghapusnya secara permanen.",
         "warning-2": "Apa Anda yakin ingin menghapus kebijakan ini?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Filter kebijakan pemberitahuan menggunakan daftar pencocok yang dipisahkan koma, misalnya:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Kebijakan yang dibuat otomatis",
@@ -2267,6 +2278,7 @@
         },
         "inherited": "Turunan",
         "mute-time": "Dibisukan saat",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Berapa lama harus menunggu sebelum mengirim pemberitahuan tentang peringatan baru yang ditambahkan ke grup peringatan yang pemberitahuan awalnya telah dikirim.",
@@ -2287,6 +2299,12 @@
       "new-policy": "Tambah kebijakan baru",
       "no-matchers": "Tidak ada pencocok",
       "reload-policies": "Muat ulang kebijakan",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2325,27 +2343,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2361,6 +2358,9 @@
       "label-new-child-policy": "Kebijakan turunan baru",
       "label-new-sibling-above": "Sibling baru di atas",
       "label-new-sibling-below": "Sibling baru di bawah"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Tidak dapat menampilkan pratinjau kueri. Beberapa sumber data yang digunakan di kueri tidak tersedia.",
@@ -2546,6 +2546,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
@@ -3151,6 +3154,10 @@
       "misconfigured-warning": "Templat ini salah dikonfigurasi.",
       "misconfigured-warning-details": "Templat harus ditentukan di bagian <2></2> dan <5></5> dari konfigurasi alertmanager Anda."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
       "title-drawer": "Edit {{name}}",
@@ -3195,7 +3202,8 @@
       "error-loading": {
         "description": "Tidak dapat memuat interval waktu. Coba lagi nanti.",
         "title": "Terjadi kesalahan saat memuat interval waktu"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Interval waktu",
@@ -3213,6 +3221,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} lalu)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3310,12 +3321,6 @@
       "label-edit": "Edit",
       "label-export": "Ekspor"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ya, hapus titik kontak",
       "deleting": "Menghapus...",
@@ -3333,15 +3338,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Hapus kebijakan pemberitahuan"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -4884,7 +4880,6 @@
       "paste-panel": "Tempel panel",
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
-      "un-group-panels": "Pisah grup",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -6568,6 +6563,8 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
       "table-view-label-table-view": "Tampilan tabel"
     },
@@ -6614,9 +6611,6 @@
     },
     "query-editor": {
       "query": "Kueri"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7796,7 +7790,8 @@
       "loading-placeholder": "Memuat..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Buka tanpa kueri"
+      "aria-label-go-queryless": "Buka tanpa kueri",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Seri hasil: {{numItems}}",
@@ -9524,6 +9519,18 @@
       "csv-placeholder": "Masukkan CSV di sini...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10477,6 +10484,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Batal terapkan wrap pada baris",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
@@ -10503,6 +10516,7 @@
     "name-show-controls": "Tampilkan kontrol",
     "name-time": "Tampilkan stempel waktu",
     "name-unique-labels": "Label unik",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Bungkus baris",
     "order-options": {
       "label-newest-first": "Terbaru lebih dulu",
@@ -12001,19 +12015,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
-      "description-branch-name-in-git-hub": "Nama cabang di GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
       "label-path": "Jalur",
-      "label-workflow": "Alur kerja",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12037,11 +12053,7 @@
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
     },
     "bitbucket": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "permissions": {
         "pull-requests-label": "Permintaan penggabungan",
         "pull-requests-read-write": "Baca dan tulis",
@@ -12056,15 +12068,13 @@
       "token-label": "Kata Sandi Aplikasi",
       "token-required": "Token Bitbucket diperlukan",
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan kata sandi aplikasi",
-      "token-user-label": "Nama pengguna",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori Bitbucket yang valid",
       "url-required": "URL repositori wajib diisi"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
+      "description-clear-repository-connection": "",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
       "error-quota-exceeded-message": "",
@@ -12305,46 +12315,31 @@
       "subtitle-provisioning-feature": "Lihat dan kelola koneksi penyediaan Anda"
     },
     "git": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "pr-workflow-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan penarikan saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan penarikan mungkin tetap diperlukan.",
       "pr-workflow-label": "Aktifkan opsi permintaan penarikan saat menyimpan",
       "token-description": "Token atau kata sandi akses repositori Git",
       "token-label": "Token Akses",
       "token-required": "Token Git diperlukan",
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan token akses",
-      "token-user-label": "Nama pengguna",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Git",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori Git yang valid",
       "url-required": "URL repositori wajib diisi"
     },
     "github": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "pr-workflow-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan penarikan saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan penarikan mungkin tetap diperlukan.",
       "pr-workflow-label": "Aktifkan opsi permintaan penarikan saat menyimpan",
       "token-description": "Token Akses Pribadi GitHub dengan izin repositori",
       "token-label": "Token Akses Pribadi",
       "token-required": "Token GitHub diperlukan",
       "url-description": "URL repositori GitHub",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori GitHub yang valid",
       "url-required": "URL repositori wajib diisi"
     },
     "gitlab": {
-      "branch-description": "Cabang yang akan digunakan untuk penyediaan",
-      "branch-label": "Cabang",
       "branch-required": "Cabang wajib diisi",
-      "path-description": "Jalur subdirektori opsional dalam repositori",
-      "path-label": "Jalur",
       "permissions": {
         "api": "API",
         "api-read-write": "Baca dan tulis",
@@ -12359,7 +12354,6 @@
       "token-label": "Token Akses Proyek",
       "token-required": "Token GitLab diperlukan",
       "url-description": "URL repositori GitLab",
-      "url-label": "URL repositori",
       "url-pattern": "Harus URL repositori GitLab yang valid",
       "url-required": "URL repositori wajib diisi"
     },
@@ -12576,9 +12570,15 @@
       "previous": "Sebelumnya"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Langkah selesai",
@@ -12617,7 +12617,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "dan klik",
@@ -12630,7 +12631,7 @@
         "token-text": "Token Akses Pribadi GitLab"
       },
       "go-to": "Buka",
-      "make-sure": "Pastikan Anda menyertakan izin ini"
+      "make-sure": ""
     },
     "warning-title-default": "Peringatan",
     "wizard": {
@@ -12654,8 +12655,6 @@
       "button-cancelling": "",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12697,10 +12696,6 @@
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12919,7 +12914,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",

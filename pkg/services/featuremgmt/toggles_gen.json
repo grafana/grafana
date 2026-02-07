@@ -1052,15 +1052,15 @@
     {
       "metadata": {
         "name": "cloudWatchBatchQueries",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770245027852",
         "creationTimestamp": "2023-10-20T19:09:41Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-04 22:43:47.852872 +0000 UTC"
         }
       },
       "spec": {
         "description": "Runs CloudWatch metrics queries as separate batches",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
         "expression": "false"
       }
@@ -4087,6 +4087,7 @@
         "name": "reportingRetries",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-08-31T07:47:47Z",
+        "deletionTimestamp": "2026-02-04T09:25:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4488,6 +4489,22 @@
         "description": "Enables team folders functionality",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-search-navigate-organise",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersFromAppPlatform",
+        "resourceVersion": "1770314407036",
+        "creationTimestamp": "2026-02-05T17:51:52Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-05 18:00:07.036855 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
         "expression": "false"
       }
     },

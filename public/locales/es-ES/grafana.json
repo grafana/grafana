@@ -673,7 +673,6 @@
       "message": {
         "required": "Este valor es obligatorio."
       },
-      "or": "o...",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -864,7 +863,9 @@
       "cancel": "Cancelar",
       "clear-filters": "Borrar filtros",
       "close": "",
+      "create": "",
       "delete": "Eliminar",
+      "deleting": "",
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar todo",
@@ -1667,9 +1668,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1687,6 +1687,9 @@
         "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "Reglas existentes gestionadas por la fuente de datos",
@@ -1737,28 +1740,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2104,7 +2098,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "¿Necesitas ayuda?"
@@ -2255,6 +2253,11 @@
       "aria-label-expand": "Expandir",
       "aria-label-more": "más acciones para la política",
       "aria-label-more-default": "más acciones para la política predeterminada",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Todas las instancias de alerta serán gestionadas por la política predeterminada si no se encuentran otras políticas coincidentes.",
         "title": "Política predeterminada",
@@ -2264,6 +2267,14 @@
         "confirm": "Sí, eliminar política",
         "warning-1": "La eliminación de esta política de notificación la eliminará de forma permanente.",
         "warning-2": "¿Seguro que quieres eliminar esta política?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Filtra las políticas de notificación mediante una lista de buscadores de coincidencias separados por comas, por ejemplo:<1>severidad=crítica, región=EMEA</1>",
       "generated-policies": "Políticas generadas automáticamente",
@@ -2278,6 +2289,7 @@
         },
         "inherited": "Heredado",
         "mute-time": "Silenciado cuando",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Tiempo que se debe esperar antes de enviar una notificación sobre nuevas alertas que se añaden a un grupo de alertas para el que ya se ha enviado una notificación inicial.",
@@ -2299,6 +2311,12 @@
       "new-policy": "Añadir nueva política",
       "no-matchers": "Ningún buscador de coincidencias",
       "reload-policies": "Volver a cargar políticas",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2338,27 +2356,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2374,6 +2371,9 @@
       "label-new-child-policy": "Nueva política secundaria",
       "label-new-sibling-above": "Nuevo elemento del mismo nivel superior",
       "label-new-sibling-below": "Nuevo elemento del mismo nivel inferior"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "No se puede mostrar la vista previa de la consulta. Algunas de las fuentes de datos utilizadas en las consultas no están disponibles.",
@@ -2559,6 +2559,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Editar",
@@ -3167,6 +3170,10 @@
       "misconfigured-warning": "La configuración de esta plantilla es incorrecta.",
       "misconfigured-warning-details": "Las plantillas deben definirse en las secciones <2></2> y <5></5> de la configuración de Alertmanager."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Editar {{name}}",
       "title-drawer": "Editar {{name}}",
@@ -3211,7 +3218,8 @@
       "error-loading": {
         "description": "No se han podido cargar los intervalos de tiempo. Inténtelo más tarde.",
         "title": "Error al cargar los intervalos de tiempo"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tiempo",
@@ -3229,6 +3237,9 @@
     },
     "timestamp": {
       "time-ago": "(hace {{time}})"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3326,12 +3337,6 @@
       "label-edit": "Editar",
       "label-export": "Exportar"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Sí, eliminar punto de contacto",
       "deleting": "Eliminando...",
@@ -3349,15 +3354,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Eliminar política de notificación"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -4908,7 +4904,6 @@
       "paste-panel": "Pegar panel",
       "paste-row": "Pegar fila",
       "paste-tab": "Pegar pestaña",
-      "un-group-panels": "Desagrupar",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -6595,6 +6590,8 @@
       "title-delete-all-transformations": "¿Eliminar todas las transformaciones?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Alternar vista de tabla",
       "table-view-label-table-view": "Vista de tabla"
     },
@@ -6641,9 +6638,6 @@
     },
     "query-editor": {
       "query": "Consulta"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7825,7 +7819,8 @@
       "loading-placeholder": "Cargando..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Seguir sin consulta"
+      "aria-label-go-queryless": "Seguir sin consulta",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Series de resultados: {{numItems}}",
@@ -9565,6 +9560,18 @@
       "csv-placeholder": "Introducir CSV aquí...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10526,6 +10533,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Desajustar líneas",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Ajustar líneas"
     },
     "logs-navigation": {
@@ -10552,6 +10565,7 @@
     "name-show-controls": "Mostrar controles",
     "name-time": "Mostrar marcas de tiempo",
     "name-unique-labels": "Etiquetas únicas",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Líneas de envoltura",
     "order-options": {
       "label-newest-first": "Nuevos primero",
@@ -12053,19 +12067,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Añada una nota para describir sus cambios (opcional)",
-      "description-branch-name-in-git-hub": "Nombre de la rama en GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Rama",
       "label-comment": "Comentario",
       "label-path": "Ruta",
-      "label-workflow": "Flujo de trabajo",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12089,11 +12105,7 @@
       "message": "Esta función se encuentra actualmente en desarrollo activo. Para obtener la mejor experiencia y las últimas mejoras, recomendamos utilizar la <2>compilación nocturna</2> de Grafana."
     },
     "bitbucket": {
-      "branch-description": "La rama que se utilizará para el aprovisionamiento",
-      "branch-label": "Rama",
       "branch-required": "La rama es obligatoria",
-      "path-description": "Ruta de subdirectorio opcional dentro del repositorio",
-      "path-label": "Ruta",
       "permissions": {
         "pull-requests-label": "Solicitudes de extracción",
         "pull-requests-read-write": "Leer y escribir",
@@ -12108,15 +12120,13 @@
       "token-label": "Contraseña de la aplicación",
       "token-required": "El token de Bitbucket es obligatorio",
       "token-user-description": "El nombre de usuario que se utilizará para acceder al repositorio con la contraseña de la aplicación",
-      "token-user-label": "Nombre de usuario",
       "token-user-required": "El nombre de usuario es obligatorio",
       "url-description": "La URL del repositorio de Bitbucket",
-      "url-label": "URL del repositorio",
       "url-pattern": "Debe ser una URL de repositorio de Bitbucket válida",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Añade un nombre claro para esta conexión de repositorio",
+      "description-clear-repository-connection": "",
       "empty": "Vacío",
       "error-field-required": "Este campo es obligatorio.",
       "error-quota-exceeded-message": "",
@@ -12363,46 +12373,31 @@
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
     },
     "git": {
-      "branch-description": "La rama que se utilizará para el aprovisionamiento",
-      "branch-label": "Rama",
       "branch-required": "La rama es obligatoria",
-      "path-description": "Ruta de subdirectorio opcional dentro del repositorio",
-      "path-label": "Ruta",
       "pr-workflow-description": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que se siga requiriendo una solicitud de extracción.",
       "pr-workflow-label": "Habilitar la opción de solicitud de extracción al guardar",
       "token-description": "Token de acceso al repositorio Git o contraseña",
       "token-label": "Token de acceso",
       "token-required": "El token de Git es obligatorio",
       "token-user-description": "El nombre de usuario que se utilizará para acceder al repositorio con el token de acceso",
-      "token-user-label": "Nombre de usuario",
       "token-user-required": "El nombre de usuario es obligatorio",
       "url-description": "La URL del repositorio Git",
-      "url-label": "URL del repositorio",
       "url-pattern": "Debe ser una URL de repositorio Git válida",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "github": {
-      "branch-description": "La rama que se utilizará para el aprovisionamiento",
-      "branch-label": "Rama",
       "branch-required": "La rama es obligatoria",
-      "path-description": "Ruta de subdirectorio opcional dentro del repositorio",
-      "path-label": "Ruta",
       "pr-workflow-description": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que se siga requiriendo una solicitud de extracción.",
       "pr-workflow-label": "Habilitar la opción de solicitud de extracción al guardar",
       "token-description": "Token de acceso personal de GitHub con permisos de repositorio",
       "token-label": "Token de acceso personal",
       "token-required": "El token de GitHub es obligatorio",
       "url-description": "La URL del repositorio de GitHub",
-      "url-label": "URL del repositorio",
       "url-pattern": "Debe ser una URL de repositorio de GitHub válida",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "gitlab": {
-      "branch-description": "La rama que se utilizará para el aprovisionamiento",
-      "branch-label": "Rama",
       "branch-required": "La rama es obligatoria",
-      "path-description": "Ruta de subdirectorio opcional dentro del repositorio",
-      "path-label": "Ruta",
       "permissions": {
         "api": "API",
         "api-read-write": "Leer y escribir",
@@ -12417,7 +12412,6 @@
       "token-label": "Token de acceso al proyecto",
       "token-required": "El token de GitLab es obligatorio",
       "url-description": "La URL del repositorio de GitLab",
-      "url-label": "URL del repositorio",
       "url-pattern": "Debe ser una URL de repositorio de GitLab válida",
       "url-required": "La URL del repositorio es obligatoria"
     },
@@ -12634,9 +12628,15 @@
       "previous": "Anterior"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Paso completado",
@@ -12675,7 +12675,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "y haz clic en",
@@ -12688,7 +12689,7 @@
         "token-text": "Token de acceso personal de GitLab"
       },
       "go-to": "Ir a",
-      "make-sure": "Asegúrate de incluir estos permisos"
+      "make-sure": ""
     },
     "warning-title-default": "Advertencia",
     "wizard": {
@@ -12712,8 +12713,6 @@
       "button-cancelling": "",
       "button-next": "Terminar",
       "button-start": "Iniciar la sincronización",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12755,10 +12754,6 @@
       "button-submitting": "Enviando...",
       "error-instance-repository-exists": "El repositorio de instancias ya existe",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12978,7 +12973,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",
