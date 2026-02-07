@@ -1,4 +1,3 @@
-import { isFunction } from 'lodash';
 import { useState } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
@@ -53,7 +52,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   }
 
   const getLinks = () => {
-    if (!isFunction(field.getLinks)) {
+    if (typeof field.getLinks !== 'function') {
       return [];
     }
 
