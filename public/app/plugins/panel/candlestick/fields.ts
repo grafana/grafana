@@ -13,7 +13,7 @@ import { findField } from 'app/features/dimensions/utils';
 
 import { prepareGraphableFields } from '../timeseries/utils';
 
-import { Options, CandlestickFieldMap, VizDisplayMode } from './types';
+import { type Options, type CandlestickFieldMap, VizDisplayMode } from './panelcfg.gen';
 
 export interface FieldPickerInfo {
   /** property name */
