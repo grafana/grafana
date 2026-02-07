@@ -436,6 +436,9 @@ export type DashboardDataQueryKind = {
   };
   group: string;
   kind: string;
+  labels?: {
+    [key: string]: string;
+  };
   spec: {
     [key: string]: {
       [key: string]: any;
@@ -1126,6 +1129,9 @@ export type DashboardGroupByVariableKind = {
   };
   group: string;
   kind: string;
+  labels?: {
+    [key: string]: string;
+  };
   spec: DashboardGroupByVariableSpec;
 };
 export type DashboardFilterOrigin = string;
@@ -1164,6 +1170,9 @@ export type DashboardAdhocVariableKind = {
   };
   group: string;
   kind: string;
+  labels?: {
+    [key: string]: string;
+  };
   spec: DashboardAdhocVariableSpec;
 };
 export type DashboardSwitchVariableSpec = {
