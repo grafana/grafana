@@ -4084,6 +4084,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:
+    "@openfeature/react-sdk": "npm:^1.2.0"
     "@swc/core": "npm:1.13.3"
     "@swc/jest": "npm:^0.2.26"
     "@types/chance": "npm:^1.1.7"
