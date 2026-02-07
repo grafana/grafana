@@ -1,7 +1,6 @@
 package meta
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -762,10 +761,10 @@ type grafanaComPluginManifest struct {
 
 // grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
 // It inherits most information from the parent plugin.
-func grafanaComChildPluginVersionToMetaSpec(ctx context.Context, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
+func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) (pluginsv0alpha1.MetaSpec, error) {
 	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
 	if err != nil {
-		logging.FromContext(ctx).Error("Error getting cdn URL for catalog child meta", "child", child.Slug, "parent", parent.PluginSlug, "err", err)
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build CDN URL for child plugin %s: %w", child.Slug, err)
 	}
 
 	// Create a synthetic meta with both parent and child info
@@ -781,11 +780,11 @@ func grafanaComChildPluginVersionToMetaSpec(ctx context.Context, child grafanaCo
 		CDNURL:              cdnURL,
 		CreatePluginVersion: parent.CreatePluginVersion,
 	}
-	return grafanaComPluginVersionMetaToMetaSpec(ctx, childMeta, child.Path)
+	return grafanaComPluginVersionMetaToMetaSpec(logger, childMeta, child.Path)
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
-func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) pluginsv0alpha1.MetaSpec {
+func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) (pluginsv0alpha1.MetaSpec, error) {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
@@ -823,21 +822,27 @@ func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafana
 
 	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")
 	if err != nil {
-		logging.FromContext(ctx).Error("Error getting module.js URL for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version)
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build module.js URL for plugin %s: %w", gcomMeta.PluginSlug, err)
 	}
 
-	modulePath := path.Join(pluginRelBasePath, "module.js")
+	modulePath := "module.js"
+	if pluginRelBasePath != "" {
+		modulePath = path.Join(pluginRelBasePath, modulePath)
+	}
 	moduleHash, ok := gcomMeta.Manifest.Files[modulePath]
 	if !ok {
-		logging.FromContext(ctx).Error("Error getting module hash for catalog meta", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "path", pluginRelBasePath)
+		logger.Warn("Module hash not found in manifest", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "path", modulePath)
 	}
 
 	loadingStrategy := calculateLoadingStrategyFromGcomMeta(gcomMeta.CreatePluginVersion)
-	metaSpec.Module = pluginsv0alpha1.MetaV0alpha1SpecModule{
+	module := pluginsv0alpha1.MetaV0alpha1SpecModule{
 		Path:            moduleURL,
-		Hash:            &moduleHash,
 		LoadingStrategy: loadingStrategy,
 	}
+	if ok {
+		module.Hash = &moduleHash
+	}
+	metaSpec.Module = module
 	metaSpec.BaseURL = gcomMeta.CDNURL
 
 	children := make([]string, 0, len(gcomMeta.Children))
@@ -848,11 +853,11 @@ func grafanaComPluginVersionMetaToMetaSpec(ctx context.Context, gcomMeta grafana
 
 	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON)
 	if err != nil {
-		logging.FromContext(ctx).Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
+		logger.Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
 	}
 	metaSpec.Translations = translations
 
-	return metaSpec
+	return metaSpec, nil
 }
 
 func translationsFromManifest(cdnURL string, manifestFiles map[string]string, pluginRelBasePath string, jsonData pluginsv0alpha1.MetaJSONData) (map[string]string, error) {
