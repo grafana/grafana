@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/grafana/dskit/runtimeconfig"
@@ -69,7 +68,7 @@ This service loads overrides (currently just quotas) from a YAML file with the f
 
 overrides:
 
-	"123":
+	"stacks-123":
 	  quotas:
 	    dashboard.grafana.app/dashboards:
 	      limit: 1500
@@ -138,9 +137,8 @@ func (q *OverridesService) GetQuota(_ context.Context, nsr NamespacedResource) (
 		return ResourceQuota{}, fmt.Errorf("failed to get quota overrides from config manager")
 	}
 
-	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
 	groupResource := nsr.Group + "/" + nsr.Resource
-	if tenantOverrides, ok := overrides.Namespaces[tenantId]; ok {
+	if tenantOverrides, ok := overrides.Namespaces[nsr.Namespace]; ok {
 		if resourceQuota, ok := tenantOverrides.Quotas[groupResource]; ok {
 			return resourceQuota, nil
 		}
