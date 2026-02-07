@@ -324,9 +324,7 @@ func (r *sqlPruneHistoryRequest) Validate() error {
 	if r.Key == nil {
 		return fmt.Errorf("missing key")
 	}
-	if r.Key.Namespace == "" {
-		return fmt.Errorf("missing namespace")
-	}
+	// Note: Namespace can be empty for cluster-scoped resources
 	if r.Key.Group == "" {
 		return fmt.Errorf("missing group")
 	}

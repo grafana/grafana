@@ -5,8 +5,8 @@ WHERE {{ .Ident "guid" }} IN (
   SELECT
     {{ .Ident "guid" }},
     ROW_NUMBER() OVER (
-      PARTITION BY {{ .Ident "namespace" }}
-        , {{ .Ident "group" }}
+      PARTITION BY {{ if ne .Key.Namespace "" }}{{ .Ident "namespace" }}
+        , {{ end }}{{ .Ident "group" }}
         , {{ .Ident "resource" }}
         , {{ .Ident "name" }}
         {{ if .PartitionByGeneration }}
@@ -15,8 +15,8 @@ WHERE {{ .Ident "guid" }} IN (
       ORDER BY {{ .Ident "resource_version" }} DESC
     ) AS {{ .Ident "rn" }}
   FROM {{ .Ident "resource_history" }}
-  WHERE {{ .Ident "namespace" }} = {{ .Arg .Key.Namespace }}
-    AND {{ .Ident "group" }} = {{ .Arg .Key.Group }}
+  WHERE {{ if ne .Key.Namespace "" }}{{ .Ident "namespace" }} = {{ .Arg .Key.Namespace }}
+    AND {{ end }}{{ .Ident "group" }} = {{ .Arg .Key.Group }}
     AND {{ .Ident "resource" }} = {{ .Arg .Key.Resource }}
     AND {{ .Ident "name" }} = {{ .Arg .Key.Name }}
     {{ if .PartitionByGeneration }}

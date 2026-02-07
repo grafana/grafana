@@ -1,4 +1,6 @@
-{{/* Since the prune limit is 20 revisions, the max rows that can be deleted is the number of names * 20. */}}
+{{/* Since the prune limit is 20 revisions, the max rows that can be deleted is the number of names * 20.
+     Note: Supports both namespace-scoped and cluster-scoped resources.
+     For cluster-scoped resources, namespace will be an empty string in the tuple comparison. */}}
 DELETE FROM {{ .Ident "resource_history" }}
 WHERE {{ .Ident "group" }} = {{ .Arg .Group }}
   AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
