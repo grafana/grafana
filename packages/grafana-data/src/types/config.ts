@@ -105,7 +105,6 @@ export interface GrafanaJavascriptAgentConfig {
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
-  webVitalsAttribution: boolean;
 }
 
 export interface UnifiedAlertingStateHistoryConfig {
