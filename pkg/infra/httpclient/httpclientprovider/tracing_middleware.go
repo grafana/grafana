@@ -8,13 +8,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 const (
@@ -22,7 +23,14 @@ const (
 	httpContentLengthTagKey = "http.content_length"
 )
 
-func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Middleware {
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider")
+
+// Deprecated: Use NewTracingMiddleware instead.
+func TracingMiddleware(_ log.Logger, _ trace.Tracer) httpclient.Middleware {
+	return NewTracingMiddleware()
+}
+
+func NewTracingMiddleware() httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(TracingMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			ctx, span := tracer.Start(req.Context(), "HTTP Outgoing Request", trace.WithSpanKind(trace.SpanKindClient))
@@ -34,7 +42,7 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 				span.SetAttributes(attribute.String(k, v))
 			}
 
-			tracer.Inject(ctx, req.Header, span)
+			otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 			res, err := next.RoundTrip(req)
 
 			span.SetAttributes(semconv.HTTPURL(req.URL.String()))

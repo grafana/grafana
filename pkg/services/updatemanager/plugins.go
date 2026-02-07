@@ -15,10 +15,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -40,7 +40,7 @@ type PluginsService struct {
 	httpClient      httpClient
 	mutex           sync.RWMutex
 	log             log.Logger
-	tracer          tracing.Tracer
+	tracer          trace.Tracer
 	updateCheckURL  *url.URL
 	pluginInstaller plugins.Installer
 	updateChecker   *pluginchecker.Service
@@ -53,14 +53,14 @@ type PluginsService struct {
 func ProvidePluginsService(cfg *setting.Cfg,
 	pluginStore pluginstore.Store,
 	pluginInstaller plugins.Installer,
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	features featuremgmt.FeatureToggles,
 	updateChecker *pluginchecker.Service,
 ) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
-			httpclientprovider.TracingMiddleware(logger, tracer),
+			httpclientprovider.NewTracingMiddleware(),
 		},
 	})
 	if err != nil {

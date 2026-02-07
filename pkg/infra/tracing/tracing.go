@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-kit/log/level"
+	"github.com/grafana/dskit/services"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
@@ -27,9 +29,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/go-kit/log/level"
-
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -66,6 +65,8 @@ type tracerProvider interface {
 }
 
 // Tracer defines the service used to create new spans.
+//
+// Soon to be deprecated: use [go.opentelemetry.io/otel/trace.Tracer] instead.
 type Tracer interface {
 	trace.Tracer
 
@@ -77,6 +78,8 @@ type Tracer interface {
 	// information passed as [Span] is preferred.
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
+	//
+	// Deprecated: Use otel.GetTextMapPropagator().Inject directly instead.
 	Inject(context.Context, http.Header, trace.Span)
 }
 
@@ -342,6 +345,7 @@ func (ots *TracingService) Run(ctx context.Context) error {
 	return ots.AwaitTerminated(ctx)
 }
 
+// Deprecated: Use otel.GetTextMapPropagator().Inject directly instead.
 func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
