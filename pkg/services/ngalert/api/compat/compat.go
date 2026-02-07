@@ -458,12 +458,15 @@ func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definition
 	}
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
-func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettings
+func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
+	m := ns.ContactPointRouting
+	if m == nil {
+		return nil
+	}
 	return &definitions.AlertRuleNotificationSettings{
 		Receiver:            m.Receiver,
 		GroupBy:             m.GroupBy,
@@ -475,12 +478,15 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.Notificat
 	}
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
-func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
+func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
+	m := ns.ContactPointRouting
+	if m == nil {
+		return nil
+	}
 
 	toStringIfNotNil := func(d *model.Duration) *string {
 		if d == nil {
@@ -502,12 +508,12 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 }
 
 // NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
-func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) []models.NotificationSettings {
+func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) *models.NotificationSettings {
 	if ns == nil {
 		return nil
 	}
-	return []models.NotificationSettings{
-		{
+	return util.Pointer(models.NotificationSettingsFromContact(
+		models.ContactPointRouting{
 			Receiver:            ns.Receiver,
 			GroupBy:             ns.GroupBy,
 			GroupWait:           ns.GroupWait,
@@ -516,7 +522,7 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 			MuteTimeIntervals:   ns.MuteTimeIntervals,
 			ActiveTimeIntervals: ns.ActiveTimeIntervals,
 		},
-	}
+	))
 }
 
 func pointerOmitEmpty(s string) *string {
