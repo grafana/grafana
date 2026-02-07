@@ -1,32 +1,18 @@
 import { DataFrame } from '@grafana/data';
-import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
-import { FieldWithStats } from 'app/features/logs/components/fieldSelector/FieldSelector';
-import {
-  getSuggestedOTelDisplayFormat,
-  OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
-} from 'app/features/logs/components/otel/formats';
 import { getDistinctLabels } from 'app/features/transformers/utils';
 
-// Adapted /app/features/logs/components/fieldSelector/FieldSelector.tsx to work with dataframes instead of LogRowModel
-export function getSuggestedFields(dataFrame: DataFrame, displayedFields: string[], defaultFields: string[] = []) {
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { getSuggestedOTelDisplayFormat, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+
+import { FieldWithStats } from './FieldSelector';
+
+export function getSuggestedFieldsFromTable(_: DataFrame, displayedFields: string[], defaultFields: string[] = []) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
     name: field,
     stats: {
       percentOfLinesWithLabel: 100,
     },
   }));
-
-  // @todo Currently broken
-  // if (config.featureToggles.otelLogsFormatting) {
-  //   getSuggestedFieldsForTable(dataFrame).forEach((field) => {
-  //     suggestedFields.push({
-  //       name: field,
-  //       stats: {
-  //         percentOfLinesWithLabel: 100,
-  //       },
-  //     });
-  //   });
-  // }
 
   if (
     !defaultFields.length &&
