@@ -5,7 +5,7 @@ import { Group } from '@visx/group';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -16,8 +16,10 @@ import {
   GrafanaTheme2,
   DataHoverClearEvent,
   DataHoverEvent,
+  LinkModel,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { SortOrder, VizTooltipOptions } from '@grafana/schema';
 import {
   useTheme2,
@@ -27,7 +29,7 @@ import {
   SeriesTable,
   usePanelContext,
 } from '@grafana/ui';
-import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
+import { type DataLinksContextMenuApi, getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
 
 import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
@@ -116,39 +118,40 @@ export const PieChart = ({
             {(pie) => (
               <>
                 {pie.arcs.map((arc) => {
-                  const color = arc.data.display.color ?? FALLBACK_COLOR;
-                  const highlightState = getHighlightState(highlightedTitle, arc);
+                    const color = arc.data.display.color ?? FALLBACK_COLOR;
+                    const highlightState = getHighlightState(highlightedTitle, arc);
 
-                  if (arc.data.hasLinks && arc.data.getLinks) {
-                    return (
-                      <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
-                        {(api) => (
-                          <PieSlice
-                            tooltip={tooltip}
-                            highlightState={highlightState}
-                            arc={arc}
-                            pie={pie}
-                            fill={getGradientColor(color)}
-                            openMenu={api.openMenu}
-                            tooltipOptions={tooltipOptions}
-                          />
-                        )}
-                      </DataLinksContextMenu>
-                    );
-                  } else {
-                    return (
-                      <PieSlice
-                        key={arc.index}
-                        highlightState={highlightState}
-                        tooltip={tooltip}
-                        arc={arc}
-                        pie={pie}
-                        fill={getGradientColor(color)}
-                        tooltipOptions={tooltipOptions}
-                      />
-                    );
-                  }
-                })}
+                    if (arc.data.hasLinks && arc.data.getLinks) {
+                      return (
+                        <PieSliceWithDataLinks
+                          key={arc.index}
+                          arc={arc}
+                          pie={pie}
+                          highlightState={highlightState}
+                          fill={getGradientColor(color)}
+                          tooltip={tooltip}
+                          tooltipOptions={tooltipOptions}
+                          outerRadius={layout.outerRadius}
+                          innerRadius={layout.innerRadius}
+                          links={arc.data.getLinks}
+                        />
+                      );
+                    } else {
+                      return (
+                        <PieSlice
+                          key={arc.index}
+                          highlightState={highlightState}
+                          tooltip={tooltip}
+                          arc={arc}
+                          pie={pie}
+                          fill={getGradientColor(color)}
+                          tooltipOptions={tooltipOptions}
+                          outerRadius={layout.outerRadius}
+                          innerRadius={layout.innerRadius}
+                        />
+                      );
+                    }
+                  })}
                 {showLabel &&
                   pie.arcs.map((arc) => {
                     const highlightState = getHighlightState(highlightedTitle, arc);
@@ -193,41 +196,211 @@ interface SliceProps {
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
-  openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+  openMenu?: DataLinksContextMenuApi['openMenu'];
+  outerRadius: number;
+  innerRadius: number;
 }
 
-function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
-  const theme = useTheme2();
-  const styles = useStyles2(getStyles);
-  const { eventBus } = usePanelContext();
+interface PieSliceWithDataLinksProps extends Omit<SliceProps, 'openMenu'> {
+  links: () => LinkModel[];
+}
 
-  const onMouseOut = useCallback(
-    (event: React.MouseEvent<SVGGElement>) => {
+
+/**
+ * Component that wraps PieSlice with DataLinksContextMenu and handles event listeners
+ * for the anchor element. This keeps event handler logic co-located with component creation.
+ */
+function PieSliceWithDataLinks({
+  arc,
+  pie,
+  highlightState,
+  fill,
+  tooltip,
+  tooltipOptions,
+  outerRadius,
+  innerRadius,
+  links,
+}: PieSliceWithDataLinksProps) {
+  const { eventBus } = usePanelContext();
+  const elementRef = useRef<SVGGElement>(null);
+
+  const publishDataHoverEvent = useCallback(
+    (raw: Event | React.SyntheticEvent) => {
       eventBus?.publish({
-        type: DataHoverClearEvent.type,
+        type: DataHoverEvent.type,
         payload: {
-          raw: event,
+          raw,
           x: 0,
           y: 0,
           dataId: arc.data.display.title,
         },
       });
+    },
+    [eventBus, arc.data.display.title]
+  );
+
+  const publishDataHoverClearEvent = useCallback(
+    (raw: Event | React.SyntheticEvent) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+    },
+    [eventBus, arc.data.display.title]
+  );
+
+  const anchorRef = useRef<HTMLAnchorElement | null>(null);
+
+  // Use ref callback to get anchor element directly when it's created (single-link case)
+  const handleAnchorRef = useCallback(
+    (element: HTMLAnchorElement | null) => {
+      anchorRef.current = element;
+
+      if (element) {
+        // Ensure anchor is focusable
+        if (element.getAttribute('tabIndex') === '-1') {
+          element.removeAttribute('tabIndex');
+        }
+
+        // Ensure SVG element is not focusable
+        if (elementRef.current) {
+          const ensureNotFocusable = () => {
+            if (elementRef.current && elementRef.current.getAttribute('tabIndex') !== '-1') {
+              elementRef.current.setAttribute('tabIndex', '-1');
+            }
+          };
+          ensureNotFocusable();
+          setTimeout(ensureNotFocusable, 0);
+        }
+      }
+    },
+    [elementRef]
+  );
+
+  const handleAnchorFocus = useCallback(
+    (event: React.FocusEvent<HTMLAnchorElement>) => {
+      publishDataHoverEvent(event.nativeEvent);
+    },
+    [publishDataHoverEvent]
+  );
+
+  const handleAnchorBlur = useCallback(
+    (event: React.FocusEvent<HTMLAnchorElement>) => {
+      publishDataHoverClearEvent(event.nativeEvent);
+    },
+    [publishDataHoverClearEvent]
+  );
+
+  const handleAnchorKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLAnchorElement>) => {
+      if (event.key === 'Tab' && elementRef.current) {
+        elementRef.current.setAttribute('tabIndex', '-1');
+      }
+      // Handle focusin events - redirect focus to anchor if a child receives focus
+      const target = event.target;
+      if (target instanceof Element && target !== anchorRef.current && anchorRef.current?.contains(target)) {
+        event.stopPropagation();
+        anchorRef.current?.focus();
+      }
+    },
+    [elementRef]
+  );
+
+  return (
+    <DataLinksContextMenu
+      links={links}
+      anchorRef={handleAnchorRef}
+      onAnchorFocus={handleAnchorFocus}
+      onAnchorBlur={handleAnchorBlur}
+      onAnchorKeyDown={handleAnchorKeyDown}
+    >
+      {(api) => (
+        <PieSlice
+          tooltip={tooltip}
+          highlightState={highlightState}
+          arc={arc}
+          pie={pie}
+          fill={fill}
+          openMenu={api.openMenu}
+          tooltipOptions={tooltipOptions}
+          outerRadius={outerRadius}
+          innerRadius={innerRadius}
+          elementRef={elementRef}
+        />
+      )}
+    </DataLinksContextMenu>
+  );
+}
+
+function PieSlice({
+  arc,
+  pie,
+  highlightState,
+  openMenu,
+  fill,
+  tooltip,
+  tooltipOptions,
+  outerRadius,
+  innerRadius,
+  elementRef: externalElementRef,
+}: SliceProps & { elementRef?: React.RefObject<SVGGElement> }) {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+  const { eventBus } = usePanelContext();
+  const internalElementRef = useRef<SVGGElement>(null);
+  const elementRef = externalElementRef || internalElementRef;
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasDataLinksDirect = Boolean(arc.data.hasLinks && arc.data.getLinks);
+  const hasDataLinks = Boolean(openMenu) || hasDataLinksDirect;
+  const shouldBeFocusable = hasDataLinks && Boolean(openMenu);
+
+  const publishDataHoverEvent = useCallback(
+    (raw: Event | React.SyntheticEvent) => {
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+    },
+    [eventBus, arc.data.display.title]
+  );
+
+  const publishDataHoverClearEvent = useCallback(
+    (raw: Event | React.SyntheticEvent) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+    },
+    [eventBus, arc.data.display.title]
+  );
+
+  const onMouseOut = useCallback(
+    (event: React.MouseEvent<SVGGElement>) => {
+      publishDataHoverClearEvent(event);
       tooltip.hideTooltip();
     },
-    [eventBus, arc, tooltip]
+    [publishDataHoverClearEvent, tooltip]
   );
 
   const onMouseMoveOverArc = useCallback(
     (event: React.MouseEvent<SVGGElement>) => {
-      eventBus?.publish({
-        type: DataHoverEvent.type,
-        payload: {
-          raw: event,
-          x: 0,
-          y: 0,
-          dataId: arc.data.display.title,
-        },
-      });
+      publishDataHoverEvent(event);
 
       const owner = event.currentTarget.ownerSVGElement;
 
@@ -240,18 +413,101 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
         });
       }
     },
-    [eventBus, arc, tooltip, pie, tooltipOptions]
+    [publishDataHoverEvent, tooltip, pie, tooltipOptions]
   );
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<SVGGElement>) => {
+      if (hasDataLinks && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (openMenu && elementRef.current) {
+          // Calculate position from arc center for pie chart
+          // For keyboard events, we need to calculate the center of the arc
+          const arcCenterAngle = (arc.startAngle + arc.endAngle) / 2;
+          const arcRadius = (outerRadius + innerRadius) / 2;
+          const centerX = Math.cos(arcCenterAngle - Math.PI / 2) * arcRadius;
+          const centerY = Math.sin(arcCenterAngle - Math.PI / 2) * arcRadius;
+
+          const svgElement = elementRef.current.ownerSVGElement;
+          const svgRect = svgElement?.getBoundingClientRect();
+
+          if (svgRect) {
+            const position = {
+              x: svgRect.left + svgRect.width / 2 + centerX,
+              y: svgRect.top + svgRect.height / 2 + centerY + window.scrollY,
+            };
+
+            // Use the updated API with position object
+            openMenu(position);
+          } else {
+            // Fallback: use the event's currentTarget (SVG element)
+            openMenu(event as React.SyntheticEvent<HTMLElement | SVGElement>);
+          }
+        }
+      }
+    },
+    [hasDataLinks, openMenu, arc, outerRadius, innerRadius]
+  );
+
+  const handleFocus = useCallback(
+    (event: React.FocusEvent<SVGGElement>) => {
+      // Clear any pending blur timeout - focus has returned to this element or a related element
+      // This prevents clearing the hover state when focus moves between related UI elements
+      // (e.g., from the pie slice to an opened context menu)
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+        blurTimeoutRef.current = null;
+      }
+
+      publishDataHoverEvent(event);
+    },
+    [publishDataHoverEvent]
+  );
+
+  const handleBlur = useCallback(
+    (event: React.FocusEvent<SVGGElement>) => {
+      // Delay clearing the hover state to handle focus transitions between related elements.
+      // When a context menu opens, focus may move from the pie slice to the menu, triggering
+      // a blur event. The timeout allows us to check if focus has actually left the component
+      // or just moved to a related element (like the menu). If focus returns within 100ms,
+      // handleFocus will clear this timeout.
+      blurTimeoutRef.current = setTimeout(() => {
+        // Only clear hover state if focus has actually left this element
+        if (elementRef.current && document.activeElement !== elementRef.current) {
+          publishDataHoverClearEvent(event);
+        }
+        blurTimeoutRef.current = null;
+      }, 100);
+    },
+    [publishDataHoverClearEvent]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const pieStyle = getSvgStyle(highlightState, styles);
 
   return (
     <g
+      ref={elementRef}
       key={arc.data.display.title}
       className={pieStyle}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
       onClick={openMenu}
+      tabIndex={shouldBeFocusable ? 0 : -1}
+      role={shouldBeFocusable ? 'link' : undefined}
+      aria-label={t('piechart.data-link-label', '{{title}} - Data link', { title: arc.data.display.title })}
+      onKeyDown={shouldBeFocusable ? handleKeyDown : undefined}
+      onFocus={hasDataLinks ? handleFocus : undefined}
+      onBlur={hasDataLinks ? handleBlur : undefined}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
@@ -438,17 +694,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     svgArg: {
       normal: css({
+        outline: 'none',
         [theme.transitions.handleMotion('no-preference')]: {
           transition: 'all 200ms ease-in-out',
         },
       }),
       highlighted: css({
+        outline: 'none',
         [theme.transitions.handleMotion('no-preference')]: {
           transition: 'all 200ms ease-in-out',
         },
         transform: 'scale3d(1.03, 1.03, 1)',
       }),
       deemphasized: css({
+        outline: 'none',
         [theme.transitions.handleMotion('no-preference')]: {
           transition: 'all 200ms ease-in-out',
         },
