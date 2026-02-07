@@ -34,9 +34,9 @@ export interface Props {
   data?: PanelData;
   showBackButton?: boolean;
   panel: VizPanel;
-  editPreview: VizPanel;
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
+  onRevertAndClose?: () => void;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
 }
@@ -57,10 +57,10 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
 
 export function PanelVizTypePicker({
   panel,
-  editPreview,
   data,
   onChange,
   onClose,
+  onRevertAndClose,
   showBackButton,
   isNewPanel,
   hasPickedViz,
@@ -122,8 +122,13 @@ export function PanelVizTypePicker({
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
     });
-    onClose();
-  }, [listMode, onClose]);
+
+    if (config.featureToggles.newVizSuggestions && onRevertAndClose) {
+      onRevertAndClose();
+    } else {
+      onClose();
+    }
+  }, [listMode, onClose, onRevertAndClose]);
 
   return (
     <div className={styles.wrapper}>
@@ -177,7 +182,6 @@ export function PanelVizTypePicker({
               <VisualizationSuggestions
                 onChange={onChange}
                 panel={panelModel}
-                editPreview={editPreview}
                 data={data}
                 searchQuery={searchQuery}
                 isNewPanel={isNewPanel}
