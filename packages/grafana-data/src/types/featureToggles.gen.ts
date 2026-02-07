@@ -1343,6 +1343,11 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Exclude redundant individual dashboard/folder permissions from managed roles at query time
+  * @default false
+  */
+  excludeRedundantManagedPermissions?: boolean;
+  /**
   * Show insights for plugins in the plugin details page
   * @default false
   */

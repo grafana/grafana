@@ -75,6 +75,10 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			params = append(params, filterParams...)
 		}
 
+		if query.ExcludeRedundantManagedPermissions {
+			q += accesscontrol.ManagedPermissionsActionSetsFilter()
+		}
+
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}
@@ -144,6 +148,10 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query acce
 			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(rolePrefixes)
 			q += rolePrefixesFilter
 			params = append(params, filterParams...)
+		}
+
+		if query.ExcludeRedundantManagedPermissions {
+			q += accesscontrol.ManagedPermissionsActionSetsFilter()
 		}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
