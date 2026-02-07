@@ -359,7 +359,7 @@
   },
   "packages/grafana-prometheus/src/components/PromQueryField.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/grafana-prometheus/src/components/metrics-browser/useMetricsLabelsValues.ts": {
@@ -407,11 +407,6 @@
   },
   "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -3764,11 +3759,6 @@
   },
   "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryCodeEditor.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },

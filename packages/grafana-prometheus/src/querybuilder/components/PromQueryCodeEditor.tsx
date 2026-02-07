@@ -43,9 +43,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     // This wrapper styling can be removed after the old PromQueryEditor is removed.
     // This is removing margin bottom on the old legacy inline form styles
     wrapper: css({
-      '.gf-form': {
-        marginBottom: 0,
-      },
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
     }),
   };
 };
