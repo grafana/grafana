@@ -4952,7 +4952,6 @@
       "paste-panel": "Vložit panel",
       "paste-row": "Vložit řádek",
       "paste-tab": "Vložit záložku",
-      "un-group-panels": "Zrušit seskupení",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -10632,6 +10631,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Rozbalit řádky",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Zalomit řádky"
     },
     "logs-navigation": {
@@ -10658,6 +10663,7 @@
     "name-show-controls": "Zobrazit ovládací prvky",
     "name-time": "Zobrazit časová razítka",
     "name-unique-labels": "Jedinečné štítky",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Zalomit řádky",
     "order-options": {
       "label-newest-first": "Seřadit od nejnovějších",
@@ -12236,7 +12242,6 @@
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "retry-action": "",
       "text-loading-resource-information": "Načítání informací o zdroji…",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} nástěnka",
@@ -12786,7 +12791,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "a klikněte",
@@ -12823,8 +12829,6 @@
       "button-cancelling": "",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
