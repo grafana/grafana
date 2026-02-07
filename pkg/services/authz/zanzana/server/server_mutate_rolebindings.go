@@ -22,14 +22,14 @@ func (s *Server) mutateRoleBindings(ctx context.Context, store *storeInfo, opera
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateRoleBinding:
 			r := op.CreateRoleBinding
-			tuple, err := s.getRoleBindingTuple(ctx, r.SubjectKind, r.SubjectName, r.RoleName)
+			tuple, err := GetRoleBindingTuple(r.SubjectKind, r.SubjectName, r.RoleName)
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuple)
 		case *authzextv1.MutateOperation_DeleteRoleBinding:
 			r := op.DeleteRoleBinding
-			tuple, err := s.getRoleBindingTuple(ctx, r.SubjectKind, r.SubjectName, r.RoleName)
+			tuple, err := GetRoleBindingTuple(r.SubjectKind, r.SubjectName, r.RoleName)
 			if err != nil {
 				return err
 			}
@@ -53,7 +53,7 @@ func (s *Server) mutateRoleBindings(ctx context.Context, store *storeInfo, opera
 	return nil
 }
 
-func (s *Server) getRoleBindingTuple(ctx context.Context, subjectKind string, subjectName string, roleName string) (*openfgav1.TupleKey, error) {
+func GetRoleBindingTuple(subjectKind string, subjectName string, roleName string) (*openfgav1.TupleKey, error) {
 	zanzanaType := ""
 	subjectRelation := ""
 

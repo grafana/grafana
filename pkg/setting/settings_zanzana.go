@@ -52,6 +52,19 @@ type ZanzanaServerSettings struct {
 	AllowInsecure bool
 	// Page size for Read queries in reconciler. Default is 100.
 	ReadPageSize int32
+
+	// Reconciler settings
+	// Enable the Unistore to Zanzana reconciler
+	ReconcilerEnabled bool
+	// Path to a kubeconfig file used to connect to the apiserver/Unistore for reading CRDs.
+	// Required when reconciler_enabled is true.
+	ReconcilerKubeconfig string
+	// Number of worker goroutines for the reconciler
+	ReconcilerWorkers int
+	// Minimum interval between namespace reconciliations
+	ReconcilerInterval time.Duration
+	// Batch size for writing tuples to Zanzana (default: 100)
+	ReconcilerWriteBatchSize int
 }
 
 type OpenFgaServerSettings struct {
@@ -234,6 +247,13 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
 	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
+
+	// Reconciler settings
+	zs.ReconcilerEnabled = serverSec.Key("reconciler_enabled").MustBool(false)
+	zs.ReconcilerKubeconfig = serverSec.Key("reconciler_kubeconfig").MustString("")
+	zs.ReconcilerWorkers = serverSec.Key("reconciler_workers").MustInt(4)
+	zs.ReconcilerInterval = serverSec.Key("reconciler_interval").MustDuration(1 * time.Hour)
+	zs.ReconcilerWriteBatchSize = serverSec.Key("reconciler_write_batch_size").MustInt(100)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))

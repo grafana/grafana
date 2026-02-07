@@ -233,6 +233,33 @@ password = password
 address = localhost:4317
 ```
 
+### Reconciler configuration
+
+There are two reconcilers for syncing authorization data to Zanzana:
+
+**1. Multi-tenant (MT) reconciler** - runs in standalone Zanzana server and reads from CRDs in Unistore:
+
+```ini
+[zanzana.server]
+reconciler_enabled = true
+reconciler_kubeconfig = /path/to/kubeconfig
+reconciler_workers = 4
+reconciler_interval = 1h
+reconciler_write_batch_size = 100
+```
+
+The kubeconfig file should contain the connection details for the apiserver that hosts the CRDs (folders, roles, rolebindings, resourcepermissions, teambindings, users). This is typically the Grafana apiserver or Unistore endpoint.
+
+**2. Legacy RBAC reconciler** - runs in the main Grafana process and reads from Grafana's SQL database:
+
+```ini
+[rbac]
+zanzana_reconciliation_enabled = true
+zanzana_reconciliation_interval = 1h
+```
+
+**Important:** When using the MT reconciler with CRDs as the source of truth, set `zanzana_reconciliation_enabled = false` in the Grafana client to avoid duplicate reconciliation from both the legacy SQL database and the CRDs.
+
 Now you can run zanzana server:
 
 ```sh

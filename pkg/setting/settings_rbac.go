@@ -16,8 +16,10 @@ type RBACSettings struct {
 	ResetBasicRoles bool
 	// RBAC single organization. This configuration option is subject to change.
 	SingleOrganization bool
-	// If zanzana feature toggle is enabled this controls how often we
-	// run the zanzana reconciliation loop.
+	// Enable the legacy RBAC Zanzana reconciler.
+	ZanzanaReconciliationEnabled bool
+	// If RBAC Zanzana reconciler is enabled this controls how often we
+	// run the reconciliation loop.
 	ZanzanaReconciliationInterval time.Duration
 
 	// set of resources that should generate managed permissions when created
@@ -49,6 +51,8 @@ func (cfg *Cfg) readRBACSettings() {
 	for _, resource := range resources {
 		s.resourcesWithWildcardSeed[resource] = struct{}{}
 	}
+
+	s.ZanzanaReconciliationEnabled = rbac.Key("zanzana_reconciliation_enabled").MustBool(true)
 
 	var err error
 	s.ZanzanaReconciliationInterval, err = gtime.ParseDuration(rbac.Key("zanzana_reconciliation_interval").MustString("1h"))

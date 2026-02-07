@@ -152,6 +152,13 @@ func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*ope
 	return deduplicatedWriteTuples, deduplicatedDeleteTuples
 }
 
+// WriteTuples writes tuples directly to OpenFGA for a given store.
+// This is used internally by mutate operations and the reconciler.
+// Tuples are automatically deduplicated before writing.
+func (s *Server) WriteTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	return s.writeTuples(ctx, store, writeTuples, deleteTuples)
+}
+
 func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
 	writeReq := &openfgav1.WriteRequest{
 		StoreId:              store.ID,
