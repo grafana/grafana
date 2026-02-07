@@ -5,8 +5,7 @@ import * as React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { withTheme2 } from '../../themes/ThemeContext';
-import { Themeable2 } from '../../types/theme';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
@@ -16,7 +15,7 @@ import { Select } from '../Select/Select';
 import { onChangeCascader } from './optionMappings';
 import { getCascaderStyles } from './styles';
 
-export interface CascaderProps extends Themeable2 {
+export interface CascaderProps {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
@@ -84,6 +83,28 @@ const disableDivFocus = css({
 
 const DEFAULT_SEPARATOR = ' / ';
 
+const flattenOptions = (
+  options: CascaderOption[],
+  optionPath: CascaderOption[] = [],
+  separator: CascaderProps['separator']
+) => {
+  let selectOptions: Array<SelectableValue<string[]>> = [];
+  for (const option of options) {
+    const cpy = [...optionPath];
+    cpy.push(option);
+    if (!option.items || option.items.length === 0) {
+      selectOptions.push({
+        singleLabel: cpy[cpy.length - 1].label,
+        label: cpy.map((o) => o.label).join(separator || DEFAULT_SEPARATOR),
+        value: cpy.map((o) => o.value),
+      });
+    } else {
+      selectOptions = [...selectOptions, ...flattenOptions(option.items, cpy, separator)];
+    }
+  }
+  return selectOptions;
+};
+
 const UnthemedCascader = ({
   separator,
   placeholder,
@@ -102,133 +123,93 @@ const UnthemedCascader = ({
   disabled,
   id,
   isClearable,
-  theme,
 }: CascaderProps) => {
-  const flattenOptions = React.useCallback(
-    (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
-      let selectOptions: Array<SelectableValue<string[]>> = [];
-      for (const option of options) {
-        const cpy = [...optionPath];
-        cpy.push(option);
-        if (!option.items || option.items.length === 0) {
-          selectOptions.push({
-            singleLabel: cpy[cpy.length - 1].label,
-            label: cpy.map((o) => o.label).join(separator || DEFAULT_SEPARATOR),
-            value: cpy.map((o) => o.value),
-          });
-        } else {
-          selectOptions = [...selectOptions, ...flattenOptions(option.items, cpy)];
-        }
-      }
-      return selectOptions;
-    },
-    [separator]
-  );
+  const searchableOptions = React.useMemo(() => flattenOptions(options, [], separator), [options, separator]);
+  const [isSearching, setIsSearching] = React.useState<CascaderState['isSearching']>(false);
+  const [focusCascade, setFocusCascade] = React.useState<CascaderState['focusCascade']>(false);
+  const [rcValue, setRcValue] = React.useState<CascaderState['rcValue']>({ value: [], label: '' });
+  const [activeLabel, setActiveLabel] = React.useState<CascaderState['activeLabel']>('');
+  const [inputValue, setInputValue] = React.useState<CascaderState['inputValue']>('');
 
-  const searchableOptions = React.useMemo(() => flattenOptions(options), [options, flattenOptions]);
-  const [cascaderState, setCascaderState] = React.useState<CascaderState>(() => {
-    const setInitialValue = (searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) => {
+  const styles = useStyles2(getCascaderStyles);
+
+  const setInitialValue = React.useCallback(
+    (searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) => {
       if (!initValue) {
-        return { rcValue: [], activeLabel: '' };
+        setRcValue({ value: [], label: '' });
+        setActiveLabel('');
       }
       for (const option of searchableOptions) {
         const optionPath = option.value || [];
 
         if (optionPath[optionPath.length - 1] === initValue) {
-          return {
-            rcValue: optionPath,
-            activeLabel: displayAllSelectedLevels ? option.label : option.singleLabel || '',
-          };
+          const label = displayAllSelectedLevels ? option.label : option.singleLabel || '';
+          setRcValue({ value: optionPath, label: label });
+          setActiveLabel(label);
         }
       }
       if (allowCustomValue) {
-        return { rcValue: [], activeLabel: initValue };
+        setRcValue({ value: [], label: initValue });
+        initValue && setActiveLabel(initValue);
       }
-      return { rcValue: [], activeLabel: '' };
-    };
-    const { rcValue, activeLabel } = setInitialValue(searchableOptions, initialValue);
-    return {
-      isSearching: false,
-      focusCascade: false,
-      rcValue,
-      activeLabel,
-      inputValue: '',
-    };
-  });
-  const { isSearching, focusCascade, rcValue, activeLabel, inputValue } = cascaderState;
+    },
+    [allowCustomValue, displayAllSelectedLevels]
+  );
+
+  React.useEffect(() => {
+    setInitialValue(searchableOptions, initialValue);
+  }, [setInitialValue, searchableOptions, initialValue]);
 
   // For rc-cascader
-  const handleChange = React.useCallback(
-    (value: string[], selectedOptions: CascaderOption[]) => {
-      const activeLabel = hideActiveLevelLabel
-        ? ''
-        : displayAllSelectedLevels
-          ? selectedOptions.map((option) => option.label).join(separator || DEFAULT_SEPARATOR)
-          : selectedOptions[selectedOptions.length - 1].label;
-      const state: CascaderState = {
-        rcValue: { value, label: activeLabel },
-        focusCascade: true,
-        activeLabel,
-        isSearching: false,
-        inputValue: activeLabel,
-      };
-      setCascaderState(state);
-      onSelect(selectedOptions[selectedOptions.length - 1].value);
-    },
-    [displayAllSelectedLevels, hideActiveLevelLabel, onSelect, separator]
-  );
+  const handleChange = (value: string[], selectedOptions: CascaderOption[]) => {
+    const activeLabel = hideActiveLevelLabel
+      ? ''
+      : displayAllSelectedLevels
+        ? selectedOptions.map((option) => option.label).join(separator || DEFAULT_SEPARATOR)
+        : selectedOptions[selectedOptions.length - 1].label;
+    setRcValue({ value, label: activeLabel });
+    setFocusCascade(true);
+    setActiveLabel(activeLabel);
+    setIsSearching(false);
+    setInputValue(activeLabel);
+    onSelect(selectedOptions[selectedOptions.length - 1].value);
+  };
+
   //For select
-  const handleSelect = React.useCallback(
-    (obj: SelectableValue<string[]>) => {
-      const valueArray = obj.value || [];
-      const activeLabel = displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
-      const state: CascaderState = {
-        activeLabel: activeLabel,
-        inputValue: activeLabel,
-        rcValue: { value: valueArray, label: activeLabel },
-        isSearching: false,
-        focusCascade: false,
-      };
-      setCascaderState(state);
-      onSelect(valueArray[valueArray.length - 1]);
-    },
-    [displayAllSelectedLevels, onSelect]
-  );
+  const handleSelect = (obj: SelectableValue<string[]>) => {
+    const valueArray = obj.value || [];
+    const activeLabel = displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
+    setActiveLabel(activeLabel);
+    setInputValue(activeLabel);
+    setRcValue({ value: valueArray, label: activeLabel });
+    setIsSearching(false);
+    setFocusCascade(false);
+    onSelect(valueArray[valueArray.length - 1]);
+  };
 
-  const handleCreateOption = React.useCallback(
-    (value: string) => {
-      setCascaderState((prev) => ({
-        ...prev,
-        activeLabel: value,
-        inputValue: value,
-        rcValue: [],
-        isSearching: false,
-      }));
-      onSelect(value);
-    },
-    [onSelect]
-  );
+  const handleCreateOption = (value: string) => {
+    setActiveLabel(value);
+    setInputValue(value);
+    setRcValue({ value: [], label: value });
+    setIsSearching(false);
+    onSelect(value);
+  };
 
-  const handleBlur = React.useCallback(() => {
-    setCascaderState((prev) => ({
-      ...prev,
-      isSearching: false,
-      focusCascade: false,
-      ...(prev.activeLabel === '' && { rcValue: [] }),
-    }));
+  const handleBlur = () => {
+    setIsSearching(false);
+    setFocusCascade(false);
+    if (activeLabel === '') {
+      setRcValue({ value: [], label: '' });
+    }
     onBlur?.();
-  }, [onBlur]);
+  };
 
-  const handleBlurCascade = React.useCallback(() => {
-    setCascaderState((prev) => ({
-      ...prev,
-      focusCascade: false,
-    }));
-
+  const handleBlurCascade = () => {
+    setFocusCascade(false);
     onBlur?.();
-  }, [onBlur]);
+  };
 
-  const handleInputKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       return;
     }
@@ -241,22 +222,14 @@ const UnthemedCascader = ({
       inputValue = inputValue.substring(0, selectionStart ?? 0) + inputValue.substring(selectionEnd ?? 0);
     }
 
-    setCascaderState((prev) => ({
-      ...prev,
-      focusCascade: false,
-      isSearching: true,
-      inputValue: inputValue,
-    }));
-  }, []);
+    setFocusCascade(false);
+    setIsSearching(true);
+    setInputValue(inputValue);
+  };
 
-  const handleSelectInputChange = React.useCallback((value: string) => {
-    setCascaderState((prev) => ({
-      ...prev,
-      inputValue: value,
-    }));
-  }, []);
-
-  const styles = getCascaderStyles(theme);
+  const handleSelectInputChange = (value: string) => {
+    setInputValue(value);
+  };
 
   return (
     <div>
@@ -309,7 +282,9 @@ const UnthemedCascader = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setCascaderState((prev) => ({ ...prev, rcValue: [], activeLabel: '', inputValue: '' }));
+                        setRcValue({ value: [], label: '' });
+                        setActiveLabel('');
+                        setInputValue('');
                         onSelect('');
                       }}
                     />
@@ -332,4 +307,4 @@ const UnthemedCascader = ({
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-cascader--docs
  */
-export const Cascader = withTheme2(React.memo(UnthemedCascader));
+export const Cascader = React.memo(UnthemedCascader);
