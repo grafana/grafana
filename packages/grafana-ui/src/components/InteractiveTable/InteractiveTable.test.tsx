@@ -204,6 +204,127 @@ describe('InteractiveTable', () => {
       expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
     });
 
+    it('renders contents on second page after navigating to the second page', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+    });
+
+    it('does not reset page number after modifying table data', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const { rerender } = render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+
+      const updatedData = [data[0], { ...data[1], country: 'Belgique' }];
+      rerender(<InteractiveTable columns={columns} data={updatedData} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument(); // Because we are on the 2nd page
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument(); // Because it was changed to Belgique
+      expect(screen.getByText('Belgique')).toBeInTheDocument();
+    });
+
+    it('does reset to first page after modifying table data if `autoResetPage` is set', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const { rerender } = render(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} autoResetPage />
+      );
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+
+      const updatedData = [data[0], { ...data[1], country: 'Belgique' }];
+      rerender(
+        <InteractiveTable columns={columns} data={updatedData} getRowId={getRowId} pageSize={1} autoResetPage />
+      );
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument(); // Because we are back on the first page
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument(); // Because we should be on the first page now
+      expect(screen.queryByText('Belgique')).not.toBeInTheDocument(); // Because we should be on the first page now
+    });
+
+    it('when on the last page, and its rows are all deleted, gracefully stay on the same page number even though it is blank', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+        { id: '3', value: '3', country: 'Canada' },
+      ];
+      const { rerender } = render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /3/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+      expect(screen.queryByText('Canada')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /3/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+      expect(screen.getByText('Canada')).toBeInTheDocument();
+
+      const updatedData = data.slice(0, 2);
+      rerender(<InteractiveTable columns={columns} data={updatedData} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /3/i })).not.toBeInTheDocument(); // Because the 3rd page is now empty
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument(); // Because we are still on the 3rd page (even though it is empty)
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument(); // Because we are still on the 3rd page (even though it is empty)
+      expect(screen.queryByText('Canada')).not.toBeInTheDocument(); // Because it was deleted
+    });
+
     it('does not render pagination controls if pageSize is set and fewer items than page size', () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
       const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
