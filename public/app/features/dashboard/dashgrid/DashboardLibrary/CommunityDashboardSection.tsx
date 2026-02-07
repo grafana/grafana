@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
 
@@ -8,8 +8,10 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } from '@grafana/ui';
 
+import { CompatibilityState } from './CompatibilityBadge';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
+import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import {
   CONTENT_KINDS,
@@ -18,12 +20,13 @@ import {
   EVENT_LOCATIONS,
   SOURCE_ENTRY_POINTS,
 } from './interactions';
-import { GnetDashboard } from './types';
+import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
   getLogoUrl,
   buildDashboardDetails,
   onUseCommunityDashboard,
+  interpolateDashboardForCompatibilityCheck,
   COMMUNITY_PAGE_SIZE_QUERY,
   COMMUNITY_RESULT_SIZE,
 } from './utils/communityDashboardHelpers';
@@ -45,6 +48,11 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
 
+  // New state for compatibility badge feature
+  const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const hasAutoCheckedRef = useRef(false);
+
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   useDebounce(
     () => {
@@ -53,6 +61,13 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     SEARCH_DEBOUNCE_MS,
     [searchQuery]
   );
+
+  // Reset initial load flag when search query changes
+  useEffect(() => {
+    if (debouncedSearchQuery.trim()) {
+      setIsInitialLoad(false);
+    }
+  }, [debouncedSearchQuery]);
 
   const {
     value: response,
@@ -150,6 +165,100 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     },
     [response, datasourceUid, debouncedSearchQuery, onShowMapping]
   );
+
+  // Handler for checking compatibility of a single dashboard
+  const handleCheckCompatibility = useCallback(
+    async (dashboard: GnetDashboard, triggerMethod: 'manual' | 'auto_initial_load') => {
+      if (!datasourceUid || !response?.datasourceType) {
+        return;
+      }
+
+      // Set loading state
+      setCompatibilityMap((prev) => new Map(prev).set(dashboard.id, { status: 'loading' }));
+
+      // Track analytics: check triggered
+      DashboardLibraryInteractions.compatibilityCheckTriggered({
+        dashboardId: String(dashboard.id),
+        dashboardTitle: dashboard.name,
+        datasourceType: response.datasourceType,
+        triggerMethod,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+      });
+
+      try {
+        const interpolatedDashboard = await interpolateDashboardForCompatibilityCheck(dashboard.id, datasourceUid);
+
+        // Call compatibility API directly
+        const result = await checkDashboardCompatibility(interpolatedDashboard, [
+          {
+            uid: datasourceUid,
+            type: response.datasourceType,
+            name: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
+          },
+        ]);
+
+        // Calculate metrics from first datasource result
+        const dsResult = result.datasourceResults[0];
+        const score = Math.round(dsResult.compatibilityScore * 100);
+        const metricsFound = dsResult.foundMetrics;
+        const metricsTotal = dsResult.totalMetrics;
+
+        // Update state with success
+        setCompatibilityMap((prev) =>
+          new Map(prev).set(dashboard.id, {
+            status: 'success',
+            score,
+            metricsFound,
+            metricsTotal,
+          })
+        );
+
+        // Track analytics: check completed
+        DashboardLibraryInteractions.compatibilityCheckCompleted({
+          dashboardId: String(dashboard.id),
+          dashboardTitle: dashboard.name,
+          datasourceType: response.datasourceType,
+          score,
+          metricsFound,
+          metricsTotal,
+          triggerMethod,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        });
+      } catch (err) {
+        console.error('Error checking dashboard compatibility:', err);
+
+        // Update state with error
+        setCompatibilityMap((prev) =>
+          new Map(prev).set(dashboard.id, {
+            status: 'error',
+            errorMessage: err instanceof Error ? err.message : 'Failed to check compatibility',
+          })
+        );
+      }
+    },
+    [datasourceUid, response]
+  );
+
+  // Auto-trigger compatibility checks on initial load for Prometheus datasources
+  useEffect(() => {
+    if (
+      !loading &&
+      isInitialLoad &&
+      !hasAutoCheckedRef.current &&
+      response?.dashboards &&
+      response.dashboards.length > 0 &&
+      datasourceUid &&
+      response.datasourceType === 'prometheus'
+    ) {
+      hasAutoCheckedRef.current = true;
+
+      // Trigger checks for all dashboards on initial load
+      // currently 6 dashboards in total
+      response.dashboards.forEach((dashboard) => {
+        handleCheckCompatibility(dashboard, 'auto_initial_load');
+      });
+    }
+  }, [loading, isInitialLoad, response, datasourceUid, handleCheckCompatibility]);
 
   return (
     <Stack direction="column" gap={2} height="100%">
@@ -253,6 +362,9 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 const isLogo = !thumbnailUrl;
                 const details = buildDashboardDetails(dashboard);
 
+                // Only show badge for Prometheus datasources
+                const showBadge = !!datasourceUid && response?.datasourceType === 'prometheus';
+
                 return (
                   <DashboardCard
                     key={dashboard.id}
@@ -263,6 +375,13 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                     isLogo={isLogo}
                     details={details}
                     kind="suggested_dashboard"
+                    showCompatibilityBadge={showBadge}
+                    compatibilityState={compatibilityMap.get(dashboard.id)}
+                    onCompatibilityCheck={
+                      showBadge && isGnetDashboard(dashboard)
+                        ? () => handleCheckCompatibility(dashboard, 'manual')
+                        : undefined
+                    }
                   />
                 );
               })}

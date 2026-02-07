@@ -6,15 +6,14 @@ require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.49.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
+	github.com/prometheus/prometheus v0.303.1
+	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.3
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Machiel/slugify v1.0.1 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
-	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.1 // indirect
@@ -37,9 +36,9 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/dolthub/go-icu-regex v0.0.0-20250916051405-78a38d478790 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -68,6 +67,7 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.25.4 // indirect
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
+	github.com/go-test/deep v1.1.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
@@ -91,9 +91,9 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
+	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grafana/sqlds/v5 v5.0.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
@@ -167,7 +167,6 @@ require (
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.1.5 // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect

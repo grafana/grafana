@@ -313,4 +313,145 @@ describe('DashboardCard', () => {
       expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
     });
   });
+
+  describe('Compatibility badge', () => {
+    it('should show Check button when showCompatibilityBadge={true} and onCompatibilityCheck is provided', () => {
+      const mockOnCompatibilityCheck = jest.fn();
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={mockOnCompatibilityCheck}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Check compatibility' })).toBeInTheDocument();
+    });
+
+    it('should not show compatibility badge when showCompatibilityBadge={false}', () => {
+      const mockOnCompatibilityCheck = jest.fn();
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          showCompatibilityBadge={false}
+          onCompatibilityCheck={mockOnCompatibilityCheck}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Check compatibility' })).not.toBeInTheDocument();
+    });
+
+    it('should not show compatibility badge when onCompatibilityCheck is not provided', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          showCompatibilityBadge={true}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Check compatibility' })).not.toBeInTheDocument();
+    });
+
+    it('should call onCompatibilityCheck when Check button is clicked', async () => {
+      const mockOnCompatibilityCheck = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={mockOnCompatibilityCheck}
+          kind="suggested_dashboard"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
+
+      expect(mockOnCompatibilityCheck).toHaveBeenCalledTimes(1);
+    });
+
+    it('should prevent event propagation when Check button is clicked', async () => {
+      const mockOnCompatibilityCheck = jest.fn();
+      const mockParentClick = jest.fn();
+      const { user } = render(
+        <div onClick={mockParentClick}>
+          <DashboardCard
+            title="Test Dashboard"
+            dashboard={createMockPluginDashboard()}
+            onClick={mockOnClick}
+            showCompatibilityBadge={true}
+            onCompatibilityCheck={mockOnCompatibilityCheck}
+            kind="suggested_dashboard"
+          />
+        </div>
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
+
+      expect(mockParentClick).not.toHaveBeenCalled();
+      expect(mockOnCompatibilityCheck).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show success badge with score when compatibilityState has success status', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={jest.fn()}
+          compatibilityState={{ status: 'success', score: 85, metricsFound: 17, metricsTotal: 20 }}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByTestId('compatibility-badge-success')).toBeInTheDocument();
+      expect(screen.getByText('85% compatible')).toBeInTheDocument();
+    });
+
+    it('should show loading state when compatibilityState has loading status', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={jest.fn()}
+          compatibilityState={{ status: 'loading' }}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByTestId('compatibility-badge-loading')).toBeInTheDocument();
+    });
+
+    it('should render buttons in correct order: primary, details, compatibility badge', () => {
+      const details = createMockDetails();
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          details={details}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={jest.fn()}
+          kind="suggested_dashboard"
+        />
+      );
+
+      const buttons = screen.getAllByRole('button');
+      expect(buttons[0]).toHaveTextContent('Use dashboard');
+      expect(buttons[1]).toHaveAttribute('aria-label', 'Details');
+      expect(buttons[2]).toHaveTextContent('Check compatibility');
+    });
+  });
 });
