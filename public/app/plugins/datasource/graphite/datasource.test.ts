@@ -1737,4 +1737,24 @@ describe('access scenarios', () => {
       });
     });
   });
+
+  describe('remove refID', () => {
+    const ds = new GraphiteDatasource(instanceSettings);
+    const refIdMap = { A: 'A' };
+
+    it('should remove refID from target name', () => {
+      const response = createFetchResponse([
+        {
+          target: 'metric.name A',
+          datapoints: [[123, 456]],
+          tags: { 'tag A': 'value' },
+        },
+      ]);
+
+      const result = ds.convertResponseToDataFrames(response, refIdMap);
+      const frame = result.data[0];
+
+      expect(frame.name).toBe('metric.name');
+    });
+  });
 });
