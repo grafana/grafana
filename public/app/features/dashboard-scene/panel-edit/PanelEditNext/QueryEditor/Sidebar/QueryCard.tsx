@@ -4,7 +4,7 @@ import { DataSourceLogo } from 'app/features/datasources/components/picker/DataS
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
-import { useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
 import { SidebarCard } from './SidebarCard';
@@ -13,6 +13,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
+  const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const isSelected = selectedQuery?.refId === query.refId;
 
   return (
@@ -21,9 +22,13 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       isSelected={isSelected}
       id={query.refId}
       onClick={() => setSelectedQuery(query)}
+      onDuplicate={() => duplicateQuery(query.refId)}
+      onDelete={() => deleteQuery(query.refId)}
+      onToggleHide={() => toggleQueryHide(query.refId)}
+      isHidden={!!query.hide}
     >
       <DataSourceLogo dataSource={queryDsSettings} />
-      <Text weight="light" variant="body" color="secondary">
+      <Text weight="light" variant="code" color="secondary">
         {query.refId}
       </Text>
     </SidebarCard>
