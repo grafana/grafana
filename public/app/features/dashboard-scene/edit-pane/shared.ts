@@ -4,6 +4,7 @@ import { useSessionStorage } from 'react-use';
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  dataLayers,
   LocalValueVariable,
   SceneGridRow,
   SceneObject,
@@ -12,9 +13,13 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
+import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
@@ -63,6 +68,14 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (sceneObj instanceof VariableAdd) {
     return new VariableAddEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof DashboardDataLayerSet) {
+    return new AnnotationSetEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof dataLayers.AnnotationsDataLayer) {
+    return new AnnotationEditableElement(sceneObj);
   }
 
   return undefined;
@@ -131,6 +144,16 @@ export interface AddVariableActionHelperProps {
 export interface RemoveVariableActionHelperProps {
   removedObject: SceneVariable;
   source: SceneVariableSet;
+}
+
+export interface AddAnnotationActionHelperProps {
+  addedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
+  source: DashboardDataLayerSet;
+}
+
+export interface RemoveAnnotationActionHelperProps {
+  removedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
+  source: DashboardDataLayerSet;
 }
 
 export interface ChangeTitleActionHelperProps {
@@ -234,6 +257,34 @@ export const dashboardEditActions = {
       },
       undo() {
         source.setState({ variables: varsBeforeRemoval });
+      },
+    });
+  },
+  addAnnotation({ source, addedObject }: AddAnnotationActionHelperProps) {
+    const layersBeforeAddition = [...source.state.annotationLayers];
+
+    dashboardEditActions.addElement({
+      source,
+      addedObject,
+      perform() {
+        source.setState({ annotationLayers: [...layersBeforeAddition, addedObject] });
+      },
+      undo() {
+        source.setState({ annotationLayers: layersBeforeAddition });
+      },
+    });
+  },
+  removeAnnotation({ source, removedObject }: RemoveAnnotationActionHelperProps) {
+    const layersBeforeRemoval = [...source.state.annotationLayers];
+
+    dashboardEditActions.removeElement({
+      source,
+      removedObject,
+      perform() {
+        source.setState({ annotationLayers: layersBeforeRemoval.filter((layer) => layer !== removedObject) });
+      },
+      undo() {
+        source.setState({ annotationLayers: layersBeforeRemoval });
       },
     });
   },

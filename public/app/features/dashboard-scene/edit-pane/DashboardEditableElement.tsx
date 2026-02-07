@@ -9,6 +9,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 import { dashboardEditActions } from './shared';
 
@@ -64,7 +65,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     if (!isEditing || !$variables) {
       return body.getOutlineChildren();
     }
-    return [$variables, ...body.getOutlineChildren()];
+    return [$variables, dashboardSceneGraph.getDataLayers(this.dashboard), ...body.getOutlineChildren()];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
