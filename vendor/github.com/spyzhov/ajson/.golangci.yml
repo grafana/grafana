@@ -1,0 +1,13 @@
+linters:
+  disable-all: true
+  enable:
+#    - gofmt # removed due to https://github.com/golangci/golangci-lint/issues/3229
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - typecheck
+    - gosec
+    - unused

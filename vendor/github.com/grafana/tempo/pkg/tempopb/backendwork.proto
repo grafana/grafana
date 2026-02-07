@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package tempopb;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+service BackendScheduler {
+  // Get next available job
+  rpc Next(NextJobRequest) returns (NextJobResponse) {}
+  
+  // Update job status
+  rpc UpdateJob(UpdateJobStatusRequest) returns (UpdateJobStatusResponse) {}
+}
+
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  JOB_TYPE_COMPACTION = 1;
+  JOB_TYPE_RETENTION = 2;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_SUCCEEDED = 1;
+  JOB_STATUS_FAILED = 2;
+  JOB_STATUS_RUNNING = 3;
+}
+
+// CompactionDetail contains fields specific to compaction jobs
+message CompactionDetail {
+  option (gogoproto.equal) = true;
+  option (gogoproto.compare) = true;
+
+  repeated string input = 1;  // block IDs for compaction
+  repeated string output = 2;  // block IDs resulting from compaction
+}
+message RetentionDetail {
+  option (gogoproto.equal) = true;
+  option (gogoproto.compare) = true;
+}
+
+// JobDetail contains the specific details for each job type
+message JobDetail {
+  option (gogoproto.equal) = true;  // Keep equal but remove compare
+
+  string tenant = 1;
+  // oneof detail {
+    CompactionDetail compaction = 2;
+    RetentionDetail retention = 3;
+    // CleanupDetail cleanup = 4;
+  // }
+}
+
+message NextJobRequest {
+  string worker_id = 1;
+}
+
+message NextJobResponse {
+  string job_id = 1;
+  JobType type = 2;
+  JobDetail detail = 3 [(gogoproto.nullable) = false];
+}
+
+message UpdateJobStatusRequest {
+  string job_id = 1;
+  JobStatus status = 2;
+  string error = 3;  // populated if status is FAILED
+  CompactionDetail compaction = 4;
+}
+
+message UpdateJobStatusResponse {
+  bool success = 1;
+}

@@ -1,0 +1,123 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package encoding
+
+import (
+  "github.com/apache/arrow-go/v18/parquet"
+)
+
+// standard map based implementation of memo tables which can be more efficient
+// in some cases based on the uniqueness / amount / size of the data.
+// these are left here for now for use in the benchmarks to compare against the
+// custom hash table implementation in the internal/hashing package as a base
+// benchmark comparison.
+
+{{range .In}}
+{{if and (ne .Name "ByteArray") (ne .Name "FixedLenByteArray") (ne .Name "Float64") (ne .Name "Boolean")}}
+func New{{.Name}}MemoTable(memory.Allocator) MemoTable {
+  return &{{.lower}}MemoTableImpl{
+      table: make(map[{{.name}}]struct{
+        value {{.name}}
+        memoIndex int
+      }),
+      nullIndex: keyNotFound,
+    }
+}
+
+type {{.lower}}MemoTableImpl struct {
+  table map[{{.name}}]struct{
+    value {{.name}}
+    memoIndex int
+  }
+  nullIndex int
+}
+
+func (m *{{.lower}}MemoTableImpl) Reset() {
+  m.table = make(map[{{.name}}]struct{
+    value {{.name}}
+    memoIndex int
+  })
+  m.nullIndex = keyNotFound
+}
+
+func (m *{{.lower}}MemoTableImpl) GetNull() (int, bool) {
+  return m.nullIndex, m.nullIndex != keyNotFound
+}
+
+func (m *{{.lower}}MemoTableImpl) Size() int {
+	sz := len(m.table)
+	if _, ok := m.GetNull(); ok {
+		sz++
+	}
+	return sz
+}
+
+func (m *{{.lower}}MemoTableImpl) GetOrInsertNull() (idx int, found bool) {
+  idx, found = m.GetNull()
+  if !found {
+		idx = m.Size()
+		m.nullIndex = idx
+	}
+	return
+}
+
+func (m *{{.lower}}MemoTableImpl) Get(val interface{}) (int, bool) {
+  v := val.({{.name}})
+  if p, ok := m.table[v]; ok {
+    return p.memoIndex, true
+  }
+  return keyNotFound, false
+}
+
+func (m *{{.lower}}MemoTableImpl) GetOrInsert(val interface{}) (idx int, found bool, err error) {
+  v := val.({{.name}})
+  p, ok := m.table[v]
+  if ok {
+    idx = p.memoIndex
+  } else {
+    idx = m.Size()
+    p.value = v
+    p.memoIndex = idx
+    m.table[v] = p
+    found = true
+  }
+  return
+}
+
+func (m *{{.lower}}MemoTableImpl) WriteOut(out []byte) {
+  m.CopyValuesSubset(0, out)
+}
+
+func (m *{{.lower}}MemoTableImpl) WriteOutSubset(start int, out []byte) {
+  m.CopyValuesSubset(start, out)
+}
+
+func (m *{{.lower}}MemoTableImpl) CopyValues(out interface{}) {
+  m.CopyValuesSubset(0, out)
+}
+
+func (m *{{.lower}}MemoTableImpl) CopyValuesSubset(start int, out interface{}) {
+	outval := out.([]{{.name}})
+	for _, v := range m.table {
+		idx := v.memoIndex - start
+		if idx >= 0 {
+			outval[idx] = v.value
+		}
+	}
+}
+{{end}}
+{{end}}

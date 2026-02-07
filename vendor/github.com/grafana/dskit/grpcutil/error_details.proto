@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package grpcutil;
+
+option go_package = "grpcutil";
+
+enum ErrorCause {
+  UNKNOWN_CAUSE = 0;
+  WRONG_CLUSTER_VALIDATION_LABEL = 1;
+}
+
+message ErrorDetails {
+  ErrorCause Cause = 1;
+}

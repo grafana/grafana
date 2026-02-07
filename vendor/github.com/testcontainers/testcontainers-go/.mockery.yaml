@@ -1,0 +1,11 @@
+quiet: True
+disable-version-string: True
+with-expecter: True
+mockname: "mock{{.InterfaceName}}"
+filename: "{{ .InterfaceName | lower }}_mock_test.go"
+outpkg: "{{.PackageName}}_test"
+dir: "{{.InterfaceDir}}"
+packages:
+  github.com/testcontainers/testcontainers-go/wait:
+    interfaces:
+      StrategyTarget:

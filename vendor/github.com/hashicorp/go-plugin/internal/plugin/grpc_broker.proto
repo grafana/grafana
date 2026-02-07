@@ -1,0 +1,22 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
+syntax = "proto3";
+package plugin;
+option go_package = "./plugin";
+
+message ConnInfo {
+    uint32 service_id = 1;
+    string network = 2;
+    string address = 3;
+    message Knock {
+        bool knock = 1;
+        bool ack = 2;
+        string error = 3;
+    }
+    Knock knock = 4;
+}
+
+service GRPCBroker {
+    rpc StartStream(stream ConnInfo) returns (stream ConnInfo);
+}

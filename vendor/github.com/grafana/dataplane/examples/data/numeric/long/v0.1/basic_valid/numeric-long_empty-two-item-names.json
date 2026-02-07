@@ -1,0 +1,45 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "numeric-long",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "NumericLong with 0 empty items. There are 2 item names (avgSlothCount, avgSleepHoursPerSlothPerDay) and 1 dimension (city). But with 0 rows there are no items.",
+            "itemCount": 0,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "type": "number",
+          "name": "avgSlothCount",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        },
+        {
+          "type": "number",
+          "name": "avgSleepHoursPerSlothPerDay",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        },
+        {
+          "type": "string",
+          "name": "city",
+          "typeInfo": {
+            "frame": "string"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": []
+    }
+  }
+]

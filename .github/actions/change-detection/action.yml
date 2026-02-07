@@ -46,6 +46,7 @@ runs:
       id: changed-files
       if: github.event_name == 'pull_request'
       uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+      continue-on-error: true # if we hit limits in GH, just default everything to changed
       with:
         files_yaml: |
           self:
@@ -65,6 +66,7 @@ runs:
             - 'go.sum'
             - 'go.work'
             - 'go.work.sum'
+            - 'vendor/**'
             - '**.go'
             - 'pkg/**'
             - '!pkg/**.md'
@@ -154,6 +156,7 @@ runs:
             - 'devenv/**'
             - '${{ inputs.self }}'
     - name: Print all change groups
+      if: ${{ steps.changed-files.outputs.all_changed_files_count <= 1000 }}
       shell: bash
       run: |
         echo "Self: ${{ steps.changed-files.outputs.self_any_changed || 'true' }}"

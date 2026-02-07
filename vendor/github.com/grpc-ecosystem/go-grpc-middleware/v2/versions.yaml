@@ -1,0 +1,12 @@
+# Versions yaml in the format supported by multimod tool (https://github.com/open-telemetry/opentelemetry-go-build-tools/tree/7c66e93ea95406b9f8bc0174809acccec745057f/multimod).
+# While we don't use multimod yet, we keep versions grouped and listed to not get lost with manual releases.
+# We group versions, so it's easier to maintain and use.
+module-sets:
+  core:
+    version: v2.0.0
+    modules:
+      - github.com/grpc-ecosystem/go-grpc-middleware/v2
+  v1-providers:
+    version: v1.0.0
+    modules:
+      - github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus

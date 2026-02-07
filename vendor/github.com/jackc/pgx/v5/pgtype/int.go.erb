@@ -1,0 +1,551 @@
+package pgtype
+
+import (
+	"database/sql/driver"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"math"
+	"strconv"
+
+	"github.com/jackc/pgx/v5/internal/pgio"
+)
+
+type Int64Scanner interface {
+	ScanInt64(Int8) error
+}
+
+type Int64Valuer interface {
+	Int64Value() (Int8, error)
+}
+
+
+<% [2, 4, 8].each do |pg_byte_size| %>
+<% pg_bit_size = pg_byte_size * 8 %>
+type Int<%= pg_byte_size %> struct {
+	Int<%= pg_bit_size %>   int<%= pg_bit_size %>
+	Valid bool
+}
+
+// ScanInt64 implements the [Int64Scanner] interface.
+func (dst *Int<%= pg_byte_size %>) ScanInt64(n Int8) error {
+	if !n.Valid {
+		*dst = Int<%= pg_byte_size %>{}
+		return nil
+	}
+
+	if n.Int64 < math.MinInt<%= pg_bit_size %> {
+		return fmt.Errorf("%d is less than minimum value for Int<%= pg_byte_size %>", n.Int64)
+	}
+	if n.Int64 > math.MaxInt<%= pg_bit_size %> {
+		return fmt.Errorf("%d is greater than maximum value for Int<%= pg_byte_size %>", n.Int64)
+	}
+	*dst = Int<%= pg_byte_size %>{Int<%= pg_bit_size %>: int<%= pg_bit_size %>(n.Int64), Valid: true}
+
+	return nil
+}
+
+// Int64Value implements the [Int64Valuer] interface.
+func (n Int<%= pg_byte_size %>) Int64Value() (Int8, error) {
+	return Int8{Int64: int64(n.Int<%= pg_bit_size %>), Valid: n.Valid}, nil
+}
+
+// Scan implements the [database/sql.Scanner] interface.
+func (dst *Int<%= pg_byte_size %>) Scan(src any) error {
+	if src == nil {
+		*dst = Int<%= pg_byte_size %>{}
+		return nil
+	}
+
+	var n int64
+
+	switch src := src.(type) {
+	case int64:
+		n = src
+	case string:
+		var err error
+		n, err = strconv.ParseInt(src, 10, <%= pg_bit_size %>)
+		if err != nil {
+			return err
+		}
+	case []byte:
+		var err error
+		n, err = strconv.ParseInt(string(src), 10, <%= pg_bit_size %>)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("cannot scan %T", src)
+	}
+
+	if n < math.MinInt<%= pg_bit_size %> {
+		return fmt.Errorf("%d is greater than maximum value for Int<%= pg_byte_size %>", n)
+	}
+	if n > math.MaxInt<%= pg_bit_size %> {
+		return fmt.Errorf("%d is greater than maximum value for Int<%= pg_byte_size %>", n)
+	}
+	*dst = Int<%= pg_byte_size %>{Int<%= pg_bit_size %>: int<%= pg_bit_size %>(n), Valid: true}
+
+	return nil
+}
+
+// Value implements the [database/sql/driver.Valuer] interface.
+func (src Int<%= pg_byte_size %>) Value() (driver.Value, error) {
+	if !src.Valid {
+		return nil, nil
+	}
+	return int64(src.Int<%= pg_bit_size %>), nil
+}
+
+// MarshalJSON implements the [encoding/json.Marshaler] interface.
+func (src Int<%= pg_byte_size %>) MarshalJSON() ([]byte, error) {
+	if !src.Valid {
+		return []byte("null"), nil
+	}
+	return []byte(strconv.FormatInt(int64(src.Int<%= pg_bit_size %>), 10)), nil
+}
+
+// UnmarshalJSON implements the [encoding/json.Unmarshaler] interface.
+func (dst *Int<%= pg_byte_size %>) UnmarshalJSON(b []byte) error {
+	var n *int<%= pg_bit_size %>
+	err := json.Unmarshal(b, &n)
+	if err != nil {
+		return err
+	}
+
+	if n == nil {
+		*dst = Int<%= pg_byte_size %>{}
+	} else {
+		*dst = Int<%= pg_byte_size %>{Int<%= pg_bit_size %>: *n, Valid: true}
+	}
+
+	return nil
+}
+
+type Int<%= pg_byte_size %>Codec struct{}
+
+func (Int<%= pg_byte_size %>Codec) FormatSupported(format int16) bool {
+	return format == TextFormatCode || format == BinaryFormatCode
+}
+
+func (Int<%= pg_byte_size %>Codec) PreferredFormat() int16 {
+	return BinaryFormatCode
+}
+
+func (Int<%= pg_byte_size %>Codec) PlanEncode(m *Map, oid uint32, format int16, value any) EncodePlan {
+	switch format {
+	case BinaryFormatCode:
+		switch value.(type) {
+		case int<%= pg_bit_size %>:
+			return encodePlanInt<%= pg_byte_size %>CodecBinaryInt<%= pg_bit_size %>{}
+		case Int64Valuer:
+			return encodePlanInt<%= pg_byte_size %>CodecBinaryInt64Valuer{}
+		}
+	case TextFormatCode:
+		switch value.(type) {
+		case int<%= pg_bit_size %>:
+			return encodePlanInt<%= pg_byte_size %>CodecTextInt<%= pg_bit_size %>{}
+		case Int64Valuer:
+			return encodePlanInt<%= pg_byte_size %>CodecTextInt64Valuer{}
+		}
+	}
+
+	return nil
+}
+
+type encodePlanInt<%= pg_byte_size %>CodecBinaryInt<%= pg_bit_size %> struct{}
+
+func (encodePlanInt<%= pg_byte_size %>CodecBinaryInt<%= pg_bit_size %>) Encode(value any, buf []byte) (newBuf []byte, err error) {
+  n := value.(int<%= pg_bit_size %>)
+  return pgio.AppendInt<%= pg_bit_size %>(buf, int<%= pg_bit_size %>(n)), nil
+}
+
+type encodePlanInt<%= pg_byte_size %>CodecTextInt<%= pg_bit_size %> struct{}
+
+func (encodePlanInt<%= pg_byte_size %>CodecTextInt<%= pg_bit_size %>) Encode(value any, buf []byte) (newBuf []byte, err error) {
+  n := value.(int<%= pg_bit_size %>)
+  return append(buf, strconv.FormatInt(int64(n), 10)...), nil
+}
+
+type encodePlanInt<%= pg_byte_size %>CodecBinaryInt64Valuer struct{}
+
+func (encodePlanInt<%= pg_byte_size %>CodecBinaryInt64Valuer) Encode(value any, buf []byte) (newBuf []byte, err error) {
+  n, err := value.(Int64Valuer).Int64Value()
+	if err != nil {
+		return nil, err
+	}
+
+	if !n.Valid {
+		return nil, nil
+	}
+
+	if n.Int64 > math.MaxInt<%= pg_bit_size %> {
+		return nil, fmt.Errorf("%d is greater than maximum value for int<%= pg_byte_size %>", n.Int64)
+	}
+	if n.Int64 < math.MinInt<%= pg_bit_size %> {
+		return nil, fmt.Errorf("%d is less than minimum value for int<%= pg_byte_size %>", n.Int64)
+	}
+
+  return pgio.AppendInt<%= pg_bit_size %>(buf, int<%= pg_bit_size %>(n.Int64)), nil
+}
+
+type encodePlanInt<%= pg_byte_size %>CodecTextInt64Valuer struct{}
+
+func (encodePlanInt<%= pg_byte_size %>CodecTextInt64Valuer) Encode(value any, buf []byte) (newBuf []byte, err error) {
+  n, err := value.(Int64Valuer).Int64Value()
+	if err != nil {
+		return nil, err
+	}
+
+	if !n.Valid {
+		return nil, nil
+	}
+
+	if n.Int64 > math.MaxInt<%= pg_bit_size %> {
+		return nil, fmt.Errorf("%d is greater than maximum value for int<%= pg_byte_size %>", n.Int64)
+	}
+	if n.Int64 < math.MinInt<%= pg_bit_size %> {
+		return nil, fmt.Errorf("%d is less than minimum value for int<%= pg_byte_size %>", n.Int64)
+	}
+
+  return append(buf, strconv.FormatInt(n.Int64, 10)...), nil
+}
+
+func (Int<%= pg_byte_size %>Codec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
+
+	switch format {
+	case BinaryFormatCode:
+		switch target.(type) {
+		case *int8:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToInt8{}
+		case *int16:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToInt16{}
+		case *int32:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToInt32{}
+		case *int64:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToInt64{}
+		case *int:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToInt{}
+		case *uint8:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToUint8{}
+		case *uint16:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToUint16{}
+		case *uint32:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToUint32{}
+		case *uint64:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToUint64{}
+		case *uint:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToUint{}
+		case Int64Scanner:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToInt64Scanner{}
+		case TextScanner:
+			return scanPlanBinaryInt<%= pg_byte_size %>ToTextScanner{}
+		}
+	case TextFormatCode:
+		switch target.(type) {
+		case *int8:
+			return scanPlanTextAnyToInt8{}
+		case *int16:
+			return scanPlanTextAnyToInt16{}
+		case *int32:
+			return scanPlanTextAnyToInt32{}
+		case *int64:
+			return scanPlanTextAnyToInt64{}
+		case *int:
+			return scanPlanTextAnyToInt{}
+		case *uint8:
+			return scanPlanTextAnyToUint8{}
+		case *uint16:
+			return scanPlanTextAnyToUint16{}
+		case *uint32:
+			return scanPlanTextAnyToUint32{}
+		case *uint64:
+			return scanPlanTextAnyToUint64{}
+		case *uint:
+			return scanPlanTextAnyToUint{}
+		case Int64Scanner:
+			return scanPlanTextAnyToInt64Scanner{}
+		}
+	}
+
+	return nil
+}
+
+func (c Int<%= pg_byte_size %>Codec) DecodeDatabaseSQLValue(m *Map, oid uint32, format int16, src []byte) (driver.Value, error) {
+	if src == nil {
+		return nil, nil
+	}
+
+	var n int64
+	err := codecScan(c, m, oid, format, src, &n)
+	if err != nil {
+		return nil, err
+	}
+	return n, nil
+}
+
+func (c Int<%= pg_byte_size %>Codec) DecodeValue(m *Map, oid uint32, format int16, src []byte) (any, error) {
+	if src == nil {
+		return nil, nil
+	}
+
+	var n int<%= pg_bit_size %>
+	err := codecScan(c, m, oid, format, src, &n)
+	if err != nil {
+		return nil, err
+	}
+	return n, nil
+}
+
+<%# PostgreSQL binary format integer to fixed size Go integers %>
+<% [8, 16, 32, 64].each do |dst_bit_size| %>
+type scanPlanBinaryInt<%= pg_byte_size %>ToInt<%= dst_bit_size %> struct{}
+
+func (scanPlanBinaryInt<%= pg_byte_size %>ToInt<%= dst_bit_size %>) Scan(src []byte, dst any) error {
+	if src == nil {
+		return fmt.Errorf("cannot scan NULL into %T", dst)
+	}
+
+	if len(src) != <%= pg_byte_size %> {
+		return fmt.Errorf("invalid length for int<%= pg_byte_size %>: %v", len(src))
+	}
+
+	p, ok := (dst).(*int<%= dst_bit_size %>)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+  <% if dst_bit_size < pg_bit_size %>
+	n := int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src))
+	if n < math.MinInt<%= dst_bit_size %> {
+		return fmt.Errorf("%d is less than minimum value for int<%= dst_bit_size %>", n)
+	} else if n > math.MaxInt<%= dst_bit_size %> {
+		return fmt.Errorf("%d is greater than maximum value for int<%= dst_bit_size %>", n)
+	}
+
+	*p = int<%= dst_bit_size %>(n)
+  <% elsif dst_bit_size == pg_bit_size %>
+	*p = int<%= dst_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src))
+  <% else %>
+	*p = int<%= dst_bit_size %>(int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src)))
+  <% end %>
+
+	return nil
+}
+
+type scanPlanBinaryInt<%= pg_byte_size %>ToUint<%= dst_bit_size %> struct{}
+
+func (scanPlanBinaryInt<%= pg_byte_size %>ToUint<%= dst_bit_size %>) Scan(src []byte, dst any) error {
+	if src == nil {
+		return fmt.Errorf("cannot scan NULL into %T", dst)
+	}
+
+	if len(src) != <%= pg_byte_size %> {
+		return fmt.Errorf("invalid length for uint<%= pg_byte_size %>: %v", len(src))
+	}
+
+	p, ok := (dst).(*uint<%= dst_bit_size %>)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	n := int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src))
+	if n < 0 {
+		return fmt.Errorf("%d is less than minimum value for uint<%= dst_bit_size %>", n)
+	}
+  <% if dst_bit_size < pg_bit_size %>
+	if n > math.MaxUint<%= dst_bit_size %> {
+		return fmt.Errorf("%d is greater than maximum value for uint<%= dst_bit_size %>", n)
+	}
+  <% end %>
+	*p = uint<%= dst_bit_size %>(n)
+
+	return nil
+}
+<% end %>
+
+<%# PostgreSQL binary format integer to Go machine integers %>
+type scanPlanBinaryInt<%= pg_byte_size %>ToInt struct{}
+
+func (scanPlanBinaryInt<%= pg_byte_size %>ToInt) Scan(src []byte, dst any) error {
+	if src == nil {
+		return fmt.Errorf("cannot scan NULL into %T", dst)
+	}
+
+	if len(src) != <%= pg_byte_size %> {
+		return fmt.Errorf("invalid length for int<%= pg_byte_size %>: %v", len(src))
+	}
+
+	p, ok := (dst).(*int)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+  <% if 32 < pg_bit_size %>
+	n := int64(binary.BigEndian.Uint<%= pg_bit_size %>(src))
+	if n < math.MinInt {
+		return fmt.Errorf("%d is less than minimum value for int", n)
+	} else if n > math.MaxInt {
+		return fmt.Errorf("%d is greater than maximum value for int", n)
+	}
+
+	*p = int(n)
+  <% else %>
+	*p = int(int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src)))
+  <% end %>
+
+	return nil
+}
+
+type scanPlanBinaryInt<%= pg_byte_size %>ToUint struct{}
+
+func (scanPlanBinaryInt<%= pg_byte_size %>ToUint) Scan(src []byte, dst any) error {
+	if src == nil {
+		return fmt.Errorf("cannot scan NULL into %T", dst)
+	}
+
+	if len(src) != <%= pg_byte_size %> {
+		return fmt.Errorf("invalid length for uint<%= pg_byte_size %>: %v", len(src))
+	}
+
+	p, ok := (dst).(*uint)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	n := int64(int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src)))
+	if n < 0 {
+		return fmt.Errorf("%d is less than minimum value for uint", n)
+	}
+  <% if 32 < pg_bit_size %>
+	if uint64(n) > math.MaxUint {
+		return fmt.Errorf("%d is greater than maximum value for uint", n)
+	}
+  <% end %>
+	*p = uint(n)
+
+	return nil
+}
+
+<%# PostgreSQL binary format integer to Go Int64Scanner %>
+type scanPlanBinaryInt<%= pg_byte_size %>ToInt64Scanner struct{}
+
+func (scanPlanBinaryInt<%= pg_byte_size %>ToInt64Scanner) Scan(src []byte, dst any) error {
+	s, ok := (dst).(Int64Scanner)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	if src == nil {
+    return s.ScanInt64(Int8{})
+	}
+
+	if len(src) != <%= pg_byte_size %> {
+		return fmt.Errorf("invalid length for int<%= pg_byte_size %>: %v", len(src))
+	}
+
+
+	n := int64(int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src)))
+
+  return s.ScanInt64(Int8{Int64: n, Valid: true})
+}
+
+<%# PostgreSQL binary format integer to Go TextScanner %>
+type scanPlanBinaryInt<%= pg_byte_size %>ToTextScanner struct{}
+
+func (scanPlanBinaryInt<%= pg_byte_size %>ToTextScanner) Scan(src []byte, dst any) error {
+	s, ok := (dst).(TextScanner)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	if src == nil {
+    return s.ScanText(Text{})
+	}
+
+	if len(src) != <%= pg_byte_size %> {
+		return fmt.Errorf("invalid length for int<%= pg_byte_size %>: %v", len(src))
+	}
+
+
+	n := int64(int<%= pg_bit_size %>(binary.BigEndian.Uint<%= pg_bit_size %>(src)))
+
+  return s.ScanText(Text{String: strconv.FormatInt(n, 10), Valid: true})
+}
+<% end %>
+
+<%# Any text to all integer types %>
+<% [
+  ["8", 8],
+  ["16", 16],
+  ["32", 32],
+  ["64", 64],
+  ["", 0]
+].each do |type_suffix, bit_size| %>
+type scanPlanTextAnyToInt<%= type_suffix %> struct{}
+
+func (scanPlanTextAnyToInt<%= type_suffix %>) Scan(src []byte, dst any) error {
+	if src == nil {
+		return fmt.Errorf("cannot scan NULL into %T", dst)
+	}
+
+	p, ok := (dst).(*int<%= type_suffix %>)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	n, err := strconv.ParseInt(string(src), 10, <%= bit_size %>)
+	if err != nil {
+		return err
+	}
+
+	*p = int<%= type_suffix %>(n)
+	return nil
+}
+
+type scanPlanTextAnyToUint<%= type_suffix %> struct{}
+
+func (scanPlanTextAnyToUint<%= type_suffix %>) Scan(src []byte, dst any) error {
+	if src == nil {
+		return fmt.Errorf("cannot scan NULL into %T", dst)
+	}
+
+	p, ok := (dst).(*uint<%= type_suffix %>)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	n, err := strconv.ParseUint(string(src), 10, <%= bit_size %>)
+	if err != nil {
+		return err
+	}
+
+	*p = uint<%= type_suffix %>(n)
+	return nil
+}
+<% end %>
+
+type scanPlanTextAnyToInt64Scanner struct{}
+
+func (scanPlanTextAnyToInt64Scanner) Scan(src []byte, dst any) error {
+	s, ok := (dst).(Int64Scanner)
+	if !ok {
+		return ErrScanTargetTypeChanged
+	}
+
+	if src == nil {
+    return s.ScanInt64(Int8{})
+	}
+
+	n, err := strconv.ParseInt(string(src), 10, 64)
+	if err != nil {
+		return err
+	}
+
+  err = s.ScanInt64(Int8{Int64: n, Valid: true})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

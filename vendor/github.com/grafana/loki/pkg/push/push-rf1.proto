@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package logproto;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "pkg/push/push.proto";
+
+option go_package = "github.com/grafana/loki/pkg/push";
+
+service PusherRF1 {
+  rpc Push(PushRequest) returns (PushResponse) {}
+}

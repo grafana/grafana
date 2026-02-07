@@ -1,0 +1,42 @@
+variables:    
+    GOPROJ: "github.com/RaveNoX/go-jsonmerge"    
+
+
+stages:
+- test
+- build
+
+test:
+    tags:
+    - docker
+    - linux
+    image: golang:latest
+    stage: test        
+    script:
+    - mkdir -p artifacts
+    - go test -cover -v -coverprofile="./artifacts/cover.out" ./
+    - go tool cover -html="./artifacts/cover.out" -o "./artifacts/cover.htm"
+    - go test -cover -v -coverprofile="./artifacts/cover_cmd.out" ./cmd/jsonmerge
+    - go tool cover -html="./artifacts/cover_cmd.out" -o "./artifacts/cover_cmd.htm"
+    artifacts:
+        paths:
+        - artifacts/*
+
+build:
+    stage: build
+    tags:
+    - docker
+    - linux
+    image: golang:latest
+    script:
+    - mkdir -p artifacts        
+    - echo "Building for Linux"
+    - GOOS=linux GOARCH=amd64 go build -o artifacts/jsonmerge ./cmd/jsonmerge
+    - echo "Building for MacOS (darwin)"
+    - GOOS=darwin GOARCH=amd64 go build -o artifacts/jsonmerge_darwin ./cmd/jsonmerge
+    - echo "Building for Windows"
+    - GOOS=windows GOARCH=amd64 go build -o artifacts/jsonmerge.exe ./cmd/jsonmerge
+    artifacts:
+        paths:
+        - artifacts/*
+

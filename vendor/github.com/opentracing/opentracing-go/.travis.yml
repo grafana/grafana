@@ -1,0 +1,20 @@
+language: go
+
+matrix:
+  include:
+  - go: "1.13.x"
+  - go: "1.14.x"
+  - go: "tip"
+    env:
+    - LINT=true
+    - COVERAGE=true
+
+install:
+  - if [ "$LINT" == true ]; then go get -u golang.org/x/lint/golint/... ; else echo 'skipping lint'; fi
+  - go get -u github.com/stretchr/testify/...
+
+script:
+  - make test
+  - go build ./...
+  - if [ "$LINT" == true ]; then make lint ; else echo 'skipping lint'; fi
+  - if [ "$COVERAGE" == true ]; then make cover && bash <(curl -s https://codecov.io/bash) ; else echo 'skipping coverage'; fi

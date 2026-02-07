@@ -1,0 +1,16 @@
+/generated
+/schemas/kind-registry
+/examples/php/vendor
+/.devbox
+/gradle.properties
+/vendor
+/cog
+/docs-site
+
+# Java building folders
+.gradle/
+build/
+
+.idea
+
+dist/

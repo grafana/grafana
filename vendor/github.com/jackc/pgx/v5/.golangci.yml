@@ -1,0 +1,21 @@
+# See for configurations: https://golangci-lint.run/usage/configuration/
+version: 2
+
+# See: https://golangci-lint.run/usage/formatters/
+formatters:
+  default: none
+  enable:
+    - gofmt # https://pkg.go.dev/cmd/gofmt
+    - gofumpt # https://github.com/mvdan/gofumpt
+
+  settings:
+    gofmt:
+      simplify: true # Simplify code: gofmt with `-s` option.
+
+    gofumpt:
+      # Module path which contains the source code being formatted.
+      # Default: ""
+      module-path: github.com/jackc/pgx/v5 # Should match with module in go.mod
+      # Choose whether to use the extra rules.
+      # Default: false
+      extra-rules: true

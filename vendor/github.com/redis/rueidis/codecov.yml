@@ -1,0 +1,6 @@
+coverage:
+  status:
+    project: false
+    patch: false
+ignore:
+  - hack

@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:${REDIS_VERSION:-7}-alpine
+    ports:
+      - "6379:6379"
+  cluster:
+    image: redis:${REDIS_VERSION:-7}-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --port 7000 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7000.conf &
+        redis-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf &
+        redis-server --port 7002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7002.conf &
+        while ! redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "7000:7000"
+      - "7001:7001"
+      - "7002:7002"
+  sentinel:
+    image: redis:${REDIS_VERSION:-7}-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        redis-server --save "" --appendonly no --port 6380 &
+        echo "sentinel monitor mymaster 127.0.0.1 6380 2\n" > sentinel.conf
+        redis-server sentinel.conf --sentinel
+    ports:
+      - "6380:6380"
+      - "26379:26379"
+  valkey:
+    image: valkey/valkey:${VALKEY_VERSION:-8}-alpine
+    ports:
+      - "16379:6379"
+  valkey-cluster:
+    image: valkey/valkey:${VALKEY_VERSION:-8}-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        valkey-server --port 17000 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 17000.conf &
+        valkey-server --port 17001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 17001.conf &
+        valkey-server --port 17002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 17002.conf &
+        while ! valkey-cli --cluster create 127.0.0.1:17000 127.0.0.1:17001 127.0.0.1:17002 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "17000:17000"
+      - "17001:17001"
+      - "17002:17002"
+  dragonflydb:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.27.1
+    ports:
+      - "36379:6379"
+  dragonflydb-cluster:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.27.1
+    ports:
+      - "37000:6379"
+    command: ["--cluster_mode", "emulated"]

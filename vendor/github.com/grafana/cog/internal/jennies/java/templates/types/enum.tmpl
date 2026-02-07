@@ -1,0 +1,27 @@
+package {{ .Package }};
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+{{ range .Comments }}
+// {{ . }}
+{{- end }}
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum {{ .Name }} {
+    {{- range $i, $val := .Values }}
+    {{- if gt $i 0 }}, {{- end }}
+    {{ $val.Name }}({{ printf "%#v" $val.Value }})
+    {{- if lastItem $i $.Values }}; {{- end }}
+    {{- end }}
+
+    private final {{ .Type }} value;
+
+    private {{ .Name }}({{ .Type }} value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public {{ .Type }} Value() {
+        return value;
+    }
+}

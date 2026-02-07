@@ -1,0 +1,52 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "timeseries-long",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "TimeSeriesLong with 0 empty items. There are 2 item names (avgSlothCount, avgSleepHoursPerSlothPerDay) and 1 dimension (city). But with 0 rows there are no items.",
+            "itemCount": 0,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "t",
+          "type": "time",
+          "typeInfo": {
+            "frame": "time.Time"
+          }
+        },
+        {
+          "type": "number",
+          "name": "slothCount",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        },
+        {
+          "type": "number",
+          "name": "sleepHoursPerSlothPerDay",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        },
+        {
+          "type": "string",
+          "name": "city",
+          "typeInfo": {
+            "frame": "float64"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": []
+    }
+  }
+]

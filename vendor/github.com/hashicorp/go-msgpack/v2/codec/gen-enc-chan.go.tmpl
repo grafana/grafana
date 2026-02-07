@@ -1,0 +1,27 @@
+{{.Label}}:
+switch timeout{{.Sfx}} :=  z.EncBasicHandle().ChanRecvTimeout; {
+case timeout{{.Sfx}} == 0: // only consume available
+	for {
+		select {
+		case b{{.Sfx}} := <-{{.Chan}}:
+			{{ .Slice }} = append({{.Slice}}, b{{.Sfx}})
+		default:
+			break {{.Label}}
+		}
+	}
+case timeout{{.Sfx}} > 0: // consume until timeout
+	tt{{.Sfx}} := time.NewTimer(timeout{{.Sfx}})
+	for {
+		select {
+		case b{{.Sfx}} := <-{{.Chan}}:
+			{{.Slice}} = append({{.Slice}}, b{{.Sfx}})
+		case <-tt{{.Sfx}}.C:
+			// close(tt.C)
+			break {{.Label}}
+		}
+	}
+default: // consume until close
+	for b{{.Sfx}} := range {{.Chan}} {
+		{{.Slice}} = append({{.Slice}}, b{{.Sfx}})
+	}
+}

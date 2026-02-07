@@ -1,0 +1,296 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "baseName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "The base resource name."
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "defaultValue": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+            "metadata": {
+                "description": "The tenant ID to which the application and resources belong."
+            }
+        },
+        "testApplicationOid": {
+            "type": "string",
+            "metadata": {
+                "description": "The client OID to grant access to test resources."
+            }
+        },
+        "provisionerApplicationOid": {
+            "type": "string",
+            "metadata": {
+                "description": "The provisioner OID to grant access to test resources."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location of the resource. By default, this is the same as the resource group."
+            }
+        },
+        "hsmLocation": {
+            "type": "string",
+            "defaultValue": "uksouth",
+            "allowedValues": [
+                "australiacentral",
+                "australiaeast",
+                "canadacentral",
+                "canadaeast",
+                "centralindia",
+                "centralus",
+                "eastasia",
+                "eastus",
+                "eastus2",
+                "francecentral",
+                "japaneast",
+                "koreacentral",
+                "northcentralus",
+                "northeurope",
+                "southafricanorth",
+                "southcentralus",
+                "switzerlandnorth",
+                "switzerlandwest",
+                "uaenorth",
+                "uksouth",
+                "westcentralus",
+                "westeurope",
+                "westus",
+                "westus2",
+                "westus3"
+            ],
+            "metadata": {
+                "description": "The location of the Managed HSM."
+            }
+        },
+        "enableHsm": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Whether to enable deployment of Managed HSM. The default is false."
+            }
+        },
+        "keyVaultSku": {
+            "type": "string",
+            "defaultValue": "premium",
+            "metadata": {
+                "description": "Key Vault SKU to deploy. The default is 'premium'"
+            }
+        },
+        "attestationImage": {
+            "type": "string",
+            "defaultValue": "keyvault-mock-attestation:latest",
+            "metadata": {
+                "description": "The container image name and tag to use for the attestation mock service."
+            }
+        }
+    },
+    "variables": {
+        "attestationFarm": "[concat(parameters('baseName'), 'farm')]",
+        "attestationSite": "[concat(parameters('baseName'), 'site')]",
+        "attestationUri": "[concat('DOCKER|azsdkengsys.azurecr.io/', parameters('attestationImage'))]",
+        "kvApiVersion": "2019-09-01",
+        "kvName": "[parameters('baseName')]",
+        "kvAdminDefinitionId": "00482a5a-887f-4fb3-b363-3b7fe8e74483",
+        "kvAdminAssignmentName": "[guid(resourceGroup().id, variables('kvAdminDefinitionId'), parameters('testApplicationOid'))]",
+        "hsmApiVersion": "2021-04-01-preview",
+        "hsmName": "[concat(parameters('baseName'), 'hsm')]",
+        "mgmtApiVersion": "2019-04-01",
+        "blobContainerName": "backup",
+        "primaryAccountName": "[concat(parameters('baseName'), 'prim')]",
+        "encryption": {
+            "services": {
+                "blob": {
+                    "enabled": true
+                }
+            },
+            "keySource": "Microsoft.Storage"
+        },
+        "networkAcls": {
+            "bypass": "AzureServices",
+            "virtualNetworkRules": [],
+            "ipRules": [],
+            "defaultAction": "Allow"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "[variables('kvApiVersion')]",
+            "name": "[variables('kvName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "[parameters('keyVaultSku')]"
+                },
+                "tenantId": "[parameters('tenantId')]",
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true,
+                "enableRbacAuthorization": true,
+                "softDeleteRetentionInDays": 7
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('kvAdminAssignmentName')]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('kvAdminDefinitionId'))]",
+                "principalId": "[parameters('testApplicationOid')]",
+                "scope": "[resourceGroup().id]"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/managedHSMs",
+            "apiVersion": "[variables('hsmApiVersion')]",
+            "name": "[variables('hsmName')]",
+            "condition": "[parameters('enableHsm')]",
+            "location": "[parameters('hsmLocation')]",
+            "sku": {
+                "family": "B",
+                "name": "Standard_B1"
+            },
+            "properties": {
+                "tenantId": "[parameters('tenantId')]",
+                "initialAdminObjectIds": "[union(array(parameters('testApplicationOid')), array(parameters('provisionerApplicationOid')))]",
+                "enablePurgeProtection": false,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 7,
+                "publicNetworkAccess": "Enabled",
+                "networkAcls": "[variables('networkAcls')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[variables('mgmtApiVersion')]",
+            "name": "[variables('primaryAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "networkAcls": "[variables('networkAcls')]",
+                "supportsHttpsTrafficOnly": true,
+                "encryption": "[variables('encryption')]",
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(variables('primaryAccountName'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName'))]"
+            ],
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(variables('primaryAccountName'), '/default/', variables('blobContainerName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('primaryAccountName'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('primaryAccountName'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-12-01",
+            "name": "[variables('attestationFarm')]",
+            "location": "[parameters('location')]",
+            "kind": "linux",
+            "sku": {
+                "name": "B1"
+            },
+            "properties": {
+                "reserved": true
+            }
+        },
+        {
+
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-12-01",
+            "name": "[variables('attestationSite')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('attestationFarm'))]"
+            ],
+            "location": "[parameters('location')]",
+            "properties": {
+                "httpsOnly": true,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('attestationFarm'))]",
+                "siteConfig": {
+                    "name": "[variables('attestationSite')]",
+                    "alwaysOn": true,
+                    "linuxFxVersion": "[variables('attestationUri')]",
+                    "appSettings": [
+                        {
+                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                            "value": "false"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "AZURE_KEYVAULT_URL": {
+            "type": "string",
+            "value": "[reference(variables('kvName')).vaultUri]"
+        },
+        "AZURE_MANAGEDHSM_URL": {
+            "type": "string",
+            "condition": "[parameters('enableHsm')]",
+            "value": "[reference(variables('hsmName')).hsmUri]"
+        },
+        "KEYVAULT_SKU": {
+            "type": "string",
+            "value": "[reference(parameters('baseName')).sku.name]"
+        },
+        "CLIENT_OBJECTID": {
+            "type": "string",
+            "value": "[parameters('testApplicationOid')]"
+        },
+        "BLOB_STORAGE_ACCOUNT_NAME": {
+            "type": "string",
+            "value": "[variables('primaryAccountName')]"
+        },
+        "BLOB_PRIMARY_STORAGE_ACCOUNT_KEY": {
+            "type": "string",
+            "value": "[listKeys(variables('primaryAccountName'), variables('mgmtApiVersion')).keys[0].value]"
+        },
+        "BLOB_CONTAINER_NAME" : {
+            "type": "string",
+            "value": "[variables('blobContainerName')]"
+        },
+        "AZURE_KEYVAULT_ATTESTATION_URL": {
+            "type": "string",
+            "value": "[format('https://{0}/', reference(variables('attestationSite')).defaultHostName)]"
+        }
+    }
+}

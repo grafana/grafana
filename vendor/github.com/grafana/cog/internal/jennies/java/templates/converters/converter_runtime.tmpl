@@ -1,0 +1,151 @@
+package {{ .Package }};
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.List;
+import java.util.Map;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.StringJoiner;
+
+public class Runtime {
+    public static String dump(Object object) {
+        if (object instanceof String) {
+            return escapeString((String) object);
+        } else if (object instanceof Integer || object instanceof Float || object instanceof Double ||
+                object instanceof Boolean || object instanceof Long || object instanceof Character ||
+                object instanceof Short || object instanceof Byte) {
+            return object.toString();
+        } else if (object instanceof List) {
+            return "List.of(" + formatList((List<?>) object) + ")";
+        } else if (object instanceof Map) {
+            return "Map.ofEntries(" + formatMap((Map<?, ?>) object) + ")";
+        } else if (object == null) {
+            return "null";
+        }
+
+        if (object.getClass().getConstructors().length == 0) {
+            return formatFactory(object);
+        }
+
+        return formatConstructor(object);
+    }
+    
+    public static String formatFactory(Object object) {
+        StringBuilder sb = new StringBuilder();
+
+        Class<?> clazz = object.getClass();
+        boolean hasBuilderArgument = false;
+
+        Map<String, Class<?>> constructorList = new HashMap<>();
+
+        // Looking for static functions
+        Method[] methods = clazz.getDeclaredMethods();
+        for (Method m : methods) {
+            if (Modifier.isStatic(m.getModifiers())) {
+                constructorList.put(m.getName(), m.getParameterTypes()[0]);
+            }
+
+            // Check kind if the method ask for a builder
+            for (Class<?> param : m.getParameterTypes()) {
+                if (param.isAssignableFrom(Builder.class)) {
+                    hasBuilderArgument = true;
+                }
+            }
+        }
+
+        // Factories only ask for one argument
+        String expectedFunction = Arrays.stream(clazz.getDeclaredFields()).
+                map((f) -> fieldAsFunctionName(f.getName())).
+                filter(constructorList::containsKey).
+                findFirst().get();
+
+        sb.append(clazz.getSimpleName()).append(".").append(expectedFunction).append("(new ").append(expectedFunction.replace("create", ""));
+        // TODO: Set fields into builder constructors with arguments and add missing builder options
+        if (hasBuilderArgument) {
+            sb.append(".Builder()");
+        } else {
+            sb.append("()");
+        }
+
+        sb.append(")");
+        return sb.toString();
+    }
+
+    public static String formatConstructor(Object object) {
+        StringBuilder sb = new StringBuilder();
+
+        Class<?> clazz = object.getClass();
+        sb.append("new ").append(clazz.getSimpleName()).append("(");
+        Field[] fields = clazz.getDeclaredFields();
+
+        for(int i = 0; i < fields.length; i++) {
+            fields[i].setAccessible(true);
+            try {
+                sb.append(dump(fields[i].get(object)));
+                if (i != fields.length - 1) {
+                    sb.append(", ");
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        sb.append(")");
+
+        return sb.toString();
+    }
+
+    public static String fieldAsFunctionName(String f) {
+        return "create"  + f.substring(0, 1).toUpperCase() + f.substring(1);
+    }
+    
+    public static String escapeString(String input) {
+        if (input.contains("\n")) {
+            String[] lines = input.split("\n");
+            StringBuilder formatted = new StringBuilder("\"\"\"\n");
+            for (String line : lines) {
+                formatted.append(line.replaceAll("\\s+$", "\\\\s")).append("\n");
+            }
+            formatted.append("\"\"\"");
+            return formatted.toString();
+        }
+
+        return "\"" +
+                input.replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                + "\"";
+
+    }
+    
+    public static <T extends Enum<T>> String formatEnum(Class<T> enumClass, T enumValue) {
+        String className = enumClass.getSimpleName();
+        String value;
+
+        if (enumValue != null) {
+            value = enumValue.name();
+        } else {
+            T defaultEnumValue = enumClass.getEnumConstants()[0];
+            value = defaultEnumValue.name();
+        }
+
+        return String.format("%s.%s", className, value);
+    }
+
+    private static String formatList(List<?> list) {
+        StringJoiner joiner = new StringJoiner(", ");
+        for (Object item : list) {
+            joiner.add(dump(item));
+        }
+        return joiner.toString();
+    }
+
+    private static String formatMap(Map<?, ?> map) {
+        StringJoiner joiner = new StringJoiner(", ");
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            joiner.add("Map.entry(" + dump(entry.getKey()) + "," + dump(entry.getValue()) + ")");
+        }
+        return joiner.toString();
+    }
+}

@@ -1,0 +1,34 @@
+{{- $json := importStdPkg "encoding/json" -}}
+{{- $errors := importStdPkg "errors" -}}
+// UnmarshalJSONStrict implements a custom JSON unmarshalling logic to decode `{{ .def.Name|formatObjectName }}` from JSON.
+// Note: the unmarshalling done by this function is strict. It will fail over required fields being absent from the input, fields having an incorrect type, unexpected fields being present, …
+func (resource *{{ .def.Name|formatObjectName }}) UnmarshalJSONStrict(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	{{- $cog := importPkg "cog" }}
+	var errs cog.BuildErrors
+	var errList []error
+{{ range .def.Type.Struct.Fields }}
+	// {{ .Name|upperCamelCase }}
+	var {{ .Name }} {{ trimPrefix "*" (.Type | formatType) }}
+
+	if err := json.Unmarshal(raw, &{{ .Name }}); err != nil {
+		errList = append(errList, err)
+	} else {
+		resource.{{ .Name|formatFieldName }} = {{ if and (ne .Type.Kind "array") (ne .Type.Kind "map") }}&{{ end }}{{ .Name }}
+		return nil
+	}
+{{ end }}
+
+	if len(errList) != 0 {
+		errs = append(errs, cog.MakeBuildErrors("{{ .def.Name }}", errors.Join(errList...))...)
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return errs
+}

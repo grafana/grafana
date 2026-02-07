@@ -1,0 +1,494 @@
+syntax = "proto3";
+
+package tempopb;
+
+import "common/v1/common.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "trace/v1/trace.proto";
+import 'google/protobuf/timestamp.proto';
+
+service Pusher {
+  // different versions of PushBytes expect the trace data to be pushed in
+  // different formats
+  rpc PushBytes(PushBytesRequest) returns (PushResponse) {}
+  rpc PushBytesV2(PushBytesRequest) returns (PushResponse) {}
+}
+
+service MetricsGenerator {
+  rpc PushSpans(PushSpansRequest) returns (PushResponse) {}
+  rpc GetMetrics(SpanMetricsRequest) returns (SpanMetricsResponse) {}
+  rpc QueryRange(QueryRangeRequest) returns (QueryRangeResponse) {}
+}
+
+service Querier {
+  rpc FindTraceByID(TraceByIDRequest) returns (TraceByIDResponse) {}
+  rpc SearchRecent(SearchRequest) returns (SearchResponse) {}
+  rpc SearchBlock(SearchBlockRequest) returns (SearchResponse) {}
+  rpc SearchTags(SearchTagsRequest) returns (SearchTagsResponse) {}
+  rpc SearchTagsV2(SearchTagsRequest) returns (SearchTagsV2Response) {}
+  rpc SearchTagValues(SearchTagValuesRequest) returns (SearchTagValuesResponse) {}
+  rpc SearchTagValuesV2(SearchTagValuesRequest) returns (SearchTagValuesV2Response) {}
+  // rpc SpanMetricsSummary(SpanMetricsSummaryRequest) returns
+  // (SpanMetricsSummaryResponse) {};
+}
+
+service StreamingQuerier {
+  rpc Search(SearchRequest) returns (stream SearchResponse);
+  rpc SearchTags(SearchTagsRequest) returns (stream SearchTagsResponse) {}
+  rpc SearchTagsV2(SearchTagsRequest) returns (stream SearchTagsV2Response) {}
+  rpc SearchTagValues(SearchTagValuesRequest) returns (stream SearchTagValuesResponse) {}
+  rpc SearchTagValuesV2(SearchTagValuesRequest) returns (stream SearchTagValuesV2Response) {}
+  rpc MetricsQueryRange(QueryRangeRequest) returns (stream QueryRangeResponse) {}
+  rpc MetricsQueryInstant(QueryInstantRequest) returns (stream QueryInstantResponse) {}
+}
+
+service Metrics {
+  rpc SpanMetricsSummary(SpanMetricsSummaryRequest) returns (SpanMetricsSummaryResponse) {}
+  rpc QueryRange(QueryRangeRequest) returns (QueryRangeResponse) {}
+}
+
+// Read
+message TraceByIDRequest {
+  bytes traceID = 1;
+  string blockStart = 2;
+  string blockEnd = 3;
+  string queryMode = 5;
+  bool allowPartialTrace = 6;
+  // Rhythm fields
+  google.protobuf.Timestamp RF1After = 7 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message TraceByIDResponse {
+  Trace trace = 1;
+  TraceByIDMetrics metrics = 2;
+  PartialStatus status = 3;
+  string message = 4;
+}
+
+message TraceByIDMetrics {
+  uint64 inspectedBytes = 1;
+}
+
+// SearchRequest takes no block parameters and implies a "recent traces" search
+message SearchRequest {
+  // case insensitive partial match
+  map<string, string> Tags = 1 [(gogoproto.nullable) = false];
+  uint32 MinDurationMs = 2;
+  uint32 MaxDurationMs = 3;
+  uint32 Limit = 4;
+  uint32 start = 5;
+  uint32 end = 6;
+  // TraceQL query
+  string Query = 8;
+  uint32 SpansPerSpanSet = 9;
+  // Rhythm fields
+  google.protobuf.Timestamp RF1After = 10 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// SearchBlockRequest takes SearchRequest parameters as well as all information
+// necessary to search a block in the backend.
+message SearchBlockRequest {
+  SearchRequest searchReq = 1;
+  string blockID = 2;
+  uint32 startPage = 3;
+  uint32 pagesToSearch = 4;
+  string encoding = 5;
+  uint32 indexPageSize = 6;
+  uint32 totalRecords = 7;
+  string dataEncoding = 8;
+  string version = 9;
+  uint64 size = 10; // total size of data file
+  uint32 footerSize = 11; // size of file footer (parquet)
+  repeated DedicatedColumn dedicatedColumns = 12;
+}
+
+// Configuration for a single dedicated attribute column.
+message DedicatedColumn {
+  enum Scope {
+    SPAN = 0;
+    RESOURCE = 1;
+  }
+  enum Type {
+    STRING = 0;
+  }
+  Scope scope = 3;
+  string name = 2;
+  Type type = 1;
+}
+
+message SearchResponse {
+  repeated TraceSearchMetadata traces = 1;
+  SearchMetrics metrics = 2;
+}
+
+message TraceSearchMetadata {
+  string traceID = 1;
+  string rootServiceName = 2;
+  string rootTraceName = 3;
+  uint64 startTimeUnixNano = 4;
+  uint32 durationMs = 5;
+  SpanSet spanSet = 6; // deprecated. use SpanSets field below
+  repeated SpanSet spanSets = 7;
+  map<string, ServiceStats> serviceStats = 8;
+}
+
+message ServiceStats {
+  uint32 spanCount = 1;
+  uint32 errorCount = 2;
+}
+
+message SpanSet {
+  repeated Span spans = 1;
+  uint32 matched = 2;
+  repeated tempopb.common.v1.KeyValue attributes = 3;
+}
+
+message Span {
+  string spanID = 1;
+  string name = 2;
+  uint64 startTimeUnixNano = 3;
+  uint64 durationNanos = 4;
+  repeated tempopb.common.v1.KeyValue attributes = 5;
+}
+
+message SearchMetrics {
+  uint32 inspectedTraces = 1;
+  uint64 inspectedBytes = 2;
+  uint32 totalBlocks = 3;
+  uint32 completedJobs = 4;
+  uint32 totalJobs = 5;
+  uint64 totalBlockBytes = 6;
+  uint64 inspectedSpans = 7;
+}
+
+message SearchTagsRequest {
+  string scope = 1;
+  string query = 2;
+  uint32 start = 3;
+  uint32 end = 4;
+  uint32 maxTagsPerScope = 5;
+  uint32 staleValuesThreshold = 6;
+  // Rhythm fields
+  google.protobuf.Timestamp RF1After = 7 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// SearchTagsBlockRequest takes SearchTagsRequest parameters as well as all information necessary
+// to search a block in the backend.
+message SearchTagsBlockRequest {
+  SearchTagsRequest searchReq = 1;
+  string blockID = 2;
+  uint32 startPage = 3;
+  uint32 pagesToSearch = 4;
+  string encoding = 5;
+  uint32 indexPageSize = 6;
+  uint32 totalRecords = 7;
+  string dataEncoding = 8;
+  string version = 9;
+  uint64 size = 10; // total size of data file
+  uint32 footerSize = 11; // size of file footer (parquet)
+  repeated DedicatedColumn dedicatedColumns = 12;
+  uint32 maxTagsPerScope = 13; // Limit of tags per scope
+  uint32 staleValueThreshold = 14; // Limit of stale values
+}
+
+message SearchTagValuesBlockRequest {
+  SearchTagValuesRequest searchReq = 1;
+  string blockID = 2;
+  uint32 startPage = 3;
+  uint32 pagesToSearch = 4;
+  string encoding = 5;
+  uint32 indexPageSize = 6;
+  uint32 totalRecords = 7;
+  string dataEncoding = 8;
+  string version = 9;
+  uint64 size = 10; // total size of data file
+  uint32 footerSize = 11; // size of file footer (parquet)
+  repeated DedicatedColumn dedicatedColumns = 12;
+}
+
+
+message SearchTagsResponse {
+  repeated string tagNames = 1;
+  MetadataMetrics metrics = 2;
+}
+
+message SearchTagsV2Response {
+  repeated SearchTagsV2Scope scopes = 1;
+  MetadataMetrics metrics = 2;
+}
+
+message SearchTagsV2Scope {
+  string name = 1;
+  repeated string tags = 2;
+}
+
+message SearchTagValuesRequest {
+  string tagName = 1;
+  string query = 2; // TraceQL query
+  uint32 start = 4;
+  uint32 end = 5;
+  uint32 maxTagValues = 6;
+  uint32 staleValueThreshold = 7; // Limit of stale values
+  // Rhythm fields
+  google.protobuf.Timestamp RF1After = 8 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message SearchTagValuesResponse {
+  repeated string tagValues = 1;
+  MetadataMetrics metrics = 2;
+}
+
+message TagValue {
+  string type = 1;
+  string value = 2;
+}
+
+message SearchTagValuesV2Response {
+  repeated TagValue tagValues = 1;
+  MetadataMetrics metrics = 2;
+}
+
+message MetadataMetrics {
+  uint64 inspectedBytes = 1;
+  uint32 totalJobs = 2;
+  uint32 completedJobs = 3;
+  uint32 totalBlocks = 4;
+  uint64 totalBlockBytes = 5;
+}
+
+message Trace {
+  repeated tempopb.trace.v1.ResourceSpans resourceSpans = 1;
+}
+
+// Write
+message PushResponse {
+  repeated PushErrorReason errorsByTrace = 1;
+}
+
+enum PushErrorReason {
+  NO_ERROR = 0;
+  MAX_LIVE_TRACES = 1;
+  TRACE_TOO_LARGE = 2;
+  UNKNOWN_ERROR = 3;
+}
+
+// PushBytesRequest pushes slices of traces, ids and searchdata. Traces are
+// encoded using the
+//  current BatchDecoder in ./pkg/model
+message PushBytesRequest {
+  // pre-marshalled Traces. length must match ids
+  repeated bytes traces = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "PreallocBytes"
+  ];
+  // trace ids. length must match traces
+  repeated bytes ids = 3;
+  // id 4 previously claimed by SearchData
+
+  // indicates whether metrics generation should be skipped
+  // for traces contained in this request.
+  bool skipMetricsGeneration = 5;
+}
+
+message PushSpansRequest {
+  // just send entire OTel spans for now
+  repeated tempopb.trace.v1.ResourceSpans batches = 1;
+
+  // indicates whether metrics generation should be skipped
+  // for traces contained in this request.
+  bool skipMetricsGeneration = 2;
+}
+
+message TraceBytes {
+  // pre-marshalled Traces
+  repeated bytes traces = 1;
+}
+
+// this message exists for marshalling/unmarshalling convenience to/from
+// parquet. in parquet we proto encode links to a column. unfortunately you
+// can't encode a slice directly so we use this wrapper to generate the required
+// marshalling/unmarshalling functions.
+message LinkSlice {
+  repeated tempopb.trace.v1.Span.Link links = 1;
+}
+
+message SpanMetricsRequest {
+  string query = 1;
+  string groupBy = 2;
+  uint64 limit = 3;
+  uint32 start = 4;
+  uint32 end = 5;
+}
+
+message SpanMetricsSummaryRequest {
+  string query = 1;
+  string groupBy = 2;
+  uint64 limit = 3;
+  uint32 start = 4;
+  uint32 end = 5;
+}
+
+message SpanMetricsResponse {
+  bool estimated = 1;
+  uint64 spanCount = 2;
+  uint64 errorSpanCount = 3;
+  repeated SpanMetrics metrics = 4;
+}
+
+message RawHistogram {
+  uint64 bucket = 1;
+  uint64 count = 2;
+}
+
+message KeyValue {
+  string key = 1;
+  TraceQLStatic value = 2;
+}
+
+message SpanMetrics {
+  repeated RawHistogram latency_histogram = 1;
+  repeated KeyValue series = 2;
+  uint64 errors = 3;
+}
+
+message SpanMetricsSummary {
+  uint64 spanCount = 1;
+  uint64 errorSpanCount = 2;
+  repeated KeyValue series = 3;
+  uint64 p99 = 4;
+  uint64 p95 = 5;
+  uint64 p90 = 6;
+  uint64 p50 = 7;
+}
+
+message SpanMetricsSummaryResponse {
+  repeated SpanMetricsSummary summaries = 1;
+}
+
+message TraceQLStatic {
+  int32 type = 1;
+  int64 n = 2;
+  double f = 3;
+  string s = 4;
+  bool b = 5;
+  uint64 d = 6;
+  int32 status = 7;
+  int32 kind = 8;
+}
+
+message SpanMetricsData {
+  string resultType = 1;
+  repeated SpanMetricsResult result = 2;
+}
+
+message SpanMetricsResult {
+  string labelName = 1; // if these are empty it is the primary trend
+  string labelValue = 2;
+  repeated SpanMetricsResultPoint ts = 3;
+}
+
+message SpanMetricsResultPoint {
+  uint32 time = 1;
+  double val = 2;
+  bytes exemplarTraceID = 3;
+  uint64 exemplarDuration = 4;
+}
+
+message QueryInstantRequest {
+  string query = 1;
+  uint64 start = 2;
+  uint64 end = 3;
+}
+
+message QueryInstantResponse {
+  repeated InstantSeries series = 1;
+  SearchMetrics metrics = 2;
+  PartialStatus status = 3;
+  string message = 4;
+}
+
+message InstantSeries {
+  // Series labels containing name and value. Data-type aware.
+  repeated tempopb.common.v1.KeyValue labels = 1 [(gogoproto.nullable) = false];
+
+  double value = 2;
+
+  // prom_labels are a flattened string-only version of the typed labels.
+  // They are used internally and may differ from official prometheus conventions.
+  string prom_labels = 3;
+}
+
+message QueryRangeRequest {
+  string query = 1;
+  uint64 start = 2;
+  uint64 end = 3;
+  uint64 step = 4;
+  //uint32 shardID = 5; // removed
+  //uint32 shardCount = 6; // removed
+  string queryMode = 7;
+  // New RF1 fields
+  string blockID = 8;
+  uint32 startPage = 9;
+  uint32 pagesToSearch = 10;
+  string version = 11;
+  string encoding = 12;
+  uint64 size = 13; // total size of data file
+  uint32 footerSize = 14; // size of file footer (parquet)
+  repeated DedicatedColumn dedicatedColumns = 15;
+  // Exemplars are optional and can be empty.
+  uint32 exemplars = 16;
+  uint32 maxSeries = 17; // max response serie before bailing early
+}
+
+enum PartialStatus {
+  COMPLETE = 0;
+  PARTIAL = 1;
+}
+
+message QueryRangeResponse {
+  repeated TimeSeries series = 1;
+  SearchMetrics metrics = 2;
+  PartialStatus status = 3;
+  string message = 4;
+}
+
+message Exemplar {
+  // Optional, can be empty.
+  repeated tempopb.common.v1.KeyValue labels = 1 [(gogoproto.nullable) = false];
+  double value = 2;
+  int64 timestamp_ms = 3;
+}
+
+message Sample {
+  // Fields order MUST match promql.FPoint so that we can cast types between them.
+  int64 timestamp_ms = 2;
+  double value = 1;
+}
+
+message TimeSeries {
+  // Series labels containing name and value. Data-type aware.
+  repeated tempopb.common.v1.KeyValue labels = 1 [(gogoproto.nullable) = false];
+
+  // Sorted by time, oldest sample first.
+  repeated Sample samples = 2 [(gogoproto.nullable) = false];
+
+  // prom_labels are a flattened string-only version of the typed labels.
+  // They are used internally and may differ from official prometheus conventions.
+  string prom_labels = 3;
+
+  // Exemplars are optional and can be empty.
+  // Sorted by time, oldest exemplar first.
+  repeated Exemplar exemplars = 4 [(gogoproto.nullable) = false];
+}

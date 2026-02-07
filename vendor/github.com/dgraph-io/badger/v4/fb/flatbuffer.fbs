@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+namespace fb;
+
+table TableIndex {
+  offsets:[BlockOffset];
+  bloom_filter:[ubyte];
+  max_version:uint64;
+  key_count:uint32;
+  uncompressed_size:uint32;
+  on_disk_size:uint32;
+  stale_data_size:uint32;
+}
+
+table BlockOffset {
+  key:[ubyte];
+  offset:uint;
+  len:uint;
+}
+
+root_type TableIndex;
+root_type BlockOffset;

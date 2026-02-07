@@ -1,0 +1,15 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":semanticCommitScope(deps)",
+    "group:allNonMajor",
+    "schedule:earlyMondays", // Run once a week.
+  ],
+  postUpdateOptions: [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ]
+}

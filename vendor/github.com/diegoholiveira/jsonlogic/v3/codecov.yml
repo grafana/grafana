@@ -1,0 +1,27 @@
+---
+codecov:
+  notify:
+    require_ci_to_pass: yes
+    after_n_builds: 1
+    wait_for_ci: yes
+coverage:
+  status:
+    patch:
+      default: off
+      pr_coverage:
+        target: 60%
+    project:
+      default: off
+      minimum:
+        target: 80%
+      decrement:
+        target: auto
+        threshold: 1.0%
+        if_not_found: success
+comment:
+  layout: "diff, flags"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: no
+  branches: null

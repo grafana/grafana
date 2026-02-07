@@ -1,0 +1,86 @@
+linters:
+  enable:
+    - errcheck
+    - errorlint
+    - gci
+    - gocritic
+    - gofumpt
+    - misspell
+    - nolintlint
+    - nakedret
+    - perfsprint
+    - revive
+    - testifylint
+    - thelper
+    - usestdlibvars
+
+linters-settings:
+  errorlint:
+    # Check whether fmt.Errorf uses the %w verb for formatting errors.
+    # See the https://github.com/polyfloyd/go-errorlint for caveats.
+    errorf: true
+    # Permit more than 1 %w verb, valid per Go 1.20 (Requires errorf:true)
+    errorf-multi: true
+    # Check for plain type assertions and type switches.
+    asserts: true
+    # Check for plain error comparisons.
+    comparison: true
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/testcontainers)
+  nakedret:
+    max-func-lines: 0
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+        arguments:
+          - allowTypesBefore: "*testing.T"
+      - name: context-keys-type
+      - name: dot-imports
+      - name: early-return
+        arguments:
+          - "preserveScope"
+      - name: empty-block
+      - name: error-naming
+        disabled: true
+      - name: error-return
+      - name: error-strings
+        disabled: true
+      - name: errorf
+      - name: increment-decrement
+      - name: indent-error-flow
+        arguments:
+          - "preserveScope"
+      - name: range
+      - name: receiver-naming
+      - name: redefines-builtin-id
+        disabled: true
+      - name: superfluous-else
+        arguments:
+          - "preserveScope"
+      - name: time-naming
+      - name: unexported-return
+        disabled: true
+      - name: unreachable-code
+      - name: unused-parameter
+      - name: use-any
+      - name: var-declaration
+      - name: var-naming
+        arguments:
+          - ["ID"] # AllowList
+          - ["VM"] # DenyList
+          - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
+  testifylint:
+    disable:
+      - float-compare
+      - go-require
+    enable-all: true
+output:
+  formats:
+    - format: colored-line-number
+  path-prefix: "."
+run:
+  timeout: 5m

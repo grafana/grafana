@@ -1,0 +1,36 @@
+package {{ .Package }};
+
+{{- $class := include "class_scalars" . }}
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+{{ .Imports }}
+
+{{- $class }}
+
+{{- define "class_scalars" }}
+public class {{ .Name }}Deserializer extends JsonDeserializer<{{ .Name }}> {
+
+    @Override
+    public {{ .Name }} deserialize(JsonParser jp, DeserializationContext cxt) throws IOException {
+        ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+        JsonNode root = mapper.readTree(jp);
+        
+        {{ .Name }} {{ .Name | lowerCamelCase }} = new {{ .Name }}();
+        
+        {{- range $i, $val := .Fields }}
+        {{ if gt $i 0 }}else {{ end }}if (root.{{ getJavaFieldTypeCheck .Type }}) {
+            {{ $.Name | lowerCamelCase }}.{{ $val.Name | lowerCamelCase }} = mapper.convertValue(root, {{ template "type_map_check" .Type }});
+        }
+        {{- end }}
+        
+        return {{ .Name | lowerCamelCase }};
+    }
+}
+{{- end }}

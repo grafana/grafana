@@ -1,0 +1,154 @@
+// Copyright (c) 2012-2018 Ugorji Nwoke. All rights reserved.
+// Use of this source code is governed by a MIT license found in the LICENSE file.
+
+// Code generated from mammoth-test.go.tmpl - DO NOT EDIT.
+
+package codec
+
+import "testing"
+import "fmt"
+import "reflect"
+
+// TestMammoth has all the different paths optimized in fast-path
+// It has all the primitives, slices and maps.
+// 
+// For each of those types, it has a pointer and a non-pointer field.
+
+func init() { _ = fmt.Printf } // so we can include fmt as needed
+
+type TestMammoth struct {
+
+{{range .Values }}{{if .Primitive }}{{/*
+*/}}{{ .MethodNamePfx "F" true }} {{ .Primitive }}
+{{ .MethodNamePfx "Fptr" true }} *{{ .Primitive }}
+{{end}}{{end}}
+
+{{range .Values }}{{if not .Primitive }}{{if not .MapKey }}{{/*
+*/}}{{ .MethodNamePfx "F" false }} []{{ .Elem }}
+{{ .MethodNamePfx "Fptr" false }} *[]{{ .Elem }}
+{{end}}{{end}}{{end}}
+
+{{range .Values }}{{if not .Primitive }}{{if .MapKey }}{{/*
+*/}}{{ .MethodNamePfx "F" false }} map[{{ .MapKey }}]{{ .Elem }}
+{{ .MethodNamePfx "Fptr" false }} *map[{{ .MapKey }}]{{ .Elem }}
+{{end}}{{end}}{{end}}
+
+}
+
+{{range .Values }}{{if not .Primitive }}{{if not .MapKey }}{{/*
+*/}} type {{ .MethodNamePfx "typMbs" false }} []{{ .Elem }}
+func (_ {{ .MethodNamePfx "typMbs" false }}) MapBySlice() { }
+{{end}}{{end}}{{end}}
+
+{{range .Values }}{{if not .Primitive }}{{if .MapKey }}{{/*
+*/}} type {{ .MethodNamePfx "typMap" false }} map[{{ .MapKey }}]{{ .Elem }}
+{{end}}{{end}}{{end}}
+
+func doTestMammothSlices(t *testing.T, h Handle) {
+{{range $i, $e := .Values }}{{if not .Primitive }}{{if not .MapKey }}{{/*
+*/}}
+    var v{{$i}}va [8]{{ .Elem }}
+    for _, v := range [][]{{ .Elem }}{ nil, {}, { {{ nonzerocmd .Elem }}, {{ zerocmd .Elem }}, {{ zerocmd .Elem }}, {{ nonzerocmd .Elem }} } } { {{/*
+    // fmt.Printf(">>>> running mammoth slice v{{$i}}: %v\n", v)
+    //   - encode value to some []byte
+    //   - decode into a length-wise-equal []byte
+    //   - check if equal to initial slice
+    //   - encode ptr to the value
+    //   - check if encode bytes are same
+    //   - decode into ptrs to: nil, then 1-elem slice, equal-length, then large len slice
+    //   - decode into non-addressable slice of equal length, then larger len 
+    //   - for each decode, compare elem-by-elem to the original slice
+    //   - 
+    //   - rinse and repeat for a MapBySlice version
+    //   - 
+    */}}
+    var v{{$i}}v1, v{{$i}}v2 []{{ .Elem }}
+	v{{$i}}v1 = v
+	bs{{$i}} := testMarshalErr(v{{$i}}v1, h, t, "enc-slice-v{{$i}}")
+	if v == nil { v{{$i}}v2 = nil } else { v{{$i}}v2 = make([]{{ .Elem }}, len(v)) }
+	testUnmarshalErr(v{{$i}}v2, bs{{$i}}, h, t, "dec-slice-v{{$i}}")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-slice-v{{$i}}")
+	if v == nil { v{{$i}}v2 = nil } else { v{{$i}}v2 = make([]{{ .Elem }}, len(v)) }
+	testUnmarshalErr(reflect.ValueOf(v{{$i}}v2), bs{{$i}}, h, t, "dec-slice-v{{$i}}-noaddr") // non-addressable value
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-slice-v{{$i}}-noaddr")
+	// ...
+	bs{{$i}} = testMarshalErr(&v{{$i}}v1, h, t, "enc-slice-v{{$i}}-p")
+	v{{$i}}v2 = nil
+	testUnmarshalErr(&v{{$i}}v2, bs{{$i}}, h, t, "dec-slice-v{{$i}}-p")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-slice-v{{$i}}-p")
+	v{{$i}}va = [8]{{ .Elem }}{} // clear the array
+	v{{$i}}v2 = v{{$i}}va[:1:1]
+	testUnmarshalErr(&v{{$i}}v2, bs{{$i}}, h, t, "dec-slice-v{{$i}}-p-1")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-slice-v{{$i}}-p-1")
+	v{{$i}}va = [8]{{ .Elem }}{} // clear the array
+	v{{$i}}v2 = v{{$i}}va[:len(v{{$i}}v1):len(v{{$i}}v1)]
+	testUnmarshalErr(&v{{$i}}v2, bs{{$i}}, h, t, "dec-slice-v{{$i}}-p-len")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-slice-v{{$i}}-p-len")
+	v{{$i}}va = [8]{{ .Elem }}{} // clear the array
+	v{{$i}}v2 = v{{$i}}va[:]
+	testUnmarshalErr(&v{{$i}}v2, bs{{$i}}, h, t, "dec-slice-v{{$i}}-p-cap")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-slice-v{{$i}}-p-cap")
+	if len(v{{$i}}v1) > 1 {
+	v{{$i}}va = [8]{{ .Elem }}{} // clear the array
+	testUnmarshalErr((&v{{$i}}va)[:len(v{{$i}}v1)], bs{{$i}}, h, t, "dec-slice-v{{$i}}-p-len-noaddr")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}va[:len(v{{$i}}v1)], t, "equal-slice-v{{$i}}-p-len-noaddr")
+	v{{$i}}va = [8]{{ .Elem }}{} // clear the array
+	testUnmarshalErr((&v{{$i}}va)[:], bs{{$i}}, h, t, "dec-slice-v{{$i}}-p-cap-noaddr")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}va[:len(v{{$i}}v1)], t, "equal-slice-v{{$i}}-p-cap-noaddr")
+    }
+    // ...
+    var v{{$i}}v3, v{{$i}}v4 {{ .MethodNamePfx "typMbs" false }}
+	v{{$i}}v2 = nil
+    if v != nil { v{{$i}}v2 = make([]{{ .Elem }}, len(v)) }
+    v{{$i}}v3 = {{ .MethodNamePfx "typMbs" false }}(v{{$i}}v1)
+    v{{$i}}v4 = {{ .MethodNamePfx "typMbs" false }}(v{{$i}}v2)
+    bs{{$i}} = testMarshalErr(v{{$i}}v3, h, t, "enc-slice-v{{$i}}-custom")
+    testUnmarshalErr(v{{$i}}v4, bs{{$i}}, h, t, "dec-slice-v{{$i}}-custom")
+    testDeepEqualErr(v{{$i}}v3, v{{$i}}v4, t, "equal-slice-v{{$i}}-custom")
+    bs{{$i}} = testMarshalErr(&v{{$i}}v3, h, t, "enc-slice-v{{$i}}-custom-p")
+    v{{$i}}v2 = nil
+    v{{$i}}v4 = {{ .MethodNamePfx "typMbs" false }}(v{{$i}}v2)
+    testUnmarshalErr(&v{{$i}}v4, bs{{$i}}, h, t, "dec-slice-v{{$i}}-custom-p")
+    testDeepEqualErr(v{{$i}}v3, v{{$i}}v4, t, "equal-slice-v{{$i}}-custom-p")
+    }
+{{end}}{{end}}{{end}}
+}
+
+func doTestMammothMaps(t *testing.T, h Handle) {
+{{range $i, $e := .Values }}{{if not .Primitive }}{{if .MapKey }}{{/*
+*/}}
+    for _, v := range []map[{{ .MapKey }}]{{ .Elem }}{ nil, {}, { {{ nonzerocmd .MapKey }}:{{ zerocmd .Elem }} {{if ne "bool" .MapKey}}, {{ nonzerocmd .MapKey }}:{{ nonzerocmd .Elem }} {{end}} } } {
+    // fmt.Printf(">>>> running mammoth map v{{$i}}: %v\n", v)
+    var v{{$i}}v1, v{{$i}}v2 map[{{ .MapKey }}]{{ .Elem }}
+	v{{$i}}v1 = v
+	bs{{$i}} := testMarshalErr(v{{$i}}v1, h, t, "enc-map-v{{$i}}")
+	if v == nil { v{{$i}}v2 = nil } else { v{{$i}}v2 = make(map[{{ .MapKey }}]{{ .Elem }}, len(v)) } // reset map
+	testUnmarshalErr(v{{$i}}v2, bs{{$i}}, h, t, "dec-map-v{{$i}}")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-map-v{{$i}}")
+	if v == nil { v{{$i}}v2 = nil } else { v{{$i}}v2 = make(map[{{ .MapKey }}]{{ .Elem }}, len(v)) } // reset map
+	testUnmarshalErr(reflect.ValueOf(v{{$i}}v2), bs{{$i}}, h, t, "dec-map-v{{$i}}-noaddr") // decode into non-addressable map value
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-map-v{{$i}}-noaddr")
+	if v == nil { v{{$i}}v2 = nil } else { v{{$i}}v2 = make(map[{{ .MapKey }}]{{ .Elem }}, len(v)) } // reset map
+	testUnmarshalErr(&v{{$i}}v2, bs{{$i}}, h, t, "dec-map-v{{$i}}-p-len")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-map-v{{$i}}-p-len")
+	bs{{$i}} = testMarshalErr(&v{{$i}}v1, h, t, "enc-map-v{{$i}}-p")
+	v{{$i}}v2 = nil
+	testUnmarshalErr(&v{{$i}}v2, bs{{$i}}, h, t, "dec-map-v{{$i}}-p-nil")
+	testDeepEqualErr(v{{$i}}v1, v{{$i}}v2, t, "equal-map-v{{$i}}-p-nil")
+    // ...
+	if v == nil { v{{$i}}v2 = nil } else { v{{$i}}v2 = make(map[{{ .MapKey }}]{{ .Elem }}, len(v)) } // reset map
+    var v{{$i}}v3, v{{$i}}v4 {{ .MethodNamePfx "typMap" false }}
+	v{{$i}}v3 = {{ .MethodNamePfx "typMap" false }}(v{{$i}}v1)
+	v{{$i}}v4 = {{ .MethodNamePfx "typMap" false }}(v{{$i}}v2)
+    bs{{$i}} = testMarshalErr(v{{$i}}v3, h, t, "enc-map-v{{$i}}-custom")
+	testUnmarshalErr(v{{$i}}v4, bs{{$i}}, h, t, "dec-map-v{{$i}}-p-len")
+	testDeepEqualErr(v{{$i}}v3, v{{$i}}v4, t, "equal-map-v{{$i}}-p-len")
+    }
+{{end}}{{end}}{{end}}
+
+}
+
+func doTestMammothMapsAndSlices(t *testing.T, h Handle) {
+     doTestMammothSlices(t, h)
+     doTestMammothMaps(t, h)
+}

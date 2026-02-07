@@ -1,0 +1,14 @@
+/.idea
+/.connstr
+.vscode
+.terraform
+*.tfstate*
+*.log
+*.swp
+*~
+coverage.json
+coverage.txt
+coverage.xml
+testresults.xml
+.azureconnstr
+

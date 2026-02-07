@@ -1,0 +1,114 @@
+{{- $options := include "options" . -}}
+{{- .Imports }}
+{{- range .Builder.For.Comments }}
+// {{ . }}
+{{- end }}
+export class {{ .Builder.Name|upperCamelCase }}Builder implements cog.Builder<{{ .BuilderSignatureType }}> {
+    protected readonly internal: {{ .ImportAlias }}.{{ .ObjectName }};
+    {{- range .Builder.Properties }}
+    private {{ .Name }}: {{ .Type | formatType }} = {{ .Type | defaultValueForType }};
+    {{- end }}
+
+    constructor({{ template "args" .Builder.Constructor.Args }}) {
+        this.internal = {{ .ImportAlias }}.default{{ .ObjectName | upperCamelCase }}();
+        {{- range $arg := .Builder.Constructor.Assignments }}
+        {{- template "constraints" $arg.Constraints }}
+        this.internal.{{ $arg.Path }} = {{ template "assignment_value" (dict "Assignment" $arg "Value" $arg.Value) }};
+        {{- end }}
+    }
+
+    /**
+     * Builds the object.
+     */
+    build(): {{ .ImportAlias }}.{{ .ObjectName }} {
+        return this.internal;
+    }
+
+{{- $customMethodsTmpl := print "builder_" .Builder.Package "_" .Builder.Name "_custom_methods" }}
+{{- includeIfExists $customMethodsTmpl (dict) -}}
+
+{{- $options -}}
+}
+{{ range .Builder.Factories }}
+    {{- template "factory" (dict "Builder" $.Builder "Factory" .) }}
+{{- end }}
+
+{{- define "assignment" }}
+{{- range .Assignment.NilChecks }}
+    {{- template "nil_check" . }}
+{{- end }}
+{{- template "constraints" .Assignment.Constraints }}
+
+    {{- template "assignment_setup" (dict "Value" .Assignment.Value) -}}
+
+    {{- $value := include "assignment_value" (dict "Assignment" .Assignment "Value" .Assignment.Value) -}}
+
+    {{- $preTmpl := print "pre_assignment_" .Builder.Name "_" .Option.Name }}
+    {{- includeIfExists $preTmpl (dict) -}}
+
+    {{- template "assignment_method" (dict "Method" .Assignment.Method "Path" .Assignment.Path "Value" $value) }}
+
+    {{- $postTmpl := print "post_assignment_" .Builder.Name "_" .Option.Name }}
+    {{- includeIfExists $postTmpl (dict) -}}
+{{- end }}
+
+{{- define "assignment_setup" }}
+    {{- with .Value.Argument }}
+        {{- if or (typeHasBuilder .Type) (resolvesToComposableSlot .Type) }}
+        {{- $builtResultSuffix := ternary "Resources" "Resource" .Type.IsArray }}
+        const {{ .Name|formatIdentifier }}{{ $builtResultSuffix }} = {{ template "unfold_builders" (dict "InputType" .Type "InputVar" (.Name|formatIdentifier) "Depth" 1) }};
+        {{- end }}
+    {{- end }}
+{{- end }}
+
+{{- define "unfold_builders" }}
+    {{- if .InputType.IsArray -}}
+        {{ .InputVar }}.map(builder{{ .Depth }} => {{ template "unfold_builders" (dict "InputType" .InputType.Array.ValueType "InputVar" (print "builder" .Depth ) "Depth" (add1 .Depth)) }})
+    {{- else if .InputType.IsMap -}}
+        (function() {
+            let results{{ .Depth }} = {};
+            for (const key{{ .Depth }} in {{ .InputVar }}) {
+                const val{{ .Depth }} = {{ .InputVar }}[key{{ .Depth }}];
+                results{{ .Depth }}[key{{ .Depth }}] = {{ template "unfold_builders" (dict "InputType" .InputType.Map.ValueType "InputVar" (print "val" .Depth ) "Depth" (add1 .Depth)) }};
+            }
+            return results{{ .Depth }};
+        }())
+    {{- else if typeIsDisjunctionOfBuilders .InputType -}}
+        {{ .InputVar }}.build()
+    {{- else if .InputType.IsDisjunction -}}
+        cog.isBuilder({{ .InputVar }}) ? {{ .InputVar }}.build() : {{ .InputVar }}
+    {{- else -}}
+        {{ .InputVar }}.build()
+    {{- end -}}
+{{- end }}
+
+{{- define "assignment_value" }}
+    {{- if not (eq .Value.Constant nil) }}
+        {{- formatValue .Assignment.Path.Last.Type .Value.Constant }}
+    {{- end }}
+    {{- with .Value.Argument }}
+        {{- if or (typeHasBuilder .Type) (resolvesToComposableSlot .Type) }}
+        {{- .Name|formatIdentifier }}{{- .Type.IsArray | ternary "Resources" "Resource" }}
+        {{- else }}
+        {{- .Name|formatIdentifier }}
+        {{- end }}
+    {{- end }}
+    {{- with .Value.Envelope }}
+        {{- template "value_envelope" (dict "Assignment" $.Assignment "Envelope" .) }}
+    {{- end }}
+{{- end }}
+
+{{- define "value_envelope" -}}
+    {
+    {{- range .Envelope.Values }}
+        {{- $value := include "assignment_value" (dict "Assignment" $.Assignment "Value" .Value) }}
+        {{ (index .Path 0).Identifier }}: {{ $value }},
+    {{- end }}
+    }
+{{- end }}
+
+{{- define "assignment_method" }}
+        {{ if eq .Method "direct" }}this.internal.{{ .Path|formatPath }} = {{ .Value }};{{ end -}}
+        {{ if eq .Method "index" }}this.internal.{{ .Path|formatPath }} = {{ .Value }};{{ end -}}
+        {{ if eq .Method "append" }}this.internal.{{ .Path|formatPath }}.push({{ .Value }});{{ end -}}
+{{- end }}

@@ -1,0 +1,42 @@
+version: "2"
+
+linters:
+  enable:
+    - gosec
+    - misspell
+    - nolintlint
+    - predeclared
+    - revive
+    - staticcheck
+  settings:
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - gosec
+          - govet
+          - staticcheck
+          - unused
+        path: _test.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

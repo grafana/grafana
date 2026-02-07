@@ -1,0 +1,30 @@
+language: go
+
+go:
+  - 1.11.x
+  - 1.12.x
+  - 1.13.x
+
+services:
+  - mysql
+  - postgresql
+
+# Setting sudo access to false will let Travis CI use containers rather than
+# VMs to run the tests. For more details see:
+# - http://docs.travis-ci.com/user/workers/container-based-infrastructure/
+# - http://docs.travis-ci.com/user/workers/standard-infrastructure/
+sudo: false
+
+before_script:
+  - mysql -e 'CREATE DATABASE squirrel;'
+  - psql -c 'CREATE DATABASE squirrel;' -U postgres
+
+script:
+  - go test
+  - cd integration
+  - go test -args -driver sqlite3
+  - go test -args -driver mysql -dataSource travis@/squirrel
+  - go test -args -driver postgres -dataSource 'postgres://postgres@localhost/squirrel?sslmode=disable'
+
+notifications:
+  irc: "irc.freenode.net#masterminds"

@@ -1,0 +1,31 @@
+{{- define "factory" }}
+{{- with .Factory.Comments}}
+/**
+{{- range . }}
+ * {{ . }}{{ end }}
+ */
+{{- end }}
+export function {{ .Factory.Name|lowerCamelCase}}({{- template "args" .Factory.Args }}): {{ .Builder.Name }}Builder {
+	const builder = new {{ .Builder.Name }}Builder();
+
+{{- range $call := .Factory.OptionCalls }}
+	builder.{{ $call.Name|formatIdentifier }}({{- range $i, $param := $call.Parameters }}{{- if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $param) -}}{{- end }});
+{{- end }}
+
+	return builder;
+}
+{{ end }}
+
+{{- define "factory_parameter_value" }}
+	{{- if not (eq .Value.Constant nil) -}}
+		{{- formatValue .Value.Constant.Type .Value.Constant.Value }}
+	{{- end }}
+	{{- with .Value.Argument -}}
+		{{- .Name|formatIdentifier -}}
+	{{- end -}}
+	{{- with .Value.Factory -}}
+		{{- $pkg := .Ref.Package|importPkg -}}
+		{{- if ne $pkg "" -}}{{ $pkg }}.{{- end -}}
+		{{ .Ref.Factory|lowerCamelCase }}({{ range $i, $arg := .Parameters }}{{- if gt $i 0 }}, {{ end }}{{ template "factory_parameter_value" (dict "Value" $arg)}}{{ end }})
+	{{- end -}}
+{{- end }}

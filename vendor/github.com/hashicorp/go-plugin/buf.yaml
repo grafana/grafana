@@ -1,0 +1,7 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: v1
+build:
+  excludes:
+    - examples/

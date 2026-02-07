@@ -1,0 +1,1 @@
+This is a partial copy of github.com/dgryski/go-metro.

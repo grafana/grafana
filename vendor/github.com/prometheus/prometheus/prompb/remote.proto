@@ -1,0 +1,88 @@
+// Copyright 2016 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package prometheus;
+
+option go_package = "prompb";
+
+import "types.proto";
+import "gogoproto/gogo.proto";
+
+message WriteRequest {
+  repeated prometheus.TimeSeries timeseries = 1 [(gogoproto.nullable) = false];
+  // Cortex uses this field to determine the source of the write request.
+  // We reserve it to avoid any compatibility issues.
+  reserved  2;
+  repeated prometheus.MetricMetadata metadata = 3 [(gogoproto.nullable) = false];
+}
+
+// ReadRequest represents a remote read request.
+message ReadRequest {
+  repeated Query queries = 1;
+
+  enum ResponseType {
+    // Server will return a single ReadResponse message with matched series that includes list of raw samples.
+    // It's recommended to use streamed response types instead.
+    //
+    // Response headers:
+    // Content-Type: "application/x-protobuf"
+    // Content-Encoding: "snappy"
+    SAMPLES = 0;
+    // Server will stream a delimited ChunkedReadResponse message that
+    // contains XOR or HISTOGRAM(!) encoded chunks for a single series.
+    // Each message is following varint size and fixed size bigendian
+    // uint32 for CRC32 Castagnoli checksum.
+    //
+    // Response headers:
+    // Content-Type: "application/x-streamed-protobuf; proto=prometheus.ChunkedReadResponse"
+    // Content-Encoding: ""
+    STREAMED_XOR_CHUNKS = 1;
+  }
+
+  // accepted_response_types allows negotiating the content type of the response.
+  //
+  // Response types are taken from the list in the FIFO order. If no response type in `accepted_response_types` is
+  // implemented by server, error is returned.
+  // For request that do not contain `accepted_response_types` field the SAMPLES response type will be used.
+  repeated ResponseType accepted_response_types = 2;
+}
+
+// ReadResponse is a response when response_type equals SAMPLES.
+message ReadResponse {
+  // In same order as the request's queries.
+  repeated QueryResult results = 1;
+}
+
+message Query {
+  int64 start_timestamp_ms = 1;
+  int64 end_timestamp_ms = 2;
+  repeated prometheus.LabelMatcher matchers = 3;
+  prometheus.ReadHints hints = 4;
+}
+
+message QueryResult {
+  // Samples within a time series must be ordered by time.
+  repeated prometheus.TimeSeries timeseries = 1;
+}
+
+// ChunkedReadResponse is a response when response_type equals STREAMED_XOR_CHUNKS.
+// We strictly stream full series after series, optionally split by time. This means that a single frame can contain
+// partition of the single series, but once a new series is started to be streamed it means that no more chunks will
+// be sent for previous one. Series are returned sorted in the same way TSDB block are internally.
+message ChunkedReadResponse {
+  repeated prometheus.ChunkedSeries chunked_series = 1;
+
+  // query_index represents an index of the query from ReadRequest.queries these chunks relates to.
+  int64 query_index = 2;
+}

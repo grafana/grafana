@@ -1,0 +1,10 @@
+#*
+*.sublime-*
+*~
+.#*
+.project
+.settings
+.DS_Store
+/maketesttables
+/workdir
+/segment-fuzz.zip

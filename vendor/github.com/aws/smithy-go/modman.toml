@@ -1,0 +1,9 @@
+[dependencies]
+
+[modules]
+
+  [modules.codegen]
+    no_tag = true
+
+  [modules."codegen/smithy-go-codegen/build/test-generated/go/internal/testmodule"]
+    no_tag = true

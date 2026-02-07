@@ -1,0 +1,5 @@
+{{- define "nil_check" }}
+if builder.internal.{{ .Path|formatPath }} == nil {
+    builder.internal.{{ .Path|formatPath }} = {{ .|emptyValueForGuard }}
+}
+{{- end }}

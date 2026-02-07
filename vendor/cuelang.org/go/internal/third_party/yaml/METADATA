@@ -1,0 +1,15 @@
+name: "go-yaml"
+description:
+    "Heavily modified version of go-yaml files. Most of the original "
+    "functionality is gone and replaced with CUE-specific code."
+
+third_party {
+  url {
+    type: GIT
+    value: "https://github.com/go-yaml/yaml"
+  }
+  version: "v2.2.1"
+  last_upgrade_date { year: 2018 month: 10 day: 24 }
+  license_type: NOTICE
+  local_modifications: "Replace Go-struct with CUE mapping."
+}

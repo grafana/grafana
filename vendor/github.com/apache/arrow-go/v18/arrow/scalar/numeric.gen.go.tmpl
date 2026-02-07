@@ -1,0 +1,149 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package scalar
+
+{{range .In}}
+type {{.Name}} struct {
+    scalar
+    Value {{.Type}}
+}
+
+func (s *{{.Name}}) Data() []byte {
+    return (*[arrow.{{.Name}}SizeBytes]byte)(unsafe.Pointer(&s.Value))[:]
+}
+
+func (s *{{.Name}}) equals(rhs Scalar) bool {
+    return s.Value == rhs.(*{{.Name}}).Value
+}
+
+{{if or (eq .Name "Float32") (eq .Name "Float64") }}
+func (s *{{.Name}}) approxEquals(rhs Scalar, eq equalOption) bool {
+    v1 := float64(s.Value)
+    v2 := float64(rhs.(*{{.Name}}).Value)
+    switch {
+    case eq.nansEq:
+        return v1 == v2 || math.Abs(v1-v2) <= eq.atol || (math.IsNaN(v1) && math.IsNaN(v2))
+    default:
+        return v1 == v2 || math.Abs(v1-v2) <= eq.atol
+    }
+}
+{{end}}
+
+func (s *{{.Name}}) value() interface{} {
+    return s.Value
+}
+
+func (s *{{.Name}}) String() string {
+	if !s.Valid {
+		return "null"
+	}
+	val, err := s.CastTo(arrow.BinaryTypes.String)
+	if err != nil {
+		return "..."
+	}
+	return string(val.(*String).Value.Bytes())
+}
+
+func (s *{{.Name}}) CastTo(dt arrow.DataType) (Scalar, error) {
+    if !s.Valid {
+        return MakeNullScalar(dt), nil
+    }
+
+    r, ok := numericMap[dt.ID()]
+    if ok {
+        return convertToNumeric(reflect.ValueOf(s.Value), r.valueType, r.scalarFunc), nil
+    }
+
+    switch dt := dt.(type) {
+    case *arrow.BooleanType:
+        return NewBooleanScalar(s.Value != 0), nil
+	case *arrow.Date32Type:
+		return NewDate32Scalar(arrow.Date32(s.Value)), nil
+	case *arrow.Date64Type:
+		return NewDate64Scalar(arrow.Date64(s.Value)), nil
+	case *arrow.Time32Type:
+		return NewTime32Scalar(arrow.Time32(s.Value), dt), nil
+	case *arrow.Time64Type:
+		return NewTime64Scalar(arrow.Time64(s.Value), dt), nil
+	case *arrow.TimestampType:
+		return NewTimestampScalar(arrow.Timestamp(s.Value), dt), nil
+	case *arrow.MonthIntervalType:
+		return NewMonthIntervalScalar(arrow.MonthInterval(s.Value)), nil
+    case *arrow.StringType:
+        return NewStringScalar(fmt.Sprintf("%v", s.Value)), nil
+    case *arrow.LargeStringType:
+        return NewLargeStringScalar(fmt.Sprintf("%v", s.Value)), nil
+    case *arrow.Decimal128Type:
+{{if eq .Name "Float32" -}}
+        v, err := decimal128.FromFloat32(s.Value, dt.Precision, dt.Scale)
+        if err != nil {
+            return nil, err
+        }
+        return NewDecimal128Scalar(v, dt), nil
+{{else if eq .Name "Float64" -}}
+        v, err := decimal128.FromFloat64(s.Value, dt.Precision, dt.Scale)
+        if err != nil {
+            return nil, err
+        }
+        return NewDecimal128Scalar(v, dt), nil
+{{else if eq .Name "Uint64" -}}
+        return NewDecimal128Scalar(decimal128.FromU64(s.Value), dt), nil
+{{else -}}
+        return NewDecimal128Scalar(decimal128.FromI64(int64(s.Value)), dt), nil
+{{end -}}
+    case *arrow.Decimal256Type:
+{{if eq .Name "Float32" -}}
+        v, err := decimal256.FromFloat32(s.Value, dt.Precision, dt.Scale)
+        if err != nil {
+            return nil, err
+        }
+        return NewDecimal256Scalar(v, dt), nil
+{{else if eq .Name "Float64" -}}
+        v, err := decimal256.FromFloat64(s.Value, dt.Precision, dt.Scale)
+        if err != nil {
+            return nil, err
+        }
+        return NewDecimal256Scalar(v, dt), nil
+{{else if eq .Name "Uint64" -}}
+        return NewDecimal256Scalar(decimal256.FromU64(s.Value), dt), nil
+{{else -}}
+        return NewDecimal256Scalar(decimal256.FromI64(int64(s.Value)), dt), nil
+{{end -}}
+	}
+
+	return nil, fmt.Errorf("invalid scalar cast from type {{.Type}} to type %s", dt)
+}
+
+func New{{.Name}}Scalar(val {{.Type}}) *{{.Name}} {
+    return &{{.Name}}{scalar{Type: arrow.PrimitiveTypes.{{.Name}}, Valid: true}, val}
+}
+{{end}}
+
+var numericMap = map[arrow.Type]struct{
+    scalarFunc reflect.Value
+    valueType reflect.Type
+}{
+{{range .In -}}
+    arrow.{{.Name|upper}}: {scalarFunc: reflect.ValueOf(New{{.Name}}Scalar), valueType: reflect.TypeOf({{.Type}}(0)) },
+{{end}}
+}
+
+var (
+{{range .In -}}
+    _ Scalar = (*{{.Name}})(nil)
+{{end}}
+)

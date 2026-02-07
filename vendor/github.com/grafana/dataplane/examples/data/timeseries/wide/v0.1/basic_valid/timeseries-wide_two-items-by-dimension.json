@@ -1,0 +1,55 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "timeseries-wide",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "TimeseriesWide with 2 items. There is 1 item name (slothCount) and 1 dimension (city).",
+            "itemCount": 2,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": false
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "t",
+          "type": "time",
+          "typeInfo": {
+            "frame": "time.Time"
+          }
+        },
+        {
+          "type": "number",
+          "name": "slothCount",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {
+            "city": "LGA"
+          }
+        },
+        {
+          "type": "number",
+          "name": "slothCount",
+          "typeInfo": {
+            "frame": "float64"
+          },
+          "labels": {
+            "city": "MIA"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        [1664901845976, 1664902845976],
+        [3, 5],
+        [6, 9]
+      ]
+    }
+  }
+]

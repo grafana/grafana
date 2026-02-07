@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/main/.schema/devbox.schema.json",
+  "packages": [
+    "go@1.23",
+    "php@8.3",
+    "php83Packages.composer@2.7",
+    "php83Packages.phpstan@2.1.1",
+    "python@3.12",
+    "golangci-lint@1.61",
+    "nodejs-slim_18@18.20.8",
+    "nodePackages.ts-node@10.9.2",
+    "gradle@8.10",
+    "goreleaser@2.2"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Entering Python venv' && . $VENV_DIR/bin/activate",
+      "echo 'Installing dependencies...' && make deps",
+      "export PYTHONPATH=$PYTHONPATH:$(pwd)/generated/python"
+    ]
+  }
+}

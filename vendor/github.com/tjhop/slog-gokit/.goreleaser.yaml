@@ -1,0 +1,29 @@
+version: 2
+
+builds:
+- skip: true
+gomod:
+  proxy: true
+  mod: mod
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^Merge pull request'
+      - '^ci(?:\(\w+\))?\!?:'
+      - '^docs(?:\(\w+\))?\!?:'
+      - '^test(?:\(\w+\))?\!?:'
+      - '^style(?:\(\w+\))?\!?:'
+  groups:
+    - title: "New Features And Changes"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "Other Changes"
+      order: 999

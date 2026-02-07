@@ -1,0 +1,7 @@
+# full line comment
+marty
+steve # trailing comment
+| different format of comment
+dustin
+siri | different style trailing comment
+multiple words	with different	whitespace

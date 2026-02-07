@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cog
+  title: cog
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: grafana/cog
+  links:
+    - title: Slack Channel
+      url: https://raintank-corp.slack.com/archives/C018SLDD5MW
+  description: |
+    Code generation with a human touch
+spec:
+  type: tool
+  owner: group:default/grafana-app-platform-squad
+  lifecycle: production

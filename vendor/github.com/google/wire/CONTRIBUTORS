@@ -1,0 +1,43 @@
+# This is the official list of people who can contribute
+# (and typically have contributed) code to the Wire repository.
+# The AUTHORS file lists the copyright holders; this file
+# lists people.  For example, Google employees are listed here
+# but not in AUTHORS, because Google holds the copyright.
+#
+# Names should be added to this file only after verifying that
+# the individual or the individual's organization has agreed to
+# the appropriate Contributor License Agreement, found here:
+#
+#     http://code.google.com/legal/individual-cla-v1.0.html
+#     http://code.google.com/legal/corporate-cla-v1.0.html
+#
+# The agreement for individuals can be filled out on the web.
+#
+# When adding J Random Contributor's name to this file,
+# either J's name or J's organization's name should be
+# added to the AUTHORS file, depending on whether the
+# individual or corporate CLA was used.
+
+# Names should be added to this file like so:
+#     Individual's name <submission email address>
+#     Individual's name <submission email address> <email2> <emailN>
+#
+# An entry with multiple email addresses specifies that the
+# first address should be used in the submit logs and
+# that the other addresses should be recognized as the
+# same person when interacting with Git.
+
+# Please keep the list sorted.
+
+Chris Lewis <cflewis@google.com> <cflewis@golang.org> <c@chris.to>
+Christina Austin <4240737+clausti@users.noreply.github.com>
+Eno Compton <enocom@google.com>
+Issac Trotts <issactrotts@google.com> <issac.trotts@gmail.com>
+ktr <ktr@syfm.me>
+Kumbirai Tanekha <kumbirai.tanekha@gmail.com>
+Oleg Kovalov <iamolegkovalov@gmail.com>
+Robert van Gent <rvangent@google.com> <vangent@gmail.com>
+Ross Light <light@google.com> <ross@zombiezen.com>
+Tuo Shan <shantuo@google.com> <sturbo89@gmail.com>
+Yoichiro Shimizu <budougumi0617@gmail.com>
+Zachary Romero <zacromero3@gmail.com>

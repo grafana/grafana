@@ -1,0 +1,18 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: "2"
+issues:
+  max-issues-per-linter: 0 # show all issues found by each linter
+  max-same-issues: 0 # don't ignore same issues
+linters:
+  exclusions:
+    rules:
+      - path: hclsyntax/scan_string_lit.go # generated file, ignore errors
+        linters:
+          - unused
+          - staticcheck
+      - path: hclsyntax/scan_tokens.go # generated file, ignore errors
+        linters:
+          - unused
+          - staticcheck

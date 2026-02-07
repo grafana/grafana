@@ -1,0 +1,18 @@
+{{- define "constraints" }}
+    {{- range $c := . }}
+        {{- $leftOperand := .Argument.Name|formatIdentifier }}
+        {{- $operator := .Op }}
+
+        {{- if eq .Op "minLength" }}
+            {{- $leftOperand = print $leftOperand ".length" }}
+            {{- $operator = ">=" }}
+        {{- end }}
+        {{- if eq .Op "maxLength" }}
+            {{- $leftOperand = print $leftOperand ".length" }}
+            {{- $operator = "<=" }}
+        {{- end }}
+        if (!({{ $leftOperand }} {{ $operator }} {{ .Parameter }})) {
+            throw new Error("{{ $leftOperand }} must be {{ $operator }} {{ .Parameter }}");
+        }
+    {{- end }}
+{{- end }}

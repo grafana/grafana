@@ -1,0 +1,193 @@
+syntax = "proto3";
+
+package stats;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/grafana/loki/v3/pkg/logqlmodel/stats";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// Result contains LogQL query statistics.
+message Result {
+  Summary summary = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "summary"
+  ];
+  Querier querier = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "querier"
+  ];
+  Ingester ingester = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "ingester"
+  ];
+  Caches caches = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "cache"
+  ];
+  Index index = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "index"
+  ];
+}
+
+message Caches {
+  Cache chunk = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "chunk"
+  ];
+  Cache index = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "index"
+  ];
+  Cache result = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "result"
+  ];
+  Cache statsResult = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "statsResult"
+  ];
+  Cache volumeResult = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "volumeResult"
+  ];
+  Cache seriesResult = 6 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "seriesResult"
+  ];
+  Cache labelResult = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "labelResult"
+  ];
+  Cache instantMetricResult = 8 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "instantMetricResult"
+  ];
+}
+
+// Summary is the summary of a query statistics.
+message Summary {
+  // Total bytes processed per second.
+  int64 bytesProcessedPerSecond = 1 [(gogoproto.jsontag) = "bytesProcessedPerSecond"];
+  // Total lines processed per second.
+  int64 linesProcessedPerSecond = 2 [(gogoproto.jsontag) = "linesProcessedPerSecond"];
+  // Total bytes processed. Includes structured metadata bytes.
+  int64 totalBytesProcessed = 3 [(gogoproto.jsontag) = "totalBytesProcessed"];
+  // Total lines processed.
+  int64 totalLinesProcessed = 4 [(gogoproto.jsontag) = "totalLinesProcessed"];
+  // Execution time in seconds.
+  // In addition to internal calculations this is also returned by the HTTP API.
+  // Grafana expects time values to be returned in seconds as float.
+  double execTime = 5 [(gogoproto.jsontag) = "execTime"];
+  // Queue time in seconds.
+  // In addition to internal calculations this is also returned by the HTTP API.
+  // Grafana expects time values to be returned in seconds as float.
+  double queueTime = 6 [(gogoproto.jsontag) = "queueTime"];
+  // Subqueries exists for backwards compatibility reasons and is deprecated. Do not use.
+  // Instead use splits and shards
+  int64 subqueries = 7 [(gogoproto.jsontag) = "subqueries"];
+  // Total number of result entries returned
+  int64 totalEntriesReturned = 8 [(gogoproto.jsontag) = "totalEntriesReturned"];
+  // Total number of splits by time
+  int64 splits = 9 [(gogoproto.jsontag) = "splits"];
+  // Total number of shards
+  int64 shards = 10 [(gogoproto.jsontag) = "shards"];
+  // Total lines post query filtering
+  int64 totalPostFilterLines = 11 [(gogoproto.jsontag) = "totalPostFilterLines"];
+  // Total bytes processed of metadata.
+  int64 totalStructuredMetadataBytesProcessed = 12 [(gogoproto.jsontag) = "totalStructuredMetadataBytesProcessed"];
+}
+
+// Statistics from Index queries
+// TODO(owen-d): include bytes.
+// Needs some index methods added to return _sized_ chunk refs to know
+message Index {
+  // Total chunks
+  int64 totalChunks = 1 [(gogoproto.jsontag) = "totalChunks"];
+  // Post-filtered chunks
+  int64 postFilterChunks = 2 [(gogoproto.jsontag) = "postFilterChunks"];
+  // Nanosecond duration spent fetching shards
+  int64 shardsDuration = 3 [(gogoproto.jsontag) = "shardsDuration"];
+}
+
+message Querier {
+  Store store = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "store"
+  ];
+}
+
+message Ingester {
+  // Total ingester reached for this query.
+  int32 totalReached = 1 [(gogoproto.jsontag) = "totalReached"];
+  // Total of chunks matched by the query from ingesters
+  int64 totalChunksMatched = 2 [(gogoproto.jsontag) = "totalChunksMatched"];
+  // Total of batches sent from ingesters.
+  int64 totalBatches = 3 [(gogoproto.jsontag) = "totalBatches"];
+  // Total lines sent by ingesters.
+  int64 totalLinesSent = 4 [(gogoproto.jsontag) = "totalLinesSent"];
+
+  Store store = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "store"
+  ];
+}
+
+message Store {
+  // The total of chunk reference fetched from index.
+  int64 totalChunksRef = 1 [(gogoproto.jsontag) = "totalChunksRef"];
+  // Total number of chunks fetched.
+  int64 totalChunksDownloaded = 2 [(gogoproto.jsontag) = "totalChunksDownloaded"];
+  // Time spent fetching chunks in nanoseconds.
+  int64 chunksDownloadTime = 3 [(gogoproto.jsontag) = "chunksDownloadTime"];
+  // Whether the query referenced structured metadata
+  bool queryReferencedStructured = 13 [(gogoproto.jsontag) = "queryReferencedStructuredMetadata"];
+
+  Chunk chunk = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "chunk"
+  ];
+
+  // Time spent fetching chunk refs from index.
+  int64 chunkRefsFetchTime = 5 [(gogoproto.jsontag) = "chunkRefsFetchTime"];
+
+  // Time spent being blocked on congestion control.
+  int64 congestionControlLatency = 6 [(gogoproto.jsontag) = "congestionControlLatency"];
+
+  // Total number of lines filtered by pipeline wrapper.
+  int64 pipelineWrapperFilteredLines = 7 [(gogoproto.jsontag) = "pipelineWrapperFilteredLines"];
+}
+
+message Chunk {
+  // Total bytes processed but was already in memory (found in the headchunk). Includes structured metadata bytes.
+  int64 headChunkBytes = 4 [(gogoproto.jsontag) = "headChunkBytes"];
+  // Total lines processed but was already in memory. (found in the headchunk)
+  int64 headChunkLines = 5 [(gogoproto.jsontag) = "headChunkLines"];
+  // Total bytes decompressed and processed from chunks. Includes structured metadata bytes.
+  int64 decompressedBytes = 6 [(gogoproto.jsontag) = "decompressedBytes"];
+  // Total lines decompressed and processed from chunks.
+  int64 decompressedLines = 7 [(gogoproto.jsontag) = "decompressedLines"];
+  // Total bytes of compressed chunks (blocks) processed.
+  int64 compressedBytes = 8 [(gogoproto.jsontag) = "compressedBytes"];
+  // Total duplicates found while processing.
+  int64 totalDuplicates = 9 [(gogoproto.jsontag) = "totalDuplicates"];
+  // Total lines post filtering
+  int64 postFilterLines = 10 [(gogoproto.jsontag) = "postFilterLines"];
+  // Total bytes processed for metadata but was already in memory. (found in the headchunk)
+  int64 headChunkStructuredMetadataBytes = 11 [(gogoproto.jsontag) = "headChunkStructuredMetadataBytes"];
+  // Total bytes of entries metadata decompressed and processed from chunks.
+  int64 decompressedStructuredMetadataBytes = 12 [(gogoproto.jsontag) = "decompressedStructuredMetadataBytes"];
+}
+
+message Cache {
+  int32 entriesFound = 1 [(gogoproto.jsontag) = "entriesFound"];
+  int32 entriesRequested = 2 [(gogoproto.jsontag) = "entriesRequested"];
+  int32 entriesStored = 3 [(gogoproto.jsontag) = "entriesStored"];
+  int64 bytesReceived = 4 [(gogoproto.jsontag) = "bytesReceived"];
+  int64 bytesSent = 5 [(gogoproto.jsontag) = "bytesSent"];
+  int32 requests = 6 [(gogoproto.jsontag) = "requests"];
+  int64 downloadTime = 7 [(gogoproto.jsontag) = "downloadTime"];
+  int64 queryLengthServed = 8 [(gogoproto.jsontag) = "queryLengthServed"];
+}

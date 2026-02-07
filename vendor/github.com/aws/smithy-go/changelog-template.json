@@ -1,0 +1,9 @@
+{
+    "id": "00000000-0000-0000-0000-000000000000",
+    "type": "feature|bugfix|dependency",
+    "description": "Description of your changes",
+    "collapse": false,
+    "modules": [
+        "."
+    ]
+}

@@ -1,0 +1,105 @@
+// Equals tests the equality of two `{{ .def.Name|formatObjectName }}` objects.
+func (resource {{ .def.Name|formatObjectName }}) Equals(other {{ .def.Name|formatObjectName }}) bool {
+	{{- template "type_equality_check" (dict "Type" .def.Type "Nullable" .def.Type.Nullable "Dereference" false "SelfName" "resource" "OtherName" "other" "Depth" 0) }}
+
+	return true
+}
+
+{{/* arguments: Type, Nullable, Dereference, SelfName, OtherName */}}
+{{- define "type_equality_check" }}
+	{{- if .Type.IsAny }}
+		{{- $reflect := importStdPkg "reflect" }}
+		{{- $dereference := ternary "*" "" .Dereference }}
+		// is DeepEqual good enough here?
+		if !reflect.DeepEqual({{ $dereference }}{{ .SelfName }}, {{ $dereference }}{{ .OtherName }}) {
+			return false
+		}
+	{{- else if resolvesToArray .Type }}
+		{{- $needsDereference := and .Type.IsRef .Type.Nullable }}
+		{{- $dereference := ternary "*" "" $needsDereference }}
+		{{- $depth := default 1 .Depth }}
+		{{- if $needsDereference }}
+			if {{ .SelfName }} == nil && {{ .OtherName }} != nil || {{ .SelfName }} != nil && {{ .OtherName }} == nil {
+				return false
+			}
+
+			if {{ .SelfName }} != nil {
+		{{- end }}
+
+		if len({{ $dereference }}{{ .SelfName }}) != len({{ $dereference }}{{ .OtherName }}) {
+			return false
+		}
+
+		for i{{ $depth }} := range {{ $dereference }}{{ .SelfName }} {
+		{{- $selfKey := print (ternary (print "(*" .SelfName ")") .SelfName $needsDereference) "[i" $depth "]" }}
+		{{- $otherKey := print (ternary (print "(*" .OtherName ")") .OtherName $needsDereference) "[i" $depth "]" }}
+			{{- template "type_equality_check" (dict "Type" (resolveRefs .Type).Array.ValueType "Nullable" (resolveRefs .Type).Array.ValueType.Nullable "Dereference" false "SelfName" $selfKey "OtherName" $otherKey "Depth" (add1 $depth)) }}
+		}
+		{{- if $needsDereference }}}{{ end }}
+	{{- else if resolvesToMap .Type }}
+		{{- $needsDereference := and .Type.IsRef .Type.Nullable }}
+		{{- $dereference := ternary "*" "" $needsDereference }}
+		{{- $depth := default 1 .Depth }}
+		{{- if $needsDereference }}
+			if {{ .SelfName }} == nil && {{ .OtherName }} != nil || {{ .SelfName }} != nil && {{ .OtherName }} == nil {
+				return false
+			}
+
+		if {{ .SelfName }} != nil {
+		{{- end }}
+
+		if len({{ $dereference }}{{ .SelfName }}) != len({{ $dereference }}{{ .OtherName }}) {
+			return false
+		}
+
+		for key{{ $depth }} := range {{ $dereference }}{{ .SelfName }} {
+			{{- $selfKey := print (ternary (print "(*" .SelfName ")") .SelfName $needsDereference) "[key" $depth "]" }}
+			{{- $otherKey := print (ternary (print "(*" .OtherName ")") .OtherName $needsDereference) "[key" $depth "]" }}
+			{{- template "type_equality_check" (dict "Type" (resolveRefs .Type).Map.ValueType "Nullable" (resolveRefs .Type).Map.ValueType.Nullable "Dereference" false "SelfName" $selfKey "OtherName" $otherKey "Depth" (add1 $depth)) }}
+		}
+		{{- if $needsDereference }}}{{ end }}
+	{{- else if and .Nullable }}
+		if {{ .SelfName }} == nil && {{ .OtherName }} != nil || {{ .SelfName }} != nil && {{ .OtherName }} == nil {
+			return false
+		}
+
+		if {{ .SelfName }} != nil {
+			{{- template "type_equality_check" (dict "Type" .Type "Nullable" false "Dereference" true "SelfName" .SelfName "OtherName" .OtherName "Depth" .Depth) }}
+		}
+	{{- else if .Type.IsStruct }}
+		{{- range $field := .Type.Struct.Fields }}
+			{{- $fieldName := $field.Name|formatFieldName -}}
+			{{- $selfKey := print $.SelfName "." $fieldName }}
+			{{- $otherKey := print $.OtherName "." $fieldName }}
+
+			{{- template "type_equality_check" (dict "Type" $field.Type "Nullable" $field.Type.Nullable "Dereference" false "SelfName" $selfKey "OtherName" $otherKey "Depth" $.Depth) }}
+		{{- end }}
+	{{- else if .Type.IsDataqueryComposableSlot }}
+		if !{{ .SelfName }}.Equals({{ .OtherName }}) {
+			return false
+		}
+	{{- else if typeHasEqualityFunc .Type }}
+		{{- $dereference := ternary "*" "" .Dereference }}
+		if !{{ .SelfName }}.Equals({{ $dereference }}{{ .OtherName }}) {
+			return false
+		}
+	{{- else if or (resolvesToScalar .Type) (resolvesToEnum .Type) }}
+	    {{- if and (.Type.IsScalar) (eq .Type.Scalar.ScalarKind "bytes")}}
+	    {{- $bytes := importStdPkg "bytes" }}
+	    if !bytes.Equal({{ .SelfName }}, {{ .OtherName }}) {
+	    {{- else }}
+		{{- $dereference := ternary "*" "" .Dereference }}
+		if {{ $dereference }}{{ .SelfName }} != {{ $dereference }}{{ .OtherName }} {
+	    {{- end }}
+			return false
+		}
+    {{- else if .Type.IsConstantRef }}
+        {{- $needsDereference := .Type.Nullable }}
+        {{- $dereference := ternary "*" "" $needsDereference }}
+        if {{ $dereference }}{{ .SelfName }} != {{ $dereference }}{{ .OtherName }} {
+            return false
+        }
+	{{- else }}
+		found an unimplemented equality case // intentionally left uncommented, to trigger a failure during codegen
+	{{- end }}
+{{- end }}

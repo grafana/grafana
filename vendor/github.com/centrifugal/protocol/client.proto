@@ -1,0 +1,344 @@
+syntax = "proto3";
+
+package centrifugal.centrifuge.protocol;
+
+option go_package = "github.com/centrifugal/protocol";
+
+message Error {
+  uint32 code = 1;
+  string message = 2;
+  bool temporary = 3;
+}
+
+message EmulationRequest {
+  string node = 1;
+  string session = 2;
+  bytes data = 3;
+}
+
+// Command sent from a client to a server.
+message Command {
+  // Id of command to let client match replies to commands.
+  uint32 id = 1;
+
+  reserved 2, 3;
+
+  // Client can send one of the following requests. Server will
+  // only take the first non-null request out of these and may return an error if
+  // client passed more than one request. We are not using oneof here due to JSON
+  // interoperability concerns.
+  ConnectRequest connect = 4;
+  SubscribeRequest subscribe = 5;
+  UnsubscribeRequest unsubscribe = 6;
+  PublishRequest publish = 7;
+  PresenceRequest presence = 8;
+  PresenceStatsRequest presence_stats = 9;
+  HistoryRequest history = 10;
+  PingRequest ping = 11;
+  SendRequest send = 12;
+  RPCRequest rpc = 13;
+  RefreshRequest refresh = 14;
+  SubRefreshRequest sub_refresh = 15;
+}
+
+// Reply is sent from a server to a client is sent as a response to Command or
+// can be an async server-to-client Push.
+message Reply {
+  // Id will only be set to a value > 0 for replies to commands. For pushes
+  // coming from server to client it has zero value.
+  uint32 id = 1;
+  // Error can only be set in replies to commands. For pushes it is never set.
+  Error error = 2;
+
+  reserved 3;
+
+  // ProtocolVersion2 server can send one of the following fields. We are not using
+  // oneof here due to JSON interoperability concerns.
+  Push push = 4;
+  ConnectResult connect = 5;
+  SubscribeResult subscribe = 6;
+  UnsubscribeResult unsubscribe = 7;
+  PublishResult publish = 8;
+  PresenceResult presence = 9;
+  PresenceStatsResult presence_stats = 10;
+  HistoryResult history = 11;
+  PingResult ping = 12;
+  RPCResult rpc = 13;
+  RefreshResult refresh = 14;
+  SubRefreshResult sub_refresh = 15;
+}
+
+// Push can be sent to a client as part of Reply in case of bidirectional transport or
+// without additional wrapping in case of unidirectional transports.
+message Push {
+  reserved 3;
+  int64 id = 1; // Optional numeric channel ID to avoid sending string channel in Push (bandwidth optimization).
+  string channel = 2;
+
+  // Server can push one of the following fields to the client. We are
+  // not using oneof here due to JSON interoperability concerns.
+  Publication pub = 4;
+  Join join = 5;
+  Leave leave = 6;
+  Unsubscribe unsubscribe = 7;
+  Message message = 8;
+  Subscribe subscribe = 9;
+  Connect connect = 10;
+  Disconnect disconnect = 11;
+  Refresh refresh = 12;
+}
+
+// ClientInfo contains information about client connection.
+message ClientInfo {
+  string user = 1;
+  string client = 2;
+  bytes conn_info = 3;
+  bytes chan_info = 4;
+}
+
+// Publication in channel.
+message Publication {
+  reserved 1, 2, 3;
+  bytes data = 4; // Data contains publication payload.
+  ClientInfo info = 5; // Info contains optional information about publisher. Usually it is set only if publication goes from the client side.
+  uint64 offset = 6; // Offset is a stream offset of the publication. Epoch is given in SubscribeResult.
+  map<string, string> tags = 7; // Optional tags associated with publication.
+  bool delta = 8;  // When set indicates that data in Publication is a delta from previous data.
+  int64 time = 9;  // Optional time of publication as Unix timestamp milliseconds.
+  string channel = 10; // Optional channel name if Publication relates to wildcard subscription.
+}
+
+// Join to channel.
+message Join {
+  ClientInfo info = 1;
+}
+
+// Leave from channel.
+message Leave {
+  ClientInfo info = 1;
+}
+
+// Unsubscribe from channel.
+message Unsubscribe {
+  reserved 1;
+  uint32 code = 2;
+  string reason = 3;
+}
+
+// Subscribe to channel, used for server-side subscriptions.
+message Subscribe {
+  bool recoverable = 1;
+  reserved 2, 3;
+  string epoch = 4;
+  uint64 offset = 5;
+  bool positioned = 6;
+  bytes data = 7;
+}
+
+// Message from client to server. No Reply is sent in response to Message.
+message Message {
+  bytes data = 1;
+}
+
+message Connect {
+  string client = 1;
+  string version = 2;
+  bytes data = 3;
+  map<string, SubscribeResult> subs = 4;
+  bool expires = 5;
+  uint32 ttl = 6;
+  uint32 ping = 7;
+  bool pong = 8;
+  string session = 9;
+  string node = 10;
+  int64 time = 11; // Server time as Unix timestamp in milliseconds (not sent by default).
+}
+
+message Disconnect {
+  uint32 code = 1;
+  string reason = 2;
+  bool reconnect = 3;
+}
+
+message Refresh {
+  bool expires = 1;
+  uint32 ttl = 2;
+}
+
+message ConnectRequest {
+  string token = 1;
+  bytes data = 2;
+  map<string, SubscribeRequest> subs = 3;
+  string name = 4;
+  string version = 5;
+  map<string, string> headers = 6;
+  int64 flag = 7; // Enable connection level features.
+}
+
+message ConnectResult {
+  string client = 1;
+  string version = 2;
+  bool expires = 3;
+  uint32 ttl = 4;
+  bytes data = 5;
+  map<string, SubscribeResult> subs = 6;
+  uint32 ping = 7;
+  bool pong = 8;
+  string session = 9;
+  string node = 10;
+  int64 time = 11; // Server time as Unix timestamp in milliseconds (not sent by default).
+}
+
+message RefreshRequest {
+  string token = 1;
+}
+
+message RefreshResult {
+  string client = 1;
+  string version = 2;
+  bool expires = 3;
+  uint32 ttl = 4;
+}
+
+message SubscribeRequest {
+  string channel = 1;
+  string token = 2;
+  bool recover = 3;
+  reserved 4, 5;
+  string epoch = 6;
+  uint64 offset = 7;
+  bytes data = 8;
+  bool positioned = 9;
+  bool recoverable = 10;
+  bool join_leave = 11;
+  string delta = 12;
+  FilterNode tf = 13; // Optional server side filter based on publication tags .
+  int64 flag = 14; // Enable subscription level features.
+}
+
+message SubscribeResult {
+  bool expires = 1;
+  uint32 ttl = 2;
+  bool recoverable = 3;
+  reserved 4, 5;
+  string epoch = 6;
+  repeated Publication publications = 7;
+  bool recovered = 8;
+  uint64 offset = 9;
+  bool positioned = 10;
+  bytes data = 11;
+  bool was_recovering = 12;
+  bool delta = 13;
+  int64 id = 14; // Optional numeric channel ID to avoid sending string channel in the following Pushes (bandwidth optimization).
+}
+
+message SubRefreshRequest {
+  string channel = 1;
+  string token = 2;
+}
+
+message SubRefreshResult {
+  bool expires = 1;
+  uint32 ttl = 2;
+}
+
+message UnsubscribeRequest {
+  string channel = 1;
+}
+
+message UnsubscribeResult {}
+
+message PublishRequest {
+  string channel = 1;
+  bytes data = 2;
+}
+
+message PublishResult {}
+
+message PresenceRequest {
+  string channel = 1;
+}
+
+message PresenceResult {
+  map<string, ClientInfo> presence = 1;
+}
+
+message PresenceStatsRequest {
+  string channel = 1;
+}
+
+message PresenceStatsResult {
+  uint32 num_clients = 1;
+  uint32 num_users = 2;
+}
+
+message StreamPosition {
+  uint64 offset = 1;
+  string epoch = 2;
+}
+
+message HistoryRequest {
+  string channel = 1;
+  reserved 2, 3, 4, 5, 6;
+  int32 limit = 7;
+  StreamPosition since = 8;
+  bool reverse = 9;
+}
+
+message HistoryResult {
+  repeated Publication publications = 1;
+  string epoch = 2;
+  uint64 offset = 3;
+}
+
+message PingRequest {}
+
+message PingResult {}
+
+message RPCRequest{
+  bytes data = 1;
+  string method = 2;
+}
+
+message RPCResult {
+  bytes data = 1 ;
+}
+
+message SendRequest{
+  bytes data = 1;
+}
+
+message FilterNode {
+  // Operation type for this node:
+  // - "" (empty string) → leaf node (comparison)
+  // - "and" → logical AND of child nodes
+  // - "or"  → logical OR of child nodes
+  // - "not" → logical NOT of a single child node
+  string op = 1;
+  // Key for comparison (only valid for leaf nodes).
+  string key = 2;
+  // Comparison operator for leaf nodes.
+  // Only meaningful if op == "".
+  // Supported values:
+  //   "eq"   → equal
+  //   "neq"  → not equal
+  //   "in"   → value is in vals
+  //   "nin"  → value is not in vals
+  //   "ex"   → key exists in tags
+  //   "nex"  → key does not exist
+  //   "sw"   → string starts with val
+  //   "ew"   → string ends with val
+  //   "ct"   → string contains val
+  //   "lt"   → numeric less than val
+  //   "lte"  → numeric less than or equal val
+  //   "gt"   → numeric greater than val
+  //   "gte"  → numeric greater than or equal val
+  string cmp = 3;
+  // Single value used in most comparisons (e.g. "eq").
+  string val = 4;
+  // Multiple values used for set comparisons ("in", "nin").
+  repeated string vals = 5;
+  // Child nodes.
+  // Used for logical operations: "and", "or", "not".
+  repeated FilterNode nodes = 6;
+}

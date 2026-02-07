@@ -1,0 +1,30 @@
+{
+  "name": "nanogit",
+  "version": "1.0.0",
+  "description": "Lightweight, HTTPS-only Git implementation for cloud-native environments",
+  "type": "module",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.24"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grafana/nanogit.git"
+  },
+  "keywords": ["git", "cloud-native", "https", "golang"],
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/grafana/nanogit/issues"
+  },
+  "homepage": "https://github.com/grafana/nanogit#readme"
+}

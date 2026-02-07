@@ -1,0 +1,138 @@
+{
+  "schema": "1.0",
+  "comment": "This file maps proto services/RPCs to the corresponding library clients/methods.",
+  "language": "go",
+  "protoPackage": "google.storage.v2",
+  "libraryPackage": "cloud.google.com/go/storage/internal/apiv2",
+  "services": {
+    "Storage": {
+      "clients": {
+        "grpc": {
+          "libraryClient": "Client",
+          "rpcs": {
+            "BidiReadObject": {
+              "methods": [
+                "BidiReadObject"
+              ]
+            },
+            "BidiWriteObject": {
+              "methods": [
+                "BidiWriteObject"
+              ]
+            },
+            "CancelResumableWrite": {
+              "methods": [
+                "CancelResumableWrite"
+              ]
+            },
+            "ComposeObject": {
+              "methods": [
+                "ComposeObject"
+              ]
+            },
+            "CreateBucket": {
+              "methods": [
+                "CreateBucket"
+              ]
+            },
+            "DeleteBucket": {
+              "methods": [
+                "DeleteBucket"
+              ]
+            },
+            "DeleteObject": {
+              "methods": [
+                "DeleteObject"
+              ]
+            },
+            "GetBucket": {
+              "methods": [
+                "GetBucket"
+              ]
+            },
+            "GetIamPolicy": {
+              "methods": [
+                "GetIamPolicy"
+              ]
+            },
+            "GetObject": {
+              "methods": [
+                "GetObject"
+              ]
+            },
+            "ListBuckets": {
+              "methods": [
+                "ListBuckets"
+              ]
+            },
+            "ListObjects": {
+              "methods": [
+                "ListObjects"
+              ]
+            },
+            "LockBucketRetentionPolicy": {
+              "methods": [
+                "LockBucketRetentionPolicy"
+              ]
+            },
+            "MoveObject": {
+              "methods": [
+                "MoveObject"
+              ]
+            },
+            "QueryWriteStatus": {
+              "methods": [
+                "QueryWriteStatus"
+              ]
+            },
+            "ReadObject": {
+              "methods": [
+                "ReadObject"
+              ]
+            },
+            "RestoreObject": {
+              "methods": [
+                "RestoreObject"
+              ]
+            },
+            "RewriteObject": {
+              "methods": [
+                "RewriteObject"
+              ]
+            },
+            "SetIamPolicy": {
+              "methods": [
+                "SetIamPolicy"
+              ]
+            },
+            "StartResumableWrite": {
+              "methods": [
+                "StartResumableWrite"
+              ]
+            },
+            "TestIamPermissions": {
+              "methods": [
+                "TestIamPermissions"
+              ]
+            },
+            "UpdateBucket": {
+              "methods": [
+                "UpdateBucket"
+              ]
+            },
+            "UpdateObject": {
+              "methods": [
+                "UpdateObject"
+              ]
+            },
+            "WriteObject": {
+              "methods": [
+                "WriteObject"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

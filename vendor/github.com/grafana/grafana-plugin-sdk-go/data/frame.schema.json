@@ -1,0 +1,601 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/Frame",
+    "definitions": {
+        "Frame": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "schema": {
+                    "$ref": "#/definitions/Schema"
+                },
+                "data": {
+                    "$ref": "#/definitions/Data"
+                }
+            },
+            "title": "Frame"
+        },
+        "Schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "refId": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/Meta"
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/SchemaField"
+                    },
+                    "minItems": 0
+                }
+            },
+            "required": [
+                "fields"
+            ],
+            "title": "Schema"
+        },
+        "SchemaField": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "string",
+                        "number",
+                        "boolean",
+                        "time",
+                        "enum",
+                        "other"
+                    ]
+                },
+                "typeInfo": {
+                    "$ref": "#/definitions/TypeInfo"
+                },
+                "labels": {
+                    "$ref": "#/definitions/Labels"
+                },
+                "config": {
+                    "$ref": "#/definitions/FieldConfig"
+                }
+            },
+            "required": [
+                "typeInfo"
+            ],
+            "title": "SchemaField"
+        },
+        "TypeInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "frame": {
+                    "type": "string",
+                    "enum": [
+                        "int8",
+                        "int16",
+                        "int32",
+                        "int64",
+                        "uint8",
+                        "uint16",
+                        "uint32",
+                        "uint64",
+                        "float32",
+                        "float64",
+                        "string",
+                        "bool",
+                        "time.Time",
+                        "json.RawMessage",
+                        "enum"
+                    ]
+                },
+                "nullable": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "frame"
+            ],
+            "title": "TypeInfo"
+        },
+        "Labels": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            },
+            "title": "Labels"
+        },
+        "FieldConfig": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "displayNameFromDS": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "filterable": {
+                    "type": "boolean"
+                },
+                "writeable": {
+                    "type": "boolean"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "decimals": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                },
+                "min": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "max": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "interval": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "mappings": {
+                    "type": "object"
+                },
+                "thresholds": {
+                    "$ref": "#/definitions/ThresholdsConfig"
+                },
+                "color": {
+                    "type": "object"
+                },
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DataLink"
+                    }
+                },
+                "noValue": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/FieldTypeConfig"
+                },
+                "custom": {
+                    "type": "object"
+                }
+            },
+            "title": "FieldConfig"
+        },
+        "FieldTypeConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enum": {
+                    "$ref": "#/definitions/EnumFieldConfig"
+                }
+            },
+            "title": "FieldTypeConfig"
+        },
+        "EnumFieldConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "text": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "color": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "icon": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "text"
+            ],
+            "title": "EnumFieldConfig"
+        },
+        "ThresholdsConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "absolute",
+                        "percentage"
+                    ]
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Threshold"
+                    },
+                    "minItems": 1
+                }
+            },
+            "required": [
+                "mode",
+                "steps"
+            ],
+            "title": "ThresholdsConfig"
+        },
+        "Threshold": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "value": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "color": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            },
+            "title": "Threshold"
+        },
+        "DataLink": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "targetBlank": {
+                    "type": "boolean"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "internal": {
+                    "$ref": "#/definitions/InternalDataLink"
+                }
+            },
+            "title": "DataLink"
+        },
+        "InternalDataLink": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "query": {},
+                "datasourceUid": {
+                    "type": "string"
+                },
+                "datasourceName": {
+                    "type": "string"
+                },
+                "panelsState": {},
+                "transformations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LinkTransformationConfig"
+                    }
+                },
+                "timeRange": {
+                    "$ref": "#/definitions/TimeRange"
+                }
+            },
+            "title": "InternalDataLink"
+        },
+        "LinkTransformationConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "regex",
+                        "logfmt"
+                    ]
+                },
+                "field": {
+                    "type": "string"
+                },
+                "expression": {
+                    "type": "string"
+                },
+                "mapValue": {
+                    "type": "string"
+                }
+            },
+            "title": "LinkTransformationConfig"
+        },
+        "TimeRange": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "to": {
+                    "type": "string",
+                    "format": "date-time"
+                }
+            },
+            "title": "TimeRange"
+        },
+        "Meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "",
+                        "timeseries-wide",
+                        "timeseries-long",
+                        "timeseries-many",
+                        "timeseries-multi",
+                        "directory-listing",
+                        "table",
+                        "numeric-wide",
+                        "numeric-multi",
+                        "numeric-long",
+                        "log-lines"
+                    ]
+                },
+                "typeVersion": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "path": {
+                    "type": "string"
+                },
+                "pathSeparator": {
+                    "type": "string"
+                },
+                "custom": {},
+                "stats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/QueryStat"
+                    }
+                },
+                "notices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Notice"
+                    }
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "preferredVisualisationType": {
+                    "type": "string",
+                    "enum": [
+                        "graph",
+                        "table",
+                        "logs",
+                        "trace",
+                        "nodeGraph",
+                        "flamegraph"
+                    ]
+                },
+                "preferredVisualisationPluginId": {
+                    "type": "string"
+                },
+                "executedQueryString": {
+                    "type": "string"
+                },
+                "dataTopic": {
+                    "type": "string",
+                    "enum": [
+                        "",
+                        "annotations"
+                    ]
+                },
+                "uniqueRowIdFields": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            },
+            "title": "Meta"
+        },
+        "QueryStat": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/FieldConfig"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "value": {
+                            "type": "number"
+                        }
+                    },
+                    "required": [
+                        "value"
+                    ]
+                }
+            ],
+            "title": "QueryStat"
+        },
+        "Notice": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "severity": {
+                    "type": "string",
+                    "enum": [
+                        "info",
+                        "warning",
+                        "error"
+                    ]
+                },
+                "text": {
+                    "type": "string"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "inspect": {
+                    "type": "string",
+                    "enum": [
+                        "",
+                        "meta",
+                        "error",
+                        "data",
+                        "stats"
+                    ]
+                }
+            },
+            "required": [
+                "severity",
+                "text"
+            ],
+            "title": "Notice"
+        },
+        "Data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ValueColumn"
+                    }
+                },
+                "entities": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/FieldEntityLookup"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "nanos": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "values"
+            ],
+            "title": "Data"
+        },
+        "ValueColumn": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/Value"
+            },
+            "title": "ValueColumn"
+        },
+        "Value": {
+            "anyOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "object"
+                },
+                {
+                    "type": "array"
+                }
+            ],
+            "title": "Value"
+        },
+        "FieldEntityLookup": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "NaN": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "Inf": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "NegInf": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "title": "FieldEntityLookup"
+        }
+    }
+}

@@ -1,0 +1,1599 @@
+OpenFGA
+https://github.com/openfga/openfga
+
+Copyright 2022 Okta, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+
+--------------------------------------------------------------------------------
+
+
+
+
+The following 3rd-party software packages may be used by or distributed with OpenFGA. Certain  licenses and notices may appear in other parts of the product in accordance with the applicable license requirements. 
+
+The Okta product that this document references does not necessarily use all the open source software packages referred to below and may also only use portions of a given package. In addition, Okta makes available to customers certain complementary, unmodified open source software packages that facilitate customers’ use of the OpenFGA product. 
+
+Date generated: 2024-10-7
+
+Revision ID: 5ed0286274ffbb1cd86efecde69a20779acec8c9
+
+
+================================================================================
+
+                                  Dependencies
+
+================================================================================
+
+- aec (39771216ff4c63d11f5e604076f9c45e8be1067b) [MIT]
+- afero (5c4385aa20510dba5ca4db12c02b0c9211d82892) [Apache-2.0]
+- antlr (4d7e18847d8881a176db3d7cca909e3f3942a05f) [BSD-3-Clause]
+- api (102620ef2a66f680803874bc22aa014c1d428a1a) [Apache-2.0]
+- backoff (720b78985a65c0452fd37bb155c7cac4157a7c45) [MIT]
+- cast (48ddde5701366ade1d3aba346e09bb58430d37c6) [MIT]
+- ccache (62cd8cc8c30cea3d3a1a9c35657921005b4ad932) [MIT]
+- cel-go (3545aac7e6d484d3035b1833c4ade036c3f7bacb) [BSD-3-Clause, Apache-2.0, MIT]
+- client_golang (05fcde9fe4eb93d3fb7b56ebe51acf80536f0583) [Apache-2.0, BSD-3-Clause, MIT]
+- client_model (571429e996ba2d9499e3dcb12926767ba953c0ef) [Apache-2.0]
+- cobra (e94f6d0dd9a5e5738dca6bce03c4b1207ffbc0ec) [Apache-2.0]
+- common (0c7b585c7da330aae136aaa874cb4f89f5b3e5d9) [Apache-2.0]
+- compress (7ae2138b16cc43afcea3ce7d3d2f2625fb389d51) [MIT, BSD-3-Clause, Apache-2.0]
+- conc (7b8c8f2875cb861bb61844c9bcaa1aed070adbd4) [MIT]
+- crypto (c9da6b9a4008902aae7c754e8f01d42e2d2cf205) [BSD-3-Clause, openssl-ssleay]
+- docker (41ca978a0a5400cc24b274137efa9f25517fcc0b) [Apache-2.0, BSD-3-Clause, GPL-2.0-or-later, MPL-2.0, MIT, CC-BY-4.0, BSD-2-Clause, openssl-ssleay, CC-BY-SA-4.0, GPL-2.0-only, ISC]
+- docker-image-spec (f1d00ebd2d6d6805170d5543dbca4b850f35f9af) [Apache-2.0]
+- edwards25519 (325f520de716c1d2d2b4e8dc2f82c7ccc5fac764) [BSD-3-Clause, BSD-1-Clause]
+- errors (614d223910a179a466c1767a985424175c39b465) [BSD-2-Clause]
+- errwrap (7b00e5db719c64d14dd0caaacbd13e76254d02c0) [MPL-2.0]
+- exp (e7e105dedf7e2bd7a7db7003ed6711b3337f26b8) [BSD-3-Clause, Apache-2.0]
+- fsnotify (cfc9c4f277ea6ec18de92444b31983b183deb4fb) [BSD-3-Clause]
+- gc (573471604cb600a31c7581f174257f48e875aa05) [BSD-3-Clause]
+- github.com/emirpasic/gods (v1.18.1) [ISC, BSD-2-Clause, BSD-3-Clause]
+- github.com/jackc/pgpassfile (v1.0.0) [MIT]
+- github.com/kylelemons/godebug (v1.1.0) [Apache-2.0]
+- github.com/lann/builder (47ae307949d0) [MIT]
+- github.com/lann/ps (62de8c46ede0) [MIT]
+- github.com/Masterminds/squirrel (v1.5.4) [MIT]
+- github.com/oklog/ulid/v2 (v2.1.0) [Apache-2.0]
+- github.com/opencontainers/go-digest (v1.0.0) [CC-BY-SA-4.0, Apache-2.0]
+- github.com/remyoudompheng/bigfft (24d4a6f8daec) [BSD-3-Clause]
+- github.com/rs/cors (v1.11.1) [MIT]
+- github.com/tidwall/match (v1.1.1) [MIT]
+- github.com/tidwall/pretty (v1.2.0) [MIT]
+- gjson (5ab551f3ac05551c469e5f5ab26154a49f69afcf) [MIT]
+- go-ansiterm (306776ec8161b5dc8676039adbf598a39bce3de0) [MIT]
+- go-cleanhttp (6d9e2ac5d828e5f8594b97f88c4bde14a67bb6d2) [MPL-2.0]
+- go-cmp (c3ad8435e7bef96af35732bc0789e5a2278c6d5f) [BSD-3-Clause]
+- goautoneg (a7dc8b61c822528f973a5e4e7b272055c6fdb43e) [BSD-3-Clause]
+
+
+--------------------------------------------------------------------------------
+Package Title: aec (39771216ff4c63d11f5e604076f9c45e8be1067b)
+
+Package Locator: git+github.com/morikuni/aec$39771216ff4c63d11f5e604076f9c45e8be1067b
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Taihei Morikuni
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The ...
+
+
+--------------------------------------------------------------------------------
+Package Title: afero (5c4385aa20510dba5ca4db12c02b0c9211d82892)
+
+Package Locator: git+github.com/spf13/afero$5c4385aa20510dba5ca4db12c02b0c9211d82892
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that ...
+
+
+--------------------------------------------------------------------------------
+Package Title: antlr (4d7e18847d8881a176db3d7cca909e3f3942a05f)
+
+Package Locator: git+github.com/antlr4-go/antlr$4d7e18847d8881a176db3d7cca909e3f3942a05f
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright (c) 2012-2023 The ANTLR Project. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or o...
+
+
+--------------------------------------------------------------------------------
+Package Title: api (102620ef2a66f680803874bc22aa014c1d428a1a)
+
+Package Locator: git+github.com/openfga/api$102620ef2a66f680803874bc22aa014c1d428a1a
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2022 Okta, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language govern...
+
+
+--------------------------------------------------------------------------------
+Package Title: backoff (720b78985a65c0452fd37bb155c7cac4157a7c45)
+
+Package Locator: git+github.com/cenkalti/backoff$720b78985a65c0452fd37bb155c7cac4157a7c45
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Cenk Altı
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above ...
+
+
+--------------------------------------------------------------------------------
+Package Title: cast (48ddde5701366ade1d3aba346e09bb58430d37c6)
+
+Package Locator: git+github.com/spf13/cast$48ddde5701366ade1d3aba346e09bb58430d37c6
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Steve Francia
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The ab...
+
+
+--------------------------------------------------------------------------------
+Package Title: ccache (62cd8cc8c30cea3d3a1a9c35657921005b4ad932)
+
+Package Locator: git+github.com/karlseguin/ccache$62cd8cc8c30cea3d3a1a9c35657921005b4ad932
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+Copyright (c) 2013 Karl Seguin.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and ...
+
+
+--------------------------------------------------------------------------------
+Package Title: cel-go (3545aac7e6d484d3035b1833c4ade036c3f7bacb)
+
+Package Locator: git+github.com/google/cel-go$3545aac7e6d484d3035b1833c4ade036c3f7bacb
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause, Apache-2.0
+
+* BSD-3-Clause *
+
+Copyright (c) 2018 The Go Authors. All rights reserved. . All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclai...
+
+* Apache-2.0 *
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner tha...
+
+
+* Other Licenses *
+MIT
+
+
+Copyright (c) 2017 Adrian Stoewer <adrian.stoewer@rz.ifi.lmu.de>
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:...
+
+
+--------------------------------------------------------------------------------
+Package Title: client_golang (05fcde9fe4eb93d3fb7b56ebe51acf80536f0583)
+
+Package Locator: git+github.com/prometheus/client_golang$05fcde9fe4eb93d3fb7b56ebe51acf80536f0583
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that...
+
+
+* Other Licenses *
+BSD-3-Clause, MIT
+
+* BSD-3-Clause *
+
+Copyright (c) 2013 The Go Authors. All rights reserved. . All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclai...
+
+* MIT *
+
+Copyright (c) 2015 Björn Rabenstein
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice ...
+
+
+--------------------------------------------------------------------------------
+Package Title: client_model (571429e996ba2d9499e3dcb12926767ba953c0ef)
+
+Package Locator: git+github.com/prometheus/client_model$571429e996ba2d9499e3dcb12926767ba953c0ef
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that...
+
+
+--------------------------------------------------------------------------------
+Package Title: cobra (e94f6d0dd9a5e5738dca6bce03c4b1207ffbc0ec)
+
+Package Locator: git+github.com/spf13/cobra$e94f6d0dd9a5e5738dca6bce03c4b1207ffbc0ec
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that ...
+
+
+--------------------------------------------------------------------------------
+Package Title: common (0c7b585c7da330aae136aaa874cb4f89f5b3e5d9)
+
+Package Locator: git+github.com/prometheus/common$0c7b585c7da330aae136aaa874cb4f89f5b3e5d9
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that...
+
+
+--------------------------------------------------------------------------------
+Package Title: compress (7ae2138b16cc43afcea3ce7d3d2f2625fb389d51)
+
+Package Locator: git+github.com/klauspost/compress$7ae2138b16cc43afcea3ce7d3d2f2625fb389d51
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT, BSD-3-Clause, Apache-2.0
+
+* MIT *
+
+Copyright (c) 2012 The Go Authors. All rights reserved.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The abo...
+
+* BSD-3-Clause *
+
+Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
+Copyright (c) 2019 Klaus Post. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and ...
+
+* Apache-2.0 *
+
+Copyright (c) 2012 The Go Authors. All rights reserved.
+Copyright (c) 2019 Klaus Post. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the fol...
+
+
+--------------------------------------------------------------------------------
+Package Title: conc (7b8c8f2875cb861bb61844c9bcaa1aed070adbd4)
+
+Package Locator: git+github.com/sourcegraph/conc$7b8c8f2875cb861bb61844c9bcaa1aed070adbd4
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+MIT License
+
+Copyright (c) 2023 Sourcegraph
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyrigh...
+
+
+--------------------------------------------------------------------------------
+Package Title: crypto (c9da6b9a4008902aae7c754e8f01d42e2d2cf205)
+
+Package Locator: git+go.googlesource.com/crypto$c9da6b9a4008902aae7c754e8f01d42e2d2cf205
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright 2009 The Go Authors.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with t...
+
+
+* Other Licenses *
+openssl-ssleay
+
+
+LICENSE ISSUES
+  ==============
+
+  The OpenSSL toolkit stays under a dual license, i.e. both the conditions of
+  the OpenSSL License and the original SSLeay license apply to the toolkit.
+  See below for the actual license texts. Actually both licenses are BSD-style
+  Open Source licenses. In case of any license issues related to OpenSSL
+  please contact openssl-core@openssl.org.
+
+  OpenSSL License
+  ---------------
+
+Redistribution and use in source and binary forms, with or without
+modificati...
+
+
+--------------------------------------------------------------------------------
+Package Title: docker (41ca978a0a5400cc24b274137efa9f25517fcc0b)
+
+Package Locator: git+github.com/docker/docker$41ca978a0a5400cc24b274137efa9f25517fcc0b
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        https://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner th...
+
+
+* Other Licenses *
+BSD-3-Clause, GPL-2.0-or-later, MPL-2.0, MIT, CC-BY-4.0, BSD-2-Clause, openssl-ssleay, CC-BY-SA-4.0, GPL-2.0-only, ISC
+
+* BSD-3-Clause *
+
+Copyright (c) 2013 Dario Castañé. All rights reserved. . All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaim...
+
+* GPL-2.0-or-later *
+
+Copyright (C)  Text: copyright notice(s) text, "NONE" or "NOASSERTION"
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 or any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more de...
+
+* MPL-2.0 *
+
+1. Definitions
+      1.1. "Contributor" means each individual or legal entity that creates, contributes to the creation of, or owns Covered Software.
+      1.2. "Contributor Version" means the combination of the Contributions of others (if any) used by a Contributor and that particular Contributor's Contribution.
+      1.3. "Contribution" means Covered Software of a particular Contributor.
+      1.4. "Covered Software" means Source Code Form to which the initial Contributor has attached the n...
+
+* MIT *
+
+Copyright (c) 2012-2017 Docker, Inc.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+* CC-BY-4.0 *
+
+Attribution 4.0 International<<endOptional>>
+By exercising the Licensed Rights (defined below), You accept and agree to be bound by the terms and conditions of this Creative Commons Attribution 4.0 International Public License ("Public License"). To the extent this Public License may be interpreted as a contract, You are granted the Licensed Rights in consideration of Your acceptance of these terms and conditions, and the Licensor grants You such rights in consideration of benefits the Licens...
+
+* BSD-2-Clause *
+
+Copyright (c) 2011 Russ Ross
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice, this
+      list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+
+      and/or other mater...
+
+* openssl-ssleay *
+
+LICENSE ISSUES
+  ==============
+
+  The OpenSSL toolkit stays under a dual license, i.e. both the conditions of
+  the OpenSSL License and the original SSLeay license apply to the toolkit.
+  See below for the actual license texts. Actually both licenses are BSD-style
+  Open Source licenses. In case of any license issues related to OpenSSL
+  please contact openssl-core@openssl.org.
+
+  OpenSSL License
+  ---------------
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+
+3. All advertising materials mentioning features or use of this
+   software must display the following acknowledgment:
+   "This product includes software developed by the OpenSSL Project
+   for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+
+4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+   endorse or promote products derived from this software without
+   prior written permission. For written permission, please contact
+   openssl-core@openssl.org.
+
+5. Products derived from this software may not be called "OpenSSL"
+   nor may "OpenSSL" appear in their names without prior written
+   permission of the OpenSSL Project.
+
+6. Redistributions of any form whatsoever must retain the following
+   acknowledgment:
+   "This product includes software developed by the OpenSSL Project
+   for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+
+THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+This product includes cryptographic software written by Eric Young
+(eay@cryptsoft.com).  This product includes software written by Tim
+Hudson (tjh@cryptsoft.com).
+
+
+ Original SSLeay License
+ -----------------------
+
+Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
+All rights reserved.
+
+This package is an SSL implementation written
+by Eric Young (eay@cryptsoft.com).
+The implementation was written so as to conform with Netscapes SSL.
+
+This library is free for commercial and non-commercial use as long as
+the following conditions are aheared to.  The following conditions
+apply to all code found in this distribution, be it the RC4, RSA,
+lhash, DES, etc., code; not just the SSL code.  The SSL documentation
+included with this distribution is covered by the same copyright terms
+except that the holder is Tim Hudson (tjh@cryptsoft.com).
+
+Copyright remains Eric Young's, and as such any Copyright notices in
+the code are not to be removed.
+If this package is used in a product, Eric Young should be given attribution
+as the author of the parts of the library used.
+This can be in the form of a textual message at program startup or
+in documentation (online or textual) provided with the package.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   "This product includes cryptographic software written by
+    Eric Young (eay@cryptsoft.com)"
+   The word 'cryptographic' can be left out if the rouines from the library
+   being used are not cryptographic related :-).
+4. If you include any Windows specific code (or a derivative thereof) from
+   the apps directory (application code) you must include an acknowledgement:
+   "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
+
+THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+The licence and distribution terms for any publically available version or
+derivative of this code cannot be changed.  i.e. this code cannot simply be
+copied and put under another distribution licence
+[including the GNU Public Licence.]
+
+* CC-BY-SA-4.0 *
+
+Attribution-ShareAlike 4.0 International<<endOptional>>
+Using Creative Commons Public Licenses
+Creative Commons public licenses provide a standard set of terms and conditions that creators and other rights holders may use to share original works of authorship and other material subject to copyright and certain other rights specified in the public license below. The following considerations are for informational purposes only, are not exhaustive, and do not form part of our licenses.
+Considerations for licensors: Our public licenses are intended for use by those authorized to give the public permission to use material in ways otherwise restricted by copyright and certain other rights. Our licenses are irrevocable. Licensors should read and understand the terms and conditions of the license they choose before applying it. Licensors should also secure all rights necessary before applying our licenses so that the public can reuse the material as expected. Licensors should clearly mark any material not subject to the license. This includes other CC-licensed material, or material used under an exception or limitation to copyright. More considerations for licensors : wiki.creativecommons.org/Considerations_for_licensors
+Considerations for the public: By using one of our public licenses, a licensor grants the public permission to use the licensed material under specified terms and conditions. If the licensor's permission is not necessary for any reason–for example, because of any applicable exception or limitation to copyright–then that use is not regulated by the license. Our licenses grant only permissions under copyright and certain other rights that a licensor has authority to grant. Use of the licensed material may still be restricted for other reasons, including because others have copyright or other rights in the material. A licensor may make special requests, such as asking that all changes be marked or described.
+Although not required by our licenses, you are encouraged to respect those requests where reasonable. More considerations for the public : wiki.creativecommons.org/Considerations_for_licensees
+Creative Commons Attribution-ShareAlike 4.0 International Public License
+By exercising the Licensed Rights (defined below), You accept and agree to be bound by the terms and conditions of this Creative Commons Attribution-ShareAlike 4.0 International Public License ("Public License"). To the extent this Public License may be interpreted as a contract, You are granted the Licensed Rights in consideration of Your acceptance of these terms and conditions, and the Licensor grants You such rights in consideration of benefits the Licensor receives from making the Licensed Material available under these terms and conditions.
+Section 1 – Definitions.
+   a. Adapted Material means material subject to Copyright and Similar Rights that is derived from or based upon the Licensed Material and in which the Licensed Material is translated, altered, arranged, transformed, or otherwise modified in a manner requiring permission under the Copyright and Similar Rights held by the Licensor. For purposes of this Public License, where the Licensed Material is a musical work, performance, or sound recording, Adapted Material is always produced where the Licensed Material is synched in timed relation with a moving image.
+   b. Adapter's License means the license You apply to Your Copyright and Similar Rights in Your contributions to Adapted Material in accordance with the terms and conditions of this Public License.
+   c. BY-SA Compatible License means a license listed at creativecommons.org/compatiblelicenses, approved by Creative Commons as essentially the equivalent of this Public License.
+   d. Copyright and Similar Rights means copyright and/or similar rights closely related to copyright including, without limitation, performance, broadcast, sound recording, and Sui Generis Database Rights, without regard to how the rights are labeled or categorized. For purposes of this Public License, the rights specified in Section 2(b)(1)-(2) are not Copyright and Similar Rights.
+   e. Effective Technological Measures means those measures that, in the absence of proper authority, may not be circumvented under laws fulfilling obligations under Article 11 of the WIPO Copyright Treaty adopted on December 20, 1996, and/or similar international agreements.
+   f. Exceptions and Limitations means fair use, fair dealing, and/or any other exception or limitation to Copyright and Similar Rights that applies to Your use of the Licensed Material.
+   g. License Elements means the license attributes listed in the name of a Creative Commons Public License. The License Elements of this Public License are Attribution and ShareAlike.
+   h. Licensed Material means the artistic or literary work, database, or other material to which the Licensor applied this Public License.
+   i. Licensed Rights means the rights granted to You subject to the terms and conditions of this Public License, which are limited to all Copyright and Similar Rights that apply to Your use of the Licensed Material and that the Licensor has authority to license.
+   j. Licensor means the individual(s) or entity(ies) granting rights under this Public License.
+   k. Share means to provide material to the public by any means or process that requires permission under the Licensed Rights, such as reproduction, public display, public performance, distribution, dissemination, communication, or importation, and to make material available to the public including in ways that members of the public may access the material from a place and at a time individually chosen by them.
+   l. Sui Generis Database Rights means rights other than copyright resulting from Directive 96/9/EC of the European Parliament and of the Council of 11 March 1996 on the legal protection of databases, as amended and/or succeeded, as well as other essentially equivalent rights anywhere in the world.
+   m. You means the individual or entity exercising the Licensed Rights under this Public License. Your has a corresponding meaning.
+Section 2 – Scope.
+   a. License grant.
+      1. Subject to the terms and conditions of this Public License, the Licensor hereby grants You a worldwide, royalty-free, non-sublicensable, non-exclusive, irrevocable license to exercise the Licensed Rights in the Licensed Material to:
+         A. reproduce and Share the Licensed Material, in whole or in part; and
+         B. produce, reproduce, and Share Adapted Material.
+      2. Exceptions and Limitations. For the avoidance of doubt, where Exceptions and Limitations apply to Your use, this Public License does not apply, and You do not need to comply with its terms and conditions.
+      3. Term. The term of this Public License is specified in Section 6(a).
+      4. Media and formats; technical modifications allowed. The Licensor authorizes You to exercise the Licensed Rights in all media and formats whether now known or hereafter created, and to make technical modifications necessary to do so. The Licensor waives and/or agrees not to assert any right or authority to forbid You from making technical modifications necessary to exercise the Licensed Rights, including technical modifications necessary to circumvent Effective Technological Measures. For purposes of this Public License, simply making modifications authorized by this Section 2(a)(4) never produces Adapted Material.
+      5. Downstream recipients.
+         A. Offer from the Licensor – Licensed Material. Every recipient of the Licensed Material automatically receives an offer from the Licensor to exercise the Licensed Rights under the terms and conditions of this Public License.
+         B. Additional offer from the Licensor – Adapted Material. Every recipient of Adapted Material from You automatically receives an offer from the Licensor to exercise the Licensed Rights in the Adapted Material under the conditions of the Adapter's License You apply.
+         C. No downstream restrictions. You may not offer or impose any additional or different terms or conditions on, or apply any Effective Technological Measures to, the Licensed Material if doing so restricts exercise of the Licensed Rights by any recipient of the Licensed Material.
+      6. No endorsement. Nothing in this Public License constitutes or may be construed as permission to assert or imply that You are, or that Your use of the Licensed Material is, connected with, or sponsored, endorsed, or granted official status by, the Licensor or others designated to receive attribution as provided in Section 3(a)(1)(A)(i).
+   b. Other rights.
+      1. Moral rights, such as the right of integrity, are not licensed under this Public License, nor are publicity, privacy, and/or other similar personality rights; however, to the extent possible, the Licensor waives and/or agrees not to assert any such rights held by the Licensor to the limited extent necessary to allow You to exercise the Licensed Rights, but not otherwise.
+      2. Patent and trademark rights are not licensed under this Public License.
+      3. To the extent possible, the Licensor waives any right to collect royalties from You for the exercise of the Licensed Rights, whether directly or through a collecting society under any voluntary or waivable statutory or compulsory licensing scheme. In all other cases the Licensor expressly reserves any right to collect such royalties.
+Section 3 – License Conditions.
+Your exercise of the Licensed Rights is expressly made subject to the following conditions.
+   a. Attribution.
+      1. If You Share the Licensed Material (including in modified form), You must:
+         A. retain the following if it is supplied by the Licensor with the Licensed Material:
+            i. identification of the creator(s) of the Licensed Material and any others designated to receive attribution, in any reasonable manner requested by the Licensor (including by pseudonym if designated);
+            ii. a copyright notice;
+            iii. a notice that refers to this Public License;
+            iv. a notice that refers to the disclaimer of warranties;
+            v. a URI or hyperlink to the Licensed Material to the extent reasonably practicable;
+         B. indicate if You modified the Licensed Material and retain an indication of any previous modifications; and
+         C. indicate the Licensed Material is licensed under this Public License, and include the text of, or the URI or hyperlink to, this Public License.
+      2. You may satisfy the conditions in Section 3(a)(1) in any reasonable manner based on the medium, means, and context in which You Share the Licensed Material. For example, it may be reasonable to satisfy the conditions by providing a URI or hyperlink to a resource that includes the required information.
+      3. If requested by the Licensor, You must remove any of the information required by Section 3(a)(1)(A) to the extent reasonably practicable.
+   b. ShareAlike.In addition to the conditions in Section 3(a), if You Share Adapted Material You produce, the following conditions also apply.
+      1. The Adapter's License You apply must be a Creative Commons license with the same License Elements, this version or later, or a BY-SA Compatible License.
+      2. You must include the text of, or the URI or hyperlink to, the Adapter's License You apply. You may satisfy this condition in any reasonable manner based on the medium, means, and context in which You Share Adapted Material.
+      3. You may not offer or impose any additional or different terms or conditions on, or apply any Effective Technological Measures to, Adapted Material that restrict exercise of the rights granted under the Adapter's License You apply.
+Section 4 – Sui Generis Database Rights.
+Where the Licensed Rights include Sui Generis Database Rights that apply to Your use of the Licensed Material:
+   a. for the avoidance of doubt, Section 2(a)(1) grants You the right to extract, reuse, reproduce, and Share all or a substantial portion of the contents of the database;
+   b. if You include all or a substantial portion of the database contents in a database in which You have Sui Generis Database Rights, then the database in which You have Sui Generis Database Rights (but not its individual contents) is Adapted Material, including for purposes of Section 3(b); and
+   c. You must comply with the conditions in Section 3(a) if You Share all or a substantial portion of the contents of the database.
+   For the avoidance of doubt, this Section 4 supplements and does not replace Your obligations under this Public License where the Licensed Rights include other Copyright and Similar Rights.
+Section 5 – Disclaimer of Warranties and Limitation of Liability.
+   a. Unless otherwise separately undertaken by the Licensor, to the extent possible, the Licensor offers the Licensed Material as-is and as-available, and makes no representations or warranties of any kind concerning the Licensed Material, whether express, implied, statutory, or other. This includes, without limitation, warranties of title, merchantability, fitness for a particular purpose, non-infringement, absence of latent or other defects, accuracy, or the presence or absence of errors, whether or not known or discoverable. Where disclaimers of warranties are not allowed in full or in part, this disclaimer may not apply to You.
+   b. To the extent possible, in no event will the Licensor be liable to You on any legal theory (including, without limitation, negligence) or otherwise for any direct, special, indirect, incidental, consequential, punitive, exemplary, or other losses, costs, expenses, or damages arising out of this Public License or use of the Licensed Material, even if the Licensor has been advised of the possibility of such losses, costs, expenses, or damages. Where a limitation of liability is not allowed in full or in part, this limitation may not apply to You.
+   c. The disclaimer of warranties and limitation of liability provided above shall be interpreted in a manner that, to the extent possible, most closely approximates an absolute disclaimer and waiver of all liability.
+Section 6 – Term and Termination.
+   a. This Public License applies for the term of the Copyright and Similar Rights licensed here. However, if You fail to comply with this Public License, then Your rights under this Public License terminate automatically.
+   b. Where Your right to use the Licensed Material has terminated under Section 6(a), it reinstates:
+      1. automatically as of the date the violation is cured, provided it is cured within 30 days of Your discovery of the violation; or
+      2. upon express reinstatement by the Licensor.
+   c. For the avoidance of doubt, this Section 6(b) does not affect any right the Licensor may have to seek remedies for Your violations of this Public License.
+   d. For the avoidance of doubt, the Licensor may also offer the Licensed Material under separate terms or conditions or stop distributing the Licensed Material at any time; however, doing so will not terminate this Public License.
+   e. Sections 1, 5, 6, 7, and 8 survive termination of this Public License.
+Section 7 – Other Terms and Conditions.
+   a. The Licensor shall not be bound by any additional or different terms or conditions communicated by You unless expressly agreed.
+   b. Any arrangements, understandings, or agreements regarding the Licensed Material not stated herein are separate from and independent of the terms and conditions of this Public License.
+Section 8 – Interpretation.
+   a. For the avoidance of doubt, this Public License does not, and shall not be interpreted to, reduce, limit, restrict, or impose conditions on any use of the Licensed Material that could lawfully be made without permission under this Public License.
+   b. To the extent possible, if any provision of this Public License is deemed unenforceable, it shall be automatically reformed to the minimum extent necessary to make it enforceable. If the provision cannot be reformed, it shall be severed from this Public License without affecting the enforceability of the remaining terms and conditions.
+   c. No term or condition of this Public License will be waived and no failure to comply consented to unless expressly agreed to by the Licensor.
+   d. Nothing in this Public License constitutes or may be interpreted as a limitation upon, or waiver of, any privileges and immunities that apply to the Licensor or You, including from the legal processes of any jurisdiction or authority.
+Creative Commons is not a party to its public licenses. Notwithstanding, Creative Commons may elect to apply one of its public licenses to material it publishes and in those instances will be considered the "Licensor." Except for the limited purpose of indicating that material is shared under a Creative Commons public license or as otherwise permitted by the Creative Commons policies published at creativecommons.org/policies, Creative Commons does not authorize the use of the trademark "Creative Commons" or any other trademark or logo of Creative Commons without its prior written consent including, without limitation, in connection with any unauthorized modifications to any of its public licenses or any other arrangements, understandings, or agreements concerning use of licensed material. For the avoidance of doubt, this paragraph does not form part of the public licenses.
+Creative Commons may be contacted at creativecommons.org.
+
+* GPL-2.0-only *
+
+Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+* ISC *
+
+Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+Permission to use, copy, modify, and distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+--------------------------------------------------------------------------------
+Package Title: docker-image-spec (f1d00ebd2d6d6805170d5543dbca4b850f35f9af)
+
+Package Locator: git+github.com/moby/docker-image-spec$f1d00ebd2d6d6805170d5543dbca4b850f35f9af
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that...
+
+
+--------------------------------------------------------------------------------
+Package Title: edwards25519 (325f520de716c1d2d2b4e8dc2f82c7ccc5fac764)
+
+Package Locator: git+github.com/FiloSottile/edwards25519$325f520de716c1d2d2b4e8dc2f82c7ccc5fac764
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other ...
+
+
+* Other Licenses *
+BSD-1-Clause
+
+
+Copyright (c) 2016 The Go Authors. All rights reserved. All rights reserved.
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+THIS SOFTWARE IS PROVIDED BY Berkeley Software Design, Inc. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPL...
+
+
+--------------------------------------------------------------------------------
+Package Title: errors (614d223910a179a466c1767a985424175c39b465)
+
+Package Locator: git+github.com/pkg/errors$614d223910a179a466c1767a985424175c39b465
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-2-Clause
+
+
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation...
+
+
+--------------------------------------------------------------------------------
+Package Title: errwrap (7b00e5db719c64d14dd0caaacbd13e76254d02c0)
+
+Package Locator: git+github.com/hashicorp/errwrap$7b00e5db719c64d14dd0caaacbd13e76254d02c0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MPL-2.0
+
+
+Mozilla Public License, version 2.0
+
+1. Definitions
+
+1.1. “Contributor”
+
+     means each individual or legal entity that creates, contributes to the
+     creation of, or owns Covered Software.
+
+1.2. “Contributor Version”
+
+     means the combination of the Contributions of others (if any) used by a
+     Contributor and that particular Contributor’s Contribution.
+
+1.3. “Contribution”
+
+     means Covered Software of a particular Contributor.
+
+1.4. “Covered Software”
+
+     means Source Code Form ...
+
+
+--------------------------------------------------------------------------------
+Package Title: exp (e7e105dedf7e2bd7a7db7003ed6711b3337f26b8)
+
+Package Locator: git+go.googlesource.com/exp$e7e105dedf7e2bd7a7db7003ed6711b3337f26b8
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright 2009 The Go Authors.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with t...
+
+
+* Other Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specifi...
+
+
+--------------------------------------------------------------------------------
+Package Title: fsnotify (cfc9c4f277ea6ec18de92444b31983b183deb4fb)
+
+Package Locator: git+github.com/fsnotify/fsnotify$cfc9c4f277ea6ec18de92444b31983b183deb4fb
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright © 2012 The Go Authors. All rights reserved.
+Copyright © fsnotify Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the followin...
+
+
+--------------------------------------------------------------------------------
+Package Title: gc (573471604cb600a31c7581f174257f48e875aa05)
+
+Package Locator: git+gitlab.com/cznic/gc$573471604cb600a31c7581f174257f48e875aa05
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+-------------------------------------------------------------------------------
+Copyright (c) 2016 The GC Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this li...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/emirpasic/gods (v1.18.1)
+
+Package Locator: go+github.com/emirpasic/gods$v1.18.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+ISC, BSD-2-Clause
+
+* ISC *
+
+Copyright (c) 2015 Emir Pasic
+Permission to use, copy, modify, and distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY D...
+
+* BSD-2-Clause *
+
+Copyright (c) 2015, Emir Pasic
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other mat...
+
+
+* Other Licenses *
+BSD-3-Clause
+
+
+Copyright (c) 2015 Emir Pasic. All rights reserved. . All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer ...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/jackc/pgpassfile (v1.0.0)
+
+Package Locator: go+github.com/jackc/pgpassfile$v1.0.0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+Copyright (c) 2019 Jack Christensen
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above cop...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/kylelemons/godebug (v1.1.0)
+
+Package Locator: go+github.com/kylelemons/godebug$v1.1.0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner tha...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/lann/builder (47ae307949d0)
+
+Package Locator: go+github.com/lann/builder$47ae307949d0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+MIT License
+
+Copyright (c) 2014-2015 Lann Martin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above cop...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/lann/ps (62de8c46ede0)
+
+Package Locator: go+github.com/lann/ps$62de8c46ede0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+Copyright (c) 2013 Michael Hendricks
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notic...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/Masterminds/squirrel (v1.5.4)
+
+Package Locator: go+github.com/Masterminds/squirrel$v1.5.4
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+MIT License
+
+Squirrel: The Masterminds
+Copyright (c) 2014-2015, Lann Martin. Copyright (C) 2015-2016, Google. Copyright (C) 2015, Matt Farina and Matt Butcher.
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and t...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/oklog/ulid/v2 (v2.1.0)
+
+Package Locator: go+github.com/oklog/ulid/v2$v2.1.0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/opencontainers/go-digest (v1.0.0)
+
+Package Locator: go+github.com/opencontainers/go-digest$v1.0.0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+CC-BY-SA-4.0, Apache-2.0
+
+* CC-BY-SA-4.0 *
+
+Attribution-ShareAlike 4.0 International
+
+=======================================================================
+
+Creative Commons Corporation ("Creative Commons") is not a law firm and
+does not provide legal services or legal advice. Distribution of
+Creative Commons public licenses does not create a lawyer-client or
+other relationship. Creative Commons makes its licenses and related
+information available on an "as-is" basis. Creative Commons gives no
+warranties regarding its licenses, any m...
+
+* Apache-2.0 *
+
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        https://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner th...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/remyoudompheng/bigfft (24d4a6f8daec)
+
+Package Locator: go+github.com/remyoudompheng/bigfft$24d4a6f8daec
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other ...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/rs/cors (v1.11.1)
+
+Package Locator: go+github.com/rs/cors$v1.11.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+Copyright (c) 2014 Olivier Poitrey <rs@dailymotion.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The ab...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/tidwall/match (v1.1.1)
+
+Package Locator: go+github.com/tidwall/match$v1.1.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Josh Baker
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above...
+
+
+--------------------------------------------------------------------------------
+Package Title: github.com/tidwall/pretty (v1.2.0)
+
+Package Locator: go+github.com/tidwall/pretty$v1.2.0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2017 Josh Baker
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above...
+
+
+--------------------------------------------------------------------------------
+Package Title: gjson (5ab551f3ac05551c469e5f5ab26154a49f69afcf)
+
+Package Locator: git+github.com/tidwall/gjson$5ab551f3ac05551c469e5f5ab26154a49f69afcf
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Josh Baker
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above...
+
+
+--------------------------------------------------------------------------------
+Package Title: go-ansiterm (306776ec8161b5dc8676039adbf598a39bce3de0)
+
+Package Locator: git+github.com/Azure/go-ansiterm$306776ec8161b5dc8676039adbf598a39bce3de0
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MIT
+
+
+The MIT License (MIT)
+
+Copyright (c) 2015 Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:...
+
+
+--------------------------------------------------------------------------------
+Package Title: go-cleanhttp (6d9e2ac5d828e5f8594b97f88c4bde14a67bb6d2)
+
+Package Locator: git+github.com/hashicorp/go-cleanhttp$6d9e2ac5d828e5f8594b97f88c4bde14a67bb6d2
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+MPL-2.0
+
+
+Mozilla Public License, version 2.0
+
+1. Definitions
+
+1.1. "Contributor"
+
+     means each individual or legal entity that creates, contributes to the
+     creation of, or owns Covered Software.
+
+1.2. "Contributor Version"
+
+     means the combination of the Contributions of others (if any) used by a
+     Contributor and that particular Contributor's Contribution.
+
+1.3. "Contribution"
+
+     means Covered Software of a particular Contributor.
+
+1.4. "Covered Software"
+
+     means Source Code Form ...
+
+
+--------------------------------------------------------------------------------
+Package Title: go-cmp (c3ad8435e7bef96af35732bc0789e5a2278c6d5f)
+
+Package Locator: git+github.com/google/go-cmp$c3ad8435e7bef96af35732bc0789e5a2278c6d5f
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright (c) 2017 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other ...
+
+
+--------------------------------------------------------------------------------
+Package Title: goautoneg (a7dc8b61c822528f973a5e4e7b272055c6fdb43e)
+
+Package Locator: git+github.com/munnerz/goautoneg$a7dc8b61c822528f973a5e4e7b272055c6fdb43e
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright (c) 2011, Open Knowledge Foundation Ltd.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+    Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the ...
+
+
+
+================================================================================
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+Report Generated by FOSSA on 2024-10-7

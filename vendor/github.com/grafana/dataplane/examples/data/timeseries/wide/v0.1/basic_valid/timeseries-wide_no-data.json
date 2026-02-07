@@ -1,0 +1,23 @@
+[
+  {
+    "schema": {
+      "meta": {
+        "type": "timeseries-wide",
+        "typeVersion": [0, 1],
+        "custom": {
+          "exampleInfo": {
+            "summary": "TimeseriesWide in no-data form (0 length fields).",
+            "itemCount": 0,
+            "collectionVersion": 1,
+            "valid": true,
+            "noData": true
+          }
+        }
+      },
+      "fields": []
+    },
+    "data": {
+      "values": []
+    }
+  }
+]

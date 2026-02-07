@@ -1,0 +1,12 @@
+language: go
+go:
+    - 1.11.x
+    - 1.12.x
+install:
+    - go get -v .
+    - go get -v golang.org/x/lint/golint
+script:
+    - diff <(gofmt -d .) <(echo -n)
+    - go vet -x ./...
+    - golint -set_exit_status ./...
+    - go test -v -race ./...

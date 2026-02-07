@@ -1,0 +1,15 @@
+{{- define "options" }}
+{{- $builder := .Builder }}
+{{ range .Builder.Options }}
+{{- $option := . }}
+    {{- range .Comments}}
+    // {{ . }}
+    {{- end }}
+    {{ .Name|formatIdentifier }}({{ template "args" .Args }}): this {
+{{- range .Assignments }}
+{{- template "assignment" (dict "Assignment" . "Builder" $builder "Option" $option) }}
+{{- end }}
+        return this;
+    }
+{{ end -}}
+{{- end }}

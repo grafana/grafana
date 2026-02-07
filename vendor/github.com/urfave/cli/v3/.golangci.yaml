@@ -1,0 +1,13 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofumpt
+
+linters:
+  enable:
+    - makezero
+    - misspell
+  exclusions:
+    presets:
+      - std-error-handling

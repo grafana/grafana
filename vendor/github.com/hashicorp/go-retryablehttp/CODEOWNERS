@@ -1,0 +1,13 @@
+# Each line is a file pattern followed by one or more owners.
+# More on CODEOWNERS files: https://help.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
+
+# Default owner
+* @hashicorp/team-ip-compliance @hashicorp/go-retryablehttp-maintainers
+
+# Add override rules below. Each line is a file/folder pattern followed by one or more owners.
+# Being an owner means those groups or individuals will be added as reviewers to PRs affecting
+# those areas of the code.
+# Examples:
+# /docs/  @docs-team
+# *.js    @js-team
+# *.go    @go-team

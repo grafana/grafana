@@ -1,0 +1,187 @@
+// Copyright 2017 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package prometheus;
+
+option go_package = "prompb";
+
+import "gogoproto/gogo.proto";
+
+message MetricMetadata {
+  enum MetricType {
+    UNKNOWN        = 0;
+    COUNTER        = 1;
+    GAUGE          = 2;
+    HISTOGRAM      = 3;
+    GAUGEHISTOGRAM = 4;
+    SUMMARY        = 5;
+    INFO           = 6;
+    STATESET       = 7;
+  }
+
+  // Represents the metric type, these match the set from Prometheus.
+  // Refer to github.com/prometheus/common/model/metadata.go for details.
+  MetricType type = 1;
+  string metric_family_name = 2;
+  string help = 4;
+  string unit = 5;
+}
+
+message Sample {
+  double value    = 1;
+  // timestamp is in ms format, see model/timestamp/timestamp.go for
+  // conversion from time.Time to Prometheus timestamp.
+  int64 timestamp = 2;
+}
+
+message Exemplar {
+  // Optional, can be empty.
+  repeated Label labels = 1 [(gogoproto.nullable) = false];
+  double value = 2;
+  // timestamp is in ms format, see model/timestamp/timestamp.go for
+  // conversion from time.Time to Prometheus timestamp.
+  int64 timestamp = 3;
+}
+
+// A native histogram, also known as a sparse histogram.
+// Original design doc:
+// https://docs.google.com/document/d/1cLNv3aufPZb3fNfaJgdaRBZsInZKKIHo9E6HinJVbpM/edit
+// The appendix of this design doc also explains the concept of float
+// histograms. This Histogram message can represent both, the usual
+// integer histogram as well as a float histogram.
+message Histogram {
+  enum ResetHint {
+    UNKNOWN = 0; // Need to test for a counter reset explicitly.
+    YES     = 1; // This is the 1st histogram after a counter reset.
+    NO      = 2; // There was no counter reset between this and the previous Histogram.
+    GAUGE   = 3; // This is a gauge histogram where counter resets don't happen.
+  }
+
+  oneof count { // Count of observations in the histogram.
+    uint64 count_int   = 1;
+    double count_float = 2;
+  }
+  double sum = 3; // Sum of observations in the histogram.
+  // The schema defines the bucket schema. Currently, valid numbers
+  // are -4 <= n <= 8. They are all for base-2 bucket schemas, where 1
+  // is a bucket boundary in each case, and then each power of two is
+  // divided into 2^n logarithmic buckets. Or in other words, each
+  // bucket boundary is the previous boundary times 2^(2^-n). In the
+  // future, more bucket schemas may be added using numbers < -4 or >
+  // 8.
+  sint32 schema             = 4;
+  double zero_threshold     = 5; // Breadth of the zero bucket.
+  oneof zero_count { // Count in zero bucket.
+    uint64 zero_count_int     = 6;
+    double zero_count_float   = 7;
+  }
+
+  // Negative Buckets.
+  repeated BucketSpan negative_spans =  8 [(gogoproto.nullable) = false];
+  // Use either "negative_deltas" or "negative_counts", the former for
+  // regular histograms with integer counts, the latter for float
+  // histograms.
+  repeated sint64 negative_deltas    =  9; // Count delta of each bucket compared to previous one (or to zero for 1st bucket).
+  repeated double negative_counts    = 10; // Absolute count of each bucket.
+
+  // Positive Buckets.
+  repeated BucketSpan positive_spans = 11 [(gogoproto.nullable) = false];
+  // Use either "positive_deltas" or "positive_counts", the former for
+  // regular histograms with integer counts, the latter for float
+  // histograms.
+  repeated sint64 positive_deltas    = 12; // Count delta of each bucket compared to previous one (or to zero for 1st bucket).
+  repeated double positive_counts    = 13; // Absolute count of each bucket.
+
+  ResetHint reset_hint               = 14;
+  // timestamp is in ms format, see model/timestamp/timestamp.go for
+  // conversion from time.Time to Prometheus timestamp.
+  int64 timestamp = 15;
+}
+
+// A BucketSpan defines a number of consecutive buckets with their
+// offset. Logically, it would be more straightforward to include the
+// bucket counts in the Span. However, the protobuf representation is
+// more compact in the way the data is structured here (with all the
+// buckets in a single array separate from the Spans).
+message BucketSpan {
+  sint32 offset = 1; // Gap to previous span, or starting point for 1st span (which can be negative).
+  uint32 length = 2; // Length of consecutive buckets.
+}
+
+// TimeSeries represents samples and labels for a single time series.
+message TimeSeries {
+  // For a timeseries to be valid, and for the samples and exemplars
+  // to be ingested by the remote system properly, the labels field is required.
+  repeated Label labels         = 1 [(gogoproto.nullable) = false];
+  repeated Sample samples       = 2 [(gogoproto.nullable) = false];
+  repeated Exemplar exemplars   = 3 [(gogoproto.nullable) = false];
+  repeated Histogram histograms = 4 [(gogoproto.nullable) = false];
+}
+
+message Label {
+  string name  = 1;
+  string value = 2;
+}
+
+message Labels {
+  repeated Label labels = 1 [(gogoproto.nullable) = false];
+}
+
+// Matcher specifies a rule, which can match or set of labels or not.
+message LabelMatcher {
+  enum Type {
+    EQ  = 0;
+    NEQ = 1;
+    RE  = 2;
+    NRE = 3;
+  }
+  Type type    = 1;
+  string name  = 2;
+  string value = 3;
+}
+
+message ReadHints {
+  int64 step_ms = 1;  // Query step size in milliseconds.
+  string func = 2;    // String representation of surrounding function or aggregation.
+  int64 start_ms = 3; // Start time in milliseconds.
+  int64 end_ms = 4;   // End time in milliseconds.
+  repeated string grouping = 5; // List of label names used in aggregation.
+  bool by = 6; // Indicate whether it is without or by.
+  int64 range_ms = 7; // Range vector selector range in milliseconds.
+}
+
+// Chunk represents a TSDB chunk.
+// Time range [min, max] is inclusive.
+message Chunk {
+  int64 min_time_ms = 1;
+  int64 max_time_ms = 2;
+
+  // We require this to match chunkenc.Encoding.
+  enum Encoding {
+    UNKNOWN         = 0;
+    XOR             = 1;
+    HISTOGRAM       = 2;
+    FLOAT_HISTOGRAM = 3;
+  }
+  Encoding type  = 3;
+  bytes data     = 4;
+}
+
+// ChunkedSeries represents single, encoded time series.
+message ChunkedSeries {
+  // Labels should be sorted.
+  repeated Label labels = 1 [(gogoproto.nullable) = false];
+  // Chunks will be in start time order and may overlap.
+  repeated Chunk chunks = 2 [(gogoproto.nullable) = false];
+}

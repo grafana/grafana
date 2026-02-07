@@ -1,0 +1,15 @@
+// Equals tests the equality of two dataqueries.
+func (resource {{ .def.Name|formatObjectName }}) Equals(otherCandidate variants.Dataquery) bool {
+	if otherCandidate == nil {
+		return false
+	}
+
+	other, ok := otherCandidate.({{ .def.Name|formatObjectName }})
+	if !ok {
+		return false
+	}
+
+	{{- template "type_equality_check" (dict "Type" .def.Type "Nullable" .def.Type.Nullable "Dereference" false "SelfName" "resource" "OtherName" "other" "Depth" 0) }}
+
+	return true
+}

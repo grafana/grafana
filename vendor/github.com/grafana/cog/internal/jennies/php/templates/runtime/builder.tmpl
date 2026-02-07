@@ -1,0 +1,14 @@
+<?php
+
+namespace {{ .NamespaceRoot }}\Cog;
+
+/**
+ * @template T
+ */
+interface Builder
+{
+    /**
+     * @return T
+     */
+    public function build();
+}

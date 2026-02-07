@@ -1,0 +1,9 @@
+.git
+*.swp
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS code
+*.code-workspace
