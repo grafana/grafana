@@ -1,0 +1,140 @@
+package inhibitionrule
+
+import (
+	"fmt"
+
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
+
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+)
+
+func ConvertToK8sResources(orgID int64, rules []ngmodels.InhibitionRule, namespacer request.NamespaceMapper, selector fields.Selector) (*model.InhibitionRuleList, error) {
+	result := &model.InhibitionRuleList{}
+
+	for _, rule := range rules {
+		item := buildInhibitionRule(orgID, rule, namespacer)
+		if selector != nil && !selector.Empty() && !selector.Matches(model.InhibitionRuleSelectableFields(&item)) {
+			continue
+		}
+		result.Items = append(result.Items, item)
+	}
+	return result, nil
+}
+
+func ConvertToK8sResource(orgID int64, rule ngmodels.InhibitionRule, namespacer request.NamespaceMapper) (*model.InhibitionRule, error) {
+	result := buildInhibitionRule(orgID, rule, namespacer)
+	result.UID = gapiutil.CalculateClusterWideUID(&result)
+	return &result, nil
+}
+
+func buildInhibitionRule(orgID int64, rule ngmodels.InhibitionRule, namespacer request.NamespaceMapper) model.InhibitionRule {
+	i := model.InhibitionRule{
+		ObjectMeta: metav1.ObjectMeta{
+			UID:             types.UID(rule.UID),
+			Name:            rule.UID,
+			Namespace:       namespacer(orgID),
+			ResourceVersion: rule.Version,
+		},
+		Spec: convertDomainToK8sSpec(rule),
+	}
+	i.SetProvenanceStatus(string(rule.Provenance))
+	i.UID = gapiutil.CalculateClusterWideUID(&i)
+
+	i.SetCanUse(rule.Provenance != ngmodels.ProvenanceConvertedPrometheus)
+
+	return i
+}
+
+func convertDomainToK8sSpec(rule ngmodels.InhibitionRule) model.InhibitionRuleSpec {
+	return model.InhibitionRuleSpec{
+		SourceMatchers: convertLabelsMatchersToK8s(rule.SourceMatchers),
+		TargetMatchers: convertLabelsMatchersToK8s(rule.TargetMatchers),
+		Equal:          rule.Equal,
+	}
+}
+
+func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRuleMatcher {
+	if len(matchers) == 0 {
+		return nil
+	}
+
+	result := make([]model.InhibitionRuleMatcher, 0, len(matchers))
+	for _, m := range matchers {
+		result = append(result, model.InhibitionRuleMatcher{
+			Type:  model.InhibitionRuleMatcherType(m.Type.String()),
+			Label: m.Name,
+			Value: m.Value,
+		})
+	}
+	return result
+}
+
+func convertToDomainModel(rule *model.InhibitionRule) (ngmodels.InhibitionRule, error) {
+	result := ngmodels.InhibitionRule{
+		Version:    rule.ResourceVersion,
+		UID:        rule.Name,
+		Provenance: ngmodels.ProvenanceNone,
+		Origin:     ngmodels.ResourceOriginGrafana,
+	}
+
+	// Convert source matchers from K8s format to prometheus format
+	sourceMatchers, err := convertK8sMatchersToLabels(rule.Spec.SourceMatchers)
+	if err != nil {
+		return ngmodels.InhibitionRule{}, fmt.Errorf("invalid source matchers: %w", err)
+	}
+	result.SourceMatchers = config.Matchers(sourceMatchers)
+
+	// Convert target matchers from K8s format to prometheus format
+	targetMatchers, err := convertK8sMatchersToLabels(rule.Spec.TargetMatchers)
+	if err != nil {
+		return ngmodels.InhibitionRule{}, fmt.Errorf("invalid target matchers: %w", err)
+	}
+	result.TargetMatchers = config.Matchers(targetMatchers)
+
+	// Copy equal labels
+	result.Equal = rule.Spec.Equal
+
+	return result, nil
+}
+
+func convertK8sMatchersToLabels(k8sMatchers []model.InhibitionRuleMatcher) (labels.Matchers, error) {
+	if len(k8sMatchers) == 0 {
+		return nil, nil
+	}
+
+	result := make(labels.Matchers, 0, len(k8sMatchers))
+	for _, m := range k8sMatchers {
+		matchType, err := convertMatcherType(string(m.Type))
+		if err != nil {
+			return nil, err
+		}
+		matcher, err := labels.NewMatcher(matchType, m.Label, m.Value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err)
+		}
+		result = append(result, matcher)
+	}
+	return result, nil
+}
+
+func convertMatcherType(k8sType string) (labels.MatchType, error) {
+	switch k8sType {
+	case "=":
+		return labels.MatchEqual, nil
+	case "!=":
+		return labels.MatchNotEqual, nil
+	case "=~":
+		return labels.MatchRegexp, nil
+	case "!~":
+		return labels.MatchNotRegexp, nil
+	default:
+		return labels.MatchEqual, fmt.Errorf("unknown matcher type: %s", k8sType)
+	}
+}

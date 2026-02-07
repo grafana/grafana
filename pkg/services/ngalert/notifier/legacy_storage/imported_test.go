@@ -263,6 +263,81 @@ mute_time_intervals:
 	})
 }
 
+func TestConfigRevisionImported_GetInhibitRules(t *testing.T) {
+	const configWithoutRules = `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+`
+
+	t.Run("should return empty list if no imported configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		assert.Nil(t, imported.importedConfig)
+
+		result, err := imported.GetInhibitRules(true)
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	// NOTE: requires https://github.com/grafana/alerting/pull/475
+	// otherwise we get `invalid merge options: matchers must not be empty` error
+	//t.Run("should return empty list if no subtree matcher", func(t *testing.T) {
+	//	extraCfg := extraConfig(configWithoutRules)
+	//	extraCfg.MergeMatchers = nil
+	//	rev := getConfigRevisionForTest(withExtraConfig(extraCfg))
+	//	imported, err := rev.Imported()
+	//	require.NoError(t, err)
+	//	assert.Nil(t, imported.importedConfig)
+
+	//	result, err := imported.GetInhibitRules()
+	//	require.NoError(t, err)
+	//	require.Empty(t, result)
+	//})
+
+	t.Run("should return empty list if no inhibition rules in imported config", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(configWithoutRules)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules(true)
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("should return imported inhibition rules with managed route matchers added", func(t *testing.T) {
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules(true)
+		require.NoError(t, err)
+		// 2 rules * 2 managed routes (named_route, other_route) = 4 total rules
+		require.Len(t, result, 4)
+
+		// Check first rule (first imported rule with first managed route)
+		assert.Len(t, result[0].SourceMatchers, 2) // Original + managed route matcher
+		assert.Len(t, result[0].TargetMatchers, 2) // Original + managed route matcher
+		assert.Equal(t, []string{"cluster"}, result[0].Equal)
+
+		// Verify managed route matcher was added
+		for _, ms := range []config.Matchers{result[0].SourceMatchers, result[0].TargetMatchers} {
+			hasManagedRouteMatcher := false
+			for _, m := range ms {
+				if m.Name == "__grafana_managed_route__" {
+					hasManagedRouteMatcher = true
+					break
+				}
+			}
+			assert.True(t, hasManagedRouteMatcher, "Managed route matcher should be added to matcher")
+		}
+	})
+}
+
 func extraConfig(yamlString string) definitions.ExtraConfiguration {
 	return definitions.ExtraConfiguration{
 		Identifier: "test",
@@ -310,4 +385,17 @@ receivers:
   - name: imported-receiver-2
     webhook_configs:
       - url: "http://localhost/"
+inhibit_rules:
+  - source_matchers:
+      - alertname = SourceAlert
+    target_matchers:
+      - alertname = TargetAlert
+    equal:
+      - cluster
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal:
+      - instance
 `
