@@ -36,7 +36,16 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		srq.SearchBefore = token.SearchBefore
 	}
 
-	searchResp, err := s.searchClient.Search(ctx, srq)
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.search != nil {
+		// Use local search service
+		searchResp, err = s.search.Search(ctx, srq)
+	} else {
+		// Use remote search service
+		// if search is not configured, searchClient will be set
+		searchResp, err = s.searchClient.Search(ctx, srq)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +111,13 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	if s.searchClient == nil || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
+	// Provisioning has no Versions.Kinds[] in its app manifest, so we cant index anything for search.
+	// Keeping this excluded until its app manifest is updated.
+	if req.Options.Key.Group == "provisioning.grafana.app" {
+		return false
+	}
+
+	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
 
