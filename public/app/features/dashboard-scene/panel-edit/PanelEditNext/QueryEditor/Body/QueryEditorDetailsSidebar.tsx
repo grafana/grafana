@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { FocusEvent, useCallback, useRef } from 'react';
+import { FocusEvent, ReactNode, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, ClickOutsideWrapper, Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { CONTENT_SIDE_BAR, TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { CONTENT_SIDE_BAR, QUERY_OPTION_FIELD_CONFIG } from '../../constants';
 import {
   useActionsContext,
   useDatasourceContext,
@@ -13,6 +13,44 @@ import {
   useQueryRunnerContext,
 } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
+
+interface OptionFieldProps {
+  field: QueryOptionField;
+  onBlur?: (event: FocusEvent<HTMLInputElement>, field: QueryOptionField) => void;
+  focusedField?: QueryOptionField | null;
+  defaultValue?: string | number;
+  placeholder?: string;
+  children?: ReactNode;
+}
+
+function OptionField({ field, onBlur, focusedField, defaultValue = '', placeholder, children }: OptionFieldProps) {
+  const styles = useStyles2(getStyles);
+  const config = QUERY_OPTION_FIELD_CONFIG[field];
+  const tooltip = config.getTooltip();
+  const label = config.getLabel();
+  const inputType = config.inputType ?? 'text';
+  const resolvedPlaceholder = placeholder ?? config.placeholder;
+
+  return (
+    <div className={styles.field}>
+      <Tooltip content={tooltip}>
+        <Icon name="info-circle" size="md" className={styles.infoIcon} />
+      </Tooltip>
+      <span className={styles.fieldLabel}>{label}</span>
+      {children ?? (
+        <Input
+          type={inputType}
+          defaultValue={defaultValue}
+          placeholder={resolvedPlaceholder}
+          onBlur={onBlur ? (e) => onBlur(e, field) : undefined}
+          autoFocus={focusedField != null && focusedField === field}
+          aria-label={label}
+          className={styles.fieldInput}
+        />
+      )}
+    </div>
+  );
+}
 
 function timeRangeValidation(value: string | null) {
   return !value || rangeUtil.isValidTimeSpan(value);
@@ -77,16 +115,27 @@ export function QueryEditorDetailsSidebar() {
         return;
       }
 
-      // Handle string fields (minInterval, cacheTimeout)
+      // Handle min interval (time span validation)
+      if (field === QueryOptionField.minInterval) {
+        const stringValue = emptyToNull(value);
+        const isValid = timeRangeValidation(stringValue);
+        if (isValid && stringValue !== options.minInterval) {
+          onQueryOptionsChange({ ...options, minInterval: stringValue });
+        }
+        return;
+      }
+
+      // Handle string fields (cacheTimeout)
       const stringValue = emptyToNull(value);
-      if (field === QueryOptionField.minInterval && stringValue !== options.minInterval) {
-        onQueryOptionsChange({ ...options, minInterval: stringValue });
-      } else if (field === QueryOptionField.cacheTimeout && stringValue !== options.cacheTimeout) {
+      if (field === QueryOptionField.cacheTimeout && stringValue !== options.cacheTimeout) {
         onQueryOptionsChange({ ...options, cacheTimeout: stringValue });
       }
     },
     [options, onQueryOptionsChange]
   );
+
+  // Shared props for all input-based OptionFields
+  const inputProps = { onBlur: handleBlur, focusedField };
 
   return (
     <ClickOutsideWrapper onClick={handleCloseSidebar}>
@@ -106,162 +155,51 @@ export function QueryEditorDetailsSidebar() {
         </Button>
         <div className={styles.content}>
           <Stack direction="column" gap={0.5}>
-            <div className={styles.field}>
-              <Tooltip
-                content={t(
-                  'query-editor.details-sidebar.max-data-points-tooltip',
-                  'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval.'
-                )}
-              >
-                <Icon name="info-circle" size="md" className={styles.infoIcon} />
-              </Tooltip>
-              <span className={styles.fieldLabel}>
-                <Trans i18nKey="query-editor.details-sidebar.max-data-points">Max data points</Trans>
-              </span>
-              <Input
-                type="number"
-                defaultValue={options.maxDataPoints ?? ''}
-                placeholder={realMaxDataPoints ? String(realMaxDataPoints) : ''}
-                onBlur={(e) => handleBlur(e, QueryOptionField.maxDataPoints)}
-                autoFocus={focusedField === QueryOptionField.maxDataPoints}
-                aria-label={t('query-editor.details-sidebar.max-data-points', 'Max data points')}
-                className={styles.fieldInput}
-              />
-            </div>
+            <OptionField
+              field={QueryOptionField.maxDataPoints}
+              {...inputProps}
+              defaultValue={options.maxDataPoints ?? ''}
+              placeholder={realMaxDataPoints ? String(realMaxDataPoints) : undefined}
+            />
 
-            <div className={styles.field}>
-              <Tooltip
-                content={t(
-                  'query-editor.details-sidebar.min-interval-tooltip',
-                  'A lower limit for the interval. Recommended to be set to write frequency, for example 1m if your data is written every minute.'
-                )}
-              >
-                <Icon name="info-circle" size="md" className={styles.infoIcon} />
-              </Tooltip>
-              <span className={styles.fieldLabel}>
-                <Trans i18nKey="query-editor.details-sidebar.min-interval">Min interval</Trans>
-              </span>
-              <Input
-                type="text"
-                defaultValue={options.minInterval ?? ''}
-                placeholder={String(minIntervalOnDs)}
-                onBlur={(e) => handleBlur(e, QueryOptionField.minInterval)}
-                autoFocus={focusedField === QueryOptionField.minInterval}
-                aria-label={t('query-editor.details-sidebar.min-interval', 'Min interval')}
-                className={styles.fieldInput}
-              />
-            </div>
+            <OptionField
+              field={QueryOptionField.minInterval}
+              {...inputProps}
+              defaultValue={options.minInterval ?? ''}
+              placeholder={String(minIntervalOnDs)}
+            />
 
-            <div className={styles.field}>
-              <Tooltip
-                content={t(
-                  'query-editor.details-sidebar.interval-tooltip',
-                  'The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.'
-                )}
-              >
-                <Icon name="info-circle" size="md" className={styles.infoIcon} />
-              </Tooltip>
-              <span className={styles.fieldLabel}>
-                <Trans i18nKey="query-editor.details-sidebar.interval">Interval</Trans>
-              </span>
+            <OptionField field={QueryOptionField.interval}>
               <span className={styles.fieldValue}>{realInterval ?? '-'}</span>
-            </div>
+            </OptionField>
 
-            <div className={styles.field}>
-              <Tooltip
-                content={t(
-                  'query-editor.details-sidebar.relative-time-tooltip',
-                  'Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.'
-                )}
-              >
-                <Icon name="info-circle" size="md" className={styles.infoIcon} />
-              </Tooltip>
-              <span className={styles.fieldLabel}>
-                <Trans i18nKey="query-editor.details-sidebar.relative-time">Relative time</Trans>
-              </span>
-              <Input
-                type="text"
-                defaultValue={options.timeRange?.from ?? ''}
-                placeholder={TIME_OPTION_PLACEHOLDER}
-                onBlur={(e) => handleBlur(e, QueryOptionField.relativeTime)}
-                autoFocus={focusedField === QueryOptionField.relativeTime}
-                aria-label={t('query-editor.details-sidebar.relative-time', 'Relative time')}
-                className={styles.fieldInput}
-              />
-            </div>
+            <OptionField
+              field={QueryOptionField.relativeTime}
+              {...inputProps}
+              defaultValue={options.timeRange?.from ?? ''}
+            />
 
-            <div className={styles.field}>
-              <Tooltip
-                content={t(
-                  'query-editor.details-sidebar.time-shift-tooltip',
-                  'Overrides the time range for individual panels by shifting its start and end relative to the time picker.'
-                )}
-              >
-                <Icon name="info-circle" size="md" className={styles.infoIcon} />
-              </Tooltip>
-              <span className={styles.fieldLabel}>
-                <Trans i18nKey="query-editor.details-sidebar.time-shift">Time shift</Trans>
-              </span>
-              <Input
-                type="text"
-                defaultValue={options.timeRange?.shift ?? ''}
-                placeholder={TIME_OPTION_PLACEHOLDER}
-                onBlur={(e) => handleBlur(e, QueryOptionField.timeShift)}
-                autoFocus={focusedField === QueryOptionField.timeShift}
-                aria-label={t('query-editor.details-sidebar.time-shift', 'Time shift')}
-                className={styles.fieldInput}
-              />
-            </div>
+            <OptionField
+              field={QueryOptionField.timeShift}
+              {...inputProps}
+              defaultValue={options.timeRange?.shift ?? ''}
+            />
 
             {showCacheTimeout && (
-              <div className={styles.field}>
-                <Tooltip
-                  content={t(
-                    'query-editor.details-sidebar.cache-timeout-tooltip',
-                    'If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.'
-                  )}
-                >
-                  <Icon name="info-circle" size="md" className={styles.infoIcon} />
-                </Tooltip>
-                <span className={styles.fieldLabel}>
-                  <Trans i18nKey="query-editor.details-sidebar.cache-timeout">Cache timeout</Trans>
-                </span>
-                <Input
-                  type="text"
-                  defaultValue={options.cacheTimeout ?? ''}
-                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                  placeholder="60"
-                  onBlur={(e) => handleBlur(e, QueryOptionField.cacheTimeout)}
-                  autoFocus={focusedField === QueryOptionField.cacheTimeout}
-                  aria-label={t('query-editor.details-sidebar.cache-timeout', 'Cache timeout')}
-                  className={styles.fieldInput}
-                />
-              </div>
+              <OptionField
+                field={QueryOptionField.cacheTimeout}
+                {...inputProps}
+                defaultValue={options.cacheTimeout ?? ''}
+              />
             )}
 
             {showCacheTTL && (
-              <div className={styles.field}>
-                <Tooltip
-                  content={t(
-                    'query-editor.details-sidebar.cache-ttl-tooltip',
-                    'Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.'
-                  )}
-                >
-                  <Icon name="info-circle" size="md" className={styles.infoIcon} />
-                </Tooltip>
-                <span className={styles.fieldLabel}>
-                  <Trans i18nKey="query-editor.details-sidebar.cache-ttl">Cache TTL</Trans>
-                </span>
-                <Input
-                  type="number"
-                  defaultValue={options.queryCachingTTL ?? ''}
-                  placeholder={dsSettings?.cachingConfig?.TTLMs ? String(dsSettings.cachingConfig.TTLMs) : ''}
-                  onBlur={(e) => handleBlur(e, QueryOptionField.queryCachingTTL)}
-                  autoFocus={focusedField === QueryOptionField.queryCachingTTL}
-                  aria-label={t('query-editor.details-sidebar.cache-ttl', 'Cache TTL')}
-                  className={styles.fieldInput}
-                />
-              </div>
+              <OptionField
+                field={QueryOptionField.queryCachingTTL}
+                {...inputProps}
+                defaultValue={options.queryCachingTTL ?? ''}
+                placeholder={dsSettings?.cachingConfig?.TTLMs ? String(dsSettings.cachingConfig.TTLMs) : undefined}
+              />
             )}
           </Stack>
         </div>
