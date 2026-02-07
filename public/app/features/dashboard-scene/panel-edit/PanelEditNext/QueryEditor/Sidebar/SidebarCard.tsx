@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
+import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { Dropdown, Icon, Menu, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { QueryEditorTypeConfig } from '../../constants';
+import { useActionsContext } from '../QueryEditorContext';
 
 interface SidebarCardProps {
   config: QueryEditorTypeConfig;
@@ -16,26 +19,71 @@ interface SidebarCardProps {
 
 export const SidebarCard = ({ config, isSelected, id, children, onClick }: SidebarCardProps) => {
   const styles = useStyles2(getStyles, { config, isSelected });
+  const theme = useTheme2();
   const typeText = config.getLabel();
+  const { addQuery } = useActionsContext();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+
+  const addMenu = (
+    <Menu>
+      <Menu.Item
+        label={t('query-editor-next.sidebar.add-query', 'Add query')}
+        icon="question-circle"
+        onClick={() => addQuery()}
+      />
+      <Menu.Item
+        label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
+        icon="book-open"
+        onClick={() => {
+          // TODO: open query library picker
+        }}
+      />
+      <Menu.Item
+        label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+        icon="calculator-alt"
+        onClick={() => addQuery({ datasource: ExpressionDatasourceRef })}
+      />
+    </Menu>
+  );
 
   return (
-    <button
-      className={styles.card}
-      onClick={onClick}
-      type="button"
-      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-      aria-pressed={isSelected}
-    >
-      <div className={styles.cardHeader}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name={config.icon} />
-          <Text weight="light" variant="body">
-            {typeText}
-          </Text>
-        </Stack>
-      </div>
-      <div className={styles.cardContent}>{children}</div>
-    </button>
+    <div className={styles.wrapper}>
+      <button
+        className={styles.card}
+        onClick={onClick}
+        type="button"
+        aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+        aria-pressed={isSelected}
+      >
+        <div className={styles.cardHeader}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Icon name={config.icon} />
+            <Text weight="light" variant="body">
+              {typeText}
+            </Text>
+          </Stack>
+        </div>
+        <div className={styles.cardContent}>{children}</div>
+      </button>
+      <Dropdown
+        overlay={addMenu}
+        placement="right-start"
+        offset={[theme.spacing.gridSize, 0]} // nudge the menu to the right, for a little space between the "+" button and the menu
+        onVisibleChange={setMenuOpen}
+      >
+        <button
+          ref={addButtonRef}
+          className={styles.addButton}
+          data-add-button
+          data-menu-open={menuOpen || undefined}
+          type="button"
+          aria-label={t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id })}
+        >
+          <Icon name="plus" size="md" />
+        </button>
+      </Dropdown>
+    </div>
   );
 };
 
@@ -44,9 +92,36 @@ function getStyles(
   { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
 ) {
   return {
+    wrapper: css({
+      position: 'relative',
+      marginInline: theme.spacing(2),
+
+      // Invisible pseudo-element extends the hover zone to cover the "+" button
+      // which sits outside the card's bottom-left corner.
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: '-1em',
+        left: `calc(-1 * ${theme.spacing(1.5)})`,
+        width: `calc(100% + ${theme.spacing(1.5)})`,
+        height: `calc(100% + 1em)`,
+        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone
+      },
+
+      '&:hover': {
+        zIndex: 1,
+      },
+
+      // Show add button on hover, or when its dropdown menu is open
+      '&:hover [data-add-button], [data-menu-open]': {
+        opacity: 1,
+        pointerEvents: 'auto',
+      },
+    }),
     card: css({
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
       background: isSelected ? theme.colors.action.selected : theme.colors.background.secondary,
       border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
@@ -68,6 +143,43 @@ function getStyles(
       },
 
       '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: '2px',
+      },
+    }),
+    addButton: css({
+      position: 'absolute',
+      top: 'calc(100%)',
+      left: 0,
+      transform: 'translate(-100%, 0)',
+      zIndex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      borderRadius: theme.shape.radius.sm,
+      border: 'none',
+      background: theme.colors.primary.main,
+      color: theme.colors.primary.contrastText,
+      cursor: 'pointer',
+      padding: 0,
+      opacity: 0,
+      pointerEvents: 'none',
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['opacity', 'background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+
+      '&:hover': {
+        background: theme.colors.primary.shade,
+      },
+
+      '&:focus-visible': {
+        opacity: 1,
+        pointerEvents: 'auto',
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
       },
