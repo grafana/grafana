@@ -31,7 +31,6 @@ export interface ImportDashboardResponseDTO {
 }
 
 export interface SaveDashboardResponseDTO {
-  id: number;
   slug: string;
   status: string;
   uid: string;

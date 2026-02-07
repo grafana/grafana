@@ -192,7 +192,6 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBe(true);
 
         scene.saveCompleted({} as Dashboard, {
-          id: 1,
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',

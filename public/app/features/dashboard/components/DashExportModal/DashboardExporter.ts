@@ -87,7 +87,6 @@ export class DashboardExporter {
     dashboard.cleanUpRepeats();
 
     const saveModel = dashboard.getSaveModelCloneOld();
-    saveModel.id = null;
 
     // undo repeat cleanup
     dashboard.processRepeats();

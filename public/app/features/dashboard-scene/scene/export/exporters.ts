@@ -95,7 +95,6 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   dashboard.cleanUpRepeats();
 
   const saveModel = dashboard.getSaveModelCloneOld();
-  saveModel.id = null;
 
   // undo repeat cleanup
   dashboard.processRepeats();

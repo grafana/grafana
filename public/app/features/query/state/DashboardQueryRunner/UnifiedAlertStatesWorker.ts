@@ -94,7 +94,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardId: dashboard.id,
+                  dashboardUID: dashboard.uid,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;
