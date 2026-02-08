@@ -329,37 +329,6 @@ func (m *FixDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *Migra
 	return RunFixDashboardVariableQuotesMigration(sess, mg)
 }
 
-// Dashboard structures for JSON unmarshaling
-type dashboardData struct {
-	Panels     []dashboardPanel `json:"panels,omitempty"`
-	Templating *templating      `json:"templating,omitempty"`
-}
-
-type templating struct {
-	List []templateVariable `json:"list,omitempty"`
-}
-
-type templateVariable struct {
-	Name       string `json:"name,omitempty"`
-	IncludeAll bool   `json:"includeAll,omitempty"`
-	Multi      bool   `json:"multi,omitempty"`
-}
-
-type dashboardPanel struct {
-	Datasource *datasource      `json:"datasource,omitempty"`
-	Repeat     string           `json:"repeat,omitempty"`
-	Targets    []target         `json:"targets,omitempty"`
-	Panels     []dashboardPanel `json:"panels,omitempty"` // For row panels
-}
-
-type datasource struct {
-	Type string `json:"type,omitempty"`
-}
-
-type target struct {
-	RawSql string `json:"rawSql,omitempty"`
-}
-
 // RunFixDashboardVariableQuotesMigration performs the migration
 func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) error {
 	type dashboard struct {
@@ -372,7 +341,7 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 	}
 
 	var dashboards []dashboard
-	if err := sess.Table("dashboard").Cols("id", "version", "uid", "org_id", "data", "api_version").Find(&dashboards); err != nil {
+	if err := sess.Table("dashboard").Where("is_folder = 0").Cols("id", "version", "uid", "org_id", "data", "api_version").Find(&dashboards); err != nil {
 		return fmt.Errorf("failed to fetch dashboards: %w", err)
 	}
 
