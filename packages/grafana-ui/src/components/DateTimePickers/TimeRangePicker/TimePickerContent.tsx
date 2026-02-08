@@ -55,60 +55,6 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-// Map for converting short time units to full words (singular/plural)
-const TIME_UNIT_LABELS: Record<string, [string, string]> = {
-  s: ['second', 'seconds'],
-  m: ['minute', 'minutes'],
-  h: ['hour', 'hours'],
-  d: ['day', 'days'],
-  w: ['week', 'weeks'],
-  M: ['month', 'months'],
-  y: ['year', 'years'],
-};
-
-/**
- * Gets the appropriate label for a time unit based on value (singular/plural).
- */
-function getUnitLabel(unit: string, value: number): string {
-  const labels = TIME_UNIT_LABELS[unit];
-  return labels ? labels[value === 1 ? 0 : 1] : unit;
-}
-
-/**
- * Parses a time shortcut string (e.g., "30m", "1h", "2d") into a TimeOption.
- * Only accepts single-unit durations as Grafana doesn't support compound durations like "1h30m".
- */
-function parseTimeShortcut(searchTerm: string): TimeOption | undefined {
-  const trimmedTerm = searchTerm.trim();
-  if (!trimmedTerm) {
-    return undefined;
-  }
-
-  // Match single-unit duration pattern: number followed by unit (e.g., "30m", "2h")
-  const singleUnitPattern = /^(\d+)([smhdwMy])$/;
-  const match = trimmedTerm.match(singleUnitPattern);
-
-  if (!match) {
-    return undefined;
-  }
-
-  const [, value, unit] = match;
-  const numValue = parseInt(value, 10);
-
-  // Validate using Grafana's duration validator
-  if (!isValidGrafanaDuration(trimmedTerm)) {
-    return undefined;
-  }
-
-  const displayLabel = `${value} ${getUnitLabel(unit, numValue)}`;
-
-  return {
-    from: `now-${trimmedTerm}`,
-    to: 'now',
-    display: `Last ${displayLabel}`,
-  };
-}
-
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
@@ -136,7 +82,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
     const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
-    const customTimeOption = parseTimeShortcut(searchTerm);
+    const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
 
     if (customTimeOption) {
       const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
@@ -165,6 +111,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 width={0}
                 value={searchTerm}
                 onChange={setSearchQuery}
+                escapeRegex={false}
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
