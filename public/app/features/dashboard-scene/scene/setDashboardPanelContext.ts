@@ -261,6 +261,18 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   return newVariable;
 }
 
+/** Convert panel AdHocFilterItem to the shape expected by AdHocFiltersVariable (keyLabel, valueLabels). */
+function toAdHocFilterWithLabels(item: AdHocFilterItem) {
+  const { key, value, operator, keyLabel, valueLabel } = item;
+  return {
+    key,
+    value,
+    operator,
+    ...(keyLabel !== undefined && { keyLabel }),
+    ...(valueLabel !== undefined && { valueLabels: [valueLabel] }),
+  };
+}
+
 function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilters: AdHocFilterItem[]) {
   if (!newFilters.length) {
     return;
@@ -270,18 +282,19 @@ function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilt
   let hasChanges = false;
 
   for (const newFilter of newFilters) {
+    const filterWithLabels = toAdHocFilterWithLabels(newFilter);
     const filterToReplaceIndex = updatedFilters.findIndex(
       (filter) =>
         filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
     );
 
     if (filterToReplaceIndex >= 0) {
-      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
+      updatedFilters.splice(filterToReplaceIndex, 1, filterWithLabels);
       hasChanges = true;
       continue;
     }
 
-    updatedFilters.push(newFilter);
+    updatedFilters.push(filterWithLabels);
     hasChanges = true;
   }
 
@@ -294,6 +307,8 @@ function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: A
   // This function handles 'Filter for value' and 'Filter out value' from table cell
   // We are allowing to add filters with the same key because elastic search ds supports that
 
+  const filterWithLabels = toAdHocFilterWithLabels(newFilter);
+
   // Update is only required when we change operator and keep key and value the same
   //   key1 = value1 -> key1 != value1
   const filterToReplaceIndex = filterVar.state.filters.findIndex(
@@ -303,11 +318,11 @@ function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: A
 
   if (filterToReplaceIndex >= 0) {
     const updatedFilters = filterVar.state.filters.slice();
-    updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
+    updatedFilters.splice(filterToReplaceIndex, 1, filterWithLabels);
     filterVar.updateFilters(updatedFilters);
     return;
   }
 
   // Add new filter
-  filterVar.updateFilters([...filterVar.state.filters, newFilter]);
+  filterVar.updateFilters([...filterVar.state.filters, filterWithLabels]);
 }
