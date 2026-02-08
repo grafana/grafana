@@ -7,6 +7,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
+import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
@@ -229,14 +230,24 @@ describe('extractV2Inputs', () => {
       'query variables',
       {
         elements: {},
-        variables: [{ kind: 'QueryVariable', spec: { name: 'myvar', query: { group: 'prometheus' } } }],
+        variables: [
+          {
+            kind: 'QueryVariable',
+            spec: { name: 'myvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+          },
+        ],
       },
     ],
     [
       'annotations',
       {
         elements: {},
-        annotations: [{ kind: 'AnnotationQuery', spec: { name: 'Deployments', query: { group: 'prometheus' } } }],
+        annotations: [
+          {
+            kind: 'AnnotationQuery',
+            spec: { name: 'Deployments', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+          },
+        ],
       },
     ],
     [
@@ -248,7 +259,14 @@ describe('extractV2Inputs', () => {
             spec: {
               data: {
                 kind: 'QueryGroup',
-                spec: { queries: [{ kind: 'PanelQuery', spec: { query: { group: 'prometheus' } } }] },
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: { query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+                    },
+                  ],
+                },
               },
             },
           },
@@ -266,28 +284,43 @@ describe('extractV2Inputs', () => {
     expect(result).toEqual(emptyInputs);
   });
 
-  it('should deduplicate datasource types', () => {
+  it('should keep distinct datasource labels', () => {
     const dashboard = {
       elements: {},
       variables: [
-        { kind: 'QueryVariable', spec: { name: 'var1', query: { group: 'prometheus' } } },
-        { kind: 'QueryVariable', spec: { name: 'var2', query: { group: 'prometheus' } } },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var2', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-2' } } },
+        },
       ],
-      annotations: [{ spec: { name: 'Deployments', query: { group: 'prometheus' } } }],
+      annotations: [
+        { spec: { name: 'Deployments', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-3' } } } },
+      ],
     };
 
     const result = extractV2Inputs(dashboard);
 
-    expect(result.dataSources).toHaveLength(1);
-    expect(result.dataSources[0].pluginId).toBe('prometheus');
+    expect(result.dataSources).toHaveLength(3);
+    expect(result.dataSources.map((ds) => ds.name)).toEqual(['prom-1', 'prom-2', 'prom-3']);
+    expect(result.dataSources.map((ds) => ds.pluginId)).toEqual(['prometheus', 'prometheus', 'prometheus']);
   });
 
   it('should collect multiple different datasource types', () => {
     const dashboard = {
       elements: {},
       variables: [
-        { kind: 'QueryVariable', spec: { name: 'promvar', query: { group: 'prometheus' } } },
-        { kind: 'QueryVariable', spec: { name: 'lokivar', query: { group: 'loki' } } },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'lokivar', query: { group: 'loki', labels: { [ExportLabel]: 'loki-1' } } },
+        },
       ],
     };
 
@@ -392,7 +425,11 @@ describe('applyV2Inputs', () => {
                   {
                     kind: 'PanelQuery',
                     spec: {
-                      query: { group: 'prometheus', datasource: { name: 'old-ds' } },
+                      query: {
+                        group: 'prometheus',
+                        labels: { [ExportLabel]: 'prometheus-1' },
+                        datasource: { name: 'old-ds' },
+                      },
                     },
                   },
                 ],
@@ -405,7 +442,11 @@ describe('applyV2Inputs', () => {
         {
           kind: 'AnnotationQuery',
           spec: {
-            query: { group: 'prometheus', datasource: { name: 'old-ds' } },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1' },
+              datasource: { name: 'old-ds' },
+            },
           },
         },
       ],
@@ -413,7 +454,11 @@ describe('applyV2Inputs', () => {
         {
           kind: 'QueryVariable',
           spec: {
-            query: { group: 'prometheus', datasource: { name: 'old-ds' } },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1' },
+              datasource: { name: 'old-ds' },
+            },
           },
         },
       ],
@@ -423,7 +468,7 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'datasource-prometheus': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
     };
 
     const result = applyV2Inputs(dashboard, form);
@@ -442,6 +487,69 @@ describe('applyV2Inputs', () => {
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
   });
 
+  it('uses datasource labels to keep selections independent', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'prometheus',
+                        labels: { [ExportLabel]: 'prometheus-1' },
+                        datasource: { name: 'old-ds' },
+                      },
+                    },
+                  },
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'prometheus',
+                        labels: { [ExportLabel]: 'prometheus-2' },
+                        datasource: { name: 'old-ds' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      annotations: [],
+      variables: [],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus-1': { uid: 'ds-uid-1', type: 'prometheus', name: 'Prometheus 1' },
+      'datasource-prometheus-2': { uid: 'ds-uid-2', type: 'prometheus', name: 'Prometheus 2' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const updatedPanel = result.elements.panel as PanelKind;
+    const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
+    const firstQuery = queries[0];
+    const secondQuery = queries[1];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const firstSpec = firstQuery?.spec as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const secondSpec = secondQuery?.spec as any;
+    expect(firstSpec?.query?.datasource?.name).toBe('ds-uid-1');
+    expect(secondSpec?.query?.datasource?.name).toBe('ds-uid-2');
+  });
+
   it('preserves variable references and does not replace them', () => {
     const dashboard = {
       title: 'old',
@@ -450,7 +558,11 @@ describe('applyV2Inputs', () => {
         {
           kind: 'AnnotationQuery',
           spec: {
-            query: { group: 'prometheus', datasource: { name: '${ds}' } },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1' },
+              datasource: { name: '${ds}' },
+            },
           },
         },
       ],
@@ -461,7 +573,7 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'datasource-prometheus': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
     };
 
     const result = applyV2Inputs(dashboard, form);

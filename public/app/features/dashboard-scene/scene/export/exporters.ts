@@ -6,11 +6,11 @@ import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   PanelKind,
-  PanelQueryKind,
-  AnnotationQueryKind,
-  QueryVariableKind,
   LibraryPanelRef,
   LibraryPanelKind,
+  DataQueryKind,
+  AdhocVariableKind,
+  GroupByVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -26,6 +26,10 @@ import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
+
+// This label is used to store the export label for a datasource when exporting a V2 dashboard for external sharing.
+// E.g. if a dashboard has two datasources with the same type, the export label will be used to distinguish them.
+export const ExportLabel = 'grafana.app/export-label';
 
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
@@ -415,36 +419,76 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
 }
 
 export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
-  const variableLookup: { [key: string]: any } = {};
+  const dataQueryLabels: { [key: string]: Set<string> } = {};
 
   // get all datasource variables
   const datasourceVariables = dashboard.variables.filter((v) => v.kind === 'DatasourceVariable');
 
-  for (const variable of dashboard.variables) {
-    variableLookup[variable.spec.name] = variable.spec;
-  }
-
-  const removeDataSourceRefs = (
-    obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
-  ) => {
-    const datasourceUid = obj.query?.datasource?.name;
-
-    if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
-      const varName = datasourceUid.slice(2, -1);
-      // if there's a match we don't want to remove the datasource ref
-      const match = datasourceVariables.find((v) => v.spec.name === varName);
-      if (match) {
-        return;
-      }
+  const processDataQueryKind = (dataQueryKind: DataQueryKind) => {
+    if (!dataQueryKind.datasource?.name) {
+      return;
     }
 
-    obj.query && (obj.query.datasource = undefined);
+    const datasourceUid = dataQueryKind.datasource.name;
+
+    if (isReferencingDsTemplateVariable(datasourceUid)) {
+      return;
+    }
+
+    dataQueryKind.labels = {
+      ...(dataQueryKind.labels ?? {}),
+      [ExportLabel]: getLabel(dataQueryKind.group, datasourceUid),
+    };
+
+    dataQueryKind.datasource = undefined;
+  };
+
+  const processAdHocAndGroupByVariables = (variable: AdhocVariableKind | GroupByVariableKind) => {
+    const datasourceUid = variable.datasource?.name;
+
+    if (!datasourceUid) {
+      return;
+    }
+
+    if (isReferencingDsTemplateVariable(datasourceUid)) {
+      return;
+    }
+
+    variable.labels = {
+      ...(variable.labels ?? {}),
+      [ExportLabel]: getLabel(variable.group, datasourceUid),
+    };
+    variable.datasource = undefined;
+  };
+
+  const isReferencingDsTemplateVariable = (datasourceUid: string) => {
+    if (datasourceUid.startsWith('${') && datasourceUid.endsWith('}')) {
+      const varName = datasourceUid.slice(2, -1);
+      return !!datasourceVariables.find((v) => v.spec.name === varName);
+    }
+
+    return false;
+  };
+
+  const getLabel = (datasourceGroup: string, datasourceUid: string) => {
+    const group = dataQueryLabels[datasourceGroup];
+
+    if (group) {
+      const matchingUid = group.has(datasourceUid);
+      if (!matchingUid) {
+        group.add(datasourceUid);
+      }
+    } else {
+      dataQueryLabels[datasourceGroup] = new Set([datasourceUid]);
+    }
+
+    return `${datasourceGroup}-${group?.size || 1}`;
   };
 
   const processPanel = (panel: PanelKind) => {
     if (panel.spec.data.spec.queries) {
       for (const query of panel.spec.data.spec.queries) {
-        removeDataSourceRefs(query.spec);
+        processDataQueryKind(query.spec.query);
       }
     }
   };
@@ -472,7 +516,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     // process template variables
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        removeDataSourceRefs(variable.spec);
+        processDataQueryKind(variable.spec.query);
         variable.spec.options = [];
         variable.spec.current = {
           text: '',
@@ -483,12 +527,14 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
           text: '',
           value: '',
         };
+      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+        processAdHocAndGroupByVariables(variable);
       }
     }
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
-      removeDataSourceRefs(annotation.spec);
+      processDataQueryKind(annotation.spec.query);
     }
 
     return dashboard;
