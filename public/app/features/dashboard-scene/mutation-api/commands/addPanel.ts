@@ -15,15 +15,13 @@ import { buildVizPanel } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
-import { gridPositionSchema, panelKindSchema } from './schemas';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
+import { validateDatasourceRefs, validatePluginId } from './validation';
 
-const payloadSchema = z.object({
-  panel: panelKindSchema,
-  position: gridPositionSchema.optional(),
-});
+export const addPanelPayloadSchema = payloads.addPanel;
 
-export type AddPanelPayload = z.infer<typeof payloadSchema>;
+export type AddPanelPayload = z.infer<typeof addPanelPayloadSchema>;
 
 /**
  * Find a panel by elementName or panelId in the dashboard body.
@@ -44,12 +42,11 @@ export function findPanel(panels: VizPanel[], elementName?: string, panelId?: nu
   return null;
 }
 
-export const addPanelCommand: CommandDefinition<AddPanelPayload> = {
+export const addPanelCommand: MutationCommand<AddPanelPayload> = {
   name: 'ADD_PANEL',
-  description:
-    'Add a new panel to the dashboard. Creates both the panel definition in elements and a layout item. Automatically generates a unique element name and positions the panel.',
+  description: payloads.addPanel.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.addPanel,
   permission: requiresEdit,
 
   handler: async (payload, context) => {
@@ -59,6 +56,16 @@ export const addPanelCommand: CommandDefinition<AddPanelPayload> = {
       const body = scene.state.body;
       if (!body) {
         throw new Error('Dashboard has no body');
+      }
+
+      const pluginError = validatePluginId(payload.panel.spec.vizConfig.group);
+      if (pluginError) {
+        return { success: false, error: pluginError, changes: [] };
+      }
+
+      const dsError = validateDatasourceRefs(payload.panel.spec.data?.spec.queries);
+      if (dsError) {
+        return { success: false, error: dsError, changes: [] };
       }
 
       const panelId = dashboardSceneGraph.getNextPanelId(scene);

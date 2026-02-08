@@ -14,26 +14,19 @@ import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveMode
 import { transformMappingsToV1 } from '../../serialization/transformToV1TypesUtils';
 
 import { findPanel } from './addPanel';
-import { panelSpecSchema } from './schemas';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
+import { validateDatasourceRefs, validatePluginId } from './validation';
 
-const payloadSchema = z
-  .object({
-    elementName: z.string().optional().describe('Element name to update'),
-    panelId: z.number().optional().describe('Alternative: panel ID'),
-    updates: panelSpecSchema.partial().describe('Partial panel spec with fields to update'),
-  })
-  .refine((data) => data.elementName !== undefined || data.panelId !== undefined, {
-    message: 'Either elementName or panelId must be provided',
-  });
+export const updatePanelPayloadSchema = payloads.updatePanel;
 
-export type UpdatePanelPayload = z.infer<typeof payloadSchema>;
+export type UpdatePanelPayload = z.infer<typeof updatePanelPayloadSchema>;
 
-export const updatePanelCommand: CommandDefinition<UpdatePanelPayload> = {
+export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
   name: 'UPDATE_PANEL',
-  description: "Update an existing panel's properties, queries, or configuration. Only provided fields are changed.",
+  description: payloads.updatePanel.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.updatePanel,
   permission: requiresEdit,
 
   handler: async (payload, context) => {
@@ -51,6 +44,18 @@ export const updatePanelCommand: CommandDefinition<UpdatePanelPayload> = {
 
       if (!panelToUpdate) {
         throw new Error(`Panel not found: ${elementName ?? `panelId=${panelId}`}`);
+      }
+
+      if (updates.vizConfig?.group !== undefined) {
+        const pluginError = validatePluginId(updates.vizConfig.group);
+        if (pluginError) {
+          return { success: false, error: pluginError, changes: [] };
+        }
+      }
+
+      const dsError = validateDatasourceRefs(updates.data?.spec.queries);
+      if (dsError) {
+        return { success: false, error: dsError, changes: [] };
       }
 
       // Capture previous state as schema-compatible PanelKind for inverse mutation

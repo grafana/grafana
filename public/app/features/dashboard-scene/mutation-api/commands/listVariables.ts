@@ -8,14 +8,14 @@ import { SceneVariableSet } from '@grafana/scenes';
 
 import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
 
-import { emptyPayloadSchema } from './schemas';
-import { readOnly, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { readOnly, type MutationCommand } from './types';
 
-export const listVariablesCommand: CommandDefinition<Record<string, never>> = {
+export const listVariablesCommand: MutationCommand<Record<string, never>> = {
   name: 'LIST_VARIABLES',
-  description: 'List all template variables in the current dashboard in v2beta1 VariableKind format.',
+  description: payloads.listVariables.description ?? '',
 
-  payloadSchema: emptyPayloadSchema,
+  payloadSchema: payloads.listVariables,
   permission: readOnly,
 
   handler: async (_payload, context) => {

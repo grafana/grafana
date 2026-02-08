@@ -5,14 +5,14 @@
  * if the dashboard is not already in edit mode.
  */
 
-import { emptyPayloadSchema } from './schemas';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
 
-export const enterEditModeCommand: CommandDefinition<Record<string, never>> = {
+export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
   name: 'ENTER_EDIT_MODE',
-  description: 'Enter edit mode on the dashboard. Required before making mutations if not already in edit mode.',
+  description: payloads.enterEditMode.description ?? '',
 
-  payloadSchema: emptyPayloadSchema,
+  payloadSchema: payloads.enterEditMode,
   permission: requiresEdit,
 
   handler: async (_payload, context) => {

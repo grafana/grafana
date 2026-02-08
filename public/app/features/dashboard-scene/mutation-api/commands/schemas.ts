@@ -1,22 +1,26 @@
 /**
- * Dashboard Mutation API -- Canonical Zod Schemas
+ * Dashboard Mutation API -- Canonical Zod Schemas & Payload Definitions
  *
- * These schemas define the v2beta1 data structures used by mutation commands
- * (PanelKind, VizConfigKind, QueryGroupKind, VariableKind, etc.).
+ * This file contains two layers:
  *
- * WHY THESE ARE ALSO EXPORTED VIA @grafana/runtime:
+ * 1. BUILDING-BLOCK SCHEMAS -- v2beta1 data structures (PanelKind, VizConfigKind,
+ *    QueryGroupKind, VariableKind, etc.) used internally by core code.
  *
- * The MutationClient (getDashboardMutationAPI()) is only available at runtime
- * after a dashboard has been loaded and activated. However, consumers like
- * the Grafana Assistant need these schemas at module load time -- before any
- * dashboard exists -- to define their tool input schemas for the LLM.
+ * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Zod schema per mutation command,
+ *    exported through DashboardMutationAPI.payloads in @grafana/runtime so
+ *    external consumers (e.g. LLM tool definitions) can compose their own
+ *    input schemas at module load time, before any dashboard is loaded.
  *
- * These schemas are re-exported through DashboardMutationAPI.schemas in
- * @grafana/runtime so external consumers (plugins) can import and compose
- * them without waiting for the MutationClient to be ready.
+ * WHY THIS FILE MUST STAY LIGHTWEIGHT:
  *
- * Within grafana core, import directly from this file -- do NOT use
- * DashboardMutationAPI.schemas (that namespace is only for external consumers).
+ * Command handler files (addPanel.ts, etc.) have heavy runtime imports
+ * (DashboardScene, serialization utils, @grafana/scenes). This file only
+ * depends on Zod, making it safe for cross-package re-export from
+ * @grafana/runtime without pulling in the DashboardScene dependency tree.
+ *
+ * Within grafana core, import directly from this file or from the command
+ * files (which re-export their schema). External consumers use
+ * DashboardMutationAPI.payloads from @grafana/runtime.
  *
  * DEFAULTS: Literal `kind` and `version` fields use .optional().default()
  * so consumers (e.g. LLM tools) can omit boilerplate. After parsing, these
@@ -162,3 +166,66 @@ export const dashboardSettingsSchema = z.object({
 });
 
 export const emptyPayloadSchema = z.object({}).strict();
+
+// Payload schemas -- one per mutation command.
+// These compose the building-block schemas above into the exact shape
+// each command's `payload` field expects.
+
+export const addPanelPayloadSchema = z.object({
+  panel: panelKindSchema,
+  position: gridPositionSchema.optional(),
+});
+
+export const updatePanelPayloadSchema = z
+  .object({
+    elementName: z.string().optional().describe('Element name to update'),
+    panelId: z.number().optional().describe('Alternative: panel ID'),
+    updates: panelSpecSchema.partial().describe('Partial panel spec with fields to update'),
+  })
+  .refine((data) => data.elementName !== undefined || data.panelId !== undefined, {
+    message: 'Either elementName or panelId must be provided',
+  });
+
+export const removePanelPayloadSchema = z
+  .object({
+    elementName: z.string().optional().describe('Element name (e.g., "panel-1")'),
+    panelId: z.number().optional().describe('Alternative: numeric panel ID'),
+  })
+  .refine((data) => data.elementName !== undefined || data.panelId !== undefined, {
+    message: 'Either elementName or panelId must be provided',
+  });
+
+export const addVariablePayloadSchema = z.object({
+  variable: variableKindSchema.describe('Variable definition (VariableKind)'),
+  position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
+});
+
+export const updateVariablePayloadSchema = z.object({
+  name: z.string().describe('Variable name to update'),
+  variable: variableKindSchema.describe('New variable definition (VariableKind)'),
+});
+
+export const removeVariablePayloadSchema = z.object({
+  name: z.string().describe('Variable name to remove'),
+});
+
+/**
+ * Per-command payload schemas, exposed via DashboardMutationAPI.payloads.
+ *
+ * Each value is a Zod schema with a `.describe()` annotation that serves
+ * as the command description (flows into JSON Schema for LLM consumers).
+ * Consumers can use Zod's `.shape`, `.extend()`, `.pick()`, etc. to
+ * extract or compose sub-schemas as needed.
+ */
+export const payloads = {
+  addPanel: addPanelPayloadSchema.describe('Add a new panel to the dashboard'),
+  removePanel: removePanelPayloadSchema.describe('Remove a panel by element name or panel ID'),
+  updatePanel: updatePanelPayloadSchema.describe('Update an existing panel'),
+  addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
+  removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
+  updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
+  listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
+  getDashboardSettings: emptyPayloadSchema.describe('Get current dashboard settings'),
+  updateDashboardSettings: dashboardSettingsSchema.describe('Update dashboard settings'),
+  enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
+};

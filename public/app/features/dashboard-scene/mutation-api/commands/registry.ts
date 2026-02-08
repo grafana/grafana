@@ -12,13 +12,13 @@ import { getDashboardSettingsCommand } from './getDashboardSettings';
 import { listVariablesCommand } from './listVariables';
 import { removePanelCommand } from './removePanel';
 import { removeVariableCommand } from './removeVariable';
-import type { CommandDefinition } from './types';
+import type { MutationCommand } from './types';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updatePanelCommand } from './updatePanel';
 import { updateVariableCommand } from './updateVariable';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each command is typed internally; the array is heterogeneous
-export const ALL_COMMANDS: Array<CommandDefinition<any>> = [
+export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   addPanelCommand,
   removePanelCommand,
   updatePanelCommand,
@@ -35,7 +35,7 @@ export const ALL_COMMANDS: Array<CommandDefinition<any>> = [
 export const MUTATION_TYPES = ALL_COMMANDS.map((cmd) => cmd.name);
 
 /** Lookup command by name (case-insensitive). */
-function findCommand(command: string): CommandDefinition | undefined {
+function findCommand(command: string): MutationCommand | undefined {
   const normalized = command.toUpperCase();
   return ALL_COMMANDS.find((cmd) => cmd.name === normalized);
 }

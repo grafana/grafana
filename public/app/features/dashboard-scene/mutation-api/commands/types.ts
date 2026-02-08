@@ -1,7 +1,7 @@
 /**
  * Command infrastructure types and permission checks.
  *
- * Provides the CommandDefinition interface used by every command file,
+ * Provides the MutationCommand interface used by every command file,
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
@@ -33,12 +33,12 @@ export type PermissionCheckResult = { allowed: true } | { allowed: false; error:
 export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
 
 /**
- * A complete command definition: schema, handler, permission, and metadata.
+ * A complete mutation command: schema, handler, permission, and metadata.
  *
- * Each command file exports a single CommandDefinition. The registry collects
+ * Each command file exports a single MutationCommand. The registry collects
  * them and the MutationExecutor iterates over them generically.
  */
-export interface CommandDefinition<T = unknown> {
+export interface MutationCommand<T = unknown> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
   name: string;
   /** Human-readable description. */

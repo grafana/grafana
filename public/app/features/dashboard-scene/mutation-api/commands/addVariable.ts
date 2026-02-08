@@ -11,15 +11,12 @@ import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2'
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
-import { variableKindSchema } from './schemas';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
 
-const payloadSchema = z.object({
-  variable: variableKindSchema.describe('Variable definition (VariableKind)'),
-  position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
-});
+export const addVariablePayloadSchema = payloads.addVariable;
 
-export type AddVariablePayload = z.infer<typeof payloadSchema>;
+export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
 
 /**
  * Replace the dashboard's variable set with a new set containing the given variables.
@@ -35,11 +32,11 @@ export function replaceVariableSet(
   return newVarSet;
 }
 
-export const addVariableCommand: CommandDefinition<AddVariablePayload> = {
+export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   name: 'ADD_VARIABLE',
-  description: 'Add a template variable to the dashboard using v2beta1 VariableKind format.',
+  description: payloads.addVariable.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.addVariable,
   permission: requiresEdit,
 
   handler: async (payload, context) => {

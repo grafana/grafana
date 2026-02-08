@@ -10,24 +10,18 @@ import { z } from 'zod';
 import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 
 import { findPanel } from './addPanel';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
 
-const payloadSchema = z
-  .object({
-    elementName: z.string().optional().describe('Element name (e.g., "panel-1")'),
-    panelId: z.number().optional().describe('Alternative: numeric panel ID'),
-  })
-  .refine((data) => data.elementName !== undefined || data.panelId !== undefined, {
-    message: 'Either elementName or panelId must be provided',
-  });
+export const removePanelPayloadSchema = payloads.removePanel;
 
-export type RemovePanelPayload = z.infer<typeof payloadSchema>;
+export type RemovePanelPayload = z.infer<typeof removePanelPayloadSchema>;
 
-export const removePanelCommand: CommandDefinition<RemovePanelPayload> = {
+export const removePanelCommand: MutationCommand<RemovePanelPayload> = {
   name: 'REMOVE_PANEL',
-  description: 'Remove a panel from the dashboard by element name or panel ID.',
+  description: payloads.removePanel.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.removePanel,
   permission: requiresEdit,
 
   handler: async (payload, context) => {

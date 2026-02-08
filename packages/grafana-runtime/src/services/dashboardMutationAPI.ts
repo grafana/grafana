@@ -22,9 +22,9 @@
  *   const result = await api.execute({ type: 'ADD_PANEL', payload: { ... } });
  * }
  *
- * // Schemas are available as static imports for composition at module load time:
- * const { schemas } = DashboardMutationAPI;
- * const mySchema = schemas.panelKindSchema;
+ * // Payload schemas are available as static imports for composition at module load time:
+ * const { addPanel, updatePanel } = DashboardMutationAPI.payloads;
+ * const mySchema = addPanel.extend({ ... });
  * ```
  */
 
@@ -155,10 +155,20 @@ export function getDashboardMutationAPI(): MutationClient | null {
 }
 
 /**
- * Canonical Zod schemas for v2beta1 dashboard structures.
+ * Per-command Zod payload schemas for dashboard mutations.
  *
- * Available as static imports so consumers can compose tool schemas
- * at module load time, before any dashboard is loaded.
+ * Available as static imports so consumers can compose tool input schemas
+ * at module load time, before any dashboard is loaded. Each key is a
+ * camelCase action name mapping to a Zod schema with a `.describe()`
+ * annotation. Use `.shape`, `.extend()`, `.pick()`, etc. to extract or
+ * compose sub-schemas.
+ *
+ * @example
+ * ```typescript
+ * const { addPanel, updateDashboardSettings } = DashboardMutationAPI.payloads;
+ * addPanel.description; // "Add a new panel to the dashboard"
+ * const vizConfig = addPanel.shape.panel.shape.spec.shape.vizConfig;
+ * ```
  */
 // eslint-disable-next-line no-restricted-imports -- cross-package re-export for the public API surface
-export * as schemas from '../../../../public/app/features/dashboard-scene/mutation-api/commands/schemas';
+export { payloads } from '../../../../public/app/features/dashboard-scene/mutation-api/commands/schemas';

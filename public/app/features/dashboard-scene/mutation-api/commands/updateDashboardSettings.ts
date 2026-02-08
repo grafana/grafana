@@ -5,22 +5,23 @@
  * display options, links, and time settings. Only provided fields are changed.
  */
 
+import { z } from 'zod';
+
 import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import type { TimeSettingsSpec } from '@grafana/schema/src/schema/dashboard/v2beta1/types.spec.gen';
 
-import { dashboardSettingsSchema } from './schemas';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
 
-const payloadSchema = dashboardSettingsSchema;
+export const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
 
-export type UpdateDashboardSettingsPayload = z.infer<typeof payloadSchema>;
+export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSettingsPayloadSchema>;
 
-export const updateDashboardSettingsCommand: CommandDefinition<UpdateDashboardSettingsPayload> = {
+export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSettingsPayload> = {
   name: 'UPDATE_DASHBOARD_SETTINGS',
-  description:
-    'Update dashboard settings. Accepts any combination of metadata, display options, links, and time settings. Only provided fields are changed.',
+  description: payloads.updateDashboardSettings.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.updateDashboardSettings,
   permission: requiresEdit,
 
   handler: async (payload, context) => {

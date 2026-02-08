@@ -7,19 +7,18 @@
 import { z } from 'zod';
 
 import { replaceVariableSet } from './addVariable';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
 
-const payloadSchema = z.object({
-  name: z.string().describe('Variable name to remove'),
-});
+export const removeVariablePayloadSchema = payloads.removeVariable;
 
-export type RemoveVariablePayload = z.infer<typeof payloadSchema>;
+export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
 
-export const removeVariableCommand: CommandDefinition<RemoveVariablePayload> = {
+export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   name: 'REMOVE_VARIABLE',
-  description: 'Remove a template variable from the dashboard by name.',
+  description: payloads.removeVariable.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.removeVariable,
   permission: requiresEdit,
 
   handler: async (payload, context) => {

@@ -14,8 +14,8 @@ import type {
 
 import { transformCursorSynctoEnum } from '../../serialization/transformToV2TypesUtils';
 
-import { emptyPayloadSchema } from './schemas';
-import { readOnly, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { readOnly, type MutationCommand } from './types';
 
 function getCursorSync(scene: { state: { $behaviors?: unknown[] } }): DashboardCursorSync {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing SceneBehavior[] to unknown[] for type guard
@@ -35,12 +35,11 @@ function getLiveNow(scene: { state: { $behaviors?: unknown[] } }): boolean | und
   return liveNow || undefined;
 }
 
-export const getDashboardSettingsCommand: CommandDefinition<Record<string, never>> = {
+export const getDashboardSettingsCommand: MutationCommand<Record<string, never>> = {
   name: 'GET_DASHBOARD_SETTINGS',
-  description:
-    'Get all dashboard settings including metadata and time configuration. Use this command to check the current dashboard state before making mutations.',
+  description: payloads.getDashboardSettings.description ?? '',
 
-  payloadSchema: emptyPayloadSchema,
+  payloadSchema: payloads.getDashboardSettings,
   permission: readOnly,
 
   handler: async (_payload, context) => {

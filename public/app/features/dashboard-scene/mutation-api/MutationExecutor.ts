@@ -14,12 +14,7 @@ import { DashboardMutationAPI } from '@grafana/runtime';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
-import type {
-  CommandDefinition,
-  MutationContext,
-  MutationTransactionInternal,
-  PermissionCheck,
-} from './commands/types';
+import type { MutationCommand, MutationContext, MutationTransactionInternal, PermissionCheck } from './commands/types';
 import type { Mutation, MutationResult, MutationEvent } from './types';
 
 /**
@@ -244,7 +239,7 @@ export class MutationExecutor {
     }
   }
 
-  private registerCommand(cmd: CommandDefinition): void {
+  private registerCommand(cmd: MutationCommand): void {
     this.commands.set(cmd.name, {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: executor validates with Zod before dispatch
       handler: cmd.handler as MutationHandler,

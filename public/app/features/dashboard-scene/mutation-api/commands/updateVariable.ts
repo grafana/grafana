@@ -12,21 +12,18 @@ import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2'
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { replaceVariableSet } from './addVariable';
-import { variableKindSchema } from './schemas';
-import { requiresEdit, type CommandDefinition } from './types';
+import { payloads } from './schemas';
+import { requiresEdit, type MutationCommand } from './types';
 
-const payloadSchema = z.object({
-  name: z.string().describe('Variable name to update'),
-  variable: variableKindSchema.describe('New variable definition (VariableKind)'),
-});
+export const updateVariablePayloadSchema = payloads.updateVariable;
 
-export type UpdateVariablePayload = z.infer<typeof payloadSchema>;
+export type UpdateVariablePayload = z.infer<typeof updateVariablePayloadSchema>;
 
-export const updateVariableCommand: CommandDefinition<UpdateVariablePayload> = {
+export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   name: 'UPDATE_VARIABLE',
-  description: 'Replace an existing template variable with a new definition, preserving its position.',
+  description: payloads.updateVariable.description ?? '',
 
-  payloadSchema,
+  payloadSchema: payloads.updateVariable,
   permission: requiresEdit,
 
   handler: async (payload, context) => {
