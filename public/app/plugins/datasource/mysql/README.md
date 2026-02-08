@@ -19,7 +19,6 @@ Watch this video to learn more about setting up the Grafana MySQL data source pl
 
 [![MySQL data source plugin | Visualize MySQL using Grafana | Tutorial](https://img.youtube.com/vi/p_RDHfHS-P8/hq720.jpg)](https://youtu.be/p_RDHfHS-P8 "MySQL data source plugin")
 
-> 
 > ## Give it a try using Grafana Play
 > 
 > With Grafana Play, you can explore and see how it works, learning from practical examples to accelerate your development. This feature can be seen on [MySQL data source plugin demo](https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview).
