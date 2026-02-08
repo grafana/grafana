@@ -243,6 +243,10 @@ func (o *RecordingRule) DeepCopyInto(dst *RecordingRule) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (RecordingRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRule"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &RecordingRule{}
 
@@ -294,6 +298,10 @@ func (o *RecordingRuleList) DeepCopy() *RecordingRuleList {
 
 func (o *RecordingRuleList) DeepCopyInto(dst *RecordingRuleList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (RecordingRuleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleList"
 }
 
 // Interface compliance compile-time check

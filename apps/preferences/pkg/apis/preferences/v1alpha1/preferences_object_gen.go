@@ -228,6 +228,10 @@ func (o *Preferences) DeepCopyInto(dst *Preferences) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Preferences) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Preferences{}
 
@@ -279,6 +283,10 @@ func (o *PreferencesList) DeepCopy() *PreferencesList {
 
 func (o *PreferencesList) DeepCopyInto(dst *PreferencesList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (PreferencesList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
 }
 
 // Interface compliance compile-time check

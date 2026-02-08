@@ -7,10 +7,14 @@ package v0alpha1
 // PullRequestJobOptionsApplyConfiguration represents a declarative configuration of the PullRequestJobOptions type for use
 // with apply.
 type PullRequestJobOptionsApplyConfiguration struct {
-	Ref  *string `json:"ref,omitempty"`
-	PR   *int    `json:"pr,omitempty"`
+	// The branch of commit hash
+	Ref *string `json:"ref,omitempty"`
+	// Pull request number (when appropriate)
+	PR *int `json:"pr,omitempty"`
+	// The specific commit hash that triggered this notice
 	Hash *string `json:"hash,omitempty"`
-	URL  *string `json:"url,omitempty"`
+	// URL to the originator (eg, PR URL)
+	URL *string `json:"url,omitempty"`
 }
 
 // PullRequestJobOptionsApplyConfiguration constructs a declarative configuration of the PullRequestJobOptions type for use with

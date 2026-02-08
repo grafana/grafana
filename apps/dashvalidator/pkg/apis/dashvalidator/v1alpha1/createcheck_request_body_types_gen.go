@@ -25,3 +25,9 @@ type CreateCheckRequestV1alpha1BodyDatasourceMappings struct {
 func NewCreateCheckRequestV1alpha1BodyDatasourceMappings() *CreateCheckRequestV1alpha1BodyDatasourceMappings {
 	return &CreateCheckRequestV1alpha1BodyDatasourceMappings{}
 }
+func (CreateCheckRequestBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckRequestBody"
+}
+func (CreateCheckRequestV1alpha1BodyDatasourceMappings) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckRequestV1alpha1BodyDatasourceMappings"
+}

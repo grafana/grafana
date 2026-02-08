@@ -16,7 +16,7 @@ import (
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	sqlSchemas := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResponseSQLSchemas"].Schema
+	sqlSchemas := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -70,7 +70,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		return routes
 	}
 
-	searchResults := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList"].Schema
+	searchResults := defs[queryV1.OpenAPIPrefix+"DataSourceConnectionList"].Schema
 	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
 		Path: "connections",
 		Spec: &spec3.PathProps{

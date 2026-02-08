@@ -43,7 +43,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -56,7 +56,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -83,7 +83,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -104,7 +104,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

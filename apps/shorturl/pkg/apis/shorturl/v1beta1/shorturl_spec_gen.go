@@ -12,3 +12,6 @@ type ShortURLSpec struct {
 func NewShortURLSpec() *ShortURLSpec {
 	return &ShortURLSpec{}
 }
+func (ShortURLSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLSpec"
+}

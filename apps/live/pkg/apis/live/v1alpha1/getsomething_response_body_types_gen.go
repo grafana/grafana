@@ -12,3 +12,6 @@ type GetSomethingBody struct {
 func NewGetSomethingBody() *GetSomethingBody {
 	return &GetSomethingBody{}
 }
+func (GetSomethingBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.live.pkg.apis.live.v1alpha1.GetSomethingBody"
+}

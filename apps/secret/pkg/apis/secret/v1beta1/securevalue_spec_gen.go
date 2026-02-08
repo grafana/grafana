@@ -38,3 +38,6 @@ type SecureValueSpec struct {
 func NewSecureValueSpec() *SecureValueSpec {
 	return &SecureValueSpec{}
 }
+func (SecureValueSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueSpec"
+}

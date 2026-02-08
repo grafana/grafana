@@ -212,7 +212,7 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	body := iamv0alpha1.GetTeamsBody{
-		Items: make([]iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam, len(result.Results.Rows)),
+		Items: make([]iamv0alpha1.GetTeamsUserTeam, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
@@ -220,7 +220,7 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 			return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
 		}
 
-		body.Items[i] = iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{
+		body.Items[i] = iamv0alpha1.GetTeamsUserTeam{
 			User:       string(row.Cells[userIDX]),
 			Team:       string(row.Cells[teamIDX]),
 			Permission: string(row.Cells[permissionIDX]),

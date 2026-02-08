@@ -330,7 +330,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v1alpha1||<namespace>/check|POST": v1alpha1.CreateCheck{},
+	"v1alpha1||<namespace>/check|POST": v1alpha1.CreateCheckResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

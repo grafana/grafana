@@ -7,9 +7,16 @@ package v0alpha1
 // GitLabRepositoryConfigApplyConfiguration represents a declarative configuration of the GitLabRepositoryConfig type for use
 // with apply.
 type GitLabRepositoryConfigApplyConfiguration struct {
-	URL    *string `json:"url,omitempty"`
+	// The repository URL (e.g. `https://gitlab.com/example/test`).
+	URL *string `json:"url,omitempty"`
+	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
-	Path   *string `json:"path,omitempty"`
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path *string `json:"path,omitempty"`
 }
 
 // GitLabRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitLabRepositoryConfig type for use with

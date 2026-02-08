@@ -228,6 +228,10 @@ func (o *ExternalGroupMapping) DeepCopyInto(dst *ExternalGroupMapping) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (ExternalGroupMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &ExternalGroupMapping{}
 
@@ -279,6 +283,10 @@ func (o *ExternalGroupMappingList) DeepCopy() *ExternalGroupMappingList {
 
 func (o *ExternalGroupMappingList) DeepCopyInto(dst *ExternalGroupMappingList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (ExternalGroupMappingList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
 }
 
 // Interface compliance compile-time check

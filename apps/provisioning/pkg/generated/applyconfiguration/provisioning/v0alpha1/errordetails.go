@@ -10,11 +10,29 @@ import (
 
 // ErrorDetailsApplyConfiguration represents a declarative configuration of the ErrorDetails type for use
 // with apply.
+//
+// ErrorDetails describes an individual field error intended to help users identify and fix issues
+// in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same
+// purpose: to deliver actionable feedback about fields in the spec that require attention.
+// Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value
+// does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
+// communicate validation or external reference errors that users can resolve by editing spec fields.
+// TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
 type ErrorDetailsApplyConfiguration struct {
-	Type   *v1.CauseType `json:"type,omitempty"`
-	Field  *string       `json:"field,omitempty"`
-	Detail *string       `json:"detail,omitempty"`
-	Origin *string       `json:"origin,omitempty"`
+	// Type is a machine-readable description of the cause of the error.
+	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
+	Type *v1.CauseType `json:"type,omitempty"`
+	// Field is the path to the field or JSON pointer that caused the error.
+	// This helps users and tools identify exactly where to correct the problem.
+	// This field is optional and may be empty if not applicable.
+	Field *string `json:"field,omitempty"`
+	// Detail provides a human-readable explanation of what went wrong.
+	// This message may be shown directly to users and should be actionable.
+	Detail *string `json:"detail,omitempty"`
+	// Origin indicates where the error originated in validation, or the name of the external service that reported the error.
+	// This can be useful for tooling or debugging, and may reference a specific rule, function, or service.
+	// This field is optional and may be empty.
+	Origin *string `json:"origin,omitempty"`
 }
 
 // ErrorDetailsApplyConfiguration constructs a declarative configuration of the ErrorDetails type for use with

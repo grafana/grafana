@@ -11,3 +11,6 @@ type GetUsageRequestParams struct {
 func NewGetUsageRequestParams() *GetUsageRequestParams {
 	return &GetUsageRequestParams{}
 }
+func (GetUsageRequestParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.quotas.pkg.apis.quotas.v0alpha1.GetUsageRequestParams"
+}

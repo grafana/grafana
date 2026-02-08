@@ -12,3 +12,6 @@ type FolderSpec struct {
 func NewFolderSpec() *FolderSpec {
 	return &FolderSpec{}
 }
+func (FolderSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec"
+}

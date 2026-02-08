@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -22,10 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/client-go/rest"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -149,7 +150,7 @@ func New(cfg app.Config) (app.App, error) {
 					}
 
 					// Return typed response matching the manifest
-					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegister{
+					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegisterResponse{
 						TypeMeta: metav1.TypeMeta{
 							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
 						},

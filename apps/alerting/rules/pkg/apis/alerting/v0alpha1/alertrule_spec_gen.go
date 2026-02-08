@@ -116,3 +116,21 @@ type AlertRuleV0alpha1SpecPanelRef struct {
 func NewAlertRuleV0alpha1SpecPanelRef() *AlertRuleV0alpha1SpecPanelRef {
 	return &AlertRuleV0alpha1SpecPanelRef{}
 }
+func (AlertRuleIntervalTrigger) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleIntervalTrigger"
+}
+func (AlertRuleExpression) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpression"
+}
+func (AlertRuleRelativeTimeRange) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleRelativeTimeRange"
+}
+func (AlertRuleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
+}
+func (AlertRuleV0alpha1SpecNotificationSettings) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"
+}
+func (AlertRuleV0alpha1SpecPanelRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecPanelRef"
+}

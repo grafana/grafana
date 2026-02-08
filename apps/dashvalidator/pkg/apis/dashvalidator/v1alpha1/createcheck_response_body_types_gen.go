@@ -5,18 +5,18 @@ package v1alpha1
 // +k8s:openapi-gen=true
 type CreateCheckBody struct {
 	CompatibilityScore float64                                    `json:"compatibilityScore"`
-	DatasourceResults  []V1alpha1CreateCheckBodyDatasourceResults `json:"datasourceResults"`
+	DatasourceResults  []CreateCheckV1alpha1BodyDatasourceResults `json:"datasourceResults"`
 }
 
 // NewCreateCheckBody creates a new CreateCheckBody object.
 func NewCreateCheckBody() *CreateCheckBody {
 	return &CreateCheckBody{
-		DatasourceResults: []V1alpha1CreateCheckBodyDatasourceResults{},
+		DatasourceResults: []CreateCheckV1alpha1BodyDatasourceResults{},
 	}
 }
 
 // +k8s:openapi-gen=true
-type V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown struct {
+type CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown struct {
 	PanelTitle         string   `json:"panelTitle"`
 	PanelID            int64    `json:"panelID"`
 	QueryRefId         string   `json:"queryRefId"`
@@ -26,15 +26,15 @@ type V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown struct {
 	CompatibilityScore float64  `json:"compatibilityScore"`
 }
 
-// NewV1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown creates a new V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown object.
-func NewV1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown() *V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown {
-	return &V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown{
+// NewCreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown creates a new CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown object.
+func NewCreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown() *CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown {
+	return &CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown{
 		MissingMetrics: []string{},
 	}
 }
 
 // +k8s:openapi-gen=true
-type V1alpha1CreateCheckBodyDatasourceResults struct {
+type CreateCheckV1alpha1BodyDatasourceResults struct {
 	Uid                string                                                   `json:"uid"`
 	Type               string                                                   `json:"type"`
 	Name               *string                                                  `json:"name,omitempty"`
@@ -43,14 +43,23 @@ type V1alpha1CreateCheckBodyDatasourceResults struct {
 	TotalMetrics       int64                                                    `json:"totalMetrics"`
 	FoundMetrics       int64                                                    `json:"foundMetrics"`
 	MissingMetrics     []string                                                 `json:"missingMetrics"`
-	QueryBreakdown     []V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown `json:"queryBreakdown"`
+	QueryBreakdown     []CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown `json:"queryBreakdown"`
 	CompatibilityScore float64                                                  `json:"compatibilityScore"`
 }
 
-// NewV1alpha1CreateCheckBodyDatasourceResults creates a new V1alpha1CreateCheckBodyDatasourceResults object.
-func NewV1alpha1CreateCheckBodyDatasourceResults() *V1alpha1CreateCheckBodyDatasourceResults {
-	return &V1alpha1CreateCheckBodyDatasourceResults{
+// NewCreateCheckV1alpha1BodyDatasourceResults creates a new CreateCheckV1alpha1BodyDatasourceResults object.
+func NewCreateCheckV1alpha1BodyDatasourceResults() *CreateCheckV1alpha1BodyDatasourceResults {
+	return &CreateCheckV1alpha1BodyDatasourceResults{
 		MissingMetrics: []string{},
-		QueryBreakdown: []V1alpha1CreateCheckBodyDatasourceResultsQueryBreakdown{},
+		QueryBreakdown: []CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown{},
 	}
+}
+func (CreateCheckBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckBody"
+}
+func (CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown"
+}
+func (CreateCheckV1alpha1BodyDatasourceResults) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckV1alpha1BodyDatasourceResults"
 }

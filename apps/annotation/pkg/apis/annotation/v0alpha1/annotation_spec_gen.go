@@ -16,3 +16,6 @@ type AnnotationSpec struct {
 func NewAnnotationSpec() *AnnotationSpec {
 	return &AnnotationSpec{}
 }
+func (AnnotationSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationSpec"
+}

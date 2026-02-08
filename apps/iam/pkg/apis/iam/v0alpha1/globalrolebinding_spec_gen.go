@@ -59,3 +59,13 @@ const (
 	GlobalRoleBindingSpecRoleRefKindCoreRole   GlobalRoleBindingSpecRoleRefKind = "CoreRole"
 	GlobalRoleBindingSpecRoleRefKindGlobalRole GlobalRoleBindingSpecRoleRefKind = "GlobalRole"
 )
+
+func (GlobalRoleBindingspecSubject) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingspecSubject"
+}
+func (GlobalRoleBindingspecRoleRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingspecRoleRef"
+}
+func (GlobalRoleBindingSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingSpec"
+}

@@ -40,6 +40,7 @@ function grafana::codegen::gen_openapi() {
     local report="/dev/null"
     local update_report=""
     local include_common_input_dirs=""
+    local fix_common_ref_paths=""
     local boilerplate="${KUBE_CODEGEN_ROOT}/hack/boilerplate.go.txt"
     local v="${KUBE_VERBOSE:-0}"
 
@@ -54,6 +55,14 @@ function grafana::codegen::gen_openapi() {
                 COMMON_INPUT_DIRS='k8s.io/apimachinery/pkg/apis/meta/v1 k8s.io/apimachinery/pkg/runtime k8s.io/apimachinery/pkg/version'
             else
                 COMMON_INPUT_DIRS=""
+            fi
+            shift 2
+            ;;
+        "--fix-common-ref-paths")
+            if [ "$2" == "true" ]; then
+                fix_common_ref_paths="true"
+            else
+                fix_common_ref_paths=""
             fi
             shift 2
             ;;
@@ -155,6 +164,17 @@ function grafana::codegen::gen_openapi() {
         --report-filename "${new_report}" \
         ${COMMON_INPUT_DIRS} \
         "${input_pkgs[@]}"
+
+    # For non-common packages, replace Go import paths with OpenAPI model names in ref()
+    # and Dependencies so they resolve against pkg/apimachinery/apis/common definitions.
+    if [ -n "${fix_common_ref_paths}" ] && [ -f "${root}/zz_generated.openapi.go" ]; then
+        sed \
+            -e 's|"k8s.io/apimachinery/pkg/apis/meta/v1\.|"io.k8s.apimachinery.pkg.apis.meta.v1.|g' \
+            -e 's|"k8s.io/apimachinery/pkg/runtime\.|"io.k8s.apimachinery.pkg.runtime.|g' \
+            -e 's|"k8s.io/apimachinery/pkg/version\.|"io.k8s.apimachinery.pkg.version.|g' \
+            "${root}/zz_generated.openapi.go" > "${root}/zz_generated.openapi.go.tmp"
+        mv "${root}/zz_generated.openapi.go.tmp" "${root}/zz_generated.openapi.go"
+    fi
 
     touch "${root}/${report}" # in case it doesn't exist yet
     if [[ -z "${new_report}" ]]; then

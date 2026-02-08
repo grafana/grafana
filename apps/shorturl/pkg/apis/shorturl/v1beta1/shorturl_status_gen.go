@@ -44,3 +44,10 @@ const (
 	ShortURLStatusOperatorStateStateInProgress ShortURLStatusOperatorStateState = "in_progress"
 	ShortURLStatusOperatorStateStateFailed     ShortURLStatusOperatorStateState = "failed"
 )
+
+func (ShortURLstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLstatusOperatorState"
+}
+func (ShortURLStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLStatus"
+}

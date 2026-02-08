@@ -7,7 +7,9 @@ package v0alpha1
 // GitHubConnectionConfigApplyConfiguration represents a declarative configuration of the GitHubConnectionConfig type for use
 // with apply.
 type GitHubConnectionConfigApplyConfiguration struct {
-	AppID          *string `json:"appID,omitempty"`
+	// GitHub App ID
+	AppID *string `json:"appID,omitempty"`
+	// GitHub App installation ID
 	InstallationID *string `json:"installationID,omitempty"`
 }
 

@@ -18,3 +18,7 @@ type WebhookResponse struct {
 	// When the response is 202 (Accepted) the queued jobs will be returned
 	Job *JobSpec `json:"job,omitempty"`
 }
+
+func (WebhookResponse) OpenAPIModelName() string {
+	return OpenAPIPrefix + "WebhookResponse"
+}

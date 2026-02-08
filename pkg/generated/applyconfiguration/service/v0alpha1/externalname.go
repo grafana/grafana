@@ -28,6 +28,7 @@ func ExternalName(name, namespace string) *ExternalNameApplyConfiguration {
 	b.WithAPIVersion("service.grafana.app/v0alpha1")
 	return b
 }
+
 func (b ExternalNameApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

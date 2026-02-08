@@ -25,3 +25,9 @@ func NewExternalGroupMappingSpec() *ExternalGroupMappingSpec {
 		TeamRef: *NewExternalGroupMappingTeamRef(),
 	}
 }
+func (ExternalGroupMappingTeamRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingTeamRef"
+}
+func (ExternalGroupMappingSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingSpec"
+}

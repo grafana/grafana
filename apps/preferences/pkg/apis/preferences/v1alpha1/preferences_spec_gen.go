@@ -50,3 +50,12 @@ type PreferencesSpec struct {
 func NewPreferencesSpec() *PreferencesSpec {
 	return &PreferencesSpec{}
 }
+func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
+}
+func (PreferencesNavbarPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
+}
+func (PreferencesSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
+}

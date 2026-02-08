@@ -31,3 +31,9 @@ func NewReceiverSpec() *ReceiverSpec {
 		Integrations: []ReceiverIntegration{},
 	}
 }
+func (ReceiverIntegration) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverIntegration"
+}
+func (ReceiverSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverSpec"
+}

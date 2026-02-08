@@ -77,3 +77,16 @@ const (
 	CorrelationTransformationSpecTypeRegex  CorrelationTransformationSpecType = "regex"
 	CorrelationTransformationSpecTypeLogfmt CorrelationTransformationSpecType = "logfmt"
 )
+
+func (CorrelationDataSourceRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationDataSourceRef"
+}
+func (CorrelationConfigSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationConfigSpec"
+}
+func (CorrelationTransformationSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTransformationSpec"
+}
+func (CorrelationSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationSpec"
+}

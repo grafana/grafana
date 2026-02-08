@@ -42,3 +42,10 @@ const (
 	CheckTypeStatusOperatorStateStateInProgress CheckTypeStatusOperatorStateState = "in_progress"
 	CheckTypeStatusOperatorStateStateFailed     CheckTypeStatusOperatorStateState = "failed"
 )
+
+func (CheckTypestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypestatusOperatorState"
+}
+func (CheckTypeStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus"
+}

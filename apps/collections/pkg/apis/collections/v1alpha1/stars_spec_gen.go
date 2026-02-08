@@ -29,3 +29,9 @@ func NewStarsSpec() *StarsSpec {
 		Resource: []StarsResource{},
 	}
 }
+func (StarsResource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsResource"
+}
+func (StarsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsSpec"
+}

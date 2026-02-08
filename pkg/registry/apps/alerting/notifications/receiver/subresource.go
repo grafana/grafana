@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/app"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -58,7 +59,7 @@ func (p *RequestHandler) HandleReceiverTestingRequest(ctx context.Context, w app
 		responseBody.Status = v0alpha1.CreateReceiverIntegrationTestBodyStatusFailure
 		responseBody.Error = &result.LastNotifyAttemptError
 	}
-	jsonData, err := json.Marshal(v0alpha1.CreateReceiverIntegrationTest{
+	jsonData, err := json.Marshal(v0alpha1.CreateReceiverIntegrationTestResponse{
 		TypeMeta:                          metav1.TypeMeta{},
 		CreateReceiverIntegrationTestBody: responseBody,
 	})

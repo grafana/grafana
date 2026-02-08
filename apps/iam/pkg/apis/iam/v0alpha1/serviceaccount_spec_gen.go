@@ -26,3 +26,6 @@ func NewServiceAccountSpec() *ServiceAccountSpec {
 		Disabled: false,
 	}
 }
+func (ServiceAccountSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountSpec"
+}

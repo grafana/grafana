@@ -10,16 +10,21 @@ import (
 
 // JobStatusApplyConfiguration represents a declarative configuration of the JobStatus type for use
 // with apply.
+//
+// The job status
 type JobStatusApplyConfiguration struct {
-	State    *provisioningv0alpha1.JobState             `json:"state,omitempty"`
-	Started  *int64                                     `json:"started,omitempty"`
-	Finished *int64                                     `json:"finished,omitempty"`
-	Message  *string                                    `json:"message,omitempty"`
-	Errors   []string                                   `json:"errors,omitempty"`
-	Warnings []string                                   `json:"warnings,omitempty"`
-	Progress *float64                                   `json:"progress,omitempty"`
-	Summary  []*provisioningv0alpha1.JobResourceSummary `json:"summary,omitempty"`
-	URLs     *RepositoryURLsApplyConfiguration          `json:"url,omitempty"`
+	State    *provisioningv0alpha1.JobState `json:"state,omitempty"`
+	Started  *int64                         `json:"started,omitempty"`
+	Finished *int64                         `json:"finished,omitempty"`
+	Message  *string                        `json:"message,omitempty"`
+	Errors   []string                       `json:"errors,omitempty"`
+	Warnings []string                       `json:"warnings,omitempty"`
+	// Optional value 0-100 that can be set while running
+	Progress *float64 `json:"progress,omitempty"`
+	// Summary of processed actions
+	Summary []*provisioningv0alpha1.JobResourceSummary `json:"summary,omitempty"`
+	// URLs contains URLs for the reference branch or commit if applicable.
+	URLs *RepositoryURLsApplyConfiguration `json:"url,omitempty"`
 }
 
 // JobStatusApplyConfiguration constructs a declarative configuration of the JobStatus type for use with

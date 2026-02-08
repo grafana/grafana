@@ -468,7 +468,7 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetIntegrationtypeschemasApiResponse = /** status 200 OK */ GetIntegrationtypeschemas;
+export type GetIntegrationtypeschemasApiResponse = /** status 200 OK */ GetIntegrationtypeschemasResponse;
 export type GetIntegrationtypeschemasApiArg = void;
 export type ListReceiverApiResponse = /** status 200 OK */ ReceiverList;
 export type ListReceiverApiArg = {
@@ -635,7 +635,7 @@ export type UpdateReceiverApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateReceiverTestApiResponse = /** status 200 OK */ CreateReceiverIntegrationTest;
+export type CreateReceiverTestApiResponse = /** status 200 OK */ CreateReceiverIntegrationTestResponse;
 export type CreateReceiverTestApiArg = {
   /** name of the ResourceCallOptions */
   name: string;
@@ -1221,7 +1221,7 @@ export type GetIntegrationtypeschemasIntegrationTypeSchemaResource = {
   };
   spec: GetIntegrationtypeschemasIntegrationTypeSchema;
 };
-export type GetIntegrationtypeschemas = {
+export type GetIntegrationtypeschemasResponse = {
   items: GetIntegrationtypeschemasIntegrationTypeSchemaResource[];
 };
 export type Time = string;
@@ -1395,7 +1395,7 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type CreateReceiverIntegrationTest = {
+export type CreateReceiverIntegrationTestResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
   duration: string;

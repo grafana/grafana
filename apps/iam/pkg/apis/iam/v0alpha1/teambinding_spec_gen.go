@@ -48,3 +48,12 @@ func NewTeamBindingSpec() *TeamBindingSpec {
 		TeamRef: *NewTeamBindingTeamRef(),
 	}
 }
+func (TeamBindingspecSubject) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject"
+}
+func (TeamBindingTeamRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamRef"
+}
+func (TeamBindingSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec"
+}

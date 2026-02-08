@@ -42,3 +42,10 @@ const (
 	AnnotationStatusOperatorStateStateInProgress AnnotationStatusOperatorStateState = "in_progress"
 	AnnotationStatusOperatorStateStateFailed     AnnotationStatusOperatorStateState = "failed"
 )
+
+func (AnnotationstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationstatusOperatorState"
+}
+func (AnnotationStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationStatus"
+}

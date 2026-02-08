@@ -8,6 +8,7 @@
 package v1beta1
 
 import (
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -60,7 +61,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref common.Referenc
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -73,7 +74,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -111,7 +112,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref common.Refe
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -131,7 +132,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichment", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichment", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -680,7 +681,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.Refer
 					"request": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The data source request to perform.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 					"refId": {
@@ -694,7 +695,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			v0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 
@@ -728,7 +729,7 @@ func schema_pkg_apis_alertenrichment_v1beta1_Step(ref common.ReferenceCallback) 
 					"timeout": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Timeout is the maximum about of time this specific enrichment is allowed to take.",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
 						},
 					},
 					"enricher": {
@@ -748,6 +749,6 @@ func schema_pkg_apis_alertenrichment_v1beta1_Step(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Conditional", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.EnricherConfig", "k8s.io/apimachinery/pkg/apis/meta/v1.Duration"},
+			"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.Conditional", "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.EnricherConfig", "io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
 	}
 }
