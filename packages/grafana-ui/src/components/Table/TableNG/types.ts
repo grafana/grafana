@@ -29,10 +29,8 @@ export type AdHocFilterItem = {
   key: string;
   value: string;
   operator: AdHocFilterOperator;
-  /** Human-readable label for the key (e.g. from DisplayNameFromDS). Falls back to key when absent. */
+  /** Human-readable label for the key (e.g. from DisplayNameFromDS). Falls back to key when absent. Values are not given separate labels in scope. */
   keyLabel?: string;
-  /** Human-readable label for the value. Falls back to value when absent. */
-  valueLabel?: string;
 };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
