@@ -139,7 +139,6 @@ describe('setDashboardPanelContext', () => {
       expect(variable.state.filters).toEqual([
         { key: 'hello', value: 'world', operator: '!=' },
         { key: 'hello', value: 'world2', operator: '!=' },
-        ,
       ]);
     });
 
@@ -175,6 +174,23 @@ describe('setDashboardPanelContext', () => {
       const variables = sceneGraph.getVariables(scene);
       const adhocVars = variables.state.variables.filter((v) => v.state.type === 'adhoc');
       expect(adhocVars.length).toBe(1);
+    });
+
+    it('should persist keyLabel and valueLabel when provided', () => {
+      const { scene, context } = buildTestScene({});
+
+      context.onAddAdHocFilter!({
+        key: 'Account.Owner.Name',
+        value: 'CA',
+        operator: '=',
+        keyLabel: 'Account Owner Name',
+        valueLabel: 'California',
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      expect(variable.state.filters).toHaveLength(1);
+      expect(variable.state.filters[0].keyLabel).toBe('Account Owner Name');
+      expect(variable.state.filters[0].valueLabels).toEqual(['California']);
     });
   });
 
