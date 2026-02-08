@@ -9477,6 +9477,10 @@
     "secret-form-field": {
       "reset": "重設"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "無法載入選項",
       "loading": "正在載入選項…",

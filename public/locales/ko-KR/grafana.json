@@ -9477,6 +9477,10 @@
     "secret-form-field": {
       "reset": "재설정"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "옵션 로딩 실패",
       "loading": "옵션 로딩 중..",

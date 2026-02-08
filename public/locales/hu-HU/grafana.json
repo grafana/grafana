@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Visszaállítás"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "A beállítások betöltése sikertelen",
       "loading": "Beállítások betöltése...",
