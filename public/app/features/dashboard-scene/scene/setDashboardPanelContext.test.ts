@@ -176,21 +176,31 @@ describe('setDashboardPanelContext', () => {
       expect(adhocVars.length).toBe(1);
     });
 
-    it('should persist keyLabel and valueLabel when provided', () => {
-      const { scene, context } = buildTestScene({});
-
-      context.onAddAdHocFilter!({
-        key: 'Account.Owner.Name',
-        value: 'CA',
-        operator: '=',
-        keyLabel: 'Account Owner Name',
-        valueLabel: 'California',
+    describe('with adhocFilterLabelsFromPanels enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.adhocFilterLabelsFromPanels = true;
       });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
-      expect(variable.state.filters).toHaveLength(1);
-      expect(variable.state.filters[0].keyLabel).toBe('Account Owner Name');
-      expect(variable.state.filters[0].valueLabels).toEqual(['California']);
+      afterAll(() => {
+        config.featureToggles.adhocFilterLabelsFromPanels = false;
+      });
+
+      it('should persist keyLabel and valueLabel when provided', () => {
+        const { scene, context } = buildTestScene({});
+
+        context.onAddAdHocFilter!({
+          key: 'Account.Owner.Name',
+          value: 'CA',
+          operator: '=',
+          keyLabel: 'Account Owner Name',
+          valueLabel: 'California',
+        });
+
+        const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+        expect(variable.state.filters).toHaveLength(1);
+        expect(variable.state.filters[0].keyLabel).toBe('Account Owner Name');
+        expect(variable.state.filters[0].valueLabels).toEqual(['California']);
+      });
     });
   });
 

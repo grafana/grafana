@@ -261,15 +261,16 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   return newVariable;
 }
 
-/** Convert panel AdHocFilterItem to the shape expected by AdHocFiltersVariable (keyLabel, valueLabels). */
+/** Convert panel AdHocFilterItem to the shape expected by AdHocFiltersVariable (keyLabel, valueLabels). Labels are only included when the feature toggle is enabled. */
 function toAdHocFilterWithLabels(item: AdHocFilterItem) {
   const { key, value, operator, keyLabel, valueLabel } = item;
+  const includeLabels = config.featureToggles.adhocFilterLabelsFromPanels;
   return {
     key,
     value,
     operator,
-    ...(keyLabel !== undefined && { keyLabel }),
-    ...(valueLabel !== undefined && { valueLabels: [valueLabel] }),
+    ...(includeLabels && keyLabel !== undefined && { keyLabel }),
+    ...(includeLabels && valueLabel !== undefined && { valueLabels: [valueLabel] }),
   };
 }
 

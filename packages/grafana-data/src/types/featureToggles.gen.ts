@@ -680,6 +680,11 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * When adding ad hoc filters from BarChart tooltip or Table cell actions, persist human-readable key and value labels (e.g. from DisplayNameFromDS) so the filter chip shows friendly names
+  * @default false
+  */
+  adhocFilterLabelsFromPanels?: boolean;
+  /**
   * Allows authenticated API calls in actions
   * @default false
   */

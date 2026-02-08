@@ -1063,6 +1063,14 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:         "adhocFilterLabelsFromPanels",
+			Description:  "When adding ad hoc filters from BarChart tooltip or Table cell actions, persist human-readable key and value labels (e.g. from DisplayNameFromDS) so the filter chip shows friendly names",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
 			Stage:        FeatureStagePublicPreview,

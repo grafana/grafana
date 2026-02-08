@@ -5,6 +5,20 @@
   "items": [
     {
       "metadata": {
+        "name": "adhocFilterLabelsFromPanels",
+        "resourceVersion": "1770585377550",
+        "creationTimestamp": "2026-02-08T21:16:17Z"
+      },
+      "spec": {
+        "description": "When adding ad hoc filters from BarChart tooltip or Table cell actions, persist human-readable key and value labels (e.g. from DisplayNameFromDS) so the filter chip shows friendly names",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-03-05T12:01:31Z",
