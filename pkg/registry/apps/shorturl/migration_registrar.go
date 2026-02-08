@@ -1,0 +1,31 @@
+package shorturl
+
+import (
+	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+/*
+ShortURLMigration returns the migration definition for shorturls.
+It lives in the shorturl package so the shorturl team owns their migration
+definition, decoupled from the dashboard accessor.
+*/
+func ShortURLMigration(migrator legacy.ShortURLMigrator) migrations.MigrationDefinition {
+	shortURLGR := schema.GroupResource{Group: shorturl.APIGroup, Resource: "shorturls"}
+
+	return migrations.MigrationDefinition{
+		ID:          "shorturls",
+		MigrationID: "shorturls migration",
+		Resources: []migrations.ResourceInfo{
+			{GroupResource: shortURLGR, LockTable: "short_url"},
+		},
+		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+			shortURLGR: migrator.MigrateShortURLs,
+		},
+		Validators: []migrations.ValidatorFactory{
+			migrations.CountValidation(shortURLGR, "short_url", "org_id = ?"),
+		},
+	}
+}
