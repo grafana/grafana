@@ -397,32 +397,100 @@ func RunFixResourceDashboardVariableQuotesMigration(sess *xorm.Session, mg *migr
 }
 
 func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
-	type resource struct {
-		GUID                    string `xorm:"guid"`
-		Group                   string `xorm:"group"`
-		Resource                string `xorm:"resource"`
-		Namespace               string `xorm:"namespace"`
-		Name                    string `xorm:"name"`
-		Folder                  string `xorm:"folder"`
-		ResourceVersion         int64  `xorm:"resource_version"`
-		PreviousResourceVersion int64  `xorm:"previous_resource_version"`
-		LabelSet                string `xorm:"label_set"`
-		Value                   string `xorm:"value"`
+	mg.Logger.Info("Starting resource dashboard variable quotes fix migration")
+
+	totalModified := 0
+	totalErrors := 0
+	totalProcessed := 0
+	batchNumber := 0
+	lastGUID := ""
+
+	for {
+		batchNumber++
+		resources, err := getResourceBatch(sess, mg, lastGUID)
+		if err != nil {
+			return err
+		}
+
+		// Exit if no more resources
+		if len(resources) == 0 {
+			break
+		}
+
+		mg.Logger.Info("Processing resource batch", "batch_number", batchNumber, "batch_size", len(resources), "total_processed", totalProcessed)
+
+		modifiedCount, errorCount, err := processResourceBatch(sess, mg, resources)
+		if err != nil {
+			return err
+		}
+
+		totalModified += modifiedCount
+		totalErrors += errorCount
+		totalProcessed += len(resources)
+
+		// Update cursor for next batch
+		lastGUID = resources[len(resources)-1].GUID
 	}
 
-	var resources []resource
-	err := sess.Table("resource").
-		Where("\"group\" = ?", "dashboard.grafana.app").
-		Where("resource = ?", "dashboards").
-		Cols("guid", "group", "resource", "namespace", "name", "folder", "resource_version", "previous_resource_version", "label_set", "value").
-		Find(&resources)
+	mg.Logger.Info("Completed resource dashboard variable quotes fix migration",
+		"total_processed", totalProcessed,
+		"modified", totalModified,
+		"errors", totalErrors)
 
-	if err != nil {
-		return fmt.Errorf("failed to fetch resources: %w", err)
+	return nil
+}
+
+type resourceRow struct {
+	GUID                    string `xorm:"guid"`
+	Group                   string `xorm:"group"`
+	Resource                string `xorm:"resource"`
+	Namespace               string `xorm:"namespace"`
+	Name                    string `xorm:"name"`
+	Folder                  string `xorm:"folder"`
+	ResourceVersion         int64  `xorm:"resource_version"`
+	PreviousResourceVersion int64  `xorm:"previous_resource_version"`
+	LabelSet                string `xorm:"label_set"`
+	Value                   string `xorm:"value"`
+}
+
+func getResourceBatch(sess *xorm.Session, mg *migrator.Migrator, lastGUID string) ([]resourceRow, error) {
+	var resources []resourceRow
+	cols := fmt.Sprintf(
+		"%s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
+		mg.Dialect.Quote("guid"),
+		mg.Dialect.Quote("group"),
+		mg.Dialect.Quote("resource"),
+		mg.Dialect.Quote("namespace"),
+		mg.Dialect.Quote("name"),
+		mg.Dialect.Quote("folder"),
+		mg.Dialect.Quote("resource_version"),
+		mg.Dialect.Quote("previous_resource_version"),
+		mg.Dialect.Quote("label_set"),
+		mg.Dialect.Quote("value"))
+
+	whereClause := ""
+	if lastGUID != "" {
+		whereClause = fmt.Sprintf("AND guid > '%s'", lastGUID)
 	}
 
-	mg.Logger.Info("Starting resource dashboard variable quotes fix migration", "total_resources", len(resources))
+	sql := fmt.Sprintf(`
+		SELECT %s
+		FROM resource
+		WHERE "group" = 'dashboard.grafana.app'
+		AND resource = 'dashboards'
+		%s
+		ORDER BY guid ASC
+		LIMIT 100;
+	`, cols, whereClause)
 
+	if err := sess.SQL(sql).Find(&resources); err != nil {
+		return nil, fmt.Errorf("failed to fetch resource batch: %w", err)
+	}
+
+	return resources, nil
+}
+
+func processResourceBatch(sess *xorm.Session, mg *migrator.Migrator, resources []resourceRow) (int, int, error) {
 	modifiedCount := 0
 	errorCount := 0
 
@@ -623,10 +691,5 @@ func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	mg.Logger.Info("Completed resource dashboard variable quotes fix migration",
-		"total_resources", len(resources),
-		"modified", modifiedCount,
-		"errors", errorCount)
-
-	return nil
+	return modifiedCount, errorCount, nil
 }
