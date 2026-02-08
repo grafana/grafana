@@ -9477,6 +9477,10 @@
     "secret-form-field": {
       "reset": "Atur ulang"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Gagal memuat opsi",
       "loading": "Memuat opsi...",

@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Redefinir"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Falha ao carregar opções",
       "loading": "Carregando opções...",
