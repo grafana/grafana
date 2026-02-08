@@ -9600,6 +9600,10 @@
     "secret-form-field": {
       "reset": "Resetovat"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Možnosti se nepodařilo načíst",
       "loading": "Načítání možností…",

@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Återställ"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Det gick inte att ladda alternativ",
       "loading": "Laddar alternativ …",

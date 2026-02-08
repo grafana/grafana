@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Zurücksetzen"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",

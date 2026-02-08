@@ -9477,6 +9477,10 @@
     "secret-form-field": {
       "reset": "リセット"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "オプションの読み込みに失敗しました",
       "loading": "オプションを読み込み中...",
