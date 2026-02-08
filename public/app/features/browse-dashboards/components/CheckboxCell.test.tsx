@@ -172,6 +172,7 @@ describe('CheckboxCell', () => {
   });
 
   it('renders a disabled checkbox for read-only repo items', () => {
+    // Read-only derived from permissions on the item.
     const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-readonly' } };
     setup(item, {
       permissions: {
@@ -179,6 +180,22 @@ describe('CheckboxCell', () => {
         isReadOnlyRepo: true,
       },
     });
+
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).toBeDisabled();
+  });
+
+  it('renders a disabled checkbox when the item uid is in a read-only repo', () => {
+    // Read-only derived from the repository validation hook.
+    const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-uid-readonly' } };
+    mockUseSelectionRepoValidation.mockReturnValue({
+      selectedItemsRepoUID: undefined,
+      isInLockedRepo: () => true,
+      isCrossRepo: false,
+      isUidInReadOnlyRepo: () => true,
+    });
+
+    setup(item);
 
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).toBeDisabled();
@@ -205,7 +222,6 @@ describe('CheckboxCell', () => {
       isCrossRepo: false,
       isUidInReadOnlyRepo: () => false,
     });
-
     setup(item);
 
     expect(
@@ -222,5 +238,17 @@ describe('CheckboxCell', () => {
     setup(item);
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('renders a checkbox for root provisioned folders when whole instance is provisioned', () => {
+    mockUseIsProvisionedInstance.mockReturnValue(true);
+
+    const item = {
+      ...folderItem,
+      item: { ...folderItem.item, managedBy: ManagerKind.Repo, parentUID: undefined, uid: 'root-provisioned' },
+    };
+
+    setup(item);
+    expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 });
