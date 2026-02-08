@@ -83,11 +83,18 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 	}()
 
 	for _, zf := range pluginArchive.File {
-		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
-		// nolint:gosec
-		dstPath := filepath.Clean(filepath.Join(installDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
+		// Resolve the destination path for this archive entry within the plugin directory
+		relPath := removeGitBuildFromName(zf.Name, pluginDirName)
 
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
+		// Strip redundant top-level plugin directory if present (e.g. "test-app/...")
+		relPath = strings.TrimPrefix(relPath, pluginDirName+string(os.PathSeparator))
+		if relPath == "" {
+			relPath = "."
+		}
+
+		dstPath := filepath.Clean(filepath.Join(installDir, relPath)) // lgtm[go/zipslip]
+
+		// Ensure the resolved path does not escape the plugin directory (ZipSlip protection)
 		rel, err := filepath.Rel(installDir, dstPath)
 		if err != nil || filepath.IsAbs(zf.Name) || strings.HasPrefix(rel, "..") {
 			return "", fmt.Errorf(

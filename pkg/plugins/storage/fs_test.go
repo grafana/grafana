@@ -146,21 +146,33 @@ func TestExtractFiles(t *testing.T) {
 		require.True(t, os.IsNotExist(err))
 	})
 
-	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
-		path, err := fs.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-parent-member.zip")), "plugin-with-parent-member", SimpleDirNameGeneratorFunc)
-		require.Empty(t, path)
-		require.EqualError(t, err, fmt.Sprintf(
-			`archive member "../member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
-			testDir,
-		))
+	t.Run("Should extract archive members with parent paths safely", func(t *testing.T) {
+		pluginID := "plugin-with-parent-member"
+
+		path, err := fs.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-parent-member.zip")), pluginID, SimpleDirNameGeneratorFunc)
+		require.NoError(t, err)
+
+		pluginDir := filepath.Join(testDir, pluginID)
+		require.Equal(t, pluginDir, path)
+
+		extractedFile := filepath.Join(pluginDir, "member.txt")
+		_, err = os.Stat(extractedFile)
+		require.NoError(t, err)
+
+		_, err = os.Stat(filepath.Join(testDir, "member.txt"))
+		require.True(t, os.IsNotExist(err))
 	})
 
 	t.Run("Should detect if archive members are absolute", func(t *testing.T) {
-		path, err := fs.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-absolute-member.zip")), "plugin-with-absolute-member", SimpleDirNameGeneratorFunc)
+		pluginID := "plugin-with-absolute-member"
+
+		path, err := fs.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-absolute-member.zip")), pluginID, SimpleDirNameGeneratorFunc)
 		require.Empty(t, path)
+
+		pluginDir := filepath.Join(testDir, pluginID)
 		require.EqualError(t, err, fmt.Sprintf(
 			`archive member "/member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
-			testDir,
+			pluginDir,
 		))
 	})
 }
