@@ -28,10 +28,12 @@ export const TableCellActions = memo(
             name={'filter-plus'}
             aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
             onClick={() => {
+              const val = String(value ?? '');
               onCellFilterAdded?.({
                 key: field.name,
                 operator: FILTER_FOR_OPERATOR,
-                value: String(value ?? ''),
+                value: val,
+                keyLabel: field.config.displayNameFromDS ?? field.state?.displayName ?? field.name,
               });
             }}
           />
@@ -39,10 +41,12 @@ export const TableCellActions = memo(
             name={'filter-minus'}
             aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
             onClick={() => {
+              const val = String(value ?? '');
               onCellFilterAdded?.({
                 key: field.name,
                 operator: FILTER_OUT_OPERATOR,
-                value: String(value ?? ''),
+                value: val,
+                keyLabel: field.config.displayNameFromDS ?? field.state?.displayName ?? field.name,
               });
             }}
           />
