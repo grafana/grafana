@@ -27,7 +27,7 @@ Grafana provides a variety of pre-built dashboard templates that you can use to 
 
 The templates provide standardized dashboard layouts designed to help you answer engineering or business questions consistently. For instance, the DORA template allows all teams within an organization to measure delivery performance using a widely adopted industry framework.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-templates-v12.3.png" max-width="750px" alt="Selection of dashboard templates" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-templates-v12.4.png" max-width="750px" alt="Selection of dashboard templates" >}}
 
 To create a dashboard from a template, follow these steps:
 
@@ -43,16 +43,24 @@ To create a dashboard from a template, follow these steps:
 1. Click **Edit**.
 1. Update the data source for each panel to add your own data and configure the queries you need.
 
-   {{< admonition type="tip" >}}
-   In Grafana Cloud, try working with [Grafana Assistant](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/) to update the dashboard with your data sources and to create queries.
-   {{< /admonition >}}
+    In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-with-grafana-assistant).
 
-1. (Optional) Make any other edits to the dashboard to most effectively display your data.
+1. Make any other edits to the dashboard to most effectively display your data.
 1. When you've made all of your changes, remove the banner panel.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v12.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save dashboard**.
+
+### Customize templates with Grafana Assistant
+
+In Grafana Cloud, you can customize a dashboard template using Grafana Assistant.
+When you choose this option, a preconfigured prompt is entered into the Assistant chat to start the process:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-assist-v12.4.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" >}}
+
+Grafana Assistant analyses the template, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
+This lets create a working, relevant dashboard from a template without having to manually map metrics and panels yourself.
 
 ## Create dashboards from suggestions
 
