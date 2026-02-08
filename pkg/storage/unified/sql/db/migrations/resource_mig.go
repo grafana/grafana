@@ -490,9 +490,63 @@ func getResourceBatch(sess *xorm.Session, mg *migrator.Migrator, lastGUID string
 	return resources, nil
 }
 
+// reserveResourceVersionBatch reserves a batch of resource versions using SELECT FOR UPDATE
+// to prevent race conditions with other components updating resource_version concurrently.
+// Returns the starting resource version for the batch.
+func reserveResourceVersionBatch(sess *xorm.Session, mg *migrator.Migrator, group, resource string, batchSize int) (int64, error) {
+	// Use SELECT FOR UPDATE to lock the row during transaction
+	var currentRV int64
+	sqlGetRV := `SELECT resource_version FROM resource_version WHERE "group" = ? AND resource = ? FOR UPDATE`
+	if mg.Dialect.DriverName() == migrator.Postgres {
+		sqlGetRV = `SELECT resource_version FROM resource_version WHERE "group" = $1 AND resource = $2 FOR UPDATE`
+	}
+
+	exists, err := sess.SQL(sqlGetRV, group, resource).Get(&currentRV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get resource_version with lock: %w", err)
+	}
+
+	if !exists {
+		return 0, fmt.Errorf("no resource_version entry found for group=%s, resource=%s", group, resource)
+	}
+
+	// Reserve batch of resource versions
+	// We reserve worst-case (full batch size) even if not all resources need updates
+	// This is acceptable for a one-time migration and dramatically reduces DB round-trips
+	newRV := currentRV + int64(batchSize)
+
+	// Update the global resource_version counter once for the entire batch
+	sqlUpdateRV := `UPDATE resource_version SET resource_version = ? WHERE "group" = ? AND resource = ?`
+	if mg.Dialect.DriverName() == migrator.Postgres {
+		sqlUpdateRV = `UPDATE resource_version SET resource_version = $1 WHERE "group" = $2 AND resource = $3`
+	}
+
+	_, err = sess.Exec(sqlUpdateRV, newRV, group, resource)
+	if err != nil {
+		return 0, fmt.Errorf("failed to update resource_version: %w", err)
+	}
+
+	mg.Logger.Debug("Reserved resource version batch", "group", group, "resource", resource, "base_rv", currentRV+1, "count", batchSize, "new_max_rv", newRV)
+
+	// Return the first RV in the reserved batch (currentRV + 1)
+	return currentRV + 1, nil
+}
+
 func processResourceBatch(sess *xorm.Session, mg *migrator.Migrator, resources []resourceRow) (int, int, error) {
+	if len(resources) == 0 {
+		return 0, 0, nil
+	}
+
+	// Reserve a batch of resource versions upfront using SELECT FOR UPDATE
+	// This prevents race conditions and reduces database updates from O(n) to O(1) per batch
+	baseRV, err := reserveResourceVersionBatch(sess, mg, "dashboard.grafana.app", "dashboards", len(resources))
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to reserve resource version batch: %w", err)
+	}
+
 	modifiedCount := 0
 	errorCount := 0
+	nextRV := baseRV // Track the next available RV from our reserved batch
 
 	for _, res := range resources {
 		// Skip empty value
@@ -577,29 +631,10 @@ func processResourceBatch(sess *xorm.Session, mg *migrator.Migrator, resources [
 				}
 			}
 
-			// Get and increment the resource_version for this resource type
-			var currentRV int64
-			sqlGetRV := `SELECT resource_version FROM resource_version WHERE "group" = ? AND resource = ?`
-			if mg.Dialect.DriverName() == migrator.Postgres {
-				sqlGetRV = `SELECT resource_version FROM resource_version WHERE "group" = $1 AND resource = $2`
-			}
-
-			exists, err := sess.SQL(sqlGetRV, res.Group, res.Resource).Get(&currentRV)
-			if err != nil {
-				mg.Logger.Warn("Failed to get resource_version", "resource_guid", res.GUID, "error", err)
-				errorCount++
-				continue
-			}
-
-			if !exists {
-				mg.Logger.Warn("No resource_version entry found", "resource_guid", res.GUID, "group", res.Group, "resource", res.Resource)
-				errorCount++
-				continue
-			}
-
-			// Increment to get new version
+			// Use next available resource version from our reserved batch
 			oldResourceVersion := res.ResourceVersion
-			newResourceVersion := currentRV + 1
+			newResourceVersion := nextRV
+			nextRV++ // Consume this RV from the reserved batch
 
 			// Update metadata.resourceVersion to match the new resource_version
 			metadataMap["resourceVersion"] = fmt.Sprintf("%d", newResourceVersion)
@@ -608,19 +643,6 @@ func processResourceBatch(sess *xorm.Session, mg *migrator.Migrator, resources [
 			updatedValue, err := json.Marshal(wrapperMap)
 			if err != nil {
 				mg.Logger.Warn("Failed to marshal updated resource wrapper JSON", "resource_guid", res.GUID, "error", err)
-				errorCount++
-				continue
-			}
-
-			// Update the global resource_version counter
-			sqlUpdateRV := `UPDATE resource_version SET resource_version = ? WHERE "group" = ? AND resource = ?`
-			if mg.Dialect.DriverName() == migrator.Postgres {
-				sqlUpdateRV = `UPDATE resource_version SET resource_version = $1 WHERE "group" = $2 AND resource = $3`
-			}
-
-			_, err = sess.Exec(sqlUpdateRV, newResourceVersion, res.Group, res.Resource)
-			if err != nil {
-				mg.Logger.Warn("Failed to update resource_version table", "resource_guid", res.GUID, "error", err)
 				errorCount++
 				continue
 			}
