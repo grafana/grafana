@@ -45,7 +45,7 @@ If an error about a missing OpenAPI schema appears, check that:
 
 1. The API group and version exist in the backend
 2. The `TestIntegrationOpenAPIs` test has been run to generate the schema (step 1 in the [main API documentation](../../public/app/api/README.md)).
-3. The schema file exists at `data/openapi/<group>-<version>.json`
+3. The schema file exists at `packages/grafana-openapi/src/apis/<group>-<version>.json`
 
 ### Validation Errors
 
