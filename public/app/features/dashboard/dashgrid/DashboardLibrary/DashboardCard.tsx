@@ -1,6 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -8,6 +10,7 @@ import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
+import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
 interface Details {
   id: string;
@@ -24,24 +27,62 @@ interface Props {
   dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
   onClick: () => void;
+  onClose?: () => void;
+  onTrackAssistantButton?: () => void; // Called before opening assistant, for analytics tracking
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
+  showAssistantButton?: boolean;
 }
 
 function DashboardCardComponent({
   title,
   imageUrl,
   onClick,
+  onClose,
+  onTrackAssistantButton,
   dashboard,
   details,
   isLogo,
   showDatasourceProvidedBadge,
   dimThumbnail,
   kind,
+  showAssistantButton,
 }: Props) {
   const styles = useStyles2(getStyles);
+
+  const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
+
+  // Create structured context item with template metadata for the Assistant
+  const templateContext = useMemo(
+    () =>
+      createAssistantContextItem('structured', {
+        title: buildTemplateContextTitle(dashboard, title),
+        data: buildTemplateContextData(dashboard, title, kind),
+      }),
+    [dashboard, title, kind]
+  );
+
+  // Build the enhanced prompt with template details
+  const assistantPrompt = useMemo(() => buildAssistantPrompt(dashboard, title, kind), [dashboard, title, kind]);
+
+  const onUseAssistantClick = () => {
+    if (assistantAvailable) {
+      onTrackAssistantButton?.();
+
+      openAssistant?.({
+        origin: 'dashboard-library/use-dashboard',
+        // @ts-expect-error - 'dashboarding' mode is valid but not in current type definitions
+        // TODO: Is there a better way to do this?
+        mode: 'dashboarding',
+        prompt: assistantPrompt,
+        context: [templateContext],
+        autoSend: true,
+      });
+      onClose?.();
+    }
+  };
 
   return (
     <Card className={styles.card} noMargin>
@@ -85,11 +126,16 @@ function DashboardCardComponent({
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
           {kind === 'template_dashboard' ? (
-            <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+            <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
           ) : (
             <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
           )}
         </Button>
+        {assistantAvailable && showAssistantButton && (
+          <Button variant="secondary" fill="text" onClick={onUseAssistantClick} icon="ai-sparkle">
+            <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+          </Button>
+        )}
         {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
             <IconButton
@@ -238,6 +284,7 @@ function getStyles(theme: GrafanaTheme2) {
     actionsContainer: css({
       marginTop: 0,
       alignItems: 'stretch',
+      flexWrap: 'nowrap',
     }),
     detailsContainer: css({
       width: '340px',

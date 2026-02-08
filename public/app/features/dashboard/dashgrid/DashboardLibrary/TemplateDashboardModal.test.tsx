@@ -122,9 +122,9 @@ describe('TemplateDashboardModal', () => {
         expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Test Template Dashboard 2' })).toBeInTheDocument();
 
-        // Assert DashboardCard components are rendered by checking for "Use template" buttons
-        const useTemplateButtons = screen.getAllByRole('button', { name: 'Use template' });
-        expect(useTemplateButtons).toHaveLength(2);
+        // Assert DashboardCard components are rendered by checking for "View template" buttons
+        const viewTemplateButtons = screen.getAllByRole('button', { name: 'View template' });
+        expect(viewTemplateButtons).toHaveLength(2);
 
         // Assert text content (descriptions)
         expect(screen.getByText('A test template dashboard')).toBeInTheDocument();

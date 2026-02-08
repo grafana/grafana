@@ -22,6 +22,7 @@ export const TemplateDashboardSourceEntryPoint = {
   QUICK_ADD_BUTTON: 'quick_add_button',
   COMMAND_PALETTE: 'command_palette',
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page_create_new_button',
+  ASSISTANT_BUTTON: 'assistant_button',
 } as const;
 
 export const SOURCE_ENTRY_POINTS = {
