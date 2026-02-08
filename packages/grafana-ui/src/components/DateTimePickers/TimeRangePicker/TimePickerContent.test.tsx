@@ -138,9 +138,7 @@ describe('TimePickerContent', () => {
       const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
       await user.type(searchInput, '1h30m');
 
-      await waitFor(() => {
-        expect(screen.queryByText(/Last 1 hour 30 minutes/i)).not.toBeInTheDocument();
-      });
+      expect(screen.queryByText(/Last 1 hour 30 minutes/i)).not.toBeInTheDocument();
     });
 
     it('uses singular form for single units', async () => {
@@ -171,10 +169,7 @@ describe('TimePickerContent', () => {
       const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
       await user.type(searchInput, '45m');
 
-      await waitFor(() => {
-        expect(screen.getByText('Last 45 minutes')).toBeInTheDocument();
-      });
-
+      expect(screen.getByText('Last 45 minutes')).toBeInTheDocument();
       expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
     });
 
