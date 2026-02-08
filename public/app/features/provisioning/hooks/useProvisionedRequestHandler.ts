@@ -116,12 +116,15 @@ export function useProvisionedRequestHandler<T>({
         setLastBranch(repository?.name, selectedBranch || repository?.branch);
       }
 
-      // Success message
-      const message = successMessage || getContextualSuccessMessage(info);
-      getAppEvents().publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [message],
-      });
+      // Only show success alert for write workflow (not branch workflow,
+      // which navigates to a preview page with its own PR banner)
+      if (workflow !== 'branch') {
+        const message = successMessage || getContextualSuccessMessage(info);
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [message],
+        });
+      }
 
       // Branch workflow
       if (workflow === 'branch' && handlers.onBranchSuccess && ref && path) {
