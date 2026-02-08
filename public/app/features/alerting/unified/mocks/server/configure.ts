@@ -174,6 +174,7 @@ export const setTimeIntervalsListEmpty = () => {
 interface TimeIntervalConfig {
   name: string;
   provenance?: string;
+  canUse?: boolean;
 }
 
 /**
@@ -182,18 +183,23 @@ interface TimeIntervalConfig {
 export const setTimeIntervalsList = (intervals: TimeIntervalConfig[]) => {
   const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
   const handler = http.get(listMuteTimingsPath, () => {
-    const items = intervals.map((interval) => ({
-      metadata: {
-        annotations: {
-          'grafana.com/provenance': interval.provenance ?? 'none',
+    const items = intervals.map((interval) => {
+      // Compute canUse based on provenance if not provided
+      const canUse = interval.canUse ?? interval.provenance !== 'converted_prometheus';
+      return {
+        metadata: {
+          annotations: {
+            'grafana.com/provenance': interval.provenance ?? 'none',
+            'grafana.com/canUse': canUse ? 'true' : 'false',
+          },
+          name: interval.name,
+          uid: `uid-${interval.name}`,
+          namespace: 'default',
+          resourceVersion: 'e0270bfced786660',
         },
-        name: interval.name,
-        uid: `uid-${interval.name}`,
-        namespace: 'default',
-        resourceVersion: 'e0270bfced786660',
-      },
-      spec: { name: interval.name, time_intervals: [] },
-    }));
+        spec: { name: interval.name, time_intervals: [] },
+      };
+    });
     return HttpResponse.json(getK8sResponse('TimeIntervalList', items));
   });
 

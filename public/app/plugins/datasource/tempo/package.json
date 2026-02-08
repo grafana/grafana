@@ -10,7 +10,7 @@
     "@grafana/lezer-traceql": "0.0.25",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.11.0",
+    "@grafana/plugin-ui": "^0.12.1",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",

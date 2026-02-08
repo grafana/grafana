@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -126,6 +127,9 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	if err := json.Unmarshal(dashBytes, &dashboard); err != nil {
 		return fmt.Errorf("failed to unmarshal dashboard JSON: %w", err)
 	}
+
+	// Ensure panels have unique IDs before conversion.
+	migration.EnsurePanelsHaveUniqueIds(dashboard)
 
 	// Get defaults
 	timeSettingsDefaults := dashv2alpha1.NewDashboardTimeSettingsSpec()
@@ -1046,7 +1050,11 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 				variables = append(variables, groupByVar)
 			}
 		default:
-			// Skip unknown variable types
+			// Log and skip unsupported variable type
+			getLogger().Warn("Variable skipped during conversion: unsupported variable type",
+				"variableName", commonProps.Name,
+				"variableType", varType,
+			)
 			continue
 		}
 	}

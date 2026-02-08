@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupMutateRoles(t *testing.T, srv *Server) *Server {
@@ -21,7 +22,10 @@ func setupMutateRoles(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testMutateRoles(t *testing.T, srv *Server) {
+func TestIntegrationServerMutateRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupMutateRoles(t, srv)
 
 	t.Run("should update role and delete old role permissions", func(t *testing.T) {
