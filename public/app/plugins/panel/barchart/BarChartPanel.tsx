@@ -175,10 +175,13 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
                 if (xField.config.filterable && onAddAdHocFilter != null) {
+                  const value = String(xField.values[dataIdx]);
                   const adHocFilterItem: AdHocFilterItem = {
                     key: xField.name,
                     operator: FILTER_FOR_OPERATOR,
-                    value: String(xField.values[dataIdx]),
+                    value,
+                    keyLabel: xField.config.displayNameFromDS ?? xField.state?.displayName ?? xField.name,
+                    valueLabel: value,
                   };
 
                   const adHocFilters: AdHocFilterModel[] = [
