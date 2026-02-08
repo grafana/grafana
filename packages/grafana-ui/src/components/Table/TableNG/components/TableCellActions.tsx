@@ -38,7 +38,6 @@ export const TableCellActions = memo(
                   operator: FILTER_FOR_OPERATOR,
                   value: val,
                   keyLabel: field.config.displayNameFromDS ?? field.state?.displayName ?? field.name,
-                  valueLabel: val,
                 });
               }}
             />
@@ -52,7 +51,6 @@ export const TableCellActions = memo(
                   operator: FILTER_OUT_OPERATOR,
                   value: val,
                   keyLabel: field.config.displayNameFromDS ?? field.state?.displayName ?? field.name,
-                  valueLabel: val,
                 });
               }}
             />
