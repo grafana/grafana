@@ -85,29 +85,24 @@ type QuotaGetter interface {
 	// GetQuotaStatus returns the quota status to be set on repositories.
 	// It takes a context and namespace to allow for future implementations
 	// that may need to fetch quota information dynamically.
-	GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus
+	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
 }
 
 // FixedQuotaGetter returns fixed quota values from static configuration.
 type FixedQuotaGetter struct {
-	maxRepositories           int64
-	maxResourcesPerRepository int64
+	quotaStatus provisioning.QuotaStatus
 }
 
-// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaLimits.
-func NewFixedQuotaGetter(limits QuotaLimits) *FixedQuotaGetter {
+// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
+func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
 	return &FixedQuotaGetter{
-		maxRepositories:           limits.MaxRepositories,
-		maxResourcesPerRepository: limits.MaxResources,
+		quotaStatus: quotaStatus,
 	}
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
-	return provisioning.QuotaStatus{
-		MaxRepositories:           f.maxRepositories,
-		MaxResourcesPerRepository: f.maxResourcesPerRepository,
-	}
+func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error) {
+	return f.quotaStatus, nil
 }
 
 // Ensure FixedQuotaGetter implements QuotaGetter interface.

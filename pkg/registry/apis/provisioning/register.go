@@ -888,7 +888,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			quotaGetter := quotas.NewFixedQuotaGetter(b.quotaLimits)
+			quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+				MaxResourcesPerRepository: b.quotaLimits.MaxResources,
+				MaxRepositories:           b.quotaLimits.MaxRepositories,
+			})
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
