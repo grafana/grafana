@@ -296,6 +296,11 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	if !ok || query.Post == nil || query.Post.RequestBody == nil {
 		return nil, fmt.Errorf("could not find query path")
 	}
+	if len(query.Parameters) != 2 && query.Parameters[0].Name != "name" {
+		return nil, fmt.Errorf("expected name parameter in query service")
+	}
+	query.Parameters = []*spec3.Parameter{query.Parameters[1]}
+
 	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
 	if ok && sqlschemas.Post != nil {
 		sqlschemas.Post.RequestBody = query.Post.RequestBody
