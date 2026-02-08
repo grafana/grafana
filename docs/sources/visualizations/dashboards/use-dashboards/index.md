@@ -273,6 +273,8 @@ Select the relative time range from the **Relative time ranges** list. You can f
 - This week so far
 - This month so far
 
+You can enter a custom relative time range into the search at the top to quickly select, such as `13h` to select a time range for the last 13 hours.
+
 #### Absolute time range
 
 You can set an absolute time range in the following ways:
