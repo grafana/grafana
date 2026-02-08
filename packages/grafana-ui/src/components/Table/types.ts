@@ -39,7 +39,15 @@ export type InspectCell = { value: any; mode: TableCellInspectorMode };
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
-export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
+export type AdHocFilterItem = {
+  key: string;
+  value: string;
+  operator: AdHocFilterOperator;
+  /** Human-readable label for the key (e.g. from DisplayNameFromDS). Falls back to key when absent. */
+  keyLabel?: string;
+  /** Human-readable label for the value. Falls back to value when absent. */
+  valueLabel?: string;
+};
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
