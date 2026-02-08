@@ -7,6 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -14,15 +16,17 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -97,9 +101,10 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := identity.GetRequester(r.Context())
+					ctx := r.Context()
+					user, err := identity.GetRequester(ctx)
 					if err != nil {
-						errhttp.Write(r.Context(), err, w)
+						errhttp.Write(ctx, err, w)
 						return
 					}
 					wrap := &contextmodel.ReqContext{
@@ -107,11 +112,15 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
-						// SignedInUser: user, ????????????
 					}
 
+					if !options.SnapshotsEnabled {
+						wrap.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+						return
+					}
 					vars := mux.Vars(r)
-					info, err := authlib.ParseNamespace(vars["namespace"])
+					namespace := vars["namespace"]
+					info, err := authlib.ParseNamespace(namespace)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
@@ -128,8 +137,78 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
-					// Use the existing snapshot service
-					dashboardsnapshots.CreateDashboardSnapshot(wrap, options, cmd, service)
+					if cmd.External && !options.ExternalEnabled {
+						wrap.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
+						return
+					}
+
+					if cmd.Dashboard == nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
+						return
+					}
+
+					// TODO: validate dashboard exists. Need to call dashboards api, Maybe in a validation hook?
+
+					cmd.OrgID = user.GetOrgID()
+					cmd.UserID, _ = identity.UserIdentifier(user.GetID())
+
+					// TODO: add logic for external and internal snapshots
+					//if cmd.External {
+					//	// TODO: if it is an external dashboard make a POST to the public snapshot server
+					//}
+
+					// Handle local snapshot creation
+					originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+					if err != nil {
+						errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+						return
+					}
+
+					snapshotURL, err := dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
+					if err != nil {
+						errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
+						return
+					}
+
+					storage := storageGetter()
+					if storage == nil {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
+						return
+					}
+
+					creater, ok := storage.(rest.Creater)
+					if !ok {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support create"), w)
+						return
+					}
+
+					// Convert command to K8s Snapshot
+					snapshot := convertCreateCmdToK8sSnapshot(&cmd, namespace)
+
+					snapshot.SetGenerateName("snapshot-")
+
+					// Set namespace in context for k8s storage layer
+					ctx = k8srequest.WithNamespace(ctx, namespace)
+
+					// Create via storage (dual-write mode decides legacy, unified, or both)
+					// TODO: split creation from Snapshot and the blob
+					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+
+					metrics.MApiDashboardSnapshotCreate.Inc()
+
+					// Build response
+					response := dashv0.DashboardCreateResponse{
+						Key:       snapshot.Name,
+						DeleteKey: *snapshot.Spec.DeleteKey,
+						URL:       snapshotURL,
+						DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
+					}
+
+					wrap.JSON(http.StatusOK, response)
 				},
 			},
 			{

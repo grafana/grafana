@@ -167,16 +167,12 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 			},
 		}
 
-		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
-			Return(nil)
-
 		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
 		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
 		ctx, recorder := createReqContext(t, req, testUser)
 
 		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
 
-		mockService.AssertExpectations(t)
 		assert.Equal(t, http.StatusForbidden, recorder.Code)
 
 		var response map[string]any
