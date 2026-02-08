@@ -1,3 +1,7 @@
+import { screen, render } from '@testing-library/react';
+
+import { selectors } from '@grafana/e2e-selectors';
+
 import { intervalsToOptions, RefreshPicker, translateOption } from './RefreshPicker';
 
 describe('RefreshPicker', () => {
@@ -77,6 +81,18 @@ describe('RefreshPicker', () => {
         label: 'Auto',
         ariaLabel: 'Select refresh from the query range',
       });
+    });
+  });
+  describe('ButtonSelect', () => {
+    it('should show interval picker by default', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} />);
+      const button = screen.getByTestId(selectors.components.RefreshPicker.intervalButtonV2);
+      expect(button).toBeInTheDocument();
+    });
+    it('should not show interval picker when noIntervalPicker is true', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} noIntervalPicker />);
+      const button = screen.queryByTestId(selectors.components.RefreshPicker.intervalButtonV2);
+      expect(button).not.toBeInTheDocument();
     });
   });
 });
