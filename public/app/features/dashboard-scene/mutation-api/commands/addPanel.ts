@@ -11,6 +11,8 @@ import { z } from 'zod';
 import { VizPanel } from '@grafana/scenes';
 import type { PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { gridItemToGridLayoutItemKind } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { buildVizPanel } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -90,6 +92,10 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
 
       scene.addPanel(vizPanel);
 
+      // Read the auto-calculated grid position from the parent DashboardGridItem
+      const gridItem = vizPanel.parent;
+      const layoutItem = gridItem instanceof DashboardGridItem ? gridItemToGridLayoutItemKind(gridItem) : undefined;
+
       const changes = [
         {
           path: `/elements/${elementName}`,
@@ -101,7 +107,7 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
 
       return {
         success: true,
-        data: { panelId, elementName },
+        data: { panelId, elementName, layoutItem },
         inverseMutation: {
           type: 'REMOVE_PANEL',
           payload: { elementName, panelId },

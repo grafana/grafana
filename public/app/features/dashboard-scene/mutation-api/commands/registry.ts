@@ -10,6 +10,7 @@ import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardSettingsCommand } from './getDashboardSettings';
 import { listVariablesCommand } from './listVariables';
+import { movePanelCommand } from './movePanel';
 import { removePanelCommand } from './removePanel';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
@@ -22,6 +23,7 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   addPanelCommand,
   removePanelCommand,
   updatePanelCommand,
+  movePanelCommand,
   addVariableCommand,
   removeVariableCommand,
   updateVariableCommand,

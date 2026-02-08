@@ -173,7 +173,11 @@ export const emptyPayloadSchema = z.object({}).strict();
 
 export const addPanelPayloadSchema = z.object({
   panel: panelKindSchema,
-  position: gridPositionSchema.optional(),
+});
+
+export const movePanelPayloadSchema = z.object({
+  elementName: z.string().describe('Element name of the panel to move (e.g., "panel-1")'),
+  position: gridPositionSchema.describe('New grid position for the panel'),
 });
 
 export const updatePanelPayloadSchema = z
@@ -227,5 +231,6 @@ export const payloads = {
   listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
   getDashboardSettings: emptyPayloadSchema.describe('Get current dashboard settings'),
   updateDashboardSettings: dashboardSettingsSchema.describe('Update dashboard settings'),
+  movePanel: movePanelPayloadSchema.describe('Move or resize a panel in the grid layout'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
 };
