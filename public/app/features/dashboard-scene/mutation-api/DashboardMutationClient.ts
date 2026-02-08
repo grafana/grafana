@@ -10,14 +10,12 @@ import { DashboardMutationAPI } from '@grafana/runtime';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { MutationExecutor } from './MutationExecutor';
-import { getJSONSchema, getZodSchema } from './commands/registry';
 
 /**
  * Dashboard Mutation Client
  *
  * Implements the public mutation API interface and manages:
  * - The underlying MutationExecutor
- * - Schema lookups for commands (Zod and JSON Schema)
  * - Registration with @grafana/runtime and window
  */
 export class DashboardMutationClient implements DashboardMutationAPI.MutationClient {
@@ -43,22 +41,6 @@ export class DashboardMutationClient implements DashboardMutationAPI.MutationCli
    */
   execute(mutation: DashboardMutationAPI.MutationRequest): Promise<DashboardMutationAPI.MutationResult> {
     return this.executor.execute(mutation);
-  }
-
-  /**
-   * Get the Zod schema for a command (for validation/composition).
-   * Returns null if command is not found.
-   */
-  getZodSchema(command: string): unknown | null {
-    return getZodSchema(command);
-  }
-
-  /**
-   * Get JSON Schema for a command, computed from Zod via z.toJSONSchema().
-   * Returns null if command is not found.
-   */
-  getJSONSchema(command: string): Record<string, unknown> | null {
-    return getJSONSchema(command);
   }
 
   /**

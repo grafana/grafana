@@ -9,12 +9,13 @@
 import { z } from 'zod';
 
 import { VizPanel } from '@grafana/scenes';
+import type { PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { buildVizPanel } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
-import { gridPositionSchema, panelKindSchema } from './shared';
+import { gridPositionSchema, panelKindSchema } from './schemas';
 import { requiresEdit, type CommandDefinition } from './types';
 
 const payloadSchema = z.object({
@@ -77,7 +78,8 @@ export const addPanelCommand: CommandDefinition<AddPanelPayload> = {
           },
         },
       };
-      const vizPanel = buildVizPanel(panelKind, panelId);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with PanelKind
+      const vizPanel = buildVizPanel(panelKind as PanelKind, panelId);
 
       scene.addPanel(vizPanel);
 

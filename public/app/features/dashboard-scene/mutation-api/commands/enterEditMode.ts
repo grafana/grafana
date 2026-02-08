@@ -5,7 +5,7 @@
  * if the dashboard is not already in edit mode.
  */
 
-import { emptyPayloadSchema } from './shared';
+import { emptyPayloadSchema } from './schemas';
 import { requiresEdit, type CommandDefinition } from './types';
 
 export const enterEditModeCommand: CommandDefinition<Record<string, never>> = {

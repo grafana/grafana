@@ -14,7 +14,7 @@ import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveMode
 import { transformMappingsToV1 } from '../../serialization/transformToV1TypesUtils';
 
 import { findPanel } from './addPanel';
-import { panelSpecSchema } from './shared';
+import { panelSpecSchema } from './schemas';
 import { requiresEdit, type CommandDefinition } from './types';
 
 const payloadSchema = z

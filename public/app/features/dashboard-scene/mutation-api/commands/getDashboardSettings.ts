@@ -14,7 +14,7 @@ import type {
 
 import { transformCursorSynctoEnum } from '../../serialization/transformToV2TypesUtils';
 
-import { emptyPayloadSchema } from './shared';
+import { emptyPayloadSchema } from './schemas';
 import { readOnly, type CommandDefinition } from './types';
 
 function getCursorSync(scene: { state: { $behaviors?: unknown[] } }): DashboardCursorSync {

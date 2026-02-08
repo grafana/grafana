@@ -5,25 +5,13 @@
  * display options, links, and time settings. Only provided fields are changed.
  */
 
-import { z } from 'zod';
-
 import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import type { TimeSettingsSpec } from '@grafana/schema/src/schema/dashboard/v2beta1/types.spec.gen';
 
-import { dashboardLinkSchema, timeSettingsSchema } from './shared';
+import { dashboardSettingsSchema } from './schemas';
 import { requiresEdit, type CommandDefinition } from './types';
 
-const payloadSchema = z.object({
-  title: z.string().optional().describe('Dashboard title'),
-  description: z.string().optional().describe('Dashboard description'),
-  tags: z.array(z.string()).optional().describe('Dashboard tags'),
-  editable: z.boolean().optional().describe('Whether the dashboard is editable'),
-  preload: z.boolean().optional().describe('Whether to preload all panels'),
-  liveNow: z.boolean().optional().describe('Enable live data redraw mode'),
-  cursorSync: z.enum(['Off', 'Crosshair', 'Tooltip']).optional().describe('Cursor sync behavior across panels'),
-  links: z.array(dashboardLinkSchema).optional().describe('Dashboard links (to other dashboards or external URLs)'),
-  timeSettings: timeSettingsSchema.optional().describe('Time range and refresh settings'),
-});
+const payloadSchema = dashboardSettingsSchema;
 
 export type UpdateDashboardSettingsPayload = z.infer<typeof payloadSchema>;
 

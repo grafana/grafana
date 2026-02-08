@@ -30,7 +30,7 @@
 export type { Mutation, MutationResult, MutationChange, MutationTransaction, MutationEvent } from './types';
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { ALL_COMMANDS, MUTATION_TYPES, getZodSchema, getJSONSchema, validatePayload } from './commands/registry';
+export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export type { CommandDefinition } from './commands/types';

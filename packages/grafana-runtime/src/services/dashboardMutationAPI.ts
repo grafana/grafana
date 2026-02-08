@@ -20,9 +20,11 @@
  * const api = DashboardMutationAPI.getDashboardMutationAPI();
  * if (api) {
  *   const result = await api.execute({ type: 'ADD_PANEL', payload: { ... } });
- *   const zodSchema = api.getZodSchema('ADD_PANEL');
- *   const jsonSchema = api.getJSONSchema('ADD_PANEL');
  * }
+ *
+ * // Schemas are available as static imports for composition at module load time:
+ * const { schemas } = DashboardMutationAPI;
+ * const mySchema = schemas.panelKindSchema;
  * ```
  */
 
@@ -109,21 +111,6 @@ export interface MutationClient {
 
   /** Execute a mutation on the dashboard. */
   execute(mutation: MutationRequest): Promise<MutationResult>;
-
-  /**
-   * Get the Zod schema for a command (for validation/composition).
-   * Returns null if command is not found.
-   *
-   * The return type is `unknown` to avoid coupling @grafana/runtime to Zod.
-   * Consumers can cast: `api.getZodSchema('ADD_PANEL') as z.ZodType`.
-   */
-  getZodSchema(command: string): unknown | null;
-
-  /**
-   * Get JSON Schema for a command, computed from Zod via z.toJSONSchema().
-   * Returns null if command is not found.
-   */
-  getJSONSchema(command: string): Record<string, unknown> | null;
 }
 
 // Singleton instance
@@ -166,3 +153,12 @@ export function getDashboardMutationAPI(): MutationClient | null {
   }
   return null;
 }
+
+/**
+ * Canonical Zod schemas for v2beta1 dashboard structures.
+ *
+ * Available as static imports so consumers can compose tool schemas
+ * at module load time, before any dashboard is loaded.
+ */
+// eslint-disable-next-line no-restricted-imports -- cross-package re-export for the public API surface
+export * as schemas from '../../../../public/app/features/dashboard-scene/mutation-api/commands/schemas';

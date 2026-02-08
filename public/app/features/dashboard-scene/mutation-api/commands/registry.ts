@@ -5,8 +5,6 @@
  * The MutationExecutor iterates over ALL_COMMANDS generically.
  */
 
-import { z } from 'zod';
-
 import { addPanelCommand } from './addPanel';
 import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
@@ -33,7 +31,7 @@ export const ALL_COMMANDS: Array<CommandDefinition<any>> = [
   enterEditModeCommand,
 ];
 
-/** All valid command names (replaces MUTATION_TYPES). */
+/** All valid command names. */
 export const MUTATION_TYPES = ALL_COMMANDS.map((cmd) => cmd.name);
 
 /** Lookup command by name (case-insensitive). */
@@ -42,27 +40,12 @@ function findCommand(command: string): CommandDefinition | undefined {
   return ALL_COMMANDS.find((cmd) => cmd.name === normalized);
 }
 
-/** Get the Zod schema for a command. Returns null if not found. */
-export function getZodSchema(command: string): z.ZodType | null {
-  return findCommand(command)?.payloadSchema ?? null;
-}
-
-/** Get JSON Schema for a command, computed from Zod. Returns null if not found. */
-export function getJSONSchema(command: string): Record<string, unknown> | null {
-  const cmd = findCommand(command);
-  if (!cmd) {
-    return null;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions -- z.toJSONSchema returns JsonSchema7Type which is not assignable to Record
-  return z.toJSONSchema(cmd.payloadSchema) as any;
-}
-
 /** Validate a payload against the Zod schema for a command. */
 export function validatePayload(
   commandType: string,
   payload: unknown
 ): { success: true; data: unknown } | { success: false; error: string } {
-  const schema = getZodSchema(commandType);
+  const schema = findCommand(commandType)?.payloadSchema ?? null;
   if (!schema) {
     return { success: true, data: payload };
   }

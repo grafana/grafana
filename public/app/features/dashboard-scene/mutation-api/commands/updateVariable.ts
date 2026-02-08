@@ -7,11 +7,12 @@
 import { z } from 'zod';
 
 import { sceneGraph } from '@grafana/scenes';
+import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { replaceVariableSet } from './addVariable';
-import { variableKindSchema } from './shared';
+import { variableKindSchema } from './schemas';
 import { requiresEdit, type CommandDefinition } from './types';
 
 const payloadSchema = z.object({
@@ -48,7 +49,8 @@ export const updateVariableCommand: CommandDefinition<UpdateVariablePayload> = {
 
       const previousState = currentVariables[existingIndex].state;
 
-      const newSceneVariable = createSceneVariableFromVariableModel(variableKind);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
+      const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
       currentVariables[existingIndex] = newSceneVariable;
 
       replaceVariableSet(scene, currentVariables);

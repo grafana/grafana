@@ -8,7 +8,7 @@ import { SceneVariableSet } from '@grafana/scenes';
 
 import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
 
-import { emptyPayloadSchema } from './shared';
+import { emptyPayloadSchema } from './schemas';
 import { readOnly, type CommandDefinition } from './types';
 
 export const listVariablesCommand: CommandDefinition<Record<string, never>> = {
