@@ -43,7 +43,7 @@ To create a dashboard from a template, follow these steps:
 1. Click **Edit**.
 1. Update the data source for each panel to add your own data and configure the queries you need.
 
-    In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-with-grafana-assistant).
+   In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-with-grafana-assistant).
 
 1. Make any other edits to the dashboard to most effectively display your data.
 1. When you've made all of your changes, remove the banner panel.
@@ -60,7 +60,7 @@ When you choose this option, a preconfigured prompt is entered into the Assistan
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-assist-v12.4.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" >}}
 
 Grafana Assistant analyses the template, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
-This lets create a working, relevant dashboard from a template without having to manually map metrics and panels yourself.
+This lets create a working, relevant dashboard from a template without the need to manually map metrics and panels.
 
 ## Create dashboards from suggestions
 
