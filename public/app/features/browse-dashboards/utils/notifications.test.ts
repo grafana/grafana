@@ -1,4 +1,5 @@
 import { AppEvents } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { getRestoreNotificationData } from './notifications';
 
@@ -143,6 +144,54 @@ describe('notifications', () => {
           alertType: AppEvents.alertError.name,
           message: 'Failed to restore 3 dashboard. Network timeout',
         },
+      });
+    });
+
+    describe('with appSubUrl', () => {
+      const originalAppSubUrl = config.appSubUrl;
+
+      beforeEach(() => {
+        config.appSubUrl = '/grafana';
+      });
+
+      afterEach(() => {
+        config.appSubUrl = originalAppSubUrl;
+      });
+
+      it('prefixes single dashboard URL with appSubUrl', () => {
+        const result = getRestoreNotificationData(['uid1'], [], '');
+        expect(result).toEqual({
+          kind: 'action',
+          data: {
+            title: 'Dashboard restored',
+            buttonLabel: 'View dashboard',
+            targetUrl: '/grafana/d/uid1',
+          },
+        });
+      });
+
+      it('prefixes folder URL with appSubUrl', () => {
+        const result = getRestoreNotificationData(['uid1', 'uid2'], [], 'folder-uid');
+        expect(result).toEqual({
+          kind: 'action',
+          data: {
+            title: 'Dashboard restored',
+            buttonLabel: 'View folder',
+            targetUrl: '/grafana/dashboards/f/folder-uid',
+          },
+        });
+      });
+
+      it('prefixes root dashboards URL with appSubUrl', () => {
+        const result = getRestoreNotificationData(['uid1', 'uid2'], [], 'general');
+        expect(result).toEqual({
+          kind: 'action',
+          data: {
+            title: 'Dashboard restored',
+            buttonLabel: 'View folder',
+            targetUrl: '/grafana/dashboards',
+          },
+        });
       });
     });
 
