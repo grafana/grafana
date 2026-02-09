@@ -44,8 +44,8 @@ const (
 )
 
 func (PlayliststatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlayliststatusOperatorState"
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlayliststatusOperatorState"
 }
 func (PlaylistStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistStatus"
 }

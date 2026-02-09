@@ -244,7 +244,7 @@ func (o *Playlist) DeepCopyInto(dst *Playlist) {
 }
 
 func (Playlist) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
 }
 
 // Interface compliance compile-time check
@@ -301,7 +301,7 @@ func (o *PlaylistList) DeepCopyInto(dst *PlaylistList) {
 }
 
 func (PlaylistList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistList"
 }
 
 // Interface compliance compile-time check
