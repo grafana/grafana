@@ -35,7 +35,7 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
-    const [ds, setDs] = useState<DataSourceApi | null>(null);
+    const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -157,15 +157,16 @@ export const LogLineDetailsComponent = memo(
     }, []);
 
     useEffect(() => {
-      const setDatasource = async () => {
-        const datasource = await getDataSourceSrv().get(log.datasourceUid);
-        if (datasource) {
-          setDs(datasource);
-        }
-      };
-
-      setDatasource();
+      getDataSourceSrv()
+        .get(log.datasourceUid)
+        .then(setDs)
+        .catch(() => setDs(null));
     }, [log.datasourceUid]);
+
+    // Wait for ds to be resolved to DataSourceApi or null on error
+    if (ds === undefined) {
+      return null;
+    }
 
     return (
       <>

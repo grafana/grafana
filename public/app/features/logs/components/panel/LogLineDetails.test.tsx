@@ -68,7 +68,7 @@ const setup = async (
   rowOverrides?: Partial<LogRowModel>,
   logListcontextOverrides?: Partial<LogListContextData>,
   logDetailsContextOverrides?: Partial<LogDetailsContextData>,
-  renderCompleteText: string | RegExp = 'Fields'
+  renderCompleteText: string | RegExp = 'Log line'
 ) => {
   const logs = [
     createLogLine({
@@ -289,8 +289,8 @@ describe('LogLineDetails', () => {
     });
   });
   describe('when the log has no fields to display', () => {
-    test('should render no details available message', () => {
-      setup(undefined, { entry: '' });
+    test('should render no details available message', async () => {
+      await setup(undefined, { entry: '' });
       expect(screen.getByText('No fields to display.')).toBeInTheDocument();
     });
     test('should not render headings', () => {
@@ -341,7 +341,7 @@ describe('LogLineDetails', () => {
       }
     );
 
-    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Fields')).toBeInTheDocument();
     expect(screen.getByText('Links')).toBeInTheDocument();
@@ -566,7 +566,7 @@ describe('LogLineDetails', () => {
 
       test('should fallback to a single group of Fields if not supported', async () => {
         jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.resolve(undefined),
+          get: (uid: string) => Promise.reject(null),
         }));
 
         await setup(
@@ -870,7 +870,7 @@ describe('LogLineDetails', () => {
       })
     );
 
-    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Links')).toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
