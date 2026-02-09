@@ -4,7 +4,7 @@ const DASHBOARD_UID = 'adhjhtt';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
 test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logstable'] }, () => {
-  test.only('should render logs table panel', async ({ page, gotoDashboardPage, selectors }) => {
+  test('should render logs table panel', async ({ page, gotoDashboardPage, selectors }) => {
     // this test can absolutely take longer than the default 30s timeout
     test.setTimeout(120_000);
 
