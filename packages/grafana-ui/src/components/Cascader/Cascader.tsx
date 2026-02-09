@@ -102,7 +102,7 @@ const flattenOptions = (
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-cascader--docs
  */
 
-const Cascader = memo(
+export const Cascader = memo(
   ({
     separator,
     placeholder,
@@ -302,5 +302,3 @@ const Cascader = memo(
 );
 
 Cascader.displayName = 'Cascader';
-
-export default Cascader;
