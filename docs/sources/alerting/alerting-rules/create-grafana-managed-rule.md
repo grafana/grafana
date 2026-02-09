@@ -175,15 +175,20 @@ To backup and manage alert rules, you can [provision alerting resources](ref:sha
 
 [//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
-### Default vs Advanced options
+### Default vs. Advanced options
 
-You can use default or advanced options for Grafana-managed alert rule creation. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, use advanced options to add multiple queries and expressions.
+Grafana Alerting provides multiple configuration options to support different alerting needs.
 
-You can toggle between the two options.
-After you have created an alert rule, the system defaults to your previous choice for the next alert rule.
+To simplify alert rule creation, some settings display a **Default** and an **Advanced** configuration view:
 
-Switching from advanced to default may result in queries and expressions that can't be converted.
-In this case, a warning message asks if you want to continue to reset to default settings.
+- [Define query and condition](#define-query-and-condition)
+- [Configure notifications](#configure-notifications)
+
+Use **Default** to create basic query conditions and route alerts directly to a contact point. Use **Advanced** for more complex query definitions, or to route alerts using notification policies.
+
+You can switch between options at any time. After you create an alert rule, Grafana remembers your last selection and uses it as the default for the next rule.
+
+If you prefer to always use advanced configuration, you can disable the **Default** modes by disabling the `alertingQueryAndExpressionsStepMode` and `alertingNotificationsStepMode` feature toggles.
 
 ## Set alert rule name
 
@@ -193,10 +198,11 @@ In this case, a warning message asks if you want to continue to reset to default
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
-You can toggle between **Default** and **Advanced** options. If the [Default vs. Advanced feature](#default-vs-advanced-options) is not enabled in your Grafana instance, follow the **Advanced options** instructions.
+The **Default** option allows to configure one query and one alert condition. The **Advanced** option allows multiple queries and expressions for more complex rule definitions.
 
 {{< collapse title="Default options" >}}
 
+1. Select a data source.
 1. Add a [query](ref:alert-rule-query).
 1. Add an [alert condition](ref:alert-condition).
 
@@ -233,6 +239,12 @@ You can toggle between **Default** and **Advanced** options. If the [Default vs.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your [alert condition](ref:alert-condition).
    {{< /collapse >}}
+
+You can switch between **Default** and **Advanced** options at any time.
+
+Switching from **Advanced** to **Default** may result in queries and expressions that can't be converted. In this case, a warning message asks if you want to continue to reset to default settings.
+
+If the [Default vs. Advanced options](#default-vs-advanced-options) feature is not enabled in your Grafana instance, follow the **Advanced options** instructions.
 
 ## Set folder and labels
 
@@ -289,32 +301,37 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 ## Configure notifications
 
-Choose to select a contact point directly from the alert rule form or to use notification policy routing as well as set up mute timings and groupings.
+Configure who receives notifications when the alert rule fires.
 
-Complete the following steps to set up notifications.
+The **Default** option allows to select a [contact point](ref:contact-points) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](ref:notification-policies).
 
-1. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
+{{< collapse title="Default options" >}}
 
-   **Select contact point**
-   1. Choose this option to select an existing [contact point](ref:contact-points).
+1.  Select an existing [contact point](ref:contact-points).
 
-      All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
+    All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
 
-   1. You can also optionally select a mute timing or active time interval as well as groupings and timings to define when not to send notifications.
+1.  Optionally, configure additional notification settings like grouping or timing options.
 
-   **Use notification policy**
-   1. Choose this option to use the [notification policy tree](ref:notification-policies) to handle alert notifications.
+{{< /collapse >}}
 
-      All notifications for this alert rule are managed by the notification policy tree, which routes alerts based on their labels.
-      If an alert doesn't match a specific policy, the default notification policy applies, ensuring all alerts are handled.
+{{< collapse title="Advanced options" >}}
 
-   1. Preview your alert instance routing set up.
+With this option, all notifications for this alert rule are managed by the [notification policy tree](ref:notification-policies), which routes alerts based on their labels.
 
-      Based on the labels added, alert instances are routed to the following notification policies displayed.
+You can preview which notification policy would handle notifications from this alert rule.
 
-   1. Expand each notification policy below to view more details.
+1. Click **Preview routing** after configuring the previous alert rule settings.
 
-   1. Click **See details** to view alert routing details and an email preview.
+   Based on the alert labels and query labels, Grafana displays the notification policies that would handle the notifications.
+
+1. Click **View route** to view policy and routing details.
+
+{{< /collapse >}}
+
+You can switch between **Default** and **Advanced** options at any time.
+
+If the [Default vs. Advanced options](#default-vs-advanced-options) feature is not enabled in your Grafana instance, follow the **Advanced options** instructions.
 
 ## Configure notification message
 
