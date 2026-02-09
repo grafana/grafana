@@ -4904,7 +4904,6 @@
       "paste-panel": "Paneel plakken",
       "paste-row": "Rij plakken",
       "paste-tab": "Tabblad plakken",
-      "un-group-panels": "Groepering opheffen",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9519,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Resetten"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Kan opties niet laden",
       "loading": "Opties laden …",
@@ -10534,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Lijnen omsluiten",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Lijnen omsluiten"
     },
     "logs-navigation": {
@@ -10560,6 +10569,7 @@
     "name-show-controls": "Bedieningselementen tonen",
     "name-time": "Tijdstempels weergeven",
     "name-unique-labels": "Unieke labels",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Lijnen omsluiten",
     "order-options": {
       "label-newest-first": "Nieuwste eerst",
@@ -12132,7 +12142,6 @@
       "placeholder-my-repository-connection": "Mijn repository-verbinding",
       "retry-action": "",
       "text-loading-resource-information": "Broninformatie laden...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} dashboard",
@@ -12670,7 +12679,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "en klik",
@@ -12707,8 +12717,6 @@
       "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
