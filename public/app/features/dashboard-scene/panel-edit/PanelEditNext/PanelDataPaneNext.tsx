@@ -1,7 +1,14 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef, getNextRefId } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneObjectBase, SceneObjectRef, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import {
+  SceneDataTransformer,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
+import { DataQuery, DataSourceRef, DataTransformerConfig } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -169,6 +176,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
       queryRunner.runQueries();
+    }
+  };
+
+  public reorderTransformations = (transformations: DataTransformerConfig[]) => {
+    const panel = this.state.panelRef.resolve();
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      panel.state.$data.setState({ transformations });
+      panel.state.$data.reprocessTransformations();
     }
   };
 

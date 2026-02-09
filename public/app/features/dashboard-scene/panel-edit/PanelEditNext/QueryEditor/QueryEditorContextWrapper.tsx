@@ -214,6 +214,7 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      reorderTransformations: dataPane.reorderTransformations,
     }),
     [dataPane]
   );

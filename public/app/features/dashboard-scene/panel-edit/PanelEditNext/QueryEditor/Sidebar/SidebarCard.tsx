@@ -18,11 +18,20 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick }: Sideb
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <button
+    <div
       className={styles.card}
       onClick={onClick}
-      type="button"
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
       aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
       aria-pressed={isSelected}
     >
@@ -35,14 +44,16 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick }: Sideb
         </Stack>
       </div>
       <div className={styles.cardContent}>{children}</div>
-    </button>
+    </div>
   );
 };
 
-function getStyles(
-  theme: GrafanaTheme2,
-  { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
-) {
+interface SidebarCardStyleProps {
+  config: QueryEditorTypeConfig;
+  isSelected: boolean;
+}
+
+function getStyles(theme: GrafanaTheme2, { config, isSelected }: SidebarCardStyleProps) {
   return {
     card: css({
       display: 'flex',
