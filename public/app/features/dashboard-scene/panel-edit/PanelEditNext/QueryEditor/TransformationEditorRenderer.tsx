@@ -11,7 +11,9 @@ export function TransformationEditorRenderer() {
   const { selectedTransformation } = useQueryEditorUIContext();
   const { updateTransformation } = useActionsContext();
 
-  const inputData = useMemo(() => data?.series || [], [data?.series]);
+  // Memoize to avoid recreating potentially large data.series array reference on every render.
+  // This prevents unnecessary re-renders and processing in TransformationEditor.
+  const inputData = useMemo(() => data?.series ?? [], [data?.series]);
 
   if (!selectedTransformation) {
     return null;
