@@ -1153,10 +1153,15 @@ export class ElasticDatasource
       datasource: this.getRef(),
       query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
+      esqlQuery: query.esqlQuery ? this.interpolateEsqlQuery(query.esqlQuery, scopedVars) : undefined,
     };
 
     const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(expandedQuery), scopedVars));
     return finalQuery;
+  }
+
+  private interpolateEsqlQuery(esqlQuery: string, scopedVars?: ScopedVars): string {
+    return this.templateSrv.replace(esqlQuery, scopedVars);
   }
 
   // Private method used in the `getDatabaseVersion` to get the database version from the Elasticsearch API.

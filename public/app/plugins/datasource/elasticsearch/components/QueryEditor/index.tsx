@@ -14,13 +14,13 @@ import { EditorType, ElasticsearchOptions } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
+import { CodeEditorSection } from './CodeEditorSection';
 import { EditorTypeSelector } from './EditorTypeSelector';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
-import { RawQueryEditor } from './RawQueryEditor';
-import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery, changeRawDSLQuery } from './state';
+import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchDataQuery, ElasticsearchOptions>;
 
@@ -153,13 +153,7 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
         )}
       </div>
 
-      {isCodeEditor && rawDSLFeatureEnabled && (
-        <RawQueryEditor
-          value={value.rawDSLQuery}
-          onChange={(rawDSLQuery) => dispatch(changeRawDSLQuery(rawDSLQuery))}
-          onRunQuery={onRunQuery}
-        />
-      )}
+      {isCodeEditor && rawDSLFeatureEnabled && <CodeEditorSection value={value} onRunQuery={onRunQuery} />}
 
       {!isCodeEditor && (
         <>

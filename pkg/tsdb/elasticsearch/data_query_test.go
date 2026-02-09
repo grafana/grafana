@@ -1876,6 +1876,11 @@ func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	return c.builder
 }
 
+func (c *fakeClient) ExecuteEsql(query string) (*es.EsqlResponse, error) {
+	// Return empty response for tests that don't use ES|QL
+	return &es.EsqlResponse{}, nil
+}
+
 func newDataQuery(body string) (backend.QueryDataRequest, error) {
 	return backend.QueryDataRequest{
 		Queries: []backend.DataQuery{

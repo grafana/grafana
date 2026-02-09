@@ -37,6 +37,11 @@ func (t *httpTransport) executeBatchRequest(uriPath, uriQuery string, body []byt
 
 // executeRequest executes an HTTP request to Elasticsearch
 func (t *httpTransport) executeRequest(method, uriPath, uriQuery string, body []byte) (*http.Response, error) {
+	return t.executeRequestWithContentType(method, uriPath, uriQuery, body, "application/x-ndjson")
+}
+
+// executeRequestWithContentType executes an HTTP request to Elasticsearch with a custom content type
+func (t *httpTransport) executeRequestWithContentType(method, uriPath, uriQuery string, body []byte, contentType string) (*http.Response, error) {
 	t.logger.Debug("Sending request to Elasticsearch", "url", t.baseURL)
 	u, err := url.Parse(t.baseURL)
 	if err != nil {
@@ -55,7 +60,7 @@ func (t *httpTransport) executeRequest(method, uriPath, uriQuery string, body []
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/x-ndjson")
+	req.Header.Set("Content-Type", contentType)
 
 	//nolint:bodyclose
 	resp, err := t.httpClient.Do(req)
@@ -63,4 +68,9 @@ func (t *httpTransport) executeRequest(method, uriPath, uriQuery string, body []
 		return nil, err
 	}
 	return resp, nil
+}
+
+// executeEsqlRequest executes an ES|QL query request to Elasticsearch
+func (t *httpTransport) executeEsqlRequest(body []byte) (*http.Response, error) {
+	return t.executeRequestWithContentType(http.MethodPost, "_query", "", body, "application/json")
 }

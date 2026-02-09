@@ -22,10 +22,15 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 
 		rawQuery := model.Get("query").MustString()
 		rawDSLQuery := model.Get("rawDSLQuery").MustString()
+		esqlQuery := model.Get("esqlQuery").MustString()
 
 		var editorType *string
 		if et := model.Get("editorType").MustString(); et != "" {
 			editorType = &et
+		}
+		var queryLanguage *string
+		if ql := model.Get("queryLanguage").MustString(); ql != "" {
+			queryLanguage = &ql
 		}
 
 		bucketAggs, err := parseBucketAggs(model)
@@ -45,6 +50,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		queries = append(queries, &Query{
 			RawQuery:      rawQuery,
 			RawDSLQuery:   rawDSLQuery,
+			EsqlQuery:     esqlQuery,
 			BucketAggs:    bucketAggs,
 			Metrics:       metrics,
 			Alias:         alias,
@@ -54,6 +60,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange:     q.TimeRange,
 			EditorType:    editorType,
+			QueryLanguage: queryLanguage,
 		})
 	}
 
