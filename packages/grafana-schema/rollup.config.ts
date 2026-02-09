@@ -43,10 +43,12 @@ export default [
       {
         format: 'esm',
         dir: path.dirname(pkg.module),
+        entryFileNames: '[name].mjs',
       },
       {
         format: 'cjs',
         dir: path.dirname(pkg.main),
+        entryFileNames: '[name].cjs',
       },
     ],
     treeshake: false,

@@ -21,6 +21,14 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/raw/index.cjs"
     },
+    "./apis/dashboard.grafana.app/*": {
+      "@grafana-app/source": "./src/schema/dashboard/*/index.ts",
+      "types": "./dist/types/schema/dashboard/*/index.d.ts"
+    },
+    "./apis/preferences.grafana.app/v1alpha1": {
+      "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
+      "types": "./dist/types/raw/preferences/x/preferences_types.gen.d.ts"
+    },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.ts",
       "types": "./dist/types/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.d.ts",
@@ -69,7 +77,7 @@
       "import": "./dist/esm/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.mjs",
       "require": "./dist/cjs/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.cjs"
     },
-    "./dist/esm/raw/composable/datagrid/panelcfg/x/DataGridPanelCfg_types.gen": {
+    "./dist/esm/raw/composable/datagrid/panelcfg/x/DatagridPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.ts",
       "types": "./dist/types/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.d.ts",
       "import": "./dist/esm/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.mjs",
