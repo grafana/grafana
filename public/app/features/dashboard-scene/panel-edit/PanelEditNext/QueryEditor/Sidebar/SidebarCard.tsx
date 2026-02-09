@@ -65,6 +65,11 @@ export const SidebarCard = ({
   const [menuView, setMenuView] = useState<MenuView>('main');
   const addButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Callback ref: focuses the submenu as soon as it mounts so keyboard
+  // navigation (arrow keys) works immediately. FloatingFocusManager only
+  // handles focus on the initial Dropdown open, not on content swaps.
+  const focusOnMount = useCallback((el: HTMLDivElement | null) => el?.focus(), []);
+
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
   // library is governed by fine-grained RBAC permissions. Otherwise, any
   // signed-in user can read saved queries (the pre-RBAC default).
@@ -101,7 +106,7 @@ export const SidebarCard = ({
 
   const menus: Record<MenuView, React.ReactElement> = {
     main: (
-      <Menu>
+      <Menu key="main">
         <Menu.Item
           label={t('query-editor-next.sidebar.add-query', 'Add query')}
           icon="question-circle"
@@ -131,7 +136,7 @@ export const SidebarCard = ({
       </Menu>
     ),
     expressionTypes: (
-      <Menu>
+      <Menu key="expressionTypes" ref={focusOnMount}>
         <Menu.Item
           label={t('query-editor-next.sidebar.back', 'Back')}
           icon="arrow-left"
