@@ -2113,6 +2113,15 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "excludeRedundantManagedPermissions",
+			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:         "pluginInsights",
 			Description:  "Show insights for plugins in the plugin details page",
 			Stage:        FeatureStageExperimental,
