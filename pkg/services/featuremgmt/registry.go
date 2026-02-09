@@ -306,15 +306,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "reportingRetries",
-			Description:     "Enables rendering retries for the reporting feature",
-			Stage:           FeatureStagePublicPreview,
-			FrontendOnly:    false,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
 			Name:         "reportingCsvEncodingOptions",
 			Description:  "Enables CSV encoding options in the reporting feature",
 			Stage:        FeatureStageExperimental,
@@ -503,7 +494,7 @@ var (
 		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
 		},
@@ -1365,6 +1356,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "teamHttpHeadersFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,
@@ -2112,6 +2111,15 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "excludeRedundantManagedPermissions",
+			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
 		},
 		{
 			Name:         "pluginInsights",

@@ -1,7 +1,7 @@
 import {
   AppEvents,
+  DataFrame,
   getPanelDataSummary,
-  PanelData,
   PanelDataSummary,
   PanelPlugin,
   PanelPluginVisualizationSuggestion,
@@ -103,12 +103,14 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
 
     // if a preferred visualisation type matches the data, prioritize it
     const mappedA = mapPreferredVisualisationTypeToPlugin(a.pluginId);
-    if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
-      return -1;
-    }
     const mappedB = mapPreferredVisualisationTypeToPlugin(b.pluginId);
-    if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
-      return 1;
+    if (mappedA !== mappedB) {
+      if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
+        return -1;
+      }
+      if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
+        return 1;
+      }
     }
 
     // compare scores directly if there are no other factors
@@ -123,11 +125,11 @@ export interface SuggestionsResult {
 
 /**
  * given PanelData, return a sorted list of Suggestions from all plugins which support it.
- * @param {PanelData} data queried and transformed data for the panel
+ * @param {DataFrame[]} series data frames
  * @returns {SuggestionsResult} sorted list of suggestions and error status
  */
-export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsResult> {
-  const dataSummary = getPanelDataSummary(data?.series);
+export async function getAllSuggestions(series?: DataFrame[]): Promise<SuggestionsResult> {
+  const dataSummary = getPanelDataSummary(series);
   const list: PanelPluginVisualizationSuggestion[] = [];
 
   const pluginIds: string[] = getPanelPluginIds();

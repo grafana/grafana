@@ -11,7 +11,8 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import { addVariable, removeVariable } from '../state/sharedReducer';
 import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
-import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../utils';
+import { toStateKey } from '../toStateKey';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import {
   changeVariableNameFailed,

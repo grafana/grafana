@@ -1672,9 +1672,8 @@
         "renamed-receivers_one": "Receivers renamed: {{count}}",
         "renamed-receivers_other": "Receivers renamed: {{count}}",
         "routing": "Notification routing",
-        "routing-default": "Default Grafana policy",
-        "routing-imported": "Imported policy ({{label}}={{value}})",
-        "routing-manual": "Manual label ({{label}}={{value}})",
+        "routing-none": "No policy tree selected",
+        "routing-tree": "Policy tree: {{name}}",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1688,6 +1687,9 @@
         "will-import-rules": "Will import rules",
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
+      },
+      "routing-tree": {
+        "default-policy": "Default Policy"
       },
       "source": {
         "datasource": "Existing data source-managed rules",
@@ -1738,28 +1740,19 @@
         "group": "Group",
         "group-desc": "Filter by group (optional)",
         "heading": "Import Alert Rules",
-        "manual-label-name": "Label name",
-        "manual-label-name-placeholder": "team",
-        "manual-label-value": "Label value",
-        "manual-label-value-placeholder": "backend",
         "namespace": "Namespace",
         "namespace-desc": "Filter by namespace (optional)",
         "no-permission-desc": "You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and <strong>alerting.provisioning:write</strong> permissions. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
         "pause-alerting": "Pause imported alert rules",
         "pause-recording": "Pause imported recording rules",
-        "policy": {
-          "default": "Use Grafana default policy",
-          "default-desc": "Alerts will be routed using the default Grafana notification policy",
-          "imported": "Use imported policy",
-          "imported-desc": "Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.",
-          "manual": "Enter label manually",
-          "manual-desc": "Specify a custom label to add to all imported rules"
-        },
         "policy-desc": "Choose how imported alerts should be routed to contact points.",
         "policy-title": "Notification Routing",
+        "policy-tree": "Policy tree",
+        "policy-tree-desc": "Select a notification policy tree to route alerts",
         "select-group": "All groups",
         "select-namespace": "All namespaces",
+        "select-policy": "Select a policy tree",
         "settings-title": "Additional Settings",
         "skip": "Skip this step",
         "skipped-step1": "Step 1 was skipped",
@@ -4911,7 +4904,6 @@
       "paste-panel": "Paste panel",
       "paste-row": "Paste row",
       "paste-tab": "Paste tab",
-      "un-group-panels": "Ungroup",
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
     },
@@ -6647,9 +6639,6 @@
     "query-editor": {
       "query": "Query"
     },
-    "query-editor-content": {
-      "content-body-goes-here": "Content body goes here!"
-    },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
@@ -7830,7 +7819,8 @@
       "loading-placeholder": "Loading..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Go queryless"
+      "aria-label-go-queryless": "Go queryless",
+      "drilldown": "Drilldown"
     },
     "raw-list-container": {
       "item-count": "Result series: {{numItems}}",
@@ -9528,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Reset"
     },
+    "secret-text-area": {
+      "hide-content": "Hide secret content",
+      "show-content": "Show secret content"
+    },
     "segment-async": {
       "error": "Failed to load options",
       "loading": "Loading options...",
@@ -10543,6 +10537,12 @@
         "filter-level": "Filter logs result by level"
       },
       "unwrap-lines": "Unwrap lines",
+      "unwrapped-columns": {
+        "disable": "Disable columns",
+        "disabled": "Columns are not supported with line wrapping enabled",
+        "disabled-label": "Columns not suported",
+        "enable": "Enable columns"
+      },
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -10569,6 +10569,7 @@
     "name-show-controls": "Show controls",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
+    "name-unwrapped-columns": "Enable columns for displayed fields",
     "name-wrap-lines": "Wrap lines",
     "order-options": {
       "label-newest-first": "Newest first",
@@ -12147,7 +12148,6 @@
       "placeholder-my-repository-connection": "My repository connection",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
-      "text-waiting-for-repository-health": "Checking repository health...",
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
     },
@@ -12679,7 +12679,8 @@
       "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
-      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below."
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
+      "text-checking-repository": "Checking repository status..."
     },
     "token-permissions-info": {
       "and-click": "and click",
@@ -12716,8 +12717,6 @@
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
-      "check-status-button": "Check repository status",
-      "check-status-message": "Repository connecting, synchronize will be ready soon.",
       "connect-step": "Connect",
       "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
       "discard-modal": {
@@ -12923,6 +12922,9 @@
       "query-name-div-title-edit-query-name": "Edit query name"
     },
     "query-error-alert": {
+      "error-details": "Query error details",
+      "fix-with-assistant": "Fix with Assistant",
+      "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
     "query-group": {
@@ -12978,7 +12980,40 @@
       "show": "Show response",
       "show-help": "Show data source help"
     },
+    "details-sidebar": {
+      "cache-timeout": "Cache timeout",
+      "cache-timeout-tooltip": "If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.",
+      "cache-ttl": "Cache TTL",
+      "cache-ttl-tooltip": "Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.",
+      "collapse": "Collapse query options sidebar",
+      "interval": "Interval",
+      "interval-tooltip": "The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.",
+      "max-data-points": "Max data points",
+      "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval.",
+      "min-interval": "Min interval",
+      "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example 1m if your data is written every minute.",
+      "no-limit": "No limit",
+      "relative-time": "Relative time",
+      "relative-time-tooltip": "Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.",
+      "time-shift": "Time shift",
+      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker.",
+      "title": "Query Options"
+    },
     "edit-query-name": "Edit query name",
+    "footer": {
+      "edit-option": "Edit {{label}}",
+      "label": {
+        "interval": "Interval",
+        "max-data-points": "Max data points",
+        "min-interval": "Min interval",
+        "relative-time": "Relative time",
+        "time-shift": "Time shift"
+      },
+      "placeholder": {
+        "no-limit": "No limit"
+      },
+      "query-options": "Query Options"
+    },
     "header": {
       "expression": "Expression",
       "transformation": "Transformation",

@@ -17,6 +17,7 @@ describe('RadialArcPathEndpointMarks', () => {
     centerX: 100,
     centerY: 100,
     radius: 80,
+    circumference: 2 * Math.PI * 80,
     barWidth: 20,
     vizWidth: 200,
     vizHeight: 200,
