@@ -191,6 +191,7 @@ describe('RuleListActions', () => {
       newGrafanaRecordingRule: byRole('link', { name: /new grafana recording rule/i }),
       newDataSourceRecordingRule: byRole('link', { name: /new data source recording rule/i }),
       importAlertRules: byRole('link', { name: /import alert rules/i }),
+      importToGma: byRole('link', { name: /import to gma/i }),
       exportAllGrafanaRules: byRole('menuitem', { name: /export all grafana rules/i }),
     },
     exportDrawer: byRole('dialog', { name: /export/i }),
@@ -321,6 +322,32 @@ describe('RuleListActions', () => {
       const importMenuItem = ui.menuOptions.importAlertRules.get(menu);
 
       expect(importMenuItem).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
+    });
+  });
+
+  describe('Import to GMA Wizard', () => {
+    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
+
+    it('should show "Import to GMA" option when user is admin with required permissions', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
+    });
+
+    it('should not show "Import to GMA" option when user is not admin', async () => {
+      grantUserRole(OrgRole.Viewer);
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importToGma.query(menu)).not.toBeInTheDocument();
     });
   });
 

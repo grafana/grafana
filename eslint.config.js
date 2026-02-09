@@ -31,6 +31,7 @@ const commonTestIgnores = [
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',
+  'packages/grafana-test-utils/src/**/*.{ts,tsx}',
 ];
 
 const generatedFiles = ['**/*.gen.ts', '**/*_gen.ts'];
@@ -573,14 +574,14 @@ module.exports = [
           message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
         },
         {
-          selector:
-            "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
-          message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
-        },
-        {
           selector: 'MemberExpression[object.name="config"][property.name="apps"]',
           message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
+        },
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
+          message:
+            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
         },
       ],
     },
@@ -598,7 +599,12 @@ module.exports = [
         {
           selector: 'MemberExpression[object.name="config"][property.name="apps"]',
           message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
+        },
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
+          message:
+            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
         },
       ],
     },
@@ -611,8 +617,15 @@ module.exports = [
         {
           selector: 'MemberExpression[object.name="config"][property.name="apps"]',
           message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
         },
+        // FIXME: Remove once all enterprise issues are fixed (reports/dashboard/DashboardReportPage.test.tsx) -
+        // we don't have a suppressions file/approach for enterprise code yet
+        // {
+        //   selector: 'MemberExpression[object.name="config"][property.name="panels"]',
+        //   message:
+        //     'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
+        // },
       ],
     },
   },

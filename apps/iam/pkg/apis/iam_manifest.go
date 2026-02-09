@@ -266,6 +266,7 @@ var appManifestData = app.ManifestData{
 					SelectableFields: []string{
 						"spec.teamRef.name",
 						"spec.subject.name",
+						"spec.external",
 					},
 				},
 

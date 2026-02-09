@@ -59,6 +59,15 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
+    builder.addBooleanSwitch({
+      path: 'unwrappedColumns',
+      name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
+      category,
+      description: 'Align values using columns when using displayed fields',
+      defaultValue: false,
+      showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
+    });
+
     // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
     if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
       builder.addBooleanSwitch({
