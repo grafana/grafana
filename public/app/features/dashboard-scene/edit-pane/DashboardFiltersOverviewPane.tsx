@@ -5,9 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
+import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverviewSearch';
 
 import { DashboardFiltersOverview } from '../scene/dashboard-filters-overview/DashboardFiltersOverview';
-import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverviewSearch';
 
 interface Props {
   adhocFilters?: AdHocFiltersVariable;

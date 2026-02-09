@@ -5,12 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, sceneUtils } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
+import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverviewSearch';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
-import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverviewSearch';
 
 interface DashboardFiltersOverviewDrawerState extends SceneObjectState {}
 
