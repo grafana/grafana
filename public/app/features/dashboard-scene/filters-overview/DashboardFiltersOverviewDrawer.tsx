@@ -5,26 +5,25 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, sceneUtils } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
-import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/filters-overview/DashboardFiltersOverviewSearch';
 
-import { DashboardFiltersOverview } from '../filters-overview/DashboardFiltersOverview';
-import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardFiltersOverview } from './DashboardFiltersOverview';
+import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
+import type { IFiltersOverviewDashboard } from './types';
+import { DashboardScene } from '../scene/DashboardScene';
 
-import { DashboardScene } from './DashboardScene';
-
-interface DashboardFiltersOverviewDrawerState extends SceneObjectState {}
+interface DashboardFiltersOverviewDrawerState extends SceneObjectState {
+  dashboard: DashboardScene;
+}
 
 export class DashboardFiltersOverviewDrawer extends SceneObjectBase<DashboardFiltersOverviewDrawerState> {
   static Component = DashboardFiltersOverviewDrawerRenderer;
 
-  private _dashboard?: DashboardScene;
+  private _dashboard: IFiltersOverviewDashboard | undefined;
 
   constructor(state: DashboardFiltersOverviewDrawerState) {
     super(state);
 
-    this.addActivationHandler(() => {
-      this._dashboard = getDashboardSceneFor(this);
-    });
+    this._dashboard = state.dashboard;
   }
 
   public getDashboard() {
@@ -36,7 +35,9 @@ export class DashboardFiltersOverviewDrawer extends SceneObjectBase<DashboardFil
   };
 }
 
-function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewDrawer>) {
+function DashboardFiltersOverviewDrawerRenderer({
+  model,
+}: SceneComponentProps<DashboardFiltersOverviewDrawer>) {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
   const dashboard = model.getDashboard();

@@ -1,21 +1,22 @@
 import { t } from '@grafana/i18n';
-import { sceneGraph, sceneUtils } from '@grafana/scenes';
+import { sceneUtils, SceneVariable } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 
 import { DashboardFiltersOverviewDrawer } from './DashboardFiltersOverviewDrawer';
-import { DashboardScene } from './DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 
 interface Props {
+  variables: SceneVariable[];
   dashboard: DashboardScene;
 }
 
-export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
-  const { variables } = sceneGraph.getVariables(dashboard)!.useState();
-
+export function DashboardFiltersOverviewPaneToggle({ variables, dashboard }: Props) {
   const tooltip = t('dashboards.filters-overview.open', 'Open filters overview pane');
 
   const onClick = () => {
-    dashboard.showModal(new DashboardFiltersOverviewDrawer({}));
+    dashboard.showModal(
+      new DashboardFiltersOverviewDrawer({})
+    );
   };
 
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));

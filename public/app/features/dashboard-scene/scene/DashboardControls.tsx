@@ -25,8 +25,8 @@ import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/C
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardFiltersOverviewPaneToggle } from '../filters-overview/DashboardFiltersOverviewPaneToggle';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
-import { DashboardFiltersOverviewPaneToggle } from './DashboardFiltersOverviewPaneToggle';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { DrilldownControls } from './DrilldownControls';
@@ -197,7 +197,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             )}
             {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
               <div className={styles.fixedControls}>
-                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} variables={variables}/>
               </div>
             )}
           </div>
@@ -236,7 +236,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         )}
         {config.featureToggles.dashboardFiltersOverview && (
           <div className={styles.fixedControls}>
-            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} variables={variables}/>
           </div>
         )}
       </div>
