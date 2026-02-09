@@ -1000,13 +1000,13 @@ describe('GrafanaReceiverForm', () => {
     });
   });
 
-  describe('with alertingNotifiersApiMigration flag enabled', () => {
+  describe('with alertingSyncNotifiersApiMigration flag enabled', () => {
     beforeEach(() => {
-      config.featureToggles.alertingNotifiersApiMigration = true;
+      config.featureToggles.alertingSyncNotifiersApiMigration = true;
     });
 
     afterEach(() => {
-      config.featureToggles.alertingNotifiersApiMigration = false;
+      config.featureToggles.alertingSyncNotifiersApiMigration = false;
     });
 
     it('should load notifiers from k8s API and render form correctly', async () => {

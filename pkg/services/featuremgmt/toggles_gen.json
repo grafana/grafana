@@ -468,7 +468,7 @@
     },
     {
       "metadata": {
-        "name": "alertingNotifiersApiMigration",
+        "name": "alertingSyncNotifiersApiMigration",
         "resourceVersion": "0",
         "creationTimestamp": "2026-02-06T00:00:00Z"
       },

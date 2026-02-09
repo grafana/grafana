@@ -952,7 +952,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingNotifiersApiMigration",
+			Name:         "alertingSyncNotifiersApiMigration",
 			Description:  "Use the new k8s API for fetching integration type schemas",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,

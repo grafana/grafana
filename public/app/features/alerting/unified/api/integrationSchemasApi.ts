@@ -91,7 +91,7 @@ function transformSchemaToNotifierDTO(schema: GetIntegrationtypeschemasIntegrati
  * Uses new k8s API when feature flag is enabled, falls back to legacy API.
  */
 export function useIntegrationTypeSchemas(options?: { skip?: boolean }) {
-  const useNewApi = config.featureToggles.alertingNotifiersApiMigration;
+  const useNewApi = config.featureToggles.alertingSyncNotifiersApiMigration;
   const skip = options?.skip ?? false;
 
   const newApiResult = useGetIntegrationtypeschemasQuery(undefined, {
