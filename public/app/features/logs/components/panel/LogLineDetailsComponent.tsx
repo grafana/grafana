@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
@@ -84,7 +84,11 @@ export const LogLineDetailsComponent = memo(
 
     const groupedLabels = useMemo(() => {
       if (!ds) {
-        return {};
+        return labelsWithLinks.length > 0
+          ? {
+              '': labelsWithLinks,
+            }
+          : {};
       }
       return groupBy(
         labelsWithLinks,
@@ -242,7 +246,11 @@ export const LogLineDetailsComponent = memo(
               <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
             </ControlledCollapse>
           )}
-          {noDetails && <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>}
+          {noDetails && (
+            <Box marginTop={1} paddingLeft={0.5}>
+              <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
+            </Box>
+          )}
         </div>
       </>
     );

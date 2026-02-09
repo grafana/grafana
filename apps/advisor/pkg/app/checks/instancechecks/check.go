@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
+
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/setting"
 )

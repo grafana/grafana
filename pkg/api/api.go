@@ -414,16 +414,19 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 
-			// Deprecated Access by internal ID
-			datasourceRoute.Get("/:id", authorize(ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Put("/:id", authorize(ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
-			datasourceRoute.Delete("/:id", authorize(ac.EvalPermission(datasources.ActionDelete, idScope)), routing.Wrap(hs.DeleteDataSourceById))
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceDisableIdApi) {
+				// Deprecated Access by internal ID
+				datasourceRoute.Get("/:id", authorize(ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
+				datasourceRoute.Put("/:id", authorize(ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
+				datasourceRoute.Delete("/:id", authorize(ac.EvalPermission(datasources.ActionDelete, idScope)), routing.Wrap(hs.DeleteDataSourceById))
 
-			datasourceRoute.Any("/:id/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
-			datasourceRoute.Any("/:id/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
-			datasourceRoute.Any("/:id/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
-			datasourceRoute.Any("/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
-			datasourceRoute.Any("/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+				datasourceRoute.Any("/:id/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
+				datasourceRoute.Any("/:id/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+				datasourceRoute.Any("/:id/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+				datasourceRoute.Any("/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+				datasourceRoute.Any("/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+			}
 
 			// Deprecated access by name (title)
 			datasourceRoute.Get("/name/:name", authorize(ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceByName))
@@ -485,19 +488,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Deprecated: used to convert internal IDs to UIDs
 			dashboardRoute.Get("/ids/:ids", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), hs.GetDashboardUIDs)
-
-			// Deprecated: use /uid/:uid API instead.
-			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIDScope := dashboards.ScopeDashboardsProvider.GetResourceScope(ac.Parameter(":dashboardId"))
-				dashIdRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashIDScope)), routing.Wrap(hs.GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashIDScope)), routing.Wrap(hs.GetDashboardVersion))
-				dashIdRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashIDScope)), routing.Wrap(hs.RestoreDashboardVersion))
-
-				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashIDScope)), routing.Wrap(hs.GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashIDScope)), routing.Wrap(hs.UpdateDashboardPermissions))
-				})
-			})
 		})
 
 		// Dashboard snapshots

@@ -60,6 +60,13 @@ func LoginPromptValidator(info *social.OAuthInfo, requester identity.Requester) 
 	return nil
 }
 
+func ValidateIDTokenValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.ValidateIDToken && info.JwkSetURL == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
+	}
+	return nil
+}
+
 func RequiredValidator(value string, name string) ssosettings.ValidateFunc[social.OAuthInfo] {
 	return func(info *social.OAuthInfo, requester identity.Requester) error {
 		if value == "" {

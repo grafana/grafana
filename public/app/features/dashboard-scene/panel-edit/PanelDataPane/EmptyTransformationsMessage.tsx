@@ -4,6 +4,7 @@ import { DataFrame, DataTransformerID, standardTransformersRegistry, Transformer
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Box, Button, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -12,11 +13,15 @@ import { TransformationCard } from '../../../dashboard/components/Transformation
 import sqlDarkImage from '../../../transformers/images/dark/sqlExpression.svg';
 import sqlLightImage from '../../../transformers/images/light/sqlExpression.svg';
 
+import { hasBackendDatasource } from './utils';
+
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
   data: DataFrame[];
+  datasourceUid?: string;
+  queries?: DataQuery[];
 }
 
 const TRANSFORMATION_IDS = [
@@ -90,7 +95,11 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
     props.onShowPicker();
   };
 
-  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions;
+  // Show the SQL Expression card if any datasource in the query set is a backend datasource.
+  const showSqlCard =
+    hasGoToQueries &&
+    config.featureToggles.sqlExpressions &&
+    hasBackendDatasource({ datasourceUid: props.datasourceUid, queries: props.queries });
 
   return (
     <Box padding={2}>
@@ -119,7 +128,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 )}
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
-                testId="go-to-queries-button"
+                testId="transform-with-sql-card"
               />
             )}
             {hasAddTransformation &&

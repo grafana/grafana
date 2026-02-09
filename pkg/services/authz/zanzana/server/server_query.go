@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"go.opentelemetry.io/otel/codes"
+
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
@@ -16,7 +17,7 @@ func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 	defer span.End()
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Query", req.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Query").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.query(ctx, req)

@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { ConstantVariableModel, VariableHide, VariableOption } from '@grafana/data';
 
-import { getInstanceState } from '../state/selectors';
+import { getInstanceState } from '../state/getInstanceState';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
