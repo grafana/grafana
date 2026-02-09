@@ -208,26 +208,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     this.runQueries();
   };
 
-  public duplicateTransformation = (index: number) => {
-    const transformer = this.getSceneDataTransformer();
-    if (!transformer) {
-      return;
-    }
-
-    const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
-      isDataTransformerConfig(t)
-    );
-    if (index < 0 || index >= transformations.length) {
-      return;
-    }
-
-    const original = transformations[index];
-    const duplicate = { ...original };
-    transformations.splice(index + 1, 0, duplicate);
-    transformer.setState({ transformations });
-    this.runQueries();
-  };
-
   public toggleTransformationDisabled = (index: number) => {
     const transformer = this.getSceneDataTransformer();
     if (!transformer) {

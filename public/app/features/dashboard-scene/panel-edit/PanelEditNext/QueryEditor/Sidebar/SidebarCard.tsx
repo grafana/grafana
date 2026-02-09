@@ -14,7 +14,7 @@ interface SidebarCardProps {
   id: string;
   children: React.ReactNode;
   onClick: () => void;
-  onDuplicate: () => void;
+  onDuplicate?: () => void;
   onDelete: () => void;
   onToggleHide: () => void;
   isHidden: boolean;

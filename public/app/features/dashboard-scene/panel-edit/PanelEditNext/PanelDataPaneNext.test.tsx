@@ -1,4 +1,4 @@
-import { sceneGraph, SceneQueryRunner, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 

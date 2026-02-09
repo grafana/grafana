@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 interface HoverActionsProps {
-  onDuplicate: () => void;
+  onDuplicate?: () => void;
   onDelete: () => void;
   onToggleHide: () => void;
   isHidden: boolean;
@@ -11,14 +11,16 @@ interface HoverActionsProps {
 export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: HoverActionsProps) {
   return (
     <Stack direction="row" gap={0}>
-      <Button
-        size="sm"
-        fill="text"
-        icon="copy"
-        variant="secondary"
-        aria-label={t('query-editor.action.duplicate', 'Duplicate query')}
-        onClick={onDuplicate}
-      />
+      {onDuplicate && (
+        <Button
+          size="sm"
+          fill="text"
+          icon="copy"
+          variant="secondary"
+          aria-label={t('query-editor.action.duplicate', 'Duplicate query')}
+          onClick={onDuplicate}
+        />
+      )}
       <Button
         size="sm"
         fill="text"

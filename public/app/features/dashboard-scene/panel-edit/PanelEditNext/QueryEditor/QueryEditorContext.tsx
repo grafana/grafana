@@ -63,7 +63,6 @@ export interface QueryEditorActions {
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
   deleteTransformation: (transformId: string) => void;
-  duplicateTransformation: (transformId: string) => void;
   toggleTransformationDisabled: (transformId: string) => void;
 }
 

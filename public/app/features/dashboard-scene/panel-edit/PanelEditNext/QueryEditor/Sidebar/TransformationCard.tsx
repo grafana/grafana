@@ -8,7 +8,7 @@ import { SidebarCard } from './SidebarCard';
 
 export const TransformationCard = ({ transformation }: { transformation: Transformation }) => {
   const { selectedTransformation, setSelectedTransformation } = useQueryEditorUIContext();
-  const { duplicateTransformation, deleteTransformation, toggleTransformationDisabled } = useActionsContext();
+  const { deleteTransformation, toggleTransformationDisabled } = useActionsContext();
   const isSelected = selectedTransformation?.transformId === transformation.transformId;
   const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
 
@@ -18,7 +18,6 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
       isSelected={isSelected}
       id={transformation.transformId}
       onClick={() => setSelectedTransformation(transformation)}
-      onDuplicate={() => duplicateTransformation(transformation.transformId)}
       onDelete={() => deleteTransformation(transformation.transformId)}
       onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
       isHidden={!!transformation.transformConfig.disabled}

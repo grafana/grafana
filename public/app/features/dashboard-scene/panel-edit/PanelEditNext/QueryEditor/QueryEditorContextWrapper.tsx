@@ -225,12 +225,6 @@ export function QueryEditorContextWrapper({
           dataPane.deleteTransformation(index);
         }
       },
-      duplicateTransformation: (transformId: string) => {
-        const index = findTransformationIndex(transformId);
-        if (index !== -1) {
-          dataPane.duplicateTransformation(index);
-        }
-      },
       toggleTransformationDisabled: (transformId: string) => {
         const index = findTransformationIndex(transformId);
         if (index !== -1) {
