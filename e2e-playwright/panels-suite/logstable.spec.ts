@@ -67,7 +67,7 @@ test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logs
     await expect(page.getByText('Selected fields')).not.toBeVisible();
   });
 
-  test.skip('Options: Show inspect button', async ({ page, gotoDashboardPage, selectors }) => {
+  test('Options: Show inspect button', async ({ page, gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
     });
@@ -75,6 +75,26 @@ test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logs
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
     ).toBeVisible();
+
+    await expect(page.getByRole('columnheader', { name: 'timestamp' })).toBeVisible();
+    await page.getByRole('columnheader', { name: 'timestamp' }).click();
+
+    // Hide body
+    // @todo locator.click does not work to deselect checkboxes, just causes infinite click loop without updating state, when clicking on the label or the checkbox. Is there a less hacky way to deselect?
+    await expect.poll(() => page.getByRole('checkbox', { name: 'body' }).isChecked()).toEqual(true);
+    page.getByLabel(/body/).first().dispatchEvent('click');
+    await expect.poll(() => page.getByRole('checkbox', { name: 'body' }).isChecked()).toEqual(false);
+
+    // Click inspect on 9th row
+    await page.getByRole('gridcell').getByLabel('View log line').nth(9).click();
+
+    // Assert drawer header is visible
+    await expect(page.getByRole('heading', { name: 'Inspect value' })).toBeVisible();
+
+    // Assert the inspect drawer shows the correct log line body
+    await expect(page.locator('.view-lines')).toContainText(
+      `level=info ts=2026-02-06T18:42:42.083508023Z caller=flush.go:253 msg="completing block" userid=29 blockID=73zco`
+    );
   });
 
   test.skip('Options: Copy log line button', async ({ page, gotoDashboardPage, selectors }) => {
