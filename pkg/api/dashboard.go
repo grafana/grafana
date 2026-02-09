@@ -83,7 +83,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	c.Req = c.Req.WithContext(ctx)
 
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -300,19 +300,11 @@ func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) stri
 	return ident.GetLogin()
 }
 
-func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
+func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, response.Response) {
 	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
 	defer span.End()
 
-	var query dashboards.GetDashboardQuery
-
-	if len(uid) > 0 {
-		query = dashboards.GetDashboardQuery{UID: uid, ID: id, OrgID: orgID}
-	} else {
-		query = dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
-	}
-
-	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+	queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: orgID})
 	if err != nil {
 		return nil, response.Error(http.StatusNotFound, "Dashboard not found", err)
 	}
@@ -344,7 +336,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	uid := web.Params(c.Req)[":uid"]
 
 	var rsp response.Response
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -584,21 +576,6 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 	dash.Set("panels", panels)
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions dashboards versions getDashboardVersionsByID
-//
-// Gets all existing versions for the dashboard.
-//
-// Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: dashboardVersionsResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
 // swagger:route GET /dashboards/uid/{uid}/versions dashboards versions getDashboardVersionsByUID
 //
 // Gets all existing versions for the dashboard using UID.
@@ -613,20 +590,13 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboardVersions")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
-
-	var dashID int64
-
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
-
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -694,21 +664,6 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	})
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByID
-//
-// Get a specific dashboard version.
-//
-// Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: dashboardVersionResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
 // swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
@@ -724,20 +679,15 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var dashID int64
-
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
 
 	var dash *dashboards.Dashboard
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID)
 	if rsp != nil {
 		return rsp
 	}

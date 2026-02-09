@@ -173,6 +173,7 @@ export const LogsPanel = ({
     noInteractions,
     timestampResolution,
     showLogAttributes,
+    unwrappedColumns,
     ...options
   },
   height,
@@ -628,6 +629,7 @@ export const LogsPanel = ({
               timeRange={data.timeRange}
               timestampResolution={timestampResolution}
               timeZone={timeZone}
+              unwrappedColumns={unwrappedColumns}
               wrapLogMessage={wrapLogMessage}
             />
           )}

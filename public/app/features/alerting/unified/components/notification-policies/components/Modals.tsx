@@ -1,101 +1,134 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { FC, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Modal, ModalProps } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
 
 import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
-import { UpdatingModal } from '../Modals';
 
-/**
- * This hook controls the delete modal for routing trees, showing loading and error states when appropriate
- */
-export const useDeleteRoutingTreeModal = (
-  handleDelete: ({ name, resourceVersion }: { name: string; resourceVersion?: string }) => Promise<unknown>
-) => {
-  const [showModal, setShowModal] = useState(false);
-  const [routingTree, setRoutingTree] = useState<{ name: string; resourceVersion?: string }>();
+export interface DeleteModalProps {
+  isOpen: boolean;
+  onConfirm: () => Promise<unknown>;
+  onDismiss: () => void;
+  routeName: string;
+}
+
+export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDismiss = useCallback(() => {
-    if (isLoading) {
-      return;
-    }
-    setRoutingTree(undefined);
-    setShowModal(false);
+  const onDeleteDismiss = () => {
+    onDismiss();
     setError(undefined);
-  }, [isLoading]);
+  };
 
-  const handleShow = useCallback(({ name, resourceVersion }: { name: string; resourceVersion?: string }) => {
-    setRoutingTree({ name, resourceVersion });
-    setShowModal(true);
+  const onDeleteConfirm = async () => {
+    setIsDeleting(true);
+    onConfirm()
+      .then(() => {
+        onDeleteDismiss();
+      })
+      .catch(setError)
+      .finally(() => {
+        setIsDeleting(false);
+      });
+  };
+  if (error) {
+    return <ErrorModal isOpen={isOpen} onDismiss={onDeleteDismiss} error={error} />;
+  }
+
+  return (
+    <ConfirmModal
+      body={
+        <>
+          <Text element="p">
+            <Trans
+              i18nKey="alerting.policies.delete-modal.permanently-remove"
+              values={{ routeName: routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName }}
+            >
+              This action will permanently remove the <code>{'{{routeName}}'}</code> notification policy.
+            </Trans>
+          </Text>
+          <Space v={2} />
+        </>
+      }
+      confirmationText={t('alerting.common.delete', 'Delete')}
+      confirmText={isDeleting ? t('alerting.common.deleting', 'Deleting...') : t('alerting.common.delete', 'Delete')}
+      onDismiss={onDeleteDismiss}
+      onConfirm={onDeleteConfirm}
+      title={t('alerting.policies.delete-modal.title-delete-notification-policy', 'Delete notification policy')}
+      isOpen={isOpen}
+    />
+  );
+});
+DeleteModal.displayName = 'DeleteModal';
+
+export interface ResetModalProps {
+  isOpen: boolean;
+  onConfirm: () => Promise<unknown>;
+  onDismiss: () => void;
+  routeName: string;
+}
+
+export const ResetModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: ResetModalProps) => {
+  const [isResetting, setIsResetting] = useState(false);
+  const [error, setError] = useState<unknown | undefined>();
+
+  const onResetDismiss = () => {
+    onDismiss();
     setError(undefined);
-  }, []);
+  };
 
-  const handleSubmit = useCallback(() => {
-    if (routingTree) {
-      setIsLoading(true);
-      handleDelete(routingTree)
-        .then(() => setShowModal(false))
-        .catch(setError)
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
-  }, [handleDelete, routingTree]);
+  const onResetConfirm = async () => {
+    setIsResetting(true);
+    onConfirm()
+      .then(() => {
+        onResetDismiss();
+      })
+      .catch(setError)
+      .finally(() => {
+        setIsResetting(false);
+      });
+  };
+  if (error) {
+    return <ErrorModal isOpen={isOpen} onDismiss={onResetDismiss} error={error} />;
+  }
 
-  const modalElement = useMemo(() => {
-    if (error) {
-      return <ErrorModal isOpen={showModal} onDismiss={handleDismiss} error={error} />;
-    }
-
-    return (
-      <Modal
-        isOpen={showModal}
-        onDismiss={handleDismiss}
-        closeOnBackdropClick={!isLoading}
-        closeOnEscape={!isLoading}
-        title={t(
-          'alerting.use-delete-routing-tree-modal.modal-element.title-delete-routing-tree',
-          'Delete routing tree'
-        )}
-      >
-        <p>
-          <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.deleting-routing-permanently-remove">
-            Deleting this routing tree will permanently remove it.
-          </Trans>
-        </p>
-        <p>
-          <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.delete-routing">
-            Are you sure you want to delete this routing tree?
-          </Trans>
-        </p>
-
-        <Modal.ButtonRow>
-          <Button type="button" variant="destructive" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? (
-              <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.deleting">Deleting...</Trans>
-            ) : (
-              <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.delete-yes">
-                Yes, delete routing tree
-              </Trans>
-            )}
-          </Button>
-          <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      </Modal>
-    );
-  }, [error, handleDismiss, handleSubmit, isLoading, showModal]);
-
-  return [modalElement, handleShow, handleDismiss] as const;
-};
+  return (
+    <ConfirmModal
+      body={
+        <>
+          <Text element="p">
+            <Trans
+              i18nKey="alerting.policies.reset-modal.permanently-reset"
+              values={{ routeName: routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName }}
+            >
+              This action will permanently reset the <code>{'{{routeName}}'}</code> notification policy to an empty
+              state.
+            </Trans>
+          </Text>
+          <Space v={2} />
+        </>
+      }
+      confirmationText={t('alerting.policies.reset-modal.reset', 'Reset')}
+      confirmText={
+        isResetting
+          ? t('alerting.policies.reset-modal.resetting', 'Resetting...')
+          : t('alerting.policies.reset-modal.reset', 'Reset')
+      }
+      onDismiss={onResetDismiss}
+      onConfirm={onResetConfirm}
+      title={t('alerting.policies.reset-modal.title-reset-notification-policy', 'Reset notification policy')}
+      isOpen={isOpen}
+    />
+  );
+});
+ResetModal.displayName = 'ResetModal';
 
 const emptyRouteWithID = {
   id: '',
@@ -103,89 +136,72 @@ const emptyRouteWithID = {
   group_by: defaultGroupBy,
 };
 
-/**
- * This hook controls the create modal for routing trees, showing loading and error states when appropriate
- */
-export const useCreateRoutingTreeModal = (handleCreate: (route: Partial<FormAmRoute>) => Promise<unknown>) => {
-  const [showModal, setShowModal] = useState(false);
-  const [route, setRoute] = useState<RouteWithID>(emptyRouteWithID);
+export interface CreateModalProps {
+  isOpen: boolean;
+  onConfirm: (route: Partial<FormAmRoute>) => Promise<unknown>;
+  onDismiss: () => void;
+}
+
+export const CreateModal = React.memo(({ onConfirm, onDismiss, isOpen }: CreateModalProps) => {
+  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
-  const [isLoading, setIsLoading] = useState(false);
+  const [route, setRoute] = useState<RouteWithID>(emptyRouteWithID);
 
-  const handleDismiss = useCallback(() => {
-    if (isLoading) {
-      return;
+  const onCreateDismiss = () => {
+    onDismiss();
+    setError(undefined);
+    setRoute(emptyRouteWithID);
+  };
+
+  const onCreateConfirm = async (newRoute: Partial<FormAmRoute>) => {
+    if (newRoute) {
+      setIsCreating(true);
+      onConfirm(newRoute)
+        .then(() => {
+          onCreateDismiss();
+        })
+        .catch(setError)
+        .finally(() => {
+          setIsCreating(false);
+        });
     }
-    setShowModal(false);
-    setError(undefined);
-    setRoute(emptyRouteWithID);
-  }, [isLoading]);
+  };
+  if (error) {
+    return <ErrorModal isOpen={isOpen} onDismiss={onCreateDismiss} error={error} />;
+  }
 
-  const handleShow = useCallback(() => {
-    setShowModal(true);
-    setError(undefined);
-    setRoute(emptyRouteWithID);
-  }, []);
+  if (isCreating) {
+    return <CreatingModal isOpen={isOpen} onDismiss={onCreateDismiss} />;
+  }
 
-  const handleSubmit = useCallback(
-    (newRoute: Partial<FormAmRoute>) => {
-      if (newRoute) {
-        setIsLoading(true);
-        handleCreate(newRoute)
-          .then(() => setShowModal(false))
-          .catch(setError)
-          .finally(() => {
-            setIsLoading(false);
-          });
-      }
-    },
-    [handleCreate]
+  return (
+    <Modal
+      isOpen={isOpen}
+      onDismiss={onCreateDismiss}
+      closeOnBackdropClick={true}
+      closeOnEscape={true}
+      title={t('alerting.policies.create-modal.title-new-notification-policy', 'New notification policy')}
+    >
+      <AmRootRouteForm
+        route={route}
+        showNameField={true}
+        onSubmit={onCreateConfirm}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        actionButtons={
+          <Modal.ButtonRow>
+            <Button type="button" variant="secondary" onClick={onCreateDismiss}>
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            </Button>
+            <Button type="submit">
+              <Trans i18nKey="alerting.common.create">Create</Trans>
+            </Button>
+          </Modal.ButtonRow>
+        }
+      />
+    </Modal>
   );
-
-  const modalElement = useMemo(() => {
-    if (error) {
-      return <ErrorModal isOpen={showModal} onDismiss={handleDismiss} error={error} />;
-    }
-
-    if (isLoading) {
-      return <UpdatingModal isOpen={showModal} onDismiss={handleDismiss} />;
-    }
-
-    return (
-      <Modal
-        isOpen={showModal}
-        onDismiss={handleDismiss}
-        closeOnBackdropClick={true}
-        closeOnEscape={true}
-        title={t(
-          'alerting.use-create-routing-tree-modal.modal-element.title-create-routing-tree',
-          'Create routing tree'
-        )}
-      >
-        <AmRootRouteForm
-          route={route}
-          showNameField={true}
-          onSubmit={handleSubmit}
-          alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-          actionButtons={
-            <Modal.ButtonRow>
-              <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-              </Button>
-              <Button type="submit">
-                <Trans i18nKey="alerting.use-create-routing-tree-modal.modal-element.add-routing-tree">
-                  Add routing tree
-                </Trans>
-              </Button>
-            </Modal.ButtonRow>
-          }
-        />
-      </Modal>
-    );
-  }, [route, error, handleSubmit, handleDismiss, isLoading, showModal]);
-
-  return [modalElement, handleShow, handleDismiss] as const;
-};
+});
+CreateModal.displayName = 'CreateModal';
 
 interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
   error: unknown;
@@ -197,10 +213,10 @@ const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
       onDismiss={onDismiss}
       closeOnBackdropClick={true}
       closeOnEscape={true}
-      title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
+      title={t('alerting.policies.error-modal.title-something-went-wrong', 'Something went wrong')}
     >
       <p>
-        <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
+        <Trans i18nKey="alerting.policies.error-modal.failed-to-update-your-configuration">
           Failed to update your configuration:
         </Trans>
       </p>
@@ -210,3 +226,22 @@ const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
     </Modal>
   );
 };
+
+const CreatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {} }) => (
+  <Modal
+    isOpen={isOpen}
+    onDismiss={onDismiss}
+    closeOnBackdropClick={false}
+    closeOnEscape={false}
+    ariaLabel={t('alerting.policies.create-modal.creating', 'Creating...')}
+    title={
+      <Stack direction="row" alignItems="center" gap={0.5}>
+        <Trans i18nKey="alerting.policies.create-modal.creating">Creating...</Trans> <Spinner inline />
+      </Stack>
+    }
+  >
+    <Trans i18nKey="alerting.policies.create-modal.please-wait">
+      Please wait while we create your notification policy.
+    </Trans>
+  </Modal>
+);
