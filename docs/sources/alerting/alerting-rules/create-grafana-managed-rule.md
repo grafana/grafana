@@ -175,7 +175,7 @@ To backup and manage alert rules, you can [provision alerting resources](ref:sha
 
 [//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
-### Default vs. Advanced options
+### Default versus Advanced options
 
 Grafana Alerting provides multiple configuration options to support different alerting needs.
 
