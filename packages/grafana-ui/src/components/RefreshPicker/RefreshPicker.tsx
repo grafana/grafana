@@ -48,7 +48,7 @@ export class RefreshPicker extends PureComponent<Props> {
   static autoOption = {
     label: 'Auto',
     value: 'auto',
-    ariaLabel: 'Select refresh from the query range',
+    ariaLabel: 'Auto refresh from the query range',
   };
 
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
