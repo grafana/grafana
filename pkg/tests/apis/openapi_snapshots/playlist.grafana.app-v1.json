@@ -1,10 +1,10 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "playlist.grafana.app/v0alpha1"
+    "title": "playlist.grafana.app/v1"
   },
   "paths": {
-    "/apis/playlist.grafana.app/v0alpha1/": {
+    "/apis/playlist.grafana.app/v1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -30,7 +30,7 @@
         }
       }
     },
-    "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/playlists": {
+    "/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists": {
       "get": {
         "tags": [
           "Playlist"
@@ -154,7 +154,7 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -258,7 +258,7 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -407,7 +407,7 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -433,7 +433,7 @@
         }
       ]
     },
-    "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/playlists/{name}": {
+    "/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}": {
       "get": {
         "tags": [
           "Playlist"
@@ -460,7 +460,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -549,7 +549,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -641,7 +641,7 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -749,7 +749,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -785,7 +785,7 @@
         }
       ]
     },
-    "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/playlists/{name}/status": {
+    "/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}/status": {
       "get": {
         "tags": [
           "Playlist"
@@ -812,7 +812,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -901,7 +901,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },
@@ -1009,7 +1009,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "playlist.grafana.app",
-          "version": "v0alpha1",
+          "version": "v1",
           "kind": "Playlist"
         }
       },

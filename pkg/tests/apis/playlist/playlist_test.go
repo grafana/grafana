@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 
 var gvr = schema.GroupVersionResource{
 	Group:    "playlist.grafana.app",
-	Version:  "v0alpha1",
+	Version:  "v1",
 	Resource: "playlists",
 }
 
@@ -55,6 +55,47 @@ func TestIntegrationPlaylist(t *testing.T) {
 		// t.Logf("%s", disco)
 		require.JSONEq(t, `[
           {
+            "freshness": "Current",
+            "resources": [
+              {
+                "resource": "playlists",
+                "responseKind": {
+                  "group": "",
+                  "kind": "Playlist",
+                  "version": ""
+                },
+                "scope": "Namespaced",
+                "singularResource": "playlist",
+                "subresources": [
+                  {
+                    "responseKind": {
+                      "group": "",
+                      "kind": "Playlist",
+                      "version": ""
+                    },
+                    "subresource": "status",
+                    "verbs": [
+                      "get",
+                      "patch",
+                      "update"
+                    ]
+                  }
+                ],
+                "verbs": [
+                  "create",
+                  "delete",
+                  "deletecollection",
+                  "get",
+                  "list",
+                  "patch",
+                  "update",
+                  "watch"
+                ]
+              }
+            ],
+            "version": "v1"
+          },
+		  {
             "freshness": "Current",
             "resources": [
               {
@@ -544,7 +585,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "apiVersion": "playlist.grafana.app/v1",
   "kind": "Playlist",
   "metadata": {
     "creationTimestamp": "${creationTimestamp}",
@@ -597,7 +638,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 
 		expectedUnstructuredResult := &unstructured.Unstructured{
 			Object: map[string]any{
-				"apiVersion": "playlist.grafana.app/v0alpha1",
+				"apiVersion": "playlist.grafana.app/v1",
 				"kind":       "Playlist",
 				"metadata": map[string]any{
 					"creationTimestamp": "123",

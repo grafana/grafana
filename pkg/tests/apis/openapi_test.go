@@ -107,6 +107,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "playlist.grafana.app",
+		Version: "v1",
+	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
 	}, {
