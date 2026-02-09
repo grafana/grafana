@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Cascader, CascaderOption, CascaderProps } from './Cascader';
+import Cascader, { CascaderOption, CascaderProps } from './Cascader';
 
 const options = [
   {
