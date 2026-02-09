@@ -73,7 +73,7 @@ func getAffectedGroupResources(sess *xorm.Session, quoteFn func(string) string) 
 		return nil, err
 	}
 
-	var results []groupResource
+	results := make([]groupResource, 0, len(rows))
 	for _, row := range rows {
 		results = append(results, groupResource{
 			group:    string(row["group"]),
@@ -102,7 +102,7 @@ func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migra
 	// Handle insufficient slots by moving the ceiling record up
 	availableSlots := ceiling - rvFloor
 	if int64(len(badRecords)) > availableSlots {
-		ceiling, err = makeSlotsAvailable(sess, quoteFn, mg, gr, ceiling, int64(len(badRecords)))
+		err = makeSlotsAvailable(sess, quoteFn, mg, gr, ceiling, int64(len(badRecords)))
 		if err != nil {
 			return fmt.Errorf("making slots available: %w", err)
 		}
@@ -429,7 +429,7 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 
 	// Build old RV -> new RV mapping
 	rvMap := make(map[int64]int64, len(batch))
-	var oldRVList []string
+	oldRVList := make([]string, 0, len(batch))
 	for _, u := range batch {
 		rvMap[u.oldRV] = u.newRV
 		oldRVList = append(oldRVList, fmt.Sprintf("%d", u.oldRV))
@@ -451,11 +451,13 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 
 	if len(histResults) > 0 {
 		caseClause := "CASE guid"
-		var guidList []string
+		guidList := make([]string, 0, len(histResults))
 		for _, row := range histResults {
 			guid := string(row["guid"])
 			var prevRV int64
-			fmt.Sscanf(string(row["previous_resource_version"]), "%d", &prevRV)
+			if _, err := fmt.Sscanf(string(row["previous_resource_version"]), "%d", &prevRV); err != nil {
+				return fmt.Errorf("parsing history previous_resource_version for guid %q: %w", guid, err)
+			}
 			if newRV, ok := rvMap[prevRV]; ok {
 				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV)
 				guidList = append(guidList, fmt.Sprintf("'%s'", guid))
@@ -491,11 +493,13 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 
 	if len(resResults) > 0 {
 		caseClause := "CASE guid"
-		var guidList []string
+		guidList := make([]string, 0, len(resResults))
 		for _, row := range resResults {
 			guid := string(row["guid"])
 			var prevRV int64
-			fmt.Sscanf(string(row["previous_resource_version"]), "%d", &prevRV)
+			if _, err := fmt.Sscanf(string(row["previous_resource_version"]), "%d", &prevRV); err != nil {
+				return fmt.Errorf("parsing resource previous_resource_version for guid %q: %w", guid, err)
+			}
 			if newRV, ok := rvMap[prevRV]; ok {
 				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV)
 				guidList = append(guidList, fmt.Sprintf("'%s'", guid))
@@ -526,7 +530,7 @@ func updateHistoryRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 
 	rvCase := "CASE guid"
 	keyPathCase := "CASE guid"
-	var guidList []string
+	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
 		quotedGUID := fmt.Sprintf("'%s'", u.guid)
@@ -557,7 +561,7 @@ func updateResourceRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 	}
 
 	rvCase := "CASE guid"
-	var guidList []string
+	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
 		quotedGUID := fmt.Sprintf("'%s'", u.guid)
