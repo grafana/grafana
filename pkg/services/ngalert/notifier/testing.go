@@ -52,13 +52,7 @@ func (f *fakeConfigStore) ListContactPointRoutings(ctx context.Context, q models
 	if q.ReceiverName != "" {
 		filteredSettings := make(map[models.AlertRuleKey]models.ContactPointRouting)
 		for key, notificationSettings := range settings {
-			// Current semantics is that we only key entries where any of the settings match the receiver name.
-			var found bool
 			if q.ReceiverName == notificationSettings.Receiver {
-				found = true
-				break
-			}
-			if found {
 				filteredSettings[key] = notificationSettings
 			}
 		}

@@ -51,7 +51,7 @@ func (c *GroupDelta) IsEmpty() bool {
 
 // NewOrUpdatedNotificationSettings returns a list of notification settings that are either new or updated in the group.
 func (c *GroupDelta) NewOrUpdatedNotificationSettings() []models.NotificationSettings {
-	var settings []models.NotificationSettings
+	settings := make([]models.NotificationSettings, 0)
 	for _, rule := range c.New {
 		if rule.NotificationSettings != nil {
 			settings = append(settings, *rule.NotificationSettings)
