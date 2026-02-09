@@ -3,7 +3,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { getDatasourceFromQueryRunner } from './utils';
+import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
 
 export function verifyDrilldownApplicability(
   sourceObject: SceneObject,
