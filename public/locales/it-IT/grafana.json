@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Ripristino"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Impossibile caricare le opzioni",
       "loading": "Caricamento opzioni in corso...",

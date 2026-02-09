@@ -9600,6 +9600,10 @@
     "secret-form-field": {
       "reset": "Сброс"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Не удалось загрузить параметры",
       "loading": "Загрузка параметров...",

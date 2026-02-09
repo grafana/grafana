@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Sıfırla"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Seçenekler yüklenemedi",
       "loading": "Seçenekler yükleniyor...",

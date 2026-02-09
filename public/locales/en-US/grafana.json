@@ -12665,12 +12665,9 @@
       "error-starting-job": "Error starting job"
     },
     "sync-repository": {
-      "body-edit-configuration": "Edit the configuration",
-      "button-edit": "Edit",
       "error-pulling-resources": "Error pulling resources",
       "pull": "Pull",
       "success-pull-started": "Pull started",
-      "title-pull-not-enabled": "Pull is not enabled",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
@@ -12922,6 +12919,9 @@
       "query-name-div-title-edit-query-name": "Edit query name"
     },
     "query-error-alert": {
+      "error-details": "Query error details",
+      "fix-with-assistant": "Fix with Assistant",
+      "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
     "query-group": {

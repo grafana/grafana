@@ -9600,6 +9600,10 @@
     "secret-form-field": {
       "reset": "Zresetuj"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Nie udało się załadować opcji",
       "loading": "Ładowanie opcji…",

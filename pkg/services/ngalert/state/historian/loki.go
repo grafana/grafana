@@ -639,9 +639,7 @@ func (h *RemoteLokiBackend) getFolderUIDsForRuleFilter(ctx context.Context, quer
 			continue
 		}
 
-		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.Namespace{
-			UID: folderUID,
-		})
+		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.NewNamespaceUID(folderUID))
 		if err != nil {
 			// Including historical folders is an edge case enhancement, better to just log the error and continue
 			// with the current folder UID.
