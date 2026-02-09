@@ -244,7 +244,7 @@ You can switch between **Default** and **Advanced** options at any time.
 
 Switching from **Advanced** to **Default** may result in queries and expressions that can't be converted. In this case, a warning message asks if you want to continue to reset to default settings.
 
-If the [Default vs. Advanced options](#default-vs-advanced-options) feature is not enabled in your Grafana instance, follow the **Advanced options** instructions.
+If the [Default versus Advanced options](#default-versus-advanced-options) feature is not enabled in your Grafana instance, follow the **Advanced options** instructions.
 
 ## Set folder and labels
 
@@ -331,7 +331,7 @@ You can preview which notification policy would handle notifications from this a
 
 You can switch between **Default** and **Advanced** options at any time.
 
-If the [Default vs. Advanced options](#default-vs-advanced-options) feature is not enabled in your Grafana instance, follow the **Advanced options** instructions.
+If the [Default versus Advanced options](#default-versus-advanced-options) feature is not enabled in your Grafana instance, follow the **Advanced options** instructions.
 
 ## Configure notification message
 
