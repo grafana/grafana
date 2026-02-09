@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { OpenAssistantButton, createAssistantContextItem } from '@grafana/assistant';
+import { OpenAssistantButton, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
@@ -13,9 +13,9 @@ export interface Props {
 
 export function QueryErrorAlert({ error, query }: Props) {
   const styles = useStyles2(getStyles);
+  const { isAvailable } = useAssistant();
 
   const message = error?.message ?? error?.data?.message ?? 'Query error';
-  const context = buildAssistantContext(error, message, query);
 
   return (
     <div className={styles.wrapper}>
@@ -35,15 +35,17 @@ export function QueryErrorAlert({ error, query }: Props) {
           </>
         )}
       </div>
-      <div className={styles.assistantButton}>
+      {isAvailable && (
+        <div className={styles.assistantButton}>
         <OpenAssistantButton
           origin="grafana/query-editor-error"
-          prompt={`Help me fix the following query error.\n\nError: ${message}${error.type ? `\nError type: \`${error.type}\`` : ''}`}
-          context={context}
+          prompt={`Help me analyze and fix the following ${error.type ? `\`${error.type}\`` : ''} query error: \`\`\`${message}\`\`\``}
+          context={buildAssistantContext(error, message, query)}
           title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
           size="sm"
-        />
-      </div>
+          />
+        </div>
+      )}
     </div>
   );
 }
