@@ -114,7 +114,8 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /select card reduce/i })).toBeInTheDocument();
 
-    // Count total transformation cards (should be 2)
+    // Count total transformation cards (should be 2).
+    // Filter to "Select card" buttons only, excluding the "Add below" ("+" icon) buttons.
     const transformCards = screen.getAllByRole('button').filter((button) => {
       const label = button.getAttribute('aria-label') || '';
       return label.startsWith('Select card') && (label.includes('organize') || label.includes('reduce'));
@@ -161,5 +162,44 @@ describe('QueryEditorSidebar', () => {
 
     // Should render transformation card
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
+  });
+
+  it('should render an "Add below" button for every card', () => {
+    const queries: DataQuery[] = [
+      { refId: 'A', datasource: { type: 'test', uid: 'test' } },
+      { refId: 'B', datasource: { type: 'test', uid: 'test' } },
+    ];
+
+    const transformations: Transformation[] = [
+      { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+    ];
+
+    render(
+      <QueryEditorProvider
+        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
+        qrState={{ queries, data: undefined, isLoading: false }}
+        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
+        uiState={{
+          selectedQuery: queries[0],
+          selectedTransformation: null,
+          setSelectedQuery: jest.fn(),
+          setSelectedTransformation: jest.fn(),
+          queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
+        }}
+        actions={mockActions}
+      >
+        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
+      </QueryEditorProvider>
+    );
+
+    // Every card (2 queries + 1 transformation) should have an "Add below" button
+    expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add below B/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add below organize/i })).toBeInTheDocument();
   });
 });
