@@ -44,7 +44,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     const value = groupByState?.value ?? [];
     const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
     // Include keysApplicability in the key so we re-fetch when it changes
-    const keysApplicabilityKey = JSON.stringify(groupByState?.keysApplicability ?? []);
+    const keysApplicabilityKey = JSON.stringify(groupByState?.keysApplicability?.map((keyApp) => keyApp.key) ?? []);
     return JSON.stringify(groupByValues) + keysApplicabilityKey;
   }, [groupByState?.value, groupByState?.keysApplicability]);
 
