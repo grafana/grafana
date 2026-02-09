@@ -187,7 +187,7 @@ Each gauge displays the sparkline inside the circle or arc:
 
 #### Show thresholds {#show-threshold-markers}
 
-Control whether a threshold band is shown around the inner gauge value band.
+Control whether a threshold band is shown outside the inner gauge value band.
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
 
