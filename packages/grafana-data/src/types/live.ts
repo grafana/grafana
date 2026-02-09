@@ -138,7 +138,7 @@ export type LiveChannelId = string;
  */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
-  namespace: string; // depends on the scope
+  stream: string; // depends on the scope
   path: string;
 
   /**
@@ -160,7 +160,7 @@ export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undef
     if (parts.length >= 3) {
       return {
         scope: parts[0] as LiveChannelScope,
-        namespace: parts[1],
+        stream: parts[1],
         path: parts.slice(2).join('/'),
       };
     }
@@ -174,7 +174,7 @@ export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undef
  * @alpha -- experimental
  */
 export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
-  return !!(addr?.path && addr.namespace && addr.scope);
+  return !!(addr?.path && addr.stream && addr.scope);
 }
 
 /**
@@ -187,10 +187,10 @@ export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
     return '';
   }
   let id: string = addr.scope;
-  if (!addr.namespace) {
+  if (!addr.stream) {
     return id;
   }
-  id += '/' + addr.namespace;
+  id += '/' + addr.stream;
   if (!addr.path) {
     return id;
   }

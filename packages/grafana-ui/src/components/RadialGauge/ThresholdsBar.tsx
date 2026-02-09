@@ -1,8 +1,8 @@
-import { FieldDisplay, Threshold } from '@grafana/data';
+import { FieldDisplay, Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
 import { GradientStop, RadialGaugeDimensions, RadialShape } from './types';
-import { getFieldConfigMinMax } from './utils';
+import { getThresholdPercentageValue } from './utils';
 
 interface ThresholdsBarProps {
   dimensions: RadialGaugeDimensions;
@@ -14,6 +14,7 @@ interface ThresholdsBarProps {
   roundedBars?: boolean;
   glowFilter?: string;
   thresholds: Threshold[];
+  thresholdsMode?: ThresholdsMode;
   gradient?: GradientStop[];
 }
 
@@ -25,6 +26,7 @@ export function ThresholdsBar({
   roundedBars,
   glowFilter,
   thresholds,
+  thresholdsMode = ThresholdsMode.Absolute,
   shape,
   gradient,
 }: ThresholdsBarProps) {
@@ -34,14 +36,13 @@ export function ThresholdsBar({
     radius: dimensions.thresholdsBarRadius,
   };
 
-  const [min, max] = getFieldConfigMinMax(fieldDisplay);
-
   let currentStart = startAngle;
   let paths: React.ReactNode[] = [];
 
   for (let i = 1; i < thresholds.length; i++) {
     const threshold = thresholds[i];
-    let valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
+    const percentage = getThresholdPercentageValue(threshold, thresholdsMode, fieldDisplay);
+    let valueDeg = percentage * angleRange;
 
     if (valueDeg > angleRange) {
       valueDeg = angleRange;
@@ -53,18 +54,19 @@ export function ThresholdsBar({
     const colorProps = gradient ? { gradient } : { color: threshold.color };
 
     paths.push(
-      <RadialArcPath
-        key={i}
-        arcLengthDeg={lengthDeg}
-        barEndcaps={shape === 'circle' && roundedBars}
-        dimensions={thresholdDimensions}
-        fieldDisplay={fieldDisplay}
-        glowFilter={glowFilter}
-        roundedBars={roundedBars}
-        shape={shape}
-        startAngle={currentStart}
-        {...colorProps}
-      />
+      <g key={i} data-testid="radial-gauge-thresholds-bar">
+        <RadialArcPath
+          arcLengthDeg={lengthDeg}
+          barEndcaps={shape === 'circle' && roundedBars}
+          dimensions={thresholdDimensions}
+          fieldDisplay={fieldDisplay}
+          glowFilter={glowFilter}
+          roundedBars={roundedBars}
+          shape={shape}
+          startAngle={currentStart}
+          {...colorProps}
+        />
+      </g>
     );
 
     currentStart += lengthDeg;

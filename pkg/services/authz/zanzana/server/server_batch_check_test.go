@@ -3,191 +3,225 @@ package server
 import (
 	"testing"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func testBatchCheck(t *testing.T, server *Server) {
-	newReq := func(subject, verb, group, resource, subresource string, items []*authzextv1.BatchCheckItem) *authzextv1.BatchCheckRequest {
-		for i, item := range items {
-			items[i] = &authzextv1.BatchCheckItem{
-				Verb:        verb,
-				Group:       group,
-				Resource:    resource,
-				Subresource: subresource,
-				Name:        item.GetName(),
-				Folder:      item.GetFolder(),
-			}
-		}
+func TestIntegrationServerBatchCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		return &authzextv1.BatchCheckRequest{
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
+	newBatchReq := func(subject string, items []*authzv1.BatchCheckItem) *authzv1.BatchCheckRequest {
+		return &authzv1.BatchCheckRequest{
 			Namespace: namespace,
 			Subject:   subject,
-			Items:     items,
+			Checks:    items,
 		}
 	}
 
-	t.Run("user:1 should only be able to read resource:dashboard.grafana.app/dashboards/1", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:1", utils.VerbGet, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1", Folder: "1"},
-			{Name: "2", Folder: "2"},
-		}))
-		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 2)
+	newItem := func(correlationID, verb, group, resource, subresource, folder, name string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: correlationID,
+			Verb:          verb,
+			Group:         group,
+			Resource:      resource,
+			Subresource:   subresource,
+			Name:          name,
+			Folder:        folder,
+		}
+	}
 
-		assert.True(t, res.Groups[groupResource].Items["1"])
-		assert.False(t, res.Groups[groupResource].Items["2"])
+	t.Run("empty batch should return empty results", func(t *testing.T) {
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", []*authzv1.BatchCheckItem{}))
+		require.NoError(t, err)
+		assert.Len(t, res.GetResults(), 0)
 	})
 
-	t.Run("user:2 should be able to read resource:dashboard.grafana.app/dashboards/{1,2} through group_resource", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:2", utils.VerbGet, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1", Folder: "1"},
-			{Name: "2", Folder: "2"},
-		}))
+	t.Run("single item batch check", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
 		require.NoError(t, err)
-		assert.Len(t, res.Groups[groupResource].Items, 2)
+		require.Len(t, res.GetResults(), 1)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
 	})
 
-	t.Run("user:3 should be able to read resource:dashboard.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:3", utils.VerbGet, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1", Folder: "1"},
-			{Name: "2", Folder: "2"},
-		}))
+	t.Run("multiple items with mixed permissions", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // user:1 has access
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "2"), // user:1 does not have access
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 2)
-
-		assert.True(t, res.Groups[groupResource].Items["1"])
-		assert.False(t, res.Groups[groupResource].Items["2"])
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.False(t, res.GetResults()["check2"].GetAllowed())
 	})
 
-	t.Run("user:4 should be able to read all dashboard.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:4", utils.VerbGet, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1", Folder: "1"},
-			{Name: "2", Folder: "3"},
-			{Name: "3", Folder: "2"},
-		}))
+	t.Run("user:2 should have access through group_resource", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "2"),
+			newItem("check3", utils.VerbGet, dashboardGroup, dashboardResource, "", "2", "3"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:2", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 3)
-
-		assert.True(t, res.Groups[groupResource].Items["1"])
-		assert.True(t, res.Groups[groupResource].Items["2"])
-		assert.False(t, res.Groups[groupResource].Items["3"])
+		require.Len(t, res.GetResults(), 3)
+		// user:2 has group_resource access to all dashboards
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.True(t, res.GetResults()["check3"].GetAllowed())
 	})
 
-	t.Run("user:5 should be able to read resource:dashboard.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:5", utils.VerbGet, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1", Folder: "1"},
-			{Name: "2", Folder: "2"},
-		}))
+	t.Run("user:3 should have access with set relation", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // has access via set relation
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "2"), // no access
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:3", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 2)
-
-		assert.True(t, res.Groups[groupResource].Items["1"])
-		assert.False(t, res.Groups[groupResource].Items["2"])
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.False(t, res.GetResults()["check2"].GetAllowed())
 	})
 
-	t.Run("user:6 should be able to read folder 1", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(folderGroup, folderResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:6", utils.VerbGet, folderGroup, folderResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1"},
-			{Name: "2"},
-		}))
+	t.Run("user:4 should have folder-based access", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // folder 1 access
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "3", "2"), // folder 3 access
+			newItem("check3", utils.VerbGet, dashboardGroup, dashboardResource, "", "2", "3"), // no access to folder 2
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:4", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 2)
-
-		assert.True(t, res.Groups[groupResource].Items["1"])
-		assert.False(t, res.Groups[groupResource].Items["2"])
+		require.Len(t, res.GetResults(), 3)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.False(t, res.GetResults()["check3"].GetAllowed())
 	})
 
-	t.Run("user:7 should be able to read folder {1,2} through group_resource access", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(folderGroup, folderResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:7", utils.VerbGet, folderGroup, folderResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "1"},
-			{Name: "2"},
-		}))
+	t.Run("folder access check", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, folderGroup, folderResource, "", "", "1"), // user:6 has direct access
+			newItem("check2", utils.VerbGet, folderGroup, folderResource, "", "", "2"), // no access
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:6", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 2)
-		require.True(t, res.Groups[groupResource].Items["1"])
-		require.True(t, res.Groups[groupResource].Items["2"])
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.False(t, res.GetResults()["check2"].GetAllowed())
 	})
 
-	t.Run("user:8 should be able to read all resoruce:dashboard.grafana.app/dashboards in folder 6 through folder 5", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:8", utils.VerbGet, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "10", Folder: "6"},
-			{Name: "20", Folder: "6"},
-		}))
+	t.Run("user:7 should have access to all folders through group_resource", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, folderGroup, folderResource, "", "", "1"),
+			newItem("check2", utils.VerbGet, folderGroup, folderResource, "", "", "10"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:7", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 2)
-		require.True(t, res.Groups[groupResource].Items["10"])
-		require.True(t, res.Groups[groupResource].Items["20"])
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
 	})
 
-	t.Run("user:9 should be able to create dashboards in folder 6 through folder 5", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, "")
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:9", utils.VerbCreate, dashboardGroup, dashboardResource, "", []*authzextv1.BatchCheckItem{
-			{Name: "10", Folder: "6"},
-			{Name: "20", Folder: "6"},
-		}))
+	t.Run("user:8 should have inherited folder access", func(t *testing.T) {
+		// folder hierarchy: folder-4 -> folder-5 -> folder-6
+		// user:8 has access to folder 5
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "6", "10"), // access through folder 5
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "5", "11"), // direct folder 5 access
+			newItem("check3", utils.VerbGet, folderGroup, folderResource, "", "4", "12"),       // no access to folder 4
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:8", items))
 		require.NoError(t, err)
-		t.Log(res.Groups)
-		require.Len(t, res.Groups[groupResource].Items, 2)
-		require.True(t, res.Groups[groupResource].Items["10"])
-		require.True(t, res.Groups[groupResource].Items["20"])
+		require.Len(t, res.GetResults(), 3)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.False(t, res.GetResults()["check3"].GetAllowed())
 	})
 
-	t.Run("user:10 should be able to get dashboard status for 10 and 11", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, statusSubresource)
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, []*authzextv1.BatchCheckItem{
-			{Name: "10", Folder: "6"},
-			{Name: "11", Folder: "6"},
-			{Name: "12", Folder: "6"},
-		}))
+	t.Run("create permissions check", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbCreate, dashboardGroup, dashboardResource, "", "5", ""),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:9", items))
 		require.NoError(t, err)
-		t.Log(res.Groups)
-		require.Len(t, res.Groups[groupResource].Items, 3)
-		require.True(t, res.Groups[groupResource].Items["10"])
-		require.True(t, res.Groups[groupResource].Items["11"])
-		require.False(t, res.Groups[groupResource].Items["12"])
+		require.Len(t, res.GetResults(), 1)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
 	})
 
-	t.Run("user:11 should be able to get dashboard status for 10, 11 and 12 through group_resource", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, statusSubresource)
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:11", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, []*authzextv1.BatchCheckItem{
-			{Name: "10", Folder: "6"},
-			{Name: "11", Folder: "6"},
-			{Name: "12", Folder: "6"},
-		}))
+	t.Run("subresource permissions check", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "10"), // has access
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "1"),  // no access
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:10", items))
 		require.NoError(t, err)
-		t.Log(res.Groups)
-		require.Len(t, res.Groups[groupResource].Items, 3)
-		require.True(t, res.Groups[groupResource].Items["10"])
-		require.True(t, res.Groups[groupResource].Items["11"])
-		require.True(t, res.Groups[groupResource].Items["12"])
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.False(t, res.GetResults()["check2"].GetAllowed())
 	})
 
-	t.Run("user:12 should be able to get dashboard status in folder 5 and 6", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, statusSubresource)
-		res, err := server.BatchCheck(newContextWithNamespace(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, []*authzextv1.BatchCheckItem{
-			{Name: "10", Folder: "5"},
-			{Name: "11", Folder: "6"},
-			{Name: "12", Folder: "6"},
-			{Name: "13", Folder: "1"},
-		}))
+	t.Run("user:11 should have group_resource access to subresources", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "10"),
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "999"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:11", items))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupResource].Items, 4)
-		require.True(t, res.Groups[groupResource].Items["10"])
-		require.True(t, res.Groups[groupResource].Items["11"])
-		require.True(t, res.Groups[groupResource].Items["12"])
-		require.False(t, res.Groups[groupResource].Items["13"])
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+	})
+
+	t.Run("user:17 should have access to folder hierarchy", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, folderGroup, folderResource, "", "", "4"),
+			newItem("check2", utils.VerbGet, folderGroup, folderResource, "", "", "5"),
+			newItem("check3", utils.VerbGet, folderGroup, folderResource, "", "", "6"),
+			newItem("check4", utils.VerbGet, dashboardGroup, dashboardResource, "", "4", "1"),
+			newItem("check5", utils.VerbGet, dashboardGroup, dashboardResource, "", "5", "1"),
+			newItem("check6", utils.VerbGet, dashboardGroup, dashboardResource, "", "6", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:17", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 6)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.True(t, res.GetResults()["check3"].GetAllowed())
+		assert.True(t, res.GetResults()["check4"].GetAllowed())
+		assert.True(t, res.GetResults()["check5"].GetAllowed())
+		assert.True(t, res.GetResults()["check6"].GetAllowed())
+	})
+
+	t.Run("user:18 should be able to create in root folder", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbCreate, folderGroup, folderResource, "", "", ""),
+			newItem("check2", utils.VerbCreate, dashboardGroup, dashboardResource, "", "", ""),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:18", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+	})
+
+	t.Run("different verbs in same batch", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+			newItem("check2", utils.VerbUpdate, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		// user:1 has both get and update access to dashboard 1
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
 	})
 }

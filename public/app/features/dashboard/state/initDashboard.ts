@@ -1,4 +1,4 @@
-import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
+import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
@@ -6,7 +6,6 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
-import store from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -19,7 +18,7 @@ import { updateNavModel } from 'app/features/dashboard-scene/pages/utils';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { toStateKey } from 'app/features/variables/utils';
+import { toStateKey } from 'app/features/variables/toStateKey';
 import {
   DASHBOARD_FROM_LS_KEY,
   DashboardDTO,

@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
+import { DataFrameType, DataSourceApi, GrafanaTheme2, hasLogsLabelTypesSupport, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
@@ -35,6 +35,7 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
+    const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -51,12 +52,15 @@ export const LogLineDetailsComponent = memo(
       };
     }, [log.entryFieldIndex, log.fields]);
 
-    const fieldsWithoutLinks =
-      log.dataFrame.meta?.type === DataFrameType.LogLines
-        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-          []
-        : // for other frames, do not show the log message unless there is a link attached
-          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
+    const fieldsWithoutLinks = useMemo(
+      () =>
+        log.dataFrame.meta?.type === DataFrameType.LogLines
+          ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+            []
+          : // for other frames, do not show the log message unless there is a link attached
+            log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
+      [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
+    );
 
     const labelsWithLinks: LabelWithLinks[] = useMemo(
       () =>
@@ -72,10 +76,22 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const groupedLabels = useMemo(
-      () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
-      [labelsWithLinks, log]
-    );
+    const groupedLabels = useMemo(() => {
+      if (!ds) {
+        return labelsWithLinks.length > 0
+          ? {
+              '': labelsWithLinks,
+            }
+          : {};
+      }
+      return groupBy(labelsWithLinks, (label) => {
+        if (hasLogsLabelTypesSupport(ds)) {
+          return ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? '';
+        }
+        return getLabelTypeFromRow(label.key, log, true) ?? '';
+      });
+    }, [ds, labelsWithLinks, log]);
+
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
@@ -139,6 +155,18 @@ export const LogLineDetailsComponent = memo(
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+      getDataSourceSrv()
+        .get(log.datasourceUid)
+        .then(setDs)
+        .catch(() => setDs(null));
+    }, [log.datasourceUid]);
+
+    // Wait for ds to be resolved to DataSourceApi or null on error
+    if (ds === undefined) {
+      return null;
+    }
 
     return (
       <>
@@ -215,7 +243,11 @@ export const LogLineDetailsComponent = memo(
               <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
             </ControlledCollapse>
           )}
-          {noDetails && <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>}
+          {noDetails && (
+            <Box marginTop={1} paddingLeft={0.5}>
+              <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
+            </Box>
+          )}
         </div>
       </>
     );

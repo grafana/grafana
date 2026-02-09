@@ -24,7 +24,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	playlistv0 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -57,11 +57,6 @@ type MigrateOptions struct {
 	WithHistory bool // only applies to dashboards
 	OnlyCount   bool // just count the values
 	Progress    func(count int, msg string)
-}
-
-type BlobStoreInfo struct {
-	Count int64
-	Size  int64
 }
 
 type dashboardRow struct {
@@ -105,6 +100,25 @@ func ProvideMigratorDashboardAccessor(
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) MigrationDashboardAccessor {
+	return newMigratorAccess(sql, provisioning, accessControl)
+}
+
+// ProvidePlaylistMigrator creates a PlaylistMigrator for migration purposes.
+// This is wired separately from MigrationDashboardAccessor so that playlist
+// migrations are decoupled from the dashboard accessor interface.
+func ProvidePlaylistMigrator(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+) PlaylistMigrator {
+	return newMigratorAccess(sql, provisioning, accessControl)
+}
+
+func newMigratorAccess(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+) *dashboardSqlAccess {
 	return &dashboardSqlAccess{
 		sql:                    sql,
 		namespacer:             claims.OrgNamespaceFormatter,
@@ -113,7 +127,7 @@ func ProvideMigratorDashboardAccessor(
 		dashboardPermissionSvc: nil, // not needed for migration
 		libraryPanelSvc:        nil, // not needed for migration
 		accessControl:          accessControl,
-		log:                    log.New("legacy.dashboard.migrator.accessor"),
+		log:                    log.New("legacy.migrator.accessor"),
 	}
 }
 
@@ -266,7 +280,7 @@ func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOpt
 }
 
 // MigrateDashboards handles the dashboard migration logic
-func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	query := &DashboardQuery{
 		OrgID:         orgId,
 		Limit:         100000000,
@@ -275,10 +289,9 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 		Order:         "ASC",            // oldest first
 	}
 
-	blobs := &BlobStoreInfo{}
 	sql, err := a.sql(ctx)
 	if err != nil {
-		return blobs, err
+		return err
 	}
 
 	opts.Progress(-1, "migrating dashboards...")
@@ -289,7 +302,7 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 		}()
 	}
 	if err != nil {
-		return blobs, err
+		return err
 	}
 
 	// Now send each dashboard
@@ -304,7 +317,7 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 		body, err := json.Marshal(dash)
 		if err != nil {
 			err = fmt.Errorf("error reading json from: %s // %w", rows.row.Dash.Name, err)
-			return blobs, err
+			return err
 		}
 
 		req := &resourcepb.BulkRequest{
@@ -332,7 +345,7 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 				opts.Progress(i, fmt.Sprintf("stream EOF/cancelled. index=%d", i))
 				err = nil
 			}
-			return blobs, err
+			return err
 		}
 	}
 
@@ -351,15 +364,15 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 	}
 
 	if rows.Error() != nil {
-		return blobs, rows.Error()
+		return rows.Error()
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", rows.count))
-	return blobs, err
+	return err
 }
 
 // MigrateFolders handles the folder migration logic
-func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -369,7 +382,7 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 
 	sql, err := a.sql(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	opts.Progress(-1, "migrating folders...")
@@ -380,7 +393,7 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 		}()
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Now send each dashboard
@@ -402,7 +415,7 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 
 		body, err := json.Marshal(dash)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		req := &resourcepb.BulkRequest{
@@ -429,36 +442,36 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 			if errors.Is(err, io.EOF) {
 				err = nil
 			}
-			return nil, err
+			return err
 		}
 	}
 
 	if rows.Error() != nil {
-		return nil, rows.Error()
+		return rows.Error()
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", rows.count))
-	return nil, err
+	return err
 }
 
 // MigrateLibraryPanels handles the library panel migration logic
-func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,
 		Limit: 1000000,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for i, panel := range panels.Items {
 		meta, err := utils.MetaAccessor(&panel)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		body, err := json.Marshal(panel)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		req := &resourcepb.BulkRequest{
@@ -483,15 +496,15 @@ func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int
 			if errors.Is(err, io.EOF) {
 				err = nil
 			}
-			return nil, err
+			return err
 		}
 	}
 	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
-	return nil, nil
+	return nil
 }
 
 // MigratePlaylists handles the playlist migration logic
-func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating playlists...")
 	rows, err := a.ListPlaylists(ctx, orgId)
 	if rows != nil {
@@ -500,7 +513,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		}()
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Group playlist items by playlist ID while preserving order
@@ -509,7 +522,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		uid       string
 		name      string
 		interval  string
-		items     []playlistv0.PlaylistItem
+		items     []playlistv1.PlaylistItem
 		createdAt int64
 		updatedAt int64
 	}
@@ -526,7 +539,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 	for rows.Next() {
 		err = rows.Scan(&currentID, &orgID, &uid, &name, &interval, &createdAt, &updatedAt, &itemType, &itemValue)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Get or create playlist entry
@@ -538,7 +551,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				uid:       uid,
 				name:      name,
 				interval:  interval,
-				items:     []playlistv0.PlaylistItem{},
+				items:     []playlistv1.PlaylistItem{},
 				createdAt: createdAt,
 				updatedAt: updatedAt,
 			}
@@ -550,22 +563,22 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 
 		// Add item if it exists (LEFT JOIN can return NULL for playlists without items)
 		if itemType.Valid && itemValue.Valid {
-			pl.items = append(pl.items, playlistv0.PlaylistItem{
-				Type:  playlistv0.PlaylistItemType(itemType.String),
+			pl.items = append(pl.items, playlistv1.PlaylistItem{
+				Type:  playlistv1.PlaylistPlaylistItemType(itemType.String),
 				Value: itemValue.String,
 			})
 		}
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return err
 	}
 
 	// Convert to K8s objects and send to stream (order is preserved)
 	for _, pl := range playlists {
-		playlist := &playlistv0.Playlist{
+		playlist := &playlistv1.Playlist{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: playlistv0.GroupVersion.String(),
+				APIVersion: playlistv1.GroupVersion.String(),
 				Kind:       "Playlist",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -573,7 +586,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				Namespace:         opts.Namespace,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
 			},
-			Spec: playlistv0.PlaylistSpec{
+			Spec: playlistv1.PlaylistSpec{
 				Title:    pl.name,
 				Interval: pl.interval,
 				Items:    pl.items,
@@ -584,7 +597,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		if pl.updatedAt != pl.createdAt {
 			meta, err := utils.MetaAccessor(playlist)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			updatedTime := time.UnixMilli(pl.updatedAt)
 			meta.SetUpdatedTimestamp(&updatedTime)
@@ -592,7 +605,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 
 		body, err := json.Marshal(playlist)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		req := &resourcepb.BulkRequest{
@@ -614,11 +627,11 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 			if errors.Is(err, io.EOF) {
 				err = nil
 			}
-			return nil, err
+			return err
 		}
 	}
 	opts.Progress(-2, fmt.Sprintf("finished playlists... (%d)", len(playlists)))
-	return nil, nil
+	return nil
 }
 
 var _ resource.ListIterator = (*rowsWrapper)(nil)

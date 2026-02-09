@@ -1,9 +1,8 @@
 import { config } from '../../config';
 import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { getCachedPromise } from '../../utils/getCachedPromise';
 
 import type { PluginMetasResponse } from './types';
-
-let initPromise: Promise<PluginMetasResponse> | null = null;
 
 function getApiVersion(): string {
   return 'v0alpha1';
@@ -25,17 +24,5 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export function initPluginMetas(): Promise<PluginMetasResponse> {
-  if (!initPromise) {
-    initPromise = loadPluginMetas();
-  }
-
-  return initPromise;
-}
-
-export function clearCache() {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('clearCache() function can only be called from tests.');
-  }
-
-  initPromise = null;
+  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { logWarning } from '@grafana/runtime';
 import {
@@ -14,7 +15,6 @@ import {
 import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -22,6 +22,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -223,6 +224,7 @@ export class RowItem
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    trackDropItemCrossLayout(gridItem);
     const layout = this.getLayout();
 
     if (isDashboardLayoutGrid(layout)) {

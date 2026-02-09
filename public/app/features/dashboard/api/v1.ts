@@ -26,7 +26,13 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import {
+  DashboardAPI,
+  DashboardVersionError,
+  DashboardWithAccessInfo,
+  ListDashboardHistoryOptions,
+  ListDeletedDashboardsOptions,
+} from './types';
 import { isV2StoredVersion } from './utils';
 
 export const K8S_V1_DASHBOARD_API_CONFIG = {
@@ -79,6 +85,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      delete obj.metadata.labels?.[DeprecatedInternalId];
+
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -87,6 +95,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     };
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
     delete obj.metadata.name;
+    // on create, always clear the id to prevent duplicate ids
+    delete obj.spec.id;
+    delete obj.metadata.labels?.[DeprecatedInternalId];
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -105,7 +116,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: v.spec.id ?? 0,
       status: 'success',
       url,
       slug,
@@ -215,6 +225,54 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       throw e;
     }
+  }
+
+  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
+    return this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+      limit: options?.limit ?? 10,
+      continue: options?.continueToken,
+    });
+  }
+
+  async getDashboardHistoryVersions(uid: string, versions: number[]) {
+    const results: Array<Resource<DashboardDataDTO>> = [];
+    const versionsToFind = new Set(versions);
+    let continueToken: string | undefined;
+
+    do {
+      // using high limit to attempt finding the versions in one request
+      // if not found, pagination will kick in
+      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      for (const item of history.items) {
+        if (versionsToFind.has(item.metadata.generation ?? 0)) {
+          results.push(item);
+          versionsToFind.delete(item.metadata.generation ?? 0);
+        }
+      }
+      continueToken = versionsToFind.size > 0 ? history.metadata.continue : undefined;
+    } while (continueToken);
+
+    if (versionsToFind.size > 0) {
+      throw new Error(`Dashboard version not found: ${[...versionsToFind].join(', ')}`);
+    }
+    return results;
+  }
+
+  async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
+    // get version to restore to, and save as new one
+    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    return await this.saveDashboard({
+      dashboard: {
+        ...historicalVersion.spec,
+        uid,
+      },
+      k8s: {
+        name: uid,
+      },
+      message: `Restored from version ${version}`,
+    });
   }
 
   async listDeletedDashboards(options: ListDeletedDashboardsOptions) {

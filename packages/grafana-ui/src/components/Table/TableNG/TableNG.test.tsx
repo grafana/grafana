@@ -14,7 +14,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
+import { PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
@@ -97,6 +97,12 @@ const createNestedDataFrame = (): DataFrame => {
     name: 'NestedData',
     fields: [
       {
+        name: 'Nested hidden',
+        type: FieldType.string,
+        values: ['secret1', 'secret2'],
+        config: { custom: { hideFrom: { viz: true } } },
+      },
+      {
         name: 'Nested A',
         type: FieldType.string,
         values: ['N1', 'N2'],
@@ -173,15 +179,15 @@ const createNestedDataFrame = (): DataFrame => {
 };
 
 // Create a data frame specifically for testing multi-column sorting
-const createSortingTestDataFrame = (): DataFrame => {
+const createSortingTestDataFrame = (length = 5): DataFrame => {
   const frame = toDataFrame({
     name: 'SortingTestData',
-    length: 5,
+    length: length,
     fields: [
       {
         name: 'Category',
         type: FieldType.string,
-        values: ['A', 'B', 'A', 'B', 'A'],
+        values: ['A', 'B', 'A', 'B', 'A', 'C'].splice(0, length),
         config: {
           custom: {
             width: 150,
@@ -204,7 +210,7 @@ const createSortingTestDataFrame = (): DataFrame => {
       {
         name: 'Value',
         type: FieldType.number,
-        values: [5, 3, 1, 4, 2],
+        values: [5, 3, 1, 4, 2, 3].splice(0, length),
         config: {
           custom: {
             width: 150,
@@ -227,7 +233,7 @@ const createSortingTestDataFrame = (): DataFrame => {
       {
         name: 'Name',
         type: FieldType.string,
-        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie'],
+        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Emily'].splice(0, length),
         config: {
           custom: {
             width: 150,
@@ -302,8 +308,10 @@ describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+  let jestScrollIntoView = jest.fn();
 
   beforeEach(() => {
+    jestScrollIntoView = jest.fn();
     user = userEvent.setup();
     origResizeObserver = global.ResizeObserver;
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -325,12 +333,89 @@ describe('TableNG', () => {
       }
     };
 
-    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
     window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
+  });
+
+  describe('initialRowIndex', () => {
+    it('should not scroll by default', async () => {
+      const { container } = render(
+        <TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={10} />
+      );
+      expect(jestScrollIntoView).not.toHaveBeenCalled();
+      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).not.toBeInTheDocument();
+    });
+    it('initialRowIndex should scroll', async () => {
+      const { container } = render(
+        <TableNG
+          initialRowIndex={4}
+          enableVirtualization={true}
+          data={createSortingTestDataFrame()}
+          width={100}
+          height={10}
+        />
+      );
+      expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
+      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).toBeVisible();
+    });
+    it('sorting should not retrigger initialRowIndex scroll', async () => {
+      const { container } = render(
+        <TableNG
+          initialRowIndex={4}
+          enableVirtualization={true}
+          data={createSortingTestDataFrame()}
+          width={100}
+          height={10}
+        />
+      );
+
+      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).toBeVisible();
+      const columnHeader = container.querySelector('[role="columnheader"]');
+
+      // Find the sort button within the first header
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
+
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
+
+      // Click the sort button
+      await user.click(sortButton);
+
+      expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+    it.each([true, false])(
+      'initialRowIndex should scroll to value at dataFrame index independent of table sort',
+      async (desc) => {
+        const { container } = render(
+          <TableNG
+            initialSortBy={[
+              {
+                displayName: 'Category',
+                desc,
+              },
+            ]}
+            initialRowIndex={5}
+            enableVirtualization={true}
+            data={createSortingTestDataFrame(6)}
+            width={100}
+            height={10}
+          />
+        );
+
+        // The first column in our selected row
+        const initiallySelectedCell = container.querySelector('[aria-selected="true"][role="gridcell"]');
+        const initiallySelectedCellContent = initiallySelectedCell?.textContent;
+        expect(initiallySelectedCell).toBeVisible();
+        expect(initiallySelectedCellContent).toEqual('C');
+        expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
+      }
+    );
   });
 
   describe('Basic TableNG rendering', () => {
@@ -413,6 +498,10 @@ describe('TableNG', () => {
           expect(screen.getByText(text)).toBeInTheDocument();
         });
 
+        // Hidden nested fields should stay hidden
+        expect(screen.queryByText('Nested hidden')).not.toBeInTheDocument();
+        expect(screen.queryByText('secret1')).not.toBeInTheDocument();
+
         // Check if the expanded row has the aria-expanded attribute
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
@@ -458,8 +547,8 @@ describe('TableNG', () => {
       );
 
       const headers = container.querySelectorAll('[role="columnheader"]');
-      const firstHeaderSpan = headers[0].querySelector('span');
-      const secondHeaderSpan = headers[1].querySelector('span');
+      const firstHeaderSpan = headers[0].querySelector('button');
+      const secondHeaderSpan = headers[1].querySelector('button');
 
       expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
       expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');

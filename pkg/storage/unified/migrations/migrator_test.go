@@ -5,14 +5,23 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
+	dashboardpkg "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	playlistpkg "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -267,6 +276,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 		t.Logf("Verifying migrations are correctly registered")
 		verifyRegisteredMigrations(t, helper, false, false)
+
+		t.Logf("Verifying key_path is populated in resource_history after bulkimport")
+		verifyKeyPathPopulated(t, helper)
 	})
 }
 
@@ -335,4 +347,446 @@ func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, sh
 	} else {
 		require.Error(t, err)
 	}
+}
+
+// verifyKeyPathPopulated verifies that all rows in resource_history have a non-empty key_path.
+// This is important because bulkimport must populate key_path for indexing/searching to work.
+func verifyKeyPathPopulated(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Helper()
+
+	query := "SELECT COUNT(*) FROM resource_history WHERE key_path = ''"
+	rows, err := helper.GetEnv().SQLStore.GetEngine().DB().Query(query)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var emptyKeyPathCount int
+	require.True(t, rows.Next(), "expected at least one row from COUNT query")
+	require.NoError(t, rows.Scan(&emptyKeyPathCount))
+	require.NoError(t, rows.Err())
+
+	require.Equal(t, 0, emptyKeyPathCount, "found %d rows in resource_history with empty key_path", emptyKeyPathCount)
+
+	// Also verify that there are actually some rows with key_path populated
+	queryTotal := "SELECT COUNT(*) FROM resource_history WHERE key_path != ''"
+	rowsTotal, err := helper.GetEnv().SQLStore.GetEngine().DB().Query(queryTotal)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rowsTotal.Close())
+	}()
+
+	var populatedKeyPathCount int
+	require.True(t, rowsTotal.Next(), "expected at least one row from COUNT query")
+	require.NoError(t, rowsTotal.Scan(&populatedKeyPathCount))
+	require.NoError(t, rowsTotal.Err())
+
+	t.Logf("Verified %d rows in resource_history have populated key_path", populatedKeyPathCount)
+	require.Greater(t, populatedKeyPathCount, 0, "expected at least one row in resource_history with populated key_path")
+}
+func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
+	tests := []struct {
+		name         string
+		response     *resourcepb.RebuildIndexesResponse
+		responseErr  error
+		expectErr    bool
+		expectErrMsg string
+		numRetries   int // Expected number of RPC calls (1 for success, 5 for max retries)
+	}{
+		{
+			name: "response error retries and returns error",
+			response: &resourcepb.RebuildIndexesResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "failed to rebuild index",
+					Reason:  "IndexError",
+				},
+			},
+			responseErr:  nil,
+			expectErr:    true,
+			expectErrMsg: "failed to rebuild index",
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
+		},
+		{
+			name:         "RPC error retries and returns error",
+			response:     nil,
+			responseErr:  fmt.Errorf("connection failed"),
+			expectErr:    true,
+			expectErrMsg: "connection failed",
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
+		},
+		{
+			name: "no error succeeds on first attempt",
+			response: &resourcepb.RebuildIndexesResponse{
+				Error: nil,
+			},
+			responseErr: nil,
+			expectErr:   false,
+			numRetries:  1, // Only initial attempt, no retries needed
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock SearchClient
+			mockClient := resource.NewMockResourceClient(t)
+
+			// Setup expectation for RebuildIndexes call - will be called numRetries times
+			mockClient.EXPECT().
+				RebuildIndexes(mock.Anything, mock.Anything).
+				Return(tt.response, tt.responseErr).
+				Times(tt.numRetries)
+
+			// Create migrator with mock client
+			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+			mockPlaylist := &legacy.MockPlaylistMigrator{}
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+			migrator := migrations.ProvideUnifiedMigrator(
+				mockAccessor,
+				mockClient,
+				registry,
+			)
+
+			// Create test data
+			info := authlib.NamespaceInfo{
+				OrgID: 1,
+				Value: "stack-123",
+			}
+			resources := []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			}
+
+			// Execute the method
+			err := migrator.RebuildIndexes(context.Background(), migrations.RebuildIndexOptions{
+				UsingDistributor:    false,
+				NamespaceInfo:       info,
+				Resources:           resources,
+				MigrationFinishedAt: time.Now(),
+			})
+
+			// Verify results
+			if tt.expectErr {
+				require.Error(t, err)
+				if tt.expectErrMsg != "" {
+					require.Contains(t, err.Error(), tt.expectErrMsg)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
+	// Test that retries work - first call fails, second succeeds
+	mockClient := resource.NewMockResourceClient(t)
+
+	// First call returns an error
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("temporary failure")).
+		Once()
+
+	// Second call succeeds
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(&resourcepb.RebuildIndexesResponse{Error: nil}, nil).
+		Once()
+
+	// Create migrator with mock client
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	mockPlaylist := &legacy.MockPlaylistMigrator{}
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+	migrator := migrations.ProvideUnifiedMigrator(
+		mockAccessor,
+		mockClient,
+		registry,
+	)
+
+	// Create test data
+	info := authlib.NamespaceInfo{
+		OrgID: 1,
+		Value: "stack-123",
+	}
+	resources := []schema.GroupResource{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+	}
+
+	// Execute the method
+	err := migrator.RebuildIndexes(context.Background(), migrations.RebuildIndexOptions{
+		UsingDistributor:    false,
+		NamespaceInfo:       info,
+		Resources:           resources,
+		MigrationFinishedAt: time.Now(),
+	})
+
+	// Should succeed after retry
+	require.NoError(t, err)
+}
+
+func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
+	migrationFinishedAt := time.Now()
+
+	tests := []struct {
+		name         string
+		response     *resourcepb.RebuildIndexesResponse
+		resources    []schema.GroupResource
+		expectErr    bool
+		expectErrMsg string
+		numRetries   int // Expected number of RPC calls (1 for success, 5 for max retries)
+	}{
+		{
+			name: "not all pods contacted retries and returns error",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: false,
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			},
+			expectErr:    true,
+			expectErrMsg: "distributor did not contact all instances",
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
+		},
+		{
+			name: "missing build time for resource succeeds (index may not exist)",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: true,
+				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						BuildTimeUnix: migrationFinishedAt.Unix(),
+					},
+				},
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+				{Group: "dashboard.grafana.app", Resource: "folders"},
+			},
+			expectErr:  false,
+			numRetries: 1, // Only initial attempt, no retries needed
+		},
+		{
+			name: "build time before migration finished retries and returns error",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: true,
+				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						BuildTimeUnix: migrationFinishedAt.Add(-1 * time.Second).Unix(), // 1 second before migration
+					},
+				},
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			},
+			expectErr:    true,
+			expectErrMsg: "was built before migration finished",
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
+		},
+		{
+			name: "build time exactly at migration time succeeds",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: true,
+				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						BuildTimeUnix: migrationFinishedAt.Unix(),
+					},
+				},
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			},
+			expectErr:  false,
+			numRetries: 1, // Only initial attempt, no retries needed
+		},
+		{
+			name: "build time after migration time succeeds",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: true,
+				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						BuildTimeUnix: migrationFinishedAt.Add(10 * time.Second).Unix(),
+					},
+				},
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			},
+			expectErr:  false,
+			numRetries: 1, // Only initial attempt, no retries needed
+		},
+		{
+			name: "response error retries and returns error even with valid build times",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: true,
+				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						BuildTimeUnix: migrationFinishedAt.Unix(),
+					},
+				},
+				Error: &resourcepb.ErrorResult{
+					Message: "some pods failed to rebuild",
+					Reason:  "PartialFailure",
+				},
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			},
+			expectErr:    true,
+			expectErrMsg: "some pods failed to rebuild",
+			numRetries:   5, // MaxRetries: 5 means 5 total attempts
+		},
+		{
+			name: "multiple resources with valid build times succeeds",
+			response: &resourcepb.RebuildIndexesResponse{
+				ContactedAllInstances: true,
+				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						BuildTimeUnix: migrationFinishedAt.Unix(),
+					},
+					{
+						Group:         "dashboard.grafana.app",
+						Resource:      "folders",
+						BuildTimeUnix: migrationFinishedAt.Add(5 * time.Second).Unix(),
+					},
+				},
+			},
+			resources: []schema.GroupResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+				{Group: "dashboard.grafana.app", Resource: "folders"},
+			},
+			expectErr:  false,
+			numRetries: 1, // Only initial attempt, no retries needed
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock SearchClient
+			mockClient := resource.NewMockResourceClient(t)
+
+			// Setup expectation for RebuildIndexes call - will be called numRetries times
+			mockClient.EXPECT().
+				RebuildIndexes(mock.Anything, mock.Anything).
+				Return(tt.response, nil).
+				Times(tt.numRetries)
+
+			// Create migrator with mock client
+			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+			mockPlaylist := &legacy.MockPlaylistMigrator{}
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+			migrator := migrations.ProvideUnifiedMigrator(
+				mockAccessor,
+				mockClient,
+				registry,
+			)
+
+			// Create test data
+			info := authlib.NamespaceInfo{
+				OrgID: 1,
+				Value: "stack-123",
+			}
+
+			// Execute the method
+			err := migrator.RebuildIndexes(context.Background(), migrations.RebuildIndexOptions{
+				UsingDistributor:    true,
+				NamespaceInfo:       info,
+				Resources:           tt.resources,
+				MigrationFinishedAt: migrationFinishedAt,
+			})
+
+			// Verify results
+			if tt.expectErr {
+				require.Error(t, err)
+				if tt.expectErrMsg != "" {
+					require.Contains(t, err.Error(), tt.expectErrMsg)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testing.T) {
+	// Test that retries work with distributor - first call has stale build time, second succeeds
+	migrationFinishedAt := time.Now()
+	mockClient := resource.NewMockResourceClient(t)
+
+	// First call returns stale build time (before migration)
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(&resourcepb.RebuildIndexesResponse{
+			ContactedAllInstances: true,
+			BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+				{
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					BuildTimeUnix: migrationFinishedAt.Add(-1 * time.Second).Unix(),
+				},
+			},
+		}, nil).
+		Once()
+
+	// Second call succeeds with fresh build time
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(&resourcepb.RebuildIndexesResponse{
+			ContactedAllInstances: true,
+			BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+				{
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					BuildTimeUnix: migrationFinishedAt.Unix(),
+				},
+			},
+		}, nil).
+		Once()
+
+	// Create migrator with mock client
+	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
+	mockPlaylist := &legacy.MockPlaylistMigrator{}
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+	migrator := migrations.ProvideUnifiedMigrator(
+		mockAccessor,
+		mockClient,
+		registry,
+	)
+
+	// Create test data
+	info := authlib.NamespaceInfo{
+		OrgID: 1,
+		Value: "stack-123",
+	}
+	resources := []schema.GroupResource{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+	}
+
+	// Execute the method
+	err := migrator.RebuildIndexes(context.Background(), migrations.RebuildIndexOptions{
+		UsingDistributor:    true,
+		NamespaceInfo:       info,
+		Resources:           resources,
+		MigrationFinishedAt: migrationFinishedAt,
+	})
+
+	// Should succeed after retry
+	require.NoError(t, err)
 }

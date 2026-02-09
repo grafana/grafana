@@ -47,6 +47,9 @@ export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
 export const canModifyProtectedEntity = (k8sEntity: EntityToCheck) =>
   getAnnotation(k8sEntity, K8sAnnotations.AccessModifyProtected) === 'true';
 
+export const canTestEntity = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.AccessTest) === 'true';
+
 /**
  * Escape \ and = characters for field selectors.
  * The Kubernetes API Machinery will decode those automatically.
@@ -64,4 +67,8 @@ export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string 
 
 export function isProvisionedResource(provenance?: string): boolean {
   return Boolean(provenance && provenance !== KnownProvenance.None);
+}
+
+export function isImportedResource(provenance?: string): boolean {
+  return provenance === KnownProvenance.ConvertedPrometheus;
 }

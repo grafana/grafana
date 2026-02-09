@@ -14,16 +14,62 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":      schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":  schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnection":     schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList": schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef":  schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataRequest":         schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":        schema_pkg_apis_query_v0alpha1_QueryDataResponse(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":  schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.SQLSchemas":               schema_pkg_apis_query_v0alpha1_SQLSchemas(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.BasicColumn":               schema_pkg_apis_query_v0alpha1_BasicColumn(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":       schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":   schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnection":      schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList":  schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionQuery": schema_pkg_apis_query_v0alpha1_DataSourceConnectionQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataRequest":          schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":         schema_pkg_apis_query_v0alpha1_QueryDataResponse(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResponseSQLSchemas":   schema_pkg_apis_query_v0alpha1_QueryResponseSQLSchemas(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":       schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":   schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.SampleRows":                SampleRows{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.SchemaInfo":                schema_pkg_apis_query_v0alpha1_SchemaInfo(ref),
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_BasicColumn(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "BasicColumn represents the column type for data that is input to a SQL expression.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"mysqlType": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"nullable": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"dataFrameFieldType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The DataFrameFieldType is the Grafana Plugin SDK data.FieldType that best represents this column we need to somehow expose this as a string value because the JSONMarshaler will write it as a string",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+				Required: []string{"name", "mysqlType", "nullable", "dataFrameFieldType"},
+			},
+		},
 	}
 }
 
@@ -154,29 +200,9 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Connection to a datasource instance The connection name must be '{group}:{name}'",
+				Description: "Connection to a datasource instance",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The configured display name",
@@ -185,19 +211,38 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
-					"datasource": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Reference to the kubernets datasource",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef"),
+							Description: "The datasource identifier inside the group/version (or UID within legacy grafana apis)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"plugin": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"title", "datasource"},
+				Required: []string{"title", "name", "group", "version"},
 			},
 		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -250,35 +295,51 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_DataSourceConnectionQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "List of all datasource instances across all datasource apiservers",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"group": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
-					"version": {
+					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "the namespace",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The datasource identifier inside the group/version (or UID within legacy grafana apis)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"plugin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The plugin ID",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"group", "version", "name"},
+				Required: []string{"namespace"},
 			},
 		},
 	}
@@ -395,6 +456,51 @@ func schema_pkg_apis_query_v0alpha1_QueryDataResponse(ref common.ReferenceCallba
 	}
 }
 
+func schema_pkg_apis_query_v0alpha1_QueryResponseSQLSchemas(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SQLSchemas returns info about what the Schema for a DS query will be like if the query were to be used an input to SQL expressions. So effectively post SQL expressions input conversion.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"sqlSchemas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SchemaInfo for each requested query by refID",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.SchemaInfo"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"sqlSchemas"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.SchemaInfo"},
+	}
+}
+
 func schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -484,28 +590,47 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref common.Reference
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_SQLSchemas(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_SchemaInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "SchemaInfo provides information and some sample data for data that could be an input to a SQL expression.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"kind": {
+					"columns": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.BasicColumn"),
+									},
+								},
+							},
 						},
 					},
-					"apiVersion": {
+					"sampleRows": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
+							Ref: ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.SampleRows"),
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
+				Required: []string{"columns", "sampleRows"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.BasicColumn", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.SampleRows"},
 	}
 }

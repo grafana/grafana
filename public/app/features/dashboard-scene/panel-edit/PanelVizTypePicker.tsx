@@ -1,14 +1,25 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
-import { useSessionStorage } from 'react-use';
+import { useMedia, useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Button, Field, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  FilterInput,
+  ScrollContainer,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -27,6 +38,7 @@ export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
   isNewPanel?: boolean;
+  hasPickedViz?: boolean;
 }
 
 const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> => {
@@ -43,10 +55,22 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     : [allVisualizationsTab, suggestionsTab];
 };
 
-export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
+export function PanelVizTypePicker({
+  panel,
+  editPreview,
+  data,
+  onChange,
+  onClose,
+  showBackButton,
+  isNewPanel,
+  hasPickedViz,
+}: Props) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
   const filterId = useId();
+
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,7 +93,13 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
   /** TABS */
   const tabs = useMemo(getTabs, []);
   const defaultTab = tabs[0].value;
-  const [listMode, setListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
+  const [storedListMode, setStoredListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
+
+  const shouldDefaultToSuggestions =
+    (isNewPanel && !hasPickedViz && config.featureToggles.newVizSuggestions) ||
+    storedListMode === VisualizationSelectPaneTab.Suggestions;
+  const initialTab = shouldDefaultToSuggestions ? VisualizationSelectPaneTab.Suggestions : storedListMode;
+  const [listMode, setListMode] = useState(initialTab);
 
   const handleListModeChange = useCallback(
     (value: VisualizationSelectPaneTab) => {
@@ -80,8 +110,9 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
         schema_version: '1.0.0',
       });
       setListMode(value);
+      setStoredListMode(value);
     },
-    [setListMode]
+    [setListMode, setStoredListMode]
   );
 
   const handleBackButtonClick = useCallback(() => {
@@ -107,39 +138,41 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
           />
         ))}
       </TabsBar>
+      <div className={styles.stickySearchWrapper}>
+        <Field
+          className={styles.searchField}
+          noMargin
+          htmlFor={filterId}
+          aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+        >
+          <Stack direction="row" gap={1}>
+            {showBackButton && (
+              <Button
+                aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+                fill="text"
+                variant="secondary"
+                icon="arrow-left"
+                className={styles.backButton}
+                data-testid={selectors.components.PanelEditor.toggleVizPicker}
+                onClick={handleBackButtonClick}
+              >
+                <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
+              </Button>
+            )}
+            <FilterInput
+              id={filterId}
+              autoFocus={!isMobile}
+              className={styles.filter}
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+            />
+          </Stack>
+        </Field>
+      </div>
       <ScrollContainer>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
-            <Field
-              tabIndex={0}
-              className={styles.searchField}
-              noMargin
-              htmlFor={filterId}
-              aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-            >
-              <Stack direction="row" gap={1}>
-                {showBackButton && (
-                  <Button
-                    aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
-                    fill="text"
-                    variant="secondary"
-                    icon="arrow-left"
-                    data-testid={selectors.components.PanelEditor.toggleVizPicker}
-                    onClick={handleBackButtonClick}
-                  >
-                    <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
-                  </Button>
-                )}
-                <FilterInput
-                  id={filterId}
-                  className={styles.filter}
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-                />
-              </Stack>
-            </Field>
-
             {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions
                 onChange={onChange}
@@ -171,10 +204,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flexGrow: 1,
     height: '100%',
-    gap: theme.spacing(2),
   }),
   searchField: css({
-    margin: theme.spacing(0.5, 0, 1, 0), // input glow with the boundary without this
+    margin: theme.spacing(2, 1.5, 0, 0),
+    width: '100%',
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    paddingBottom: theme.spacing(0.75),
+  }),
+  stickySearchWrapper: css({
+    boxShadow: theme.shadows.z1,
+    zIndex: 1,
   }),
   tabs: css({
     width: '100%',
@@ -185,15 +224,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
   }),
   tabContent: css({
+    paddingTop: theme.spacing(1),
     paddingInline: theme.spacing(2),
   }),
-  closeButton: css({
-    marginLeft: 'auto',
-  }),
-  customFieldMargin: css({
-    marginBottom: theme.spacing(1),
+  backButton: css({
+    marginLeft: theme.spacing(1), // shift button to the right
   }),
   filter: css({
     minHeight: theme.spacing(4),
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    marginLeft: theme.spacing(1),
   }),
 });

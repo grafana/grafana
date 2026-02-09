@@ -415,7 +415,6 @@ export function createDashboardSceneFromDashboardModel(
       description: oldModel.description,
       editable: oldModel.editable,
       preload: dto.preload ?? false,
-      id: oldModel.id,
       isDirty: false,
       links: oldModel.links || [],
       meta: oldModel.meta,
@@ -482,7 +481,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
-    pluginId: panel.type ?? 'timeseries',
+    pluginId: panel.type ?? 'timeseries', // TODO: should this be `getDefaultPluginId()`?
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
