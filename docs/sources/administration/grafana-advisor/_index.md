@@ -209,25 +209,70 @@ The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana re
 
 It can be used to manage Advisor `checks` and `checktypes`. We'll cover some examples below.
 
-### Get the list of checks
+{{< tabs >}}
+{{< tab-content name="Get the list of checks" >}}
 
 ```bash
-grafanactl advisor checks list
+grafanactl resources get checks -o wide
 ```
 
-### Get the list of check types
+For a more detailed view, you can get the list of elements checked and failing inspecting the JSON output:
 
 ```bash
-grafanactl advisor checktypes list
+grafanactl resources get checks -o json | jq -r '
+  ["TYPE","CHECKED","FAILURES"],
+  (
+    [.items[] | {
+      type: .metadata.labels["advisor.grafana.app/type"],
+      ts: .metadata.creationTimestamp,
+      count: (.status.report.count // 0),
+      failures: ((.status.report.failures // []) | length)
+    }]
+    | group_by(.type)
+    | map(sort_by(.ts) | last)
+    | sort_by(.type)
+    | .[]
+    | [.type, (.count | tostring), (.failures | tostring)]
+  )
+  | @tsv
+' | column -t -s $'\t'
 ```
 
-### Get the list of failures for a check
+{{< /tab-content >}}
+{{< tab-content name="Get the list of check types" >}}
 
 ```bash
-grafanactl resources get checks/<check-name> -o json | jq '.status.report.failures[].item'
+grafanactl resources get checktypes -o wide
 ```
 
-### Run checks for a type
+{{< /tab-content >}}
+{{< tab-content name="Show all failures across every check type" >}}
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["SEVERITY","ITEM","RULE","TYPE"],
+  (
+    [.items[] | {
+      type: .metadata.labels["advisor.grafana.app/type"],
+      ts: .metadata.creationTimestamp,
+      failures: (.status.report.failures // [])
+    }]
+    | group_by(.type)
+    | map(sort_by(.ts) | last)
+    | map(select((.failures | length) > 0))
+    | .[]
+    | .type as $t
+    | .failures[]
+    | [.severity, .item, .stepID, $t]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Run checks for a type" >}}
+
+Create the check resource and push it:
 
 ```bash
 mkdir -p resources/Check/
@@ -247,11 +292,48 @@ echo '{
     }
   }
 }' > resources/Check/check-manual.json
-grafanctl push checks/check-manual
+grafanactl push checks/check-manual
 ```
 
-And then wait for the check to be run and the results to be available:
+Then wait for the check to run and the results to be available:
 
 ```bash
 grafanactl resources get checks/check-manual -o json | jq '.status.report'
 ```
+
+{{< /tab-content >}}
+{{< tab-content name="Get plugins that need an update" >}}
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["PLUGIN","SEVERITY","PLUGIN PATH"],
+  (
+    [.items[] | select(.metadata.labels["advisor.grafana.app/type"] == "plugin")]
+    | sort_by(.metadata.creationTimestamp) | last
+    | .status.report.failures[]?
+    | select(.stepID == "update")
+    | [.item, .severity, (.links[0].url // "-")]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Unhealthy datasources" >}}
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["DATASOURCE","SEVERITY","DATASOURCE PATH"],
+  (
+    [.items[] | select(.metadata.labels["advisor.grafana.app/type"] == "datasource")]
+    | sort_by(.metadata.creationTimestamp) | last
+    | .status.report.failures[]?
+    | select(.stepID == "health-check")
+    | [.item, .severity, (.links[0].url // "-")]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< /tabs >}}
