@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { FocusEvent, ReactNode, useCallback, useRef } from 'react';
+import { FocusEvent, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, ClickOutsideWrapper, Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, ClickOutsideWrapper, Stack, useStyles2 } from '@grafana/ui';
 
-import { CONTENT_SIDE_BAR, QUERY_OPTION_FIELD_CONFIG } from '../../constants';
+import { CONTENT_SIDE_BAR } from '../../constants';
 import {
   useActionsContext,
   useDatasourceContext,
@@ -14,43 +14,7 @@ import {
 } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
-interface OptionFieldProps {
-  field: QueryOptionField;
-  onBlur?: (event: FocusEvent<HTMLInputElement>, field: QueryOptionField) => void;
-  focusedField?: QueryOptionField | null;
-  defaultValue?: string | number;
-  placeholder?: string;
-  children?: ReactNode;
-}
-
-function OptionField({ field, onBlur, focusedField, defaultValue = '', placeholder, children }: OptionFieldProps) {
-  const styles = useStyles2(getStyles);
-  const config = QUERY_OPTION_FIELD_CONFIG[field];
-  const tooltip = config.getTooltip();
-  const label = config.getLabel();
-  const inputType = config.inputType ?? 'text';
-  const resolvedPlaceholder = placeholder ?? config.placeholder;
-
-  return (
-    <div className={styles.field}>
-      <Tooltip content={tooltip}>
-        <Icon name="info-circle" size="md" className={styles.infoIcon} />
-      </Tooltip>
-      <span className={styles.fieldLabel}>{label}</span>
-      {children ?? (
-        <Input
-          type={inputType}
-          defaultValue={defaultValue}
-          placeholder={resolvedPlaceholder}
-          onBlur={onBlur ? (e) => onBlur(e, field) : undefined}
-          autoFocus={focusedField != null && focusedField === field}
-          aria-label={label}
-          className={styles.fieldInput}
-        />
-      )}
-    </div>
-  );
-}
+import { OptionField } from './OptionField';
 
 function timeRangeValidation(value: string | null) {
   return !value || rangeUtil.isValidTimeSpan(value);
@@ -242,33 +206,12 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1.5),
       overflow: 'auto',
     }),
-    field: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 0),
-    }),
-    fieldLabel: css({
-      flex: 1,
-      color: theme.colors.text.primary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontFamily: theme.typography.fontFamilyMonospace,
-      whiteSpace: 'nowrap',
-    }),
-    fieldInput: css({
-      width: CONTENT_SIDE_BAR.labelWidth,
-      flexShrink: 0,
-    }),
     fieldValue: css({
       width: CONTENT_SIDE_BAR.labelWidth,
       flexShrink: 0,
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
       textAlign: 'right',
-    }),
-    infoIcon: css({
-      color: theme.colors.text.secondary,
-      flexShrink: 0,
     }),
   };
 }
