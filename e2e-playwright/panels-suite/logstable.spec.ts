@@ -67,7 +67,7 @@ test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logs
     await expect(page.getByText('Selected fields')).not.toBeVisible();
   });
 
-  test('Options: Show inspect button', async ({ page, gotoDashboardPage, selectors }) => {
+  test('Show inspect button', async ({ page, gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
     });
@@ -97,24 +97,36 @@ test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logs
     );
   });
 
-  test.skip('Options: Copy log line button', async ({ page, gotoDashboardPage, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
+  test.describe('Options', () => {
+    test.skip('Options: Inspect button', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+      });
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
+      ).toBeVisible();
     });
 
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
-    ).toBeVisible();
-  });
+    test.skip('Options: Copy log line button', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+      });
 
-  test.skip('Options: Show controls', async ({ page, gotoDashboardPage, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
+      ).toBeVisible();
     });
 
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
-    ).toBeVisible();
+    test.skip('Options: Show controls', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+      });
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
+      ).toBeVisible();
+    });
   });
 
   test.skip('No data', async ({ page, gotoDashboardPage, selectors }) => {
