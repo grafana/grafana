@@ -109,7 +109,7 @@ error: storage.unified.migration_runner Migration validation failed
 Query the migration log table to check status:
 
 ```sql
-SELECT * FROM unifiedstorage_migration_log WHERE migration_id LIKE '%folders-dashboards%';
+SELECT * FROM unifiedstorage_migration_log;
 ```
 
 ## Development
@@ -276,3 +276,26 @@ type Validator interface {
 
 Add your validator factory to the `Validators` slice in your migration definition's
 `MigrationDefinition`.
+
+## Testing
+
+### Pre-migration delete
+
+Before migrating each resource type, the migration system performs a **full delete** of all existing data for that resource in unified storage. This ensures a clean state and prevents duplicate or stale data. The delete happens within the same transaction as the migration write, so if the migration fails, the delete is rolled back.
+
+### Re-running a migration
+
+After a successful migration, a row is recorded in the `unifiedstorage_migration_log` table. On subsequent startups, Grafana checks this table and **skips** any migration that already has an entry.
+
+To re-run a migration (e.g., for testing), delete the corresponding row from the log table:
+
+```sql
+-- View existing migration entries
+SELECT * FROM unifiedstorage_migration_log;
+
+-- Delete a specific entry to allow re-running that migration
+DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'folders and dashboards migration';
+DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'playlists migration';
+```
+
+After removing the row, restart Grafana to trigger the migration again. Since the migration performs a full delete of the target resources before writing, re-running is safe and will not result in duplicate data.
