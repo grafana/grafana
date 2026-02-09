@@ -13,7 +13,7 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
-import { getDatasourceFromQueryRunner } from '../utils/utils';
+import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 

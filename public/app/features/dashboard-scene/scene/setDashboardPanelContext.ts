@@ -6,9 +6,9 @@ import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import {
   getDashboardSceneFor,
-  getDatasourceFromQueryRunner,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
 } from '../utils/utils';
