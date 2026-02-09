@@ -223,47 +223,23 @@ export function NestedFolderPicker({
   );
 
   const flatTree = useMemo(() => {
-    let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
+    let flatTree: DashboardsTreeItem[];
 
     if (isBrowsing) {
       flatTree = browseFlatTree;
+
+      // Theoretically this and excluded items could be done in a single iteration, but as these are used infrequently,
+      // it does not seem worth the tradeoff of readability.
+      if (!showRootFolder) {
+        flatTree = filterRootItem(flatTree);
+      }
+
+      // Add "Team folders" at the top of the tree list.
+      return filterExcludedItems([...teamFolderTreeItems, ...flatTree], excludeUIDs);
     } else {
-      flatTree =
-        searchResults?.items.map((item) => ({
-          isOpen: false,
-          level: 0,
-          item: {
-            kind: 'folder' as const,
-            title: item.title,
-            uid: item.uid,
-            parentUID: item.parentUID,
-            parentTitle: item.parentTitle,
-          },
-        })) ?? [];
+      flatTree = searchResultsToTreeItems(searchResults?.items || []);
+      return filterExcludedItems(flatTree, excludeUIDs);
     }
-
-    if (teamFolderTreeItems.length && isBrowsing) {
-      // Make "Team folders" a sibling root to the "Dashboards" root.
-      flatTree = [...teamFolderTreeItems, ...flatTree];
-    }
-
-    // It's not super optimal to filter these in an additional iteration, but
-    // these options are used infrequently that its not a big deal
-    if (!showRootFolder || excludeUIDs?.length) {
-      flatTree = flatTree.filter((item) => {
-        if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
-          return false;
-        }
-
-        if (excludeUIDs?.includes(item.item.uid)) {
-          return false;
-        }
-
-        return true;
-      });
-    }
-
-    return flatTree;
   }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
 
   const isItemLoaded = useCallback(
@@ -463,6 +439,41 @@ function useTeamFolders(
     teamFolderTreeItems,
     teamFolderOwnersByUid,
   };
+}
+
+function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeItem[] {
+  return (
+    items.map((item) => ({
+      isOpen: false,
+      level: 0,
+      item: {
+        kind: 'folder' as const,
+        title: item.title,
+        uid: item.uid,
+        parentUID: item.parentUID,
+        parentTitle: item.parentTitle,
+      },
+    })) ?? []
+  );
+}
+
+function filterRootItem(items: DashboardsTreeItem[]) {
+  const itemsFiltered: DashboardsTreeItem[] = [];
+  for (const item of items) {
+    // We remove the root item and also adjust the level of all items that should have been under it.
+    if (item.item.uid !== getRootFolderItem().item.uid) {
+      item.level = item.level - 1;
+      itemsFiltered.push(item);
+    }
+  }
+  return itemsFiltered;
+}
+
+function filterExcludedItems(items: DashboardsTreeItem[], excludeUIDs: string[] | undefined) {
+  if (excludeUIDs?.length) {
+    return items.filter((i) => !excludeUIDs?.includes(i.item.uid));
+  }
+  return items;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

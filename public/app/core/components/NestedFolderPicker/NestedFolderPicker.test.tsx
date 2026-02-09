@@ -234,6 +234,20 @@ describe('NestedFolderPicker', () => {
     expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
   });
 
+  it('shows team folders at top level when root folder is hidden', async () => {
+    config.featureToggles.teamFolders = true;
+    const { user } = render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    const teamFolders = await screen.findByLabelText('Team folders');
+    const topLevelFolder = await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
+    expect(teamFolders).toBeInTheDocument();
+    expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
+    expect(teamFolders.getAttribute('aria-level')).toBe(topLevelFolder.getAttribute('aria-level'));
+  });
+
   it('does not render team folders when feature toggle is disabled', async () => {
     config.featureToggles.teamFolders = false;
     const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
