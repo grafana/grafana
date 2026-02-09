@@ -24,6 +24,10 @@ jest.mock('./useUserActivity', () => ({
   useUserActivity: jest.fn().mockReturnValue(true),
 }));
 
+jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
+  useMediaQueryMinWidth: () => true,
+}));
+
 const mockUseUserActivity = jest.requireMock('./useUserActivity').useUserActivity;
 
 jest.mock('../utils/interactions', () => ({

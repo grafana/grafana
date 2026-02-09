@@ -94,6 +94,12 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
+const mockUserStorageGetItem = jest.fn();
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockUserStorageGetItem })),
+}));
+
 const createTestStore = () =>
   configureStore({
     reducer: {
@@ -198,6 +204,7 @@ beforeEach(() => {
   mockDashboardLoader.loadDashboard.mockReset();
   mockDashboardLoader.loadSnapshot.mockReset();
   fetchMock.mockReset();
+  mockUserStorageGetItem.mockReset();
 
   // Reset locationService mocks
   locationService.getSearch = jest.fn().mockReturnValue(new URLSearchParams());
@@ -409,6 +416,30 @@ describe('DashboardScenePageStateManager v1', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    describe('AssistantPreview', () => {
+      const previewUid = btoa('preview-key');
+      const v1StoredDashboard = { title: 'Preview', panels: [], schemaVersion: 40 };
+      const v2StoredDashboard = { title: 'Preview', elements: {}, layout: { kind: 'GridLayout', spec: { items: [] } } };
+
+      it('should load v1 dashboard from user storage', async () => {
+        mockUserStorageGetItem.mockResolvedValue(JSON.stringify(v1StoredDashboard));
+
+        const loader = new DashboardScenePageStateManager({});
+        const result = await loader.fetchDashboard({ uid: previewUid, route: DashboardRoutes.AssistantPreview });
+
+        expect(result).toEqual({ dashboard: v1StoredDashboard, meta: expect.any(Object) });
+      });
+
+      it('should throw DashboardVersionError when stored dashboard is v2', async () => {
+        mockUserStorageGetItem.mockResolvedValue(JSON.stringify(v2StoredDashboard));
+
+        const loader = new DashboardScenePageStateManager({});
+        await expect(
+          loader.fetchDashboard({ uid: previewUid, route: DashboardRoutes.AssistantPreview })
+        ).rejects.toThrow(DashboardVersionError);
+      });
     });
 
     describe('New dashboards', () => {
@@ -812,6 +843,31 @@ describe('DashboardScenePageStateManager v2', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    describe('AssistantPreview', () => {
+      const previewUid = btoa('preview-key');
+      const v1StoredDashboard = { title: 'Preview', panels: [], schemaVersion: 40 };
+      const v2StoredDashboard = { title: 'Preview', elements: {}, layout: { kind: 'GridLayout', spec: { items: [] } } };
+
+      it('should load v2 dashboard from user storage', async () => {
+        mockUserStorageGetItem.mockResolvedValue(JSON.stringify(v2StoredDashboard));
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        const result = await loader.fetchDashboard({ uid: previewUid, route: DashboardRoutes.AssistantPreview });
+
+        expect(result?.spec).toEqual(v2StoredDashboard);
+        expect(result?.apiVersion).toBe('v2beta1');
+      });
+
+      it('should throw DashboardVersionError when stored dashboard is v1', async () => {
+        mockUserStorageGetItem.mockResolvedValue(JSON.stringify(v1StoredDashboard));
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await expect(
+          loader.fetchDashboard({ uid: previewUid, route: DashboardRoutes.AssistantPreview })
+        ).rejects.toThrow(DashboardVersionError);
+      });
     });
 
     describe('Home dashboard', () => {
@@ -1457,6 +1513,16 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       const v2Scene = manager.transformResponseToScene(v2Response, { uid: 'v2-dash', route: DashboardRoutes.Normal });
       expect(v2Scene).toBeInstanceOf(DashboardScene);
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+    });
+
+    it('should switch to v2 manager when AssistantPreview contains v2 dashboard', async () => {
+      mockUserStorageGetItem.mockResolvedValue(JSON.stringify(defaultDashboardV2Spec()));
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: btoa('preview-key'), route: DashboardRoutes.AssistantPreview });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(manager.state.dashboard).toBeDefined();
     });
   });
 
