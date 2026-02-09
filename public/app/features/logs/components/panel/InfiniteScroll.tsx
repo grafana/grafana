@@ -9,9 +9,10 @@ import { Spinner, useStyles2 } from '@grafana/ui';
 
 import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
-import { getStyles, LogLine } from './LogLine';
+import { LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { LogListModel } from './processing';
+import { getStyles } from './styles';
 import { LogLineVirtualization } from './virtualization';
 
 interface ChildrenProps {

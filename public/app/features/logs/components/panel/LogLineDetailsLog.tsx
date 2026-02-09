@@ -6,9 +6,9 @@ import { useStyles2 } from '@grafana/ui';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
-import { getStyles } from './LogLine';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
+import { getStyles } from './styles';
 
 interface Props {
   log: LogListModel;

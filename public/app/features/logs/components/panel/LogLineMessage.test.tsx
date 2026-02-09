@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import { getStyles } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
+import { getStyles } from './styles';
 
 const theme = createTheme();
 const styles = getStyles(theme);

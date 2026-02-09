@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode } from 'react';
 
-import { LogLineStyles } from './LogLine';
+import { LogLineStyles } from './styles';
 
 interface Props {
   children: ReactNode;

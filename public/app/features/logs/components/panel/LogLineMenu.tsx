@@ -8,9 +8,9 @@ import { Dropdown, IconButton, Menu } from '@grafana/ui';
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
+import { LogLineStyles } from './styles';
 
 export type GetRowContextQueryFn = (
   row: LogRowModel,
