@@ -254,7 +254,7 @@ export function getAggregationByRenderer(aggregation: string) {
 
 function getAggregationWithoutRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} by(${model.params.map((x) => (typeof x === 'string' ? utf8Support(x) : x)).join(', ')}) (${innerExpr})`;
+    return `${aggregation} without(${model.params.map((x) => (typeof x === 'string' ? utf8Support(x) : x)).join(', ')}) (${innerExpr})`;
   };
 }
 
