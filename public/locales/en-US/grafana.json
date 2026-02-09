@@ -12476,6 +12476,7 @@
       "path-required": "Repository path is required"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
+    "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
       "show-less": "show less",
       "show-more": "show more",

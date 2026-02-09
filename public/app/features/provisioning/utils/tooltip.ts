@@ -8,7 +8,7 @@ export function getManagedByRepositoryTooltip(title?: string): string {
   if (!title) {
     return t('provisioning.managed-by-repository-tooltip', 'Managed by: Repository');
   }
-  return t('provisioning.managed-by-repository-tooltip', 'Managed by: Repository {{title}}', {
+  return t('provisioning.managed-by-repository-tooltip-with-title', 'Managed by: Repository {{title}}', {
     title,
     interpolation: { escapeValue: false },
   });
