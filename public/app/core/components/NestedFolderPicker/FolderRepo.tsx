@@ -5,7 +5,7 @@ import { Badge, Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { DashboardViewItem } from 'app/features/search/types';
 import { FolderDTO } from 'app/types/folders';
 
@@ -21,10 +21,12 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
   const skipRender = canSkipEarly || isProvisionedInstance;
 
-  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
+  const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
     skipQuery: skipRender,
   });
+
+  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
 
   if (skipRender) {
     return null;
@@ -44,7 +46,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
         title={t('folder-repo.provisioned-badge', 'Provisioned')}
         color="purple"
         icon="exchange-alt"
-        tooltip={t('folder-repo.provisioned-badge', 'Provisioned')}
+        tooltip={repoTooltipText}
       />
     </Stack>
   );

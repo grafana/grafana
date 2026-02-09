@@ -1,4 +1,5 @@
 import { render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -24,8 +25,16 @@ function mockSettings(items: Array<Partial<RepositoryView>>) {
   mockUseGetFrontendSettingsQuery.mockReturnValue({ data: { items } });
 }
 
-function mockRepoView({ isReadOnlyRepo = false, repoType = 'github' }) {
-  mockUseGetResourceRepositoryView.mockReturnValue({ isReadOnlyRepo, repoType });
+function mockRepoView({
+  isReadOnlyRepo = false,
+  repoType = 'github',
+  repository,
+}: {
+  isReadOnlyRepo?: boolean;
+  repoType?: string;
+  repository?: { title?: string; name?: string };
+} = {}) {
+  mockUseGetResourceRepositoryView.mockReturnValue({ isReadOnlyRepo, repoType, repository });
 }
 
 const MOCK_FOLDER: DashboardViewItem = {
@@ -42,7 +51,7 @@ function setup({
   settingsMock = [],
 }: {
   folder?: DashboardViewItem;
-  repoViewMock?: { isReadOnlyRepo?: boolean; repoType?: string };
+  repoViewMock?: { isReadOnlyRepo?: boolean; repoType?: string; repository?: { title?: string; name?: string } };
   settingsMock?: Array<Partial<RepositoryView>>;
 }) {
   mockSettings(settingsMock);
@@ -87,5 +96,36 @@ describe('FolderRepo', () => {
     setup({ folder: MOCK_FOLDER, repoViewMock: { isReadOnlyRepo: true, repoType: 'github' } });
     expect(screen.getByText('Read only')).toBeInTheDocument();
     expect(screen.queryByTitle('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders Provisioned badge when repository has title (tooltip shows repository title)', async () => {
+    const user = userEvent.setup();
+    setup({
+      folder: MOCK_FOLDER,
+      repoViewMock: { repository: { title: 'My Repo', name: 'repo-1' } },
+    });
+    const provisionedBadge = screen.getByTitle('Provisioned');
+    await user.hover(provisionedBadge);
+    expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
+  });
+
+  it('renders Provisioned badge when repository has name but no title (tooltip shows repository name)', async () => {
+    const user = userEvent.setup();
+    setup({
+      folder: MOCK_FOLDER,
+      repoViewMock: { repository: { name: 'repo-1' } },
+    });
+    const provisionedBadge = screen.getByTitle('Provisioned');
+    await user.hover(provisionedBadge);
+    expect(await screen.findByText('Managed by: Repository repo-1')).toBeInTheDocument();
+  });
+
+  it('renders Provisioned badge when repository is undefined (tooltip has empty title)', async () => {
+    const user = userEvent.setup();
+    setup({ folder: MOCK_FOLDER, repoViewMock: {} });
+    const provisionedBadge = screen.getByTitle('Provisioned');
+    await user.hover(provisionedBadge);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Managed by: Repository');
   });
 });

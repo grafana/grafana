@@ -20,19 +20,6 @@ export function getIsReadOnlyRepo(repository: RepositoryView | undefined): boole
   return getIsReadOnlyWorkflows(repository.workflows);
 }
 
-// Right now we only support local file provisioning message and git provisioned. This can be extended in the future as needed.
-export const getReadOnlyTooltipText = ({ isLocal = false }) => {
-  return isLocal
-    ? t(
-        'provisioning.read-only-local-tooltip',
-        'This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.'
-      )
-    : t(
-        'provisioning.read-only-remote-tooltip',
-        'This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.'
-      );
-};
-
 /**
  * Finds the repository name for an item by traversing up the tree to find the root provisioned folder (managed by ManagerKind.Repo)
  * This should be an edge case where user have multiple provisioned folders and try to managing resources on root folder
