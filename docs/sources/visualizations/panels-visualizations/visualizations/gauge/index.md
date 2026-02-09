@@ -159,7 +159,7 @@ Adjust how the gauge is displayed.
 | [Neutral value](#neutral-value) | Set the starting value from which every gauge will be filled. |
 | [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |
 | [Show thresholds](#show-threshold-markers) | Control whether a threshold band is shown outside the inner gauge value band. |
-| Show labels | Control whether threshold, neutral and min/max labels are shown around the outside of the gauge. |
+| Show labels | Control whether threshold, neutral and min/max labels are shown outside of the gauge. |
 | Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value.</li><li>**Bar glow** - Adds a glowing shadow around the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
 
 <!-- prettier-ignore-end -->
