@@ -57,7 +57,11 @@ function DashboardCardComponent({
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
-      <IconButton name="info-circle" size="sm" aria-label={t('dashboard-library.card.details-tooltip', 'Details')} />
+      <IconButton
+        name="info-circle"
+        size={isCompatibilityAppEnabled ? 'sm' : 'xl'}
+        aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
+      />
     </Tooltip>
   );
 
@@ -118,7 +122,7 @@ function DashboardCardComponent({
           )}
         </Button>
         {!isCompatibilityAppEnabled && detailsButton}
-        {showCompatibilityBadge && onCompatibilityCheck && (
+        {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
           <CompatibilityBadge
             state={compatibilityState ?? { status: 'idle' }}
             onCheck={onCompatibilityCheck}

@@ -5,7 +5,7 @@ import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } from '@grafana/ui';
 
 import { CompatibilityState } from './CompatibilityBadge';
@@ -47,6 +47,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
+  const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
 
   // New state for compatibility badge feature
   const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
@@ -248,7 +249,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       response?.dashboards &&
       response.dashboards.length > 0 &&
       datasourceUid &&
-      response.datasourceType === 'prometheus'
+      response.datasourceType === 'prometheus' &&
+      isCompatibilityAppEnabled
     ) {
       hasAutoCheckedRef.current = true;
 
@@ -258,7 +260,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         handleCheckCompatibility(dashboard, 'auto_initial_load');
       });
     }
-  }, [loading, isInitialLoad, response, datasourceUid, handleCheckCompatibility]);
+  }, [loading, isInitialLoad, response, datasourceUid, handleCheckCompatibility, isCompatibilityAppEnabled]);
 
   return (
     <Stack direction="column" gap={2} height="100%">
@@ -363,7 +365,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 const details = buildDashboardDetails(dashboard);
 
                 // Only show badge for Prometheus datasources
-                const showBadge = !!datasourceUid && response?.datasourceType === 'prometheus';
+                const showBadge =
+                  isCompatibilityAppEnabled && !!datasourceUid && response?.datasourceType === 'prometheus';
 
                 return (
                   <DashboardCard

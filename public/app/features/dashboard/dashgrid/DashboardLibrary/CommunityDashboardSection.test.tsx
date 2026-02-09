@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
@@ -195,6 +195,8 @@ describe('CommunityDashboardSection', () => {
   });
 
   describe('Compatibility Badge Feature', () => {
+    testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
+
     it('should show "Check" button when datasource type is prometheus', async () => {
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
@@ -437,6 +439,50 @@ describe('CommunityDashboardSection', () => {
       await waitFor(() => {
         expect(screen.getByTestId('compatibility-badge-success')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('When dashboardValidatorApp is disabled', () => {
+    testWithFeatureToggles({ disable: ['dashboardValidatorApp'] });
+
+    it('should not show compatibility badge for prometheus datasources', async () => {
+      mockDatasourceType = 'prometheus';
+      mockFetchCommunityDashboards.mockResolvedValue({
+        page: 1,
+        pages: 5,
+        items: [createMockGnetDashboard()],
+      });
+
+      await setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+      });
+
+      // Verify badge is not rendered
+      expect(screen.queryByRole('button', { name: /Check/i })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('compatibility-badge-loading')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('compatibility-badge-success')).not.toBeInTheDocument();
+    });
+
+    it('should not trigger auto-checks on initial load', async () => {
+      mockDatasourceType = 'prometheus';
+      mockFetchCommunityDashboards.mockResolvedValue({
+        page: 1,
+        pages: 5,
+        items: [createMockGnetDashboard()],
+      });
+
+      await setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+      });
+
+      // Verify no API calls were made
+      expect(mockInterpolateDashboard).not.toHaveBeenCalled();
+      expect(mockCheckCompatibility).not.toHaveBeenCalled();
+      expect(DashboardLibraryInteractions.compatibilityCheckTriggered).not.toHaveBeenCalled();
     });
   });
 });

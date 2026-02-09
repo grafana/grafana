@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
@@ -315,6 +315,8 @@ describe('DashboardCard', () => {
   });
 
   describe('Compatibility badge', () => {
+    testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
+
     it('should show Check button when showCompatibilityBadge={true} and onCompatibilityCheck is provided', () => {
       const mockOnCompatibilityCheck = jest.fn();
       render(
@@ -434,7 +436,7 @@ describe('DashboardCard', () => {
       expect(screen.getByTestId('compatibility-badge-loading')).toBeInTheDocument();
     });
 
-    it('should render buttons in correct order: primary, details, compatibility badge', () => {
+    it('should render buttons in correct order: details (in title), primary, compatibility badge', () => {
       const details = createMockDetails();
       render(
         <DashboardCard
@@ -448,10 +450,55 @@ describe('DashboardCard', () => {
         />
       );
 
+      // With dashboardValidatorApp enabled, details button moves into the title row
       const buttons = screen.getAllByRole('button');
-      expect(buttons[0]).toHaveTextContent('Use dashboard');
-      expect(buttons[1]).toHaveAttribute('aria-label', 'Details');
+      expect(buttons[0]).toHaveAttribute('aria-label', 'Details');
+      expect(buttons[1]).toHaveTextContent('Use dashboard');
       expect(buttons[2]).toHaveTextContent('Check compatibility');
+    });
+  });
+
+  describe('dashboardValidatorApp Feature Flag Gating', () => {
+    describe('when dashboardValidatorApp is disabled', () => {
+      testWithFeatureToggles({ disable: ['dashboardValidatorApp'] });
+
+      it('should hide compatibility badge even when showCompatibilityBadge is true', () => {
+        const mockOnCompatibilityCheck = jest.fn();
+
+        render(
+          <DashboardCard
+            title="Test Dashboard"
+            dashboard={createMockPluginDashboard()}
+            onClick={jest.fn()}
+            showCompatibilityBadge={true}
+            onCompatibilityCheck={mockOnCompatibilityCheck}
+            kind="suggested_dashboard"
+          />
+        );
+
+        expect(screen.queryByRole('button', { name: /Check/i })).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when dashboardValidatorApp is enabled', () => {
+      testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
+
+      it('should show compatibility badge when showCompatibilityBadge is true', () => {
+        const mockOnCompatibilityCheck = jest.fn();
+
+        render(
+          <DashboardCard
+            title="Test Dashboard"
+            dashboard={createMockPluginDashboard()}
+            onClick={jest.fn()}
+            showCompatibilityBadge={true}
+            onCompatibilityCheck={mockOnCompatibilityCheck}
+            kind="suggested_dashboard"
+          />
+        );
+
+        expect(screen.getByRole('button', { name: /Check/i })).toBeInTheDocument();
+      });
     });
   });
 });
