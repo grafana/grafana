@@ -5,7 +5,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, setup } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockQueryOptionsState, setup } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryCard } from './QueryCard';
@@ -44,6 +44,7 @@ describe('SidebarCard', () => {
           selectedTransformation: transformation,
           setSelectedQuery,
           setSelectedTransformation,
+          queryOptions: mockQueryOptionsState,
           selectedQueryDsData: null,
           selectedQueryDsLoading: false,
           showingDatasourceHelp: false,
@@ -84,6 +85,7 @@ describe('SidebarCard', () => {
           selectedTransformation: null,
           setSelectedQuery,
           setSelectedTransformation,
+          queryOptions: mockQueryOptionsState,
           selectedQueryDsData: null,
           selectedQueryDsLoading: false,
           showingDatasourceHelp: false,

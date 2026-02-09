@@ -670,7 +670,6 @@
       "message": {
         "required": "必填。"
       },
-      "or": "或",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -860,7 +859,10 @@
     "common": {
       "cancel": "取消",
       "clear-filters": "清除篩選",
+      "close": "",
+      "create": "",
       "delete": "刪除",
+      "deleting": "",
       "edit": "編輯",
       "export": "匯出",
       "export-all": "匯出全部",
@@ -1580,6 +1582,17 @@
       "action-button": "匯入",
       "additional-settings": "附加設定",
       "alert-rules": "警報規則",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "匯入",
         "loading": "正在載入…",
@@ -1606,13 +1619,15 @@
         "label": "資料來源",
         "required-message": "請選擇一個資料來源"
       },
-      "error": "無法匯入警報規則：{{error}}",
+      "error": "",
       "group": {
         "description": "輸入以搜尋現有群組",
         "label": "群組"
       },
       "import-location-and-filters": "匯入位置和篩選條件",
       "import-source": "匯入來源",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "輸入以搜尋現有的命名空間",
         "label": "命名空間"
@@ -1624,17 +1639,148 @@
       "pause-recording": {
         "label": "暫停匯入的錄製規則"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "錄製規則",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-none": "",
+        "routing-tree": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
+      },
       "source": {
         "datasource": "現有的資料來源管理規則",
         "datasource-description": "從現有資料來源匯入規則",
         "yaml": "Prometheus YAML 檔案",
         "yaml-description": "從 Prometheus YAML 檔案匯入規則。"
       },
-      "success": "已成功將警報規則匯入至 Grafana 管理的規則。",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy-desc": "",
+        "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
+        "select-group": "",
+        "select-namespace": "",
+        "select-policy": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "需匯入規則的資料夾",
         "label": "目標資料夾"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "選擇一個與 Prometheus 相容的 YAML 檔案進行匯入",
@@ -1645,6 +1791,9 @@
         "target-datasource-required": "請選擇目標資料來源"
       },
       "yaml-error": "無法剖析 YAML 檔案：{{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -1938,7 +2087,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "需要幫忙嗎？"
@@ -2089,6 +2242,11 @@
       "aria-label-expand": "展開",
       "aria-label-more": "符合政策所需的更多動作",
       "aria-label-more-default": "預設原則的更多動作",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "若未找到其他符合條件的政策，所有警報執行個體將由預設政策處理。",
         "title": "預設政策",
@@ -2098,6 +2256,14 @@
         "confirm": "是的，刪除政策",
         "warning-1": "刪除此通知政策將永久移除該政策。",
         "warning-2": "您確定要刪除這個政策嗎？"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "使用以逗號分隔的比對條件清單來篩選通知政策，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動產生的政策",
@@ -2112,6 +2278,7 @@
         },
         "inherited": "繼承",
         "mute-time": "靜音時間",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "在已對某警報群組發送初始通知後，若有新警報加入該群組，系統會等待多久才發送後續通知。",
@@ -2132,6 +2299,12 @@
       "new-policy": "新增政策",
       "no-matchers": "沒有匹配條件",
       "reload-policies": "重新載入政策",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2170,27 +2343,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2206,6 +2358,9 @@
       "label-new-child-policy": "新的子級政策",
       "label-new-sibling-above": "上方的新同級項目",
       "label-new-sibling-below": "下方的新同級項目"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "無法顯示查詢預覽。查詢中使用的某些資料來源不可用。",
@@ -2391,6 +2546,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "編輯",
@@ -2609,7 +2767,8 @@
       "expand-all": "展開全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "匯入警報規則"
+      "import-to-gma": "匯入警報規則",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在載入規則…",
@@ -2995,6 +3154,10 @@
       "misconfigured-warning": "此範本設定錯誤。",
       "misconfigured-warning-details": "必須在警報管理設定的<2></2>和<5></5>兩個區段中定義範本。"
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "編輯{{name}}",
       "title-drawer": "編輯{{name}}",
@@ -3039,7 +3202,8 @@
       "error-loading": {
         "description": "無法載入時間間隔。請稍候再試。",
         "title": "載入時間間隔時發生錯誤"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "時間間隔",
@@ -3057,6 +3221,9 @@
     },
     "timestamp": {
       "time-ago": "（{{time}} 前）"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3154,12 +3321,6 @@
       "label-edit": "編輯",
       "label-export": "匯出"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "是，刪除聯絡點",
       "deleting": "正在刪除…",
@@ -3177,15 +3338,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "刪除通知政策"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3454,6 +3606,10 @@
       "hosted-domain-label": "託管網域",
       "id-token-attribute-name-description": "用於從傳回的 OAuth2 權杖中擷取 ID 權杖的金鑰名稱。",
       "id-token-attribute-name-label": "ID 權杖屬性名稱",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "用於從使用者 ID 權杖中查找使用者登入的 JMESPath 表達式。",
       "login-attribute-path-label": "登入屬性路徑",
       "login-prompt-consent": "同意",
@@ -3520,6 +3676,8 @@
       "use-refresh-token-label": "使用重新整理權杖",
       "validate-hosted-domain-description": "若啟用，Grafana 將會比對從 Google ID 權杖擷取的託管網域與使用者指定的「{{ allowedDomainsLabel }}」清單。",
       "validate-hosted-domain-label": "驗證託管網域",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "用於驗證 OAuth2 提供者的權杖檔案路徑。僅當用戶端驗證設定為「workload_identity」時才需要此項設定。預設為 /var/run/secrets/azure/tokens/azure-identity-token。",
       "workload-identity-token-file-label": "{{ workloadIdentityLabel }} 權杖檔案",
       "workload-identity-token-file-required": "當用戶端驗證設定為「Workload identity」時必須設定此欄位。"
@@ -4722,7 +4880,6 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -4850,12 +5007,6 @@
       "message": {
         "edit-dashboard-json": "編輯儀表板 JSON"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "驗證是為了開發目的，應該可以安全地忽略。若您是 Grafana 開發人員，請考慮檢查並更新儀表板架構",
-      "title-checking-dashboard-validity": "正在檢查儀表板有效性",
-      "title-dashboard-failed-schema-validation": "儀表板結構驗證失敗",
-      "title-error-checking-dashboard-validity": "檢查儀表板有效性時發生錯誤"
     },
     "default-layout": {
       "description": "單獨設定每個面板的位置和大小",
@@ -6412,6 +6563,8 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "切換表格檢視",
       "table-view-label-table-view": "表格檢視"
     },
@@ -7637,7 +7790,8 @@
       "loading-placeholder": "正在載入…"
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "停用查詢"
+      "aria-label-go-queryless": "停用查詢",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "結果系列：{{numItems}} 個",
@@ -9323,6 +9477,10 @@
     "secret-form-field": {
       "reset": "重設"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "無法載入選項",
       "loading": "正在載入選項…",
@@ -9365,6 +9523,18 @@
       "csv-placeholder": "在此處輸入 CSV …",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10318,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "取消換行",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "換行"
     },
     "logs-navigation": {
@@ -10344,6 +10520,7 @@
     "name-show-controls": "顯示控制項",
     "name-time": "顯示時間戳記",
     "name-unique-labels": "唯一標籤",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "換行",
     "order-options": {
       "label-newest-first": "最新排前",
@@ -10382,6 +10559,17 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該欄位",
       "label-log-stats": "{{label}}：{{total}} 列中的 {{rowCount}} 列有該標籤"
+    }
+  },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
     }
   },
   "manage-dashbaords": {
@@ -11831,19 +12019,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名稱",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "分支",
       "label-comment": "評論",
       "label-path": "路徑",
-      "label-workflow": "工作流程",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11867,11 +12057,7 @@
       "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
     },
     "bitbucket": {
-      "branch-description": "用於佈建的分支",
-      "branch-label": "分支",
       "branch-required": "分支為必填",
-      "path-description": "儲存庫中的可選子目錄路徑",
-      "path-label": "路徑",
       "permissions": {
         "pull-requests-label": "拉取請求",
         "pull-requests-read-write": "讀寫",
@@ -11886,24 +12072,26 @@
       "token-label": "應用程式密碼",
       "token-required": "Bitbucket 權杖為必填",
       "token-user-description": "將用於存取具有應用程式密碼的儲存庫的使用者名稱",
-      "token-user-label": "使用者名稱",
       "token-user-required": "使用者名稱為必填",
       "url-description": "Bitbucket 儲存庫網址",
-      "url-label": "儲存庫網址",
       "url-pattern": "必須為有效的 Bitbucket 儲存庫網址",
       "url-required": "儲存庫網址為必填"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "為此儲存庫連線新增一個明確的名稱",
+      "description-clear-repository-connection": "",
       "empty": "空",
       "error-field-required": "此為必填欄位。",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "顯示名稱",
       "placeholder-my-repository-connection": "我的儲存庫連線",
+      "retry-action": "",
       "text-loading-resource-information": "正在載入資源資訊…",
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
       "folders-count_other": "{{count}} 個資料夾"
@@ -12131,46 +12319,31 @@
       "subtitle-provisioning-feature": "檢視及管理您的佈建連線"
     },
     "git": {
-      "branch-description": "用於佈建的分支",
-      "branch-label": "分支",
       "branch-required": "分支為必填",
-      "path-description": "儲存庫中的可選子目錄路徑",
-      "path-label": "路徑",
       "pr-workflow-description": "允許使用者在儲存變更時選擇是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
       "pr-workflow-label": "儲存時啟用拉取請求選項",
       "token-description": "Git 儲存庫存取權杖或密碼",
       "token-label": "存取權杖",
       "token-required": "Git 權杖為必填",
       "token-user-description": "將用於存取具有存取權杖的儲存庫的使用者名稱",
-      "token-user-label": "使用者名稱",
       "token-user-required": "使用者名稱為必填",
       "url-description": "Git 儲存庫網址",
-      "url-label": "儲存庫網址",
       "url-pattern": "必須為有效的 Git 儲存庫網址",
       "url-required": "儲存庫網址為必填"
     },
     "github": {
-      "branch-description": "用於佈建的分支",
-      "branch-label": "分支",
       "branch-required": "分支為必填",
-      "path-description": "儲存庫中的可選子目錄路徑",
-      "path-label": "路徑",
       "pr-workflow-description": "允許使用者在儲存變更時選擇是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
       "pr-workflow-label": "儲存時啟用拉取請求選項",
       "token-description": "具有儲存庫權限的 GitHub 個人存取權杖",
       "token-label": "個人存取權杖",
       "token-required": "GitHub 權杖為必填",
       "url-description": "Github 儲存庫網址",
-      "url-label": "儲存庫網址",
       "url-pattern": "必須為有效的 GitHub 儲存庫網址",
       "url-required": "儲存庫網址為必填"
     },
     "gitlab": {
-      "branch-description": "用於佈建的分支",
-      "branch-label": "分支",
       "branch-required": "分支為必填",
-      "path-description": "儲存庫中的可選子目錄路徑",
-      "path-label": "路徑",
       "permissions": {
         "api": "API",
         "api-read-write": "讀寫",
@@ -12185,7 +12358,6 @@
       "token-label": "專案存取權杖",
       "token-required": "GitLab 權杖為必填",
       "url-description": "GitLab 儲存庫網址",
-      "url-label": "儲存庫網址",
       "url-pattern": "必須為有效的 GitLab 儲存庫網址",
       "url-required": "儲存庫網址為必填"
     },
@@ -12402,9 +12574,15 @@
       "previous": "上一個"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "已完成步驟",
@@ -12443,7 +12621,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "然後按一下",
@@ -12456,7 +12635,7 @@
         "token-text": "GitLab Personal 存取權杖"
       },
       "go-to": "前往",
-      "make-sure": "請務必包含以下權限"
+      "make-sure": ""
     },
     "warning-title-default": "警告",
     "wizard": {
@@ -12480,8 +12659,6 @@
       "button-cancelling": "",
       "button-next": "結束",
       "button-start": "開始同步處理",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12523,14 +12700,7 @@
       "button-submitting": "正在提交…",
       "error-instance-repository-exists": "執行個體儲存庫已存在",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
-  },
-  "provisioning-alert": {
-    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12737,9 +12907,62 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
+    },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
     },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""

@@ -98,11 +98,17 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "query.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "advisor.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "playlist.grafana.app",
+		Version: "v1",
 	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",

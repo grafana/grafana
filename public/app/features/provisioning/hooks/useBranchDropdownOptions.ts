@@ -23,7 +23,7 @@ function getBranchDescriptions() {
   return {
     configured: t(
       'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
-      'Configured branch'
+      'Synchronized branch'
     ),
     pr: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch', 'Pull request branch'),
     lastUsed: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used', 'Last branch'),
