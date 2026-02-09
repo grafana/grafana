@@ -7,7 +7,7 @@ import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { DashboardFiltersOverviewSearch } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverviewSearch';
 
-import { DashboardFiltersOverview } from '../scene/dashboard-filters-overview/DashboardFiltersOverview';
+import { DashboardFiltersOverview } from 'app/features/dashboard-scene/scene/dashboard-filters-overview/DashboardFiltersOverview';
 
 interface Props {
   adhocFilters?: AdHocFiltersVariable;
