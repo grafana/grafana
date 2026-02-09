@@ -20,6 +20,7 @@ export function NotificationButton({ title, buttonLabel, href, ariaLabel }: Noti
   );
 }
 
+// Helper to avoid JSX imports at call sites that don't otherwise need them
 export function buildNotificationButton(props: NotificationButtonProps): ReactElement {
   return <NotificationButton {...props} />;
 }

@@ -28,7 +28,7 @@ describe('notifications', () => {
       expect(result).toEqual({
         kind: 'action',
         data: {
-          title: 'Dashboards restored',
+          title: 'Dashboard restored',
           buttonLabel: 'View folder',
           targetUrl: '/dashboards/f/folder-uid',
         },
@@ -40,7 +40,7 @@ describe('notifications', () => {
       expect(result).toEqual({
         kind: 'action',
         data: {
-          title: 'Dashboards restored',
+          title: 'Dashboard restored',
           buttonLabel: 'View folder',
           targetUrl: '/dashboards',
         },
