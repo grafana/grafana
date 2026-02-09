@@ -146,7 +146,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		user2 := &user.SignedInUser{
 			UserID:  999,
 			UserUID: "different-user-uid",
-			OrgID:   sc.reqContext.SignedInUser.GetOrgID(),
+			OrgID:   sc.reqContext.GetOrgID(),
 			OrgRole: org.RoleViewer,
 		}
 		_, err = cache.get(ctx, user2)
