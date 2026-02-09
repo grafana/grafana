@@ -262,6 +262,7 @@ describe('PanelDataPaneNext', () => {
 
     it('should delete a transformation', () => {
       dataPane.deleteTransformation(1);
+
       expect(mockTransformer.setState).toHaveBeenCalledWith({
         transformations: [
           { id: 'organize', options: {} },
@@ -272,23 +273,12 @@ describe('PanelDataPaneNext', () => {
     });
 
     it('should not delete a transformation if the index is out of bounds', () => {
-      const mockTransformer = new SceneDataTransformer({
-        transformations: mockTransformations,
-        $data: mockQueryRunner,
-      });
-
-      jest.spyOn(mockTransformer, 'setState');
-      mockPanel.state.$data = mockTransformer;
-
-      // Test negative index
       dataPane.deleteTransformation(-1);
       expect(mockTransformer.setState).not.toHaveBeenCalled();
 
-      // Test index beyond array length
       dataPane.deleteTransformation(5);
       expect(mockTransformer.setState).not.toHaveBeenCalled();
 
-      // Test exact length (one past last valid index)
       dataPane.deleteTransformation(3);
       expect(mockTransformer.setState).not.toHaveBeenCalled();
     });
