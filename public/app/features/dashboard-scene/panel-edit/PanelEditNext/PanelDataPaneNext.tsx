@@ -226,8 +226,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    const transform = transformations[index];
-    transformations[index] = { ...transform, disabled: !transform.disabled };
+    const transformation = transformations[index];
+    transformations[index] = { ...transformation, disabled: !transformation.disabled };
     transformer.setState({ transformations });
     this.runQueries();
   };

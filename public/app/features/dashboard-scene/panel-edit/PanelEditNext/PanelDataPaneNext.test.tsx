@@ -241,7 +241,7 @@ describe('PanelDataPaneNext', () => {
     });
   });
 
-  describe('deleteTransformation', () => {
+  describe('transformations', () => {
     const mockTransformations: DataTransformerConfig[] = [
       { id: 'organize', options: {} },
       { id: 'reduce', options: {} },
@@ -260,27 +260,41 @@ describe('PanelDataPaneNext', () => {
       mockPanel.state.$data = mockTransformer;
     });
 
-    it('should delete a transformation', () => {
-      dataPane.deleteTransformation(1);
+    describe('deleteTransformation', () => {
+      it('should delete a transformation', () => {
+        dataPane.deleteTransformation(1);
 
-      expect(mockTransformer.setState).toHaveBeenCalledWith({
-        transformations: [
-          { id: 'organize', options: {} },
-          { id: 'filter', options: {} },
-        ],
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'filter', options: {} },
+          ],
+        });
+        expect(mockQueryRunner.runQueries).toHaveBeenCalled();
       });
-      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+
+      it('should not delete a transformation if the index is out of bounds', () => {
+        dataPane.deleteTransformation(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(3);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
     });
 
-    it('should not delete a transformation if the index is out of bounds', () => {
-      dataPane.deleteTransformation(-1);
-      expect(mockTransformer.setState).not.toHaveBeenCalled();
-
-      dataPane.deleteTransformation(5);
-      expect(mockTransformer.setState).not.toHaveBeenCalled();
-
-      dataPane.deleteTransformation(3);
-      expect(mockTransformer.setState).not.toHaveBeenCalled();
+    describe('toggleTransformationDisabled', () => {
+      it('should toggle the disabled state of a transformation', () => {
+        dataPane.toggleTransformationDisabled(1);
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'reduce', options: {}, disabled: true },
+          ],
+        });
+      });
     });
   });
 });
