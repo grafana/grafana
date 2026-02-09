@@ -30,6 +30,12 @@ export function isDataTransformerConfig(
   return transformation !== null && 'id' in transformation && !('refId' in transformation);
 }
 
+/**
+ * Filters an array of transformations to only include DataTransformerConfig items since
+ * the UI does not support CustomTransformerDefinition items.
+ * @param transformations - The array of transformations to filter.
+ * @returns An array of DataTransformerConfig items.
+ */
 export const filterDataTransformerConfigs = (
   transformations: Array<DataTransformerConfig | CustomTransformerDefinition>
 ): DataTransformerConfig[] => {
