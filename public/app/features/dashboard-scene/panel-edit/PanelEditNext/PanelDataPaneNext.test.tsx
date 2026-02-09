@@ -288,12 +288,22 @@ describe('PanelDataPaneNext', () => {
     describe('toggleTransformationDisabled', () => {
       it('should toggle the disabled state of a transformation', () => {
         dataPane.toggleTransformationDisabled(1);
+
         expect(mockTransformer.setState).toHaveBeenCalledWith({
           transformations: [
             { id: 'organize', options: {} },
             { id: 'reduce', options: {}, disabled: true },
+            { id: 'filter', options: {} },
           ],
         });
+      });
+
+      it('should not toggle if the index is out of bounds', () => {
+        dataPane.toggleTransformationDisabled(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.toggleTransformationDisabled(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
       });
     });
   });
