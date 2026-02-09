@@ -213,7 +213,6 @@ externalServiceAccounts,2023-09-28T07:26:37Z,,4563fc48afe81ff1af54b6a5bf6d65355f
 alertingModifiedExport,2023-09-28T14:07:45Z,2023-10-12T17:17:32Z,169c5262a5e7d04234119a3733b00bb787b8bf90,Sonia Aguilar
 enableNativeHTTPHistogram,2023-10-03T18:23:55Z,,0fc403d116b9cbd0b93e497cff0ddded55f9fe60,Carl Bergquist
 transformationsVariableSupport,2023-10-04T14:28:46Z,2025-02-17T12:07:11Z,40cdb3033697e8d8e43d0ee0342f0d16fac7d633,Oscar Kilhed
-kubernetesPlaylists,2023-10-05T19:00:36Z,2024-08-13T08:03:28Z,664ebf771e2a1d2f94bc14d3dababb634c4ac40f,Todd Treece
 grafanaAPIServerWithExperimentalAPIs,2023-10-06T18:55:22Z,,717a9dd6160e352ff7c184bfcddf2410eed9d908,Ryan McKinley
 panelMonitoring,2023-10-09T05:19:08Z,2025-11-07T19:04:42Z,ef82767dabea7d19cd8efac0c36ed590d4d767f4,Victor Marin
 navAdminSubsections,2023-10-10T10:50:44Z,2023-11-17T10:04:34Z,f56cc6fdc01dbf2efb802f22650cb2bef0c40179,Ashley Harrison
@@ -235,7 +234,6 @@ alertmanagerRemoteOnly,2023-10-30T16:27:08Z,2025-05-12T12:25:43Z,363830883cb1f5d
 alertmanagerRemotePrimary,2023-10-30T16:27:08Z,,363830883cb1f5de30f7015df5cba419df47468e,Santiago
 alertmanagerRemoteSecondary,2023-10-30T16:27:08Z,,363830883cb1f5de30f7015df5cba419df47468e,Santiago
 annotationPermissionUpdate,2023-10-31T13:30:13Z,,c51c51458e4dd103aa0c099aa48b0d41f9375f86,Ieva
-kubernetesPlaylistsAPI,2023-10-31T17:26:39Z,2023-11-08T19:14:05Z,dd773e74f120ba908cafd596a6875c2d7fa199bf,Ryan McKinley
 traceToProfiles,2023-11-01T10:14:24Z,2024-01-22T14:21:14Z,c39e9a8f527b79881b95f64fd1c413b4bff42983,Joey
 extractFieldsNameDeduplication,2023-11-02T15:47:42Z,2025-11-12T10:08:13Z,0eda368d32dbd7f57635cabd6b7d6870ca7b58ee,Oscar Kilhed
 dashboardSceneForViewers,2023-11-02T19:02:25Z,,6e80a3d59b14d9af235431d6acdce95835e2a792,Dominik Prokop
