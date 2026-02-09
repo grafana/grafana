@@ -1,15 +1,23 @@
+import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert } from '@grafana/ui';
+import { Alert, Icon, Stack } from '@grafana/ui';
 
 import { StatusInfo } from '../types';
 
 import { MessageList } from './MessageList';
 
+export interface AlertAction {
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  external?: boolean;
+}
+
 interface ProvisioningAlertProps {
   error?: string | StatusInfo;
   warning?: string | StatusInfo;
   success?: string | StatusInfo;
-  retry?: () => void;
+  action?: AlertAction;
 }
 
 const getTitle = (alert: string | StatusInfo, type: 'error' | 'warning' | 'success' = 'error') => {
@@ -38,7 +46,7 @@ const getMessage = (alert: string | StatusInfo) => {
   return alert.message;
 };
 
-export function ProvisioningAlert({ error, warning, success, retry }: ProvisioningAlertProps) {
+export function ProvisioningAlert({ error, warning, success, action }: ProvisioningAlertProps) {
   const alertData = error || warning || success;
   const type = error ? 'error' : warning ? 'warning' : 'success';
   const severity = type === 'success' ? 'success' : type;
@@ -47,14 +55,43 @@ export function ProvisioningAlert({ error, warning, success, retry }: Provisioni
     return null;
   }
 
+  const message = getMessage(alertData);
+
+  const getButtonContent = () => {
+    if (!action) {
+      return undefined;
+    }
+    if (action.href && action.external) {
+      return (
+        <Stack alignItems="center">
+          {action.label}
+          <Icon name="external-link-alt" />
+        </Stack>
+      );
+    }
+    return <span>{action.label}</span>;
+  };
+
+  const getOnRemove = () => {
+    if (!action) {
+      return undefined;
+    }
+    // Save href to a var for the types to resolve properly
+    const href = action.href;
+    if (href) {
+      return () => window.open(textUtil.sanitizeUrl(href), '_blank');
+    }
+    return action.onClick;
+  };
+
   return (
     <Alert
       severity={severity}
       title={getTitle(alertData, type)}
-      buttonContent={retry ? <span>{t('provisioning-alert.retry', 'Retry')}</span> : undefined}
-      onRemove={retry}
+      buttonContent={action ? getButtonContent() : undefined}
+      onRemove={getOnRemove()}
     >
-      {getMessage(alertData)}
+      {message}
     </Alert>
   );
 }

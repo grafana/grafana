@@ -92,11 +92,11 @@
       "import": "./dist/esm/clients/rtkq/user/index.mjs",
       "require": "./dist/cjs/clients/rtkq/user/index.cjs"
     },
-    "./rtkq/playlist/v0alpha1": {
-      "@grafana-app/source": "./src/clients/rtkq/playlist/v0alpha1/index.ts",
-      "types": "./dist/types/clients/rtkq/playlist/v0alpha1/index.d.ts",
-      "import": "./dist/esm/clients/rtkq/playlist/v0alpha1/index.mjs",
-      "require": "./dist/cjs/clients/rtkq/playlist/v0alpha1/index.cjs"
+    "./rtkq/playlist/v1": {
+      "@grafana-app/source": "./src/clients/rtkq/playlist/v1/index.ts",
+      "types": "./dist/types/clients/rtkq/playlist/v1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/playlist/v1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/playlist/v1/index.cjs"
     },
     "./rtkq/preferences/v1alpha1": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/v1alpha1/index.ts",

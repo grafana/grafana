@@ -19,25 +19,24 @@ export interface UseGetRepositoryRefsProps {
 
 export function useGetRepositoryRefs({ repositoryType, repositoryName }: UseGetRepositoryRefsProps) {
   const {
-    isReady: isRepositoryReady,
     isLoading: isRepositoryLoading,
     hasError: isRepoError,
+    isReconciled,
+    healthStatusNotReady,
   } = useRepositoryStatus(repositoryName);
 
+  const shouldSkipQuery = !repositoryName || !isGitProvider(repositoryType) || !isReconciled;
   const {
     data: branchData,
     isLoading: branchLoading,
     error: branchError,
-  } = useGetRepositoryRefsQuery(
-    !repositoryName || !isGitProvider(repositoryType) || !isRepositoryReady ? skipToken : { name: repositoryName }
-  );
+  } = useGetRepositoryRefsQuery(shouldSkipQuery ? skipToken : { name: repositoryName });
 
-  const repositoryNotReady = !isRepositoryReady && !isRepoError;
   const branchOptions = branchData?.items.map((item) => ({ label: item.name, value: item.name })) ?? [];
 
   return {
     options: branchOptions,
-    loading: branchLoading || isRepositoryLoading || repositoryNotReady,
+    loading: branchLoading || isRepositoryLoading || healthStatusNotReady,
     error: isRepoError
       ? t(
           'provisioning.connect-step.text-repository-not-ready',
