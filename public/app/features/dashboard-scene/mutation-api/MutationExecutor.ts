@@ -56,20 +56,14 @@ class MutationEventBus {
 }
 
 export class MutationExecutor {
-  private scene!: DashboardScene;
+  private scene: DashboardScene;
   private commands: Map<string, CommandRegistration> = new Map();
   private eventBus = new MutationEventBus();
   private _currentTransaction: MutationTransactionInternal | null = null;
 
-  constructor() {
-    this.registerDefaultHandlers();
-  }
-
-  /**
-   * Set the dashboard scene to operate on.
-   */
-  setScene(scene: DashboardScene): void {
+  constructor(scene: DashboardScene) {
     this.scene = scene;
+    this.registerDefaultHandlers();
   }
 
   /**
@@ -125,7 +119,8 @@ export class MutationExecutor {
     this._currentTransaction = transaction;
 
     const results: MutationResult[] = [];
-    const context: MutationContext = { scene: this.scene, transaction };
+    const availableCommands = Array.from(this.commands.keys());
+    const context: MutationContext = { scene: this.scene, transaction, availableCommands };
 
     try {
       for (let i = 0; i < mutations.length; i++) {
@@ -198,11 +193,12 @@ export class MutationExecutor {
 
       const errorMessage = error instanceof Error ? error.message : String(error);
 
-      // Emit failure event
+      // Emit failure event for the mutation that caused the failure
+      const failedIndex = results.length > 0 ? results.length - 1 : 0;
       if (mutations.length > 0) {
         this.eventBus.emit({
           type: 'mutation_failed',
-          mutation: mutations[0],
+          mutation: mutations[failedIndex],
           result: { success: false, error: errorMessage, changes: [] },
           transaction,
           timestamp: Date.now(),
@@ -210,9 +206,9 @@ export class MutationExecutor {
         });
       }
 
-      // Mark ALL results as failed
-      results.length = 0;
-      for (const _mutation of mutations) {
+      // Pad remaining (unexecuted) mutations with failure results.
+      // Already-executed results are preserved so callers know the real state.
+      for (let i = results.length; i < mutations.length; i++) {
         results.push({
           success: false,
           error: `Transaction failed: ${errorMessage}`,

@@ -16,6 +16,8 @@ import type { MutationChange, MutationResult, MutationTransaction } from '../typ
 export interface MutationContext {
   scene: DashboardScene;
   transaction: MutationTransactionInternal;
+  /** All registered command names, for read-only introspection (e.g., GET_DASHBOARD_SETTINGS). */
+  availableCommands: string[];
 }
 
 /**
@@ -45,15 +47,14 @@ export interface MutationCommand<T = unknown> {
   description: string;
   /** Zod schema for runtime payload validation. Single source of truth. */
   payloadSchema: z.ZodType<T>;
-  /** Permission check run before execution. */
+  /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck;
   /** The handler function. */
   handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
 }
 
 /**
- * Requires edit permissions on the dashboard.
- * Also enters edit mode if not already editing.
+ * Requires edit permissions on the dashboard (pure check, no side effects).
  */
 export function requiresEdit(scene: DashboardScene): PermissionCheckResult {
   if (!scene.canEditDashboard()) {
@@ -61,9 +62,6 @@ export function requiresEdit(scene: DashboardScene): PermissionCheckResult {
       allowed: false,
       error: 'Cannot edit dashboard: insufficient permissions or dashboard is a snapshot',
     };
-  }
-  if (!scene.state.isEditing) {
-    scene.onEnterEditMode();
   }
   return { allowed: true };
 }
@@ -73,4 +71,14 @@ export function requiresEdit(scene: DashboardScene): PermissionCheckResult {
  */
 export function readOnly(): PermissionCheckResult {
   return { allowed: true };
+}
+
+/**
+ * Enter edit mode if the dashboard is not already editing.
+ * Call this at the top of any command handler that modifies the dashboard.
+ */
+export function enterEditModeIfNeeded(scene: DashboardScene): void {
+  if (!scene.state.isEditing) {
+    scene.onEnterEditMode();
+  }
 }

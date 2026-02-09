@@ -23,8 +23,7 @@ export class DashboardMutationClient implements DashboardMutationAPI.MutationCli
   private dashboardUid: string | undefined;
 
   constructor(scene: DashboardScene) {
-    this.executor = new MutationExecutor();
-    this.executor.setScene(scene);
+    this.executor = new MutationExecutor(scene);
     this.dashboardUid = scene.state.uid;
   }
 

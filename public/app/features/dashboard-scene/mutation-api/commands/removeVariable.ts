@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { replaceVariableSet } from './addVariable';
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 export const removeVariablePayloadSchema = payloads.removeVariable;
 
@@ -24,6 +24,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   handler: async (payload, context) => {
     const { scene, transaction } = context;
     const { name } = payload;
+    enterEditModeIfNeeded(scene);
 
     try {
       const variables = scene.state.$variables;

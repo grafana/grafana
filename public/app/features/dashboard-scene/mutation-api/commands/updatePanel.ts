@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 
-import { PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { FieldConfigSource, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createPanelDataProvider } from '../../serialization/layoutSerializers/utils';
 import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
@@ -15,7 +15,7 @@ import { transformMappingsToV1 } from '../../serialization/transformToV1TypesUti
 
 import { findPanel } from './addPanel';
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { validateDatasourceRefs, validatePluginId } from './validation';
 
 export const updatePanelPayloadSchema = payloads.updatePanel;
@@ -32,6 +32,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
   handler: async (payload, context) => {
     const { scene, transaction } = context;
     const { elementName, panelId, updates } = payload;
+    enterEditModeIfNeeded(scene);
 
     try {
       const body = scene.state.body;
@@ -89,7 +90,13 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           };
         }
         if (vizConfig.spec?.fieldConfig !== undefined) {
-          stateUpdate.fieldConfig = transformMappingsToV1(vizConfig.spec.fieldConfig);
+          // Ensure defaults and overrides are present as required by FieldConfigSource
+          const fieldConfig = {
+            defaults: vizConfig.spec.fieldConfig.defaults ?? {},
+            overrides: vizConfig.spec.fieldConfig.overrides ?? [],
+          };
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output structurally matches after defaulting
+          stateUpdate.fieldConfig = transformMappingsToV1(fieldConfig as FieldConfigSource);
         }
       }
 
@@ -99,12 +106,25 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
       // Handle data updates using serialization utils
       if (updates.data !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing Element to PanelKind
-        const currentPanelKind = vizPanelToSchemaV2(panelToUpdate) as PanelKind;
-        const updatedPanelKind: PanelKind = {
-          ...currentPanelKind,
-          spec: { ...currentPanelKind.spec, data: updates.data },
+        const serialized = vizPanelToSchemaV2(panelToUpdate);
+        if (serialized.kind !== 'Panel') {
+          throw new Error('Cannot update queries on a library panel');
+        }
+        const currentPanelKind = serialized;
+        const safeData = {
+          ...updates.data,
+          spec: {
+            ...updates.data.spec,
+            queries: updates.data.spec.queries ?? currentPanelKind.spec.data.spec.queries,
+            queryOptions: updates.data.spec.queryOptions ?? {},
+            transformations: updates.data.spec.transformations ?? [],
+          },
         };
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output structurally matches after defaulting
+        const updatedPanelKind = {
+          ...currentPanelKind,
+          spec: { ...currentPanelKind.spec, data: safeData },
+        } as PanelKind;
         const dataProvider = createPanelDataProvider(updatedPanelKind);
         panelToUpdate.setState({ $data: dataProvider });
       }

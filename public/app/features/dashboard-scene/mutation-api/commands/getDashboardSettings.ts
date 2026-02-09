@@ -17,7 +17,7 @@ import { transformCursorSynctoEnum } from '../../serialization/transformToV2Type
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 
-function getCursorSync(scene: { state: { $behaviors?: unknown[] } }): DashboardCursorSync {
+export function getCursorSync(scene: { state: { $behaviors?: unknown[] } }): DashboardCursorSync {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing SceneBehavior[] to unknown[] for type guard
   const cursorSync = (scene.state.$behaviors as unknown[])?.find(
     (b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync
@@ -26,7 +26,7 @@ function getCursorSync(scene: { state: { $behaviors?: unknown[] } }): DashboardC
   return transformCursorSynctoEnum(cursorSync);
 }
 
-function getLiveNow(scene: { state: { $behaviors?: unknown[] } }): boolean | undefined {
+export function getLiveNow(scene: { state: { $behaviors?: unknown[] } }): boolean | undefined {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing SceneBehavior[] to unknown[] for type guard
   const liveNow = (scene.state.$behaviors as unknown[])?.find(
     (b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer
@@ -43,10 +43,7 @@ export const getDashboardSettingsCommand: MutationCommand<Record<string, never>>
   permission: readOnly,
 
   handler: async (_payload, context) => {
-    const { scene } = context;
-
-    // Lazy import to avoid circular dependency
-    const { ALL_COMMANDS } = await import('./registry');
+    const { scene, availableCommands } = context;
 
     const timeRange = scene.state.$timeRange;
     const timeSettings: Partial<TimeSettingsSpec> = {};
@@ -77,7 +74,7 @@ export const getDashboardSettingsCommand: MutationCommand<Record<string, never>>
       timeSettings,
       canEdit: scene.canEditDashboard(),
       isEditing: scene.state.isEditing ?? false,
-      availableCommands: ALL_COMMANDS.map((cmd) => cmd.name),
+      availableCommands,
     };
 
     return {

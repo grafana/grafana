@@ -13,7 +13,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { replaceVariableSet } from './addVariable';
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 export const updateVariablePayloadSchema = payloads.updateVariable;
 
@@ -28,6 +28,7 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
   handler: async (payload, context) => {
     const { scene, transaction } = context;
+    enterEditModeIfNeeded(scene);
 
     try {
       const { name, variable: variableKind } = payload;

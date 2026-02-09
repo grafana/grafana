@@ -12,7 +12,7 @@ import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2'
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 export const addVariablePayloadSchema = payloads.addVariable;
 
@@ -41,6 +41,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
 
   handler: async (payload, context) => {
     const { scene, transaction } = context;
+    enterEditModeIfNeeded(scene);
 
     try {
       const { variable: variableKind, position } = payload;

@@ -81,6 +81,18 @@ export interface DashboardSettings {
   availableCommands: string[];
 }
 
+/** Response data from ADD_PANEL */
+export interface AddPanelData {
+  panelId: number;
+  elementName: string;
+  layoutItem?: unknown;
+}
+
+/** Response data from LIST_VARIABLES */
+export interface ListVariablesData {
+  variables: Array<{ kind: string; spec: { name: string; [key: string]: unknown } }>;
+}
+
 /** Dashboard link as returned by GET_DASHBOARD_SETTINGS */
 export interface DashboardSettingsLink {
   title: string;

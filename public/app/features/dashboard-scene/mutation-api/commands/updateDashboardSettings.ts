@@ -10,8 +10,9 @@ import { z } from 'zod';
 import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import type { TimeSettingsSpec } from '@grafana/schema/src/schema/dashboard/v2beta1/types.spec.gen';
 
+import { getCursorSync, getLiveNow } from './getDashboardSettings';
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 export const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
 
@@ -26,6 +27,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
 
   handler: async (payload, context) => {
     const { scene, transaction } = context;
+    enterEditModeIfNeeded(scene);
 
     try {
       // Capture previous state for inverse mutation
@@ -34,6 +36,9 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         description: scene.state.description,
         tags: scene.state.tags,
         editable: scene.state.editable,
+        preload: scene.state.preload,
+        liveNow: getLiveNow(scene),
+        cursorSync: getCursorSync(scene),
         links: scene.state.links,
       };
 

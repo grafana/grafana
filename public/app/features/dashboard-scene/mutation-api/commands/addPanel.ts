@@ -18,7 +18,7 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { validateDatasourceRefs, validatePluginId } from './validation';
 
 export const addPanelPayloadSchema = payloads.addPanel;
@@ -53,6 +53,7 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
 
   handler: async (payload, context) => {
     const { scene, transaction } = context;
+    enterEditModeIfNeeded(scene);
 
     try {
       const body = scene.state.body;

@@ -11,7 +11,7 @@ import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveMode
 
 import { findPanel } from './addPanel';
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 export const removePanelPayloadSchema = payloads.removePanel;
 
@@ -27,6 +27,7 @@ export const removePanelCommand: MutationCommand<RemovePanelPayload> = {
   handler: async (payload, context) => {
     const { scene, transaction } = context;
     const { elementName, panelId } = payload;
+    enterEditModeIfNeeded(scene);
 
     try {
       const body = scene.state.body;

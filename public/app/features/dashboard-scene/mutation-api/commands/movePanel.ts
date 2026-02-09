@@ -13,7 +13,7 @@ import { gridItemToGridLayoutItemKind } from '../../serialization/layoutSerializ
 
 import { findPanel } from './addPanel';
 import { payloads } from './schemas';
-import { requiresEdit, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 export const movePanelPayloadSchema = payloads.movePanel;
 
@@ -29,6 +29,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
   handler: async (payload, context) => {
     const { scene, transaction } = context;
     const { elementName, position } = payload;
+    enterEditModeIfNeeded(scene);
 
     try {
       const body = scene.state.body;

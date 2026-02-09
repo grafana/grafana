@@ -179,7 +179,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig.kind]?.skipDataQuery) {
+  if (config.panels[panel.vizConfig?.group]?.skipDataQuery) {
     return undefined;
   }
 
