@@ -391,7 +391,10 @@ export const browseDashboardsAPI = createApi({
             // Show success notification after all deletions
             if (restoreDashboardsEnabled) {
               // Show notification with button to Recently Deleted
-              const title = t('browse-dashboards.delete.success', 'Dashboard deleted', { count: deletedCount });
+              const title =
+                deletedCount === 1
+                  ? t('browse-dashboards.delete.success-single', 'Dashboard deleted')
+                  : t('browse-dashboards.delete.success-multiple', 'Dashboards deleted');
               const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
               const component = buildNotificationButton({
                 title,

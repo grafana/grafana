@@ -3966,8 +3966,8 @@
       "tags-column": "Tags"
     },
     "delete": {
-      "success_one": "Dashboard deleted",
-      "success_other": "Dashboard deleted",
+      "success-multiple": "Dashboards deleted",
+      "success-single": "Dashboard deleted",
       "view-recently-deleted": "View deleted dashboards"
     },
     "delete-folder": {
