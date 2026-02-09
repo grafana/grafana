@@ -188,6 +188,7 @@ func newService(
 		auth := resourcegrpc.Authenticator{Tracer: tracer}
 		return auth.Authenticate(ctx)
 	})
+
 	return &service{
 		backend:            backend,
 		cfg:                cfg,
