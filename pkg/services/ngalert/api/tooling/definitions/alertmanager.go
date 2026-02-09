@@ -808,6 +808,9 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	}
 	// support only one config for now
 	mimirCfg := c.ExtraConfigs[0]
+	if err := mimirCfg.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid extra configuration: %w", err)
+	}
 	opts := definition.MergeOpts{
 		DedupSuffix:     mimirCfg.Identifier,
 		SubtreeMatchers: mimirCfg.MergeMatchers,

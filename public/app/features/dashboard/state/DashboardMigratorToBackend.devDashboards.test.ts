@@ -95,6 +95,7 @@ describe('Dev Dashboard Backend / Frontend result comparison', () => {
       );
       const backendOutputWithSuffix = path.join(path.dirname(backendOutputPath), backendOutputFilename);
       const backendMigrationResult = JSON.parse(readFileSync(backendOutputWithSuffix, 'utf8'));
+      delete backendMigrationResult.id; // Remove id to match frontend behavior
 
       expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 

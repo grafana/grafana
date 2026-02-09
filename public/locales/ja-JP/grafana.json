@@ -670,7 +670,6 @@
       "message": {
         "required": "必須項目です。"
       },
-      "or": "もしくは",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -861,7 +860,9 @@
       "cancel": "キャンセル",
       "clear-filters": "フィルタをクリア",
       "close": "",
+      "create": "",
       "delete": "削除",
+      "deleting": "",
       "edit": "編集",
       "export": "エクスポート",
       "export-all": "すべてをエクスポート",
@@ -1662,9 +1663,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1679,6 +1679,9 @@
         "renamed-intervals_other": "",
         "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "既存のデータソース管理ルール",
@@ -1727,28 +1730,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2093,7 +2087,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "サポートが必要ですか？"
@@ -2244,6 +2242,11 @@
       "aria-label-expand": "展開",
       "aria-label-more": "ポリシーのその他の操作",
       "aria-label-more-default": "デフォルトポリシーのその他の操作",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "一致する他のポリシーが見つからない場合、すべてのアラートインスタンスはデフォルトのポリシーによって処理されます。",
         "title": "デフォルトのポリシー",
@@ -2253,6 +2256,14 @@
         "confirm": "はい、ポリシーを削除します",
         "warning-1": "この通知ポリシーを削除すると、完全に削除されます。",
         "warning-2": "本当にこれを削除してもよろしいですか？"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "通知ポリシーを、カンマで区切られたマッチャーのリストを使用してフィルタリングします。例：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動生成されたポリシー",
@@ -2267,6 +2278,7 @@
         },
         "inherited": "遺伝",
         "mute-time": "次の場合にミュート",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "最初の通知がすでに送信されているアラートのグループに追加された新しいアラートに関する通知を送信する前に待機する時間。",
@@ -2287,6 +2299,12 @@
       "new-policy": "新しいポリシーを追加",
       "no-matchers": "マッチャーなし",
       "reload-policies": "ポリシーを再読み込み",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2325,27 +2343,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2361,6 +2358,9 @@
       "label-new-child-policy": "新しい子ポリシー",
       "label-new-sibling-above": "上に新しい兄弟ポリシーを追加",
       "label-new-sibling-below": "下に新しい兄弟ポリシーを追加"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "クエリプレビューを表示できません。クエリで使用されているデータソースの一部が利用できません。",
@@ -2546,6 +2546,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "編集",
@@ -3151,6 +3154,10 @@
       "misconfigured-warning": "このテンプレートは誤って構成されています。",
       "misconfigured-warning-details": "テンプレートは、Alertmanager設定の<2></2>と<5></5>セクションの両方で定義する必要があります。"
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "{{name}}を編集",
       "title-drawer": "{{name}}を編集",
@@ -3195,7 +3202,8 @@
       "error-loading": {
         "description": "時間間隔を読み込めませんでした。後でもう一度お試しください。",
         "title": "時間間隔の読み込みエラー"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "時間間隔",
@@ -3213,6 +3221,9 @@
     },
     "timestamp": {
       "time-ago": "（{{time}}前）"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3310,12 +3321,6 @@
       "label-edit": "編集",
       "label-export": "エクスポート"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "はい、連絡先を削除する",
       "deleting": "削除中…",
@@ -3333,15 +3338,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "通知ポリシーを削除"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -4884,7 +4880,6 @@
       "paste-panel": "パネルを貼り付け",
       "paste-row": "行を貼り付け",
       "paste-tab": "タブを貼り付け",
-      "un-group-panels": "グループ解除",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -6568,6 +6563,8 @@
       "title-delete-all-transformations": "すべての変換を削除しますか？"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "テーブル表示を切り替え",
       "table-view-label-table-view": "テーブル表示"
     },
@@ -6614,9 +6611,6 @@
     },
     "query-editor": {
       "query": "クエリ"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7796,7 +7790,8 @@
       "loading-placeholder": "読み込み中..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "クエリなしにする"
+      "aria-label-go-queryless": "クエリなしにする",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "結果シリーズ：{{numItems}}",
@@ -9482,6 +9477,10 @@
     "secret-form-field": {
       "reset": "リセット"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "オプションの読み込みに失敗しました",
       "loading": "オプションを読み込み中...",
@@ -9524,6 +9523,18 @@
       "csv-placeholder": "ここにCSVを入力...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10477,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "行の折り返しを解除",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
@@ -10503,6 +10520,7 @@
     "name-show-controls": "コントロールを表示",
     "name-time": "タイムスタンプを表示",
     "name-unique-labels": "一意のラベル",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "行を折り返す",
     "order-options": {
       "label-newest-first": "新しいものから表示",
@@ -12001,19 +12019,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
-      "description-branch-name-in-git-hub": "GitHubのブランチ名",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "ブランチ",
       "label-comment": "コメント",
       "label-path": "パス",
-      "label-workflow": "ワークフロー",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12037,11 +12057,7 @@
       "message": "この機能は現在開発中です。最高の体験と最新の改善を利用するには、Grafanaの<2>ナイトリービルド</2>の使用をお勧めします。"
     },
     "bitbucket": {
-      "branch-description": "プロビジョニングに使用するブランチ",
-      "branch-label": "ブランチ",
       "branch-required": "ブランチが必要です",
-      "path-description": "リポジトリ内のオプションのサブディレクトリパス",
-      "path-label": "パス",
       "permissions": {
         "pull-requests-label": "プルリクエスト",
         "pull-requests-read-write": "読み取りと書き込み",
@@ -12056,15 +12072,13 @@
       "token-label": "アプリパスワード",
       "token-required": "Bitbucketトークンが必要です",
       "token-user-description": "アプリパスワードでリポジトリにアクセスする際に使用するユーザー名",
-      "token-user-label": "ユーザー名",
       "token-user-required": "ユーザー名が必要です",
       "url-description": "BitbucketリポジトリURL",
-      "url-label": "リポジトリURL",
       "url-pattern": "有効なBitbucketリポジトリURLを入力してください",
       "url-required": "リポジトリURLが必要です"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "このリポジトリ接続にわかりやすい名前を追加します",
+      "description-clear-repository-connection": "",
       "empty": "空",
       "error-field-required": "このフィールドは必須です。",
       "error-quota-exceeded-message": "",
@@ -12305,46 +12319,31 @@
       "subtitle-provisioning-feature": "プロビジョニング接続を表示・管理"
     },
     "git": {
-      "branch-description": "プロビジョニングに使用するブランチ",
-      "branch-label": "ブランチ",
       "branch-required": "ブランチが必要です",
-      "path-description": "リポジトリ内のオプションのサブディレクトリパス",
-      "path-label": "パス",
       "pr-workflow-description": "変更保存時にプルリクエストを開くかどうかをユーザーが選択できます。メインブランチへの直接変更が許可されていないリポジトリでは、プルリクエストが必要になる場合があります。",
       "pr-workflow-label": "保存時にプルリクエストオプションを有効にする",
       "token-description": "Gitリポジトリのアクセストークンまたはパスワード",
       "token-label": "アクセストークン",
       "token-required": "Gitトークンが必要です",
       "token-user-description": "アクセストークンでリポジトリにアクセスする際のユーザー名",
-      "token-user-label": "ユーザー名",
       "token-user-required": "ユーザー名が必要です",
       "url-description": "GitリポジトリURL",
-      "url-label": "リポジトリURL",
       "url-pattern": "有効なGitリポジトリURLでなければなりません",
       "url-required": "リポジトリURLが必要です"
     },
     "github": {
-      "branch-description": "プロビジョニングに使用するブランチ",
-      "branch-label": "ブランチ",
       "branch-required": "ブランチが必要です",
-      "path-description": "リポジトリ内のオプションのサブディレクトリパス",
-      "path-label": "パス",
       "pr-workflow-description": "変更保存時にプルリクエストを開くかどうかをユーザーが選択できます。メインブランチへの直接変更が許可されていないリポジトリでは、プルリクエストが必要になる場合があります。",
       "pr-workflow-label": "保存時にプルリクエストオプションを有効にする",
       "token-description": "リポジトリ権限を持つGitHubパーソナルアクセストークン",
       "token-label": "パーソナルアクセストークン",
       "token-required": "GitHubトークンが必要です",
       "url-description": "GitHubのリポジトリURL",
-      "url-label": "リポジトリURL",
       "url-pattern": "有効なGitHubリポジトリURLでなければなりません",
       "url-required": "リポジトリURLが必要です"
     },
     "gitlab": {
-      "branch-description": "プロビジョニングに使用するブランチ",
-      "branch-label": "ブランチ",
       "branch-required": "ブランチが必要です",
-      "path-description": "リポジトリ内のオプションのサブディレクトリパス",
-      "path-label": "パス",
       "permissions": {
         "api": "API",
         "api-read-write": "読み取りと書き込み",
@@ -12359,7 +12358,6 @@
       "token-label": "プロジェクトアクセストークン",
       "token-required": "GitLabトークンが必要です",
       "url-description": "GitLabリポジトリURL",
-      "url-label": "リポジトリURL",
       "url-pattern": "有効なGitLabリポジトリURLでなければなりません",
       "url-required": "リポジトリURLが必要です"
     },
@@ -12576,9 +12574,15 @@
       "previous": "前へ"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "完了したステップ",
@@ -12617,7 +12621,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
@@ -12630,7 +12635,7 @@
         "token-text": "GitLabパーソナルアクセストークン"
       },
       "go-to": "進む",
-      "make-sure": "これらの権限を必ず含めてください"
+      "make-sure": ""
     },
     "warning-title-default": "警告",
     "wizard": {
@@ -12654,8 +12659,6 @@
       "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12697,10 +12700,6 @@
       "button-submitting": "送信中…",
       "error-instance-repository-exists": "インスタンスリポジトリはすでに存在します",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12919,7 +12918,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",

@@ -10,8 +10,8 @@ import {
   VariablesUnknownTable,
   VariablesUnknownTableProps,
 } from './VariablesUnknownTable';
+import { UsagesToNetwork } from './types';
 import * as utils from './utils';
-import { UsagesToNetwork } from './utils';
 
 async function getTestContext(
   overrides: Partial<VariablesUnknownTableProps> | undefined = {},
