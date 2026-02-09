@@ -94,9 +94,9 @@ func (tc *playlistsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, sh
 		},
 	})
 
-	VerifyResourceCount(t, playlistCli, expectedPlaylistCount)
+	verifyResourceCount(t, playlistCli, expectedPlaylistCount)
 	for _, uid := range tc.playlistUIDs {
-		VerifyResource(t, playlistCli, uid, shouldExist)
+		verifyResource(t, playlistCli, uid, shouldExist)
 	}
 }
 

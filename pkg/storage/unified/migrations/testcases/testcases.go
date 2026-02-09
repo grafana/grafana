@@ -23,8 +23,8 @@ type ResourceMigratorTestCase interface {
 	Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }
 
-// VerifyResourceCount verifies that the expected number of resources exist in K8s storage
-func VerifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedCount int) {
+// verifyResourceCount verifies that the expected number of resources exist in K8s storage
+func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedCount int) {
 	t.Helper()
 
 	l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
@@ -35,8 +35,8 @@ func VerifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedC
 	require.Equal(t, expectedCount, len(resources))
 }
 
-// VerifyResource verifies that a resource with the given UID exists in K8s storage
-func VerifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, shouldExist bool) {
+// verifyResource verifies that a resource with the given UID exists in K8s storage
+func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, shouldExist bool) {
 	t.Helper()
 
 	_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})

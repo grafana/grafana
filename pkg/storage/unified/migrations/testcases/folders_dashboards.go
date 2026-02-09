@@ -90,9 +90,9 @@ func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTes
 			Resource: "folders",
 		},
 	})
-	VerifyResourceCount(t, folderCli, expectedFolderCount)
+	verifyResourceCount(t, folderCli, expectedFolderCount)
 	for _, uid := range folderUIDs {
-		VerifyResource(t, folderCli, uid, shouldExist)
+		verifyResource(t, folderCli, uid, shouldExist)
 	}
 
 	// Verify dashboards
@@ -109,9 +109,9 @@ func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTes
 			Resource: "dashboards",
 		},
 	})
-	VerifyResourceCount(t, dashboardCli, expectedDashboardCount)
+	verifyResourceCount(t, dashboardCli, expectedDashboardCount)
 	for _, uid := range dashboardUIDs {
-		VerifyResource(t, dashboardCli, uid, shouldExist)
+		verifyResource(t, dashboardCli, uid, shouldExist)
 	}
 }
 
