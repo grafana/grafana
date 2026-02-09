@@ -6519,7 +6519,6 @@
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
@@ -12476,6 +12475,7 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-by-repository-tooltip": "Managed by: Repository",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
