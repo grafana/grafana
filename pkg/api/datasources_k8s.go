@@ -58,7 +58,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 		uid := web.Params(c.Req)[":uid"]
 
 		// fetch the datasource type so we know which api group to call
-		conn, err := hs.dsConnectionClient.GetConnectionByUID(c, uid)
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, uid)
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				return response.Error(http.StatusNotFound, "Data source not found", nil)
@@ -66,7 +66,13 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 			return response.Error(http.StatusInternalServerError, "Failed to lookup datasource connection", err)
 		}
 
-		k8sDS, err := hs.getK8sDataSource(c, conn.Datasource.Group, conn.Datasource.Version, uid)
+		if len(conns.Items) > 1 {
+			return response.Error(http.StatusConflict, "duplicate datasource connections found with this name", nil)
+		}
+
+		conn := conns.Items[0]
+
+		k8sDS, err := hs.getK8sDataSource(c, conn.APIGroup, conn.APIVersion, conn.Name)
 		if err != nil {
 			return hs.handleK8sError(err)
 		}

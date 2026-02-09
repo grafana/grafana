@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -24,13 +24,18 @@ import (
 // This client is useful for services that currently do not know about a datasource's type when fetching it.
 type ConnectionClient interface {
 	// GetConnectionByUID looks up a datasource connection by UID.
-	// Returns the connection which contains the API group (plugin type).
+	// Returns one or more connections which contains the API group (plugin type).
+	// If more that one connection is returned, it should be considered an error
+	// as we cannot guarantee which resource the caller intended to get.
+	//
 	// Deprecated: Use GetConnectionByTypeAndUID instead when type is known.
-	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnection, error)
+	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error)
 
 	// GetConnectionByTypeAndUID looks up a datasource connection by type and UID.
-	// Preferred method when the plugin type is already known.
-	GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnection, error)
+	// Preferred method when the plugin type is already known.  If more that one
+	// connection is returned, it should be considered an error as we cannot
+	// guarantee which resource the caller intended to get.
+	GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnectionList, error)
 }
 
 var _ ConnectionClient = (*connectionClientImpl)(nil)
@@ -57,14 +62,20 @@ var connectionsGVR = schema.GroupVersionResource{
 
 // GetConnectionByUID queries GET /apis/query.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
 // Deprecated: Use GetConnectionByTypeAndUID when type is known.
-func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnection, error) {
-	client, err := dynamic.NewForConfig(cl.clientConfigProvider.GetDirectRestConfig(c))
+func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error) {
+	namespace := cl.namespaceMapper(c.OrgID)
+
+	cfg := cl.clientConfigProvider.GetDirectRestConfig(c)
+	cfg = dynamic.ConfigFor(cfg) // This sets NegotiatedSerializer, required for RESTClientFor
+	cfg.GroupVersion = &schema.GroupVersion{Group: "query.grafana.app", Version: "v0alpha1"}
+	rest, err := rest.RESTClientFor(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create k8s client: %w", err)
+		return nil, fmt.Errorf("failed to create rest client: %w", err)
 	}
 
-	namespace := cl.namespaceMapper(c.OrgID)
-	result, err := client.Resource(connectionsGVR).Namespace(namespace).Get(c.Req.Context(), uid, metav1.GetOptions{})
+	var statusCode int
+	result := rest.Get().AbsPath("apis", "query.grafana.app", "v0alpha1", "namespaces", namespace, "connections").Param("name", uid).Do(c.Req.Context()).StatusCode(&statusCode)
+	err = result.Error()
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, fmt.Errorf("datasource connection not found: %s", uid)
@@ -72,13 +83,10 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 		return nil, fmt.Errorf("failed to get connection: %w", err)
 	}
 
-	data, err := result.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal connection: %w", err)
-	}
+	body, err := result.Raw()
 
-	var conn queryV0.DataSourceConnection
-	if err := json.Unmarshal(data, &conn); err != nil {
+	var conn queryV0.DataSourceConnectionList
+	if err := json.Unmarshal(body, &conn); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal connection: %w", err)
 	}
 
@@ -86,7 +94,7 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 }
 
 // GetConnectionByTypeAndUID looks up a datasource connection when the plugin type is already known.
-func (cl *connectionClientImpl) GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnection, error) {
+func (cl *connectionClientImpl) GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnectionList, error) {
 	// When type is known, we can construct the connection name directly: {group}:{uid}
 	group := pluginType + ".datasource.grafana.app"
 	name := group + ":" + uid
