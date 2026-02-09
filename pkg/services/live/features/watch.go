@@ -20,20 +20,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 // WatchRunner will start a watch task and broadcast results
 type WatchRunner struct {
 	publisher      model.ChannelPublisher
-	configProvider apiserver.RestConfigProvider
+	configProvider restconfig.RestConfigProvider
 
 	watchingMu sync.Mutex
 	watching   map[string]*watcher
 }
 
-func NewWatchRunner(publisher model.ChannelPublisher, configProvider apiserver.RestConfigProvider) *WatchRunner {
+func NewWatchRunner(publisher model.ChannelPublisher, configProvider restconfig.RestConfigProvider) *WatchRunner {
 	return &WatchRunner{
 		publisher:      publisher,
 		configProvider: configProvider,

@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,7 +19,7 @@ func ProvideService(cfg *setting.Cfg,
 	routeRegister routing.RouteRegister,
 	accessControl ac.AccessControl,
 	features featuremgmt.FeatureToggles,
-	configProvider apiserver.DirectRestConfigProvider,
+	configProvider restconfig.DirectRestConfigProvider,
 ) *QueryHistoryService {
 	s := &QueryHistoryService{
 		store:         sqlStore,

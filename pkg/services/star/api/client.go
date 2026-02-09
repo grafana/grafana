@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
@@ -28,7 +28,7 @@ type K8sClients interface {
 
 type k8sClients struct {
 	namespacer     authlib.NamespaceFormatter
-	configProvider apiserver.DirectRestConfigProvider
+	configProvider restconfig.DirectRestConfigProvider
 }
 
 var (

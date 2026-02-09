@@ -14,9 +14,9 @@ import (
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -54,7 +54,7 @@ type K8sClientWithFallback struct {
 // ProvideK8sClientWithFallback provides a K8sHandlerWithFallback.
 func ProvideK8sClientWithFallback(
 	cfg *setting.Cfg,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
 	resourceClient resource.ResourceClient,
@@ -71,7 +71,7 @@ func ProvideK8sClientWithFallback(
 // NewK8sClientWithFallback creates a new K8sClientWithFallback.
 func NewK8sClientWithFallback(
 	cfg *setting.Cfg,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
 	resourceClient resource.ResourceClient,
@@ -301,7 +301,7 @@ func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVer
 
 func newK8sClientFactory(
 	cfg *setting.Cfg,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
 	resourceClient resource.ResourceClient,

@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -50,7 +50,7 @@ type syncer struct {
 	orgService          org.Service
 	namespaceMapper     request.NamespaceMapper
 	serverLock          ServerLock
-	restConfigProvider  apiserver.RestConfigProvider
+	restConfigProvider  restconfig.RestConfigProvider
 	pluginsStoreService pluginstore.Store
 }
 
@@ -67,7 +67,7 @@ func newSyncer(
 	orgService org.Service,
 	namespaceMapper request.NamespaceMapper,
 	serverLock ServerLock,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	pluginsStoreService pluginstore.Store,
 ) *syncer {
 	s := syncer{
@@ -91,7 +91,7 @@ func ProvideSyncer(
 	orgService org.Service,
 	cfgProvider configprovider.ConfigProvider,
 	serverLock ServerLock,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	pluginsStoreService pluginstore.Store,
 ) (Syncer, error) {
 	cfg, err := cfgProvider.Get(context.Background())
