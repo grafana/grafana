@@ -39,7 +39,7 @@ To set up Grafana Advisor you need:
 
 ### Enable feature toggles
 
-To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 To enable the required feature toggles, add them to your Grafana configuration file:
 
@@ -121,11 +121,15 @@ This guide walks you through creating a Grafana alert that monitors Advisor chec
 7. Provide a token name and set an appropriate expiration date
 8. Click **Generate token**
 
-> **Important**: Copy the token value immediately and store it securely - you won't be able to see it again
+{{< admonition type="caution" >}}
+Copy the token value immediately and store it securely - you won't be able to see it again.
+{{< /admonition >}}
 
 ### Step 2: Set up the Grafana Infinity data source
 
-> **Important**: Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+{{< admonition type="note" >}}
+Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+{{< /admonition >}}
 
 1. Go to **Connections → Add new connection**
 2. Search for "Infinity"
@@ -205,7 +209,7 @@ Your alert is now configured to monitor Advisor results and notify you when fail
 
 ## How to manage Advisor using the Grafana CLI `grafanactl`
 
-The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](/docs/grafana/latest/as-code/observability-as-code/grafana-cli/) documentation.
+The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) documentation.
 
 It can be used to manage Advisor `checks` and `checktypes`. We'll cover some examples below.
 
