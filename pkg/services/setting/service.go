@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -54,6 +55,10 @@ const (
 )
 
 const defaultServiceName = "grafana"
+
+// standard OpenTelemetry environment variable for service name.
+// refer to: https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
+const otelServiceNameEnvVar = "OTEL_SERVICE_NAME"
 
 var settingGroupVersion = schema.GroupVersion{
 	Group:   ApiGroup,
@@ -143,7 +148,7 @@ type Config struct {
 	PageSize int64
 	// ServiceName is used to identify the client in the UserAgent header.
 	// The UserAgent format is "settings-client <version> (<service_name>)".
-	// Defaults to "grafana" if not set.
+	// Falls back to the OTEL_SERVICE_NAME environment variable, then to "grafana".
 	ServiceName string
 }
 
@@ -434,6 +439,10 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 	}
 
 	serviceName := config.ServiceName
+	if serviceName == "" {
+		serviceName = os.Getenv(otelServiceNameEnvVar)
+	}
+
 	if serviceName == "" {
 		serviceName = defaultServiceName
 	}

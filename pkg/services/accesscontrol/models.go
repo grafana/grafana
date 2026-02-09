@@ -235,6 +235,12 @@ type GetUserPermissionsQuery struct {
 	Roles        []string
 	TeamIDs      []int64
 	RolePrefixes []string
+	// ExcludeRedundantManagedPermissions filters out individual dashboard/folder action permissions
+	// from managed roles when action sets are enabled. These permissions are redundant because
+	// ExpandActionSets expands action set permissions (e.g. dashboards:view) into the individual
+	// actions (e.g. dashboards:read) in memory. Excluding them from the SQL query significantly
+	// reduces the number of rows loaded for large installations.
+	ExcludeRedundantManagedPermissions bool
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role

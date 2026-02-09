@@ -204,11 +204,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables rendering retries for the reporting feature
-  * @default false
-  */
-  reportingRetries?: boolean;
-  /**
   * Enables CSV encoding options in the reporting feature
   * @default false
   */
@@ -1347,6 +1342,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Exclude redundant individual dashboard/folder permissions from managed roles at query time
+  * @default false
+  */
+  excludeRedundantManagedPermissions?: boolean;
   /**
   * Show insights for plugins in the plugin details page
   * @default false

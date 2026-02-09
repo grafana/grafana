@@ -126,8 +126,6 @@ export interface DashboardSceneState extends SceneObjectState {
   uid?: string;
   /** @experimental */
   scopeMeta?: ScopeMeta;
-  /** @deprecated */
-  id?: number | null;
   /** Layout of panels */
   body: DashboardLayoutManager;
   /** NavToolbar actions */
@@ -302,7 +300,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       version: result.version,
       isDirty: false,
       uid: result.uid,
-      id: result.id,
       meta: {
         ...this.state.meta,
         uid: result.uid,

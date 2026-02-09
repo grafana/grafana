@@ -673,7 +673,6 @@
       "message": {
         "required": "Zorunlu."
       },
-      "or": "veya",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -864,7 +863,9 @@
       "cancel": "İptal",
       "clear-filters": "Filtreleri temizle",
       "close": "",
+      "create": "",
       "delete": "Sil",
+      "deleting": "",
       "edit": "Düzenle",
       "export": "Dışa aktar",
       "export-all": "Tümünü dışa aktar",
@@ -1667,9 +1668,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1687,6 +1687,9 @@
         "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "Mevcut veri kaynağı tarafından yönetilen kurallar",
@@ -1737,28 +1740,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2104,7 +2098,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Yardıma mı ihtiyacınız var?"
@@ -2255,6 +2253,11 @@
       "aria-label-expand": "Genişlet",
       "aria-label-more": "politika için daha fazla işlem",
       "aria-label-more-default": "varsayılan politika için daha fazla işlem",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Başka bir eşleşen politika bulunamazsa tüm uyarı örnekleri varsayılan politika tarafından işlenecektir.",
         "title": "Varsayılan politika",
@@ -2264,6 +2267,14 @@
         "confirm": "Evet, politikayı sil",
         "warning-1": "Bu bildirim politikası silindiğinde kalıcı olarak kaldırılacaktır.",
         "warning-2": "Bu politikayı silmek istediğinizden emin misiniz?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Bildirim politikalarını, virgülle ayrılmış eşleşenler listesi kullanarak filtreleyin, örneğin: <1>severity=critical, region=EMEA</1>",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
@@ -2278,6 +2289,7 @@
         },
         "inherited": "Devralınmış",
         "mute-time": "Şu durumda sessize alınır:",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "İlk bildirimin zaten gönderildiği bir grup uyarıya eklenen yeni uyarılar hakkında bildirim göndermeden önce ne kadar beklenmesi gerektiğini belirleyin.",
@@ -2299,6 +2311,12 @@
       "new-policy": "Yeni politika ekle",
       "no-matchers": "Eşleşen yok",
       "reload-policies": "Politikaları yeniden yükle",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2338,27 +2356,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2374,6 +2371,9 @@
       "label-new-child-policy": "Çocuklara ilişkin yeni politika",
       "label-new-sibling-above": "Yukarıdan yeni eş düzey",
       "label-new-sibling-below": "Aşağıdan yeni eş düzey"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Sorgu ön izlemesi görüntülenemiyor. Sorgularda kullanılan bazı veri kaynakları mevcut değil.",
@@ -2559,6 +2559,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Düzenle",
@@ -3167,6 +3170,10 @@
       "misconfigured-warning": "Bu şablon yanlış yapılandırılmış.",
       "misconfigured-warning-details": "Şablonlar alertmanager yapılandırmanızın hem <2></2> hem de <5></5> bölümlerinde tanımlanmalıdır."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "{{name}} ögesini düzenle",
       "title-drawer": "{{name}} ögesini düzenle",
@@ -3211,7 +3218,8 @@
       "error-loading": {
         "description": "Zaman aralıkları yüklenemedi. Lütfen daha sonra tekrar deneyin.",
         "title": "Zaman aralıkları yüklenirken hata oluştu"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Zaman aralıkları",
@@ -3229,6 +3237,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} önce)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3326,12 +3337,6 @@
       "label-edit": "Düzenle",
       "label-export": "Dışa aktar"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Evet, iletişim noktasını sil",
       "deleting": "Siliniyor...",
@@ -3349,15 +3354,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "Bildirim politikasını sil"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -4908,7 +4904,6 @@
       "paste-panel": "Paneli yapıştır",
       "paste-row": "Satırı yapıştır",
       "paste-tab": "Sekmeyi yapıştır",
-      "un-group-panels": "Gruplandırmayı çöz",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -6595,6 +6590,8 @@
       "title-delete-all-transformations": "Tüm dönüşümler silinsin mi?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Tablo görünümünü aç/kapat",
       "table-view-label-table-view": "Tablo görünümü"
     },
@@ -6641,9 +6638,6 @@
     },
     "query-editor": {
       "query": "Sorgu"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7825,7 +7819,8 @@
       "loading-placeholder": "Yükleniyor..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Sorgu olmadan devam et"
+      "aria-label-go-queryless": "Sorgu olmadan devam et",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Sonuç serisi: {{numItems}}",
@@ -9523,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Sıfırla"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Seçenekler yüklenemedi",
       "loading": "Seçenekler yükleniyor...",
@@ -9565,6 +9564,18 @@
       "csv-placeholder": "Buraya CSV girin...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10526,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Satırları çöz",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
@@ -10552,6 +10569,7 @@
     "name-show-controls": "Kontrolleri göster",
     "name-time": "",
     "name-unique-labels": "Benzersiz etiketler",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Satırları kaydır",
     "order-options": {
       "label-newest-first": "Yeniden eskiye",
@@ -12053,19 +12071,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
-      "description-branch-name-in-git-hub": "GitHub'daki dal adı",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Dal",
       "label-comment": "Yorum",
       "label-path": "Yol",
-      "label-workflow": "İş akışı",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12089,11 +12109,7 @@
       "message": "Bu özellik şu anda aktif geliştirme aşamasındadır. En iyi deneyim ve en yeni geliştirmeler için Grafana'nın <2>gecelik derleme</2> sürümünü kullanmanızı öneririz."
     },
     "bitbucket": {
-      "branch-description": "Sağlama için kullanılacak dal",
-      "branch-label": "Dal",
       "branch-required": "Dal gereklidir",
-      "path-description": "Depo içinde isteğe bağlı alt dizin yolu",
-      "path-label": "Yol",
       "permissions": {
         "pull-requests-label": "",
         "pull-requests-read-write": "",
@@ -12108,15 +12124,13 @@
       "token-label": "Uygulama Parolası",
       "token-required": "Bitbucket belirteci gereklidir",
       "token-user-description": "Uygulama parolasıyla depoya erişmek için kullanılacak kullanıcı adı",
-      "token-user-label": "Kullanıcı adı",
       "token-user-required": "Kullanıcı adı gereklidir",
       "url-description": "Bitbucket depo URL'si",
-      "url-label": "Depo URL'si",
       "url-pattern": "Geçerli bir Bitbucket depo URL'si olmalıdır",
       "url-required": "Depo URL'si gereklidir"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Bu depo bağlantısı için net bir ad ekleyin",
+      "description-clear-repository-connection": "",
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
       "error-quota-exceeded-message": "",
@@ -12363,46 +12377,31 @@
       "subtitle-provisioning-feature": "Sağlama bağlantılarınızı görüntüleyin ve yönetin"
     },
     "git": {
-      "branch-description": "Sağlama için kullanılacak dal",
-      "branch-label": "Dal",
       "branch-required": "Dal gereklidir",
-      "path-description": "Depo içinde isteğe bağlı alt dizin yolu",
-      "path-label": "Yol",
       "pr-workflow-description": "Kullanıcıların değişiklikleri kaydederken bir çekme isteği açıp açmayacağını seçmesine izin verir. Depo ana dala doğrudan değişikliklere izin vermiyorsa bir çekme isteği gerekebilir.",
       "pr-workflow-label": "Kaydederken çekme isteği seçeneğini etkinleştir",
       "token-description": "Git deposu erişim belirteci veya parolası",
       "token-label": "Erişim Belirteci",
       "token-required": "Git belirteci gereklidir",
       "token-user-description": "Erişim belirteciyle depoya erişmek için kullanılacak kullanıcı adı",
-      "token-user-label": "Kullanıcı adı",
       "token-user-required": "Kullanıcı adı gereklidir",
       "url-description": "Git deposu URL'si",
-      "url-label": "Depo URL'si",
       "url-pattern": "Geçerli bir Git depo URL'si olmalıdır",
       "url-required": "Depo URL'si gereklidir"
     },
     "github": {
-      "branch-description": "Sağlama için kullanılacak dal",
-      "branch-label": "Dal",
       "branch-required": "Dal gereklidir",
-      "path-description": "Depo içinde isteğe bağlı alt dizin yolu",
-      "path-label": "Yol",
       "pr-workflow-description": "Kullanıcıların değişiklikleri kaydederken bir çekme isteği açıp açmayacağını seçmesine izin verir. Depo ana dala doğrudan değişikliklere izin vermiyorsa bir çekme isteği gerekebilir.",
       "pr-workflow-label": "Kaydederken çekme isteği seçeneğini etkinleştir",
       "token-description": "Depo izinlerine sahip GitHub Kişisel Erişim Belirteci",
       "token-label": "Kişisel Erişim Belirteci",
       "token-required": "GitHub belirteci gereklidir",
       "url-description": "GitHub depo URL'si",
-      "url-label": "Depo URL'si",
       "url-pattern": "Geçerli bir GitHub depo URL'si olmalıdır",
       "url-required": "Depo URL'si gereklidir"
     },
     "gitlab": {
-      "branch-description": "Sağlama için kullanılacak dal",
-      "branch-label": "Dal",
       "branch-required": "Dal gereklidir",
-      "path-description": "Depo içinde isteğe bağlı alt dizin yolu",
-      "path-label": "Yol",
       "permissions": {
         "api": "",
         "api-read-write": "",
@@ -12417,7 +12416,6 @@
       "token-label": "Proje Erişim Belirteci",
       "token-required": "GitLab belirteci gereklidir",
       "url-description": "GitLab depo URL'si",
-      "url-label": "Depo URL'si",
       "url-pattern": "Geçerli bir GitLab depo URL'si olmalıdır",
       "url-required": "Depo URL'si gereklidir"
     },
@@ -12634,9 +12632,15 @@
       "previous": "Önceki"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Tamamlanan adım",
@@ -12675,7 +12679,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "ve şuna tıklayın:",
@@ -12688,7 +12693,7 @@
         "token-text": ""
       },
       "go-to": "Şuraya git:",
-      "make-sure": "Bu izinleri eklediğinizden emin olun"
+      "make-sure": ""
     },
     "warning-title-default": "Uyarı",
     "wizard": {
@@ -12712,8 +12717,6 @@
       "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12755,10 +12758,6 @@
       "button-submitting": "Gönderiliyor...",
       "error-instance-repository-exists": "Örnek deposu zaten var",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12978,7 +12977,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",

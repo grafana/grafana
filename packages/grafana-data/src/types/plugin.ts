@@ -217,6 +217,7 @@ export interface PluginMetaInfo {
   screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
+  keywords?: string[] | null;
 }
 
 export interface PluginConfigPageProps<T extends PluginMeta> {
