@@ -32,16 +32,14 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
   const [createTeamFolder, setCreateTeamFolder] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | undefined>(undefined);
+  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | null>(null);
 
   const handleTeamFolderToggle = () => {
     setCreateTeamFolder(!createTeamFolder);
   };
 
   const handleTeamSelectorChange = (ownerRef: OwnerReference | null) => {
-    if (ownerRef) {
-      setSelectedTeam(ownerRef);
-    }
+    setSelectedTeam(ownerRef);
   };
 
   const translatedFolderNameRequiredPhrase = t(
