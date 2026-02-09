@@ -30,8 +30,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -71,6 +73,7 @@ type service struct {
 	searchRing       *ring.Ring
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
+	authenticator    interceptors.AuthenticatorFunc
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
@@ -85,6 +88,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	srv *grpc.Server,
 ) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
@@ -98,6 +102,11 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
 	}
+
+	if err := s.registerServer(srv); err != nil {
+		return nil, err
+	}
+
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
 	return s, nil
 }
@@ -115,6 +124,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
+	srv *grpc.Server,
 ) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
@@ -150,6 +160,10 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
+	if err := s.registerServer(srv); err != nil {
+		return nil, err
+	}
+
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 	return s, nil
 }
@@ -168,10 +182,17 @@ func newService(
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
+	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+	// grpcutils.NewGrpcAuthenticator should be used instead.
+	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
+		auth := resourcegrpc.Authenticator{Tracer: tracer}
+		return auth.Authenticate(ctx)
+	})
 	return &service{
 		backend:            backend,
 		cfg:                cfg,
 		features:           features,
+		authenticator:      authn,
 		tracing:            tracer,
 		db:                 db,
 		log:                log,
@@ -284,10 +305,6 @@ func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 }
 
 func (s *service) starting(ctx context.Context) error {
-	if s.serverStopper == nil {
-		return fmt.Errorf("grpc services not registered, call RegisterGRPCServices before starting")
-	}
-
 	if s.subservicesMngr != nil {
 		s.subservicesWatcher.WatchManager(s.subservicesMngr)
 		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr); err != nil {
@@ -314,13 +331,8 @@ func (s *service) starting(ctx context.Context) error {
 	return nil
 }
 
-// RegisterGRPCServices creates the resource server and registers the gRPC services on the provided server.
-// This must be called before the service is started.
-func (s *service) RegisterGRPCServices(srv *grpc.Server) error {
-	if s.serverStopper != nil {
-		return fmt.Errorf("grpc services already registered")
-	}
-
+// registerServer creates the resource/search server and registers the gRPC services on the provided server.
+func (s *service) registerServer(srv *grpc.Server) error {
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
@@ -367,14 +379,12 @@ func (s *service) running(ctx context.Context) error {
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
 		s.log.Info("Stopping resource server")
-		if s.serverStopper != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			if err := s.serverStopper.Stop(ctx); err != nil {
-				s.log.Warn("Failed to stop resource server", "error", err)
-			} else {
-				s.log.Info("Resource server stopped")
-			}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.serverStopper.Stop(ctx); err != nil {
+			s.log.Warn("Failed to stop resource server", "error", err)
+		} else {
+			s.log.Info("Resource server stopped")
 		}
 
 		return nil
@@ -513,23 +523,43 @@ func (s *service) createAndRegisterServer(srv *grpc.Server, opts ServerOptions) 
 	return s.registerUnifiedResourceServer(srv, server)
 }
 
+// searchServerWithAuth wraps a SearchServer with per-service authentication.
+type searchServerWithAuth struct {
+	resource.SearchServer
+	*interceptors.ServiceWithAuth
+}
+
 func (s *service) registerSearchServer(srv *grpc.Server, server resource.SearchServer) error {
-	resourcepb.RegisterResourceIndexServer(srv, server)
-	resourcepb.RegisterManagedObjectIndexServer(srv, server)
-	resourcepb.RegisterDiagnosticsServer(srv, server)
+	var handler = server
+	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
+		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
+	}
+	resourcepb.RegisterResourceIndexServer(srv, handler)
+	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
+	resourcepb.RegisterDiagnosticsServer(srv, handler)
 	return s.registerHealthAndReflection(srv, server)
 }
 
+// resourceServerWithAuth wraps a ResourceServer with per-service authentication.
+type resourceServerWithAuth struct {
+	resource.ResourceServer
+	*interceptors.ServiceWithAuth
+}
+
 func (s *service) registerUnifiedResourceServer(srv *grpc.Server, server resource.ResourceServer) error {
+	var handler = server
+	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
+		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
+	}
 	// Register storage services
-	resourcepb.RegisterResourceStoreServer(srv, server)
-	resourcepb.RegisterBulkStoreServer(srv, server)
-	resourcepb.RegisterBlobStoreServer(srv, server)
-	resourcepb.RegisterDiagnosticsServer(srv, server)
-	resourcepb.RegisterQuotasServer(srv, server)
+	resourcepb.RegisterResourceStoreServer(srv, handler)
+	resourcepb.RegisterBulkStoreServer(srv, handler)
+	resourcepb.RegisterBlobStoreServer(srv, handler)
+	resourcepb.RegisterDiagnosticsServer(srv, handler)
+	resourcepb.RegisterQuotasServer(srv, handler)
 	// Register search services
-	resourcepb.RegisterResourceIndexServer(srv, server)
-	resourcepb.RegisterManagedObjectIndexServer(srv, server)
+	resourcepb.RegisterResourceIndexServer(srv, handler)
+	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	return s.registerHealthAndReflection(srv, server)
 }
 

@@ -205,12 +205,11 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, nil, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil, grpcService.GetServer())
 	require.NoError(t, err)
-	require.NoError(t, svc.RegisterGRPCServices(grpcService.GetServer()))
 	var client resourcepb.ResourceStoreClient
 
 	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
@@ -304,12 +303,11 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		},
 	}
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, nil, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server", nil, nil)
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil, grpcService.GetServer())
 	require.NoError(t, err)
-	require.NoError(t, svc.RegisterGRPCServices(grpcService.GetServer()))
 
 	var client resource.SearchClient
 	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors

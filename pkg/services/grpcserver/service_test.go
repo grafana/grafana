@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -14,7 +12,6 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -420,109 +417,6 @@ func TestDelayShutdown(t *testing.T) {
 		defer checkCancel2()
 		_, err = healthClient.Check(checkCtx2, &grpc_health_v1.HealthCheckRequest{})
 		assert.Error(t, err, "Server should be stopped after explicit shutdown() call")
-	})
-}
-
-func TestDependentModules(t *testing.T) {
-	t.Run("waits for dependent modules before shutting down", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.GRPCServer.Network = "tcp"
-		cfg.GRPCServer.Address = "127.0.0.1:0"
-		cfg.GRPCServer.GracefulShutdownTimeout = 5 * time.Second
-
-		// Create a mock dependent service that takes some time to stop
-		dependentStopStarted := make(chan struct{})
-		dependentStopped := make(chan struct{})
-		dependentSvc := services.NewBasicService(nil, func(ctx context.Context) error {
-			<-ctx.Done()
-			return nil
-		}, func(_ error) error {
-			close(dependentStopStarted)
-			time.Sleep(200 * time.Millisecond) // Simulate cleanup
-			close(dependentStopped)
-			return nil
-		}).WithName("dependent-module")
-
-		// Create the DSKitService with the dependent module name
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrpcServer)
-		dskitSvc, err := ProvideDSKitService(cfg, features, nil, nil, prometheus.NewPedanticRegistry(), "test-grpc-server", []string{"dependent-module"}, func(name string) services.Service {
-			if name == "dependent-module" {
-				return dependentSvc
-			}
-			return nil
-		})
-		require.NoError(t, err)
-		grpc_health_v1.RegisterHealthServer(dskitSvc.GetServer(), &testHealthServer{})
-
-		// Start both services
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		grpcDone := make(chan struct{})
-		go func() {
-			_ = dskitSvc.StartAsync(ctx)
-			_ = dskitSvc.AwaitRunning(ctx)
-			_ = dskitSvc.AwaitTerminated(context.Background())
-			close(grpcDone)
-		}()
-
-		dependentDone := make(chan struct{})
-		go func() {
-			_ = dependentSvc.StartAsync(ctx)
-			_ = dependentSvc.AwaitRunning(ctx)
-			_ = dependentSvc.AwaitTerminated(context.Background())
-			close(dependentDone)
-		}()
-
-		// Wait for both to be running
-		require.NoError(t, dskitSvc.AwaitRunning(ctx))
-		require.NoError(t, dependentSvc.AwaitRunning(ctx))
-
-		// Verify server is running
-		conn, err := grpc.NewClient(
-			dskitSvc.GetAddress(),
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		)
-		require.NoError(t, err)
-		defer func() { _ = conn.Close() }()
-
-		healthClient := grpc_health_v1.NewHealthClient(conn)
-		_, err = healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-		require.NoError(t, err)
-
-		// Stop both services (simulating ServiceManager.StopAsync)
-		dskitSvc.StopAsync()
-		dependentSvc.StopAsync()
-
-		// Dependent should start stopping first
-		select {
-		case <-dependentStopStarted:
-			// Expected
-		case <-time.After(1 * time.Second):
-			t.Fatal("Dependent service should start stopping")
-		}
-
-		// gRPC server should still be running while dependent is stopping
-		checkCtx, checkCancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		_, err = healthClient.Check(checkCtx, &grpc_health_v1.HealthCheckRequest{})
-		checkCancel()
-		assert.NoError(t, err, "gRPC server should still be running while waiting for dependent")
-
-		// Wait for dependent to fully stop
-		select {
-		case <-dependentStopped:
-			// Expected
-		case <-time.After(1 * time.Second):
-			t.Fatal("Dependent service should have stopped")
-		}
-
-		// Now wait for gRPC to stop
-		select {
-		case <-grpcDone:
-			// Expected
-		case <-time.After(1 * time.Second):
-			t.Fatal("gRPC server should have stopped after dependent")
-		}
 	})
 }
 

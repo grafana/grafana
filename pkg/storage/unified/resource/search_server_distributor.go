@@ -27,32 +27,23 @@ import (
 
 type UnifiedStorageGrpcService interface {
 	services.NamedService
-	// RegisterGRPCServices registers the gRPC services on the provided server.
-	RegisterGRPCServices(srv *grpc.Server) error
 }
 
 var (
 	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
 )
 
-func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) UnifiedStorageGrpcService {
-	svc := services.NewBasicService(nil, func(ctx context.Context) error {
-		<-ctx.Done()
-		return nil
-	}, nil).WithName(modules.SearchServerDistributor)
-	return &distributorServer{
-		BasicService: svc,
-		log:          log.New("index-server-distributor"),
-		ring:         ring,
-		clientPool:   ringClientPool,
-		tracing:      tracer,
+func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool, srv *grpc.Server) (UnifiedStorageGrpcService, error) {
+	s := &distributorServer{
+		log:        log.New("index-server-distributor"),
+		ring:       ring,
+		clientPool: ringClientPool,
+		tracing:    tracer,
 	}
-}
 
-func (s *distributorServer) RegisterGRPCServices(srv *grpc.Server) error {
 	healthService, err := ProvideHealthService(s)
 	if err != nil {
-		return err
+		return s, err
 	}
 
 	resourcepb.RegisterResourceIndexServer(srv, s)
@@ -60,7 +51,12 @@ func (s *distributorServer) RegisterGRPCServices(srv *grpc.Server) error {
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	grpcserver.RegisterReflection(srv)
 
-	return nil
+	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
+		<-ctx.Done()
+		return nil
+	}, nil).WithName(modules.SearchServerDistributor)
+
+	return s, nil
 }
 
 type RingClient struct {

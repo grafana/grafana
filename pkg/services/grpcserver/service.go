@@ -210,55 +210,28 @@ func (s *gPRCServerService) GetAddress() string {
 	return s.address
 }
 
-// ServiceResolver is a function that resolves a module name to its service.
-type ServiceResolver func(moduleName string) services.Service
-
 // DSKitService is a wrapper around a dskit BasicService and a Provider.
 type DSKitService struct {
 	*services.BasicService
 	Provider
-
-	dependentModules []string
-	serviceResolver  ServiceResolver
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
 func ProvideDSKitService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	authenticator interceptors.Authenticator,
 	tracer trace.Tracer,
 	registerer prometheus.Registerer,
 	serviceName string,
-	dependentModules []string,
-	serviceResolver ServiceResolver,
 ) (*DSKitService, error) {
-	grpcService, err := provideService(cfg, features, authenticator, tracer, registerer, true)
+	grpcService, err := provideService(cfg, features, nil, tracer, registerer, true)
 	if err != nil {
 		return nil, err
 	}
-	svc := &DSKitService{
-		Provider:         grpcService,
-		dependentModules: dependentModules,
-		serviceResolver:  serviceResolver,
-	}
+	svc := &DSKitService{Provider: grpcService}
 	svc.BasicService = services.NewBasicService(nil, grpcService.Run, func(_ error) error {
-		svc.waitForDependents()
 		grpcService.shutdown()
 		return nil
 	}).WithName(serviceName)
 	return svc, nil
-}
-
-// waitForDependents waits for all dependent modules to reach Terminated or Failed state.
-func (s *DSKitService) waitForDependents() {
-	if s.serviceResolver == nil {
-		return
-	}
-
-	for _, moduleName := range s.dependentModules {
-		if svc := s.serviceResolver(moduleName); svc != nil {
-			_ = svc.AwaitTerminated(context.Background())
-		}
-	}
 }

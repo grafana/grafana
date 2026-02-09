@@ -190,8 +190,3 @@ func (m *service) RegisterInvisibleModule(name string, fn func() (services.Servi
 func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
 }
-
-// GetService returns the service for the given module name, or nil if not found.
-func (m *service) GetService(name string) services.Service {
-	return m.serviceMap[name]
-}
