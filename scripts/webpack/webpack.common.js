@@ -4,7 +4,7 @@ const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
-module.exports = {
+module.exports = (env = {}) => ({
   target: 'web',
   entry: {
     app: './public/app/index.ts',
@@ -15,9 +15,9 @@ module.exports = {
     asyncWebAssembly: true,
   },
   output: {
-    clean: true,
+    clean: env.useReact18 ? false : true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[contenthash].js',
+    filename: !env.useReact18 ? '[name].[contenthash].js' : '[name]-react18.[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
@@ -66,6 +66,22 @@ module.exports = {
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
     }),
+    ...(!env.useReact18
+      ? []
+      : [
+          new webpack.NormalModuleReplacementPlugin(/^react$/, (resource) => {
+            resource.request = resource.request.replace('react', 'react-18');
+          }),
+          new webpack.NormalModuleReplacementPlugin(/^react-dom/, (resource) => {
+            resource.request = resource.request.replace('react-dom', 'react-dom-18');
+          }),
+          new webpack.NormalModuleReplacementPlugin(/^react\/jsx-runtime$/, (resource) => {
+            resource.request = resource.request.replace('react/jsx-runtime', 'react-18/jsx-runtime');
+          }),
+          new webpack.NormalModuleReplacementPlugin(/^react\/jsx-dev-runtime/, (resource) => {
+            resource.request = resource.request.replace('react/jsx-dev-runtime', 'react-18/jsx-dev-runtime');
+          }),
+        ]),
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
@@ -145,4 +161,4 @@ module.exports = {
       },
     },
   },
-};
+});

@@ -8,6 +8,7 @@
   "scripts": {
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js",
+    "build:useReact18": "yarn run build -- --env useReact18=1 noMinify=1",
     "build:nominify": "yarn run build -- --env noMinify=1",
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
     "codeowners-manifest": "node ./scripts/codeowners-manifest/index.js",
@@ -390,8 +391,10 @@
     "prismjs": "1.30.0",
     "re-resizable": "6.11.2",
     "react": "19.2.1",
+    "react-18": "npm:react@^18.0.0",
     "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "19.2.1",
+    "react-dom-18": "npm:react-dom@^18.0.0",
     "react-draggable": "4.5.0",
     "react-dropzone": "^14.2.3",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",

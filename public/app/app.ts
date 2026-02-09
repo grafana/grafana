@@ -5,6 +5,7 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
 
+import * as React from 'react';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -132,6 +133,7 @@ export class GrafanaApp {
 
   async init() {
     try {
+      console.log(React.version);
       await preInitTasks();
 
       // Let iframe container know grafana has started loading

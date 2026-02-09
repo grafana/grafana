@@ -1457,4 +1457,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Revert to React 18 for the frontend
+  * @default true
+  */
+  useReact18?: boolean;
 }

@@ -176,6 +176,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore frontend build manifest
 manifest.json
+manifest-react18.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**

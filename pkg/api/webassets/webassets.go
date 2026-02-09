@@ -11,9 +11,11 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ManifestInfo struct {
@@ -59,8 +61,26 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 		result, err = readWebAssetsFromCDN(ctx, cdn)
 	}
 
+	// Get an OpenFeature client instance for feature flag evaluation
+	client := openfeature.GetApiInstance().GetClient()
+
+	// Evaluate the feature flag
+	enabled := client.Boolean(
+		ctx,                                 // Request context
+		featuremgmt.FlagUseReact18,          // Feature flag name
+		true,                                // Default value if evaluation fails
+		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
+	)
+
+	var assetsFilename string
+	if enabled {
+		assetsFilename = "assets-manifest-react18.json"
+	} else {
+		assetsFilename = "assets-manifest.json"
+	}
+
 	if result == nil {
-		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
 		if err == nil {
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {

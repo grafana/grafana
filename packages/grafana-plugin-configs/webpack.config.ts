@@ -11,6 +11,8 @@ import VirtualModulesPlugin from 'webpack-virtual-modules';
 import { DIST_DIR } from './constants.ts';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
 
+const USE_REACT_19 = true;
+
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
     // avoid copying files already in dist
@@ -213,7 +215,7 @@ const config = async (env: Env): Promise<Configuration> => {
       clean: {
         keep: new RegExp(`(.*?_(amd64|arm(64)?)(.exe)?|go_plugin_build_manifest)`),
       },
-      filename: '[name].js',
+      filename: USE_REACT_19 ? '[name].js' : '[name]-react18.js',
       library: {
         type: 'amd',
       },
@@ -239,6 +241,22 @@ const config = async (env: Env): Promise<Configuration> => {
     },
 
     plugins: [
+      ...(USE_REACT_19
+        ? []
+        : [
+            new webpack.NormalModuleReplacementPlugin(/^react$/, (resource) => {
+              resource.request = resource.request.replace('react', 'react-18');
+            }),
+            new webpack.NormalModuleReplacementPlugin(/^react-dom/, (resource) => {
+              resource.request = resource.request.replace('react-dom', 'react-dom-18');
+            }),
+            new webpack.NormalModuleReplacementPlugin(/^react\/jsx-runtime$/, (resource) => {
+              resource.request = resource.request.replace('react/jsx-runtime', 'react-18/jsx-runtime');
+            }),
+            new webpack.NormalModuleReplacementPlugin(/^react\/jsx-dev-runtime/, (resource) => {
+              resource.request = resource.request.replace('react/jsx-dev-runtime', 'react-18/jsx-dev-runtime');
+            }),
+          ]),
       virtualPublicPath,
       // Insert create plugin version information into the bundle so Grafana will load from cdn with script tags.
       new webpack.BannerPlugin({

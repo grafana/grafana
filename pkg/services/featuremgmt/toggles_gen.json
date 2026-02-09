@@ -4835,6 +4835,23 @@
     },
     {
       "metadata": {
+        "name": "useReact18",
+        "resourceVersion": "1770636136840",
+        "creationTimestamp": "2026-02-09T11:21:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-09 11:22:16.840941 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Revert to React 18 for the frontend",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "useScopeSingleNodeEndpoint",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T14:32:41Z"

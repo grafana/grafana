@@ -2301,6 +2301,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "useReact18",
+			Description:  "Revert to React 18 for the frontend",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "true",
+		},
 	}
 )
 
