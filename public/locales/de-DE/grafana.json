@@ -4904,7 +4904,6 @@
       "paste-panel": "Panel einfügen",
       "paste-row": "Zeile einfügen",
       "paste-tab": "Tab einfügen",
-      "un-group-panels": "Gruppierung aufheben",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9519,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Zurücksetzen"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",
@@ -10534,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Zeilenumbruch aufheben",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Zeilen umbrechen"
     },
     "logs-navigation": {
@@ -10560,6 +10569,7 @@
     "name-show-controls": "Steuerelemente anzeigen",
     "name-time": "Zeitstempel anzeigen",
     "name-unique-labels": "Eindeutige Labels",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Zeilen umbrechen",
     "order-options": {
       "label-newest-first": "Neueste zuerst",
@@ -12132,7 +12142,6 @@
       "placeholder-my-repository-connection": "Meine Repository-Verbindung",
       "retry-action": "",
       "text-loading-resource-information": "Ressourceninformationen werden geladen ...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} Dashboard",
@@ -12670,7 +12679,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "und klicken",
@@ -12707,8 +12717,6 @@
       "button-cancelling": "",
       "button-next": "Fertigstellen",
       "button-start": "Synchronisierung starten",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {

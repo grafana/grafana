@@ -3888,7 +3888,7 @@
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
       "new-folder-as-team-folder-checkbox-tooltip": "Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access",
-      "new-folder-as-team-folder-label": "Team:",
+      "new-folder-as-team-folder-label": "Team",
       "new-folder-name-required-phrase": "Folder name is required.",
       "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
@@ -9518,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Reset"
     },
+    "secret-text-area": {
+      "hide-content": "Hide secret content",
+      "show-content": "Show secret content"
+    },
     "segment-async": {
       "error": "Failed to load options",
       "loading": "Loading options...",
@@ -10282,10 +10286,10 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed label",
-          "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed field",
+          "indexed-label_one": "Indexed labels",
+          "indexed-label_other": "Indexed labels",
+          "parsedl-label_one": "Parsed fields",
+          "parsedl-label_other": "Parsed fields",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -10666,6 +10670,16 @@
       "message-same-name-current-folder": "A dashboard or a folder with the same name already exists in the current folder",
       "message-same-name-general": "A folder or dashboard with the same name already exists in the root folder"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "Error updating folder owner",
+    "folder-owner-removed": "Folder owner removed",
+    "folder-owner-updated": "Folder owner updated",
+    "manage-folder-owner": "Manage folder owner",
+    "manage-folder-owner-alert-text": "Folders owned by teams that you belong to will be prioritised for you in the folder picker and other locations.",
+    "manage-folder-owner-alert-title": "Select a team to own this folder to help organise your resources.",
+    "save-owner": "Save owner",
+    "select-owner": "Select an owner"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -11507,9 +11521,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
-  },
-  "owner-reference": {
-    "team-members": "Team members:"
   },
   "page": {
     "editable-title": {
@@ -12661,12 +12672,9 @@
       "error-starting-job": "Error starting job"
     },
     "sync-repository": {
-      "body-edit-configuration": "Edit the configuration",
-      "button-edit": "Edit",
       "error-pulling-resources": "Error pulling resources",
       "pull": "Pull",
       "success-pull-started": "Pull started",
-      "title-pull-not-enabled": "Pull is not enabled",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
@@ -12918,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Edit query name"
     },
     "query-error-alert": {
+      "error-details": "Query error details",
+      "fix-with-assistant": "Fix with Assistant",
+      "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
     "query-group": {
