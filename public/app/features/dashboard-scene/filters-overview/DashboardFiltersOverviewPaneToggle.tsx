@@ -15,7 +15,7 @@ export function DashboardFiltersOverviewPaneToggle({ variables, dashboard }: Pro
 
   const onClick = () => {
     dashboard.showModal(
-      new DashboardFiltersOverviewDrawer({})
+      new DashboardFiltersOverviewDrawer({dashboard})
     );
   };
 
