@@ -45,13 +45,7 @@ export function SyncRepository({ repository }: Props) {
             ? undefined
             : t('provisioning.sync-repository.tooltip-unhealthy-repository', 'Unable to pull an unhealthy repository')
         }
-        disabled={
-          jobQuery.isLoading ||
-          activeJob?.status?.state === 'working' ||
-          !name ||
-          !isHealthy ||
-          !repository.spec?.sync?.enabled
-        }
+        disabled={jobQuery.isLoading || activeJob?.status?.state === 'working' || !name || !isHealthy}
         onClick={onClick}
       >
         <Trans i18nKey="provisioning.sync-repository.pull">Pull</Trans>
