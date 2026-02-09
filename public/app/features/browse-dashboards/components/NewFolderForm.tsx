@@ -38,7 +38,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
     setCreateTeamFolder(!createTeamFolder);
   };
 
-  const handleTeamSelectorChange = (ownerRef: OwnerReference) => {
+  const handleTeamSelectorChange = (ownerRef: OwnerReference | null) => {
     if (ownerRef) {
       setSelectedTeam(ownerRef);
     }
