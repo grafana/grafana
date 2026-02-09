@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -19,7 +19,7 @@ import { PanelDataPaneNext } from '../PanelDataPaneNext';
 import { QueryEditorProvider } from './QueryEditorContext';
 import { QueryOptionField, Transformation } from './types';
 import { useQueryOptions } from './useQueryOptions';
-import { getEditorType, isDataTransformerConfig } from './utils';
+import { filterDataTransformerConfigs, getEditorType } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -42,23 +42,19 @@ export function QueryEditorContextWrapper({
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
-  // TODO: review all this garbage
-  const sceneDataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : undefined;
-  const transformerState = sceneDataTransformer?.useState();
+  // Get the transformer's state directly, will be undefined if $data isn't a SceneDataTransformer
+  const transformerState = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data.useState() : undefined;
 
   const transformations: Transformation[] = useMemo(() => {
     const rawTransformations = transformerState?.transformations ?? [];
-    // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-    const transformationList = rawTransformations.filter((t): t is DataTransformerConfig => isDataTransformerConfig(t));
+    const filteredTransformations = filterDataTransformerConfigs(rawTransformations);
 
-    return transformationList.map((t, index) => {
-      return {
-        transformConfig: t,
-        registryItem: standardTransformersRegistry.getIfExists(t.id),
-        // Use a stable ID based on the index and config id to avoid regenerating UUIDs on every render
-        transformId: `${index}-${t.id}`,
-      };
-    });
+    return filteredTransformations.map((t, index) => ({
+      transformConfig: t,
+      registryItem: standardTransformersRegistry.getIfExists(t.id),
+      // Create a stable ID that handles multiple transformations of the same type
+      transformId: `${index}-${t.id}`,
+    }));
   }, [transformerState?.transformations]);
 
   // NOTE: This is the datasource for the panel, not the query

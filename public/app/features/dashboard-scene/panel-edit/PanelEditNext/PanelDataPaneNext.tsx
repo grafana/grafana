@@ -17,7 +17,7 @@ import { getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
-import { isDataTransformerConfig } from './QueryEditor/utils';
+import { filterDataTransformerConfigs } from './QueryEditor/utils';
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -199,10 +199,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const transformer = this.getSceneDataTransformer();
 
     if (transformer) {
-      // We only care about DataTransformerConfig items, not CustomTransformerDefinition
-      const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
-        isDataTransformerConfig(t)
-      );
+      const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
 
       if (index >= 0 && index < transformations.length) {
         return { transformations, transformer };
