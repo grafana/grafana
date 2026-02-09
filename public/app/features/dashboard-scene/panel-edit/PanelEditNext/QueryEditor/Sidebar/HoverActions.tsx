@@ -18,7 +18,10 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
           icon="copy"
           variant="secondary"
           aria-label={t('query-editor.action.duplicate', 'Duplicate query')}
-          onClick={onDuplicate}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicate();
+          }}
         />
       )}
       <Button
@@ -27,7 +30,10 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         icon="trash-alt"
         variant="secondary"
         aria-label={t('query-editor.action.delete', 'Delete query')}
-        onClick={onDelete}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
       />
       <Button
         size="sm"
@@ -35,7 +41,10 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         icon={isHidden ? 'eye-slash' : 'eye'}
         variant="secondary"
         aria-label={isHidden ? t('query-editor.action.show', 'Show card') : t('query-editor.action.hide', 'Hide card')}
-        onClick={onToggleHide}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleHide();
+        }}
       />
     </Stack>
   );
