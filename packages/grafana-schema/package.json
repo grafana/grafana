@@ -19,7 +19,7 @@
       "@grafana-app/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/raw/index.cjs"
+      "require": "./dist/cjs/index.cjs"
     },
     "./apis/dashboard.grafana.app/*/examples": {
       "@grafana-app/source": "./src/schema/dashboard/*/*_examples.ts",
