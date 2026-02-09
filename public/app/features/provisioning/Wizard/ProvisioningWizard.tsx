@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -15,12 +15,12 @@ import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 
-import { GitHubAppStepRef } from './GitHubAppStep';
 import { useStepStatus } from './StepStatusContext';
 import { Stepper } from './Stepper';
 import { WizardButtonBar } from './components/WizardButtonBar';
 import { WizardStepContent } from './components/WizardStepContent';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { useWizardButtons } from './hooks/useWizardButtons';
 import { useWizardCancellation } from './hooks/useWizardCancellation';
@@ -47,12 +47,13 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const values = getDefaultValues({ allowedTargets: settingsData?.allowedTargets });
   const methods = useForm<WizardFormData>({
+    reValidateMode: 'onBlur',
     defaultValues: {
       repository: { ...values, type },
       migrate: {
         history: true,
       },
-      githubAuthType: 'pat',
+      githubAuthType: 'github-app',
       githubAppMode: 'existing',
       githubApp: {},
     },
@@ -66,7 +67,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, githubAuthType] = watch([
+  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
@@ -74,12 +75,13 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     'githubAppMode',
   ]);
 
-  // Ref for GitHubAppStep to trigger submission
-  const githubAppStepRef = useRef<GitHubAppStepRef>(null);
-
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
-  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
+  const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
+  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
+    isHealthy,
+    healthStatusNotReady,
+  });
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName,
     setStepStatusInfo,
@@ -92,7 +94,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep,
     completedSteps,
     currentStepConfig,
-    visibleSteps,
+    steps: wizardSteps,
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
@@ -139,7 +141,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     currentStepConfig,
     methods,
     submitData,
-    githubAppStepRef,
     setStepStatusInfo,
     onSuccess: goToNextStep,
   });
@@ -158,6 +159,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     isCreatingSkipJob,
     showCancelConfirmation,
     shouldUseCancelBehavior,
+    githubAppMode,
+    githubAuthType,
   });
 
   // A different repository is marked with instance target -- nothing will succeed
@@ -174,12 +177,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     }
   }, [navigate, repoName, settingsData?.items]);
 
-  const handleGitHubAppSubmit = useCallback(
+  const handleGitHubAppCreation = useCallback(
     (result: ConnectionCreationResult) => {
       if (result.success) {
         setValue('githubApp.connectionName', result.connectionName);
-        setStepStatusInfo({ status: 'success' });
-        goToNextStep();
+        // after successful creation, switch to existing mode so user can select
+        setValue('githubAppMode', 'existing');
       } else {
         setStepStatusInfo({
           status: 'error',
@@ -190,20 +193,16 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         });
       }
     },
-    [setValue, setStepStatusInfo, goToNextStep]
+    [setValue, setStepStatusInfo]
   );
 
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        {activeStep === 'authType' ? (
-          <div className={styles.stepperSpacer} />
-        ) : (
-          <>
-            <Stepper steps={visibleSteps} activeStep={activeStep} visitedSteps={completedSteps} />
-            <div className={styles.divider} />
-          </>
-        )}
+        <>
+          <Stepper steps={wizardSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+          <div className={styles.divider} />
+        </>
         <form onSubmit={handleSubmit(onFormSubmit)} className={styles.form}>
           <FormPrompt
             onDiscard={onDiscard}
@@ -211,14 +210,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
           />
           <Stack direction="column">
             <Box marginBottom={2}>
-              <Text element="h2">
-                {activeStep === 'authType'
-                  ? (currentStepConfig?.title ?? '')
-                  : `${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}
-              </Text>
+              <Text element="h2">{`${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}</Text>
             </Box>
 
-            {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
+            {hasStepError && 'error' in stepStatusInfo && (
+              <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
+            )}
             {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
@@ -227,8 +224,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 activeStep={activeStep}
                 settingsData={settingsData}
                 repoName={repoName}
-                githubAppStepRef={githubAppStepRef}
-                onGitHubAppSubmit={handleGitHubAppSubmit}
+                onGitHubAppSubmit={handleGitHubAppCreation}
                 onRepositoryDeletion={handleRepositoryDeletion}
                 isCancelling={isCancelling}
               />

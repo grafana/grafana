@@ -1,4 +1,4 @@
-import { DataFrameView, FieldDisplay } from '@grafana/data';
+import { DataFrameView, FieldDisplay, ThresholdsMode } from '@grafana/data';
 
 import type { RadialGaugeProps } from './RadialGauge';
 import { RadialGaugeDimensions } from './types';
@@ -11,9 +11,28 @@ import {
   getFieldDisplayProcessor,
   getAngleBetweenSegments,
   getOptimalSegmentCount,
+  getThresholdPercentageValue,
 } from './utils';
 
 describe('RadialGauge utils', () => {
+  const createFieldDisplay = (value: number, min = 0, max = 100): FieldDisplay => ({
+    display: {
+      numeric: value,
+      text: value.toString(),
+      color: 'blue',
+    },
+    field: {
+      min,
+      max,
+    },
+    view: undefined,
+    colIndex: 0,
+    rowIndex: 0,
+    name: 'test',
+    getLinks: () => [],
+    hasLinks: false,
+  });
+
   describe('getFieldDisplayProcessor', () => {
     it('should return display processor from view when available', () => {
       const mockProcessor = jest.fn();
@@ -156,13 +175,16 @@ describe('RadialGauge utils', () => {
       expect(withGlow.radius).toBeLessThan(withoutGlow.radius); // glow reduces available space
     });
 
-    it('should adjust radius for rounded bars when endAngle < 180', () => {
+    it('should adjust radius and centerY for rounded bars when endAngle < 180', () => {
       const sharpBars = calc({});
-      const roundedBars = calc({ roundedBars: true });
-      const roundedGauge = calc({ roundedBars: true, shape: 'gauge' });
+      const roundedCircle = calc({ roundedBars: true, shape: 'circle' });
+      const roundedArc = calc({ roundedBars: true, shape: 'gauge' });
 
-      expect(roundedBars.radius).toEqual(sharpBars.radius);
-      expect(roundedGauge.radius).toBeLessThan(sharpBars.radius);
+      expect(roundedCircle.radius).toEqual(sharpBars.radius);
+      expect(roundedArc.radius).toBeLessThan(sharpBars.radius);
+
+      expect(roundedCircle.centerY).toEqual(sharpBars.centerY);
+      expect(roundedArc.centerY).not.toEqual(sharpBars.centerY);
     });
 
     it('should handle threshold bars', () => {
@@ -227,24 +249,6 @@ describe('RadialGauge utils', () => {
   });
 
   describe('getValueAngleForValue', () => {
-    const createFieldDisplay = (value: number, min = 0, max = 100): FieldDisplay => ({
-      display: {
-        numeric: value,
-        text: value.toString(),
-        color: 'blue',
-      },
-      field: {
-        min,
-        max,
-      },
-      view: undefined,
-      colIndex: 0,
-      rowIndex: 0,
-      name: 'test',
-      getLinks: () => [],
-      hasLinks: false,
-    });
-
     it('should calculate angle for value in range', () => {
       const fieldDisplay = createFieldDisplay(50, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
@@ -333,48 +337,20 @@ describe('RadialGauge utils', () => {
   });
 
   describe('drawRadialArcPath', () => {
-    const defaultDims = Object.freeze({
-      vizHeight: 220,
-      vizWidth: 220,
-      centerX: 100,
-      centerY: 100,
-      radius: 80,
-      barWidth: 20,
-      margin: 0,
-      barIndex: 0,
-      thresholdsBarWidth: 0,
-      thresholdsBarSpacing: 0,
-      thresholdsBarRadius: 0,
-      scaleLabelsFontSize: 0,
-      scaleLabelsSpacing: 0,
-      scaleLabelsRadius: 0,
-      gaugeBottomY: 0,
-    }) satisfies RadialGaugeDimensions;
-
     it.each([
       { description: 'quarter arc', startAngle: 0, endAngle: 90 },
       { description: 'half arc', startAngle: 0, endAngle: 180 },
       { description: 'three quarter arc', startAngle: 0, endAngle: 270 },
-      { description: 'rounded bars', startAngle: 0, endAngle: 270, roundedBars: true },
-      { description: 'wide bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 50 } },
-      { description: 'narrow bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 5 } },
-      { description: 'narrow radius', startAngle: 0, endAngle: 180, dimensions: { radius: 50 } },
-      {
-        description: 'center x and y',
-        startAngle: 0,
-        endAngle: 360,
-        roundedBars: true,
-        dimensions: { centerX: 150, centerY: 200 },
-      },
-    ])(`should draw correct path for $description`, ({ startAngle, endAngle, dimensions, roundedBars }) => {
-      const path = drawRadialArcPath(startAngle, endAngle, { ...defaultDims, ...dimensions }, roundedBars);
+      { description: 'narrow radius', startAngle: 0, endAngle: 180, radius: 50 },
+    ])(`should draw correct path for $description`, ({ startAngle, endAngle, radius = 80 }) => {
+      const path = drawRadialArcPath(startAngle, endAngle, radius);
       expect(path).toMatchSnapshot();
     });
 
     describe('edge cases', () => {
       it('should adjust 360deg or greater  arcs to avoid SVG rendering issues', () => {
-        expect(drawRadialArcPath(0, 360, defaultDims)).toEqual(drawRadialArcPath(0, 359.99, defaultDims));
-        expect(drawRadialArcPath(0, 380, defaultDims)).toEqual(drawRadialArcPath(0, 380, defaultDims));
+        expect(drawRadialArcPath(0, 360, 80)).toEqual(drawRadialArcPath(0, 359.99, 80));
+        expect(drawRadialArcPath(0, 380, 80)).toEqual(drawRadialArcPath(0, 380, 80));
       });
     });
   });
@@ -408,6 +384,22 @@ describe('RadialGauge utils', () => {
 
       expect(getOptimalSegmentCount(dimensions, 2, 10, 360)).toBe(8);
       expect(getOptimalSegmentCount(dimensions, 1, 5, 360)).toBe(5);
+    });
+  });
+
+  describe('getThresholdPercentageValue', () => {
+    it('should return the correct percentage for absolute thresholds', () => {
+      const threshold = { value: 75, label: 'Warning', color: '#fff' };
+      const fieldDisplay = createFieldDisplay(75, 0, 200);
+      const result = getThresholdPercentageValue(threshold, ThresholdsMode.Absolute, fieldDisplay);
+      expect(result).toBe(0.375);
+    });
+
+    it('should return the correct percentage for percentage thresholds', () => {
+      const threshold = { value: 75, label: 'Warning', color: '#fff' };
+      const fieldDisplay = createFieldDisplay(75, 0, 50);
+      const result = getThresholdPercentageValue(threshold, ThresholdsMode.Percentage, fieldDisplay);
+      expect(result).toBe(0.75);
     });
   });
 });

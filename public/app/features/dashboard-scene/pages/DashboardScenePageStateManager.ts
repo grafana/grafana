@@ -1,6 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
@@ -217,6 +218,38 @@ abstract class DashboardScenePageStateManagerBase<T>
         throw err;
       }
     }
+  }
+
+  /**
+   * Loads the assistant preview dashboard from the user storage
+   * @param base64EncodedKey base64 encoded key of the dashboard in the user storage
+   * @returns Promise with dashboard data (can be v1 or v2 format) and meta
+   */
+  protected async loadAssistantPreviewDashboard(
+    base64EncodedKey: string
+  ): Promise<{ dashboard: DashboardDataDTO | DashboardV2Spec; meta: DashboardDTO['meta'] }> {
+    const decodedKey = atob(decodeURIComponent(base64EncodedKey));
+    const userStorage = new UserStorage('grafana-assistant-app');
+    const dashboard = await userStorage.getItem(decodeURIComponent(decodedKey));
+    if (!dashboard) {
+      throw new Error('Dashboard not found');
+    }
+    let dashboardData: DashboardDataDTO | DashboardV2Spec;
+    try {
+      dashboardData = JSON.parse(dashboard);
+    } catch (err) {
+      throw new Error('Invalid dashboard data');
+    }
+    return {
+      dashboard: dashboardData,
+      meta: {
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        canSave: false,
+        canEdit: false,
+      },
+    };
   }
 
   protected async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
@@ -682,6 +715,17 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
+        case DashboardRoutes.AssistantPreview: {
+          const result = await this.loadAssistantPreviewDashboard(uid);
+          if (isDashboardV2Spec(result.dashboard)) {
+            // This will redirect to the v2 dashboard dashboard manager to correctly load a v2 dashboard
+            throw new DashboardVersionError('v2beta1', 'Assistant preview contains V2 dashboard');
+          }
+          return {
+            dashboard: result.dashboard,
+            meta: result.meta,
+          };
+        }
         case DashboardRoutes.Public: {
           const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
           // public dashboards use legacy API but can return V2 dashboards
@@ -886,6 +930,30 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           break;
         case DashboardRoutes.Provisioning: {
           return await this.loadProvisioningDashboard(slug || '', uid);
+        }
+        case DashboardRoutes.AssistantPreview: {
+          const result = await this.loadAssistantPreviewDashboard(uid);
+          if (!isDashboardV2Spec(result.dashboard)) {
+            // This will redirect to the v1 dashboard dashboard manager to correctly load a v2 dashboard
+            throw new DashboardVersionError('v0alpha1', 'Assistant preview contains V1 dashboard');
+          }
+          return {
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              creationTimestamp: '',
+              name: '',
+              resourceVersion: '0',
+            },
+            spec: result.dashboard,
+            access: {
+              canSave: result.meta.canSave ?? false,
+              canEdit: result.meta.canEdit ?? false,
+              canDelete: result.meta.canDelete ?? false,
+              canShare: result.meta.canShare ?? false,
+              canStar: result.meta.canStar ?? false,
+            },
+          };
         }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);

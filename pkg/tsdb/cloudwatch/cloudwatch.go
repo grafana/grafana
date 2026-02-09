@@ -82,6 +82,14 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		authSettings.ProxyOptions = ds.ProxyOpts
 	}
+
+	authSettings.PerDatasourceProxySettings = &awsauth.PerDatasourceProxySettings{
+		ProxyType:     awsauth.ProxyType(ds.Settings.ProxyType),
+		ProxyUrl:      ds.Settings.ProxyUrl,
+		ProxyUsername: ds.Settings.ProxyUsername,
+		ProxyPassword: ds.Settings.ProxyPassword,
+	}
+
 	cfg, err := ds.AWSConfigProvider.GetConfig(ctx, authSettings)
 	if err != nil {
 		return aws.Config{}, err

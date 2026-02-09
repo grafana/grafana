@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
@@ -24,6 +25,15 @@ jest.mock('@grafana/assistant', () => ({
     openAssistant: jest.fn(),
   }),
 }));
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(createTempoDatasource()),
+    }),
+  };
+});
 
 jest.mock('./LogListContext');
 jest.mock('../LogDetails');
@@ -119,26 +129,60 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByText('2025-08-06 11:35:19.504133766')).toBeInTheDocument();
   });
 
-  test('Renders a log line with displayed fields', () => {
-    render(
-      <LogListContextProvider {...contextProps}>
-        <LogLine {...defaultProps} displayedFields={['place']} />
-      </LogListContextProvider>
-    );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
-    expect(screen.queryByText(log.body)).not.toBeInTheDocument();
-    expect(screen.getByText('luna')).toBeInTheDocument();
-  });
+  describe('Displayed fields', () => {
+    test('Renders a log line with displayed fields', () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} displayedFields={['place']} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText(log.body)).not.toBeInTheDocument();
+      expect(screen.getByText('luna')).toBeInTheDocument();
+    });
 
-  test('Renders a log line with body displayed fields', () => {
-    render(
-      <LogListContextProvider {...contextProps}>
-        <LogLine {...defaultProps} displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]} />
-      </LogListContextProvider>
-    );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
-    expect(screen.getByText('log message 1')).toBeInTheDocument();
-    expect(screen.getByText('luna')).toBeInTheDocument();
+    test('Renders a log line with body displayed fields', () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('luna')).toBeInTheDocument();
+    });
+
+    test('Renders empty displayed fields when using unwrapped columns', () => {
+      const { container } = render(
+        <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={true}>
+          <LogLine {...defaultProps} displayedFields={['place', 'nothing', LOG_LINE_BODY_FIELD_NAME, 'empty']} />
+        </LogListContextProvider>
+      );
+      // 4 displayed fields + time + level
+      expect(container.querySelectorAll('.field')).toHaveLength(6);
+    });
+
+    test('Skips empty displayed fields when not using unwrapped columns', () => {
+      const { container } = render(
+        <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={false}>
+          <LogLine {...defaultProps} displayedFields={['place', 'nothing', LOG_LINE_BODY_FIELD_NAME, 'empty']} />
+        </LogListContextProvider>
+      );
+
+      // 4 displayed fields - 2 empty fields + time + level
+      expect(container.querySelectorAll('.field')).toHaveLength(4);
+    });
+
+    test('Skips empty displayed fields when using wrapped logs', () => {
+      const { container } = render(
+        <LogListContextProvider {...contextProps} wrapLogMessage={true}>
+          <LogLine {...defaultProps} displayedFields={['place', 'nothing', LOG_LINE_BODY_FIELD_NAME, 'empty']} />
+        </LogListContextProvider>
+      );
+
+      // 4 displayed fields - 2 empty fields + time + level
+      expect(container.querySelectorAll('.field')).toHaveLength(4);
+    });
   });
 
   test('Reports mouse over events', async () => {
@@ -585,117 +629,259 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
 });
 
 describe('getGridTemplateColumns', () => {
-  test('Gets the template columns for the default visualization mode', () => {
-    expect(
-      getGridTemplateColumns(
-        [
-          {
-            field: 'timestamp',
-            width: 23,
-          },
-          {
-            field: 'level',
-            width: 4,
-          },
-        ],
-        []
-      )
-    ).toBe('23px 4px 1fr');
+  describe('With unwrapped columns', () => {
+    test('Gets the template columns for the default visualization mode', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+          ],
+          [],
+          true
+        )
+      ).toBe('23px 4px 1fr');
+    });
+
+    test('Gets the template columns when displayed fields are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+          ],
+          ['field'],
+          true
+        )
+      ).toBe('23px 4px 4px');
+    });
+
+    test('Gets the template columns when displayed fields including the log line body are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          true
+        )
+      ).toBe('23px 4px 4px 20px');
+    });
+
+    test('Gets the template columns with unique labels', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'unique-labels',
+              internal: true,
+              width: 0,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          true
+        )
+      ).toBe('23px 4px max-content 4px 20px');
+    });
   });
 
-  test('Gets the template columns when displayed fields are used', () => {
-    expect(
-      getGridTemplateColumns(
-        [
-          {
-            field: 'timestamp',
-            width: 23,
-          },
-          {
-            field: 'level',
-            width: 4,
-          },
-        ],
-        ['field']
-      )
-    ).toBe('23px 4px');
-  });
+  describe('Without unwrapped columns', () => {
+    test('Gets the template columns for the default visualization mode', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+          ],
+          [], // No displayed fields
+          false
+        )
+      ).toBe('23px 4px 1fr');
+    });
 
-  test('Gets the template columns when displayed fields are used', () => {
-    expect(
-      getGridTemplateColumns(
-        [
-          {
-            field: 'timestamp',
-            width: 23,
-          },
-          {
-            field: 'level',
-            width: 4,
-          },
-          {
-            field: 'field',
-            width: 4,
-          },
-        ],
-        ['field']
-      )
-    ).toBe('23px 4px 4px');
-  });
+    test('Gets the template columns when displayed fields are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('23px 4px max-content');
+    });
 
-  test('Gets the template columns when displayed fields are used', () => {
-    expect(
-      getGridTemplateColumns(
-        [
-          {
-            field: 'timestamp',
-            width: 23,
-          },
-          {
-            field: 'level',
-            width: 4,
-          },
-          {
-            field: 'field',
-            width: 4,
-          },
-          {
-            field: LOG_LINE_BODY_FIELD_NAME,
-            width: 20,
-          },
-        ],
-        ['field']
-      )
-    ).toBe('23px 4px 4px 20px');
-  });
+    test('Gets the template columns when displayed fields including the log line body are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('23px 4px max-content max-content');
+    });
 
-  test('Gets the template columns with unique labels', () => {
-    expect(
-      getGridTemplateColumns(
-        [
-          {
-            field: 'timestamp',
-            width: 23,
-          },
-          {
-            field: 'level',
-            width: 4,
-          },
-          {
-            field: 'unique-labels',
-            width: 0,
-          },
-          {
-            field: 'field',
-            width: 4,
-          },
-          {
-            field: LOG_LINE_BODY_FIELD_NAME,
-            width: 20,
-          },
-        ],
-        ['field']
-      )
-    ).toBe('23px 4px max-content 4px 20px');
+    test('Gets the template columns with unique labels', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'unique-labels',
+              internal: true,
+              width: 0,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('23px 4px max-content max-content max-content');
+    });
+
+    test('Uses the "internal" flag and not names to identify internal fields', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: undefined,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: undefined,
+              width: 4,
+            },
+            {
+              field: 'unique-labels',
+              internal: undefined,
+              width: 0,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('max-content max-content max-content max-content max-content');
+    });
   });
 });

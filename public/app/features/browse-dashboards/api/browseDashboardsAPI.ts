@@ -19,8 +19,8 @@ import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDash
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
 import { PermissionLevel } from 'app/types/acl';
-import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
-import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
+import { ImportDashboardResponseDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { DescendantCount, DescendantCountDTO, FolderDTO, FolderListItemDTO } from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';

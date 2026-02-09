@@ -10,7 +10,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   selectedLogGroupsContainer: css({
     marginLeft: theme.spacing(0.5),
-    marginBottom: theme.spacing(0.5),
     display: 'flex',
     flexFlow: 'wrap',
     gap: theme.spacing(1),

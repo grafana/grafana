@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagDisableEnvelopeEncryption
-	// Disable envelope encryption (emergency only)
-	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -38,14 +34,6 @@ const (
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
-
-	// FlagShowDashboardValidationWarnings
-	// Show warnings when dashboards do not validate against the schema
-	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
-
-	// FlagMysqlAnsiQuotes
-	// Use double quotes to escape keyword in a MySQL query
-	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -123,10 +111,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagReportingRetries
-	// Enables rendering retries for the reporting feature
-	FlagReportingRetries = "reportingRetries"
-
 	// FlagReportingCsvEncodingOptions
 	// Enables CSV encoding options in the reporting feature
 	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
@@ -198,6 +182,10 @@ const (
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+
+	// FlagDatasourceDisableIdApi
+	// Does not register datasource apis that use the numeric id
+	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -347,6 +335,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagSavedQueriesRBAC
+	// Enables Saved queries (query library) RBAC permissions
+	FlagSavedQueriesRBAC = "savedQueriesRBAC"
+
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
@@ -390,10 +382,6 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
-
-	// FlagSsoSettingsLDAP
-	// Use the new SSO Settings API to configure LDAP
-	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -543,6 +531,10 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
+	// FlagTeamHttpHeadersFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -619,8 +611,16 @@ const (
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
 	// FlagKubernetesAuthZHandlerRedirect
-	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
 	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
+
+	// FlagKubernetesAuthZResourcePermissionsRedirect
+	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
+
+	// FlagKubernetesAuthZRolesRedirect
+	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
@@ -762,6 +762,10 @@ const (
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 
+	// FlagExcludeRedundantManagedPermissions
+	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
+	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
+
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
@@ -801,4 +805,12 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagKubernetesTeamsHandlerRedirect
+	// Redirects the request to teams related endpoints to the app platform API
+	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+
+	// FlagAlertingMultiplePolicies
+	// Enables the ability to create multiple alerting policies
+	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 )

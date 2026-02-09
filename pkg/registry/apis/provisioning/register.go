@@ -417,10 +417,17 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 // Uses the access checker with verb-based authorization.
 func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
-	// Repository CRUD - use access checker with the actual verb
+	// Repository CRUD - viewers can read, admins can write
 	case "":
-		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      a.GetVerb(),
+		verb := a.GetVerb()
+		// Read operations (get, list, watch) are allowed for viewers
+		// Write operations (create, update, patch, delete) require admin
+		accessChecker := b.accessWithAdmin
+		if verb == "get" || verb == "list" || verb == "watch" {
+			accessChecker = b.accessWithViewer
+		}
+		return toAuthorizerDecision(accessChecker.Check(ctx, authlib.CheckRequest{
+			Verb:      verb,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
@@ -634,14 +641,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler = appadmission.NewHandler()
 
 	// Repository mutator and validator
-	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
+	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory)
 	// quotaLimits is set via SetQuotas HACK method, use it directly
 
 	// HACK: Use NewVerifyAgainstExistingRepositoriesValidatorWithQuotas to pass QuotaLimits directly.
 	// This avoids the need for SetQuotaLimits and moves the HACK logic to construction.
 	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(b.repoLister, b.quotaLimits)
 	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidatorRaw)
-	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
+	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory, b.minSyncInterval))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
 	connAdmissionValidator := connection.NewAdmissionValidator(b.connectionFactory)
@@ -809,9 +816,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 			)
-			// HACK: Set quota limits after construction to avoid changing NewSyncWorker signature.
-			// See SetQuotaLimits for details. Use the same quotaLimits constructed for the validator.
-			syncWorker.SetQuotaLimits(b.quotaLimits)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -899,6 +903,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 				informerFactoryResyncInterval,
+				b.minSyncInterval,
 				quotaGetter,
 			)
 			if err != nil {
@@ -910,7 +915,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
-			connHealthChecker := controller.NewConnectionHealthChecker(&connTester, healthMetricsRecorder)
+			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,

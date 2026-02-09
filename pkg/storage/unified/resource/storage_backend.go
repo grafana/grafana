@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -62,13 +63,14 @@ type kvStorageBackend struct {
 	dataStore                    *dataStore
 	eventStore                   *eventStore
 	notifier                     notifier
-	builder                      DocumentBuilder
 	log                          log.Logger
 	withPruner                   bool
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
 	withExperimentalClusterScope bool
+	lastImportStore              *lastImportStore
+	lastImportTimeMaxAge         time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -103,6 +105,9 @@ type KVBackendOptions struct {
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	// needed for sqlkv
 	DBKeepAlive any
+
+	// If not zero, the backend will regularly remove times from "last import times" older than this.
+	LastImportTimeMaxAge time.Duration
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -137,21 +142,22 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
-		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
 		dbKeepAlive:                  opts.DBKeepAlive,
+		lastImportStore:              newLastImportStore(kv),
+		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
 
-	// Start the event cleanup background job
-	go backend.runCleanupOldEvents(ctx)
+	// Start the cleanup background job.
+	go backend.runCleanups(ctx)
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
@@ -170,8 +176,8 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
-// runCleanupOldEvents starts a background goroutine that periodically cleans up old events
-func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+// runCleanups starts periodically cleans up old events and last import times.
+func (k *kvStorageBackend) runCleanups(ctx context.Context) {
 	// Run cleanup every hour
 	ticker := time.NewTicker(k.eventPruningInterval)
 	defer ticker.Stop()
@@ -183,7 +189,21 @@ func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
 			return
 		case <-ticker.C:
 			k.cleanupOldEvents(ctx)
+			k.cleanupOldLastImportTimes(ctx)
 		}
+	}
+}
+
+func (k *kvStorageBackend) cleanupOldLastImportTimes(ctx context.Context) {
+	if k.lastImportTimeMaxAge <= 0 {
+		return
+	}
+
+	deleted, err := k.lastImportStore.CleanupLastImportTimes(ctx, k.lastImportTimeMaxAge)
+	if err != nil {
+		k.log.Error("Failed to cleanup last import times", "error", err)
+	} else if deleted > 0 {
+		k.log.Info("Cleaned up last import times", "deleted_count", deleted)
 	}
 }
 
@@ -196,7 +216,7 @@ func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 		return
 	}
 
-	if deletedCount == 0 {
+	if deletedCount > 0 {
 		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
 	}
 }
@@ -269,6 +289,8 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
+//
+//nolint:gocyclo
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
@@ -302,7 +324,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	obj := event.Object
 	// Write data.
-	var action DataAction
+	var action kv.DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
@@ -349,7 +371,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		dataKey.GUID = uuid.New().String()
 		var err error
 		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			if err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
+			if err := k.dataStore.Save(kv.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
 			}
 
@@ -386,6 +408,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			// If we can't read the latest version, clean up what we wrote
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+					k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+				}
+			}
 			return 0, fmt.Errorf("failed to check latest version: %w", err)
 		}
 
@@ -393,12 +420,22 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+					k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+				}
+			}
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+					k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+				}
+			}
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
@@ -412,6 +449,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			// If we can't read the latest version, clean up what we wrote
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+					k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+				}
+			}
 			return 0, fmt.Errorf("failed to check latest version: %w", err)
 		}
 
@@ -419,6 +461,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+					k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+				}
+			}
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
 
@@ -426,6 +473,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
 			_ = k.dataStore.Delete(ctx, dataKey)
+			if k.rvManager != nil {
+				if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+					k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+				}
+			}
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
 	}
@@ -844,7 +896,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, sinceRv)
 }
 
-func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
+func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
 	switch action {
 	case DataActionCreated:
 		return resourcepb.WatchEvent_ADDED
@@ -1305,7 +1357,16 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
+		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
+		if err != nil {
+			yield(ResourceLastImportTime{}, err)
+			return
+		}
+		for _, v := range valid {
+			if !yield(v.ToResourceLastImportTime(), nil) {
+				return
+			}
+		}
 	}
 }
 
@@ -1323,71 +1384,59 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
-	if setting.RebuildCollection {
-		for _, key := range setting.Collection {
-			events := make([]string, 0)
-			for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
-				if err != nil {
-					b.log.Error("failed to list event: %s", err)
-					return rsp
-				}
-
-				evtKey, err := ParseEventKey(evtKeyStr)
-				if err != nil {
-					b.log.Error("error parsing event key: %s", err)
-					return rsp
-				}
-
-				if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
-					continue
-				}
-
-				events = append(events, evtKeyStr)
-			}
-
-			if err := b.eventStore.batchDelete(ctx, events); err != nil {
-				b.log.Error("failed to delete events: %s", err)
+	for _, key := range setting.Collection {
+		events := make([]string, 0)
+		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
+			if err != nil {
+				b.log.Error("failed to list event: %s", err)
 				return rsp
 			}
 
-			historyKeys := make([]DataKey, 0)
-
-			for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			}, SortOrderAsc) {
-				if err != nil {
-					b.log.Error("failed to list collection before delete: %s", err)
-					return rsp
-				}
-
-				historyKeys = append(historyKeys, dataKey)
-			}
-
-			previousCount := int64(len(historyKeys))
-			if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
-				b.log.Error("failed to delete collection: %s", err)
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				b.log.Error("error parsing event key: %s", err)
 				return rsp
 			}
-			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace:     key.Namespace,
-				Group:         key.Group,
-				Resource:      key.Resource,
-				PreviousCount: previousCount,
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
 			}
+
+			events = append(events, evtKeyStr)
 		}
-	} else {
-		for _, key := range setting.Collection {
-			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+
+		if err := b.eventStore.batchDelete(ctx, events); err != nil {
+			b.log.Error("failed to delete events: %s", err)
+			return rsp
+		}
+
+		historyKeys := make([]DataKey, 0)
+
+		for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, SortOrderAsc) {
+			if err != nil {
+				b.log.Error("failed to list collection before delete: %s", err)
+				return rsp
 			}
+
+			historyKeys = append(historyKeys, dataKey)
+		}
+
+		previousCount := int64(len(historyKeys))
+		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
+			b.log.Error("failed to delete collection: %s", err)
+			return rsp
+		}
+		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
+			Namespace:     key.Namespace,
+			Group:         key.Group,
+			Resource:      key.Resource,
+			PreviousCount: previousCount,
 		}
 	}
-
-	obj := &unstructured.Unstructured{}
 
 	saved := make([]DataKey, 0)
 	rollback := func() {
@@ -1397,6 +1446,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			b.log.Error("failed to delete during rollback: %s", err)
 		}
 	}
+
+	updatedResources := make(map[NamespacedResource]bool)
 
 	for iter.Next() {
 		if iter.RollbackRequested() {
@@ -1413,7 +1464,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		rsp.Processed++
 
-		var action DataAction
+		var action kv.DataAction
 		switch resourcepb.WatchEvent_Type(req.Action) {
 		case resourcepb.WatchEvent_ADDED:
 			action = DataActionCreated
@@ -1453,6 +1504,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			continue
 		}
 
+		obj := &unstructured.Unstructured{}
 		err := obj.UnmarshalJSON(req.Value)
 		if err != nil {
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
@@ -1483,9 +1535,21 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		saved = append(saved, dataKey)
+		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
 	}
 
-	// TODO update last import time
+	if rsp.Error == nil {
+		now := time.Now()
+		for nsr := range updatedResources {
+			err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
+				NamespacedResource: nsr,
+				LastImportTime:     now,
+			})
+			if err != nil {
+				rsp.Error = AsErrorResult(fmt.Errorf("failed to save last import time for resource %s: %s", nsr.String(), err))
+			}
+		}
+	}
 
 	return rsp
 }

@@ -182,7 +182,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -217,7 +217,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "alias(target)")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -240,7 +240,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -281,7 +281,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -316,7 +316,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, true, "alias(target)")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -833,7 +833,7 @@ func TestAliasMatching(t *testing.T) {
 			]`, tc.target, tc.tagsName)
 
 			httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-			dataFrames, err := service.toDataFrames(httpResponse, "A", tc.fromAlert, tc.target)
+			dataFrames, err := service.toDataFrames(httpResponse, "A")
 
 			require.NoError(t, err)
 			require.Len(t, dataFrames, 1)

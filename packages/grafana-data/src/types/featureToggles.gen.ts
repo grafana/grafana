@@ -19,11 +19,6 @@
  */
 export interface FeatureToggles {
   /**
-  * Disable envelope encryption (emergency only)
-  * @default false
-  */
-  disableEnvelopeEncryption?: boolean;
-  /**
   * Search for dashboards using panel title
   * @default false
   */
@@ -68,16 +63,6 @@ export interface FeatureToggles {
   * @default true
   */
   cloudWatchCrossAccountQuerying?: boolean;
-  /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
-  * Use double quotes to escape keyword in a MySQL query
-  * @default false
-  */
-  mysqlAnsiQuotes?: boolean;
   /**
   * Rule backtesting API for alerting
   * @default false
@@ -219,11 +204,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables rendering retries for the reporting feature
-  * @default false
-  */
-  reportingRetries?: boolean;
-  /**
   * Enables CSV encoding options in the reporting feature
   * @default false
   */
@@ -319,6 +299,11 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
+  * Does not register datasource apis that use the numeric id
+  * @default false
+  */
+  datasourceDisableIdApi?: boolean;
+  /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
   */
@@ -378,16 +363,6 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
-  /**
-  * Enables dashboard rendering using Scenes for viewer roles
-  * @default true
-  */
-  dashboardSceneForViewers?: boolean;
-  /**
-  * Enables rendering dashboards using scenes for solo panels
-  * @default true
-  */
-  dashboardSceneSolo?: boolean;
   /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
@@ -594,6 +569,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables Saved queries (query library) RBAC permissions
+  * @default false
+  */
+  savedQueriesRBAC?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -658,11 +638,6 @@ export interface FeatureToggles {
   * @default false
   */
   authZGRPCServer?: boolean;
-  /**
-  * Use the new SSO Settings API to configure LDAP
-  * @default true
-  */
-  ssoSettingsLDAP?: boolean;
   /**
   * Use openFGA as authorization engine.
   * @default false
@@ -781,12 +756,12 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   /**
   * Enables time range panning functionality
-  * @default false
+  * @default true
   */
   timeRangePan?: boolean;
   /**
   * Enables new keyboard shortcuts for time range zoom operations
-  * @default false
+  * @default true
   */
   newTimeRangeZoomShortcuts?: boolean;
   /**
@@ -816,7 +791,7 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   /**
   * Enables SCIM support for user and group management
-  * @default false
+  * @default true
   */
   enableSCIM?: boolean;
   /**
@@ -904,6 +879,11 @@ export interface FeatureToggles {
   * @default false
   */
   teamHttpHeadersTempo?: boolean;
+  /**
+  * Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+  * @default false
+  */
+  teamHttpHeadersFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
   * @default false
@@ -1000,6 +980,11 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
+  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1082,10 +1067,21 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
+  * @deprecated
   * @default false
   */
   kubernetesAuthZHandlerRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZResourcePermissionsRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRolesRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1317,6 +1313,11 @@ export interface FeatureToggles {
   */
   newVizSuggestions?: boolean;
   /**
+  * Enable style actions (copy/paste) in the panel editor
+  * @default false
+  */
+  panelStyleActions?: boolean;
+  /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false
   */
@@ -1351,6 +1352,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Exclude redundant individual dashboard/folder permissions from managed roles at query time
+  * @default false
+  */
+  excludeRedundantManagedPermissions?: boolean;
   /**
   * Show insights for plugins in the plugin details page
   * @default false
@@ -1451,4 +1457,14 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamBindings?: boolean;
+  /**
+  * Redirects the request to teams related endpoints to the app platform API
+  * @default false
+  */
+  kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Enables the ability to create multiple alerting policies
+  * @default false
+  */
+  alertingMultiplePolicies?: boolean;
 }
