@@ -6,24 +6,25 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, sceneUtils } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
 
-interface DashboardFiltersOverviewDrawerState extends SceneObjectState {
-  dashboard: DashboardScene;
-}
+interface DashboardFiltersOverviewDrawerState extends SceneObjectState {}
 
 export class DashboardFiltersOverviewDrawer extends SceneObjectBase<DashboardFiltersOverviewDrawerState> {
   static Component = DashboardFiltersOverviewDrawerRenderer;
 
-  private _dashboard: DashboardScene;
+  private _dashboard?: DashboardScene;
 
   constructor(state: DashboardFiltersOverviewDrawerState) {
     super(state);
 
-    this._dashboard = state.dashboard;
+    this.addActivationHandler(() => {
+      this._dashboard = getDashboardSceneFor(this);
+    });
   }
 
   public getDashboard() {

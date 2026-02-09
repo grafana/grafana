@@ -25,7 +25,6 @@ import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/C
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardFiltersOverviewPaneToggle } from '../filters-overview/DashboardFiltersOverviewPaneToggle';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
@@ -33,6 +32,7 @@ import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
+// import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -197,7 +197,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             )}
             {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
               <div className={styles.fixedControls}>
-                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} variables={variables}/>
+                {/*<DashboardFiltersOverviewPaneToggle dashboard={dashboard} />*/}
               </div>
             )}
           </div>
@@ -235,9 +235,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
         {config.featureToggles.dashboardFiltersOverview && (
-          <div className={styles.fixedControls}>
-            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} variables={variables}/>
-          </div>
+          <div className={styles.fixedControls}>{/*<DashboardFiltersOverviewPaneToggle dashboard={dashboard} />*/}</div>
         )}
       </div>
       {config.featureToggles.scopeFilters && !editPanel && (

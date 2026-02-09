@@ -161,8 +161,9 @@ export function useFiltersOverviewState({
     }
 
     const init = async () => {
-      const { keys, operatorsByKey, multiValuesByKey, singleValuesByKey, isOriginByKey } =
-        buildOverviewState(adhocFilters.state);
+      const { keys, operatorsByKey, multiValuesByKey, singleValuesByKey, isOriginByKey } = buildOverviewState(
+        adhocFilters.state
+      );
 
       // Fetch keys from datasource
       keys.push(...(await adhocFilters._getKeys(null)));
