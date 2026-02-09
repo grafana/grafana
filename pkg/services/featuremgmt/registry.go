@@ -494,7 +494,7 @@ var (
 		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
 		},
@@ -2111,6 +2111,15 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "excludeRedundantManagedPermissions",
+			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
 		},
 		{
 			Name:         "pluginInsights",

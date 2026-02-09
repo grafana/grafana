@@ -24,7 +24,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	playlistv0 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -522,7 +522,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		uid       string
 		name      string
 		interval  string
-		items     []playlistv0.PlaylistItem
+		items     []playlistv1.PlaylistItem
 		createdAt int64
 		updatedAt int64
 	}
@@ -551,7 +551,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				uid:       uid,
 				name:      name,
 				interval:  interval,
-				items:     []playlistv0.PlaylistItem{},
+				items:     []playlistv1.PlaylistItem{},
 				createdAt: createdAt,
 				updatedAt: updatedAt,
 			}
@@ -563,8 +563,8 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 
 		// Add item if it exists (LEFT JOIN can return NULL for playlists without items)
 		if itemType.Valid && itemValue.Valid {
-			pl.items = append(pl.items, playlistv0.PlaylistItem{
-				Type:  playlistv0.PlaylistItemType(itemType.String),
+			pl.items = append(pl.items, playlistv1.PlaylistItem{
+				Type:  playlistv1.PlaylistPlaylistItemType(itemType.String),
 				Value: itemValue.String,
 			})
 		}
@@ -576,9 +576,9 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 
 	// Convert to K8s objects and send to stream (order is preserved)
 	for _, pl := range playlists {
-		playlist := &playlistv0.Playlist{
+		playlist := &playlistv1.Playlist{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: playlistv0.GroupVersion.String(),
+				APIVersion: playlistv1.GroupVersion.String(),
 				Kind:       "Playlist",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -586,7 +586,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				Namespace:         opts.Namespace,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
 			},
-			Spec: playlistv0.PlaylistSpec{
+			Spec: playlistv1.PlaylistSpec{
 				Title:    pl.name,
 				Interval: pl.interval,
 				Items:    pl.items,

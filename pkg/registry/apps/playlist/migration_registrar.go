@@ -1,7 +1,7 @@
 package playlist
 
 import (
-	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"k8s.io/apimachinery/pkg/runtime/schema"
