@@ -108,16 +108,17 @@ describe('useOnCallIntegration', () => {
       });
 
       // Verify options are enhanced
-      expect(notifier.options).toHaveLength(3);
-      expect(notifier.options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
-      expect(notifier.options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
-      expect(notifier.options[2].propertyName).toBe('url');
+      const options = notifier.options ?? [];
+      expect(options).toHaveLength(3);
+      expect(options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
+      expect(options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
+      expect(options[2].propertyName).toBe('url');
 
-      expect(notifier.options[0].element).toBe('radio');
-      expect(notifier.options[2].element).toBe('select');
+      expect(options[0].element).toBe('radio');
+      expect(options[2].element).toBe('select');
 
-      expect(notifier.options[2].selectOptions).toHaveLength(1);
-      expect(notifier.options[2].selectOptions![0]).toMatchObject({
+      expect(options[2].selectOptions).toHaveLength(1);
+      expect(options[2].selectOptions![0]).toMatchObject({
         label: 'grafana-integration',
         value: 'https://oncall.com/grafana-integration',
       });
@@ -217,8 +218,9 @@ describe('useOnCallIntegration', () => {
         heading: '',
       });
 
-      expect(notifier.options).toHaveLength(1);
-      expect(notifier.options[0].propertyName).toBe('url');
+      const options = notifier.options ?? [];
+      expect(options).toHaveLength(1);
+      expect(options[0].propertyName).toBe('url');
     });
   });
 
@@ -269,8 +271,9 @@ describe('useOnCallIntegration', () => {
         heading: '',
       });
 
-      expect(notifier.options).toHaveLength(1);
-      expect(notifier.options[0].propertyName).toBe('url');
+      const options = notifier.options ?? [];
+      expect(options).toHaveLength(1);
+      expect(options[0].propertyName).toBe('url');
     });
   });
 });
