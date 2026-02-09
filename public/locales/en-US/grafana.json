@@ -12922,6 +12922,9 @@
       "query-name-div-title-edit-query-name": "Edit query name"
     },
     "query-error-alert": {
+      "error-details": "Query error details",
+      "fix-with-assistant": "Fix with Assistant",
+      "original-query": "Original query",
       "trace-id": "(Trace ID: {{traceId}})"
     },
     "query-group": {
