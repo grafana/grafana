@@ -10286,10 +10286,10 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed label",
-          "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed field",
+          "indexed-label_one": "Indexed labels",
+          "indexed-label_other": "Indexed labels",
+          "parsedl-label_one": "Parsed fields",
+          "parsedl-label_other": "Parsed fields",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
