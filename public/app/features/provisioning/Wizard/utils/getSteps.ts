@@ -5,26 +5,21 @@ import { Step } from '../Stepper';
 import { GitHubAuthType, RepoType, WizardStep } from '../types';
 
 export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array<Step<WizardStep>> => {
-  const steps: Array<Step<WizardStep>> = [];
-
-  steps.push({
-    id: 'authType',
-    name: t('provisioning.wizard.connect-step', 'Connect'),
-    title: t('provisioning.wizard.connect-step', 'Connect'),
-    submitOnNext: true,
-  });
-
-  // Connection step (fields vary based on repo type)
-  steps.push({
-    id: 'connection',
-    name: t('provisioning.wizard.step-configure-repo', 'Configure repository'),
-    title: isGitProvider(type)
-      ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
-      : t('provisioning.wizard.title-connect', 'Connect to external storage'),
-    submitOnNext: true,
-  });
-
-  steps.push(
+  return [
+    {
+      id: 'authType',
+      name: t('provisioning.wizard.connect-step', 'Connect'),
+      title: t('provisioning.wizard.connect-step', 'Connect'),
+      submitOnNext: true,
+    },
+    {
+      id: 'connection',
+      name: t('provisioning.wizard.step-configure-repo', 'Configure repository'),
+      title: isGitProvider(type)
+        ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
+        : t('provisioning.wizard.title-connect', 'Connect to external storage'),
+      submitOnNext: true,
+    },
     {
       id: 'bootstrap',
       name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
@@ -42,8 +37,6 @@ export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array
       name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
       title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
       submitOnNext: true,
-    }
-  );
-
-  return steps;
+    },
+  ];
 };

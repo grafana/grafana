@@ -72,18 +72,49 @@ async function typeIntoTokenField(user: UserEvent, placeholder: string, value: s
   await user.type(screen.getByPlaceholderText(placeholder), value);
 }
 
-async function navigateToConnectionStep(user: UserEvent, type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git') {
+async function navigateToConnectionStep(
+  user: UserEvent,
+  type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
+  data?: {
+    token?: string;
+    tokenUser?: string;
+    url?: string;
+  }
+) {
   if (type === 'github') {
     // Select PAT option (GitHub App is the default)
     await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
+  }
 
-    // Fill PAT + repo URL on auth step
-    await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
-    await user.type(screen.getByPlaceholderText('https://github.com/owner/repository'), 'https://github.com/test/repo');
+  if (type !== 'local' && data?.token) {
+    const tokenPlaceholders = {
+      github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+      bitbucket: 'ATBBxxxxxxxxxxxxxxxx',
+      git: 'token or password',
+    };
+    await typeIntoTokenField(user, tokenPlaceholders[type], data.token);
+  }
 
-    // Advance to Configure repository
-    await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+  if ((type === 'bitbucket' || type === 'git') && data?.tokenUser) {
+    await user.type(screen.getByPlaceholderText('username'), data.tokenUser);
+  }
 
+  if (type !== 'local' && data?.url) {
+    const urlPlaceholders = {
+      github: 'https://github.com/owner/repository',
+      gitlab: 'https://gitlab.com/owner/repository',
+      bitbucket: 'https://bitbucket.org/owner/repository',
+      git: 'https://git.example.com/owner/repository.git',
+    };
+    await user.type(screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
+  }
+
+  await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+
+  if (type === 'local') {
+    expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
+  } else {
     expect(await screen.findByRole('heading', { name: /Configure repository/i })).toBeInTheDocument();
   }
 }
@@ -99,32 +130,12 @@ async function fillConnectionForm(
     path?: string;
   }
 ) {
-  // First navigate to the connection step (handles AuthType step for GitHub)
-  await navigateToConnectionStep(user, type);
-
-  // Token inputs only exist in this step for non-GitHub providers
-  if (type !== 'local' && type !== 'github' && data.token) {
-    const tokenPlaceholders = {
-      gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
-      bitbucket: 'ATBBxxxxxxxxxxxxxxxx',
-      git: 'token or password',
-    };
-    await typeIntoTokenField(user, tokenPlaceholders[type], data.token);
-  }
-
-  if ((type === 'bitbucket' || type === 'git') && data.tokenUser) {
-    await user.type(screen.getByPlaceholderText('username'), data.tokenUser);
-  }
-
-  // Repo URL for GitHub is already entered on auth step
-  if (type !== 'local' && type !== 'github' && data.url) {
-    const urlPlaceholders = {
-      gitlab: 'https://gitlab.com/owner/repository',
-      bitbucket: 'https://bitbucket.org/owner/repository',
-      git: 'https://git.example.com/owner/repository.git',
-    };
-    await user.type(screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
-  }
+  // Complete authType step first (token/url inputs are here for all git providers)
+  await navigateToConnectionStep(user, type, {
+    token: data.token,
+    tokenUser: data.tokenUser,
+    url: data.url,
+  });
 
   if (type !== 'local' && data.branch) {
     await user.type(screen.getByRole('combobox'), `${data.branch}{Enter}`);
@@ -439,23 +450,21 @@ describe('ProvisioningWizard', () => {
 
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
 
-      // Fill required GitLab fields so submit proceeds
-      await user.type(screen.getByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx'), 'glpat-test');
+      // Fill required GitLab fields on auth step and submit
+      await typeIntoTokenField(user, 'glpat-xxxxxxxxxxxxxxxxxxxx', 'glpat-test');
       await user.type(
         screen.getByPlaceholderText('https://gitlab.com/owner/repository'),
         'https://gitlab.com/test/repo'
       );
-      await user.type(screen.getByRole('combobox'), 'main{Enter}');
-      await user.type(screen.getByRole('textbox', { name: /Path/i }), '/');
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
 
       // Now the submit should fail with statusError
       const alert = await screen.findByRole('alert', { name: /Repository connection failed/i });
       expect(alert).toBeInTheDocument();
       expect(screen.getByText('Repository connection failed')).toBeInTheDocument();
 
-      expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /1\. Connect/i })).toBeInTheDocument();
     });
 
     it('should show error when repository creation fails', async () => {
@@ -633,36 +642,64 @@ describe('ProvisioningWizard', () => {
 
   describe('Different Repository Types', () => {
     it('should render GitLab-specific fields', async () => {
-      setup(<ProvisioningWizard type="gitlab" />);
+      const { user } = setup(<ProvisioningWizard type="gitlab" />);
 
+      // Auth step fields
       expect(screen.getByText('Project Access Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
+
+      await navigateToConnectionStep(user, 'gitlab', {
+        token: 'glpat-test',
+        url: 'https://gitlab.com/test/repo',
+      });
+
+      // Connection step fields
       expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
     it('should render Bitbucket-specific fields', async () => {
-      setup(<ProvisioningWizard type="bitbucket" />);
+      const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
+      // Auth step fields
       expect(screen.getByText('App Password *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
+
+      await navigateToConnectionStep(user, 'bitbucket', {
+        token: 'test-token',
+        tokenUser: 'test-user',
+        url: 'https://bitbucket.org/test/repo',
+      });
+
+      // Connection step fields
       expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
     it('should render Git-specific fields', async () => {
-      setup(<ProvisioningWizard type="git" />);
+      const { user } = setup(<ProvisioningWizard type="git" />);
 
+      // Auth step fields
       expect(screen.getByText('Access Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
+
+      await navigateToConnectionStep(user, 'git', {
+        token: 'test-token',
+        tokenUser: 'test-user',
+        url: 'https://git.example.com/test/repo.git',
+      });
+
+      // Connection step fields
       expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
     it('should render local repository fields', async () => {
-      setup(<ProvisioningWizard type="local" />);
+      const { user } = setup(<ProvisioningWizard type="local" />);
+
+      await navigateToConnectionStep(user, 'local');
 
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
@@ -675,13 +712,12 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
-      await fillConnectionForm(user, 'bitbucket', {
-        token: 'test-token',
-        tokenUser: 'test-user',
-        url: 'https://bitbucket.org/test/repo',
-        branch: 'main',
-        path: '/',
-      });
+      await typeIntoTokenField(user, 'ATBBxxxxxxxxxxxxxxxx', 'test-token');
+      await user.type(screen.getByPlaceholderText('username'), 'test-user');
+      await user.type(
+        screen.getByPlaceholderText('https://bitbucket.org/owner/repository'),
+        'https://bitbucket.org/test/repo'
+      );
 
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
     });
@@ -689,13 +725,12 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Git provider', async () => {
       const { user } = setup(<ProvisioningWizard type="git" />);
 
-      await fillConnectionForm(user, 'git', {
-        token: 'test-token',
-        tokenUser: 'test-user',
-        url: 'https://git.example.com/test/repo.git',
-        branch: 'main',
-        path: '/',
-      });
+      await typeIntoTokenField(user, 'token or password', 'test-token');
+      await user.type(screen.getByPlaceholderText('username'), 'test-user');
+      await user.type(
+        screen.getByPlaceholderText('https://git.example.com/owner/repository.git'),
+        'https://git.example.com/test/repo.git'
+      );
 
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
     });
