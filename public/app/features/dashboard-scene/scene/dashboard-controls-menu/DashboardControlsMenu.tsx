@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Box, Menu, useStyles2 } from '@grafana/ui';
@@ -14,7 +15,7 @@ interface DashboardControlsMenuProps {
   links: DashboardLink[];
   annotations: SceneDataLayerProvider[];
   dashboardUID?: string;
-  isEditingNewLayouts?: boolean;
+  isEditing?: boolean;
 }
 
 export function DashboardControlsMenu({
@@ -22,8 +23,9 @@ export function DashboardControlsMenu({
   links,
   annotations,
   dashboardUID,
-  isEditingNewLayouts,
+  isEditing,
 }: DashboardControlsMenuProps) {
+  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
   return (
     <Box
       minWidth={32}

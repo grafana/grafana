@@ -34,18 +34,20 @@ export function getDashboardControls(dashboard: DashboardScene) {
 
 export function useDashboardControls(dashboard: DashboardScene) {
   const dashboardState = dashboard.useState();
+
   const variablesState = sceneGraph.getVariables(dashboard).useState();
-  const dataState = sceneGraph.getData(dashboard).useState();
-  const isEditingNewLayouts = dashboardState.isEditing && config.featureToggles.dashboardNewLayouts;
-  const links = getDashboardControlsLinks(dashboardState.links);
   const variables = getDashboardControlsVariables(variablesState.variables);
+
+  const dataState = sceneGraph.getData(dashboard).useState();
+  const links = getDashboardControlsLinks(dashboardState.links);
+
+  const isEditingNewLayouts = dashboardState.isEditing && config.featureToggles.dashboardNewLayouts;
   const annotations = getDashboardControlsAnnotations(dataState, isEditingNewLayouts);
 
   return {
     variables,
     links,
     annotations,
-    isEditingNewLayouts,
   };
 }
 

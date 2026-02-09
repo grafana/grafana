@@ -28,11 +28,15 @@ export function DashboardDataLayerControls({ dashboard }: { dashboard: Dashboard
     );
   }, [state, dataLayerSet, isEditingNewLayouts]);
 
-  return visibleLayers.map((layer) => (
-    <div key={layer.state.key} className={styles.container}>
-      <DataLayerControl layer={layer} isEditingNewLayouts={isEditingNewLayouts} />
-    </div>
-  ));
+  return useMemo(
+    () =>
+      visibleLayers.map((layer) => (
+        <div key={layer.state.key} className={styles.container}>
+          <DataLayerControl layer={layer} isEditingNewLayouts={isEditingNewLayouts} />
+        </div>
+      )),
+    [visibleLayers, styles.container, isEditingNewLayouts]
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

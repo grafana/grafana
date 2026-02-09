@@ -15,8 +15,8 @@ export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 
 export function DashboardControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
-  const { uid } = dashboard.useState();
-  const { variables, links, annotations, isEditingNewLayouts } = useDashboardControls(dashboard);
+  const { uid, isEditing } = dashboard.useState();
+  const { variables, links, annotations } = useDashboardControls(dashboard);
   const dashboardControlsCount = variables.length + links.length + annotations.length;
   const hasDashboardControls = dashboardControlsCount > 0;
 
@@ -33,7 +33,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
           links={links}
           annotations={annotations}
           dashboardUID={uid}
-          isEditingNewLayouts={isEditingNewLayouts}
+          isEditing={isEditing}
         />
       }
     >
