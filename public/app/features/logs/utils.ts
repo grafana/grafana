@@ -402,11 +402,11 @@ function getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame, index:
 }
 
 /**
+ * @deprecated Implement DataSourceWithLogsLabelTypesSupport and use ds.getLabelDisplayTypeFromFrame
+ * to support label types.
+ * 
  * Look for a `labelTypes` field. If found, use it to resolve the type for the
  * provided label.
- *
- * Implement DataSourceWithLogsLabelTypesSupport and use ds.getLabelDisplayTypeFromFrame to support
- * a different label types implementation.
  *
  * @param label
  * @param row
@@ -421,6 +421,7 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = fa
 }
 
 /**
+ * @deprecated
  * @param labelType
  * @param datasourceType
  * @param plural
@@ -430,11 +431,11 @@ function getDataSourceLabelType(labelType: string, datasourceType: string | unde
     case 'loki':
       switch (labelType) {
         case 'I':
-          return t('logs.fields.type.loki.indexed-label', 'Indexed label', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.indexed-label', 'Indexed labels', { count: plural ? 2 : 1 });
         case 'S':
           return t('logs.fields.type.loki.structured-metadata', 'Structured metadata', { count: plural ? 2 : 1 });
         case 'P':
-          return t('logs.fields.type.loki.parsedl-label', 'Parsed field', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.parsedl-label', 'Parsed fields', { count: plural ? 2 : 1 });
         default:
           return null;
       }
