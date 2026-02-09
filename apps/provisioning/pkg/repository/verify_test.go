@@ -127,6 +127,32 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
+			name: "allows duplicate empty paths in same repo",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:  "https://github.com/org/repo",
+						Path: "",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:  "https://github.com/org/repo",
+							Path: "",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "forbids parent folder conflict",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},

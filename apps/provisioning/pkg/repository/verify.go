@@ -78,21 +78,25 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 				continue
 			}
 			if v.URL() == cfg.URL() {
-				if v.Path() == cfg.Path() {
+				// Allow duplicate paths only when both paths are empty (repository root)
+				if v.Path() == cfg.Path() && cfg.Path() != "" {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
 				}
 
-				relPath, err := filepath.Rel(v.Path(), cfg.Path())
-				if err != nil {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-				}
-				// https://pkg.go.dev/path/filepath#Rel
-				// Rel will return "../" if the relative paths are not related
-				if !strings.HasPrefix(relPath, "../") {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
+				// Skip parent/child conflict check when both paths are empty (both at repository root)
+				if v.Path() != "" || cfg.Path() != "" {
+					relPath, err := filepath.Rel(v.Path(), cfg.Path())
+					if err != nil {
+						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
+					}
+					// https://pkg.go.dev/path/filepath#Rel
+					// Rel will return "../" if the relative paths are not related
+					if !strings.HasPrefix(relPath, "../") {
+						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
+							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
+					}
 				}
 			}
 		}

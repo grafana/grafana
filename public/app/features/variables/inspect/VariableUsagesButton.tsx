@@ -5,7 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
-import { UsagesToNetwork } from './utils';
+import { UsagesToNetwork } from './types';
 
 interface Props {
   id: string;

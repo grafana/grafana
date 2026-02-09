@@ -426,10 +426,17 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 // Uses the access checker with verb-based authorization.
 func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
-	// Repository CRUD - use access checker with the actual verb
+	// Repository CRUD - viewers can read, admins can write
 	case "":
-		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      a.GetVerb(),
+		verb := a.GetVerb()
+		// Read operations (get, list, watch) are allowed for viewers
+		// Write operations (create, update, patch, delete) require admin
+		accessChecker := b.accessWithAdmin
+		if verb == "get" || verb == "list" || verb == "watch" {
+			accessChecker = b.accessWithViewer
+		}
+		return toAuthorizerDecision(accessChecker.Check(ctx, authlib.CheckRequest{
+			Verb:      verb,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
@@ -815,9 +822,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 			)
-			// HACK: Set quota limits after construction to avoid changing NewSyncWorker signature.
-			// See SetQuotaLimits for details. Use the same quotaLimits constructed for the validator.
-			syncWorker.SetQuotaLimits(b.quotaLimits)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(

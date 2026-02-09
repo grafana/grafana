@@ -1,16 +1,16 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-github/v70 v70.0.0
+	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.49.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
-	github.com/grafana/grafana-plugin-sdk-go v0.286.0
+	github.com/grafana/grafana-plugin-sdk-go v0.287.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/stretchr/testify v1.11.1
@@ -78,7 +78,7 @@ require (
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/apache/arrow-go/v18 v18.5.0 // indirect
+	github.com/apache/arrow-go/v18 v18.5.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/aws/aws-sdk-go v1.55.7 // indirect
@@ -167,12 +167,12 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.26.1 // indirect
-	github.com/google/flatbuffers v25.9.23+incompatible // indirect
+	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173 // indirect
+	github.com/grafana/alerting v0.0.0-20260206150146-b5f69c55f91a // indirect
 	github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
@@ -252,14 +252,14 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.6 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
-	github.com/pierrec/lz4/v4 v4.1.22 // indirect
+	github.com/pierrec/lz4/v4 v4.1.23 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/alertmanager v0.28.2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.4 // indirect
+	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.15.1 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
