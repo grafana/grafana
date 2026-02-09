@@ -6093,6 +6093,7 @@
       "checking": "Checking",
       "error-text": "Error",
       "error-tooltip": "Compatibility check failed. First, verify the <2>data source</2> is working. Then open the dashboard and review the <6>variables</6>.",
+      "not-supported-tooltip": "This dashboard or datasource type is not yet supported. Only Prometheus datasources and non-dynamic dashboards (v1) are currently supported.",
       "score-text": "{{score}}% compatible",
       "tooltip-green": "{{score}}% ({{found}}/{{total}}) of metrics match.",
       "tooltip-orange": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.",

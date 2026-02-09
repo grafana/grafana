@@ -13,72 +13,23 @@ export type CompatibilityState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'success'; score: number; metricsFound: number; metricsTotal: number }
-  | { status: 'error'; errorMessage?: string };
+  | { status: 'error'; errorMessage?: string; errorCode?: string };
+
+export type ErrorCategory = 'not_supported' | 'unexpected';
+
+interface ScoreIndicator {
+  color: 'green' | 'orange' | 'red';
+  icon: 'check-circle' | 'exclamation-triangle' | 'times-circle';
+  tooltip: string;
+}
 
 interface CompatibilityBadgeProps {
   state: CompatibilityState;
-  onCheck: () => void; // Called when Check button clicked
-  onRetry?: () => void; // Called when error badge clicked
+  onCheck: () => void;
+  onRetry?: () => void;
 }
 
-/**
- * Determines the color category based on compatibility score.
- * - green: ≥80% (highly compatible)
- * - orange: 50-79% (partially compatible)
- * - red: <50% (low compatibility)
- */
-function getScoreColor(score: number): 'green' | 'orange' | 'red' {
-  if (score >= 80) {
-    return 'green';
-  }
-  if (score >= 50) {
-    return 'orange';
-  }
-  return 'red';
-}
-
-/**
- * Returns the appropriate icon name based on compatibility score.
- */
-function getScoreIcon(score: number): 'check-circle' | 'exclamation-triangle' | 'times-circle' {
-  if (score >= 80) {
-    return 'check-circle';
-  }
-  if (score >= 50) {
-    return 'exclamation-triangle';
-  }
-  return 'times-circle';
-}
-
-/**
- * Returns the appropriate tooltip message based on compatibility score.
- * - Green (≥80%): Simple match message
- * - Orange (50-79%): Match message + warning about panel customization
- * - Red (<50%): Match message + warning about query customization
- */
-function getScoreTooltip(score: number, metricsFound: number, metricsTotal: number): string {
-  if (score >= 80) {
-    return t(
-      'dashboard-library.compatibility-badge.tooltip-green',
-      '{{score}}% ({{found}}/{{total}}) of metrics match.',
-      { score, found: metricsFound, total: metricsTotal }
-    );
-  }
-
-  if (score >= 50) {
-    return t(
-      'dashboard-library.compatibility-badge.tooltip-orange',
-      '{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.',
-      { score, found: metricsFound, total: metricsTotal }
-    );
-  }
-
-  return t(
-    'dashboard-library.compatibility-badge.tooltip-red',
-    '{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization.',
-    { score, found: metricsFound, total: metricsTotal }
-  );
-}
+const NOT_SUPPORTED_CODES = ['datasource_wrong_type', 'unsupported_dashboard_version', 'invalid_dashboard'];
 
 /**
  * Compact inline badge that displays dashboard compatibility status.
@@ -93,7 +44,6 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
   const styles = useStyles2(getStyles);
   const isLoading = state.status === 'loading';
 
-  // Idle/Loading state - show Check button (changes to "Checking" with spinner when loading)
   if (state.status === 'idle' || state.status === 'loading') {
     const buttonText = isLoading
       ? t('dashboard-library.compatibility-badge.checking', 'Checking')
@@ -126,27 +76,11 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
     );
   }
 
-  // Error state - show error badge with retry
   if (state.status === 'error') {
-    const errorTooltip = (
-      <Trans i18nKey="dashboard-library.compatibility-badge.error-tooltip">
-        Compatibility check failed. First, verify the{' '}
-        <a href="https://grafana.com/docs/grafana/latest/datasources/" target="_blank" rel="noopener noreferrer">
-          data source
-        </a>{' '}
-        is working. Then open the dashboard and review the{' '}
-        <a
-          href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/modify-dashboard-settings/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          variables
-        </a>
-        .
-      </Trans>
-    );
+    const tooltipContent = getErrorTooltip(state.errorCode, styles.tooltipLink);
+
     return (
-      <Tooltip interactive={true} content={errorTooltip}>
+      <Tooltip interactive={true} content={tooltipContent}>
         <span
           className={styles.badgeWrapper}
           onClick={(e) => {
@@ -174,12 +108,12 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
     );
   }
 
-  // Success state - show score with color coding
-  // With discriminated unions, TypeScript knows score/metricsFound/metricsTotal exist
   if (state.status === 'success') {
-    const color = getScoreColor(state.score);
-    const icon = getScoreIcon(state.score);
-    const tooltipContent = getScoreTooltip(state.score, state.metricsFound, state.metricsTotal);
+    const {
+      color,
+      icon,
+      tooltip: tooltipContent,
+    } = getScoreIndicator(state.score, state.metricsFound, state.metricsTotal);
 
     return (
       <Tooltip interactive={true} content={tooltipContent}>
@@ -197,14 +131,95 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
     );
   }
 
-  // Fallback - shouldn't reach here but return null if state is malformed
   return null;
 };
+
+function categorizeError(errorCode?: string): ErrorCategory {
+  if (errorCode && NOT_SUPPORTED_CODES.includes(errorCode)) {
+    return 'not_supported';
+  }
+  return 'unexpected';
+}
+
+/**
+ * Returns color, icon, and tooltip for a compatibility score.
+ * Thresholds: green ≥80%, orange 50-79%, red <50%.
+ */
+function getScoreIndicator(score: number, metricsFound: number, metricsTotal: number): ScoreIndicator {
+  if (score >= 80) {
+    return {
+      color: 'green',
+      icon: 'check-circle',
+      tooltip: t(
+        'dashboard-library.compatibility-badge.tooltip-green',
+        '{{score}}% ({{found}}/{{total}}) of metrics match.',
+        { score, found: metricsFound, total: metricsTotal }
+      ),
+    };
+  }
+
+  if (score >= 50) {
+    return {
+      color: 'orange',
+      icon: 'exclamation-triangle',
+      tooltip: t(
+        'dashboard-library.compatibility-badge.tooltip-orange',
+        '{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.',
+        { score, found: metricsFound, total: metricsTotal }
+      ),
+    };
+  }
+
+  return {
+    color: 'red',
+    icon: 'times-circle',
+    tooltip: t(
+      'dashboard-library.compatibility-badge.tooltip-red',
+      '{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization.',
+      { score, found: metricsFound, total: metricsTotal }
+    ),
+  };
+}
+
+function getErrorTooltip(errorCode: string | undefined, linkClassName: string) {
+  const category = categorizeError(errorCode);
+  if (category === 'not_supported') {
+    return (
+      <Trans i18nKey="dashboard-library.compatibility-badge.not-supported-tooltip">
+        This dashboard or datasource type is not yet supported. Only Prometheus datasources and non-dynamic dashboards
+        (v1) are currently supported.
+      </Trans>
+    );
+  }
+
+  return (
+    <Trans i18nKey="dashboard-library.compatibility-badge.error-tooltip">
+      Compatibility check failed. First, verify the{' '}
+      <a
+        href="https://grafana.com/docs/grafana/latest/datasources/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClassName}
+      >
+        data source
+      </a>{' '}
+      is working. Then open the dashboard and review the{' '}
+      <a
+        href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/modify-dashboard-settings/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClassName}
+      >
+        variables
+      </a>
+      .
+    </Trans>
+  );
+}
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     button: css({
-      // Min-width prevents layout shift between "Check" and "Checking" states
       minWidth: theme.spacing(12),
       justifyContent: 'center',
     }),
@@ -215,9 +230,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
     }),
-    // Match button height (md = 32px) with vertical padding
-    // Badge default is ~22px, button md is 32px, so add ~6.4px padding each side
-    // theme.spacing(0.8) = 6.4px (close to 6.38px)
     badge: css({
       paddingTop: theme.spacing(0.8),
       paddingBottom: theme.spacing(0.8),
@@ -228,6 +240,13 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'pointer',
       '&:hover': {
         opacity: 0.8,
+      },
+    }),
+    tooltipLink: css({
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+      '&:hover': {
+        textDecoration: 'none',
       },
     }),
   };

@@ -5,7 +5,7 @@ import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, isFetchError } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } from '@grafana/ui';
 
 import { CompatibilityState } from './CompatibilityBadge';
@@ -228,11 +228,14 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       } catch (err) {
         console.error('Error checking dashboard compatibility:', err);
 
-        // Update state with error
+        const errorMessage = isFetchError(err) ? err.data?.message : 'Failed to check compatibility';
+        const errorCode = isFetchError(err) ? err.data?.code : undefined;
+
         setCompatibilityMap((prev) =>
           new Map(prev).set(dashboard.id, {
             status: 'error',
-            errorMessage: err instanceof Error ? err.message : 'Failed to check compatibility',
+            errorMessage,
+            errorCode,
           })
         );
       }

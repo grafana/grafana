@@ -217,5 +217,77 @@ describe('CompatibilityBadge', () => {
       expect(mockOnRetry).toHaveBeenCalledTimes(1);
       expect(mockParentClick).not.toHaveBeenCalled();
     });
+
+    it('should show not-supported tooltip for datasource_wrong_type', async () => {
+      const state: CompatibilityState = {
+        status: 'error',
+        errorCode: 'datasource_wrong_type',
+      };
+      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} onRetry={mockOnRetry} />);
+
+      await userEvent.hover(screen.getByTestId('compatibility-badge-error'));
+
+      expect(await screen.findByText(/not yet supported/i)).toBeInTheDocument();
+    });
+
+    it('should show not-supported tooltip for unsupported_dashboard_version', async () => {
+      const state: CompatibilityState = {
+        status: 'error',
+        errorCode: 'unsupported_dashboard_version',
+      };
+      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} onRetry={mockOnRetry} />);
+
+      await userEvent.hover(screen.getByTestId('compatibility-badge-error'));
+
+      expect(await screen.findByText(/not yet supported/i)).toBeInTheDocument();
+    });
+
+    it('should show not-supported tooltip for invalid_dashboard', async () => {
+      const state: CompatibilityState = {
+        status: 'error',
+        errorCode: 'invalid_dashboard',
+      };
+      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} onRetry={mockOnRetry} />);
+
+      await userEvent.hover(screen.getByTestId('compatibility-badge-error'));
+
+      expect(await screen.findByText(/not yet supported/i)).toBeInTheDocument();
+    });
+
+    it('should show troubleshooting tooltip for unexpected errors', async () => {
+      const state: CompatibilityState = {
+        status: 'error',
+        errorCode: 'datasource_auth_failed',
+      };
+      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} onRetry={mockOnRetry} />);
+
+      await userEvent.hover(screen.getByTestId('compatibility-badge-error'));
+
+      expect(await screen.findByText(/Compatibility check failed/i)).toBeInTheDocument();
+    });
+
+    it('should show troubleshooting tooltip when errorCode is not provided', async () => {
+      const state: CompatibilityState = {
+        status: 'error',
+        errorMessage: 'Unknown error',
+      };
+      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} onRetry={mockOnRetry} />);
+
+      await userEvent.hover(screen.getByTestId('compatibility-badge-error'));
+
+      expect(await screen.findByText(/Compatibility check failed/i)).toBeInTheDocument();
+    });
+
+    it('should allow retry on not_supported errors', async () => {
+      const state: CompatibilityState = {
+        status: 'error',
+        errorCode: 'datasource_wrong_type',
+      };
+      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} onRetry={mockOnRetry} />);
+
+      await userEvent.click(screen.getByTestId('compatibility-badge-error'));
+
+      expect(mockOnRetry).toHaveBeenCalledTimes(1);
+    });
   });
 });
