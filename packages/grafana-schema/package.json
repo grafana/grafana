@@ -21,6 +21,10 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/raw/index.cjs"
     },
+    "./apis/dashboard.grafana.app/*/examples": {
+      "@grafana-app/source": "./src/schema/dashboard/*/*_examples.ts",
+      "types": "./dist/types/schema/dashboard/*/*_examples.d.ts"
+    },
     "./apis/dashboard.grafana.app/*": {
       "@grafana-app/source": "./src/schema/dashboard/*/index.ts",
       "types": "./dist/types/schema/dashboard/*/index.d.ts"
