@@ -30,4 +30,12 @@ export { UserStorage } from '../utils/userStorage';
 
 export { initOpenFeature, evaluateBooleanFlag } from './openFeature';
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
-export { useAppPluginMeta, useAppPluginMetas } from '../services/pluginMeta/hooks';
+export {
+  useAppPluginMeta,
+  useAppPluginMetas,
+  usePanelPluginMeta,
+  usePanelPluginMetas,
+} from '../services/pluginMeta/hooks';
+export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
+export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
+export { getPanelPluginMeta, getPanelPluginMetas, setPanelPluginMetas } from '../services/pluginMeta/panels';

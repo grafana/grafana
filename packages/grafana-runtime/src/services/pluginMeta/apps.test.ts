@@ -217,7 +217,11 @@ describe('immutability', () => {
 
     // mutate deep props
     mutatedApps[0].dependencies.grafanaDependency = '';
-    mutatedApps[0].extensions.addedLinks.push({ targets: [], title: '', description: '' });
+    mutatedApps[0].extensions.addedLinks.push({
+      targets: [],
+      title: '',
+      description: '',
+    });
 
     // assert we have mutated props
     expect(mutatedApps[0].dependencies.grafanaDependency).toEqual('');

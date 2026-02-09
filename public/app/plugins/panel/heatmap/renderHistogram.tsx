@@ -1,5 +1,5 @@
 export function renderHistogram(
-  can: React.RefObject<HTMLCanvasElement>,
+  can: React.RefObject<HTMLCanvasElement | null>,
   histCanWidth: number,
   histCanHeight: number,
   xVals: number[],

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -377,6 +378,32 @@ func Test_executeStartQuery(t *testing.T) {
 				},
 				queryLanguage: cloudwatchlogstypes.QueryLanguagePpl,
 			},
+			"PPL with log scope does not drop log groups": {
+				queries: []backend.DataQuery{{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryLanguage": "PPL",
+						"logsQueryScope": "namePrefix",
+						"queryString":"source logs | fields @message",
+						"logGroupNames":["some name","another name"]
+					}`),
+				}},
+				expectedOutput: []*cloudwatchlogs.StartQueryInput{
+					{
+						StartTime:     aws.Int64(0),
+						EndTime:       aws.Int64(1),
+						Limit:         aws.Int32(12),
+						QueryString:   aws.String("source logs | fields @message"),
+						LogGroupNames: []string{"some name", "another name"},
+						QueryLanguage: cloudwatchlogstypes.QueryLanguagePpl,
+					},
+				},
+				queryLanguage: cloudwatchlogstypes.QueryLanguagePpl,
+			},
 			"SQL": {
 				queries: []backend.DataQuery{
 					{
@@ -514,6 +541,42 @@ func Test_executeStartQuery(t *testing.T) {
 				QueryString:         aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
 				LogGroupIdentifiers: []string{"*fake**ARN"},
 				QueryLanguage:       cloudwatchlogstypes.QueryLanguageCwli,
+			},
+		}, cli.calls.startQuery)
+	})
+
+	t.Run("skips empty log group identifiers after trimming", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryString":"fields @message",
+						"logGroups":[{"arn": "*"}],
+						"region": "us-east-1"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:     aws.Int64(0),
+				EndTime:       aws.Int64(1),
+				Limit:         aws.Int32(12),
+				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				QueryLanguage: cloudwatchlogstypes.QueryLanguageCwli,
 			},
 		}, cli.calls.startQuery)
 	})
@@ -873,6 +936,204 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}, resp)
 }
 
+func Test_expandLogGroupsMacro(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var cli fakeCWLogsClient
+
+	NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
+		return &cli
+	}
+
+	t.Run("expands $__logGroups macro with log group names when not a monitoring account", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}, {"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2", "name": "group2"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['group1', 'group2'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("expands $__logGroups macro with ARNs when monitoring account", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}, {"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2", "name": "group2"}],
+						"region": "us-east-1"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['arn:aws:logs:us-east-1:123456789012:log-group:group1', 'arn:aws:logs:us-east-1:123456789012:log-group:group2'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("strips trailing * from ARNs when expanding macro", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1*", "name": "group1"}],
+						"region": "us-east-1"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['arn:aws:logs:us-east-1:123456789012:log-group:group1'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("returns error when $__logGroups macro is used but no log groups are selected", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "query contains $__logGroups but no log groups are selected")
+	})
+
+	t.Run("does not expand macro when query does not contain $__logGroups", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`logGroups(logGroupIdentifier: ['my-log-group'])`" + `"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['my-log-group'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("does not expand macro for non-SQL query languages", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message | $__logGroups",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Contains(t, *cli.calls.startQuery[0].QueryString, "$__logGroups")
+	})
+
+	t.Run("expands macro with single log group", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:single-group", "name": "single-group"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['single-group'])`", *cli.calls.startQuery[0].QueryString)
+	})
+}
+
 func TestGroupResponseFrame(t *testing.T) {
 	t.Run("Doesn't group results without time field", func(t *testing.T) {
 		frame := data.NewFrameOfFieldTypes("test", 0, data.FieldTypeString, data.FieldTypeInt32)
@@ -894,4 +1155,418 @@ func asArray(field *data.Field) []any {
 		vals = append(vals, field.At(i))
 	}
 	return vals
+}
+
+func TestContainsSourceCommand(t *testing.T) {
+	testCases := map[string]struct {
+		query    string
+		expected bool
+	}{
+		"no SOURCE command": {
+			query:    "fields @timestamp, @message | sort @timestamp desc | limit 25",
+			expected: false,
+		},
+		"SOURCE at start": {
+			query:    "SOURCE logGroups(namePrefix: ['app']) fields @timestamp, @message",
+			expected: true,
+		},
+		"SOURCE lowercase": {
+			query:    "source logGroups() fields @timestamp",
+			expected: true,
+		},
+		"SOURCE mixed case": {
+			query:    "Source logGroups() fields @timestamp",
+			expected: true,
+		},
+		"SOURCE with leading whitespace": {
+			query:    "   SOURCE logGroups() fields @timestamp",
+			expected: true,
+		},
+		"SOURCE with newline after keyword": {
+			query:    "SOURCE\nlogGroups() fields @timestamp",
+			expected: true,
+		},
+		"SOURCE with tab after keyword": {
+			query:    "SOURCE\tlogGroups() fields @timestamp",
+			expected: true,
+		},
+		"SOURCE in middle of query (not at start)": {
+			query:    "fields @timestamp | SOURCE something",
+			expected: false,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			result := containsSourceCommand(tc.query)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestBuildSourceClause(t *testing.T) {
+	testCases := map[string]struct {
+		logsQuery       models.LogsQuery
+		includeAccounts bool
+		expected        string
+	}{
+		"allLogGroups with no options": {
+			logsQuery:       models.LogsQuery{},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups()",
+		},
+		"namePrefix with single prefix": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:   utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogGroupPrefixes: []string{"/aws/lambda"},
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups(namePrefix: ['/aws/lambda'])",
+		},
+		"namePrefix with multiple prefixes": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:   utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogGroupPrefixes: []string{"/aws/lambda", "/aws/apigateway"},
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups(namePrefix: ['/aws/lambda', '/aws/apigateway'])",
+		},
+		"allLogGroups ignores leftover prefixes": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:   utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupPrefixes: []string{"/aws/lambda"},
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups()",
+		},
+		"with INFREQUENT_ACCESS class": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogGroupClass: utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups(class: ['INFREQUENT_ACCESS'])",
+		},
+		"with STANDARD class (should be omitted)": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogGroupClass: utils.Pointer(dataquery.LogGroupClassSTANDARD),
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups()",
+		},
+		"with account identifiers when includeAccounts is true": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					SelectedAccountIds: []string{"123456789012", "987654321098"},
+				},
+			},
+			includeAccounts: true,
+			expected:        "SOURCE logGroups(accountIdentifier: ['123456789012', '987654321098'])",
+		},
+		"with account identifiers when includeAccounts is false (non-monitoring account)": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					SelectedAccountIds: []string{"123456789012", "987654321098"},
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups()",
+		},
+		"with all options and includeAccounts true": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogGroupPrefixes:   []string{"/aws/lambda"},
+					LogGroupClass:      utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					SelectedAccountIds: []string{"123456789012"},
+				},
+			},
+			includeAccounts: true,
+			expected:        "SOURCE logGroups(namePrefix: ['/aws/lambda'], class: ['INFREQUENT_ACCESS'], accountIdentifier: ['123456789012'])",
+		},
+		"with all options but includeAccounts false": {
+			logsQuery: models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogGroupPrefixes:   []string{"/aws/lambda"},
+					LogGroupClass:      utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					SelectedAccountIds: []string{"123456789012"},
+				},
+			},
+			includeAccounts: false,
+			expected:        "SOURCE logGroups(namePrefix: ['/aws/lambda'], class: ['INFREQUENT_ACCESS'])",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			result := buildSourceClause(tc.logsQuery, tc.includeAccounts)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestValidateLogGroupPrefixes(t *testing.T) {
+	testCases := map[string]struct {
+		prefixes    []string
+		expectError bool
+		errorMsg    string
+	}{
+		"valid single prefix": {
+			prefixes:    []string{"/aws/lambda"},
+			expectError: false,
+		},
+		"valid multiple prefixes": {
+			prefixes:    []string{"/aws/lambda", "/aws/ecs", "prod"},
+			expectError: false,
+		},
+		"valid exactly 5 prefixes": {
+			prefixes:    []string{"one", "two", "three", "four", "five"},
+			expectError: false,
+		},
+		"empty prefixes": {
+			prefixes:    []string{},
+			expectError: true,
+			errorMsg:    "at least one log group prefix is required",
+		},
+		"too many prefixes": {
+			prefixes:    []string{"one", "two", "three", "four", "five", "six"},
+			expectError: true,
+			errorMsg:    "maximum of 5 log group prefixes allowed",
+		},
+		"prefix too short": {
+			prefixes:    []string{"ab"},
+			expectError: true,
+			errorMsg:    "must be at least 3 characters",
+		},
+		"prefix contains wildcard": {
+			prefixes:    []string{"/aws/*"},
+			expectError: true,
+			errorMsg:    "cannot contain wildcard character",
+		},
+		"one valid one invalid prefix": {
+			prefixes:    []string{"/aws/lambda", "ab"},
+			expectError: true,
+			errorMsg:    "must be at least 3 characters",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			err := validateLogGroupPrefixes(tc.prefixes)
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errorMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateAccountIdentifiers(t *testing.T) {
+	testCases := map[string]struct {
+		accounts    []string
+		expectError bool
+		errorMsg    string
+	}{
+		"valid empty accounts": {
+			accounts:    []string{},
+			expectError: false,
+		},
+		"valid single account": {
+			accounts:    []string{"123456789012"},
+			expectError: false,
+		},
+		"valid multiple accounts": {
+			accounts:    []string{"123456789012", "234567890123", "345678901234"},
+			expectError: false,
+		},
+		"valid exactly 20 accounts": {
+			accounts: []string{
+				"111111111111", "222222222222", "333333333333", "444444444444", "555555555555",
+				"666666666666", "777777777777", "888888888888", "999999999999", "101010101010",
+				"111111111112", "222222222223", "333333333334", "444444444445", "555555555556",
+				"666666666667", "777777777778", "888888888889", "999999999990", "101010101011",
+			},
+			expectError: false,
+		},
+		"too many accounts": {
+			accounts: []string{
+				"111111111111", "222222222222", "333333333333", "444444444444", "555555555555",
+				"666666666666", "777777777777", "888888888888", "999999999999", "101010101010",
+				"111111111112", "222222222223", "333333333334", "444444444445", "555555555556",
+				"666666666667", "777777777778", "888888888889", "999999999990", "101010101011",
+				"121212121212",
+			},
+			expectError: true,
+			errorMsg:    "maximum of 20 account identifiers allowed",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			err := validateAccountIdentifiers(tc.accounts)
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errorMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestQuery_StartQuery_WithNamePrefixScope(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var cli fakeCWLogsClient
+	NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
+		return &cli
+	}
+
+	t.Run("injects SOURCE clause for namePrefix scope", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message",
+						"logsQueryScope": "namePrefix",
+						"logGroupPrefixes": ["/aws/lambda"]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SOURCE logGroups(namePrefix: ['/aws/lambda']) | fields @timestamp,ltrim(@log) as "+logIdentifierInternal+",ltrim(@logStream) as "+logStreamIdentifierInternal+"|fields @message", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("injects SOURCE clause for allLogGroups scope", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message",
+						"logsQueryScope": "allLogGroups"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SOURCE logGroups() | fields @timestamp,ltrim(@log) as "+logIdentifierInternal+",ltrim(@logStream) as "+logStreamIdentifierInternal+"|fields @message", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("returns error when query already contains SOURCE command", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"SOURCE logGroups() fields @message",
+						"logsQueryScope": "namePrefix",
+						"logGroupPrefixes": ["/aws/lambda"]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "query cannot contain SOURCE command when using Name prefix or All log groups mode")
+	})
+
+	t.Run("does not inject SOURCE clause for logGroupName scope", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message",
+						"logsQueryScope": "logGroupName",
+						"logGroupNames": ["/aws/lambda/myfunction"]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "fields @timestamp,ltrim(@log) as "+logIdentifierInternal+",ltrim(@logStream) as "+logStreamIdentifierInternal+"|fields @message", *cli.calls.startQuery[0].QueryString)
+	})
+}
+
+func TestFormatStringArrayForSource(t *testing.T) {
+	testCases := map[string]struct {
+		input    []string
+		expected string
+	}{
+		"single element": {
+			input:    []string{"value1"},
+			expected: "['value1']",
+		},
+		"multiple elements": {
+			input:    []string{"value1", "value2", "value3"},
+			expected: "['value1', 'value2', 'value3']",
+		},
+		"empty array": {
+			input:    []string{},
+			expected: "[]",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			result := formatStringArrayForSource(tc.input)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }

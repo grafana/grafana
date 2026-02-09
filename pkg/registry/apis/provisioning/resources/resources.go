@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 var (
@@ -27,17 +28,48 @@ var (
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
-// NewResourceOwnershipConflictError creates a BadRequest error for when a resource
-// is owned by a different repository or manager and cannot be modified
-func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {
-	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
-		resourceName,
-		currentManager.Kind,
-		currentManager.Identity,
-		requestingManager.Kind,
-		requestingManager.Identity)
+// wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
+// to treat them as warnings rather than hard errors. This includes:
+// - Kubernetes field validation errors
+// - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
+// - Dashboard validation errors (all DashboardErr types)
+// - Duplicate resource errors
+// - Resource already in repository errors
+func wrapAsValidationErrorIfNeeded(err error) error {
+	if err == nil {
+		return nil
+	}
 
-	return apierrors.NewBadRequest(message)
+	// Check if it's already a validation error
+	var validationErr *ResourceValidationError
+	if errors.As(err, &validationErr) {
+		return err
+	}
+
+	// Check if it's a field validation error (e.g., missing name)
+	var fieldErr *field.Error
+	if errors.As(err, &fieldErr) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a Kubernetes API BadRequest error (these are usually validation errors)
+	// Dashboard validation errors are wrapped as BadRequest by the dashboard API
+	if apierrors.IsBadRequest(err) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a dashboard validation error (wrap all dashboard errors as validation errors)
+	var dashboardErr dashboardaccess.DashboardErr
+	if errors.As(err, &dashboardErr) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a duplicate name error or already in repository error
+	if errors.Is(err, ErrDuplicateName) || errors.Is(err, ErrAlreadyInRepository) {
+		return NewResourceValidationError(err)
+	}
+
+	return err
 }
 
 type WriteOptions struct {
@@ -239,7 +271,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parseSpan.End()
 
 	if parsed.Obj.GetName() == "" {
-		return "", schema.GroupVersionKind{}, ErrMissingName
+		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
 	// Check if the resource already exists
@@ -276,6 +308,8 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	err = parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
+		// Wrap resource validation errors (like dashboard refresh interval) as warnings
+		err = wrapAsValidationErrorIfNeeded(err)
 	}
 	runSpan.End()
 
@@ -309,7 +343,7 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	objName := obj.GetName()
 	if objName == "" {
-		return "", "", schema.GroupVersionKind{}, ErrMissingName
+		return "", "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
 	client, _, err := r.clients.ForKind(ctx, *gvk)

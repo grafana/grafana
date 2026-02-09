@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -159,8 +158,6 @@ func setup(t *testing.T) *serviceTestStruct {
 		pollChangesChannel <- ctx
 	}
 
-	searchStub := searchV2.NewStubSearchService()
-
 	service, err := newProvisioningServiceImpl(
 		func(context.Context, string, dashboardstore.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, dualwrite.Service, *serverlock.ServerLockService) (dashboards.DashboardProvisioner, error) {
 			serviceTest.dashboardProvisionerInstantiations++
@@ -175,7 +172,6 @@ func setup(t *testing.T) *serviceTestStruct {
 		func(context.Context) error {
 			return nil
 		},
-		searchStub,
 	)
 	service.provisionAlerting = func(context.Context, prov_alerting.ProvisionerConfig) error {
 		return nil

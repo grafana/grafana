@@ -81,7 +81,7 @@ By default, Grafana uses its built-in Alertmanager, and Grafana Cloud instances 
 
 {{< figure src="/media/docs/alerting/alerting-choose-alertmanager.png" max-width="750px" alt="A screenshot choosing an Alertmanager in the notification policies UI" >}}
 
-When having multiple Alertmanagers, note that each Alertmanager manages its own independent notification resources, such as contact points, templates, policies, silences, mute timings, and active notifications.
+When having multiple Alertmanagers, note that each Alertmanager manages its own independent notification resources, such as contact points, templates, policies, silences, mute timings, active time intervals, and active notifications.
 
 These notification resources cannot be shared across different Alertmanagers.
 

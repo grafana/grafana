@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
@@ -17,9 +18,9 @@ const MAX_RECENT = 5;
 const recentDashboardsKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
 export function RecentlyViewedDashboards() {
-  const [isOpen, setIsOpen] = useState(true);
-
   const styles = useStyles2(getStyles);
+  const isMediumScreen = !useMediaQueryMinWidth('md');
+  const [isOpen, setIsOpen] = useState(!isMediumScreen); // Default to closed on small screens
 
   const {
     value: recentDashboards = [],
@@ -43,6 +44,11 @@ export function RecentlyViewedDashboards() {
     });
     setIsOpen(!isOpen);
   };
+
+  useEffect(() => {
+    // Auto collapse on small screens and expand on larger screens
+    setIsOpen(!isMediumScreen);
+  }, [isMediumScreen]);
 
   if (recentDashboards.length === 0) {
     return null;
@@ -95,6 +101,7 @@ export function RecentlyViewedDashboards() {
                   showFolderNames={true}
                   locationInfo={foldersByUid[dash.location]}
                   layoutMode="card"
+                  source="browseDashboardsPage_RecentlyViewedCard"
                 />
               </li>
             ))}

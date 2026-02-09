@@ -1,14 +1,16 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { AppEvents, isObject } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { Connection, useDeleteConnectionMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage, extractStatusCauses } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { CONNECTIONS_URL } from '../constants';
+import { CONNECTIONS_TAB_URL } from '../constants';
 
 interface Props {
   name: string;
@@ -25,8 +27,18 @@ export function DeleteConnectionButton({ name, connection }: Props) {
       connectionType: connection?.spec?.type ?? 'unknown',
     });
 
-    await deleteConnection({ name });
-    navigate(CONNECTIONS_URL);
+    try {
+      await deleteConnection({ name }).unwrap();
+      navigate(CONNECTIONS_TAB_URL);
+    } catch (error) {
+      const causes = isObject(error) && 'data' in error ? extractStatusCauses(error.data) : [];
+      const errorMessage = causes[0]?.message ?? extractErrorMessage(error);
+
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: [errorMessage],
+      });
+    }
   }, [deleteConnection, name, connection, navigate]);
 
   const showDeleteModal = useCallback(() => {

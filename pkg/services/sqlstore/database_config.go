@@ -166,11 +166,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if features != nil && features.IsEnabledGlobally(featuremgmt.FlagMysqlAnsiQuotes) {
-			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
+		cnnstr += "&sql_mode=ANSI_QUOTES"
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(dbCfg.Host, "127.0.0.1", "5432")

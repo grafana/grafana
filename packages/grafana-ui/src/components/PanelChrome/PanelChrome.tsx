@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PropsWithChildren, ReactElement, ReactNode, useId, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -115,11 +115,6 @@ interface HoverHeader {
   hoverHeaderOffset?: number;
 }
 
-const MaybeWrap = ({ children }: PropsWithChildren<{}>) => {
-  const styles = useStyles2(getStyles);
-  return getFeatureToggle('preventPanelChromeOverflow') ? <div className={styles.container}>{children}</div> : children;
-};
-
 /**
  * @internal
  */
@@ -227,7 +222,6 @@ export function PanelChrome({
       ) {
         return;
       }
-
       // setTimeout is needed here because onSelect stops the event propagation
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
@@ -248,9 +242,12 @@ export function PanelChrome({
 
   const onContentPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
-      // When selected, ignore clicks inside buttons, links, canvas and svg elments
+      // Ignore clicks inside buttons, links, canvas and svg elments
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
-      if (isSelected && evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+      if (
+        evt.target instanceof Element &&
+        (evt.target.closest('button,a,canvas,svg') || evt.target.classList.contains('u-over'))
+      ) {
         // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();
         return;
@@ -258,7 +255,7 @@ export function PanelChrome({
 
       onSelect?.(evt);
     },
-    [isSelected, onSelect]
+    [onSelect]
   );
 
   const headerContent = (
@@ -352,7 +349,7 @@ export function PanelChrome({
   const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
 
   return (
-    <MaybeWrap>
+    <div className={styles.container}>
       {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
       <section
         className={cx(
@@ -436,6 +433,7 @@ export function PanelChrome({
                   placement="bottom-end"
                   menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
                   onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
                 />
               )}
             </div>
@@ -459,7 +457,7 @@ export function PanelChrome({
           </div>
         )}
       </section>
-    </MaybeWrap>
+    </div>
   );
 }
 
@@ -528,12 +526,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-container',
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
-      position: getFeatureToggle('preventPanelChromeOverflow') ? 'unset' : 'relative',
+      position: 'unset',
       borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: getFeatureToggle('preventPanelChromeOverflow') ? 'hidden' : 'initial',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',

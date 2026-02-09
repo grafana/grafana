@@ -24,7 +24,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                   | Description                                                                                                                                                   | Enabled by default |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `disableEnvelopeEncryption`           | Disable envelope encryption (emergency only)                                                                                                                  |                    |
 | `publicDashboardsScene`               | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                   | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
@@ -36,22 +35,23 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                             | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `kubernetesDashboards`                | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
+| `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
-| `dashboardSceneForViewers`            | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
-| `dashboardSceneSolo`                  | Enables rendering dashboards using scenes for solo panels                                                                                                     | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
-| `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                | Yes                |
 | `cloudWatchRoundUpEndTime`            | Round up end time for metric queries to the next minute to avoid missing data                                                                                 | Yes                |
 | `newFiltersUI`                        | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                                          | Yes                |
 | `alertingQueryAndExpressionsStepMode` | Enables step mode for alerting queries and expressions                                                                                                        | Yes                |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            | Yes                |
 | `useSessionStorageForRedirection`     | Use session storage for handling the redirection after login                                                                                                  | Yes                |
 | `pluginsSriChecks`                    | Enables SRI checks for plugin assets                                                                                                                          |                    |
+| `timeRangePan`                        | Enables time range panning functionality                                                                                                                      | Yes                |
+| `newTimeRangeZoomShortcuts`           | Enables new keyboard shortcuts for time range zoom operations                                                                                                 | Yes                |
 | `azureMonitorDisableLogLimit`         | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                              |                    |
+| `enableSCIM`                          | Enables SCIM support for user and group management                                                                                                            | Yes                |
 | `alertingUIOptimizeReducer`           | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
 | `azureMonitorEnableUserAuth`          | Enables user auth for Azure Monitor datasource only                                                                                                           | Yes                |
 | `alertingNotificationsStepMode`       | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
@@ -80,20 +80,17 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
-| `reportingRetries`                | Enables rendering retries for the reporting feature                                                    |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
-| `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
+| `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
-| `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
-| `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `newGauge`                        | Enable new gauge visualization                                                                         |

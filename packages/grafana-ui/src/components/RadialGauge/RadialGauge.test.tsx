@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
+import { ThresholdsMode } from '@grafana/schema';
+
 import { RadialGaugeExample } from './RadialGauge.story';
 
 describe('RadialGauge', () => {
@@ -16,6 +18,7 @@ describe('RadialGauge', () => {
     { description: 'with endpoint marker point', props: { roundedBars: true, endpointMarker: 'point' } },
     { description: 'with thresholds bar', props: { thresholdsBar: true } },
     { description: 'with sparkline', props: { sparkline: true } },
+    { description: 'with neutral value', props: { neutral: 50 } },
   ] satisfies Array<{ description: string; props?: ComponentProps<typeof RadialGaugeExample> }>)(
     'should render $description without throwing',
     ({ props }) => {
@@ -24,10 +27,165 @@ describe('RadialGauge', () => {
     }
   );
 
-  it('should render threshold labels', () => {
-    render(<RadialGaugeExample showScaleLabels={true} />);
+  describe('labels', () => {
+    it('should render labels', () => {
+      render(<RadialGaugeExample showScaleLabels />);
 
-    expect(screen.getByRole('img')).toBeInTheDocument();
-    expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+    });
+
+    it('should render labels including neutral', () => {
+      render(<RadialGaugeExample showScaleLabels neutral={50} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.getByLabelText('Neutral 50')).toBeInTheDocument();
+    });
+
+    it('should not render a threshold if it is out of range', () => {
+      render(
+        <RadialGaugeExample
+          showScaleLabels
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 200, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 65')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Threshold 200')).not.toBeInTheDocument();
+    });
+
+    it('should not render neutral if it is out of range', () => {
+      render(<RadialGaugeExample showScaleLabels neutral={-50} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Neutral -50')).not.toBeInTheDocument();
+    });
+
+    it('should not render neutral if it duplicates a threshold value', () => {
+      render(<RadialGaugeExample showScaleLabels neutral={85} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Neutral 85')).not.toBeInTheDocument();
+    });
+
+    it('should render percentage labels', () => {
+      render(
+        <RadialGaugeExample
+          showScaleLabels
+          min={50}
+          max={150}
+          thresholds={{
+            mode: ThresholdsMode.Percentage,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 90, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 0%')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 65%')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 90%')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 100%')).toBeInTheDocument();
+    });
+  });
+
+  describe('thresholds bar', () => {
+    it('should render thresholds bar if some thresholds are in range', () => {
+      render(
+        <RadialGaugeExample
+          thresholdsBar
+          min={50}
+          max={150}
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: 0, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 200, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getAllByTestId('radial-gauge-thresholds-bar')).toHaveLength(2);
+    });
+
+    it('should render thresholds bar for percentage thresholds', () => {
+      render(
+        <RadialGaugeExample
+          thresholdsBar
+          min={200}
+          max={300}
+          thresholds={{
+            mode: ThresholdsMode.Percentage,
+            steps: [
+              { value: 0, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 90, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getAllByTestId('radial-gauge-thresholds-bar')).toHaveLength(3);
+    });
+
+    it('should not render thresholds bar if min === max', () => {
+      render(
+        <RadialGaugeExample
+          thresholdsBar
+          min={1}
+          max={1}
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: 1, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 200, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.queryByTestId('radial-gauge-thresholds-bar')).not.toBeInTheDocument();
+    });
+
+    it('should not render thresholds bar if the prop is not set', () => {
+      render(
+        <RadialGaugeExample
+          min={50}
+          max={150}
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: 0, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 200, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.queryByTestId('radial-gauge-thresholds-bar')).not.toBeInTheDocument();
+    });
   });
 });

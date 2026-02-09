@@ -29,10 +29,12 @@ import {
   LogSortOrderChangeEvent,
   LoadingState,
   rangeUtil,
+  transformDataFrame,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -177,6 +179,7 @@ export const LogsPanel = ({
     noInteractions,
     timestampResolution,
     showLogAttributes,
+    unwrappedColumns,
     ...options
   },
   height,
@@ -196,7 +199,7 @@ export const LogsPanel = ({
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
   // Prevents the scroll position to change when new data from infinite scrolling is received
   const keepScrollPositionRef = useRef<null | 'infinite-scroll' | 'user'>(null);
-  let closeCallback = useRef<() => void>();
+  const closeCallback = useRef<(() => void) | undefined>(undefined);
   const { app, eventBus, onAddAdHocFilter } = usePanelContext();
 
   useEffect(() => {
@@ -476,6 +479,10 @@ export const LogsPanel = ({
       let newSeries: DataFrame[] = [];
       try {
         newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
+        const panel = getDashboardSrv().getCurrent()?.getPanelById(id);
+        if (panel?.transformations) {
+          newSeries = await lastValueFrom(transformDataFrame(panel?.transformations, newSeries));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -489,7 +496,7 @@ export const LogsPanel = ({
         series: newSeries,
       });
     },
-    [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
+    [data.request, dataSourcesMap, id, onNewLogsReceived, panelData, timeZone]
   );
 
   const renderCommonLabels = () => (
@@ -566,8 +573,6 @@ export const LogsPanel = ({
           logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
-          onClickShowField={showField}
-          onClickHideField={hideField}
         />
       )}
       {config.featureToggles.newLogsPanel && (
@@ -630,6 +635,7 @@ export const LogsPanel = ({
               timeRange={data.timeRange}
               timestampResolution={timestampResolution}
               timeZone={timeZone}
+              unwrappedColumns={unwrappedColumns}
               wrapLogMessage={wrapLogMessage}
             />
           )}

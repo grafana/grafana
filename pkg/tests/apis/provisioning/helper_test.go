@@ -16,8 +16,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,6 +34,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -840,6 +840,28 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	return repo
 }
 
+func repositoryToUnstructured(t *testing.T, obj *provisioning.Repository) *unstructured.Unstructured {
+	bytes, err := json.Marshal(obj)
+	require.NoError(t, err)
+
+	res := &unstructured.Unstructured{}
+	err = res.UnmarshalJSON(bytes)
+	require.NoError(t, err)
+
+	return res
+}
+
+func unstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *provisioning.Connection {
+	bytes, err := obj.MarshalJSON()
+	require.NoError(t, err)
+
+	c := &provisioning.Connection{}
+	err = json.Unmarshal(bytes, c)
+	require.NoError(t, err)
+
+	return c
+}
+
 // postFilesRequest performs a direct HTTP POST request to the files API.
 // This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
 type filesPostOptions struct {
@@ -1025,6 +1047,31 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 
 	appSlug := "someSlug"
 	connectionFactory := h.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+	// Setup mock repositories for the ListRepos endpoint
+	expectedRepos := []*github.Repository{
+		{
+			Name: github.Ptr("test-repo-1"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-1"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-1/test-repo-1"),
+		},
+		{
+			Name: github.Ptr("test-repo-2"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-2"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-2/test-repo-2"),
+		},
+		{
+			Name: github.Ptr("test-repo-3"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-3"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-3/test-repo-3"),
+		},
+	}
+
 	connectionFactory.Client = ghmock.NewMockedHTTPClient(
 		ghmock.WithRequestMatchHandler(
 			ghmock.GetApp,
@@ -1047,6 +1094,28 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 					ID: &idInt,
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostAppInstallationsAccessTokensByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				installation := github.InstallationToken{
+					Token:     github.Ptr("someToken"),
+					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetInstallationRepositories,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				reposResponse := &github.ListRepositories{
+					Repositories: expectedRepos,
+					TotalCount:   github.Ptr(len(expectedRepos)),
+				}
+				_, _ = w.Write(ghmock.MustMarshal(reposResponse))
 			}),
 		),
 	)
@@ -1099,4 +1168,14 @@ func requestHelper(
 	}
 
 	return result, resp.Response.StatusCode, nil
+}
+
+// findCondition finds a condition by type in the conditions list
+func findCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }

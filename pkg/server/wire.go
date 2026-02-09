@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -54,6 +55,7 @@ import (
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -141,7 +143,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -242,6 +243,8 @@ var wireBasicSet = wire.NewSet(
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
 	legacy.ProvideMigratorDashboardAccessor,
+	legacy.ProvidePlaylistMigrator,
+	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
@@ -276,8 +279,6 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	sort.ProvideService,
 	search.ProvideService,
-	searchV2.ProvideService,
-	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
@@ -518,7 +519,7 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
-	ngmetrics.ProvideServiceForTest,
+	ngmetrics.ProvideService,
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
@@ -573,4 +574,19 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
 	wire.Build(wireExtsSet)
 	return &unifiedsearch.StandardDocumentBuilders{}, nil
+}
+
+/*
+provideMigrationRegistry builds the MigrationRegistry directly from the
+underlying dependencies. When adding a new resource migration, add the
+dependency parameter here and register it with the registry.
+*/
+func provideMigrationRegistry(
+	accessor legacy.MigrationDashboardAccessor,
+	playlistMigrator legacy.PlaylistMigrator,
+) *unifiedmigrations.MigrationRegistry {
+	r := unifiedmigrations.NewMigrationRegistry()
+	r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
+	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	return r
 }

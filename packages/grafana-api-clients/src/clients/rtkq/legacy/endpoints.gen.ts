@@ -28,7 +28,6 @@ export const addTagTypes = [
   'invites',
   'preferences',
   'orgs',
-  'playlists',
   'query_history',
   'recording_rules',
   'reports',
@@ -59,6 +58,7 @@ const injectedRtkApi = api
           params: {
             delegatable: queryArg.delegatable,
             includeHidden: queryArg.includeHidden,
+            targetOrgId: queryArg.targetOrgId,
           },
         }),
         providesTags: ['access_control', 'enterprise'],
@@ -115,7 +115,12 @@ const injectedRtkApi = api
         providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addTeamRole: build.mutation<AddTeamRoleApiResponse, AddTeamRoleApiArg>({
@@ -131,6 +136,9 @@ const injectedRtkApi = api
           url: `/access-control/teams/${queryArg.teamId}/roles`,
           method: 'PUT',
           body: queryArg.setTeamRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -150,7 +158,14 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       listUserRoles: build.query<ListUserRolesApiResponse, ListUserRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/users/${queryArg.userId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/users/${queryArg.userId}/roles`,
+          params: {
+            includeHidden: queryArg.includeHidden,
+            includeMapped: queryArg.includeMapped,
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addUserRole: build.mutation<AddUserRoleApiResponse, AddUserRoleApiArg>({
@@ -166,6 +181,9 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           method: 'PUT',
           body: queryArg.setUserRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -760,18 +778,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['datasources', 'correlations'],
       }),
-      getDataSourceIdByName: build.query<GetDataSourceIdByNameApiResponse, GetDataSourceIdByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/id/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
-      deleteDataSourceByName: build.mutation<DeleteDataSourceByNameApiResponse, DeleteDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}`, method: 'DELETE' }),
-        invalidatesTags: ['datasources'],
-      }),
-      getDataSourceByName: build.query<GetDataSourceByNameApiResponse, GetDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
       datasourceProxyDeleteByUiDcalls: build.mutation<
         DatasourceProxyDeleteByUiDcallsApiResponse,
         DatasourceProxyDeleteByUiDcallsApiArg
@@ -1240,40 +1246,6 @@ const injectedRtkApi = api
           body: queryArg.updateOrgUserCommand,
         }),
         invalidatesTags: ['orgs'],
-      }),
-      searchPlaylists: build.query<SearchPlaylistsApiResponse, SearchPlaylistsApiArg>({
-        query: (queryArg) => ({
-          url: `/playlists`,
-          params: {
-            query: queryArg.query,
-            limit: queryArg.limit,
-          },
-        }),
-        providesTags: ['playlists'],
-      }),
-      createPlaylist: build.mutation<CreatePlaylistApiResponse, CreatePlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists`, method: 'POST', body: queryArg.createPlaylistCommand }),
-        invalidatesTags: ['playlists'],
-      }),
-      deletePlaylist: build.mutation<DeletePlaylistApiResponse, DeletePlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['playlists'],
-      }),
-      getPlaylist: build.query<GetPlaylistApiResponse, GetPlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}` }),
-        providesTags: ['playlists'],
-      }),
-      updatePlaylist: build.mutation<UpdatePlaylistApiResponse, UpdatePlaylistApiArg>({
-        query: (queryArg) => ({
-          url: `/playlists/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.updatePlaylistCommand,
-        }),
-        invalidatesTags: ['playlists'],
-      }),
-      getPlaylistItems: build.query<GetPlaylistItemsApiResponse, GetPlaylistItemsApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}/items` }),
-        providesTags: ['playlists'],
       }),
       viewPublicDashboard: build.query<ViewPublicDashboardApiResponse, ViewPublicDashboardApiArg>({
         query: (queryArg) => ({ url: `/public/dashboards/${queryArg.accessToken}` }),
@@ -2066,6 +2038,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}` }),
         providesTags: ['sso_settings'],
       }),
+      patchProviderSettings: build.mutation<PatchProviderSettingsApiResponse, PatchProviderSettingsApiArg>({
+        query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PATCH', body: queryArg.body }),
+        invalidatesTags: ['sso_settings'],
+      }),
       updateProviderSettings: build.mutation<UpdateProviderSettingsApiResponse, UpdateProviderSettingsApiArg>({
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PUT', body: queryArg.body }),
         invalidatesTags: ['sso_settings'],
@@ -2080,6 +2056,7 @@ export type ListRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListRolesApiArg = {
   delegatable?: boolean;
   includeHidden?: boolean;
+  targetOrgId?: number;
 };
 export type CreateRoleApiResponse = /** status 201 (empty) */ RoleDto;
 export type CreateRoleApiArg = {
@@ -2122,6 +2099,7 @@ export type ListTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type ListTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
 };
 export type AddTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2133,6 +2111,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
   setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
@@ -2150,6 +2129,9 @@ export type ListUsersRolesApiArg = {
 export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
+  includeHidden?: boolean;
+  includeMapped?: boolean;
+  targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2161,6 +2143,7 @@ export type SetUserRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetUserRolesApiArg = {
   userId: number;
+  targetOrgId?: number;
   setUserRolesCommand: SetUserRolesCommand;
 };
 export type RemoveUserRoleApiResponse =
@@ -2213,8 +2196,7 @@ export type SetResourcePermissionsForUserApiArg = {
 };
 export type GetSyncStatusApiResponse = /** status 200 (empty) */ ActiveSyncStatusDto;
 export type GetSyncStatusApiArg = void;
-export type ReloadLdapCfgApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type ReloadLdapCfgApiResponse = unknown;
 export type ReloadLdapCfgApiArg = void;
 export type GetLdapStatusApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2653,26 +2635,6 @@ export type GetCorrelationsApiArg = {
   /** Source datasource UID filter to be applied to correlations */
   sourceUid?: string[];
 };
-export type GetDataSourceIdByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the data source. */
-  id: number;
-};
-export type GetDataSourceIdByNameApiArg = {
-  name: string;
-};
-export type DeleteDataSourceByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted data source. */
-  id: number;
-  /** Message Message of the deleted dashboard. */
-  message: string;
-};
-export type DeleteDataSourceByNameApiArg = {
-  name: string;
-};
-export type GetDataSourceByNameApiResponse = /** status 200 (empty) */ DataSource;
-export type GetDataSourceByNameApiArg = {
-  name: string;
-};
 export type DatasourceProxyDeleteByUiDcallsApiResponse = unknown;
 export type DatasourceProxyDeleteByUiDcallsApiArg = {
   uid: string;
@@ -3092,34 +3054,6 @@ export type UpdateOrgUserApiArg = {
   userId: number;
   updateOrgUserCommand: UpdateOrgUserCommand;
 };
-export type SearchPlaylistsApiResponse = /** status 200 (empty) */ Playlists;
-export type SearchPlaylistsApiArg = {
-  query?: string;
-  /** in:limit */
-  limit?: number;
-};
-export type CreatePlaylistApiResponse = /** status 200 (empty) */ Playlist;
-export type CreatePlaylistApiArg = {
-  createPlaylistCommand: CreatePlaylistCommand;
-};
-export type DeletePlaylistApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type DeletePlaylistApiArg = {
-  uid: string;
-};
-export type GetPlaylistApiResponse = /** status 200 (empty) */ PlaylistDto;
-export type GetPlaylistApiArg = {
-  uid: string;
-};
-export type UpdatePlaylistApiResponse = /** status 200 (empty) */ PlaylistDto;
-export type UpdatePlaylistApiArg = {
-  uid: string;
-  updatePlaylistCommand: UpdatePlaylistCommand;
-};
-export type GetPlaylistItemsApiResponse = /** status 200 (empty) */ PlaylistItemDto[];
-export type GetPlaylistItemsApiArg = {
-  uid: string;
-};
 export type ViewPublicDashboardApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type ViewPublicDashboardApiArg = {
   accessToken: string;
@@ -3425,7 +3359,7 @@ export type AddTeamGroupApiApiArg = {
   teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
-export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
+export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult[];
 export type SearchTeamGroupsApiArg = {
   teamId: number;
   page?: number;
@@ -3808,6 +3742,16 @@ export type GetProviderSettingsApiResponse = /** status 200 (empty) */ {
 };
 export type GetProviderSettingsApiArg = {
   key: string;
+};
+export type PatchProviderSettingsApiResponse =
+  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type PatchProviderSettingsApiArg = {
+  key: string;
+  body: {
+    settings?: {
+      [key: string]: any;
+    };
+  };
 };
 export type UpdateProviderSettingsApiResponse =
   /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -5235,11 +5179,6 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: any;
-  functional?: any;
-  performance?: any;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5248,7 +5187,6 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
@@ -5265,7 +5203,6 @@ export type PreferencesSpec = {
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
-export type CookieType = string;
 export type NavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5273,7 +5210,6 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type PatchPrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5287,7 +5223,6 @@ export type PatchPrefsCmd = {
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5345,58 +5280,6 @@ export type SearchOrgUsersQueryResult = {
   page?: number;
   perPage?: number;
   totalCount?: number;
-};
-export type Playlist = {
-  id?: number;
-  interval?: string;
-  name?: string;
-  uid?: string;
-};
-export type Playlists = Playlist[];
-export type PlaylistItem = {
-  Id?: number;
-  PlaylistId?: number;
-  order?: number;
-  title?: string;
-  type?: string;
-  value?: string;
-};
-export type CreatePlaylistCommand = {
-  interval?: string;
-  items?: PlaylistItem[];
-  name?: string;
-};
-export type PlaylistItemDto = {
-  /** Title is an unused property -- it will be removed in the future */
-  title?: string;
-  /** Type of the item. */
-  type?: string;
-  /** Value depends on type and describes the playlist item.
-    
-    dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
-    is not portable as the numerical identifier is non-deterministic between different instances.
-    Will be replaced by dashboard_by_uid in the future. (deprecated)
-    dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
-    dashboards behind the tag will be added to the playlist.
-    dashboard_by_uid: The value is the dashboard UID */
-  value?: string;
-};
-export type PlaylistDto = {
-  /** Interval sets the time between switching views in a playlist. */
-  interval?: string;
-  /** The ordered list of items that the playlist will iterate over. */
-  items?: PlaylistItemDto[];
-  /** Name of the playlist. */
-  name?: string;
-  /** Unique playlist identifier. Generated on creation, either by the
-    creator of the playlist of by the application. */
-  uid?: string;
-};
-export type UpdatePlaylistCommand = {
-  interval?: string;
-  items?: PlaylistItem[];
-  name?: string;
-  uid?: string;
 };
 export type DataSourceRef = {
   /** The plugin type-id */
@@ -6005,6 +5888,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  teamUid?: string;
   uid?: string;
 };
 export type TeamGroupMapping = {
@@ -6608,11 +6492,6 @@ export const {
   useAddDataSourceMutation,
   useGetCorrelationsQuery,
   useLazyGetCorrelationsQuery,
-  useGetDataSourceIdByNameQuery,
-  useLazyGetDataSourceIdByNameQuery,
-  useDeleteDataSourceByNameMutation,
-  useGetDataSourceByNameQuery,
-  useLazyGetDataSourceByNameQuery,
   useDatasourceProxyDeleteByUiDcallsMutation,
   useDatasourceProxyGetByUiDcallsQuery,
   useLazyDatasourceProxyGetByUiDcallsQuery,
@@ -6727,15 +6606,6 @@ export const {
   useLazySearchOrgUsersQuery,
   useRemoveOrgUserMutation,
   useUpdateOrgUserMutation,
-  useSearchPlaylistsQuery,
-  useLazySearchPlaylistsQuery,
-  useCreatePlaylistMutation,
-  useDeletePlaylistMutation,
-  useGetPlaylistQuery,
-  useLazyGetPlaylistQuery,
-  useUpdatePlaylistMutation,
-  useGetPlaylistItemsQuery,
-  useLazyGetPlaylistItemsQuery,
   useViewPublicDashboardQuery,
   useLazyViewPublicDashboardQuery,
   useGetPublicAnnotationsQuery,
@@ -6917,5 +6787,6 @@ export const {
   useRemoveProviderSettingsMutation,
   useGetProviderSettingsQuery,
   useLazyGetProviderSettingsQuery,
+  usePatchProviderSettingsMutation,
   useUpdateProviderSettingsMutation,
 } = injectedRtkApi;

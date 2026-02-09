@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 )
 
 const (
@@ -233,6 +234,35 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var teamLBACRuleKind = TeamLBACRuleKind()
+var TeamLBACRuleInfo = utils.NewResourceInfo(
+	teamLBACRuleKind.Group(), teamLBACRuleKind.Version(),
+	teamLBACRuleKind.GroupVersionResource().Resource,
+	strings.ToLower(teamLBACRuleKind.Kind()), teamLBACRuleKind.Kind(),
+	func() runtime.Object { return teamLBACRuleKind.ZeroValue() },
+	func() runtime.Object { return teamLBACRuleKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Datasource Type", Type: "string", Format: "string", Description: "Data source type"},
+			{Name: "Datasource UID", Type: "string", Format: "string", Description: "Data source UID"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			t, ok := obj.(*TeamLBACRule)
+			if !ok {
+				return nil, fmt.Errorf("expected teamlbacrule")
+			}
+			return []interface{}{
+				t.Name,
+				t.Spec.DatasourceType,
+				t.Spec.DatasourceUid,
+				t.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
 var ExternalGroupMappingResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"externalgroupmappings", "externalgroupmapping", "ExternalGroupMapping",
 	func() runtime.Object { return &ExternalGroupMapping{} },
@@ -323,6 +353,18 @@ func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 
+func AddTeamLBACRuleTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&TeamLBACRule{},
+		&TeamLBACRuleList{},
+
+		// What is this about?
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
+	)
+	return nil
+}
+
 func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.GroupVersion) error {
 	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
@@ -371,17 +413,7 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 	)
 
 	// Enable field selectors for TeamBinding
-	err := scheme.AddFieldLabelConversionFunc(
-		TeamBindingResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)
-			}
-		},
-	)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, TeamBindingKind())
 	if err != nil {
 		return err
 	}
