@@ -87,6 +87,14 @@ function withBaseRestrictedImportsConfig(config = {}) {
   return finalConfig;
 }
 
+const datavizDefaultImportsRestrictions = [
+  {
+    group: ['@emotion/css'],
+    importNames: ['cx'],
+    message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
+  },
+];
+
 /**
  * @type {Array<import('eslint').Linter.Config>}
  */
@@ -478,12 +486,40 @@ module.exports = [
 
   {
     // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            ...datavizDefaultImportsRestrictions,
+            {
+              group: ['@grafana/data'],
+              importNames: ['getFieldDisplayName'],
+              message:
+                'Using the method inside Table can have performance implications which are unnecessary. Instead, use the local `getDisplayName` from the table utils.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  {
+    // custom rule for Table to avoid performance regressions
     files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
           patterns: [
+            ...datavizDefaultImportsRestrictions,
+            {
+              group: ['@grafana/data'],
+              importNames: ['getFieldDisplayName'],
+              message:
+                'Using the method inside Table can have performance implications which are unnecessary. Instead, use the local `getDisplayName` from the table utils.',
+            },
             {
               group: ['**/themes/ThemeContext'],
               importNames: ['useStyles2', 'useTheme2'],
@@ -496,20 +532,14 @@ module.exports = [
     },
   },
 
-  // dataviz prefers to use `clsx` over `cx` to compose classes as a rule for performance reasons
+  // other dataviz panels which should just get our default set of restrictions
   {
     files: ['public/app/plugins/panel/state-timeline/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
-          patterns: [
-            {
-              group: ['@emotion/css'],
-              importNames: ['cx'],
-              message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
-            },
-          ],
+          patterns: [...datavizDefaultImportsRestrictions],
         }),
       ],
     },
