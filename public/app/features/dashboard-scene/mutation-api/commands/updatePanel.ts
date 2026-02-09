@@ -115,7 +115,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           ...updates.data,
           spec: {
             ...updates.data.spec,
-            queries: updates.data.spec.queries ?? currentPanelKind.spec.data.spec.queries,
+            queries: updates.data.spec.queries ?? currentPanelKind.spec.data?.spec?.queries ?? [],
             queryOptions: updates.data.spec.queryOptions ?? {},
             transformations: updates.data.spec.transformations ?? [],
           },

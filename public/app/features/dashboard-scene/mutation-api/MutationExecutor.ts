@@ -85,10 +85,6 @@ export class MutationExecutor {
    * Execute multiple mutations atomically.
    */
   async executeBatch(requests: DashboardMutationAPI.MutationRequest[]): Promise<MutationResult[]> {
-    if (!this.scene) {
-      throw new Error('No scene set. Call setScene() first.');
-    }
-
     // Normalize request types to UPPER_CASE
     const normalizedRequests = requests.map((r) => ({
       ...r,

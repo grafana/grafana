@@ -7,8 +7,10 @@
 
 import { z } from 'zod';
 
-import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
+import { behaviors, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import type { TimeSettingsSpec } from '@grafana/schema/src/schema/dashboard/v2beta1/types.spec.gen';
+
+import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
 
 import { getCursorSync, getLiveNow } from './getDashboardSettings';
 import { payloads } from './schemas';
@@ -56,12 +58,37 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
       if (payload.editable !== undefined) {
         sceneUpdates.editable = payload.editable;
       }
+      if (payload.preload !== undefined) {
+        sceneUpdates.preload = payload.preload;
+      }
       if (payload.links !== undefined) {
         sceneUpdates.links = payload.links;
       }
 
       if (Object.keys(sceneUpdates).length > 0) {
         scene.setState(sceneUpdates);
+      }
+
+      // Apply liveNow via LiveNowTimer behavior
+      if (payload.liveNow !== undefined) {
+        try {
+          const liveNowTimer = sceneGraph.findObject(scene, (s) => s instanceof behaviors.LiveNowTimer);
+          if (liveNowTimer instanceof behaviors.LiveNowTimer) {
+            payload.liveNow ? liveNowTimer.enable() : liveNowTimer.disable();
+          }
+        } catch {
+          // LiveNowTimer may not exist
+        }
+      }
+
+      // Apply cursorSync via CursorSync behavior
+      if (payload.cursorSync !== undefined) {
+        const cursorSyncBehavior = scene.state.$behaviors?.find(
+          (b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync
+        );
+        if (cursorSyncBehavior) {
+          cursorSyncBehavior.setState({ sync: transformCursorSyncV2ToV1(payload.cursorSync) });
+        }
       }
 
       // Apply time settings if provided

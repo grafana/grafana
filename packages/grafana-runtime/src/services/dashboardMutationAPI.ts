@@ -41,8 +41,8 @@ export interface MutationResult {
   success: boolean;
   /** Error message if success is false */
   error?: string;
-  /** List of changes made by the mutation */
-  changes?: MutationChange[];
+  /** List of changes made by the mutation (empty array on failure) */
+  changes: MutationChange[];
   /** Warnings (non-fatal issues) */
   warnings?: string[];
   /** Data returned by read-only operations (e.g., GET_DASHBOARD_SETTINGS) */
