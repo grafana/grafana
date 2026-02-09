@@ -9,6 +9,10 @@ const BRACES: Record<string, string> = {
 
 const MATCH_MARK = 'brace_match';
 
+function uniqueId(): string {
+  return Math.random().toString(36).slice(2, 9);
+}
+
 export function BracesPlugin(): Plugin {
   return {
     onKeyDown(event, editor, next) {
@@ -42,7 +46,7 @@ export function BracesPlugin(): Plugin {
             event.preventDefault();
             const complement = BRACES[event.key];
             const matchAnnotation = {
-              key: `${MATCH_MARK}-${crypto.randomUUID()}`,
+              key: `${MATCH_MARK}-${uniqueId()}`,
               type: `${MATCH_MARK}-${complement}`,
               anchor: {
                 key: startKey,
