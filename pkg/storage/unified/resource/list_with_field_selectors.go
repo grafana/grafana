@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"net/http"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -36,7 +37,16 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		srq.SearchBefore = token.SearchBefore
 	}
 
-	searchResp, err := s.searchClient.Search(ctx, srq)
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.search != nil {
+		// Use local search service
+		searchResp, err = s.search.Search(ctx, srq)
+	} else {
+		// Use remote search service
+		// useFieldSelectorSearch() already checks that either s.search or s.searchClient is set
+		searchResp, err = s.searchClient.Search(ctx, srq)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +112,16 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	if s.searchClient == nil || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
+	// Excluded groups have no Versions.Kinds[] in its app manifest, so we cant index anything for search.
+	excludedGroups := []string{
+		"provisioning.grafana.app",
+		"scope.grafana.app",
+	}
+	if slices.Contains(excludedGroups, req.Options.Key.Group) {
+		return false
+	}
+
+	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
 
