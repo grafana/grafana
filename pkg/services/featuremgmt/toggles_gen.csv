@@ -22,7 +22,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-04-12,disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-04-03,renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
-2023-05-04,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
+2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2023-04-24,enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
 2023-07-12,logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
@@ -36,7 +36,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 2023-08-30,dashgpt,GA,@grafana/dashboards-squad,false,false,true
 2024-03-05,aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
-2023-08-31,reportingRetries,preview,@grafana/grafana-operator-experience-squad,false,true,false
 2026-01-08,reportingCsvEncodingOptions,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
@@ -61,7 +60,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-28,queryServiceWithConnections,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
-2023-10-20,cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
+2023-10-20,cloudWatchBatchQueries,GA,@grafana/aws-datasources,false,false,false
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
@@ -146,10 +145,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-04,pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
-2025-11-04,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
+2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
 2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
-2024-12-19,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-11-14,passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
@@ -265,6 +264,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-11-12,newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+2026-02-06,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 2025-12-15,elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false

@@ -670,7 +670,6 @@
       "message": {
         "required": "필수 사항입니다. "
       },
-      "or": "또는",
       "validate-name": ""
     },
     "am-routes-expanded-form": {
@@ -861,7 +860,9 @@
       "cancel": "취소",
       "clear-filters": "필터 초기화",
       "close": "",
+      "create": "",
       "delete": "삭제",
+      "deleting": "",
       "edit": "편집",
       "export": "내보내기",
       "export-all": "모두 내보내기",
@@ -1662,9 +1663,8 @@
         "pause-recording": "",
         "policy-tree": "",
         "routing": "",
-        "routing-default": "",
-        "routing-imported": "",
-        "routing-manual": "",
+        "routing-none": "",
+        "routing-tree": "",
         "rules-skipped": "",
         "rules-title": "",
         "skipped": "",
@@ -1679,6 +1679,9 @@
         "renamed-intervals_other": "",
         "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
       },
       "source": {
         "datasource": "기존 데이터 소스 관리 규칙",
@@ -1727,28 +1730,19 @@
         "group": "",
         "group-desc": "",
         "heading": "",
-        "manual-label-name": "",
-        "manual-label-name-placeholder": "",
-        "manual-label-value": "",
-        "manual-label-value-placeholder": "",
         "namespace": "",
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "pause-alerting": "",
         "pause-recording": "",
-        "policy": {
-          "default": "",
-          "default-desc": "",
-          "imported": "",
-          "imported-desc": "",
-          "manual": "",
-          "manual-desc": ""
-        },
         "policy-desc": "",
         "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
         "select-group": "",
         "select-namespace": "",
+        "select-policy": "",
         "settings-title": "",
         "skip": "",
         "skipped-step1": "",
@@ -2093,7 +2087,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "도움이 필요하세요?"
@@ -2244,6 +2242,11 @@
       "aria-label-expand": "펼치기",
       "aria-label-more": "정책에 대한 추가 동작",
       "aria-label-more-default": "기본 정책에 대한 추가 동작",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "일치하는 다른 정책을 찾을 수 없는 경우 모든 경고 인스턴스는 기본 정책에 의해 처리됩니다.",
         "title": "기본 정책",
@@ -2253,6 +2256,14 @@
         "confirm": "삭제 진행",
         "warning-1": "이 알림 정책을 삭제하면 영구적으로 제거됩니다.",
         "warning-2": "정말로 이 정책을 삭제하시겠어요?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "다음과 같이 쉼표로 구분된 일치 조건의 목록을 사용하여 알림 정책을 필터링합니다. <1>심각도=심각, 지역=EMEA</1>",
       "generated-policies": "자동 생성된 정책",
@@ -2267,6 +2278,7 @@
         },
         "inherited": "상속됨",
         "mute-time": "알림 비활성화 시간",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "초기 알림이 이미 전송된 경고 그룹에 추가된 새 경고에 대해 알림을 전송하기 전에 얼마나 기다려야 하는지를 말합니다.",
@@ -2287,6 +2299,12 @@
       "new-policy": "새 정책 추가",
       "no-matchers": "일치 조건 없음",
       "reload-policies": "정책 다시 로딩",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
       "root-policy": {
         "description": "",
         "title": ""
@@ -2325,27 +2343,6 @@
       "fetch": {
         "error": ""
       },
-      "policy-header": {
-        "delete": {
-          "aria-label": "",
-          "delete-label": "",
-          "reset-label": ""
-        },
-        "edit": {
-          "text": ""
-        },
-        "export": {
-          "aria-label": "",
-          "label": ""
-        },
-        "more-actions": {
-          "aria-label": ""
-        },
-        "view": {
-          "provisioned-tooltip": "",
-          "text": ""
-        }
-      },
       "reset-reasons": {
         "no-permissions": "",
         "provisioned": ""
@@ -2361,6 +2358,9 @@
       "label-new-child-policy": "새 하위 정책",
       "label-new-sibling-above": "위에 형제 항목 추가",
       "label-new-sibling-below": "아래에 형제 항목 추가"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "쿼리 미리보기를 표시할 수 없습니다. 쿼리에 사용된 데이터 소스 중 일부를 사용할 수 없습니다.",
@@ -2546,6 +2546,9 @@
       "clear": "",
       "label-search-by-name-or-receiver": "",
       "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "편집",
@@ -3151,6 +3154,10 @@
       "misconfigured-warning": "이 템플릿은 잘못 구성되었습니다.",
       "misconfigured-warning-details": "템플릿은 alertmanager 구성의 <2></2> 및 <5></5> 섹션 모두에서 정의되어야 합니다."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "{{name}} 편집",
       "title-drawer": "{{name}} 편집",
@@ -3195,7 +3202,8 @@
       "error-loading": {
         "description": "시간 간격을 불러올 수 없습니다. 나중에 다시 시도해 주세요.",
         "title": "시간 간격 불러오는 중 오류 발생"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "시간 간격",
@@ -3213,6 +3221,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} 전)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3310,12 +3321,6 @@
       "label-edit": "편집",
       "label-export": "내보내기"
     },
-    "use-create-routing-tree-modal": {
-      "modal-element": {
-        "add-routing-tree": "",
-        "title-create-routing-tree": ""
-      }
-    },
     "use-delete-contact-point-modal": {
       "delete-confirm": "네, 연락처를 삭제해 주세요",
       "deleting": "삭제 중…",
@@ -3333,15 +3338,6 @@
     "use-delete-policy-modal": {
       "modal-element": {
         "title-delete-notification-policy": "알림 정책 삭제"
-      }
-    },
-    "use-delete-routing-tree-modal": {
-      "modal-element": {
-        "delete-routing": "",
-        "delete-yes": "",
-        "deleting": "",
-        "deleting-routing-permanently-remove": "",
-        "title-delete-routing-tree": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -4884,7 +4880,6 @@
       "paste-panel": "패널 붙여넣기",
       "paste-row": "행 붙여넣기",
       "paste-tab": "탭 붙여넣기",
-      "un-group-panels": "그룹 해제",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -6568,6 +6563,8 @@
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "표 보기 토글",
       "table-view-label-table-view": "테이블 보기"
     },
@@ -6614,9 +6611,6 @@
     },
     "query-editor": {
       "query": "쿼리"
-    },
-    "query-editor-content": {
-      "content-body-goes-here": ""
     },
     "query-variable-editor-form": {
       "description-examples": "",
@@ -7796,7 +7790,8 @@
       "loading-placeholder": "로딩 중..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "쿼리 없이 진행"
+      "aria-label-go-queryless": "쿼리 없이 진행",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "결과 시리즈: {{numItems}}개",
@@ -9482,6 +9477,10 @@
     "secret-form-field": {
       "reset": "재설정"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "옵션 로딩 실패",
       "loading": "옵션 로딩 중..",
@@ -9524,6 +9523,18 @@
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -10477,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "줄 바꿈 제거",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
@@ -10503,6 +10520,7 @@
     "name-show-controls": "컨트롤 표시",
     "name-time": "타임스탬프 표시",
     "name-unique-labels": "고유 레이블",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "줄 바꿈",
     "order-options": {
       "label-newest-first": "최신순",
@@ -12001,19 +12019,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
-      "description-branch-name-in-git-hub": "GitHub의 브랜치 이름",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "브랜치",
       "label-comment": "댓글",
       "label-path": "경로",
-      "label-workflow": "워크플로",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -12037,11 +12057,7 @@
       "message": "이 기능은 현재 적극적으로 개발 중입니다. 최상의 경험과 최신 개선 사항 적용을 위해 Grafana의 <2>야간 빌드</2>를 사용하는 것이 좋습니다."
     },
     "bitbucket": {
-      "branch-description": "프로비저닝에 사용할 브랜치",
-      "branch-label": "브랜치",
       "branch-required": "브랜치는 필수 항목입니다",
-      "path-description": "리포지토리 내의 하위 디렉터리 경로(선택 사항)",
-      "path-label": "경로",
       "permissions": {
         "pull-requests-label": "풀 요청",
         "pull-requests-read-write": "읽기 및 쓰기",
@@ -12056,15 +12072,13 @@
       "token-label": "앱 비밀번호",
       "token-required": "Bitbucket 토큰은 필수 항목입니다",
       "token-user-description": "앱 비밀번호로 리포지토리에 액세스하는 데 사용할 사용자 이름",
-      "token-user-label": "사용자 이름",
       "token-user-required": "사용자 이름은 필수 항목입니다",
       "url-description": "Bitbucket 리포지토리 URL",
-      "url-label": "리포지토리 URL",
       "url-pattern": "유효한 Bitbucket 리포지토리 URL이어야 합니다",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "이 리포지토리 연결에 대해 알기 쉬운 이름 추가",
+      "description-clear-repository-connection": "",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
       "error-quota-exceeded-message": "",
@@ -12305,46 +12319,31 @@
       "subtitle-provisioning-feature": "프로비저닝 연결 보기 및 관리"
     },
     "git": {
-      "branch-description": "프로비저닝에 사용할 브랜치",
-      "branch-label": "브랜치",
       "branch-required": "브랜치는 필수 항목입니다",
-      "path-description": "리포지토리 내의 하위 디렉터리 경로(선택 사항)",
-      "path-label": "경로",
       "pr-workflow-description": "사용자가 변경 사항을 저장할 때 풀 요청을 열 것인지 여부를 선택할 수 있습니다. 리포지토리에서 메인 브랜치에 대한 직접 변경을 허용하지 않는 경우에도 풀 요청이 필요할 수 있습니다.",
       "pr-workflow-label": "저장 시 풀 요청 옵션 활성화",
       "token-description": "Git 리포지토리 액세스 토큰 또는 비밀번호",
       "token-label": "액세스 토큰",
       "token-required": "Git 토큰은 필수 항목입니다",
       "token-user-description": "액세스 토큰을 사용하여 리포지토리에 액세스하는 데 사용할 사용자 이름",
-      "token-user-label": "사용자 이름",
       "token-user-required": "사용자 이름은 필수 항목입니다",
       "url-description": "Git 리포지토리 URL",
-      "url-label": "리포지토리 URL",
       "url-pattern": "유효한 Git 리포지토리 URL이어야 합니다",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "github": {
-      "branch-description": "프로비저닝에 사용할 브랜치",
-      "branch-label": "브랜치",
       "branch-required": "브랜치는 필수 항목입니다",
-      "path-description": "리포지토리 내의 하위 디렉터리 경로(선택 사항)",
-      "path-label": "경로",
       "pr-workflow-description": "사용자가 변경 사항을 저장할 때 풀 요청을 열 것인지 여부를 선택할 수 있습니다. 리포지토리에서 메인 브랜치에 대한 직접 변경을 허용하지 않는 경우에도 풀 요청이 필요할 수 있습니다.",
       "pr-workflow-label": "저장 시 풀 요청 옵션 활성화",
       "token-description": "리포지토리 권한이 있는 GitHub 개인 액세스 토큰",
       "token-label": "개인 액세스 토큰",
       "token-required": "GitHub 토큰은 필수 항목입니다",
       "url-description": "GitHub 리포지토리 URL",
-      "url-label": "리포지토리 URL",
       "url-pattern": "유효한 GitHub 리포지토리 URL이어야 합니다",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "gitlab": {
-      "branch-description": "프로비저닝에 사용할 브랜치",
-      "branch-label": "브랜치",
       "branch-required": "브랜치는 필수 항목입니다",
-      "path-description": "리포지토리 내의 하위 디렉터리 경로(선택 사항)",
-      "path-label": "경로",
       "permissions": {
         "api": "API",
         "api-read-write": "읽기 및 쓰기",
@@ -12359,7 +12358,6 @@
       "token-label": "프로젝트 액세스 토큰",
       "token-required": "GitLab 토큰은 필수 항목입니다",
       "url-description": "GitLab 리포지토리 URL",
-      "url-label": "리포지토리 URL",
       "url-pattern": "유효한 GitLab 리포지토리 URL이어야 합니다",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
@@ -12576,9 +12574,15 @@
       "previous": "이전"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "완료된 단계",
@@ -12617,7 +12621,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "및 클릭",
@@ -12630,7 +12635,7 @@
         "token-text": "GitLab 개인 액세스 토큰"
       },
       "go-to": "다음으로 이동",
-      "make-sure": "반드시 이러한 권한을 포함하세요"
+      "make-sure": ""
     },
     "warning-title-default": "경고",
     "wizard": {
@@ -12654,8 +12659,6 @@
       "button-cancelling": "",
       "button-next": "완료",
       "button-start": "동기화 시작",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12697,10 +12700,6 @@
       "button-submitting": "제출 중…",
       "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
   },
   "public-dashboard": {
@@ -12919,7 +12918,40 @@
       "show": "",
       "show-help": ""
     },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
+    },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
     "header": {
       "expression": "",
       "transformation": "",
