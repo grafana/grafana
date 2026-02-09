@@ -7,6 +7,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
+import { MULTI_OPERATOR_VALUES } from './utils';
 
 interface DashboardFiltersOverviewProps {
   adhocFilters?: AdHocFiltersVariable;
@@ -61,7 +62,7 @@ export const DashboardFiltersOverview = ({
               keyOption={keyOption}
               keyValue={keyValue}
               operatorValue={operatorValue}
-              isMultiOperator={operatorConfig.multiValues.has(operatorValue)}
+              isMultiOperator={MULTI_OPERATOR_VALUES.has(operatorValue)}
               singleValue={state.singleValuesByKey[keyValue] ?? ''}
               multiValues={state.multiValuesByKey[keyValue] ?? []}
               isGroupBy={state.isGrouped[keyValue] ?? false}

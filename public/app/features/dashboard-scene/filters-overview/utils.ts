@@ -1,5 +1,9 @@
 import { SelectableValue } from '@grafana/data';
-import { AdHocFilterWithLabels } from '@grafana/scenes';
+import { AdHocFilterWithLabels, OPERATORS } from '@grafana/scenes';
+
+export const MULTI_OPERATOR_VALUES = new Set(
+  OPERATORS.filter((op) => op.isMulti).map((op) => op.value)
+);
 
 export interface OverviewInitState {
   keys: Array<SelectableValue<string>>;
@@ -9,13 +13,10 @@ export interface OverviewInitState {
   isOriginByKey: Record<string, boolean>;
 }
 
-export function buildOverviewState(
-  filtersState: {
-    originFilters?: AdHocFilterWithLabels[];
-    filters: AdHocFilterWithLabels[];
-  },
-  multiOperatorValues: Set<string>
-): OverviewInitState {
+export function buildOverviewState(filtersState: {
+  originFilters?: AdHocFilterWithLabels[];
+  filters: AdHocFilterWithLabels[];
+}): OverviewInitState {
   const keys: Array<SelectableValue<string>> = [];
   const operatorsByKey: Record<string, string> = {};
   const multiValuesByKey: Record<string, string[]> = {};
@@ -44,7 +45,7 @@ export function buildOverviewState(
     keys.push({ label: selectedFilter.keyLabel, value: selectedFilter.key });
     operatorsByKey[selectedFilter.key] = selectedFilter.operator;
     isOriginByKey[selectedFilter.key] = false;
-    if (selectedFilter.values && selectedFilter.values.length > 0 && multiOperatorValues.has(selectedFilter.operator)) {
+    if (selectedFilter.values && selectedFilter.values.length > 0 && MULTI_OPERATOR_VALUES.has(selectedFilter.operator)) {
       multiValuesByKey[selectedFilter.key] = selectedFilter.values!;
     } else {
       singleValuesByKey[selectedFilter.key] = selectedFilter.value!;
@@ -89,7 +90,6 @@ export interface ApplyFiltersInput {
   multiValuesByKey: Record<string, string[]>;
   existingOriginFilters: AdHocFilterWithLabels[];
   existingFilters: AdHocFilterWithLabels[];
-  multiOperatorValues: Set<string>;
 }
 
 export interface ApplyFiltersOutput {
@@ -107,7 +107,6 @@ export function buildAdHocApplyFilters({
   multiValuesByKey,
   existingOriginFilters,
   existingFilters,
-  multiOperatorValues,
 }: ApplyFiltersInput): ApplyFiltersOutput {
   const nextFilters: AdHocFilterWithLabels[] = [];
   const nextOriginFilters: AdHocFilterWithLabels[] = [];
@@ -127,7 +126,7 @@ export function buildAdHocApplyFilters({
     const existingFilter = existingFilters.find((filter) => filter.key === keyValue && !filter.nonApplicable);
 
     const operatorValue = isOrigin ? '=' : (operatorsByKey[keyValue] ?? '=');
-    const isMultiOperator = multiOperatorValues.has(operatorValue);
+    const isMultiOperator = MULTI_OPERATOR_VALUES.has(operatorValue);
     const singleValue = singleValuesByKey[keyValue] ?? '';
     const multiValues = multiValuesByKey[keyValue] ?? [];
 

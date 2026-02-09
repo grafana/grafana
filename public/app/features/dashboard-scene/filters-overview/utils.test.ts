@@ -24,7 +24,7 @@ describe('DashboardFiltersOverview utils', () => {
         },
       ];
 
-      const result = buildOverviewState({ originFilters, filters }, new Set(['=|']));
+      const result = buildOverviewState({ originFilters, filters });
 
       expect(result.keys).toEqual([
         { label: 'Region', value: 'region' },
@@ -54,7 +54,7 @@ describe('DashboardFiltersOverview utils', () => {
         },
       ];
 
-      const result = buildOverviewState({ originFilters, filters }, new Set());
+      const result = buildOverviewState({ originFilters, filters });
 
       expect(result.keys).toEqual([]);
       expect(result.isOriginByKey).toEqual({});
@@ -73,7 +73,7 @@ describe('DashboardFiltersOverview utils', () => {
         },
       ];
 
-      const result = buildOverviewState({ originFilters, filters: [] }, new Set(['=|']));
+      const result = buildOverviewState({ originFilters, filters: [] });
 
       expect(result.operatorsByKey).toEqual({ region: '=' });
       expect(result.singleValuesByKey).toEqual({ region: '' });
@@ -131,7 +131,6 @@ describe('DashboardFiltersOverview utils', () => {
         multiValuesByKey: {},
         existingOriginFilters,
         existingFilters,
-        multiOperatorValues: new Set(),
       });
 
       expect(result.nextOriginFilters).toEqual([
@@ -176,7 +175,6 @@ describe('DashboardFiltersOverview utils', () => {
         multiValuesByKey: { region: [] },
         existingOriginFilters: [],
         existingFilters: [],
-        multiOperatorValues: new Set(['=|']),
       });
 
       expect(result.nextFilters).toEqual([]);
@@ -201,7 +199,6 @@ describe('DashboardFiltersOverview utils', () => {
         multiValuesByKey: {},
         existingOriginFilters,
         existingFilters: [],
-        multiOperatorValues: new Set(),
       });
 
       expect(result.nextOriginFilters).toEqual([

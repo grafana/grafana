@@ -6,10 +6,10 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, sceneUtils } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
 
+import { DashboardScene } from '../scene/DashboardScene';
+
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
-import type { IFiltersOverviewDashboard } from './types';
-import { DashboardScene } from '../scene/DashboardScene';
 
 interface DashboardFiltersOverviewDrawerState extends SceneObjectState {
   dashboard: DashboardScene;
@@ -18,7 +18,7 @@ interface DashboardFiltersOverviewDrawerState extends SceneObjectState {
 export class DashboardFiltersOverviewDrawer extends SceneObjectBase<DashboardFiltersOverviewDrawerState> {
   static Component = DashboardFiltersOverviewDrawerRenderer;
 
-  private _dashboard: IFiltersOverviewDashboard | undefined;
+  private _dashboard: DashboardScene;
 
   constructor(state: DashboardFiltersOverviewDrawerState) {
     super(state);
@@ -35,9 +35,7 @@ export class DashboardFiltersOverviewDrawer extends SceneObjectBase<DashboardFil
   };
 }
 
-function DashboardFiltersOverviewDrawerRenderer({
-  model,
-}: SceneComponentProps<DashboardFiltersOverviewDrawer>) {
+function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewDrawer>) {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
   const dashboard = model.getDashboard();

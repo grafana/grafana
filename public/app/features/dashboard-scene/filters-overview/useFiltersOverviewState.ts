@@ -150,7 +150,6 @@ export function useFiltersOverviewState({
   const operatorConfig = useMemo(
     () => ({
       options: OPERATORS.map((op) => ({ label: op.value, value: op.value })),
-      multiValues: new Set<string>(OPERATORS.filter((op) => op.isMulti).map((op) => op.value)),
     }),
     []
   );
@@ -162,10 +161,8 @@ export function useFiltersOverviewState({
     }
 
     const init = async () => {
-      const { keys, operatorsByKey, multiValuesByKey, singleValuesByKey, isOriginByKey } = buildOverviewState(
-        adhocFilters.state,
-        operatorConfig.multiValues
-      );
+      const { keys, operatorsByKey, multiValuesByKey, singleValuesByKey, isOriginByKey } =
+        buildOverviewState(adhocFilters.state);
 
       // Fetch keys from datasource
       keys.push(...(await adhocFilters._getKeys(null)));
@@ -200,7 +197,7 @@ export function useFiltersOverviewState({
     };
 
     init();
-  }, [adhocFilters, groupByVariable, operatorConfig.multiValues]);
+  }, [adhocFilters, groupByVariable]);
 
   // Initialize openGroups when new groups appear
   const { groupNames } = useMemo(() => splitKeysByGroup(state.keys), [state.keys]);
@@ -296,7 +293,6 @@ export function useFiltersOverviewState({
               multiValuesByKey: state.multiValuesByKey,
               existingOriginFilters: adhocFilters.state.originFilters ?? [],
               existingFilters: adhocFilters.state.filters ?? [],
-              multiOperatorValues: operatorConfig.multiValues,
             });
 
           adhocFilters.setState({
@@ -306,7 +302,7 @@ export function useFiltersOverviewState({
         }
       },
     }),
-    [adhocFilters, groupByVariable, operatorConfig.multiValues, state, valueOptionsByKey]
+    [adhocFilters, groupByVariable, state, valueOptionsByKey]
   );
 
   return {
