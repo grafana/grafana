@@ -19,6 +19,7 @@ import (
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -44,10 +45,26 @@ type Parser interface {
 
 type parserFactory struct {
 	ClientFactory ClientFactory
+	// Parser is taking more responsibility that it should as it's parsing file but also managing resource creation.
+	// In order to ensure any code path changing resources complies with quotas, we need to pass the quota checker factory here
+	// as this is the lower level of abstraction modifying resources that is shared among API and controllers.
+	// TODO: we should refactor this to have a better separation of concerns.
+	QuotaCheckerFactory quotas.QuotaCheckerFactory
+}
+
+// Temporal constructor to avoid wiring multiple components at the same time.
+func NewParserFactoryWithQuotaChecker(clientFactory ClientFactory, quotaCheckerFactory quotas.QuotaCheckerFactory) ParserFactory {
+	return &parserFactory{
+		ClientFactory:       clientFactory,
+		QuotaCheckerFactory: quotaCheckerFactory,
+	}
 }
 
 func NewParserFactory(clientFactory ClientFactory) ParserFactory {
-	return &parserFactory{clientFactory}
+	return &parserFactory{
+		ClientFactory:       clientFactory,
+		QuotaCheckerFactory: quotas.NewUnlimitedQuotaCheckerFactory(),
+	}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -58,6 +75,11 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		return nil, err
 	}
 
+	checker, err := f.QuotaCheckerFactory.GetQuotaChecker(ctx, config.Status.Quota, config.Namespace, config.Name)
+	if err != nil {
+		return nil, fmt.Errorf("get quota checker: %w", err)
+	}
+
 	urls, _ := repo.(repository.RepositoryWithURLs)
 	return &parser{
 		repo: provisioning.ResourceRepositoryInfo{
@@ -66,9 +88,10 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		urls:    urls,
-		clients: clients,
-		config:  config,
+		urls:         urls,
+		clients:      clients,
+		config:       config,
+		quotaChecker: checker,
 	}, nil
 }
 
@@ -83,6 +106,9 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
+
+	// QuotaChecker checks resource quota before creation
+	quotaChecker quotas.QuotaChecker
 }
 
 type ParsedResource struct {
@@ -125,13 +151,17 @@ type ParsedResource struct {
 
 	// If we got some Errors
 	Errors []string
+
+	// QuotaChecker checks resource quota before creation
+	quotaChecker quotas.QuotaChecker
 }
 
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
-		Info: info,
-		Repo: r.repo,
+		Info:         info,
+		Repo:         r.repo,
+		quotaChecker: r.quotaChecker,
 	}
 
 	if err := IsPathSupported(info.Path); err != nil {
@@ -365,6 +395,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		}
 		if err != nil {
 			deleteSpan.RecordError(err)
+		} else {
+			// Update quota usage after successful deletion
+			if quotaErr := f.quotaChecker.OnResourceDeleted(deleteCtx); quotaErr != nil {
+				// Log the error but don't fail the operation since the resource was already deleted
+				logging.FromContext(deleteCtx).Error("failed to update quota after resource deletion", "error", quotaErr)
+			}
 		}
 
 		// Set the deleted resource as the result
@@ -389,19 +425,28 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// If we have already tried loading existing, start with create
 	if f.DryRunResponse != nil && f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
+
 		createCtx, createSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.create")
 		createSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
-		f.Upsert, err = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
-			FieldValidation: fieldValidation,
+
+		// Use GrantResourceCreation to check quota, create resource, and update quota tracker
+		err = f.quotaChecker.GrantResourceCreation(createCtx, func() error {
+			var createErr error
+			f.Upsert, createErr = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
+				FieldValidation: fieldValidation,
+			})
+			if createErr != nil {
+				createSpan.RecordError(createErr)
+			}
+			return createErr
 		})
 		if err != nil {
 			createSpan.RecordError(err)
+			createSpan.End()
+			return fmt.Errorf("resource creation: %w", err)
 		}
 		createSpan.End()
-
-		if err == nil {
-			return nil // it worked, return
-		}
+		return nil // it worked, return
 	}
 
 	// Try update, otherwise create
@@ -424,13 +469,25 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	if apierrors.IsNotFound(err) {
 		f.Action = provisioning.ResourceActionCreate
+
 		fallbackCreateCtx, fallbackCreateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.create_fallback")
 		fallbackCreateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
-		f.Upsert, err = f.Client.Create(fallbackCreateCtx, f.Obj, metav1.CreateOptions{
-			FieldValidation: fieldValidation,
+
+		// Use GrantResourceCreation to check quota, create resource, and update quota tracker
+		err = f.quotaChecker.GrantResourceCreation(fallbackCreateCtx, func() error {
+			var createErr error
+			f.Upsert, createErr = f.Client.Create(fallbackCreateCtx, f.Obj, metav1.CreateOptions{
+				FieldValidation: fieldValidation,
+			})
+			if createErr != nil {
+				fallbackCreateSpan.RecordError(createErr)
+			}
+			return createErr
 		})
 		if err != nil {
 			fallbackCreateSpan.RecordError(err)
+			fallbackCreateSpan.End()
+			return fmt.Errorf("grant resource creation: %w", err)
 		}
 		fallbackCreateSpan.End()
 	}
