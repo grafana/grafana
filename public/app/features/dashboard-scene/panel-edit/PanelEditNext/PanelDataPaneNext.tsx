@@ -192,14 +192,28 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     return undefined;
   }
 
-  public deleteTransformation = (index: number) => {
+  private getTransformations(index: number): {
+    transformations: DataTransformerConfig[] | undefined;
+    transformer: SceneDataTransformer | undefined;
+  } {
     const transformer = this.getSceneDataTransformer();
-    if (!transformer) {
-      return;
+
+    if (transformer) {
+      const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
+        isDataTransformerConfig(t)
+      );
+
+      if (index >= 0 && index < transformations.length) {
+        return { transformations, transformer };
+      }
     }
 
-    const transformations = [...transformer.state.transformations];
-    if (index < 0 || index >= transformations.length) {
+    return { transformations: undefined, transformer: undefined };
+  }
+
+  public deleteTransformation = (index: number) => {
+    const { transformations, transformer } = this.getTransformations(index);
+    if (!transformations || !transformer) {
       return;
     }
 
@@ -209,16 +223,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   };
 
   public toggleTransformationDisabled = (index: number) => {
-    const transformer = this.getSceneDataTransformer();
-    if (!transformer) {
-      return;
-    }
-
-    const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
-      isDataTransformerConfig(t)
-    );
-
-    if (index < 0 || index >= transformations.length) {
+    const { transformations, transformer } = this.getTransformations(index);
+    if (!transformations || !transformer) {
       return;
     }
 
