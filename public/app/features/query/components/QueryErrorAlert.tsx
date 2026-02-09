@@ -37,12 +37,12 @@ export function QueryErrorAlert({ error, query }: Props) {
       </div>
       {isAvailable && (
         <div className={styles.assistantButton}>
-        <OpenAssistantButton
-          origin="grafana/query-editor-error"
-          prompt={`Help me analyze and fix the following ${error.type ? `\`${error.type}\`` : ''} query error: \`\`\`${message}\`\`\``}
-          context={buildAssistantContext(error, message, query)}
-          title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
-          size="sm"
+          <OpenAssistantButton
+            origin="grafana/query-editor-error"
+            prompt={`Help me analyze and fix the following ${error.type ? `\`${error.type}\`` : ''} query error: \`\`\`${message}\`\`\``}
+            context={buildAssistantContext(error, message, query)}
+            title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
+            size="sm"
           />
         </div>
       )}
