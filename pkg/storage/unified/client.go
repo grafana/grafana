@@ -8,8 +8,6 @@ import (
 
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,6 +16,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
@@ -62,7 +63,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	client, err := newClient(options.StorageOptions{
+	storageOptions := options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:                apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:                 apiserverCfg.Key("address").MustString(""),
@@ -70,7 +71,11 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
+	}
+	if err := validateUnifiedStorageOptions(opts.Cfg, &storageOptions); err != nil {
+		return nil, err
+	}
+	client, err := newClient(storageOptions, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
 		// Otherwise we would still try to query the legacy SQL database in Mode 5.
@@ -93,6 +98,24 @@ func ProvideUnifiedStorageClient(opts *Options,
 	}
 
 	return client, err
+}
+
+// Ensure deployments are not running with invalid configuration setups
+func validateUnifiedStorageOptions(cfg *setting.Cfg, opts *options.StorageOptions) error {
+	if cfg.StackID != "" || cfg.Env == "development" {
+		return nil // When running in cloud or production, allow any configuration combination
+	}
+
+	// Running standard unified storage in OSS/On-prem
+	if opts.StorageType == options.StorageTypeUnified {
+		if cfg.EnableSearch == false {
+			return fmt.Errorf("[unified_storage].enable_search is disabled")
+		}
+		if cfg.DisableDataMigrations {
+			return fmt.Errorf("[unified_storage].disable_data_migrations is enabled")
+		}
+	}
+	return nil
 }
 
 func newClient(opts options.StorageOptions,
