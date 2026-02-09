@@ -80,24 +80,71 @@ func TestFoo(t *testing.T) {
 
 ### Frontend
 
-Use the new OpenFeature-based feature flag client for all new feature flags. There are some differences compared to the legacy `config.featureToggles` system:
+Use the OpenFeature React hooks for all new feature flags. The React hooks automatically stay up to date with the latest flag values and integrate seamlessly with React components.
 
-- Feature flag initialisation is async, but will be finished by the time the UI is rendered. This means you cannot get the value of a feature flag at the 'top level' of a module/file
-- Call `evaluateBooleanFlag("flagName")` from `@grafana/runtime/internal` instead to get the value of a feature flag
-- Feature flag values _may_ change over the lifetime of the session. Do not store the value in a variable that is used for longer than a single render - always call `evaluateBooleanFlag` lazily when you use the value.
+#### Using React hooks (recommended)
 
-e.g.
+For React components, use the `useBooleanFlagValue` hook from `@openfeature/react-sdk`:
+
+```tsx
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+
+function MyComponent() {
+  // The hook returns the current value and automatically updates when the flag changes
+  const isNewPreferencesEnabled = useBooleanFlagValue('newPreferences', false);
+
+  if (isNewPreferencesEnabled) {
+    return <NewPreferencesUI />;
+  }
+
+  return <LegacyPreferencesUI />;
+}
+```
+
+Flag values _may_ change over the lifetime of the session, so do not store the result elsewhere in a way it will not react to changes in the flag value.
+
+If using non-boolean flags (a unique feature of the new feature flag system), explore the other exports from `@openfeature/react-sdk` to see how to use them.
+
+#### Using the client directly (non-React contexts)
+
+For advanced, non-React contexts (utilities, class methods, callbacks), you can use the OpenFeature client directly.
+
+However, because this is seperate from the React render loop there are important caveats you must be aware of:
+
+- Flag values are loaded asynchronously, so you cannot call `getBooleanValue()` just at the top-level of a module. You must wait until `app.ts` has initialised until you call a flag otherwise you will only get the default value
+- Flag values can change over the lifetime of the session, so do not store or cache the result. Always evaluate flags just in time when you use them, preferably in the if statement, for example.
+
+It is strongly preferred to use the React hooks instead of getting the client.
 
 ```ts
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
-// BAD - Don't do this. The feature toggle will not evaluate correctly
-const isEnabled = evaluateBooleanFlag('newPreferences', false);
-
-function makeAPICall() {
-  // GOOD - The feature toggle should be called after app initialisation
-  if (evaluateBooleanFlag('newPreferences', false)) {
+// GOOD - The feature toggle should be called after app initialisation
+function doThing() {
+  if (getFeatureFlagClient().getBooleanValue('newPreferences', false)) {
     // do new things
+  }
+}
+
+// BAD - Don't do this. The feature toggle must wait until app initialisation
+const isEnabled = getFeatureFlagClient().getBooleanValue('newPreferences', false);
+
+function doThing() {
+  if (isEnabled) {
+    // do new things
+  }
+}
+
+// BAD - Don't do this. The feature toggle will not change in response to updates
+class FooSrv {
+  constructor() {
+    this.isEnabled = getFeatureFlagClient().getBooleanValue('newPreferences', false);
+  }
+
+  doThing() {
+    if (this.isEnabled) {
+      // do new things
+    }
   }
 }
 ```
