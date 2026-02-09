@@ -2,8 +2,9 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
+import { Alert, Button, Stack } from '@grafana/ui';
 import { OwnerReference as OwnerReferenceType } from 'app/api/clients/folder/v1beta1';
+import { extractErrorMessage } from 'app/api/utils';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { OwnerReferenceSelector } from './OwnerReferenceSelector';
@@ -24,23 +25,30 @@ export const ManageOwnerReferences = ({
   const { data: ownerReferences } = useGetOwnerReferences({ resourceId });
   const [setOwnerReference, { isLoading: isLoadingSetOwnerReference }] = useSetOwnerReference({ resourceId });
   const [removeOwnerReference, { isLoading: isLoadingRemoveOwnerReference }] = useRemoveOwnerReferences({ resourceId });
+  const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
 
   const handleSaveButtonClick = async () => {
-    reportInteraction('grafana_owner_reference_modal_save_button_clicked', {
-      actionType: ownerReferences[0]?.uid ? 'reference changed' : 'reference set',
-    });
+    try {
+      reportInteraction('grafana_owner_reference_modal_save_button_clicked', {
+        actionType: ownerRef ? 'reference changed' : 'reference set',
+      });
 
-    if (!ownerRef) {
-      await removeOwnerReference();
-      notify.success(t('manage-owner-references.folder-owner-removed', 'Folder owner removed'));
+      if (!ownerRef) {
+        await removeOwnerReference().unwrap();
+        notify.success(t('manage-owner-references.folder-owner-removed', 'Folder owner removed'));
+        onSave();
+        return;
+      }
+
+      await setOwnerReference(ownerRef).unwrap();
+      notify.success(t('manage-owner-references.folder-owner-updated', 'Folder owner updated'));
+      setOwnerRef(null);
       onSave();
-      return;
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      setApiErrorMessage(errorMessage);
+      notify.error(t('manage-owner-references.folder-owner-error', 'Error updating folder owner'));
     }
-
-    await setOwnerReference(ownerRef);
-    notify.success(t('manage-owner-references.folder-owner-updated', 'Folder owner updated'));
-    setOwnerRef(null);
-    onSave();
   };
 
   const handleCancelButtonClick = async () => {
@@ -58,6 +66,11 @@ export const ManageOwnerReferences = ({
           setOwnerRef(ownerReference);
         }}
       />
+      {apiErrorMessage && (
+        <Alert severity="error" title={t('manage-owner-references.folder-owner-error', 'Error updating folder owner')}>
+          {apiErrorMessage}
+        </Alert>
+      )}
       <Stack direction="row" gap={2} justifyContent="end">
         <Button variant="secondary" fill="outline" onClick={handleCancelButtonClick} disabled={isLoading}>
           <Trans i18nKey="common.cancel">Cancel</Trans>
