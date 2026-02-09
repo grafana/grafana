@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -114,7 +114,7 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 type shortURLK8sHandler struct {
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	clientConfigProvider restconfig.DirectRestConfigProvider
 	cfg                  *setting.Cfg
 }
 

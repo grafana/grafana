@@ -16,7 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -208,7 +208,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		resources.FolderResource.Group:    foldersServerURL,
 		provisioning.GROUP:                provisioningServerURL,
 	}
-	configProviders := make(map[string]apiserver.RestConfigProvider)
+	configProviders := make(map[string]restconfig.RestConfigProvider)
 
 	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
 	if err != nil {
@@ -672,7 +672,7 @@ type directConfigProvider struct {
 	cfg *rest.Config
 }
 
-func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+func NewDirectConfigProvider(cfg *rest.Config) restconfig.RestConfigProvider {
 	return &directConfigProvider{cfg: cfg}
 }
 

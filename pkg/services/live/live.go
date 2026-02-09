@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -73,7 +73,7 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	pluginStore pluginstore.Store, pluginClient plugins.Client, dataSourceCache datasources.CacheService,
 	usageStatsService usagestats.Service, toggles featuremgmt.FeatureToggles,
 	dashboardService dashboards.DashboardAccessService,
-	configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
+	configProvider restconfig.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,

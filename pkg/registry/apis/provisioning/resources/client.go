@@ -15,8 +15,8 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 )
 
 var (
@@ -65,14 +65,14 @@ type clientsProvider interface {
 // It implements ClientsProvider by creating a dynamic client and discovery client
 // for the given rest config provider
 type singleAPIClients struct {
-	configProvider apiserver.RestConfigProvider
+	configProvider restconfig.RestConfigProvider
 	once           sync.Once
 	dynamic        dynamic.Interface
 	discovery      client.DiscoveryClient
 	initErr        error
 }
 
-func newSingleAPIClients(configProvider apiserver.RestConfigProvider) clientsProvider {
+func newSingleAPIClients(configProvider restconfig.RestConfigProvider) clientsProvider {
 	return &singleAPIClients{configProvider: configProvider}
 }
 
@@ -116,12 +116,12 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 	return p.dynamic, p.discovery, nil
 }
 
-func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory {
+func NewClientFactory(configProvider restconfig.RestConfigProvider) ClientFactory {
 	return &clientFactory{newSingleAPIClients(configProvider)}
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider) ClientFactory {
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]restconfig.RestConfigProvider) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 
 	for api, configProvider := range configProviders {

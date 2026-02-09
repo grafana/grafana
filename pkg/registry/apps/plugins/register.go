@@ -15,9 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -30,14 +30,14 @@ var (
 type AppInstaller struct {
 	metaManager        *meta.ProviderManager
 	cfgProvider        configprovider.ConfigProvider
-	restConfigProvider apiserver.RestConfigProvider
+	restConfigProvider restconfig.RestConfigProvider
 
 	*pluginsapp.PluginAppInstaller
 }
 
 func ProvideAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles,

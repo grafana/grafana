@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -32,11 +32,11 @@ type api struct {
 	service            *Service
 	permissions        []string
 	features           featuremgmt.FeatureToggles
-	restConfigProvider apiserver.RestConfigProvider
+	restConfigProvider restconfig.RestConfigProvider
 	logger             log.Logger
 }
 
-func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider restconfig.RestConfigProvider) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for i := len(manager.permissions) - 1; i >= 0; i-- {

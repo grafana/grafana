@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -56,5 +56,5 @@ type Options struct {
 	// LicenseMV if configured is applied to endpoints that can modify permissions
 	LicenseMW web.Handler
 	// RestConfigProvider if configured enables K8s API redirect for resource permissions
-	RestConfigProvider apiserver.RestConfigProvider
+	RestConfigProvider restconfig.RestConfigProvider
 }
