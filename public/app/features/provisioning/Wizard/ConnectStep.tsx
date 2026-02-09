@@ -24,7 +24,6 @@ export const ConnectStep = memo(function ConnectStep() {
   const [repositoryName = ''] = watch(['repositoryName']);
   const isGitBased = isGitProvider(type);
 
-  // this hook returns branches from internal endpoint (only available for Github PAT and Github App)
   const {
     options: repositoryRefsOptions,
     loading: isRefsLoading,

@@ -77,7 +77,7 @@ describe('useWizardNavigation', () => {
 
     it('should calculate currentStepIndex correctly', () => {
       const { result } = setup();
-      expect(result.current.currentStepIndex).toBe(0);
+      expect(result.current.currentStepIndex).toBe(0); // authType is the first step, setup initializes with it
     });
 
     it('should calculate currentStepConfig correctly', () => {
@@ -88,11 +88,11 @@ describe('useWizardNavigation', () => {
   });
 
   describe('goToNextStep', () => {
-    it('should advance to the next step', async () => {
+    it('should advance to the next step', () => {
       const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep();
       });
 
       expect(result.current.activeStep).toBe('connection');
@@ -102,8 +102,8 @@ describe('useWizardNavigation', () => {
     it('should reset step status info when advancing', async () => {
       const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep();
       });
 
       expect(mockSetStepStatusInfo).toHaveBeenCalledWith({ status: 'idle' });
@@ -112,23 +112,15 @@ describe('useWizardNavigation', () => {
     it('should navigate to provisioning URL on last step', async () => {
       const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep(); // authType -> connection
-      });
-      await act(async () => {
-        await result.current.goToNextStep(); // connection -> bootstrap
-      });
-      await act(async () => {
-        await result.current.goToNextStep(); // bootstrap -> synchronize
-      });
-      await act(async () => {
-        await result.current.goToNextStep(); // synchronize -> finish
-      });
+      const go = (times: number) => {
+        for (let i = 0; i < times; i++) {
+          act(() => {
+            result.current.goToNextStep();
+          });
+        }
+      };
 
-      await act(async () => {
-        await result.current.goToNextStep(); // finish -> navigate
-      });
-
+      go(5); // Go through all steps to reach last step
       expect(mockNavigate).toHaveBeenCalledWith(PROVISIONING_URL);
     });
 
@@ -138,14 +130,14 @@ describe('useWizardNavigation', () => {
         canSkipSync: true,
       });
 
-      await act(async () => {
-        await result.current.goToNextStep(); // authType -> connection
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // connection -> bootstrap
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // bootstrap -> finish (skip sync)
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> finish (skip sync)
       });
 
       // Job is created in background with skipStatusUpdates
@@ -159,14 +151,14 @@ describe('useWizardNavigation', () => {
         canSkipSync: true,
       });
 
-      await act(async () => {
-        await result.current.goToNextStep(); // authType -> connection
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // connection -> bootstrap
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // bootstrap -> finish (skip sync)
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> finish (skip sync)
       });
 
       // Job creation is attempted but navigation happens regardless
@@ -188,14 +180,14 @@ describe('useWizardNavigation', () => {
         canSkipSync: true,
       });
 
-      await act(async () => {
-        await result.current.goToNextStep(); // authType -> connection
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // connection -> bootstrap
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // bootstrap -> navigate (no next step)
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> navigate (no next step)
       });
 
       // Navigation proceeds to provisioning URL since finish step doesn't exist
@@ -208,11 +200,12 @@ describe('useWizardNavigation', () => {
     it('should go back to the previous step', async () => {
       const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep(); // authType -> connection
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
       });
-      await act(async () => {
-        await result.current.goToNextStep(); // connection -> bootstrap
+
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
       });
 
       act(() => {
@@ -225,8 +218,8 @@ describe('useWizardNavigation', () => {
     it('should remove current step from completed steps', async () => {
       const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep();
       });
       expect(result.current.completedSteps).toContain('authType');
 

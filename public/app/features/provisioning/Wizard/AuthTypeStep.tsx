@@ -61,6 +61,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
 
   return (
     <Stack direction="column" gap={2}>
+      {/* PAT & Github App Switch - only for GitHub repositories */}
       {isGitHub && (
         <Field
           noMargin
