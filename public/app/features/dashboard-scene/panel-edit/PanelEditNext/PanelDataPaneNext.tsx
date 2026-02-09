@@ -199,6 +199,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const transformer = this.getSceneDataTransformer();
 
     if (transformer) {
+      // We only care about DataTransformerConfig items, not CustomTransformerDefinition
       const transformations = [...transformer.state.transformations].filter((t): t is DataTransformerConfig =>
         isDataTransformerConfig(t)
       );
