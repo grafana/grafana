@@ -3,25 +3,12 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
+import { RestoreNotificationData } from '../types';
+
 interface RestoreFailure {
   uid: string;
   error: string;
 }
-
-interface NotificationEventData {
-  alertType: string;
-  message: string;
-}
-
-interface NotificationActionData {
-  title: string;
-  buttonLabel: string;
-  targetUrl: string;
-}
-
-export type RestoreNotificationData =
-  | { kind: 'action'; data: NotificationActionData }
-  | { kind: 'event'; data: NotificationEventData };
 
 export function getRestoreNotificationData(
   successful: string[],
