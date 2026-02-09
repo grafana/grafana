@@ -402,15 +402,17 @@ function getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame, index:
 }
 
 /**
- * @deprecated, use datasource.getLabelDisplayTypeFromFrame instead
+ * Look for a `labelTypes` field. If found, use it to resolve the type for the
+ * provided label.
+ *
+ * Implement DataSourceWithLogsLabelTypesSupport and use ds.getLabelDisplayTypeFromFrame to support
+ * a different label types implementation.
+ *
  * @param label
  * @param row
  * @param plural
  */
 export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = false) {
-  if (!row.datasourceType) {
-    return null;
-  }
   const labelType = getLabelDisplayTypeFromFrame(label, row.dataFrame, row.rowIndex);
   if (!labelType) {
     return null;
@@ -419,12 +421,11 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = fa
 }
 
 /**
- * @deprecated
  * @param labelType
  * @param datasourceType
  * @param plural
  */
-function getDataSourceLabelType(labelType: string, datasourceType: string, plural: boolean) {
+function getDataSourceLabelType(labelType: string, datasourceType: string | undefined, plural: boolean) {
   switch (datasourceType) {
     case 'loki':
       switch (labelType) {
@@ -438,7 +439,7 @@ function getDataSourceLabelType(labelType: string, datasourceType: string, plura
           return null;
       }
     default:
-      return null;
+      return labelType;
   }
 }
 
