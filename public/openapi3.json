@@ -22245,6 +22245,8 @@
     },
     "/playlists": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "searchPlaylists",
         "parameters": [
           {
@@ -22278,6 +22280,8 @@
         ]
       },
       "post": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "createPlaylist",
         "requestBody": {
           "content": {
@@ -22315,6 +22319,8 @@
     },
     "/playlists/{uid}": {
       "delete": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "deletePlaylist",
         "parameters": [
           {
@@ -22349,6 +22355,8 @@
         ]
       },
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "getPlaylist",
         "parameters": [
           {
@@ -22383,6 +22391,8 @@
         ]
       },
       "put": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "updatePlaylist",
         "parameters": [
           {
@@ -22430,6 +22440,8 @@
     },
     "/playlists/{uid}/items": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).",
         "operationId": "getPlaylistItems",
         "parameters": [
           {

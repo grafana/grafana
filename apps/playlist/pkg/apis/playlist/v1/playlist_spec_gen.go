@@ -1,11 +1,20 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v0alpha1
+package v1
 
 // +k8s:openapi-gen=true
-type PlaylistItem struct {
+type PlaylistItem = PlaylistPlaylistItem
+
+// NewPlaylistItem creates a new PlaylistItem object.
+func NewPlaylistItem() *PlaylistItem {
+	return NewPlaylistPlaylistItem()
+}
+
+// Shared item definition for all versions
+// +k8s:openapi-gen=true
+type PlaylistPlaylistItem struct {
 	// type of the item.
-	Type PlaylistItemType `json:"type"`
+	Type PlaylistPlaylistItemType `json:"type"`
 	// Value depends on type and describes the playlist item.
 	//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
 	//  is not portable as the numerical identifier is non-deterministic between different instances.
@@ -16,9 +25,9 @@ type PlaylistItem struct {
 	Value string `json:"value"`
 }
 
-// NewPlaylistItem creates a new PlaylistItem object.
-func NewPlaylistItem() *PlaylistItem {
-	return &PlaylistItem{}
+// NewPlaylistPlaylistItem creates a new PlaylistPlaylistItem object.
+func NewPlaylistPlaylistItem() *PlaylistPlaylistItem {
+	return &PlaylistPlaylistItem{}
 }
 
 // +k8s:openapi-gen=true
@@ -36,12 +45,12 @@ func NewPlaylistSpec() *PlaylistSpec {
 }
 
 // +k8s:openapi-gen=true
-type PlaylistItemType string
+type PlaylistPlaylistItemType string
 
 const (
-	PlaylistItemTypeDashboardByTag PlaylistItemType = "dashboard_by_tag"
-	PlaylistItemTypeDashboardByUid PlaylistItemType = "dashboard_by_uid"
-	PlaylistItemTypeDashboardById  PlaylistItemType = "dashboard_by_id"
+	PlaylistPlaylistItemTypeDashboardByTag PlaylistPlaylistItemType = "dashboard_by_tag"
+	PlaylistPlaylistItemTypeDashboardByUid PlaylistPlaylistItemType = "dashboard_by_uid"
+	PlaylistPlaylistItemTypeDashboardById  PlaylistPlaylistItemType = "dashboard_by_id"
 )
 
 func (PlaylistItem) OpenAPIModelName() string {

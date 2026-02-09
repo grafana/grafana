@@ -7599,11 +7599,13 @@
     },
     "/playlists": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlists.",
         "operationId": "searchPlaylists",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7628,11 +7630,13 @@
         }
       },
       "post": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Create playlist.",
         "operationId": "createPlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -7664,11 +7668,13 @@
     },
     "/playlists/{uid}": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlist.",
         "operationId": "getPlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7696,11 +7702,13 @@
         }
       },
       "put": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Update playlist.",
         "operationId": "updatePlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -7736,11 +7744,13 @@
         }
       },
       "delete": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Delete playlist.",
         "operationId": "deletePlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7770,11 +7780,13 @@
     },
     "/playlists/{uid}/items": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlist items.",
         "operationId": "getPlaylistItems",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
