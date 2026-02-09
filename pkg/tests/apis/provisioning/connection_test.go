@@ -63,22 +63,18 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-	connectionName := "connection"
-	connectionType := provisioning.GithubConnectionType
-	namePrefix := fmt.Sprintf("%s-", connectionType)
-	fullName := namePrefix + connectionName
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      connectionName,
+				"name":      "connection",
 				"namespace": "default",
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  connectionType,
+				"type":  provisioning.GitHubRepositoryType,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -91,13 +87,15 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 		}}
 		// CREATE
-		_, err := helper.CreateGithubConnection(t, ctx, connection)
+		c, err := helper.CreateGithubConnection(t, ctx, connection)
 		require.NoError(t, err, "failed to create resource")
 
+		connectionName := c.GetName()
+
 		// READ
-		output, err := helper.Connections.Resource.Get(ctx, fullName, metav1.GetOptions{})
+		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to read back resource")
-		assert.Equal(t, fullName, output.GetName(), "name should be equal")
+		assert.Equal(t, connectionName, output.GetName(), "name should be equal")
 		assert.Equal(t, "default", output.GetNamespace(), "namespace should be equal")
 		spec := output.Object["spec"].(map[string]any)
 		assert.Equal(t, "github", spec["type"], "type should be equal")
@@ -113,14 +111,14 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "failed to list resource")
 		assert.Equal(t, 1, len(list.Items), "should have one connection")
-		assert.Equal(t, fullName, list.Items[0].GetName(), "name should be equal")
+		assert.Equal(t, connectionName, list.Items[0].GetName(), "name should be equal")
 
 		// UPDATE
 		updatedConnection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      fullName,
+				"name":      connectionName,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -147,7 +145,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		// DELETE - Retry delete to handle resource version conflicts
 		// The controller may have updated the resource after our update, changing the resource version
 		require.Eventually(t, func() bool {
-			err := helper.Connections.Resource.Delete(ctx, fullName, metav1.DeleteOptions{})
+			err := helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 			if err != nil {
 				if k8serrors.IsConflict(err) {
 					// Resource version conflict - retry
@@ -172,12 +170,12 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      connectionName,
+				"name":      "connection",
 				"namespace": "default",
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  connectionType,
+				"type":  provisioning.GitHubRepositoryType,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -206,7 +204,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		result = helper.ViewerREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name(fullName).
+			Name("connection").
 			Do(t.Context())
 		require.NotNil(t, result.Error())
 		err = &k8serrors.StatusError{}
@@ -223,22 +221,15 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-	connectionName := "connection"
-	connectionType := provisioning.GithubConnectionType
-	namePrefix := fmt.Sprintf("%s-", connectionType)
-	fullName := namePrefix + connectionName
 
-	t.Run("should update connection name with prefix", func(t *testing.T) {
-		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, fullName, metav1.DeleteOptions{})
-			require.NoError(t, err)
-		})
+	t.Run("should update connection name with type prefix", func(t *testing.T) {
+		connectionType := provisioning.GithubConnectionType
+		namePrefix := fmt.Sprintf("%s-", connectionType)
 
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      connectionName,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -258,25 +249,27 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 
 		c, err := helper.CreateGithubConnection(t, ctx, connection)
 		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, fullName, c.GetName(), "name should be updated")
+		require.Contains(t, c.GetName(), namePrefix, "name should be updated")
+
+		t.Cleanup(func() {
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should keep connection name if the prefix is already there", func(t *testing.T) {
-		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, fullName, metav1.DeleteOptions{})
-			require.NoError(t, err)
-		})
+	t.Run("should update connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
 
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      fullName,
-				"namespace": "default",
+				"namespace":    "default",
+				"generateName": generateName,
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  connectionType,
+				"type":  provisioning.GithubConnectionType,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -291,7 +284,47 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 
 		c, err := helper.CreateGithubConnection(t, ctx, connection)
 		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, fullName, c.GetName(), "name should be identical")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("should keep connection name if already given", func(t *testing.T) {
+		name := "some-name"
+
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GithubConnectionType,
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		require.NoError(t, err, "failed to create resource")
+		require.Equal(t, name, c.GetName(), "name should be identical")
+
+		t.Cleanup(func() {
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -305,23 +338,14 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	connectionName := "connection"
 	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
 	bitbucketNamePrefix := fmt.Sprintf("%s-", provisioning.BitbucketConnectionType)
-	gitlabFullName := gitlabNamePrefix + connectionName
-	bitbucketFullName := bitbucketNamePrefix + connectionName
 
-	t.Run("should update gitlab connection name with prefix", func(t *testing.T) {
-		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, gitlabFullName, metav1.DeleteOptions{})
-			require.NoError(t, err)
-		})
-
+	t.Run("should update gitlab connection name with type prefix", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      connectionName,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -340,20 +364,54 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, gitlabFullName, c.GetName(), "name should be updated")
-	})
+		require.Contains(t, c.GetName(), gitlabNamePrefix, "name should be updated")
 
-	t.Run("should keep gitlab connection name if the prefix is already there", func(t *testing.T) {
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, gitlabFullName, metav1.DeleteOptions{})
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
 
+	t.Run("should update gitlab connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      gitlabFullName,
+				"namespace":    "default",
+				"generateName": generateName,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GitlabConnectionType,
+				"gitlab": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("should keep gitlab connection name if name is already given", func(t *testing.T) {
+		name := "some-name"
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -372,20 +430,19 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, gitlabFullName, c.GetName(), "name should be identical")
-	})
+		require.Equal(t, name, c.GetName(), "name should be identical")
 
-	t.Run("should update bitbucket connection name with prefix", func(t *testing.T) {
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, bitbucketFullName, metav1.DeleteOptions{})
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
 
+	t.Run("should update bitbucket connection name with type prefix", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      connectionName,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -404,20 +461,54 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, bitbucketFullName, c.GetName(), "name should be updated")
-	})
+		require.Contains(t, c.GetName(), bitbucketNamePrefix, "name should be updated")
 
-	t.Run("should keep bitbucket connection name if the prefix is already there", func(t *testing.T) {
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, bitbucketFullName, metav1.DeleteOptions{})
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
 
+	t.Run("should update bitbucket connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      bitbucketFullName,
+				"namespace":    "default",
+				"generateName": generateName,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.BitbucketConnectionType,
+				"bitbucket": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("should keep bitbucket connection name if name is already given", func(t *testing.T) {
+		name := "some-name"
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -436,7 +527,12 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, bitbucketFullName, c.GetName(), "name should be identical")
+		require.Equal(t, name, c.GetName(), "name should be identical")
+
+		t.Cleanup(func() {
+			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 

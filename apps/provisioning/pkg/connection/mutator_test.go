@@ -35,42 +35,44 @@ func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) a
 
 func TestAdmissionMutator_Mutate(t *testing.T) {
 	tests := []struct {
-		name            string
-		obj             runtime.Object
-		factoryErr      error
-		wantObject      runtime.Object
-		wantErr         bool
-		wantErrContains string
+		name                     string
+		obj                      runtime.Object
+		factoryErr               error
+		expectObjectNameContains string
+		wantErr                  bool
+		wantErrContains          string
 	}{
 		{
-			name: "doesn't update name with prefix and calls factory mutate for connection",
+			name: "doesn't generate name calls factory mutate for connection",
 			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "github-test"},
+				ObjectMeta: metav1.ObjectMeta{Name: "existing-name"},
 				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
 			},
-			wantObject: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "github-test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
-			},
-			wantErr: false,
+			expectObjectNameContains: "existing-name",
+			wantErr:                  false,
 		},
 		{
-			name: "updates name with prefix and calls factory mutate for connection",
+			name: "generates name with given prefix and calls factory mutate for connection",
 			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{GenerateName: "test-"},
 				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
 			},
-			wantObject: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "github-test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
-			},
-			wantErr: false,
+			expectObjectNameContains: "test-",
+			wantErr:                  false,
 		},
 		{
-			name:       "returns nil for nil object",
-			obj:        nil,
-			wantObject: nil,
-			wantErr:    false,
+			name: "generates name with type prefix and calls factory mutate for connection",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			expectObjectNameContains: "github-",
+			wantErr:                  false,
+		},
+		{
+			name:    "returns nil for nil object",
+			obj:     nil,
+			wantErr: false,
 		},
 		{
 			name:            "returns error for non-connection object",
@@ -115,7 +117,9 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tt.wantObject, tt.obj)
+			if tt.obj != nil {
+				require.Contains(t, tt.obj.(*provisioning.Connection).Name, tt.expectObjectNameContains)
+			}
 		})
 	}
 }

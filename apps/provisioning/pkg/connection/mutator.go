@@ -1,13 +1,14 @@
 package connection
 
 import (
+	"cmp"
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // AdmissionMutator handles mutation for Connection resources
@@ -34,9 +35,9 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("expected connection configuration, got %T", obj)
 	}
 
-	repositoryNamePrefix := fmt.Sprintf("%s-", c.Spec.Type)
-	if !strings.Contains(c.GetName(), repositoryNamePrefix) {
-		c.Name = repositoryNamePrefix + c.GetName()
+	namePrefix := fmt.Sprintf("%s-", c.Spec.Type)
+	if a.GetOperation() == admission.Create && c.GetName() == "" {
+		c.SetName(cmp.Or(c.GetGenerateName(), namePrefix) + util.GenerateShortUID())
 	}
 
 	return m.factory.Mutate(ctx, c)
