@@ -14,7 +14,7 @@ const baseResponse = {
 
 const specialCaseOwnerRef = [
   {
-    apiVersion: 'iam.grafana.com/v0alpha1',
+    apiVersion: 'iam.grafana.app/v0alpha1',
     kind: 'Team',
     name: MOCK_TEAMS[0].metadata.name,
     uid: MOCK_TEAMS[0].metadata.name,
