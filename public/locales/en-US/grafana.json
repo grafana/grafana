@@ -4058,7 +4058,7 @@
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
       "success_one": "Dashboard restored",
-      "success_other": "Dashboard restored",
+      "success_other": "Dashboards restored",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboards restored successfully",
       "view-dashboard": "View dashboard",
