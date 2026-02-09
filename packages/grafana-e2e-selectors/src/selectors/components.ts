@@ -70,6 +70,9 @@ export const versionedComponents = {
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
     },
+    dockHide: {
+      '12.4.0': 'data-testid sidebar-dock-hide',
+    },
     newPanelButton: {
       '12.4.0': 'data-testid sidebar add new panel',
     },
