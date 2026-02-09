@@ -46,7 +46,6 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -224,16 +223,18 @@ abstract class DashboardScenePageStateManagerBase<T>
   /**
    * Loads the assistant preview dashboard from the user storage
    * @param base64EncodedKey base64 encoded key of the dashboard in the user storage
-   * @returns Promise<DashboardDTO>
+   * @returns Promise with dashboard data (can be v1 or v2 format) and meta
    */
-  protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<DashboardDTO> {
+  protected async loadAssistantPreviewDashboard(
+    base64EncodedKey: string
+  ): Promise<{ dashboard: DashboardDataDTO | DashboardV2Spec; meta: DashboardDTO['meta'] }> {
     const decodedKey = atob(decodeURIComponent(base64EncodedKey));
     const userStorage = new UserStorage('grafana-assistant-app');
     const dashboard = await userStorage.getItem(decodeURIComponent(decodedKey));
     if (!dashboard) {
       throw new Error('Dashboard not found');
     }
-    let dashboardData: DashboardDataDTO;
+    let dashboardData: DashboardDataDTO | DashboardV2Spec;
     try {
       dashboardData = JSON.parse(dashboard);
     } catch (err) {
@@ -713,8 +714,17 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
-        case DashboardRoutes.AssistantPreview:
-          return this.loadAssistantPreviewDashboard(uid);
+        case DashboardRoutes.AssistantPreview: {
+          const result = await this.loadAssistantPreviewDashboard(uid);
+          if (isDashboardV2Spec(result.dashboard)) {
+            // This will redirect to the v2 dashboard dashboard manager to correctly load a v2 dashboard
+            throw new DashboardVersionError('v2beta1', 'Assistant preview contains V2 dashboard');
+          }
+          return {
+            dashboard: result.dashboard,
+            meta: result.meta,
+          };
+        }
         case DashboardRoutes.Public: {
           const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
           // public dashboards use legacy API but can return V2 dashboards
@@ -921,24 +931,26 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           return await this.loadProvisioningDashboard(slug || '', uid);
         }
         case DashboardRoutes.AssistantPreview: {
-          const v1Response = await this.loadAssistantPreviewDashboard(uid);
-          const scene = transformSaveModelToScene(v1Response, undefined, getSceneCreationOptions());
-          const spec = transformSceneToSaveModelSchemaV2(scene);
+          const result = await this.loadAssistantPreviewDashboard(uid);
+          if (!isDashboardV2Spec(result.dashboard)) {
+            // This will redirect to the v1 dashboard dashboard manager to correctly load a v2 dashboard
+            throw new DashboardVersionError('v0alpha1', 'Assistant preview contains V1 dashboard');
+          }
           return {
             apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               creationTimestamp: '',
-              name: v1Response.dashboard.uid ?? '',
-              resourceVersion: v1Response.dashboard.version?.toString() || '0',
+              name: '',
+              resourceVersion: '0',
             },
-            spec,
+            spec: result.dashboard,
             access: {
-              canSave: v1Response.meta.canSave ?? false,
-              canEdit: v1Response.meta.canEdit ?? false,
-              canDelete: v1Response.meta.canDelete ?? false,
-              canShare: v1Response.meta.canShare ?? false,
-              canStar: v1Response.meta.canStar ?? false,
+              canSave: result.meta.canSave ?? false,
+              canEdit: result.meta.canEdit ?? false,
+              canDelete: result.meta.canDelete ?? false,
+              canShare: result.meta.canShare ?? false,
+              canStar: result.meta.canStar ?? false,
             },
           };
         }
