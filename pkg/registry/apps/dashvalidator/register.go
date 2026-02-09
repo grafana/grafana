@@ -1,6 +1,8 @@
 package dashvalidator
 
 import (
+	"context"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -12,8 +14,10 @@ import (
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator/prometheus"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -21,6 +25,7 @@ var _ appsdkapiserver.AppInstaller = (*DashValidatorAppInstaller)(nil)
 
 type DashValidatorAppInstaller struct {
 	appsdkapiserver.AppInstaller
+	ac accesscontrol.AccessControl
 }
 
 // RegisterAppInstaller is called by Wire to create the app installer.
@@ -28,6 +33,7 @@ type DashValidatorAppInstaller struct {
 func RegisterAppInstaller(
 	datasourceSvc datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
+	ac accesscontrol.AccessControl,
 ) (*DashValidatorAppInstaller, error) {
 	// Create MetricsCache - shared cache for all datasource types
 	metricsCache := cache.NewMetricsCache()
@@ -75,11 +81,41 @@ func RegisterAppInstaller(
 
 	return &DashValidatorAppInstaller{
 		AppInstaller: defaultInstaller,
+		ac:           ac,
 	}, nil
 }
 
-// GetAuthorizer provides the authorization for the app
+// GetAuthorizer provides fine-grained authorization for the app.
+// Uses AccessControl to evaluate permissions (datasources:read, datasources:query, + dashboards:create)
 func (a *DashValidatorAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	//nolint:staticcheck
-	return roleauthorizer.NewRoleAuthorizer()
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			user, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "authentication required", err
+			}
+
+			// For now we only support /check, which is a POST and we don't support any other verbs
+			if attr.GetVerb() != "create" {
+				return authorizer.DecisionDeny, "operation not supported", nil
+			}
+
+			// POST /check maps to "create" verb.
+			// Require datasource read (config lookup), query (metric checks),
+			// and dashboard create (the end goal of the compatibility check flow).
+			evaluator := accesscontrol.EvalAll(
+				accesscontrol.EvalPermission(datasources.ActionRead),
+				accesscontrol.EvalPermission(datasources.ActionQuery),
+				accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate),
+			)
+			ok, err := a.ac.Evaluate(ctx, user, evaluator)
+			if err != nil {
+				return authorizer.DecisionDeny, "permission check failed", err
+			}
+			if ok {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "insufficient permissions: datasources:read, datasources:query, and dashboards:create required", nil
+		},
+	)
 }
