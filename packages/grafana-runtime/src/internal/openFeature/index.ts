@@ -21,7 +21,7 @@ export async function initOpenFeature() {
 
   const ofProvider = new OFREPWebProvider({
     baseUrl: baseUrl,
-    pollInterval: -1, // disable polling
+    pollInterval: 60 * 60 * 1000, // 1hour in milliseconds
     timeoutMs: 5_000,
   });
 
