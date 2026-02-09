@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v0alpha1
+package v1
 
 // +k8s:openapi-gen=true
 type PlayliststatusOperatorState struct {

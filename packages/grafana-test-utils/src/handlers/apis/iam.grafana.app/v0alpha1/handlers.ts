@@ -1,5 +1,8 @@
 import { HttpResponse, http } from 'msw';
 
+import { mockTeamsMap } from '../../../../fixtures/teams';
+import { getErrorResponse } from '../../../helpers';
+
 const getDisplayMapping = () =>
   http.get<{ namespace: string }>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/display', ({ request }) => {
     const url = new URL(request.url);
@@ -26,4 +29,29 @@ const getDisplayMapping = () =>
     });
   });
 
-export default [getDisplayMapping()];
+const getTeamHandler = () =>
+  http.get<{ namespace: string; uid: string }>(
+    '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/teams/:uid',
+    ({ params }) => {
+      const { uid } = params;
+      const team = mockTeamsMap.get(uid);
+      if (!team) {
+        return HttpResponse.json(getErrorResponse(`team.iam.grafana.app "${uid}" not found`, 404), { status: 404 });
+      }
+
+      return HttpResponse.json(team.team);
+    }
+  );
+
+const listTeamsHandler = () =>
+  http.get<{ namespace: string }, never>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/teams', () => {
+    const items = Array.from(mockTeamsMap.values()).map(({ team }) => team);
+    return HttpResponse.json({
+      metadata: {},
+      items,
+      kind: 'TeamList',
+      apiVersion: 'iam.grafana.app/v0alpha1',
+    });
+  });
+
+export default [getDisplayMapping(), getTeamHandler(), listTeamsHandler()];

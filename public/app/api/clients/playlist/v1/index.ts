@@ -1,4 +1,4 @@
-import { generatedAPI, type Playlist, type PlaylistSpec } from '@grafana/api-clients/rtkq/playlist/v0alpha1';
+import { generatedAPI, type Playlist, type PlaylistSpec } from '@grafana/api-clients/rtkq/playlist/v1';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { createSuccessNotification } from '../../../../core/copy/appNotification';
@@ -6,7 +6,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { contextSrv } from '../../../../core/services/context_srv';
 import { handleError } from '../../../utils';
 
-export const playlistAPIv0alpha1 = generatedAPI.enhanceEndpoints({
+export const playlistAPIv1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     getPlaylist: {
       transformResponse: async (response: Playlist) => {
@@ -83,7 +83,7 @@ export const {
   useGetPlaylistQuery,
   useListPlaylistQuery,
   useReplacePlaylistMutation,
-} = playlistAPIv0alpha1;
+} = playlistAPIv1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export type { Playlist, PlaylistSpec } from '@grafana/api-clients/rtkq/playlist/v0alpha1';
+export type { Playlist, PlaylistSpec } from '@grafana/api-clients/rtkq/playlist/v1';
