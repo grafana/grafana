@@ -1,16 +1,10 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
-import { v4 } from 'uuid';
 
-import {
-  DataSourceInstanceSettings,
-  getDataSourceRef,
-  LoadingState,
-  standardTransformersRegistry,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -18,9 +12,10 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { useTransformations } from './hooks/useTransformations';
 import { QueryOptionField, Transformation } from './types';
 import { useQueryOptions } from './useQueryOptions';
-import { getEditorType, isDataTransformerConfig } from './utils';
+import { getEditorType } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -43,25 +38,8 @@ export function QueryEditorContextWrapper({
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
-  const transformations: Transformation[] = useMemo(() => {
-    if (panel.state.$data instanceof SceneDataTransformer) {
-      // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-      const transformationList = panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
-        isDataTransformerConfig(t)
-      );
-
-      const transformationsList: Transformation[] = transformationList.map((t) => {
-        return {
-          transformConfig: t,
-          registryItem: standardTransformersRegistry.getIfExists(t.id),
-          transformId: v4(),
-        };
-      });
-
-      return transformationsList;
-    }
-    return [];
-  }, [panel]);
+  const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
+  const transformations = useTransformations(dataTransformer);
 
   // NOTE: This is the datasource for the panel, not the query
   const dsState = useMemo(
@@ -142,19 +120,31 @@ export function QueryEditorContextWrapper({
   }, [transformations, selectedTransformationId]);
 
   const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
-    if (!selectedQuery?.datasource) {
+    if (!selectedQuery) {
       return undefined;
     }
 
     try {
-      const dsSettings = getDataSourceSrv().getInstanceSettings(selectedQuery.datasource);
-      const datasource = await getDataSourceSrv().get(selectedQuery.datasource);
-      return { datasource, dsSettings };
+      // If query has datasource, use it; otherwise fall back to panel datasource
+      const dsRef = selectedQuery.datasource || (dsSettings ? getDataSourceRef(dsSettings) : undefined);
+
+      if (!dsRef) {
+        return undefined;
+      }
+
+      const queryDsSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+      if (!queryDsSettings) {
+        console.error('Datasource settings not found for', dsRef);
+        return undefined;
+      }
+
+      const queryDatasource = await getDataSourceSrv().get(dsRef);
+      return { datasource: queryDatasource, dsSettings: queryDsSettings };
     } catch (err) {
       console.error('Failed to load datasource for selected query:', err);
       return undefined;
     }
-  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type]);
+  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type, dsSettings?.uid]);
 
   const uiState = useMemo(
     () => ({
@@ -214,6 +204,7 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      updateTransformation: dataPane.updateTransformation,
     }),
     [dataPane]
   );
