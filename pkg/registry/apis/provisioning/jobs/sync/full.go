@@ -72,6 +72,33 @@ func FullSync(
 		return nil
 	}
 
+	// Calculate net change from sync operations
+	var netChange int64
+	for _, change := range changes {
+		// Skip folders
+		if safepath.IsDir(change.Path) {
+			continue
+		}
+
+		switch change.Action {
+		case repository.FileActionCreated:
+			netChange++
+		case repository.FileActionDeleted:
+			netChange--
+		case repository.FileActionUpdated:
+			// Updates don't change resource count
+		default:
+			// Ignore other actions (e.g., FileActionRenamed, FileActionIgnored)
+		}
+	}
+
+	// Check quota before applying changes
+	if err := checkQuotaBeforeSync(ctx, repo, netChange, repositoryResources, tracer); err != nil {
+		progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
+		progress.SetFinalMessage(ctx, "repository is over quota and sync would add resources, resulting in resources exceeding the quota limit. sync cannot proceed")
+		return tracing.Error(span, err)
+	}
+
 	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
 }
 

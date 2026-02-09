@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -453,6 +454,12 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 					},
 				}
 				repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				// Mock Config() for quota check - return empty quota (unlimited)
+				repo.MockReader.On("Config").Return(&provisioning.Repository{
+					Status: provisioning.RepositoryStatus{
+						Quota: provisioning.QuotaStatus{},
+					},
+				})
 				progress.On("SetTotal", mock.Anything, 1).Return()
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -482,6 +489,12 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 					},
 				}
 				repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				// Mock Config() for quota check - return empty quota (unlimited)
+				repo.MockReader.On("Config").Return(&provisioning.Repository{
+					Status: provisioning.RepositoryStatus{
+						Quota: provisioning.QuotaStatus{},
+					},
+				})
 				progress.On("SetTotal", mock.Anything, 1).Return()
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -515,6 +528,12 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 					},
 				}
 				repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				// Mock Config() for quota check - return empty quota (unlimited)
+				repo.MockReader.On("Config").Return(&provisioning.Repository{
+					Status: provisioning.RepositoryStatus{
+						Quota: provisioning.QuotaStatus{},
+					},
+				})
 				progress.On("SetTotal", mock.Anything, 2).Return()
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
