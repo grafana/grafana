@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"net/http"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -43,7 +44,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		searchResp, err = s.search.Search(ctx, srq)
 	} else {
 		// Use remote search service
-		// if search is not configured, searchClient will be set
+		// useFieldSelectorSearch() already checks that either s.search or s.searchClient is set
 		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
 	if err != nil {
@@ -111,9 +112,12 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	// Provisioning has no Versions.Kinds[] in its app manifest, so we cant index anything for search.
-	// Keeping this excluded until its app manifest is updated.
-	if req.Options.Key.Group == "provisioning.grafana.app" {
+	// Excluded groups have no Versions.Kinds[] in its app manifest, so we cant index anything for search.
+	excludedGroups := []string{
+		"provisioning.grafana.app",
+		"scope.grafana.app",
+	}
+	if slices.Contains(excludedGroups, req.Options.Key.Group) {
 		return false
 	}
 
