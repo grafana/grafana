@@ -4,15 +4,9 @@ import { reportInteraction } from '@grafana/runtime';
 import { Text, Link } from '@grafana/ui';
 
 /**
- * Display a team owner reference, with additional information about the team members.
+ * Display a team owner reference as a link to team details page
  */
-export const OwnerReference = ({
-  ownerReference,
-  compact = false,
-}: {
-  ownerReference: OwnerReferenceType;
-  compact?: boolean;
-}) => {
+export const OwnerReference = ({ ownerReference }: { ownerReference: OwnerReferenceType }) => {
   const { data: team, isLoading: isLoadingTeam } = useGetTeamQuery({ name: ownerReference.uid });
 
   if (isLoadingTeam || !team) {
