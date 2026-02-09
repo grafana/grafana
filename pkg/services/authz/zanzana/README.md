@@ -242,13 +242,26 @@ There are two reconcilers for syncing authorization data to Zanzana:
 ```ini
 [zanzana.server]
 reconciler_enabled = true
-reconciler_kubeconfig = /path/to/kubeconfig
+reconciler_folder_apiserver_url = https://folder-apiserver.default.svc.cluster.local:6446
+reconciler_iam_apiserver_url = https://iam-apiserver.default.svc.cluster.local:6452
+reconciler_resources = folders,users,teambindings,roles,rolebindings,resourcepermissions
+reconciler_tls_insecure = true
 reconciler_workers = 4
 reconciler_interval = 1h
 reconciler_write_batch_size = 100
+
+[grpc_client_authentication]
+token = <TOKEN>
+token_exchange_url = <TOKEN_EXCHANGE_URL>
+token_namespace = *
 ```
 
-The kubeconfig file should contain the connection details for the apiserver that hosts the CRDs (folders, roles, rolebindings, resourcepermissions, teambindings, users). This is typically the Grafana apiserver or Unistore endpoint.
+The reconciler connects to individual API servers for each API group:
+- `reconciler_folder_apiserver_url` - Folder API server for `folder.grafana.app` resources (folders)
+- `reconciler_iam_apiserver_url` - IAM API server for `iam.grafana.app` resources (roles, rolebindings, resourcepermissions, teambindings, users)
+- `reconciler_resources` - Comma-separated list of resources to reconcile. If not set, reconciles all known resources. Use this to limit reconciliation to resources that are properly configured in your environment.
+
+Each API group uses its own audience for token scoping. The `[grpc_client_authentication]` section configures the token exchange used to authenticate against the API servers.
 
 **2. Legacy RBAC reconciler** - runs in the main Grafana process and reads from Grafana's SQL database:
 

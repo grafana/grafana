@@ -22,8 +22,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
 	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -231,18 +231,60 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 
 	var clientFactory resources.ClientFactory
 	if cfg.ZanzanaServer.ReconcilerEnabled {
-		if cfg.ZanzanaServer.ReconcilerKubeconfig == "" {
-			return nil, fmt.Errorf("reconciler_kubeconfig must be set when reconciler_enabled is true")
+		if cfg.ZanzanaServer.ReconcilerFolderAPIServerURL == "" {
+			return nil, fmt.Errorf("reconciler_folder_apiserver_url must be set when reconciler_enabled is true")
+		}
+		if cfg.ZanzanaServer.ReconcilerIAMAPIServerURL == "" {
+			return nil, fmt.Errorf("reconciler_iam_apiserver_url must be set when reconciler_enabled is true")
 		}
 
-		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.ZanzanaServer.ReconcilerKubeconfig)
+		grpcAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+		token := grpcAuthSection.Key("token").MustString("")
+		tokenExchangeURL := grpcAuthSection.Key("token_exchange_url").MustString("")
+
+		if token == "" || tokenExchangeURL == "" {
+			return nil, fmt.Errorf("token and token_exchange_url must be set in [grpc_client_authentication] when reconciler is enabled")
+		}
+
+		tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            token,
+			TokenExchangeURL: tokenExchangeURL,
+		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to build rest config from kubeconfig %q: %w", cfg.ZanzanaServer.ReconcilerKubeconfig, err)
+			return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 		}
 
-		clientFactory = resources.NewClientFactory(apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
-			return restConfig, nil
-		}))
+		// Build per-group REST configs with group-specific audiences
+		apiServerURLs := map[string]string{
+			"folder.grafana.app": cfg.ZanzanaServer.ReconcilerFolderAPIServerURL,
+			"iam.grafana.app":    cfg.ZanzanaServer.ReconcilerIAMAPIServerURL,
+		}
+
+		configProviders := make(map[string]apiserver.RestConfigProvider)
+		for group, url := range apiServerURLs {
+			// Each API group gets its own audience for proper token scoping
+			audienceProvider := clientauth.NewStaticAudienceProvider(group)
+			namespaceProvider := clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace)
+
+			restConfig := &clientrest.Config{
+				Host:    url,
+				APIPath: "/apis",
+				TLSClientConfig: clientrest.TLSClientConfig{
+					Insecure: cfg.ZanzanaServer.ReconcilerTLSInsecure,
+				},
+				WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
+					tokenExchangeClient,
+					audienceProvider,
+					namespaceProvider,
+				),
+			}
+
+			configProviders[group] = apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
+				return restConfig, nil
+			})
+		}
+
+		clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders)
 	}
 
 	s := &Zanzana{
