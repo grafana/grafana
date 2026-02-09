@@ -5,7 +5,10 @@ import { DataQuery } from '@grafana/schema';
 
 import { QueryErrorAlert } from './QueryErrorAlert';
 
+const mockUseAssistant = jest.fn().mockReturnValue({ isAvailable: true });
+
 jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => mockUseAssistant(),
   OpenAssistantButton: ({ title }: { title: string }) => <button>{title}</button>,
   createAssistantContextItem: jest.fn((type: string, params: { title: string; data: unknown }) => ({
     type,
@@ -14,6 +17,21 @@ jest.mock('@grafana/assistant', () => ({
 }));
 
 describe('QueryErrorAlert', () => {
+  beforeEach(() => {
+    mockUseAssistant.mockReturnValue({ isAvailable: true });
+  });
+
+  it('should not render the assistant button when assistant is not available', () => {
+    mockUseAssistant.mockReturnValue({ isAvailable: false });
+
+    const error: DataQueryError = { message: 'Some error' };
+
+    render(<QueryErrorAlert error={error} />);
+
+    expect(screen.getByText('Some error')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
+  });
+
   it('should render the error message', () => {
     const error: DataQueryError = { message: 'Something went wrong' };
 
