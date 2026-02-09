@@ -1,4 +1,4 @@
-import { createElement, useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { DataTransformerConfig, DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,17 +22,15 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
     [transformConfig, onUpdate]
   );
 
-  const editor = useMemo(
-    () =>
-      createElement(registryItem!.editor!, {
-        options: { ...registryItem!.transformation.defaultOptions, ...transformConfig.options },
-        input: inputData,
-        onChange: handleChange,
-      }),
-    [registryItem, transformConfig.options, inputData, handleChange]
-  );
+  const Editor = registryItem!.editor!;
 
   return (
-    <div data-testid={selectors.components.TransformTab.transformationEditor(registryItem?.name || '')}>{editor}</div>
+    <div data-testid={selectors.components.TransformTab.transformationEditor(registryItem?.name || '')}>
+      <Editor
+        input={inputData}
+        onChange={handleChange}
+        options={{ ...registryItem!.transformation.defaultOptions, ...transformConfig.options }}
+      />
+    </div>
   );
 }

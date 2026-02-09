@@ -1,8 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
@@ -12,6 +10,8 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { useSelectedCard } from './hooks/useSelectedCard';
+import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
 import { QueryOptionField, Transformation } from './types';
 import { useQueryOptions } from './useQueryOptions';
@@ -87,64 +87,14 @@ export function QueryEditorContextWrapper({
     setFocusedField(null);
   }, []);
 
-  const selectedQuery = useMemo(() => {
-    const queries = queryRunnerState?.queries ?? [];
+  const { selectedQuery, selectedTransformation } = useSelectedCard(
+    selectedQueryRefId,
+    selectedTransformationId,
+    queryRunnerState?.queries ?? [],
+    transformations
+  );
 
-    // If we have a selected query refId, try to find that query
-    if (selectedQueryRefId) {
-      const query = queries.find((q) => q.refId === selectedQueryRefId);
-      if (query) {
-        return query;
-      }
-    }
-
-    // If a transformation is selected, don't select any query
-    if (selectedTransformationId) {
-      return null;
-    }
-
-    // Otherwise, default to the first query if available
-    return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedQueryRefId, selectedTransformationId]);
-
-  const selectedTransformation = useMemo(() => {
-    // If we have a selected transformation id, try to find that transformation
-    if (selectedTransformationId) {
-      const transformation = transformations.find((t) => t.transformId === selectedTransformationId);
-      if (transformation) {
-        return transformation;
-      }
-    }
-
-    return null;
-  }, [transformations, selectedTransformationId]);
-
-  const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
-    if (!selectedQuery) {
-      return undefined;
-    }
-
-    try {
-      // If query has datasource, use it; otherwise fall back to panel datasource
-      const dsRef = selectedQuery.datasource || (dsSettings ? getDataSourceRef(dsSettings) : undefined);
-
-      if (!dsRef) {
-        return undefined;
-      }
-
-      const queryDsSettings = getDataSourceSrv().getInstanceSettings(dsRef);
-      if (!queryDsSettings) {
-        console.error('Datasource settings not found for', dsRef);
-        return undefined;
-      }
-
-      const queryDatasource = await getDataSourceSrv().get(dsRef);
-      return { datasource: queryDatasource, dsSettings: queryDsSettings };
-    } catch (err) {
-      console.error('Failed to load datasource for selected query:', err);
-      return undefined;
-    }
-  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type, dsSettings?.uid]);
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
   const uiState = useMemo(
     () => ({
@@ -169,7 +119,7 @@ export function QueryEditorContextWrapper({
         closeSidebar,
         focusedField,
       },
-      selectedQueryDsData: selectedQueryDsData ?? null,
+      selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),

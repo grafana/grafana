@@ -13034,6 +13034,11 @@
       "transformations": "Transformations"
     }
   },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "Failed to load datasource for this query",
+    "loading-datasource": "Loading datasource",
+    "no-query-editor-component": "Data source plugin does not export any query editor component"
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
@@ -14241,6 +14246,9 @@
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": "Transformation does not have an editor component"
   },
   "transformations": {
     "empty": {
