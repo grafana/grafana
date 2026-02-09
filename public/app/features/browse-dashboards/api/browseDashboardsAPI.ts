@@ -361,49 +361,51 @@ export const browseDashboardsAPI = createApi({
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
         // TODO error handling here
-        for (const dashboardUID of dashboardUIDs) {
-          if (config.featureToggles.provisioning) {
-            const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
-            if (isProvisionedDashboard(dto)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: [
-                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
-                ],
-              });
-              continue;
+        try {
+          for (const dashboardUID of dashboardUIDs) {
+            if (config.featureToggles.provisioning) {
+              const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+              if (isProvisionedDashboard(dto)) {
+                appEvents.publish({
+                  type: AppEvents.alertWarning.name,
+                  payload: [
+                    'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                  ],
+                });
+                continue;
+              }
             }
+            await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+
+            deletedCount++;
+            deletedDashboardUIDs.push(dashboardUID);
           }
-          await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+        } finally {
+          if (deletedCount > 0) {
+            pageStateManager.clearDashboardCache();
+            deletedDashboardsCache.clear();
+            for (const uid of deletedDashboardUIDs) {
+              pageStateManager.removeSceneCache(uid);
+            }
 
-          deletedCount++;
-          deletedDashboardUIDs.push(dashboardUID);
-        }
-
-        if (deletedCount > 0) {
-          pageStateManager.clearDashboardCache();
-          deletedDashboardsCache.clear();
-          for (const uid of deletedDashboardUIDs) {
-            pageStateManager.removeSceneCache(uid);
-          }
-
-          // Show success notification after all deletions
-          if (restoreDashboardsEnabled) {
-            // Show notification with button to Recently Deleted
-            const title = t('browse-dashboards.delete.success', 'Dashboard deleted', { count: deletedCount });
-            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
-            const component = buildNotificationButton({
-              title,
-              buttonLabel: buttonText,
-              href: '/dashboard/recently-deleted',
-            });
-            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-          } else if (config.featureToggles.kubernetesDashboards) {
-            // Legacy notification for kubernetes dashboards
-            appEvents.publish({
-              type: AppEvents.alertSuccess.name,
-              payload: ['Dashboard deleted'],
-            });
+            // Show success notification after all deletions
+            if (restoreDashboardsEnabled) {
+              // Show notification with button to Recently Deleted
+              const title = t('browse-dashboards.delete.success', 'Dashboard deleted', { count: deletedCount });
+              const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
+              const component = buildNotificationButton({
+                title,
+                buttonLabel: buttonText,
+                href: config.appSubUrl + '/dashboard/recently-deleted',
+              });
+              dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+            } else if (config.featureToggles.kubernetesDashboards) {
+              // Legacy notification for kubernetes dashboards
+              appEvents.publish({
+                type: AppEvents.alertSuccess.name,
+                payload: ['Dashboard deleted'],
+              });
+            }
           }
         }
 

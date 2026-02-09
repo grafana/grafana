@@ -1,5 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 interface RestoreFailure {
@@ -46,10 +47,10 @@ export function getRestoreNotificationData(
             : t('browse-dashboards.restore.view-folder', 'View folder'),
         targetUrl:
           successCount === 1
-            ? `/d/${successful[0]}`
+            ? `${config.appSubUrl}/d/${successful[0]}`
             : !restoreTarget || restoreTarget === GENERAL_FOLDER_UID
-              ? '/dashboards'
-              : `/dashboards/f/${restoreTarget}`,
+              ? `${config.appSubUrl}/dashboards`
+              : `${config.appSubUrl}/dashboards/f/${restoreTarget}`,
       },
     };
   }
