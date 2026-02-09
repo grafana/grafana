@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataQueryError, DataQueryErrorType } from '@grafana/data';
+import { DataQueryError } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { QueryErrorAlert } from './QueryErrorAlert';
@@ -46,12 +46,12 @@ describe('QueryErrorAlert', () => {
     expect(screen.getByText(/abc123/)).toBeInTheDocument();
   });
 
-  it('should render the Explain in Assistant button', () => {
+  it('should render the Fix with Assistant button', () => {
     const error: DataQueryError = { message: 'Some error' };
 
     render(<QueryErrorAlert error={error} />);
 
-    expect(screen.getByRole('button', { name: 'Explain in Assistant' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fix with Assistant' })).toBeInTheDocument();
   });
 
   it('should pass original query to assistant context when provided', () => {

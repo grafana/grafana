@@ -15,25 +15,7 @@ export function QueryErrorAlert({ error, query }: Props) {
   const styles = useStyles2(getStyles);
 
   const message = error?.message ?? error?.data?.message ?? 'Query error';
-
-  const context = [
-    createAssistantContextItem('structured', {
-      title: t('query.query-error-alert.error-details', 'Query error details'),
-      data: {
-        type: error.type,
-        message,
-      },
-    }),
-  ];
-
-  if (query) {
-    context.push(
-      createAssistantContextItem('structured', {
-        title: t('query.query-error-alert.original-query', 'Original query'),
-        data: query,
-      })
-    );
-  }
+  const context = buildAssistantContext(error, message, query);
 
   return (
     <div className={styles.wrapper}>
@@ -56,14 +38,45 @@ export function QueryErrorAlert({ error, query }: Props) {
       <div className={styles.assistantButton}>
         <OpenAssistantButton
           origin="grafana/query-editor-error"
-          prompt={`Explain the following query error and help me fix it.\n\nError: ${message}${error.type ? `\nError type: \`${error.type}\`` : ''}`}
+          prompt={`Help me fix the following query error.\n\nError: ${message}${error.type ? `\nError type: \`${error.type}\`` : ''}`}
           context={context}
-          title={t('query.query-error-alert.explain-in-assistant', 'Explain in Assistant')}
+          title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
           size="sm"
         />
       </div>
     </div>
   );
+}
+
+function buildAssistantContext(error: DataQueryError, message: string, query?: DataQuery) {
+  const context = [
+    createAssistantContextItem('structured', {
+      title: t('query.query-error-alert.error-details', 'Query error details'),
+      data: {
+        type: error.type,
+        message,
+      },
+    }),
+  ];
+
+  if (query) {
+    context.push(
+      createAssistantContextItem('structured', {
+        title: t('query.query-error-alert.original-query', 'Original query'),
+        data: query,
+      })
+    );
+
+    if (query.datasource?.uid) {
+      context.push(
+        createAssistantContextItem('datasource', {
+          datasourceUid: query.datasource.uid,
+        })
+      );
+    }
+  }
+
+  return context;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
