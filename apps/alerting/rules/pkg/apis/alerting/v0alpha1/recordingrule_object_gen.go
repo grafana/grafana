@@ -25,6 +25,13 @@ type RecordingRule struct {
 	Status RecordingRuleStatus `json:"status" yaml:"status"`
 }
 
+func NewRecordingRule() *RecordingRule {
+	return &RecordingRule{
+		Spec:   *NewRecordingRuleSpec(),
+		Status: *NewRecordingRuleStatus(),
+	}
+}
+
 func (o *RecordingRule) GetSpec() any {
 	return o.Spec
 }

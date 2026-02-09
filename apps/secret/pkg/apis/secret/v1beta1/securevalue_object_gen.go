@@ -25,6 +25,13 @@ type SecureValue struct {
 	Status SecureValueStatus `json:"status" yaml:"status"`
 }
 
+func NewSecureValue() *SecureValue {
+	return &SecureValue{
+		Spec:   *NewSecureValueSpec(),
+		Status: *NewSecureValueStatus(),
+	}
+}
+
 func (o *SecureValue) GetSpec() any {
 	return o.Spec
 }

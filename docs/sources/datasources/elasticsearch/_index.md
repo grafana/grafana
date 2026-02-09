@@ -67,15 +67,12 @@ If you use Amazon OpenSearch Service (the successor to Amazon Elasticsearch Serv
 
 ## Supported Elasticsearch versions
 
-{{< admonition type="warning" >}}
-The Elasticsearch data source plugin currently does not support Elastic Cloud Serverless, or any other serverless variant of Elasticsearch.
-{{< /admonition >}}
-
 This data source supports these versions of Elasticsearch:
 
 - ≥ v7.17
 - v8.x
 - v9.x
+- Elastic Cloud Serverless
 
 The Grafana maintenance policy for the Elasticsearch data source aligns with [Elastic Product End of Life Dates](https://www.elastic.co/support/eol). Grafana ensures proper functionality for supported versions only. If you use an EOL version of Elasticsearch, you can still run queries, but the query builder displays a warning. Grafana doesn't guarantee functionality or provide fixes for EOL versions.
 

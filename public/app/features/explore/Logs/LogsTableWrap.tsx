@@ -3,6 +3,7 @@ import { Resizable, ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  AbsoluteTimeRange,
   DataFrame,
   ExploreLogsPanelState,
   GrafanaTheme2,
@@ -13,19 +14,16 @@ import {
   SplitOpen,
   store,
   TimeRange,
-  AbsoluteTimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
-import {
-  getFieldSelectorWidth,
-  LogsTableFieldSelector,
-  MIN_WIDTH,
-} from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/LogsTableFieldSelector';
+import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/fieldSelectorUtils';
+import { getSuggestedFieldsFromTable } from 'app/features/logs/components/fieldSelector/getSuggestedFieldsFromTable';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
-
-import { parseLogsFrame } from '../../logs/logsFrame';
+import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
 import { SETTING_KEY_ROOT } from './utils/logs';
@@ -508,15 +506,15 @@ export function LogsTableWrap(props: Props) {
           handleClasses={{ right: dragStyles.dragHandleVertical }}
           size={{ width: sidebarWidth, height: getLogsTableHeight() }}
           defaultSize={{ width: sidebarWidth, height: getLogsTableHeight() }}
-          minWidth={MIN_WIDTH}
+          minWidth={FIELD_SELECTOR_MIN_WIDTH}
           maxWidth={props.width * 0.8}
           onResize={getOnResize}
         >
           <LogsTableFieldSelector
+            getSuggestedFields={getSuggestedFieldsFromTable}
             clear={clearSelection}
             columnsWithMeta={columnsWithMeta}
             dataFrames={[currentDataFrame]}
-            logs={[]}
             reorder={reorderColumn}
             setSidebarWidth={setSidebarWidth}
             sidebarWidth={sidebarWidth}

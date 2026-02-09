@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
@@ -13,7 +14,7 @@ import (
 func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamRequest) context.Context {
 	// append all incoming headers
 	for key, value := range req.Headers {
-		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+		ctx = metadata.AppendToOutgoingContext(ctx, key, url.PathEscape(value))
 	}
 	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
 	// changes or updates, so we have to get it from context.
