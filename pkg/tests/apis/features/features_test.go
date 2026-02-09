@@ -35,7 +35,7 @@ func TestIntegrationFeatures(t *testing.T) {
 	t.Run("Test evaluate flags", func(t *testing.T) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			Method: http.MethodPost,
-			Path:   "/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags/" + flag,
+			Path:   "/apis/features.grafana.app/v0alpha1/ofrep/v1/evaluate/flags/" + flag,
 			User:   helper.Org1.Admin,
 		}, &map[string]any{})
 

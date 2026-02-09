@@ -139,7 +139,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 			}}}
 
 	return &builder.APIRoutes{
-		Namespace: []builder.APIRouteHandler{
+		Root: []builder.APIRouteHandler{
 			{
 				Path: "ofrep/v1/evaluate/flags",
 				Spec: &spec3.PathProps{
@@ -367,8 +367,6 @@ func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
 
 	if user.GetNamespace() != "" {
 		namespace = user.GetNamespace()
-	} else {
-		namespace = mux.Vars(r)["namespace"]
 	}
 
 	// Read request body for namespace validation and tracing
