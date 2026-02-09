@@ -76,12 +76,10 @@ describe('useIntegrationTypeSchemas', () => {
       const notifierWithSecure = result.current.data?.find((n) =>
         n.versions?.some((v) => v.options.some((o) => o.secure))
       );
+      expect(notifierWithSecure).toBeDefined();
 
-      if (notifierWithSecure) {
-        const secureOption = notifierWithSecure.versions?.flatMap((v) => v.options).find((o) => o.secure);
-
-        expect(secureOption?.secureFieldKey).toBe(secureOption?.propertyName);
-      }
+      const secureOption = notifierWithSecure!.versions?.flatMap((v) => v.options).find((o) => o.secure);
+      expect(secureOption?.secureFieldKey).toBe(secureOption?.propertyName);
     });
 
     it('should handle nested subformOptions with correct secureFieldKey paths', async () => {
@@ -91,22 +89,22 @@ describe('useIntegrationTypeSchemas', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Find a notifier with subformOptions
-      const notifierWithSubform = result.current.data?.find((n) =>
-        n.versions?.some((v) => v.options.some((o) => o.subformOptions?.length))
+      // Find a notifier with subformOptions that contain a secure option
+      const notifierWithSecureSubform = result.current.data?.find((n) =>
+        n.versions?.some((v) => v.options.some((o) => o.subformOptions?.some((sub) => sub.secure)))
       );
+      expect(notifierWithSecureSubform).toBeDefined();
 
-      if (notifierWithSubform) {
-        const optionWithSubform = notifierWithSubform.versions
-          ?.flatMap((v) => v.options)
-          .find((o) => o.subformOptions?.length);
+      const optionWithSubform = notifierWithSecureSubform!.versions
+        ?.flatMap((v) => v.options)
+        .find((o) => o.subformOptions?.some((sub) => sub.secure));
+      expect(optionWithSubform).toBeDefined();
 
-        const secureSubOption = optionWithSubform?.subformOptions?.find((o) => o.secure);
-        if (secureSubOption) {
-          // secureFieldKey should include parent path
-          expect(secureSubOption.secureFieldKey).toContain(optionWithSubform?.propertyName);
-        }
-      }
+      const secureSubOption = optionWithSubform!.subformOptions?.find((o) => o.secure);
+      expect(secureSubOption).toBeDefined();
+
+      // secureFieldKey should include parent path
+      expect(secureSubOption!.secureFieldKey).toContain(optionWithSubform!.propertyName);
     });
   });
 

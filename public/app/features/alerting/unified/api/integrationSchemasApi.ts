@@ -86,11 +86,17 @@ function transformSchemaToNotifierDTO(schema: GetIntegrationtypeschemasIntegrati
   };
 }
 
+interface UseIntegrationTypeSchemasResult {
+  data?: NotifierDTO[];
+  isLoading: boolean;
+  error?: unknown;
+}
+
 /**
  * Hook to fetch integration type schemas.
  * Uses new k8s API when feature flag is enabled, falls back to legacy API.
  */
-export function useIntegrationTypeSchemas(options?: { skip?: boolean }) {
+export function useIntegrationTypeSchemas(options?: { skip?: boolean }): UseIntegrationTypeSchemasResult {
   const useNewApi = config.featureToggles.alertingSyncNotifiersApiMigration;
   const skip = options?.skip ?? false;
 
@@ -101,7 +107,7 @@ export function useIntegrationTypeSchemas(options?: { skip?: boolean }) {
     skip: skip || !!useNewApi,
   });
 
-  return useMemo(() => {
+  return useMemo((): UseIntegrationTypeSchemasResult => {
     if (useNewApi) {
       return {
         ...newApiResult,
