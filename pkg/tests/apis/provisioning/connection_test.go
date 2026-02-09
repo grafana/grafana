@@ -252,8 +252,10 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 		require.Contains(t, c.GetName(), namePrefix, "name should be updated")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -287,8 +289,10 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 		require.Contains(t, c.GetName(), generateName, "name should be updated")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -322,8 +326,10 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 		require.Equal(t, name, c.GetName(), "name should be identical")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 }
@@ -367,8 +373,10 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		require.Contains(t, c.GetName(), gitlabNamePrefix, "name should be updated")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -400,8 +408,10 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		require.Contains(t, c.GetName(), generateName, "name should be updated")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -433,8 +443,10 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		require.Equal(t, name, c.GetName(), "name should be identical")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -464,8 +476,10 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		require.Contains(t, c.GetName(), bitbucketNamePrefix, "name should be updated")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -497,8 +511,10 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		require.Contains(t, c.GetName(), generateName, "name should be updated")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 
@@ -530,8 +546,10 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		require.Equal(t, name, c.GetName(), "name should be identical")
 
 		t.Cleanup(func() {
-			err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	})
 }
