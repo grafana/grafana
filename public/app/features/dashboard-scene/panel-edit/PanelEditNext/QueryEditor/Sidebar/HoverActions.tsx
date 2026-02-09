@@ -1,6 +1,9 @@
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
+import { QueryEditorType } from '../../constants';
+import { useQueryEditorUIContext } from '../QueryEditorContext';
+
 interface HoverActionsProps {
   onDuplicate?: () => void;
   onDelete: () => void;
@@ -9,8 +12,8 @@ interface HoverActionsProps {
 }
 
 export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: HoverActionsProps) {
-  // we know that the actions are for a query if we have onDuplicate
-  const typeText = onDuplicate ? 'query' : 'transformation';
+  const { cardType } = useQueryEditorUIContext();
+  const typeText = cardType === QueryEditorType.Query ? 'query' : 'transformation';
 
   return (
     <Stack direction="row" gap={0}>
