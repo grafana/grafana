@@ -108,7 +108,7 @@ func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
 	// Run migration in a background goroutine to avoid blocking service startup
 	go func() {
 		l.Info("Starting annotation dashboard_uid migration in background")
-		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName(), l)
+		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName(), l)
 		if err != nil {
 			l.Error("failed to populate dashboard_uid for annotations", "error", err)
 		} else {
