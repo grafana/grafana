@@ -9,6 +9,9 @@ interface HoverActionsProps {
 }
 
 export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: HoverActionsProps) {
+  // we know that the actions are for a query if we have onDuplicate
+  const typeText = onDuplicate ? 'query' : 'transformation';
+
   return (
     <Stack direction="row" gap={0}>
       {onDuplicate && (
@@ -29,7 +32,7 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         fill="text"
         icon="trash-alt"
         variant="secondary"
-        aria-label={t('query-editor.action.delete', 'Delete query')}
+        aria-label={t('query-editor.action.delete', 'Delete {{type}}', { type: typeText })}
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
@@ -40,7 +43,11 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         fill="text"
         icon={isHidden ? 'eye-slash' : 'eye'}
         variant="secondary"
-        aria-label={isHidden ? t('query-editor.action.show', 'Show card') : t('query-editor.action.hide', 'Hide card')}
+        aria-label={
+          isHidden
+            ? t('query-editor.action.show', 'Show {{type}}', { type: typeText })
+            : t('query-editor.action.hide', 'Hide {{type}}', { type: typeText })
+        }
         onClick={(e) => {
           e.stopPropagation();
           onToggleHide();
