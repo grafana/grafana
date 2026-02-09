@@ -5222,6 +5222,24 @@
         "failed-to-fetch-dashboard": "Failed to fetch dashboard"
       }
     },
+    "filters-overview": {
+      "apply": "Apply",
+      "apply-close": "Apply and close",
+      "close": "Close",
+      "empty": "No labels available",
+      "groupby": "GroupBy",
+      "missing-adhoc": "No ad hoc filters available",
+      "operator": "Operator",
+      "search": {
+        "aria-label": "Search filters",
+        "placeholder": "Search..."
+      },
+      "title": "Edit filters",
+      "value": "Value"
+    },
+    "filters-verview": {
+      "title": "Edit filters"
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Send custom feedback",
       "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
@@ -7064,7 +7082,14 @@
       "title": "Versions"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "Select operator",
+  "dashboard.filters-overview.value.placeholder": "Select values",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "All filters",
+      "filters": "Filters",
+      "open": "Open filters overview pane"
+    },
     "panel-queries": {
       "add-from-saved-queries": "Add from saved queries"
     },
