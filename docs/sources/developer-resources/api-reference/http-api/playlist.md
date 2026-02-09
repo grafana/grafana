@@ -286,7 +286,7 @@ Content-Type: application/json
 Deletes a playlist.
 
 - `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- name: the UID of the playlist
+- `name`: The UID of the playlist.
 
 **Example Request**:
 
