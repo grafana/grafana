@@ -231,6 +231,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "IDX_resource_history_resource_action_version_name",
 	}))
 
+	mg.AddMigration("Fix resource_history drift: insert missing delete records", &resourceHistoryDriftFixMigration{})
+
 	return marker
 }
 
