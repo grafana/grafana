@@ -88,6 +88,9 @@ export type QueryLibraryContextType = {
   activeDatasources: string[];
   /** Set a guard function that returns true to allow closing, false to prevent closing */
   setCloseGuard: (shouldAllowClose: () => boolean) => void;
+  /** Template variable overrides keyed by unresolved variable string (for example `${var}`) */
+  templateVariableOverrides: Record<string, string>;
+  setTemplateVariableOverrides: (overrides: Record<string, string>) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -123,6 +126,8 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   newQuery: undefined,
   activeDatasources: [],
   setCloseGuard: () => {},
+  templateVariableOverrides: {},
+  setTemplateVariableOverrides: () => {},
 });
 
 export function useQueryLibraryContext() {
