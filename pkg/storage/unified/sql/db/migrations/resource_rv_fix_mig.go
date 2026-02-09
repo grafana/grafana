@@ -218,27 +218,27 @@ func getCurrentDBEpoch(sess *xorm.Session, mg *migrator.Migrator) (int64, error)
 	return epoch, nil
 }
 
-func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migrator.Migrator, gr groupResource, ceiling int64, needed int64) (int64, error) {
+func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migrator.Migrator, gr groupResource, ceiling int64, needed int64) error {
 	targetMinCeiling := rvFloor + needed
 	if ceiling >= targetMinCeiling {
-		return ceiling, nil
+		return nil
 	}
 
 	// Move every valid RV that blocks the [rvFloor, targetMinCeiling) range.
 	blockingRVs, err := findBlockingRVs(sess, quoteFn, gr, ceiling, targetMinCeiling)
 	if err != nil {
-		return 0, fmt.Errorf("finding blocking RVs: %w", err)
+		return fmt.Errorf("finding blocking RVs: %w", err)
 	}
 	if len(blockingRVs) == 0 {
-		return targetMinCeiling, nil
+		return nil
 	}
 
 	freeRVs, err := findFreeRVsByScan(sess, quoteFn, gr, ceiling, targetMinCeiling, len(blockingRVs))
 	if err != nil {
-		return 0, fmt.Errorf("finding free RVs by scan: %w", err)
+		return fmt.Errorf("finding free RVs by scan: %w", err)
 	}
 	if len(freeRVs) < len(blockingRVs) {
-		return 0, fmt.Errorf("insufficient RV slots while preserving max RV: need %d free slots >= %d, found %d",
+		return fmt.Errorf("insufficient RV slots while preserving max RV: need %d free slots >= %d, found %d",
 			len(blockingRVs), targetMinCeiling, len(freeRVs))
 	}
 
@@ -246,11 +246,11 @@ func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migr
 	for i, oldRV := range blockingRVs {
 		newRV := freeRVs[i]
 		if err := moveCeilingRecord(sess, quoteFn, gr, oldRV, newRV); err != nil {
-			return 0, fmt.Errorf("moving RV %d to %d: %w", oldRV, newRV, err)
+			return fmt.Errorf("moving RV %d to %d: %w", oldRV, newRV, err)
 		}
 	}
 
-	return targetMinCeiling, nil
+	return nil
 }
 
 func findBlockingRVs(sess *xorm.Session, quoteFn func(string) string, gr groupResource, fromRV, toRV int64) ([]int64, error) {
