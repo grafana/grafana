@@ -13,7 +13,6 @@ import {
   useListRepositoryQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useBranchOptions } from '../hooks/useBranchOptions';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 
@@ -28,7 +27,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
 }));
 
 jest.mock('../hooks/useCreateOrUpdateRepository');
-jest.mock('../hooks/useBranchOptions');
 jest.mock('../hooks/useConnectionOptions');
 jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/provisioning/v0alpha1'),
@@ -46,7 +44,6 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
   typeof useCreateOrUpdateRepository
 >;
-const mockUseBranchOptions = useBranchOptions as jest.MockedFunction<typeof useBranchOptions>;
 const mockUseGetRepositoryRefsQuery = useGetRepositoryRefsQuery as jest.MockedFunction<
   typeof useGetRepositoryRefsQuery
 >;
@@ -141,16 +138,6 @@ async function fillConnectionForm(
 describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock useBranchOptions to prevent real API calls
-    mockUseBranchOptions.mockReturnValue({
-      options: [
-        { label: 'main', value: 'main' },
-        { label: 'develop', value: 'develop' },
-      ],
-      loading: false,
-      error: null,
-    });
 
     // Mock useGetRepositoryRefsQuery for GitHub repositories
     mockUseGetRepositoryRefsQuery.mockReturnValue({

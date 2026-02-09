@@ -1,32 +1,26 @@
 import { t } from '@grafana/i18n';
 
+import { isGitProvider } from '../../utils/repositoryTypes';
 import { Step } from '../Stepper';
 import { GitHubAuthType, RepoType, WizardStep } from '../types';
 
 export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array<Step<WizardStep>> => {
   const steps: Array<Step<WizardStep>> = [];
 
-  // For GitHub, add auth type selection step
-  if (type === 'github') {
-    steps.push({
-      id: 'authType',
-      name: t('provisioning.wizard.connect-step', 'Connect'),
-      title: t('provisioning.wizard.connect-step', 'Connect'),
-      submitOnNext: true,
-    });
-  }
+  steps.push({
+    id: 'authType',
+    name: t('provisioning.wizard.connect-step', 'Connect'),
+    title: t('provisioning.wizard.connect-step', 'Connect'),
+    submitOnNext: true,
+  });
 
-  // Connection step (always present, but fields vary)
+  // Connection step (fields vary based on repo type)
   steps.push({
     id: 'connection',
-    name:
-      type === 'github'
-        ? t('provisioning.wizard.step-configure-repo', 'Configure repository')
-        : t('provisioning.wizard.step-connect', 'Connect'),
-    title:
-      type === 'github'
-        ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
-        : t('provisioning.wizard.title-connect', 'Connect to external storage'),
+    name: t('provisioning.wizard.step-configure-repo', 'Configure repository'),
+    title: isGitProvider(type)
+      ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
+      : t('provisioning.wizard.title-connect', 'Connect to external storage'),
     submitOnNext: true,
   });
 

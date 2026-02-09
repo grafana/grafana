@@ -9,7 +9,6 @@ import { Step } from '../Stepper';
 import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
-  initialStep: WizardStep;
   steps: Array<Step<WizardStep>>;
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
@@ -32,7 +31,6 @@ export interface UseWizardNavigationReturn {
 }
 
 export function useWizardNavigation({
-  initialStep,
   steps,
   canSkipSync,
   setStepStatusInfo,
@@ -43,7 +41,7 @@ export function useWizardNavigation({
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
+  const [activeStep, setActiveStep] = useState<WizardStep>('authType');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
