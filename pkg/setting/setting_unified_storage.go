@@ -13,9 +13,10 @@ import (
 const DefaultAutoMigrationThreshold = 10
 
 const (
-	PlaylistResource  = "playlists.playlist.grafana.app"
-	FolderResource    = "folders.folder.grafana.app"
-	DashboardResource = "dashboards.dashboard.grafana.app"
+	PlaylistResource   = "playlists.playlist.grafana.app"
+	FolderResource     = "folders.folder.grafana.app"
+	DashboardResource  = "dashboards.dashboard.grafana.app"
+	DashboardResource2 = "test.dashboard.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
