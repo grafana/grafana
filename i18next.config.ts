@@ -14,6 +14,7 @@ export default defineConfig({
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    // eslint-disable-next-line no-restricted-syntax
     sort: (a, b) => a.key.localeCompare(b.key, 'en-US'),
   },
 });
