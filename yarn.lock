@@ -3340,6 +3340,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/assistant@npm:^0.1.14":
+  version: 0.1.14
+  resolution: "@grafana/assistant@npm:0.1.14"
+  peerDependencies:
+    "@grafana/data": ">=12.1.0"
+    "@grafana/runtime": ">=12.1.0"
+    "@grafana/scenes": ">=5.41.0"
+    "@grafana/ui": ">=12.1.0"
+    react: ">=18.0.0"
+    rxjs: ">=7.0.0"
+  checksum: 10/b669f4d0bf1707d6bacfea1cd02a3e401b030eb3f682ee792b7a9dca44d6ff14fe8d29f2ed4dc05ea5203db167c353b1a1f552ee9ec8d14eaf6a073cd62b1bd4
+  languageName: node
+  linkType: hard
+
 "@grafana/async-query-data@npm:0.4.2":
   version: 0.4.2
   resolution: "@grafana/async-query-data@npm:0.4.2"
@@ -3805,6 +3819,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.16"
+    "@grafana/assistant": "npm:^0.1.14"
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"

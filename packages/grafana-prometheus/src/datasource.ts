@@ -97,6 +97,7 @@ export class PrometheusDatasource
   url: string;
   withCredentials: boolean;
   defaultEditor?: QueryEditorMode;
+  instanceSettings: DataSourceInstanceSettings<PromOptions>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -106,6 +107,7 @@ export class PrometheusDatasource
     super(instanceSettings);
 
     // DATASOURCE CONFIGURATION PROPERTIES
+    this.instanceSettings = instanceSettings;
     this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
     this.cache = new QueryCache({

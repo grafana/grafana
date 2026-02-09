@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Space } from '@grafana/ui';
+import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQuery } from '../../types';
@@ -19,6 +19,7 @@ import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 
+import { QueryActionAssistantButton } from './AssistantButton';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
@@ -118,25 +119,34 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        {!query.expr && (
-          <Button
-            data-testid={selectors.components.QueryBuilder.queryPatterns}
-            variant="secondary"
-            size="sm"
-            onClick={handleOpenQueryPatternsModal}
-          >
-            <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
-              Kick start your query
-            </Trans>
-          </Button>
-        )}
-        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
-          <QueryHeaderSwitch
-            label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
-            value={explain}
-            onChange={onShowExplainChange}
+        <Stack>
+          <QueryActionAssistantButton
+            query={query}
+            queries={queries ?? []}
+            dataSourceInstanceSettings={props.datasource.instanceSettings}
+            app={app}
+            datasourceApi={null}
           />
-        </div>
+          {!query.expr && (
+            <Button
+              data-testid={selectors.components.QueryBuilder.queryPatterns}
+              variant="secondary"
+              size="sm"
+              onClick={handleOpenQueryPatternsModal}
+            >
+              <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
+                Kick start your query
+              </Trans>
+            </Button>
+          )}
+          <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
+            <QueryHeaderSwitch
+              label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
+              value={explain}
+              onChange={onShowExplainChange}
+            />
+          </div>
+        </Stack>
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
           <Button
