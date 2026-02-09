@@ -547,8 +547,8 @@ describe('TableNG', () => {
       );
 
       const headers = container.querySelectorAll('[role="columnheader"]');
-      const firstHeaderSpan = headers[0].querySelector('span');
-      const secondHeaderSpan = headers[1].querySelector('span');
+      const firstHeaderSpan = headers[0].querySelector('button');
+      const secondHeaderSpan = headers[1].querySelector('button');
 
       expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
       expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');

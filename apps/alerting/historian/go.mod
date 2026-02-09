@@ -1,12 +1,12 @@
 module github.com/grafana/grafana/apps/alerting/historian
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e
-	github.com/grafana/grafana-app-sdk v0.49.0
+	github.com/grafana/grafana-app-sdk v0.49.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.10
@@ -168,6 +168,7 @@ require (
 	golang.org/x/tools v0.41.0 // indirect
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
+	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
 	google.golang.org/grpc v1.78.0 // indirect
