@@ -29,3 +29,9 @@ export function isDataTransformerConfig(
 ): transformation is DataTransformerConfig {
   return transformation !== null && 'id' in transformation && !('refId' in transformation);
 }
+
+export const filterDataTransformerConfigs = (
+  transformations: Array<DataTransformerConfig | CustomTransformerDefinition>
+): DataTransformerConfig[] => {
+  return transformations.filter((t): t is DataTransformerConfig => isDataTransformerConfig(t));
+};

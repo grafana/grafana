@@ -2,10 +2,9 @@ import { useMemo } from 'react';
 
 import { standardTransformersRegistry } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataTransformerConfig } from '@grafana/schema';
 
 import { Transformation } from '../types';
-import { isDataTransformerConfig } from '../utils';
+import { filterDataTransformerConfigs } from '../utils';
 
 /**
  * Hook to subscribe to transformations from a SceneDataTransformer.
@@ -15,14 +14,12 @@ export function useTransformations(dataTransformer: SceneDataTransformer | null)
   const transformerState = dataTransformer?.useState();
 
   return useMemo(() => {
-    if (!dataTransformer) {
+    if (!dataTransformer || !transformerState) {
       return [];
     }
 
     // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-    const transformationList = (transformerState?.transformations || []).filter((t): t is DataTransformerConfig =>
-      isDataTransformerConfig(t)
-    );
+    const transformationList = filterDataTransformerConfigs(transformerState.transformations || []);
 
     // Use the transformation's id + index as a stable key for React
     // transformConfig holds the actual object reference from Scene state
@@ -31,5 +28,5 @@ export function useTransformations(dataTransformer: SceneDataTransformer | null)
       registryItem: standardTransformersRegistry.getIfExists(t.id),
       transformId: `${t.id}-${index}`,
     }));
-  }, [dataTransformer, transformerState?.transformations]);
+  }, [dataTransformer, transformerState]);
 }
