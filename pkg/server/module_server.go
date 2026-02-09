@@ -202,24 +202,23 @@ func (s *ModuleServer) Run() error {
 		// Determine which modules depend on the gRPC server
 		dependentModules := []string{modules.StorageServer, modules.SearchServer, modules.SearchServerDistributor}
 		var enabledModules []string
+		var authn interceptors.Authenticator
 		for _, mod := range dependentModules {
 			if m.IsModuleEnabled(mod) {
 				enabledModules = append(enabledModules, mod)
+				// SearchServerDistributor only forwards to search pods, no double authentication needed
+				if mod != modules.SearchServerDistributor {
+					// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+					// grpcutils.NewGrpcAuthenticator should be used instead.
+					authn = interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+						auth := resourcegrpc.Authenticator{Tracer: tracer}
+						return auth.Authenticate(ctx)
+					}))
+				}
 			}
 		}
 		if len(enabledModules) == 0 {
 			return nil, nil
-		}
-
-		// SearchServerDistributor forwards to search, no authentication needed
-		var authn interceptors.Authenticator
-		if m.IsModuleEnabled(modules.StorageServer) || m.IsModuleEnabled(modules.SearchServer) {
-			// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
-			// grpcutils.NewGrpcAuthenticator should be used instead.
-			authn = interceptors.AuthenticatorFunc(sql.NewAuthenticatorWithFallback(s.cfg, s.registerer, tracer, func(ctx context.Context) (context.Context, error) {
-				auth := resourcegrpc.Authenticator{Tracer: tracer}
-				return auth.Authenticate(ctx)
-			}))
 		}
 		var err error
 		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, authn, tracer, s.registerer, modules.GRPCServer, enabledModules, m.GetService)
