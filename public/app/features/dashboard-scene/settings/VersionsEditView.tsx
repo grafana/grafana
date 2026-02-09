@@ -1,10 +1,13 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import * as React from 'react';
+import { useMemo } from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Spinner, Stack } from '@grafana/ui';
+import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { Resource } from 'app/features/apiserver/types';
+import { AnnoKeyMessage, AnnoKeyUpdatedBy, AnnoKeyUpdatedTimestamp, Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
   DecoratedRevisionModel,
@@ -119,9 +122,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
         checked: false,
         uid: item.metadata.name,
         version: item.metadata.generation ?? 0,
-        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
-        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
-        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        created:
+          item.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ??
+          item.metadata.creationTimestamp ??
+          new Date().toISOString(),
+        createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? '',
+        message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         data: item.spec as object,
       })
@@ -182,6 +188,26 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const dashboard = model.getDashboard();
   const { isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
+
+  const userKeys = useMemo(
+    () => [...new Set(model.versions.map((v) => v.createdBy).filter(Boolean))],
+    [model.versions]
+  );
+  const { data: displayData } = useGetDisplayMappingQuery(userKeys.length > 0 ? { key: userKeys } : skipToken);
+  const isLoadingUserDisplayNames = userKeys.length > 0 && !displayData;
+
+  // Here replacing raw user ids with human readable names
+  const versionsWithDisplayNames = useMemo(() => {
+    if (!displayData) {
+      return model.versions;
+    }
+    return model.versions.map((version) => {
+      const idx = version.createdBy ? displayData.keys.indexOf(version.createdBy) : -1;
+      const displayName = idx >= 0 ? displayData.display[idx]?.displayName : undefined;
+      return displayName ? { ...version, createdBy: displayName } : version;
+    });
+  }, [model.versions, displayData]);
+
   const canCompare = model.versions.filter((version) => version.checked).length === 2;
   const showButtons = model.versions.length > 1;
   const hasMore = model.versions.length >= model.limit;
@@ -219,10 +245,11 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
         <VersionHistoryTable
-          versions={model.versions}
+          versions={versionsWithDisplayNames}
           onCheck={model.onCheck}
           canCompare={canCompare}
           onRestore={dashboard.onRestore}
+          isLoadingUserDisplayNames={isLoadingUserDisplayNames}
         />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
