@@ -705,11 +705,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -771,11 +766,6 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/Table.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2272,7 +2262,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 23
+      "count": 22
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {

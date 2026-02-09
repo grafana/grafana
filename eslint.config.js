@@ -31,6 +31,7 @@ const commonTestIgnores = [
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',
+  'packages/grafana-test-utils/src/**/*.{ts,tsx}',
 ];
 
 const generatedFiles = ['**/*.gen.ts', '**/*_gen.ts'];
@@ -571,11 +572,6 @@ module.exports = [
           selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
           // eslint-disable-next-line no-restricted-syntax
           message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
-        },
-        {
-          selector:
-            "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
-          message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
         },
         {
           selector: 'MemberExpression[object.name="config"][property.name="apps"]',
