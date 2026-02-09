@@ -54,7 +54,7 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 
 		// In case request cache ID is set, use cached tree
 		var tree *folder.FolderTree
-		if getRequestCacheID(ctx) != "" {
+		if hasCache(ctx) {
 			tree, err = l.treeCache.get(ctx, user)
 			if err != nil {
 				return nil, err

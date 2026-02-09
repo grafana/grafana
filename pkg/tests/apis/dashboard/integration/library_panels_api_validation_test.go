@@ -438,118 +438,144 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	}
 }
 
-// TestIntegrationLibraryElementFolderHierarchy tests that permissions are correctly propagated in a folder hierarchy:
-// 1. Parent folder access grants access to child folder library elements (inherited permissions)
-// 2. Child folder access does NOT grant access to parent folder library elements (no reverse inheritance)
+// folderHierarchySetup holds the common test data for folder hierarchy tests.
+type folderHierarchySetup struct {
+	ctx              TestContext
+	parentFolder     *folder.Folder
+	childFolder      *folder.Folder
+	grandchildFolder *folder.Folder
+	libraryElements  []string
+	testUser         apis.User
+}
+
+// setupFolderHierarchy creates a nested folder structure with library elements and a test user.
+func setupFolderHierarchy(t *testing.T, helper *apis.K8sTestHelper, dualWriterMode rest.DualWriterMode) folderHierarchySetup {
+	t.Helper()
+
+	ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+	// Create a nested folder structure: parentFolder -> childFolder -> grandchildFolder
+	parentFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "ParentFolder")
+	require.NoError(t, err)
+	require.NotNil(t, parentFolder)
+
+	childFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "ChildFolder", parentFolder.UID)
+	require.NoError(t, err)
+	require.NotNil(t, childFolder)
+
+	grandchildFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "GrandchildFolder", childFolder.UID)
+	require.NoError(t, err)
+	require.NotNil(t, grandchildFolder)
+
+	libraryElements := make([]string, 0, 3)
+	for _, f := range []*folder.Folder{parentFolder, childFolder, grandchildFolder} {
+		libraryElement, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in "+f.Title, f.UID, nil)
+		require.NoError(t, err)
+		libraryElements = append(libraryElements, libraryElement)
+	}
+	t.Cleanup(func() {
+		for _, uid := range libraryElements {
+			err := deleteLibraryElement(t, ctx, ctx.AdminUser, uid)
+			require.NoError(t, err)
+		}
+	})
+
+	testUser := ctx.Helper.CreateUser("hierarchy-test-user", "Org1", org.RoleViewer, nil)
+
+	return folderHierarchySetup{
+		ctx:              ctx,
+		parentFolder:     parentFolder,
+		childFolder:      childFolder,
+		grandchildFolder: grandchildFolder,
+		libraryElements:  libraryElements,
+		testUser:         testUser,
+	}
+}
+
+// getVisibleLibraryElementUIDs returns the UIDs and total count of library elements visible to the user.
+func getVisibleLibraryElementUIDs(t *testing.T, ctx *TestContext, user apis.User) ([]string, int) {
+	t.Helper()
+	listData, err := getDashboardViaHTTP(t, ctx, "/api/library-elements", user)
+	require.NoError(t, err)
+	require.NotNil(t, listData)
+
+	result := listData["result"].(map[string]interface{})
+	elements := result["elements"].([]interface{})
+	totalCount := int(result["totalCount"].(float64))
+
+	visibleUIDs := make([]string, 0, len(elements))
+	for _, elem := range elements {
+		elemMap := elem.(map[string]interface{})
+		if uid, ok := elemMap["uid"].(string); ok {
+			visibleUIDs = append(visibleUIDs, uid)
+		}
+	}
+	return visibleUIDs, totalCount
+}
+
+// TestIntegrationLibraryElementFolderHierarchy tests that permissions are correctly propagated in a folder hierarchy.
+// Each sub-test uses its own K8sTestHelper to ensure independent folder tree caches.
 func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
-				EnableFeatureToggles: []string{
-					"kubernetesLibraryPanels",
+		opts := testinfra.GrafanaOpts{
+			DisableDataMigrations: true,
+			DisableAnonymous:      true,
+			EnableFeatureToggles: []string{
+				"kubernetesLibraryPanels",
+			},
+			UnifiedStorageEnableSearch: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: dualWriterMode,
 				},
-				UnifiedStorageEnableSearch: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
+				"folders.folder.grafana.app": {
+					DualWriterMode: dualWriterMode,
 				},
-				DisableAuthZClientCache: true,
-			})
-			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			},
+			DisableAuthZClientCache: true,
+		}
+		// Test 1: Parent folder access grants access to child folder library elements (inherited permissions)
+		t.Run(fmt.Sprintf("DualWriterMode %d/parent access grants child access", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, opts)
+			t.Cleanup(helper.Shutdown)
+			s := setupFolderHierarchy(t, helper, dualWriterMode)
 
-			// Create a nested folder structure: parentFolder -> childFolder -> grandchildFolder
-			parentFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "ParentFolder")
-			require.NoError(t, err)
-			require.NotNil(t, parentFolder)
+			// Give user access to the parent folder
+			setResourceUserPermission(t, s.ctx, s.ctx.AdminUser, false, s.parentFolder.UID, addUserPermission(t, nil, s.testUser, ResourcePermissionLevelView))
 
-			childFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "ChildFolder", parentFolder.UID)
-			require.NoError(t, err)
-			require.NotNil(t, childFolder)
+			visibleUIDs, totalCount := getVisibleLibraryElementUIDs(t, &s.ctx, s.testUser)
 
-			grandchildFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "GrandchildFolder", childFolder.UID)
-			require.NoError(t, err)
-			require.NotNil(t, grandchildFolder)
+			// User with parent folder access should see ALL library elements
+			require.Contains(t, visibleUIDs, s.libraryElements[0])
+			require.Contains(t, visibleUIDs, s.libraryElements[1])
+			require.Contains(t, visibleUIDs, s.libraryElements[2])
+			require.Len(t, visibleUIDs, 3)
+			require.Equal(t, 3, totalCount)
+		})
 
-			libraryElements := make([]string, 0, 3)
-			for _, f := range []*folder.Folder{parentFolder, childFolder, grandchildFolder} {
-				libraryElement, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in "+f.Title, f.UID, nil)
-				require.NoError(t, err)
-				libraryElements = append(libraryElements, libraryElement)
-			}
-			t.Cleanup(func() {
-				err = deleteLibraryElement(t, ctx, ctx.AdminUser, libraryElements[0])
-				require.NoError(t, err)
-				err = deleteLibraryElement(t, ctx, ctx.AdminUser, libraryElements[1])
-				require.NoError(t, err)
-				err = deleteLibraryElement(t, ctx, ctx.AdminUser, libraryElements[2])
-				require.NoError(t, err)
-			})
+		// Test 2: Child folder access does NOT grant access to parent folder library elements (no reverse inheritance)
+		t.Run(fmt.Sprintf("DualWriterMode %d/child access does not grant parent access", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, opts)
+			t.Cleanup(helper.Shutdown)
+			s := setupFolderHierarchy(t, helper, dualWriterMode)
 
-			// Create a test user
-			testUser := ctx.Helper.CreateUser("hierarchy-test-user", "Org1", org.RoleViewer, nil)
-			listURL := "/api/library-elements"
+			// Remove default viewer access to parent folder so only explicit permissions apply
+			setResourceUserPermission(t, s.ctx, s.ctx.AdminUser, false, s.parentFolder.UID, []ResourcePermissionSetting{})
 
-			// Helper to get visible library element UIDs
-			getVisibleUIDs := func() ([]string, int) {
-				listData, err := getDashboardViaHTTP(t, &ctx, listURL, testUser)
-				require.NoError(t, err)
-				require.NotNil(t, listData)
+			// Give user access to ONLY the grandchild folder
+			setResourceUserPermission(t, s.ctx, s.ctx.AdminUser, false, s.grandchildFolder.UID, addUserPermission(t, nil, s.testUser, ResourcePermissionLevelView))
 
-				result := listData["result"].(map[string]interface{})
-				elements := result["elements"].([]interface{})
-				totalCount := int(result["totalCount"].(float64))
+			visibleUIDs, totalCount := getVisibleLibraryElementUIDs(t, &s.ctx, s.testUser)
 
-				visibleUIDs := make([]string, 0, len(elements))
-				for _, elem := range elements {
-					elemMap := elem.(map[string]interface{})
-					if uid, ok := elemMap["uid"].(string); ok {
-						visibleUIDs = append(visibleUIDs, uid)
-					}
-				}
-				return visibleUIDs, totalCount
-			}
-
-			// Test 1: Parent folder access grants access to all child library elements
-			t.Run("parent access grants child access", func(t *testing.T) {
-				// Give user access to the parent folder
-				setResourceUserPermission(t, ctx, ctx.AdminUser, false, parentFolder.UID, addUserPermission(t, nil, testUser, ResourcePermissionLevelView))
-
-				visibleUIDs, totalCount := getVisibleUIDs()
-
-				// User with parent folder access should see ALL library elements
-				require.Contains(t, visibleUIDs, libraryElements[0])
-				require.Contains(t, visibleUIDs, libraryElements[1])
-				require.Contains(t, visibleUIDs, libraryElements[2])
-				require.Len(t, visibleUIDs, 3)
-				require.Equal(t, 3, totalCount)
-			})
-
-			// Test 2: Remove parent access, give only grandchild access - should NOT see parent/child elements
-			t.Run("child access does not grant parent access", func(t *testing.T) {
-				// Remove access to parent folder
-				setResourceUserPermission(t, ctx, ctx.AdminUser, false, parentFolder.UID, []ResourcePermissionSetting{})
-
-				// Give user access to ONLY the grandchild folder
-				setResourceUserPermission(t, ctx, ctx.AdminUser, false, grandchildFolder.UID, addUserPermission(t, nil, testUser, ResourcePermissionLevelView))
-
-				visibleUIDs, totalCount := getVisibleUIDs()
-
-				// User should ONLY see the library element in the grandchild folder
-				require.Contains(t, visibleUIDs, libraryElements[2])
-				require.NotContains(t, visibleUIDs, libraryElements[1])
-				require.NotContains(t, visibleUIDs, libraryElements[0])
-				require.Len(t, visibleUIDs, 1)
-				require.Equal(t, 1, totalCount)
-			})
+			// User should ONLY see the library element in the grandchild folder
+			require.Contains(t, visibleUIDs, s.libraryElements[2])
+			require.NotContains(t, visibleUIDs, s.libraryElements[1])
+			require.NotContains(t, visibleUIDs, s.libraryElements[0])
+			require.Len(t, visibleUIDs, 1)
+			require.Equal(t, 1, totalCount)
 		})
 	}
 }

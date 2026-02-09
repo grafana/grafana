@@ -343,7 +343,17 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
 		var folderUID, folderTitle string
-		if tree == nil {
+		var cacheHit bool
+		if tree != nil {
+			var fd folder.FolderNode
+			fd, cacheHit = tree.GetByID(libraryElement.FolderID) // nolint:staticcheck
+			if cacheHit {
+				folderTitle = fd.Title
+				folderUID = fd.UID
+			}
+		}
+		// Fetch folder from service if tree is nil, or if it doesn't have the folder info (e.g. due to a recent creation)
+		if tree == nil || !cacheHit {
 			// nolint:staticcheck
 			f, err := l.folderService.Get(c, &folder.GetFolderQuery{OrgID: signedInUser.GetOrgID(), ID: &libraryElement.FolderID, SignedInUser: signedInUser})
 			if err != nil {
@@ -354,13 +364,6 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 			if f.ID == 0 { // nolint:staticcheck
 				folderUID = ac.GeneralFolderUID
 			}
-		} else {
-			fd, ok := tree.GetByID(libraryElement.FolderID) // nolint:staticcheck
-			if !ok {
-				return []model.LibraryElementDTO{}, model.ErrLibraryElementNotFound
-			}
-			folderTitle = fd.Title
-			folderUID = fd.UID
 		}
 		var updatedModel json.RawMessage
 		if libraryElement.Kind == int64(model.PanelElement) {
