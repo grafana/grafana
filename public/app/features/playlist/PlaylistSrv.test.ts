@@ -4,7 +4,7 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
-import { Playlist } from '../../api/clients/playlist/v0alpha1';
+import { Playlist } from '../../api/clients/playlist/v1';
 import { DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
@@ -22,7 +22,7 @@ jest.mock('./utils', () => ({
 }));
 
 const mockPlaylist: Playlist = {
-  apiVersion: 'playlist.grafana.app/v0alpha1',
+  apiVersion: 'playlist.grafana.app/v1',
   kind: 'Playlist',
   spec: {
     interval: '1s',

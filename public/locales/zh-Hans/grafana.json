@@ -4880,7 +4880,6 @@
       "paste-panel": "粘贴面板",
       "paste-row": "粘贴行",
       "paste-tab": "粘贴选项卡",
-      "un-group-panels": "取消分组",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9478,6 +9477,10 @@
     "secret-form-field": {
       "reset": "重置"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "加载选项失败",
       "loading": "正在加载选项...",
@@ -10485,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "取消多行显示",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
@@ -10511,6 +10520,7 @@
     "name-show-controls": "显示控件",
     "name-time": "显示时间戳",
     "name-unique-labels": "唯一标签",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "多行显示",
     "order-options": {
       "label-newest-first": "最新靠前",
@@ -12080,7 +12090,6 @@
       "placeholder-my-repository-connection": "我的存储库连接",
       "retry-action": "",
       "text-loading-resource-information": "正在加载资源信息...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} 个数据面板",
@@ -12612,7 +12621,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "并点击",
@@ -12649,8 +12659,6 @@
       "button-cancelling": "",
       "button-next": "完成",
       "button-start": "开始同步",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {

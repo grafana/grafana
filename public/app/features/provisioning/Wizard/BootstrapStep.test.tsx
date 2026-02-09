@@ -540,7 +540,7 @@ describe('BootstrapStep', () => {
         resourceCount: 0,
         resourceCountString: 'Empty',
         fileCountString: 'Empty',
-        isLoading: false,
+        isLoading: true, // isLoading is true when healthStatusNotReady is true
         requiresMigration: false,
         shouldSkipSync: true,
       });
@@ -548,7 +548,7 @@ describe('BootstrapStep', () => {
       setup();
 
       // Should show loading/waiting state, not error
-      expect(screen.getByText('Checking repository health...')).toBeInTheDocument();
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
       expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
     });
 
@@ -583,7 +583,7 @@ describe('BootstrapStep', () => {
 
       // Should show error state
       expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
-      expect(screen.queryByText('Checking repository health...')).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading resource information...')).not.toBeInTheDocument();
     });
 
     it('should show content when repository is healthy and reconciled', async () => {

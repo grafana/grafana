@@ -479,7 +479,7 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type PlaylistItem = {
+export type PlaylistPlaylistItem = {
   /** type of the item. */
   type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id';
   /** Value depends on type and describes the playlist item.
@@ -493,7 +493,7 @@ export type PlaylistItem = {
 };
 export type PlaylistSpec = {
   interval: string;
-  items: PlaylistItem[];
+  items: PlaylistPlaylistItem[];
   title: string;
 };
 export type PlaylistOperatorState = {
