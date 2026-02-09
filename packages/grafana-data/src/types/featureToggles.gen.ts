@@ -1453,6 +1453,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
+  * Use the new APIs for syncing users to teams
+  * @default false
+  */
+  kubernetesTeamSync?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */

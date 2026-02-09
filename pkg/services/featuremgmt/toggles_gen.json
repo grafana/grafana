@@ -2806,6 +2806,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesTeamSync",
+        "resourceVersion": "1770656731636",
+        "creationTimestamp": "2026-02-09T17:05:31Z"
+      },
+      "spec": {
+        "description": "Use the new APIs for syncing users to teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesTeamsHandlerRedirect",
         "resourceVersion": "1770222039889",
         "creationTimestamp": "2026-02-04T16:20:39Z"
