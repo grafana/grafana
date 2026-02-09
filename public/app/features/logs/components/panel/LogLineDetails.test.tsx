@@ -549,7 +549,7 @@ describe('LogLineDetails', () => {
           },
           undefined,
           undefined,
-          'Indexed label'
+          /Indexed label/
         );
 
         // Show labels and links

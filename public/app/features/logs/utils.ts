@@ -404,7 +404,7 @@ function getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame, index:
 /**
  * @deprecated Implement DataSourceWithLogsLabelTypesSupport and use ds.getLabelDisplayTypeFromFrame
  * to support label types.
- * 
+ *
  * Look for a `labelTypes` field. If found, use it to resolve the type for the
  * provided label.
  *
@@ -440,7 +440,7 @@ function getDataSourceLabelType(labelType: string, datasourceType: string | unde
           return null;
       }
     default:
-      return labelType;
+      return null;
   }
 }
 
