@@ -7,7 +7,7 @@ import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scene
 import { Spinner, Stack } from '@grafana/ui';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { Resource } from 'app/features/apiserver/types';
+import { AnnoKeyMessage, AnnoKeyUpdatedBy, AnnoKeyUpdatedTimestamp, Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
   DecoratedRevisionModel,
@@ -122,9 +122,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
         checked: false,
         uid: item.metadata.name,
         version: item.metadata.generation ?? 0,
-        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
-        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
-        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        created:
+          item.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ??
+          item.metadata.creationTimestamp ??
+          new Date().toISOString(),
+        createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? '',
+        message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         data: item.spec as object,
       })
