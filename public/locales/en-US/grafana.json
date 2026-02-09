@@ -10671,6 +10671,7 @@
     }
   },
   "manage-owner-references": {
+    "folder-owner-error": "Error updating folder owner",
     "folder-owner-removed": "Folder owner removed",
     "folder-owner-updated": "Folder owner updated",
     "manage-folder-owner": "Manage folder owner",
