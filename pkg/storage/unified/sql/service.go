@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -531,7 +531,7 @@ type searchServerWithAuth struct {
 	*interceptors.ServiceWithAuth
 }
 
-var _ grpc_auth.ServiceAuthFuncOverride = (*searchServerWithAuth)(nil)
+var _ grpcauth.ServiceAuthFuncOverride = (*searchServerWithAuth)(nil)
 
 func (s *service) registerSearchServer(srv *grpc.Server, server resource.SearchServer) error {
 	var handler = server
@@ -550,7 +550,7 @@ type resourceServerWithAuth struct {
 	*interceptors.ServiceWithAuth
 }
 
-var _ grpc_auth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
+var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 
 func (s *service) registerUnifiedResourceServer(srv *grpc.Server, server resource.ResourceServer) error {
 	var handler = server
