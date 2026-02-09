@@ -22,7 +22,12 @@ export function DashboardFiltersOverviewPane({ adhocFilters, groupByVariable, on
   return (
     <Box display="flex" direction="column" flex={1} height="100%" minHeight={0}>
       <div className={styles.header}>
-        <IconButton name="times" size="lg" onClick={onClose} aria-label={t('dashboard.filters-overview.close', 'Close')} />
+        <IconButton
+          name="times"
+          size="lg"
+          onClick={onClose}
+          aria-label={t('dashboard.filters-overview.close', 'Close')}
+        />
         <div className={styles.title}>
           <Text variant="h6">{t('dashboard.filters-overview.title', 'Edit filters')}</Text>
         </div>

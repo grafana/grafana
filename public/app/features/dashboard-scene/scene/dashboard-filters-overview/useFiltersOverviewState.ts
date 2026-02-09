@@ -82,9 +82,7 @@ const filterKeysBySearch = (
   const haystack = keys.map((k) => (k.label ?? k.value ?? '').toString());
   const matchingKeyIndices = fuzzySearch(haystack, searchTerm);
   const matchingKeyValues = new Set(
-    matchingKeyIndices
-      .map((i) => keys[i]?.value ?? keys[i]?.label)
-      .filter((v): v is string => Boolean(v))
+    matchingKeyIndices.map((i) => keys[i]?.value ?? keys[i]?.label).filter((v): v is string => Boolean(v))
   );
   const matchingGroupNames = new Set(
     fuzzySearch(groupNames, searchTerm)
@@ -131,7 +129,11 @@ const buildListItems = (
   return items;
 };
 
-export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQuery }: UseFiltersOverviewStateOptions) {
+export function useFiltersOverviewState({
+  adhocFilters,
+  groupByVariable,
+  searchQuery,
+}: UseFiltersOverviewStateOptions) {
   const [state, setState] = useState<FiltersOverviewState>({
     keys: [],
     operatorsByKey: {},
@@ -145,10 +147,13 @@ export function useFiltersOverviewState({ adhocFilters, groupByVariable, searchQ
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
 
   // Operator config (stable)
-  const operatorConfig = useMemo(() => ({
-    options: OPERATORS.map((op) => ({ label: op.value, value: op.value })),
-    multiValues: new Set<string>(OPERATORS.filter((op) => op.isMulti).map((op) => op.value)),
-  }), []);
+  const operatorConfig = useMemo(
+    () => ({
+      options: OPERATORS.map((op) => ({ label: op.value, value: op.value })),
+      multiValues: new Set<string>(OPERATORS.filter((op) => op.isMulti).map((op) => op.value)),
+    }),
+    []
+  );
 
   // Initialize state from filters
   useEffect(() => {
