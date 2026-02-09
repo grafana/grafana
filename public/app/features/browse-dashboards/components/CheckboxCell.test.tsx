@@ -123,6 +123,28 @@ describe('CheckboxCell', () => {
     expect(onItemSelectionChange).toHaveBeenCalledWith(item.item, true);
   });
 
+  it('renders a checked checkbox when item is selected', () => {
+    const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-selected' } };
+
+    setup(item, {
+      isSelected: () => SelectionState.Selected,
+    });
+
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).toBeChecked();
+  });
+
+  it('renders a mixed checkbox when item selection is mixed', () => {
+    const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-mixed' } };
+
+    setup(item, {
+      isSelected: () => SelectionState.Mixed,
+    });
+
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).toBePartiallyChecked();
+  });
+
   it('renders a spacer when isSelected function is not provided', () => {
     setup(dashboardItem, { includeIsSelected: false });
 
