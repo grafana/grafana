@@ -89,6 +89,6 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 func (cl *connectionClientImpl) GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnection, error) {
 	// When type is known, we can construct the connection name directly: {group}:{uid}
 	group := pluginType + ".datasource.grafana.app"
-	name := queryV0.DataSourceConnectionName(group, uid)
+	name := group + ":" + uid
 	return cl.GetConnectionByUID(c, name)
 }
