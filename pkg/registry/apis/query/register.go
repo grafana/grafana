@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,6 +54,7 @@ type QueryAPIBuilder struct {
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
 	connections            query.DataSourceConnectionProvider
+	reportStatus           func(context.Context, int)
 }
 
 func NewQueryAPIBuilder(
@@ -65,6 +67,7 @@ func NewQueryAPIBuilder(
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	connections query.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
+	reportStatus func(context.Context, int),
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -98,6 +101,7 @@ func NewQueryAPIBuilder(
 			Tracer:   tracer,
 		},
 		legacyDatasourceLookup: legacyDatasourceLookup,
+		reportStatus:           reportStatus,
 	}, nil
 }
 
@@ -134,6 +138,19 @@ func RegisterAPIService(
 			return authorizer.DecisionAllow, "", nil
 		})
 
+	statusMetric := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Subsystem: "ds_querier",
+		Name:      "requests_total",
+	}, []string{"status_code"})
+	registerer.MustRegister(statusMetric)
+
+	reportStatus := func(ctx context.Context, statusCode int) {
+		statusMetric.With(prometheus.Labels{
+			"status_code": strconv.Itoa(statusCode),
+		}).Inc()
+	}
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -144,6 +161,7 @@ func RegisterAPIService(
 		legacyDatasourceLookup,
 		dataSourcesService, // query.DataSourceConnectionProvider
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		reportStatus,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
