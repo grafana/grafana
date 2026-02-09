@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
 import { Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { RuleFormValues } from '../../../types/rule-form';
@@ -22,14 +22,16 @@ function isDefaultPolicy(policy: Route): boolean {
 }
 
 /**
- * PolicyTreeSelector - A dropdown to select the notification policy tree for an alert rule.
+ * PolicyTreeSelector - A component to select the notification policy tree for an alert rule.
  *
  * When multiple policies are enabled, this component allows users to select which policy tree
  * should handle the routing for the alert rule. The selection is stored as a label
  * `__grafana_managed_route__` on the rule.
  *
- * - For new rules: defaults to the default policy (empty value for user-defined)
- * - For existing rules: pre-selects based on the existing label value
+ * UX behavior:
+ * - For new rules or rules using the default policy: shows a collapsed view with a "Change" button
+ * - For existing rules with a custom policy: shows the dropdown directly
+ * - A "Reset to default" button allows quickly returning to the default policy
  */
 export function PolicyTreeSelector() {
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
@@ -44,20 +46,30 @@ export function PolicyTreeSelector() {
     return existingLabel?.value ?? '';
   }, [labels]);
 
+  const isUsingDefaultPolicy = currentPolicyValue === '';
+
+  // Expanded state: collapsed when using default policy, expanded when custom policy is selected
+  const [isExpanded, setIsExpanded] = useState(!isUsingDefaultPolicy);
+
+  // Sync expanded state when policy changes externally (e.g. loading existing rule)
+  useEffect(() => {
+    if (!isLoading) {
+      setIsExpanded(!isUsingDefaultPolicy);
+    }
+  }, [isUsingDefaultPolicy, isLoading]);
+
   // Build options from available policies, filtering out duplicate defaults
   const policyOptions: Array<SelectableValue<string>> = useMemo(() => {
     if (!policies) {
       return [];
     }
 
-    // Track if we've already added the default policy option
     let defaultPolicyAdded = false;
     const options: Array<SelectableValue<string>> = [];
 
     for (const policy of policies) {
       const isDefault = isDefaultPolicy(policy);
 
-      // Skip if this is another default policy entry (avoid duplicates)
       if (isDefault && defaultPolicyAdded) {
         continue;
       }
@@ -72,7 +84,7 @@ export function PolicyTreeSelector() {
         description: isDefault
           ? t(
               'alerting.policy-tree-selector.default-policy-desc',
-              'Alert instances will be routed using the default Grafana notification policy'
+              'Routes alerts using the default notification policy tree'
             )
           : t('alerting.policy-tree-selector.custom-policy-desc', 'Route alerts through the {{name}} policy tree', {
               name: policy.name,
@@ -91,12 +103,10 @@ export function PolicyTreeSelector() {
 
     const existingLabel = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME);
 
-    // If no existing label, nothing to validate
     if (!existingLabel) {
       return;
     }
 
-    // Check if the label value corresponds to an existing policy
     const labelValue = existingLabel.value;
     const policyExists = policies.some((p) => {
       if (isDefaultPolicy(p)) {
@@ -112,32 +122,49 @@ export function PolicyTreeSelector() {
     }
   }, [isLoading, policies, labels, setValue]);
 
-  const updatePolicyLabel = (newValue: string) => {
-    const currentLabels = getValues('labels');
-    const existingLabelIndex = currentLabels.findIndex((label) => label.key === NAMED_ROOT_LABEL_NAME);
+  const updatePolicyLabel = useCallback(
+    (newValue: string) => {
+      const currentLabels = getValues('labels');
+      const existingLabelIndex = currentLabels.findIndex((label) => label.key === NAMED_ROOT_LABEL_NAME);
 
-    let newLabels = [...currentLabels];
+      let newLabels = [...currentLabels];
 
-    if (newValue === '') {
-      // If selecting default policy (empty value), remove the label entirely
-      if (existingLabelIndex !== -1) {
-        newLabels.splice(existingLabelIndex, 1);
-      }
-    } else {
-      // Add or update the label
-      if (existingLabelIndex !== -1) {
-        newLabels[existingLabelIndex] = { key: NAMED_ROOT_LABEL_NAME, value: newValue };
+      if (newValue === '') {
+        // If selecting default policy (empty value), remove the label entirely
+        if (existingLabelIndex !== -1) {
+          newLabels.splice(existingLabelIndex, 1);
+        }
       } else {
-        newLabels = [...newLabels, { key: NAMED_ROOT_LABEL_NAME, value: newValue }];
+        // Add or update the label
+        if (existingLabelIndex !== -1) {
+          newLabels[existingLabelIndex] = { key: NAMED_ROOT_LABEL_NAME, value: newValue };
+        } else {
+          newLabels = [...newLabels, { key: NAMED_ROOT_LABEL_NAME, value: newValue }];
+        }
       }
-    }
 
-    setValue('labels', newLabels);
-  };
+      setValue('labels', newLabels);
+    },
+    [getValues, setValue]
+  );
 
   const handlePolicyChange = (option: SelectableValue<string>) => {
     const newValue = option.value ?? '';
     updatePolicyLabel(newValue);
+
+    // If user selects default, collapse back
+    if (newValue === '') {
+      setIsExpanded(false);
+    }
+  };
+
+  const handleResetToDefault = () => {
+    updatePolicyLabel('');
+    setIsExpanded(false);
+  };
+
+  const handleChangeClick = () => {
+    setIsExpanded(true);
   };
 
   if (error) {
@@ -147,36 +174,85 @@ export function PolicyTreeSelector() {
   return (
     <Box marginBottom={2}>
       <Stack direction="column" gap={1}>
-        <Text element="h5">
-          <Trans i18nKey="alerting.policy-tree-selector.title">Notification policy</Trans>
-        </Text>
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="alerting.policy-tree-selector.description">
-            Select which notification policy tree should handle routing for this alert rule.
-          </Trans>
-        </Text>
-        <Stack direction="row" gap={1} alignItems="center">
-          <Field noMargin>
-            <Select
-              inputId="policy-tree-selector"
-              aria-label={t('alerting.policy-tree-selector.aria-label', 'Select notification policy')}
-              options={policyOptions}
-              value={currentPolicyValue}
-              onChange={handlePolicyChange}
-              isLoading={isLoading}
-              disabled={isLoading}
-              width={40}
-              placeholder={t('alerting.policy-tree-selector.placeholder', 'Select a policy...')}
-            />
-          </Field>
-          <TextLink
-            href={ALERTING_PATHS.ROUTES}
-            external
-            aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
-          >
-            <Trans i18nKey="alerting.policy-tree-selector.view-policies">View policies</Trans>
-          </TextLink>
-        </Stack>
+        {isExpanded ? (
+          // Expanded: show the dropdown
+          <>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="alerting.policy-tree-selector.description">
+                Select which notification policy tree should handle routing for this alert rule.
+              </Trans>
+            </Text>
+            <Stack direction="row" gap={1} alignItems="center">
+              <Field noMargin>
+                <Select
+                  inputId="policy-tree-selector"
+                  aria-label={t('alerting.policy-tree-selector.aria-label', 'Select notification policy')}
+                  options={policyOptions}
+                  value={currentPolicyValue}
+                  onChange={handlePolicyChange}
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                  width={40}
+                  placeholder={t('alerting.policy-tree-selector.placeholder', 'Select a policy...')}
+                />
+              </Field>
+              {!isUsingDefaultPolicy && (
+                <Button
+                  variant="secondary"
+                  fill="text"
+                  size="sm"
+                  icon="history"
+                  type="button"
+                  onClick={handleResetToDefault}
+                  aria-label={t('alerting.policy-tree-selector.reset-aria', 'Reset to default policy')}
+                >
+                  <Trans i18nKey="alerting.policy-tree-selector.reset">Reset to default</Trans>
+                </Button>
+              )}
+              <TextLink
+                href={ALERTING_PATHS.ROUTES}
+                external
+                aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
+              >
+                <Trans i18nKey="alerting.policy-tree-selector.view-policies">View policies</Trans>
+              </TextLink>
+            </Stack>
+          </>
+        ) : (
+          // Collapsed: show default policy info with a change button
+          <>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="alerting.policy-tree-selector.default-info">
+                Alert instances are routed using the default notification policy tree.
+              </Trans>
+            </Text>
+            <Stack direction="row" gap={1} alignItems="center">
+              <Badge
+                text={t('alerting.policy-tree-selector.default-badge', 'Default policy')}
+                color="blue"
+                icon="shield"
+              />
+              <Button
+                variant="secondary"
+                fill="text"
+                size="sm"
+                type="button"
+                onClick={handleChangeClick}
+                disabled={isLoading}
+                aria-label={t('alerting.policy-tree-selector.change-aria', 'Change notification policy')}
+              >
+                <Trans i18nKey="alerting.policy-tree-selector.change">Change</Trans>
+              </Button>
+              <TextLink
+                href={ALERTING_PATHS.ROUTES}
+                external
+                aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
+              >
+                <Trans i18nKey="alerting.policy-tree-selector.view-policies">View policies</Trans>
+              </TextLink>
+            </Stack>
+          </>
+        )}
       </Stack>
     </Box>
   );

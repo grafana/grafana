@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
-import { byRole } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -52,9 +52,14 @@ const dataSources = {
 };
 
 const policyTreeUi = {
-  policySelector: byRole('combobox', { name: /select notification policy/i }),
-  policyTitle: byRole('heading', { name: /notification policy/i }),
+  // Collapsed state
+  defaultBadge: byText('Default policy'),
+  changeButton: byRole('button', { name: /change notification policy/i }),
   viewPoliciesLink: byRole('link', { name: /view notification policies/i }),
+
+  // Expanded state
+  policySelector: byRole('combobox', { name: /select notification policy/i }),
+  resetButton: byRole('button', { name: /reset to default policy/i }),
 };
 
 const selectFolderAndGroup = async (user: UserEvent) => {
@@ -135,9 +140,10 @@ describe('PolicyTreeSelector - feature toggle OFF', () => {
       expect(ui.buttons.save.get()).toBeEnabled();
     });
 
-    // Should NOT show the policy selector
+    // Should NOT show any policy selector elements
     expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
-    expect(policyTreeUi.policyTitle.query()).not.toBeInTheDocument();
+    expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+    expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
   });
 });
 
@@ -152,96 +158,163 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
     grantAllPermissions();
   });
 
-  it('shows policy tree selector with title, dropdown, and link', async () => {
-    const { user } = renderRuleEditor();
+  describe('new rule - collapsed default policy view', () => {
+    it('shows collapsed view with Default policy badge, Change button, and View policies link', async () => {
+      const { user } = renderRuleEditor();
 
-    await user.type(await ui.inputs.name.find(), 'my great new rule');
-    await selectFolderAndGroup(user);
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
 
-    // Policy tree selector should be visible
-    await waitFor(() => {
-      expect(policyTreeUi.policyTitle.get()).toBeInTheDocument();
+      // Wait for the policy section to appear
+      await waitFor(() => {
+        expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
+      });
+
+      // Collapsed state: badge + change button, NO dropdown
+      expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
+      expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      expect(policyTreeUi.viewPoliciesLink.get()).toBeInTheDocument();
+      expect(policyTreeUi.viewPoliciesLink.get()).toHaveAttribute('href', '/alerting/routes');
+
+      // Dropdown should NOT be visible in collapsed state
+      expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
 
-    expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
-    expect(policyTreeUi.viewPoliciesLink.get()).toBeInTheDocument();
-    expect(policyTreeUi.viewPoliciesLink.get()).toHaveAttribute('href', '/alerting/routes');
-  });
+    it('does not add __grafana_managed_route__ label when saving with default policy', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
-  it('defaults to Default policy for new rules', async () => {
-    const { user } = renderRuleEditor();
+      const { user } = renderRuleEditor();
 
-    await user.type(await ui.inputs.name.find(), 'my great new rule');
-    await selectFolderAndGroup(user);
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
 
-    await waitFor(() => {
-      expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      // Wait for the collapsed policy section
+      await waitFor(() => {
+        expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
+      });
+
+      // Save without changing policy
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+
+      // The request should NOT contain __grafana_managed_route__ label
+      expect(serializedRequests).toMatchSnapshot();
     });
 
-    // Should show "Default policy" as the selected value
-    expect(screen.getByText('Default policy')).toBeInTheDocument();
-  });
+    it('expands dropdown when Change button is clicked', async () => {
+      const { user } = renderRuleEditor();
 
-  it('does not add __grafana_managed_route__ label when default policy is selected', async () => {
-    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
 
-    const { user } = renderRuleEditor();
+      // Wait for collapsed state
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
 
-    await user.type(await ui.inputs.name.find(), 'my great new rule');
-    await selectFolderAndGroup(user);
+      // Click "Change" to expand
+      await user.click(policyTreeUi.changeButton.get());
 
-    await waitFor(() => {
-      expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      // Now the dropdown should be visible
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
+
+      // Badge and change button should be gone
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
 
-    // Default policy is already selected, just save
-    await user.click(ui.buttons.save.get());
-    const requests = await capture;
-    const serializedRequests = await serializeRequests(requests);
+    it('adds __grafana_managed_route__ label when custom policy is selected', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
-    // The request should NOT contain __grafana_managed_route__ label
-    expect(serializedRequests).toMatchSnapshot();
-  });
+      const { user } = renderRuleEditor();
 
-  it('adds __grafana_managed_route__ label when custom policy is selected', async () => {
-    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
 
-    const { user } = renderRuleEditor();
+      // Wait for collapsed state and click "Change"
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.changeButton.get());
 
-    await user.type(await ui.inputs.name.find(), 'my great new rule');
-    await selectFolderAndGroup(user);
+      // Wait for dropdown to appear
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
 
-    await waitFor(() => {
-      expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      // Open the policy dropdown
+      await user.click(policyTreeUi.policySelector.get());
+
+      // Wait for options to load
+      await waitFor(() => {
+        const options = screen.getAllByRole('option');
+        expect(options.length).toBeGreaterThan(1);
+      });
+
+      // Select a non-default policy
+      const customPolicyName = 'Managed Policy - Empty Provisioned';
+      const customPolicyOption = screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') });
+      await user.click(customPolicyOption);
+
+      // Verify the policy was selected and "Reset to default" button appears
+      await waitFor(() => {
+        expect(screen.getByText(customPolicyName)).toBeInTheDocument();
+      });
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+
+      // Save
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+
+      // The request should contain __grafana_managed_route__ label with the policy name
+      expect(serializedRequests).toMatchSnapshot();
     });
 
-    // Open the policy dropdown
-    await user.click(policyTreeUi.policySelector.get());
+    it('resets to default and collapses when Reset to default is clicked', async () => {
+      const { user } = renderRuleEditor();
 
-    // Wait for options to load
-    await waitFor(() => {
-      const options = screen.getAllByRole('option');
-      expect(options.length).toBeGreaterThan(1);
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
+
+      // Expand the dropdown
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.changeButton.get());
+
+      // Wait for dropdown
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
+
+      // Select a custom policy
+      await user.click(policyTreeUi.policySelector.get());
+      await waitFor(() => {
+        const options = screen.getAllByRole('option');
+        expect(options.length).toBeGreaterThan(1);
+      });
+      const customPolicyName = 'Managed Policy - Empty Provisioned';
+      const customPolicyOption = screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') });
+      await user.click(customPolicyOption);
+
+      // Verify reset button appears
+      await waitFor(() => {
+        expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      });
+
+      // Click "Reset to default"
+      await user.click(policyTreeUi.resetButton.get());
+
+      // Should collapse back to the default view
+      await waitFor(() => {
+        expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
+      });
+      expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
+      expect(policyTreeUi.resetButton.query()).not.toBeInTheDocument();
     });
-
-    // Select a non-default policy (Managed Policy - Empty Provisioned)
-    const customPolicyName = 'Managed Policy - Empty Provisioned';
-    const customPolicyOption = screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') });
-    expect(customPolicyOption).toBeInTheDocument();
-    await user.click(customPolicyOption);
-
-    // Verify the policy was selected
-    await waitFor(() => {
-      expect(screen.getByText(customPolicyName)).toBeInTheDocument();
-    });
-
-    // Save
-    await user.click(ui.buttons.save.get());
-    const requests = await capture;
-    const serializedRequests = await serializeRequests(requests);
-
-    // The request should contain __grafana_managed_route__ label with the policy name
-    expect(serializedRequests).toMatchSnapshot();
   });
 
   describe('edit existing rule', () => {
@@ -281,34 +354,44 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
       );
     };
 
-    it('pre-selects the policy from existing __grafana_managed_route__ label', async () => {
+    it('shows expanded dropdown with custom policy pre-selected when rule has __grafana_managed_route__ label', async () => {
       mockRulerGroupWithLabels({ [NAMED_ROOT_LABEL_NAME]: CUSTOM_POLICY_NAME });
 
-      // Use just the UID like other tests do
       renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
-      // Wait for the form to load
+      // Wait for the form to load - dropdown should be directly visible (expanded) for custom policy
       await waitFor(() => {
         expect(policyTreeUi.policySelector.get()).toBeEnabled();
       });
 
       // Should show the custom policy name as selected
       expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+
+      // Reset to default button should be visible
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+
+      // Change button should NOT be visible (we're in expanded state)
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
 
-    it('pre-selects Default policy when rule has no __grafana_managed_route__ label', async () => {
+    it('shows collapsed default view when rule has no __grafana_managed_route__ label', async () => {
       mockRulerGroupWithLabels({}); // no policy label
 
-      // Use just the UID like other tests do
       renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
-      // Wait for the form to load
+      // Wait for the form to load - should show collapsed state
       await waitFor(() => {
-        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+        expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
       });
 
-      // Should show Default policy as selected
-      expect(screen.getByText('Default policy')).toBeInTheDocument();
+      // Should show collapsed default view
+      await waitFor(() => {
+        expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
+      });
+      expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+
+      // Dropdown should NOT be visible
+      expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
   });
 });
