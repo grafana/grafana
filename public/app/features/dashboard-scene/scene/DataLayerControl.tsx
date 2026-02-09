@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
-import { ControlsLabel, SceneDataLayerProvider } from '@grafana/scenes';
+import { ControlsLabel, dataLayers, SceneDataLayerProvider } from '@grafana/scenes';
 import { InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
 
 export type Props = {
@@ -17,6 +18,17 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
   const { isSelected, onSelect, isSelectable } = useElementSelection(layer.state.key);
   const showLoading = Boolean(data && data.state === LoadingState.Loading);
   const styles = useStyles2(getStyles);
+  const onHiddenToggleChange = useCallback(() => {
+    if (layer instanceof dataLayers.AnnotationsDataLayer) {
+      layer.setState({
+        isEnabled: !isEnabled,
+        query: { ...layer.state.query, enable: !isEnabled },
+      });
+    } else {
+      layer.setState({ isEnabled: !isEnabled });
+    }
+  }, [isEnabled, layer]);
+
   const shouldShowHidden = isEditingNewLayouts && isHidden;
 
   if (isHidden && !isEditingNewLayouts) {
@@ -25,12 +37,7 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
 
   // When isHidden is true, layer.Component returns null, so we render our own switch
   const switchComponent = shouldShowHidden ? (
-    <InlineSwitch
-      className={styles.switch}
-      id={elementId}
-      value={isEnabled}
-      onChange={() => layer.setState({ isEnabled: !isEnabled })}
-    />
+    <InlineSwitch className={styles.switch} id={elementId} value={isEnabled} onChange={onHiddenToggleChange} />
   ) : (
     <layer.Component model={layer} />
   );
