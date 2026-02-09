@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 import {
   config,
@@ -14,6 +15,7 @@ import { ExploreItemState } from 'app/types/explore';
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 import { parseLogsFrame } from '../logs/logsFrame';
 
+import { FormDTO } from './Forms/types';
 import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
 import { CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
 
@@ -145,3 +147,41 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
 };
 
 export const correlationsLogger = createMonitoringLogger('features.correlations');
+
+/*
+  config: CorrelationConfigSpec;
+  description?: string;
+  label: string;
+  source: CorrelationDataSourceRef;
+  target?: CorrelationDataSourceRef;
+  type: CorrelationCorrelationType;
+};
+
+export type CorrelationConfigSpec = {
+  field: string;
+  target: CorrelationTargetSpec;
+  transformations?: CorrelationTransformationSpec[];
+};
+*/
+
+export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> => {
+  const dsSrv = getDataSourceSrv();
+  const sourceDs = await dsSrv.get(data.sourceUID);
+  let targetDs;
+  if ('targetUID' in data) {
+    targetDs = await dsSrv.get(data.targetUID!);
+  }
+
+  return {
+    label: data.label,
+    description: data.description,
+    source: { group: sourceDs.type, name: sourceDs.uid },
+    target: targetDs?.uid !== undefined ? { group: targetDs.type, name: targetDs?.uid } : undefined,
+    type: data.type,
+    config: {
+      field: data.config.field,
+      target: { ...data.config.target },
+      transformations: data.config.transformations,
+    },
+  };
+};
