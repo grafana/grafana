@@ -12,6 +12,7 @@ import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';
 import { logsFieldSelectorWrapperStyles } from './styles';
+import { getSuggestedFields } from './suggestedFields';
 
 /**
  * FieldSelector wrapper for the LogsTable visualization.
