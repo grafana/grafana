@@ -1,0 +1,17 @@
+{
+  "name": "Deuteranopia/Protanopia (Dark)",
+  "id": "deuteranopia_protanopia_dark",
+  "colors": {
+    "mode": "dark",
+    "success": {
+      "main": "#2EC4B6"
+    },
+    "error": {
+      "main": "#FF7A18"
+    },
+    "warning": {
+      "main": "#FFF899"
+    },
+    "contrastThreshold": 4.5
+  }
+}

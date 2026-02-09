@@ -1,0 +1,19 @@
+{
+  "name": "Deuteranopia/Protanopia (Light)",
+  "id": "deuteranopia_protanopia_light",
+  "colors": {
+    "mode": "light",
+    "success": {
+      "main": "#006F7A"
+    },
+    "error": {
+      "main": "#FF9900",
+      "text": "#B5510D"
+    },
+    "warning": {
+      "main": "#FFEE52",
+      "text": "#756600"
+    },
+    "contrastThreshold": 4.5
+  }
+}
