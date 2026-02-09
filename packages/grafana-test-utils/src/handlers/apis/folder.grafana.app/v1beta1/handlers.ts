@@ -207,6 +207,10 @@ const updateFolderHandler = () =>
           if (patch.op === 'replace' && path === 'ownerReferences') {
             (appPlatformFolder.metadata as Record<string, unknown>)[path] = patch.value;
           }
+
+          if (patch.op === 'remove' && path === 'ownerReferences') {
+            delete (appPlatformFolder.metadata as Record<string, unknown>)[path];
+          }
         });
 
         return HttpResponse.json(appPlatformFolder);
