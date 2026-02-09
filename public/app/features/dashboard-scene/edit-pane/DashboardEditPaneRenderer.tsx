@@ -7,6 +7,7 @@ import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectSt
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardFiltersOverviewPane } from '../filters-overview/DashboardFiltersOverviewPane';
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
@@ -18,7 +19,6 @@ import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
-import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { DashboardOutline } from './DashboardOutline';
 import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';

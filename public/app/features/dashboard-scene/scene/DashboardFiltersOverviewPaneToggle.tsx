@@ -2,9 +2,8 @@ import { t } from '@grafana/i18n';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 
-import { DashboardScene } from '../DashboardScene';
-
 import { DashboardFiltersOverviewDrawer } from './DashboardFiltersOverviewDrawer';
+import { DashboardScene } from './DashboardScene';
 
 interface Props {
   dashboard: DashboardScene;
