@@ -6089,11 +6089,10 @@
     "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
     "compatibility-badge": {
       "check": "Check compatibility",
-      "check-failed": "Check failed",
       "check-tooltip": "Checks how many dashboard metrics match your data source.",
       "checking": "Checking",
-      "error-hint": "There is an error with the compatibility check, your data source and variables may need to be reviewed.",
       "error-text": "Error",
+      "error-tooltip": "Compatibility check failed. First, verify the <2>data source</2> is working. Then open the dashboard and review the <6>variables</6>.",
       "score-text": "{{score}}% compatible",
       "tooltip-green": "{{score}}% ({{found}}/{{total}}) of metrics match.",
       "tooltip-orange": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.",

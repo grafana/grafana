@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 /**
@@ -128,12 +128,23 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
 
   // Error state - show error badge with retry
   if (state.status === 'error') {
-    const errorPrefix = state.errorMessage || t('dashboard-library.compatibility-badge.check-failed', 'Check failed');
-    const errorSuffix = t(
-      'dashboard-library.compatibility-badge.error-hint',
-      'There is an error with the compatibility check, your data source and variables may need to be reviewed.'
+    const errorTooltip = (
+      <Trans i18nKey="dashboard-library.compatibility-badge.error-tooltip">
+        Compatibility check failed. First, verify the{' '}
+        <a href="https://grafana.com/docs/grafana/latest/datasources/" target="_blank" rel="noopener noreferrer">
+          data source
+        </a>{' '}
+        is working. Then open the dashboard and review the{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/modify-dashboard-settings/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          variables
+        </a>
+        .
+      </Trans>
     );
-    const errorTooltip = `${errorPrefix}. ${errorSuffix}`;
     return (
       <Tooltip interactive={true} content={errorTooltip}>
         <span
