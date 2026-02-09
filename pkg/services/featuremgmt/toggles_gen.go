@@ -363,10 +363,6 @@ const (
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
 
-	// FlagAlertingNotifiersApiMigration
-	// Use the new k8s API for fetching integration type schemas
-	FlagAlertingNotifiersApiMigration = "alertingNotifiersApiMigration"
-
 	// FlagPreserveDashboardStateWhenNavigating
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"

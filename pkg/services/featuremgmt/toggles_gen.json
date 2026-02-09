@@ -240,20 +240,6 @@
     },
     {
       "metadata": {
-        "name": "alertingNotifiersApiMigration",
-        "resourceVersion": "0",
-        "creationTimestamp": "2026-02-06T00:00:00Z"
-      },
-      "spec": {
-        "description": "Use the new k8s API for fetching integration type schemas",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingEnrichmentAssistantInvestigations",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -478,6 +464,20 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotifiersApiMigration",
+        "resourceVersion": "0",
+        "creationTimestamp": "2026-02-06T00:00:00Z"
+      },
+      "spec": {
+        "description": "Use the new k8s API for fetching integration type schemas",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
