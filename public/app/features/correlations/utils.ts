@@ -174,18 +174,26 @@ export const getCorrelationsFromStorage = async (
         );
     } else {
       const dataSourceSrv = getDataSourceSrv();
-      const instanceDSRef = (await dataSourceSrv.get(instanceUid)).getRef();
+      const instanceDS = await dataSourceSrv.get(instanceUid);
+      const instanceDSRef = instanceDS.getRef();
       queryDSRefList = [instanceDSRef];
     }
-    const labelStr = queryDSRefList.map((ref) => `${ref?.type}.${ref?.uid}`).join();
+    const labelStr = queryDSRefList
+      .map((ref) => {
+        if (ref !== undefined && ref.type !== undefined && ref.uid !== undefined) {
+          return `${ref.type}.${ref.uid}`;
+        } else {
+          return undefined;
+        }
+      })
+      .filter((r) => r !== undefined)
+      .join();
     const labelSelectString = `correlations.grafana.app/sourceDS-ref in (${labelStr})`;
-    const corrSubscription = dispatch(
+    const { data } = await dispatch(
       correlationsAPIv0alpha1.endpoints.listCorrelation.initiate({
         labelSelector: labelSelectString,
       })
     );
-
-    const { data } = await corrSubscription;
     const enrichedCorr = (data?.items ?? [])
       .map((item) => toEnrichedCorrelationDataK8s(item))
       .filter((i) => i !== undefined);
