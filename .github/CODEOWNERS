@@ -493,7 +493,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
 /e2e-playwright/start-server @grafana/grafana-frontend-platform
 /e2e-playwright/storybook/ @grafana/grafana-frontend-platform
-/e2e-playwright/test-plugins/ @grafana/plugins-platform-frontend
+/e2e-playwright/test-plugins/ @grafana/grafana-frontend-platform
 /e2e-playwright/unauthenticated/login.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/utils/ @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
@@ -583,7 +583,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/legend* @grafana/oss-big-tent
 /packages/grafana-data/src/utils/location* @grafana/grafana-search-navigate-organise
 /packages/grafana-data/src/utils/LocalStorageValueProvider.tsx @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/makeClassES5Compatible.ts @grafana/plugins-platform-frontend
+/packages/grafana-data/src/utils/makeClassES5Compatible.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/matchPluginId* @grafana/plugins-platform-frontend
 /packages/grafana-data/src/utils/namedColorsPalette* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/nodeGraph.ts @grafana/observability-traces-and-profiling
@@ -668,7 +668,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/logging.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/megaMenuOpen.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/utils/migrationHandler* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/packages/grafana-runtime/src/utils/plugin.ts @grafana/rafana-frontend-platform
+/packages/grafana-runtime/src/utils/plugin.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/publicDashboardQueryHandler.ts @grafana/grafana-operator-experience-squad
 /packages/grafana-runtime/src/utils/qscheck* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/queryResponse* @grafana/grafana-datasources-core-services
