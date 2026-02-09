@@ -27,7 +27,7 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
-  if (dashboard.uid && clone.panels) {
+  if (dashboard.uid?.length && clone.panels) {
     clone.panels.forEach((panel) => {
       // @ts-expect-error
       if (panel.type === 'graph' && panel.alert) {
