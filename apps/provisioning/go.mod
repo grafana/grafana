@@ -2,13 +2,18 @@ module github.com/grafana/grafana/apps/provisioning
 
 go 1.25.7
 
+// TODO: stop depending on grafana core.
+replace (
+	github.com/grafana/grafana => ../..
+)
+
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
-	github.com/grafana/grafana v6.1.6+incompatible
+	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.49.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
