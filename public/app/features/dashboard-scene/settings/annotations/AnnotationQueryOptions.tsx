@@ -142,13 +142,17 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
 
       // If the data source type changed, reset the query to defaults
       const newQuery =
-        query?.datasource?.type !== dsRef.type
+        query.datasource?.type !== dsRef.type
           ? {
-              name: query?.name,
-              enable: query?.enable,
-              iconColor: query?.iconColor,
-              hide: query?.hide,
               datasource: dsRef,
+              builtIn: query.builtIn,
+              enable: query.enable,
+              iconColor: query.iconColor,
+              name: query.name,
+              hide: query.hide,
+              filter: query.filter,
+              mappings: query.mappings,
+              type: query.type,
             }
           : { ...query, datasource: dsRef };
 
