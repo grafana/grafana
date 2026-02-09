@@ -6,9 +6,7 @@ import { DataSourceRef } from '@grafana/schema';
  * When no panel-level datasource is set, it means all queries use the same datasource,
  * so we extract the datasource from the first query.
  */
-export function getDatasourceFromQueryRunner(
-  queryRunner: SceneQueryRunner
-): DataSourceRef | null | undefined {
+export function getDatasourceFromQueryRunner(queryRunner: SceneQueryRunner): DataSourceRef | null | undefined {
   // Panel-level datasource is set for mixed datasource panels
   if (queryRunner.state.datasource) {
     return queryRunner.state.datasource;
