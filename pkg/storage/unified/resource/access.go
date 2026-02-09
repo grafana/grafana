@@ -222,24 +222,14 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 
 func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
 	t := time.Now()
-	fallbackUsed := FallbackUsed(ctx)
 	ctx, span := tracer.Start(ctx, "resource.authzLimitedClient.BatchCheck", trace.WithAttributes(
 		attribute.String("namespace", req.Namespace),
 		attribute.String("subject", id.GetSubject()),
 		attribute.Int("check_count", len(req.Checks)),
-		attribute.Bool("fallback_used", fallbackUsed),
 	))
 	defer span.End()
 
 	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
-
-	// BatchCheck is not supported in fallback mode
-	if fallbackUsed {
-		span.SetStatus(codes.Error, "BatchCheck not supported in fallback mode")
-		err := fmt.Errorf("BatchCheck not supported in fallback mode")
-		span.RecordError(err)
-		return claims.BatchCheckResponse{}, err
-	}
 
 	// Validate namespace matches
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
