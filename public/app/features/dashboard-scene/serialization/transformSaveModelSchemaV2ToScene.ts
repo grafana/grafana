@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  AdHocFilterWithLabels,
   behaviors,
   ConstantVariable,
   CustomVariable,
@@ -314,8 +315,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     );
 
     // Separate filters by origin - filters with origin go to originFilters, others go to filters
-    const originFilters: AdHocFiltersVariable['state']['filters'] = [];
-    const filters: AdHocFiltersVariable['state']['filters'] = [];
+    const originFilters: AdHocFilterWithLabels[] = [];
+    const filters: AdHocFilterWithLabels[] = [];
     variable.spec.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
 
     const adhocVariableState: AdHocFiltersVariable['state'] = {
