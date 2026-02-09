@@ -1259,7 +1259,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-checks.yml @tolzhabayev
-/.github/workflows/pr-frontend-backend-separation.yml @evictorero
+/.github/workflows/pr-mt-service-compatibility.yml @evictorero
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev

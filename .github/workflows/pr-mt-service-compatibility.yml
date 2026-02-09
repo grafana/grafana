@@ -62,8 +62,8 @@ jobs:
       - name: Check for exception label
         run: |
           LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels --jq '.labels[].name')
-          if echo "$LABELS" | grep -q "frontend-backend-coupled"; then
-            echo "✅ Mixed changes allowed - exception label 'frontend-backend-coupled' is present"
+          if echo "$LABELS" | grep -q "no-check-mt-service-compatibility"; then
+            echo "✅ Mixed changes allowed - exception label 'no-check-mt-service-compatibility' is present"
             exit 0
           else
             echo "❌ This PR contains both frontend and backend changes."
@@ -79,7 +79,7 @@ jobs:
             echo "  - One PR for backend changes (pkg/, *.go, go.mod)"
             echo ""
             echo "Exception process (if changes MUST be coupled):"
-            echo "• Add the 'frontend-backend-coupled' label to this PR"
+            echo "• Add the 'no-check-mt-service-compatibility' label to this PR"
             echo "• Explain in the PR description why these changes cannot be separated"
             echo "• Get platform team approval"
             exit 1
