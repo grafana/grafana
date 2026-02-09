@@ -204,7 +204,7 @@ Content-Type: application/json
 Updates an existing playlist. The entire playlist spec must be provided.
 
 - namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- name: the UID of the playlist
+- `name`: The UID of the playlist.
 
 **Example Request**:
 
