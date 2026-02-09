@@ -91,6 +91,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		offset = token.Offset
 	}
 
+	queryLimit := opts.Limit + 1
 	query := &annotations.ItemQuery{
 		SignedInUser: user,
 		OrgID:        orgID,
@@ -98,7 +99,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		PanelID:      opts.PanelID,
 		From:         opts.From,
 		To:           opts.To,
-		Limit:        opts.Limit,
+		Limit:        queryLimit,
 		Offset:       offset,
 		AlertID:      -1,
 	}
@@ -108,13 +109,19 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		return nil, err
 	}
 
+	// check if there's more items than the limit
+	moreThanLimit := int64(len(items)) > opts.Limit
+	if moreThanLimit {
+		items = items[:opts.Limit]
+	}
+
 	result := make([]annotationV0.Annotation, 0, len(items))
 	for _, item := range items {
 		result = append(result, *a.toK8sResource(item, namespace))
 	}
 
 	list := &AnnotationList{Items: result}
-	if int64(len(items)) == opts.Limit {
+	if moreThanLimit {
 		list.Continue = encodeContinueToken(offset+opts.Limit, opts.Limit)
 	}
 	return list, nil
