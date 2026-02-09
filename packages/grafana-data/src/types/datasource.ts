@@ -22,12 +22,27 @@ import { RawTimeRange, TimeRange } from './time';
 import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
+export interface DataSourceConfigValidationAPI {
+  // Register validator, returns cleanup function
+  registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;
+  // Manually trigger all validations
+  validate: () => Promise<boolean>;
+  // Check if form is valid (no errors)
+  isValid: () => boolean;
+  // Get all validation errors by field path
+  getErrors: () => Record<string, string>;
+  // Set error for a field
+  setError: (field: string, message: string) => void;
+  // Clear error for a field
+  clearError: (field: string) => void;
+}
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
   SecureJSONData = {},
 > {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
+  validation?: DataSourceConfigValidationAPI;
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>

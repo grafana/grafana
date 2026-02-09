@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -325,14 +324,14 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 	})
 }
 
-func validateURL(cmdType string, url string) response.Response {
-	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
-		datasourcesLogger.Error("Failed to validate URL", "url", url)
-		return response.Error(http.StatusBadRequest, "Validation error, invalid URL", err)
-	}
+// func validateURL(cmdType string, url string) response.Response {
+// 	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
+// 		datasourcesLogger.Error("Failed to validate URL", "url", url)
+// 		return response.Error(http.StatusBadRequest, "Validation error, invalid URL", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
@@ -390,11 +389,11 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.URL)
 	cmd.OrgID = c.GetOrgID()
 	cmd.UserID = userID
-	if cmd.URL != "" {
-		if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
-			return resp
-		}
-	}
+	// if cmd.URL != "" {
+	// 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
+	// 		return resp
+	// 	}
+	// }
 
 	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
@@ -462,9 +461,9 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if cmd.ID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64); err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
-		return resp
-	}
+	// if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
+	// 	return resp
+	// }
 	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
@@ -507,9 +506,9 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	}
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.URL)
 	cmd.OrgID = c.GetOrgID()
-	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
-		return resp
-	}
+	// if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
+	// 	return resp
+	// }
 	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}

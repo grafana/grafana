@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, Text, useStyles2 } from '@grafana/ui';
+
+import { DataSourceConfigValidationAPI } from '../../../../../../../../packages/grafana-data/src/types/datasource';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
@@ -10,8 +12,44 @@ import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
 import { CONTAINER_MIN_WIDTH } from './constants';
 import { Props } from './types';
 
-export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Props) => {
+const createValidationAPI = (): DataSourceConfigValidationAPI => {
+  const validators = new Set<() => Promise<boolean> | boolean>();
+  const errors: Record<string, string> = {};
+
+  return {
+    registerValidation(validator) {
+      validators.add(validator);
+      return () => validators.delete(validator);
+    },
+
+    async validate() {
+      const results = await Promise.all(Array.from(validators).map((v) => Promise.resolve(v())));
+      return results.every(Boolean);
+    },
+
+    isValid() {
+      return Object.keys(errors).length === 0;
+    },
+
+    getErrors() {
+      return errors;
+    },
+
+    setError(field, message) {
+      errors[field] = message;
+    },
+
+    clearError(field) {
+      delete errors[field];
+    },
+  };
+};
+
+export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options, validation }: Props) => {
   const styles = useStyles2(getStyles);
+
+  const validationAPI = useMemo(() => validation || createValidationAPI(), [validation]);
+
   return (
     <Stack justifyContent="space-between">
       <div className={`${styles.hideOnSmallScreen} ${styles.leftSticky}`}>
@@ -24,7 +62,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
           <Text variant="bodySmall" color="secondary">
             Fields marked with * are required
           </Text>
-          <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
+          <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} validation={validationAPI} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
       </Box>

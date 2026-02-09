@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
@@ -37,8 +38,25 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
 };
 
 export const UrlAndAuthenticationSection = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options, onOptionsChange, validation } = props;
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    if (validation) {
+      const unregister = validation.registerValidation(() => {
+        console.log(options.url);
+        if (options.url === undefined || options.url.trim() === '') {
+          validation.setError('options.jsonData.url', 'Server is required');
+          return false;
+        }
+        validation.clearError('options.jsonData.url');
+        return true;
+      });
+      console.log('validaton', validation);
+      return unregister;
+    }
+    return;
+  }, [options.url, validation]);
 
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
