@@ -5,8 +5,6 @@ import { getRestoreNotificationData } from './notifications';
 
 describe('notifications', () => {
   describe('getRestoreNotificationData', () => {
-    // note: pluralisation is handled as part of the i18n framework
-    // in tests, only the fallback singular message is used
     it('returns null when both arrays are empty', () => {
       const result = getRestoreNotificationData([], [], '');
       expect(result).toBeNull();
@@ -29,7 +27,7 @@ describe('notifications', () => {
       expect(result).toEqual({
         kind: 'action',
         data: {
-          title: 'Dashboard restored',
+          title: 'Dashboards restored',
           buttonLabel: 'View folder',
           targetUrl: '/dashboards/f/folder-uid',
         },
@@ -41,7 +39,7 @@ describe('notifications', () => {
       expect(result).toEqual({
         kind: 'action',
         data: {
-          title: 'Dashboard restored',
+          title: 'Dashboards restored',
           buttonLabel: 'View folder',
           targetUrl: '/dashboards',
         },
@@ -175,7 +173,7 @@ describe('notifications', () => {
         expect(result).toEqual({
           kind: 'action',
           data: {
-            title: 'Dashboard restored',
+            title: 'Dashboards restored',
             buttonLabel: 'View folder',
             targetUrl: '/grafana/dashboards/f/folder-uid',
           },
@@ -187,7 +185,7 @@ describe('notifications', () => {
         expect(result).toEqual({
           kind: 'action',
           data: {
-            title: 'Dashboard restored',
+            title: 'Dashboards restored',
             buttonLabel: 'View folder',
             targetUrl: '/grafana/dashboards',
           },

@@ -27,7 +27,10 @@ export function getRestoreNotificationData(
     return {
       kind: 'action',
       data: {
-        title: t('browse-dashboards.restore.success', 'Dashboard restored', { count: successCount }),
+        title:
+          successCount === 1
+            ? t('browse-dashboards.restore.success-single', 'Dashboard restored')
+            : t('browse-dashboards.restore.success-multiple', 'Dashboards restored'),
         buttonLabel:
           successCount === 1
             ? t('browse-dashboards.restore.view-dashboard', 'View dashboard')
