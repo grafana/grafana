@@ -26,6 +26,7 @@ interface LogListFieldSelectorProps {
 }
 
 export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
+  // @todo move up
   const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
     useLogListContext();
   const [sidebarHeight, setSidebarHeight] = useState(220);
@@ -96,6 +97,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     [displayedFields, onClickHideField, onClickShowField]
   );
 
+  // @todo pass in suggested fields instead of calculating
   const suggestedFields = useMemo(() => getSuggestedFields(logs, displayedFields), [displayedFields, logs]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 

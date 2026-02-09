@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -95,7 +94,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
-			expectedQuotaReason: provisioning.ReasonResourceQuotaExceeded,
+			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
 			expectedQuotaStatus: false,
 		},
 		{
@@ -106,8 +105,8 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
-			expectedQuotaReason: provisioning.ReasonResourceQuotaReached,
-			expectedQuotaStatus: false,
+			expectedQuotaReason: provisioning.ReasonQuotaReached,
+			expectedQuotaStatus: true,
 		},
 		{
 			name:                      "within quota when under limit",
@@ -140,6 +139,11 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					Name:       "test-repo",
 					Namespace:  "test-namespace",
 					Generation: 1,
+				},
+				Status: provisioning.RepositoryStatus{
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: tt.maxResourcesPerRepository,
+					},
 				},
 			}
 			readerWriter.MockRepository.On("Config").Return(repoConfig)
@@ -182,7 +186,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					}
 					// Find the Quota condition
 					for _, c := range conditions {
-						if c.Type == provisioning.ConditionTypeQuota {
+						if c.Type == provisioning.ConditionTypeResourceQuota {
 							capturedQuotaCondition = c
 							return true
 						}
@@ -201,7 +205,6 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				10,
 			)
-			worker.SetQuotaLimits(quotas.QuotaLimits{MaxResources: tt.maxResourcesPerRepository})
 
 			// Create test job
 			job := provisioning.Job{
@@ -217,7 +220,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			// Verify quota condition
-			require.Equal(t, provisioning.ConditionTypeQuota, capturedQuotaCondition.Type)
+			require.Equal(t, provisioning.ConditionTypeResourceQuota, capturedQuotaCondition.Type)
 			require.Equal(t, tt.expectedQuotaReason, capturedQuotaCondition.Reason)
 			if tt.expectedQuotaStatus {
 				require.Equal(t, metav1.ConditionTrue, capturedQuotaCondition.Status)

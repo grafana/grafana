@@ -14,4 +14,5 @@ type GitRepository interface {
 	repository.StageableRepository
 	URL() string
 	Branch() string
+	SetBranch(branch string)
 }
