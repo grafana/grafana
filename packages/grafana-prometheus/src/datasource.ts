@@ -11,14 +11,12 @@ import {
   CustomVariableModel,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceGetDrilldownsApplicabilityOptions,
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateTime,
-  DrilldownsApplicability,
   getDefaultTimeRange,
   LegacyMetricFindQueryOptions,
   MetricFindValue,
@@ -594,63 +592,6 @@ export class PrometheusDatasource
       value: v,
       text: v,
     }));
-  }
-
-  async getDrilldownsApplicability(
-    options: DataSourceGetDrilldownsApplicabilityOptions<PromQuery>
-  ): Promise<DrilldownsApplicability[]> {
-    console.log('AAAA');
-    console.log(options);
-
-    if (options.filters) {
-      const res = [];
-      for (const filter of options.filters) {
-        res.push({
-          key: filter.key,
-          applicable: false,
-          origin: filter.origin,
-          reason: 'No good filter reason',
-        });
-      }
-
-      if (options.queries?.length === 2 || options.queries?.[0].expr.startsWith('asserts')) {
-        res[0].applicable = true;
-      }
-
-      return res;
-    }
-
-    if (options.groupByKeys) {
-      const res = [];
-      for (const key of options.groupByKeys) {
-        res.push({
-          key,
-          applicable: true,
-          reason: 'No good groupBy reason',
-        });
-      }
-
-      return res;
-    }
-
-    return [
-      {
-        key: 'namespace',
-        applicable: false,
-        reason: 'It does not apply',
-        origin: 'scope',
-      },
-      {
-        key: 'asserts_env',
-        applicable: false,
-        origin: 'dashboard',
-        reason: 'user filter with key asserts_env has precedence',
-      },
-      {
-        key: 'asserts_env',
-        applicable: true,
-      },
-    ];
   }
 
   interpolateVariablesInQueries(
