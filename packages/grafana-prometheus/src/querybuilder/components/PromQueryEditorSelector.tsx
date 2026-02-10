@@ -2,6 +2,7 @@
 import { isEqual } from 'lodash';
 import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -19,7 +20,6 @@ import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 
-import { QueryActionAssistantButton } from './AssistantButton';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
@@ -90,6 +90,10 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     setQueryPatternsModalOpen(true);
   }, [app]);
 
+  // TODO: add check for what app it is coming from:
+  // if (app !== CoreApp.Explore && app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
+  //   return null;
+  // }
   return (
     <>
       <ConfirmModal
@@ -120,12 +124,14 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
       />
       <EditorHeader>
         <Stack>
-          <QueryActionAssistantButton
+          {/* TODO: check feature flag for query with assistant */}
+          <QueryWithAssistantButton
             query={query}
             queries={queries ?? []}
             dataSourceInstanceSettings={props.datasource.instanceSettings}
             app={app}
             datasourceApi={null}
+            buttonSize="sm"
           />
           {!query.expr && (
             <Button

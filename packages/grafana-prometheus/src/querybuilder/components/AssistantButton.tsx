@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
+
 import { useAssistant, createAssistantContextItem } from '@grafana/assistant';
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { CoreApp, DataSourceApi, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
-import { Button } from '@grafana/ui';
+import { Button, useTheme2 } from '@grafana/ui';
 
 function queryIsEmpty(query: DataQuery): boolean {
   const dataQueryProps = ['refId', 'hide', 'key', 'queryType', 'datasource'];
@@ -37,6 +39,8 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
   datasourceApi,
 }: QueryActionAssistantButtonProps<TQuery>) {
   const { isAvailable, openAssistant } = useAssistant();
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
   // Check if the feature toggle is enabled
   if (!config.featureToggles.queryWithAssistant) {
@@ -161,10 +165,18 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
       variant="secondary"
       icon="ai"
       onClick={handleClick}
-      style={{ borderColor: 'linear-gradient(45deg, #A855F7, #F97316, #A855F7, #F97316)' }}
-      title={t('query-operation.header.query-with-assistant', 'Query with Assistant')}
+      className={styles.gradient}
+      title={t('query-operation.header.query-with-assistant', 'Query with Assistanaaaat')}
     >
-      {t('query-operation.header.query-with-assistant', 'Query with Assistant')}
+      {t('query-operation.header.query-with-assistant', 'Query with Assistaaaaaant')}
     </Button>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  gradient: css({
+    background:
+      /* First layer: inner background, matches page background color */
+      `linear-gradient(${theme.colors.background}, ${theme.colors.background}) padding-box, linear-gradient(45deg, #A855F7, #F97316, #A855F7, #F97316) border-box`,
+  }),
+});

@@ -36,7 +36,6 @@ import {
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
-import { QueryActionAssistantButton } from './QueryActionAssistantButton';
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
@@ -468,7 +467,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
     const { app, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } = this.props;
-    const { datasource } = this.state;
 
     return (
       <QueryEditorRowHeader
@@ -480,15 +478,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={() => (
-          <>
-            <QueryActionAssistantButton
-              query={query}
-              queries={queries}
-              dataSourceInstanceSettings={this.props.dataSource}
-              datasourceApi={datasource}
-              app={app}
-            />
-            {renderHeaderExtras && renderHeaderExtras()}
+          <> {renderHeaderExtras && renderHeaderExtras()}
           </>
         )}
         alerting={app === CoreApp.UnifiedAlerting}

@@ -3326,31 +3326,35 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.13":
-  version: 0.1.13
-  resolution: "@grafana/assistant@npm:0.1.13"
+"@grafana/assistant@file:/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant::locator=%40grafana%2Fprometheus%40workspace%3Apackages%2Fgrafana-prometheus":
+  version: 0.1.14
+  resolution: "@grafana/assistant@file:/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant#/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant::hash=5c28ef&locator=%40grafana%2Fprometheus%40workspace%3Apackages%2Fgrafana-prometheus"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
+    "@grafana/i18n": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
     "@grafana/scenes": ">=5.41.0"
+    "@grafana/schema": ">=12.1.0"
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/90b94602f739b2940d3ff21a97cdcf09be828f5ece5212131e1351c5f8e0528e232f219a3370c0655f80ee20ae340ae62a1a4331064c66060c47de7287f81832
+  checksum: 10/148c6c6e8059f0b4f899789a87f586f70dee267d0f9b3911fb84f59dc7e1df059c8c7028b8c917844fd1fcac6ffef52eefa71b31876474f86613b58db15e9c64
   languageName: node
   linkType: hard
 
-"@grafana/assistant@npm:^0.1.14":
+"@grafana/assistant@file:/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant::locator=grafana%40workspace%3A.":
   version: 0.1.14
-  resolution: "@grafana/assistant@npm:0.1.14"
+  resolution: "@grafana/assistant@file:/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant#/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant::hash=5c28ef&locator=grafana%40workspace%3A."
   peerDependencies:
     "@grafana/data": ">=12.1.0"
+    "@grafana/i18n": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
     "@grafana/scenes": ">=5.41.0"
+    "@grafana/schema": ">=12.1.0"
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/b669f4d0bf1707d6bacfea1cd02a3e401b030eb3f682ee792b7a9dca44d6ff14fe8d29f2ed4dc05ea5203db167c353b1a1f552ee9ec8d14eaf6a073cd62b1bd4
+  checksum: 10/148c6c6e8059f0b4f899789a87f586f70dee267d0f9b3911fb84f59dc7e1df059c8c7028b8c917844fd1fcac6ffef52eefa71b31876474f86613b58db15e9c64
   languageName: node
   linkType: hard
 
@@ -3819,7 +3823,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.16"
-    "@grafana/assistant": "npm:^0.1.14"
+    "@grafana/assistant": "file:/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant"
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
@@ -20486,7 +20490,7 @@ __metadata:
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.13"
+    "@grafana/assistant": "file:/Users/jcolladokuri/src/grafana-assistant-app/packages/@grafana/assistant"
     "@grafana/aws-sdk": "npm:0.9.0"
     "@grafana/azure-sdk": "npm:0.0.8"
     "@grafana/data": "workspace:*"
