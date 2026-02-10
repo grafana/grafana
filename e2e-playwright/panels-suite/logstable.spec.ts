@@ -3,14 +3,14 @@ import { test, expect } from '@grafana/plugin-e2e';
 const DASHBOARD_UID = 'adhjhtt';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
-test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logstable'] }, () => {
+test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () => {
   test('should render logs table panel', async ({ page, gotoDashboardPage, selectors }) => {
     // this test can absolutely take longer than the default 30s timeout
     test.setTimeout(120_000);
 
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '1' }),
+      queryParams: new URLSearchParams({ editPanel: '2' }),
     });
 
     await expect(
@@ -129,13 +129,35 @@ test.describe('Panels test: LogsTable - Kitchen Sink', { tag: ['@panels', '@logs
     });
   });
 
-  test.skip('No data', async ({ page, gotoDashboardPage, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
+  test.describe('No data', () => {
+    test('Not logs frame', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '3' }),
+      });
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Not logs panel'))
+      ).toBeVisible();
+
+      await expect(page.getByTestId(selectors.components.Panels.Panel.PanelDataErrorMessage)).toBeVisible();
+      await expect(page.getByTestId(selectors.components.Panels.Panel.PanelDataErrorMessage)).toContainText(
+        'Data is missing a string field'
+      );
     });
 
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
-    ).toBeVisible();
+    test('Empty logs frame', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '4' }),
+      });
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('No data panel'))
+      ).toBeVisible();
+
+      await expect(page.getByTestId(selectors.components.Panels.Panel.PanelDataErrorMessage)).toBeVisible();
+      await expect(page.getByTestId(selectors.components.Panels.Panel.PanelDataErrorMessage)).toContainText('No data');
+    });
   });
 });

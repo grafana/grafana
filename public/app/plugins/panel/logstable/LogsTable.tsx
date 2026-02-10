@@ -145,11 +145,14 @@ export const LogsTable = ({
     return data;
   }, [organizedFrame, data, frameIndex]);
 
+  const noSeries = data.series.length === 0;
+  const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
+
+  // Logs frame be null for non logs frames
+  const noLogsFram = !logsFrame;
+
   // Show no data state if query returns nothing
-  if (
-    (data.series.length === 0 || data.series[frameIndex].fields[0].values.length === 0) &&
-    data.state === LoadingState.Done
-  ) {
+  if ((noSeries || noValues || noLogsFram) && data.state === LoadingState.Done) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 

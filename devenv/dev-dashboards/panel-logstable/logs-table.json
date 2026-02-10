@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 0,
   "links": [],
   "panels": [
     {
@@ -79,6 +78,119 @@
       ],
       "title": "Default Logs Table Panel",
       "type": "logstable"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "showControls": false,
+        "showCopyLogLink": false,
+        "showHeader": true,
+        "showInspectLogLine": true
+      },
+      "pluginVersion": "12.4.0-pre",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Not logs panel",
+      "type": "logstable"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "showControls": false,
+        "showCopyLogLink": false,
+        "showHeader": true,
+        "showInspectLogLine": true
+      },
+      "pluginVersion": "12.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "levelColumn": true,
+          "lines": 0,
+          "refId": "A",
+          "scenarioId": "logs"
+        }
+      ],
+      "title": "No data panel",
+      "type": "logstable"
     }
   ],
   "preload": false,
@@ -95,6 +207,6 @@
   "timezone": "browser",
   "title": "LogsTable - Kitchen Sink",
   "uid": "adhjhtt",
-  "version": 4,
+  "version": 10,
   "weekStart": ""
 }
