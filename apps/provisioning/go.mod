@@ -3,6 +3,7 @@ module github.com/grafana/grafana/apps/provisioning
 go 1.25.7
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
