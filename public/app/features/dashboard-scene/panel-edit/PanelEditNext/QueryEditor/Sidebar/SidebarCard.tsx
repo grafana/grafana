@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useRef, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -37,6 +37,12 @@ interface SidebarCardProps {
   onDelete: () => void;
   onToggleHide: () => void;
   isHidden: boolean;
+}
+
+function isExpressionType(
+  item: SelectableValue<ExpressionQueryType>
+): item is SelectableValue<ExpressionQueryType> & { value: ExpressionQueryType } {
+  return typeof item.value === 'string' && item.value in EXPRESSION_ICON_MAP;
 }
 
 /**
@@ -146,12 +152,12 @@ export const SidebarCard = ({
           }}
         />
         <Menu.Divider />
-        {expressionTypes.map((item) => (
+        {expressionTypes.filter(isExpressionType).map((item) => (
           <Menu.Item
             key={item.value}
             label={item.label ?? ''}
-            icon={EXPRESSION_ICON_MAP[item.value!]}
-            onClick={() => addExpressionOfType(item.value!)}
+            icon={EXPRESSION_ICON_MAP[item.value]}
+            onClick={() => addExpressionOfType(item.value)}
           />
         ))}
       </Menu>
