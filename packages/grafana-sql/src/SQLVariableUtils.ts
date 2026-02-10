@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 
-import { Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 
 import { applyQueryDefaults } from './defaults';
@@ -24,6 +24,12 @@ export const migrateVariableQuery = (rawQuery: string | SQLQuery): SQLVariableQu
     }),
     query: rawQuery,
   };
+};
+
+export const updateFrame = (frame: DataFrame, meta?: SQLQueryMeta): DataFrame => {
+  const fields = convertFieldsToVariableFields(frame.fields, meta);
+  let length = fields.length > 0 ? fields[0].values.length : frame.length;
+  return { ...frame, length, fields };
 };
 
 export const convertFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {

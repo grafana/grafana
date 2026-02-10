@@ -1,7 +1,7 @@
-import { Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 
-import { migrateVariableQuery, convertFieldsToVariableFields } from './SQLVariableUtils';
+import { migrateVariableQuery, convertFieldsToVariableFields, updateFrame } from './SQLVariableUtils';
 import { QueryFormat, SQLQuery, SQLQueryMeta } from './types';
 
 const refId = 'SQLVariableQueryEditor-VariableQuery';
@@ -137,6 +137,66 @@ describe('convertOriginalFieldsToVariableFields', () => {
       const fields = [field('value'), field('text'), field('other')];
       expect(convertFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
     });
+  });
+});
+
+describe('updateFrame', () => {
+  it('should update frame length to match deduplicated values in legacy scenario', () => {
+    const inputFrame: DataFrame = {
+      name: 'test',
+      length: 6,
+      fields: [
+        field('id', FieldType.string, ['A', 'B', 'A', 'C', 'B', 'D']),
+      ],
+    };
+    const result = updateFrame(inputFrame);
+    expect(result.length).toBe(4);
+    expect(result.fields[0].values).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('should update frame length when multiple fields have duplicates across them', () => {
+    const inputFrame: DataFrame = {
+      name: 'test',
+      length: 9,
+      fields: [
+        field('id', FieldType.string, ['A', 'B', 'C']),
+        field('name', FieldType.string, ['D', 'D']),
+        field('category', FieldType.string, ['F', 'G', 'H']),
+      ],
+    };
+    const result = updateFrame(inputFrame);
+    expect(result.length).toBe(7);
+    expect(result.fields[0].values).toEqual(['A', 'B', 'C', 'D', 'F', 'G', 'H']);
+  });
+
+  it('should update frame length with meta fields', () => {
+    const inputFrame: DataFrame = {
+      name: 'test',
+      length: 3,
+      fields: [
+        field('display_name', FieldType.string, ['Alice', 'Bob', 'Charlie']),
+        field('id', FieldType.number, [1, 2, 3]),
+      ],
+    };
+    const result = updateFrame(inputFrame, { textField: 'display_name', valueField: 'id' });
+    expect(result.length).toBe(3);
+    expect(result.fields[0].name).toBe('text');
+    expect(result.fields[1].name).toBe('value');
+  });
+
+  it('should update frame length with __text and __value fields', () => {
+    const inputFrame: DataFrame = {
+      name: 'test',
+      length: 2,
+      fields: [
+        field('__text', FieldType.string, ['a', 'b']),
+        field('__value', FieldType.string, ['1', '2']),
+      ],
+    };
+    const result = updateFrame(inputFrame);
+    expect(result.length).toBe(2);
+    expect(result.fields[0].name).toBe('text');
+    expect(result.fields[1].name).toBe('value');
   });
 });
 

@@ -5,7 +5,7 @@ import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, DataFrame }
 import { EditorMode } from '@grafana/plugin-ui';
 
 import { SQLVariablesQueryEditor } from './SQLVariableEditor';
-import { migrateVariableQuery, convertFieldsToVariableFields, refId } from './SQLVariableUtils';
+import { migrateVariableQuery, updateFrame, refId } from './SQLVariableUtils';
 import { SqlDatasource } from './datasource/SqlDatasource';
 import { applyQueryDefaults } from './defaults';
 import { QueryFormat, type SQLQuery } from './types';
@@ -24,10 +24,7 @@ export class SQLVariableSupport extends CustomVariableSupport<SqlDatasource, SQL
       map((d: DataQueryResponse) => {
         return {
           ...d,
-          data: (d.data || []).map((frame: DataFrame) => ({
-            ...frame,
-            fields: convertFieldsToVariableFields(frame.fields, updatedQuery.meta),
-          })),
+          data: (d.data || []).map((frame: DataFrame) => updateFrame(frame, updatedQuery.meta)),
         };
       })
     );
