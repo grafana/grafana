@@ -3512,6 +3512,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/faro-instrumentation-replay@npm:^2.2.3":
+  version: 2.2.3
+  resolution: "@grafana/faro-instrumentation-replay@npm:2.2.3"
+  dependencies:
+    "@grafana/faro-core": "npm:^2.2.3"
+    rrweb: "npm:^2.0.0-alpha.18"
+  checksum: 10/9e6fa788f01a89272bc001522556a553109d1588a89c3c020ee11cd984a6539ada9eee27122b58cd634d74e82d9926d980b05af6143601462ebb9eb9db97e543
+  languageName: node
+  linkType: hard
+
 "@grafana/faro-web-sdk@npm:^1.13.2":
   version: 1.19.0
   resolution: "@grafana/faro-web-sdk@npm:1.19.0"
@@ -8150,6 +8160,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rrweb/types@npm:^2.0.0-alpha.20":
+  version: 2.0.0-alpha.20
+  resolution: "@rrweb/types@npm:2.0.0-alpha.20"
+  checksum: 10/8eb2fe29592da207420ff019f1ce316182e88a6e6876e16d185c5e9c97047cbe58708f1fe2e170cf04ae372152cba04230c826a2cbb84430b1f6bd09dc2e47d6
+  languageName: node
+  linkType: hard
+
+"@rrweb/utils@npm:^2.0.0-alpha.20":
+  version: 2.0.0-alpha.20
+  resolution: "@rrweb/utils@npm:2.0.0-alpha.20"
+  checksum: 10/a04895a8d61caf68c8909437dc61a682a99a75fd0665858b75f37f3d98bd6000f90fabd807479d2bf0d96439405172c6964b5b26abc1a6c8e8be55f0b67b82a8
+  languageName: node
+  linkType: hard
+
 "@rsbuild/plugin-check-syntax@npm:1.3.0":
   version: 1.3.0
   resolution: "@rsbuild/plugin-check-syntax@npm:1.3.0"
@@ -10654,6 +10678,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/css-font-loading-module@npm:0.0.7":
+  version: 0.0.7
+  resolution: "@types/css-font-loading-module@npm:0.0.7"
+  checksum: 10/f70b9098ee3b2e006f5f6d5cecc627dcc7b898f266bfc594e73a8720636f1a3bc5f8c38fa0e8f7e5b7878038b46fd70da0c797c3288e072af984097210f4c056
+  languageName: node
+  linkType: hard
+
 "@types/d3-array@npm:*, @types/d3-array@npm:3.0.3":
   version: 3.0.3
   resolution: "@types/d3-array@npm:3.0.3"
@@ -12667,6 +12698,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xstate/fsm@npm:^1.4.0":
+  version: 1.6.5
+  resolution: "@xstate/fsm@npm:1.6.5"
+  checksum: 10/deae1501169d41d5395ce1581d7b08bde17911b7dec1533eacd5bee17060d22273055d6d6bc7e8f32222a502e4dcf510cd29064a5c9c5fa5aa2ced0ad60b2512
+  languageName: node
+  linkType: hard
+
 "@xtuc/ieee754@npm:^1.2.0":
   version: 1.2.0
   resolution: "@xtuc/ieee754@npm:1.2.0"
@@ -13842,6 +13880,13 @@ __metadata:
   version: 0.1.0
   resolution: "base32.js@npm:0.1.0"
   checksum: 10/7d7401a8f5c4ec45336ff72c97ee554b9bc22c2153b301acf657e6f9e25928a6205b2cfc55731072ba5686515e4903e2d3e462bea49db5f1515bbd01da1276ad
+  languageName: node
+  linkType: hard
+
+"base64-arraybuffer@npm:^1.0.1":
+  version: 1.0.2
+  resolution: "base64-arraybuffer@npm:1.0.2"
+  checksum: 10/15e6400d2d028bf18be4ed97702b11418f8f8779fb8c743251c863b726638d52f69571d4cc1843224da7838abef0949c670bde46936663c45ad078e89fee5c62
   languageName: node
   linkType: hard
 
@@ -20606,6 +20651,7 @@ __metadata:
     "@grafana/eslint-config": "npm:8.2.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/faro-core": "npm:^2.2.3"
+    "@grafana/faro-instrumentation-replay": "npm:^2.2.3"
     "@grafana/faro-web-sdk": "npm:^2.2.3"
     "@grafana/faro-web-tracing": "npm:^2.2.3"
     "@grafana/flamegraph": "workspace:*"
@@ -25832,7 +25878,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mitt@npm:^3.0.1":
+"mitt@npm:^3.0.0, mitt@npm:^3.0.1":
   version: 3.0.1
   resolution: "mitt@npm:3.0.1"
   checksum: 10/287c70d8e73ffc25624261a4989c783768aed95ecb60900f051d180cf83e311e3e59865bfd6e9d029cdb149dc20ba2f128a805e9429c5c4ce33b1416c65bbd14
@@ -28991,7 +29037,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.5.6, postcss@npm:^8.4.33, postcss@npm:^8.4.40, postcss@npm:^8.5.1, postcss@npm:^8.5.6":
+"postcss@npm:8.5.6, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.40, postcss@npm:^8.5.1, postcss@npm:^8.5.6":
   version: 8.5.6
   resolution: "postcss@npm:8.5.6"
   dependencies:
@@ -31492,6 +31538,40 @@ __metadata:
     parseurl: "npm:^1.3.3"
     path-to-regexp: "npm:^8.0.0"
   checksum: 10/8949bd1d3da5403cc024e2989fee58d7fda0f3ffe9f2dc5b8a192f295f400b3cde307b0b554f7d44851077640f36962ca469a766b3d57410d7d96245a7ba6c91
+  languageName: node
+  linkType: hard
+
+"rrdom@npm:^2.0.0-alpha.20":
+  version: 2.0.0-alpha.20
+  resolution: "rrdom@npm:2.0.0-alpha.20"
+  dependencies:
+    rrweb-snapshot: "npm:^2.0.0-alpha.20"
+  checksum: 10/f10707fc02a2a38e7dd30222a817c04ff5ef273d81617bd9f84f408b2567b48b952246a3c7eae8fbf4b6a0150f8e30572282470b72228e0a6998fc21d8ab88ae
+  languageName: node
+  linkType: hard
+
+"rrweb-snapshot@npm:^2.0.0-alpha.20":
+  version: 2.0.0-alpha.20
+  resolution: "rrweb-snapshot@npm:2.0.0-alpha.20"
+  dependencies:
+    postcss: "npm:^8.4.38"
+  checksum: 10/e423d705af2e75f328e7a8e3202af71839fb42a5e635878e3ab58111812330b3ed263c04f0ef738e2f98e08400788fee2d3f0c259e858eb6f468473ea97e300c
+  languageName: node
+  linkType: hard
+
+"rrweb@npm:^2.0.0-alpha.18":
+  version: 2.0.0-alpha.20
+  resolution: "rrweb@npm:2.0.0-alpha.20"
+  dependencies:
+    "@rrweb/types": "npm:^2.0.0-alpha.20"
+    "@rrweb/utils": "npm:^2.0.0-alpha.20"
+    "@types/css-font-loading-module": "npm:0.0.7"
+    "@xstate/fsm": "npm:^1.4.0"
+    base64-arraybuffer: "npm:^1.0.1"
+    mitt: "npm:^3.0.0"
+    rrdom: "npm:^2.0.0-alpha.20"
+    rrweb-snapshot: "npm:^2.0.0-alpha.20"
+  checksum: 10/edb4cc003846ef877b1b24fd0d8541ec5aa8d3b2ce8f2dd224ccee9f2c02d2bd2cca074e230e175de20760c3a2bf616a94a37921c220f441f71b237a399e6d3b
   languageName: node
   linkType: hard
 
