@@ -981,3 +981,298 @@ func TestValidateQueries_CacheHit_NoProviderCallOnSecondValidation(t *testing.T)
 	require.NoError(t, err)
 	require.Equal(t, 1, mockProv.callCount) // Provider NOT called again
 }
+
+// ============================================================================
+// Unit Tests for Helper Functions
+// ============================================================================
+
+func TestCalculateOverallScore(t *testing.T) {
+	tests := []struct {
+		name           string
+		totalQueries   int
+		checkedQueries int
+		totalMetrics   int
+		foundMetrics   int
+		expected       float64
+	}{
+		{
+			name:           "normal case - all found",
+			totalQueries:   3,
+			checkedQueries: 3,
+			totalMetrics:   5,
+			foundMetrics:   5,
+			expected:       1.0,
+		},
+		{
+			name:           "normal case - partial",
+			totalQueries:   2,
+			checkedQueries: 2,
+			totalMetrics:   4,
+			foundMetrics:   2,
+			expected:       0.5,
+		},
+		{
+			name:           "normal case - none found",
+			totalQueries:   1,
+			checkedQueries: 1,
+			totalMetrics:   3,
+			foundMetrics:   0,
+			expected:       0.0,
+		},
+		{
+			name:           "no queries - empty dashboard",
+			totalQueries:   0,
+			checkedQueries: 0,
+			totalMetrics:   0,
+			foundMetrics:   0,
+			expected:       1.0,
+		},
+		{
+			name:           "queries parsed but no metrics extracted - time()",
+			totalQueries:   1,
+			checkedQueries: 1,
+			totalMetrics:   0,
+			foundMetrics:   0,
+			expected:       1.0,
+		},
+		{
+			name:           "all queries failed to parse",
+			totalQueries:   2,
+			checkedQueries: 0,
+			totalMetrics:   0,
+			foundMetrics:   0,
+			expected:       0.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			score := calculateOverallScore(tt.totalQueries, tt.checkedQueries, tt.totalMetrics, tt.foundMetrics)
+			require.InDelta(t, tt.expected, score, 0.001)
+		})
+	}
+}
+
+func TestCalculateCompatibility(t *testing.T) {
+	tests := []struct {
+		name             string
+		uniqueMetrics    []string
+		availableSet     map[string]bool
+		expectedFound    int
+		expectedMissing  []string
+		expectedMissingN int // length check when order doesn't matter
+	}{
+		{
+			name:             "all metrics found",
+			uniqueMetrics:    []string{"up", "cpu"},
+			availableSet:     map[string]bool{"up": true, "cpu": true, "mem": true},
+			expectedFound:    2,
+			expectedMissingN: 0,
+		},
+		{
+			name:             "no metrics found",
+			uniqueMetrics:    []string{"up", "cpu"},
+			availableSet:     map[string]bool{"mem": true},
+			expectedFound:    0,
+			expectedMissingN: 2,
+		},
+		{
+			name:             "partial - one missing",
+			uniqueMetrics:    []string{"up", "cpu"},
+			availableSet:     map[string]bool{"up": true},
+			expectedFound:    1,
+			expectedMissing:  []string{"cpu"},
+			expectedMissingN: 1,
+		},
+		{
+			name:             "empty metrics list",
+			uniqueMetrics:    []string{},
+			availableSet:     map[string]bool{"up": true},
+			expectedFound:    0,
+			expectedMissingN: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			foundCount, missingMetrics, missingSet := calculateCompatibility(tt.uniqueMetrics, tt.availableSet)
+			require.Equal(t, tt.expectedFound, foundCount)
+			require.Len(t, missingMetrics, tt.expectedMissingN)
+			require.Len(t, missingSet, tt.expectedMissingN)
+			if tt.expectedMissing != nil {
+				require.ElementsMatch(t, tt.expectedMissing, missingMetrics)
+			}
+		})
+	}
+}
+
+func TestParseQueries(t *testing.T) {
+	t.Run("all successful", func(t *testing.T) {
+		parser := &mockParser{
+			metricsToReturn: map[string][]string{
+				"up":       {"up"},
+				"sum(cpu)": {"cpu"},
+			},
+		}
+		queries := []validator.Query{
+			{RefID: "A", QueryText: "up"},
+			{RefID: "B", QueryText: "sum(cpu)"},
+		}
+
+		parseResults, uniqueMetrics, checkedCount := parseQueries(queries, parser)
+
+		require.Len(t, parseResults, 2)
+		require.Equal(t, 2, checkedCount)
+		require.ElementsMatch(t, []string{"up", "cpu"}, uniqueMetrics)
+		require.Nil(t, parseResults[0].parseError)
+		require.Nil(t, parseResults[1].parseError)
+	})
+
+	t.Run("all failed", func(t *testing.T) {
+		parseErr := errors.New("bad syntax")
+		parser := &mockParser{
+			errorToReturn: map[string]error{
+				"bad1": parseErr,
+				"bad2": parseErr,
+			},
+		}
+		queries := []validator.Query{
+			{RefID: "A", QueryText: "bad1"},
+			{RefID: "B", QueryText: "bad2"},
+		}
+
+		parseResults, uniqueMetrics, checkedCount := parseQueries(queries, parser)
+
+		require.Len(t, parseResults, 2)
+		require.Equal(t, 0, checkedCount)
+		require.Empty(t, uniqueMetrics)
+		require.Error(t, parseResults[0].parseError)
+		require.Error(t, parseResults[1].parseError)
+	})
+
+	t.Run("mixed success and failure", func(t *testing.T) {
+		parser := &mockParser{
+			metricsToReturn: map[string][]string{
+				"up": {"up"},
+			},
+			errorToReturn: map[string]error{
+				"bad": errors.New("bad"),
+			},
+		}
+		queries := []validator.Query{
+			{RefID: "A", QueryText: "up"},
+			{RefID: "B", QueryText: "bad"},
+		}
+
+		parseResults, uniqueMetrics, checkedCount := parseQueries(queries, parser)
+
+		require.Len(t, parseResults, 2)
+		require.Equal(t, 1, checkedCount)
+		require.ElementsMatch(t, []string{"up"}, uniqueMetrics)
+		require.Nil(t, parseResults[0].parseError)
+		require.Error(t, parseResults[1].parseError)
+	})
+
+	t.Run("deduplication across queries", func(t *testing.T) {
+		parser := &mockParser{
+			metricsToReturn: map[string][]string{
+				"up":      {"up"},
+				"sum(up)": {"up"},
+			},
+		}
+		queries := []validator.Query{
+			{RefID: "A", QueryText: "up"},
+			{RefID: "B", QueryText: "sum(up)"},
+		}
+
+		_, uniqueMetrics, _ := parseQueries(queries, parser)
+
+		require.Len(t, uniqueMetrics, 1) // "up" deduplicated
+		require.Contains(t, uniqueMetrics, "up")
+	})
+
+	t.Run("empty queries list", func(t *testing.T) {
+		parser := &mockParser{}
+		queries := []validator.Query{}
+
+		parseResults, uniqueMetrics, checkedCount := parseQueries(queries, parser)
+
+		require.Empty(t, parseResults)
+		require.Empty(t, uniqueMetrics)
+		require.Equal(t, 0, checkedCount)
+	})
+}
+
+func TestBuildQueryBreakdown(t *testing.T) {
+	t.Run("all parsed successfully", func(t *testing.T) {
+		queries := []validator.Query{
+			{RefID: "A", PanelTitle: "Panel A", PanelID: 1},
+			{RefID: "B", PanelTitle: "Panel B", PanelID: 2},
+		}
+		parseResults := []parseQueryResult{
+			{metrics: []string{"up"}},
+			{metrics: []string{"cpu"}},
+		}
+		missingSet := map[string]bool{} // nothing missing
+
+		breakdown := buildQueryBreakdown(queries, parseResults, missingSet)
+
+		require.Len(t, breakdown, 2)
+		require.InDelta(t, 1.0, breakdown[0].CompatibilityScore, 0.001)
+		require.InDelta(t, 1.0, breakdown[1].CompatibilityScore, 0.001)
+		require.Nil(t, breakdown[0].ParseError)
+	})
+
+	t.Run("with parse errors", func(t *testing.T) {
+		queries := []validator.Query{
+			{RefID: "A", PanelTitle: "Bad", PanelID: 1},
+		}
+		parseResults := []parseQueryResult{
+			{parseError: errors.New("syntax error")},
+		}
+		missingSet := map[string]bool{}
+
+		breakdown := buildQueryBreakdown(queries, parseResults, missingSet)
+
+		require.Len(t, breakdown, 1)
+		require.NotNil(t, breakdown[0].ParseError)
+		require.Contains(t, *breakdown[0].ParseError, "syntax error")
+		require.InDelta(t, 0.0, breakdown[0].CompatibilityScore, 0.001)
+		require.Equal(t, 0, breakdown[0].TotalMetrics)
+	})
+
+	t.Run("mixed compatibility", func(t *testing.T) {
+		queries := []validator.Query{
+			{RefID: "A", PanelTitle: "Good", PanelID: 1},
+			{RefID: "B", PanelTitle: "Half", PanelID: 2},
+		}
+		parseResults := []parseQueryResult{
+			{metrics: []string{"up"}},
+			{metrics: []string{"cpu", "mem"}},
+		}
+		missingSet := map[string]bool{"mem": true}
+
+		breakdown := buildQueryBreakdown(queries, parseResults, missingSet)
+
+		require.Len(t, breakdown, 2)
+		require.InDelta(t, 1.0, breakdown[0].CompatibilityScore, 0.001) // up found
+		require.InDelta(t, 0.5, breakdown[1].CompatibilityScore, 0.001) // 1/2 found
+		require.Contains(t, breakdown[1].MissingMetrics, "mem")
+	})
+
+	t.Run("query with no metrics - time()", func(t *testing.T) {
+		queries := []validator.Query{
+			{RefID: "A", PanelTitle: "Time", PanelID: 1},
+		}
+		parseResults := []parseQueryResult{
+			{metrics: []string{}},
+		}
+		missingSet := map[string]bool{}
+
+		breakdown := buildQueryBreakdown(queries, parseResults, missingSet)
+
+		require.Len(t, breakdown, 1)
+		require.Equal(t, 0, breakdown[0].TotalMetrics)
+		require.InDelta(t, 1.0, breakdown[0].CompatibilityScore, 0.001)
+	})
+}

@@ -30,80 +30,92 @@ func NewValidator(mc *cache.MetricsCache) *Validator {
 	}
 }
 
-// ValidateQueries validates Prometheus queries against the datasource
+// ValidateQueries validates Prometheus queries against the datasource.
+// It orchestrates parsing, fetching, compatibility checking, and scoring.
 func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Query, datasource validator.Datasource) (*validator.ValidationResult, error) {
-	result := &validator.ValidationResult{
-		TotalQueries:   len(queries),
-		QueryBreakdown: make([]validator.QueryResult, 0, len(queries)),
+	parseResults, uniqueMetrics, checkedCount := parseQueries(queries, v.parser)
+
+	availableSet, err := fetchAvailableMetrics(ctx, v.cache, datasource)
+	if err != nil {
+		return nil, err
 	}
 
-	// Step 1: Parse all queries to extract metrics
-	// Track all parse results (success or failure) so we can include errors in breakdown
-	type queryParseResult struct {
-		metrics    []string
-		parseError error
+	foundCount, missingMetrics, missingSet := calculateCompatibility(uniqueMetrics, availableSet)
+
+	return &validator.ValidationResult{
+		TotalQueries:   len(queries),
+		CheckedQueries: checkedCount,
+		QueryBreakdown: buildQueryBreakdown(queries, parseResults, missingSet),
+		CompatibilityResult: validator.CompatibilityResult{
+			TotalMetrics:       len(uniqueMetrics),
+			FoundMetrics:       foundCount,
+			MissingMetrics:     missingMetrics,
+			CompatibilityScore: calculateOverallScore(len(queries), checkedCount, len(uniqueMetrics), foundCount),
+		},
+	}, nil
+}
+
+// fetchAvailableMetrics retrieves available metrics from the datasource via cache
+// and returns them as a set for O(1) lookup.
+// This is a thin wrapper that delegates to the cache layer.
+func fetchAvailableMetrics(ctx context.Context, metricsCache *cache.MetricsCache, datasource validator.Datasource) (map[string]bool, error) {
+	availableMetrics, err := metricsCache.GetMetrics(ctx, datasources.DS_PROMETHEUS, datasource.UID, datasource.URL, datasource.HTTPClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
 	}
-	parseResults := make([]queryParseResult, len(queries))
-	allMetrics := make(map[string]bool) // Use map to deduplicate
-	queryMetrics := make(map[int][]string)
+
+	availableSet := make(map[string]bool, len(availableMetrics))
+	for _, metric := range availableMetrics {
+		availableSet[metric] = true
+	}
+
+	return availableSet, nil
+}
+
+// parseQueries parses all queries to extract metrics.
+// Returns per-query parse results, a deduplicated list of all metrics, and
+// the count of successfully parsed queries.
+func parseQueries(queries []validator.Query, parser validator.MetricExtractor) ([]parseQueryResult, []string, int) {
+	parseResults := make([]parseQueryResult, len(queries))
+	allMetrics := make(map[string]bool)
+	checkedCount := 0
 
 	for i, query := range queries {
-		metrics, err := v.parser.ExtractMetrics(query.QueryText)
+		metrics, err := parser.ExtractMetrics(query.QueryText)
 
-		// Store result regardless of success/failure
-		parseResults[i] = queryParseResult{
+		parseResults[i] = parseQueryResult{
 			metrics:    metrics,
 			parseError: err,
 		}
 
-		if err != nil {
-			// Don't continue - we'll include this in breakdown as a failed query
-		} else {
-			result.CheckedQueries++
-			queryMetrics[i] = metrics
-
-			// Add to global metrics set
+		if err == nil {
+			checkedCount++
 			for _, metric := range metrics {
 				allMetrics[metric] = true
 			}
 		}
 	}
 
-	// Convert map to slice for fetcher
-	metricsToCheck := make([]string, 0, len(allMetrics))
+	uniqueMetrics := make([]string, 0, len(allMetrics))
 	for metric := range allMetrics {
-		metricsToCheck = append(metricsToCheck, metric)
-	}
-	result.TotalMetrics = len(metricsToCheck)
-
-	// Step 2: Fetch available metrics from Prometheus (via cache)
-	availableMetrics, err := v.cache.GetMetrics(ctx, datasources.DS_PROMETHEUS, datasource.UID, datasource.URL, datasource.HTTPClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
+		uniqueMetrics = append(uniqueMetrics, metric)
 	}
 
-	// Build a set for O(1) lookup
-	availableSet := make(map[string]bool)
-	for _, metric := range availableMetrics {
-		availableSet[metric] = true
-	}
+	return parseResults, uniqueMetrics, checkedCount
+}
 
-	// Step 3: Calculate compatibility
-	missingMetricsMap := make(map[string]bool)
-	for _, metric := range metricsToCheck {
-		if !availableSet[metric] {
-			missingMetricsMap[metric] = true
-		}
-	}
-	result.FoundMetrics = result.TotalMetrics - len(missingMetricsMap)
+// parseQueryResult holds the outcome of parsing a single query.
+type parseQueryResult struct {
+	metrics    []string
+	parseError error
+}
 
-	// Convert missing metrics map to slice
-	result.MissingMetrics = make([]string, 0, len(missingMetricsMap))
-	for metric := range missingMetricsMap {
-		result.MissingMetrics = append(result.MissingMetrics, metric)
-	}
+// buildQueryBreakdown creates per-query validation results.
+// Queries that failed to parse get 0% score but are still included in the breakdown.
+// Queries with no metrics (e.g., time()) get 100% score.
+func buildQueryBreakdown(queries []validator.Query, parseResults []parseQueryResult, missingSet map[string]bool) []validator.QueryResult {
+	breakdown := make([]validator.QueryResult, 0, len(queries))
 
-	// Step 4: Build per-query breakdown (including queries that failed to parse)
 	for i, query := range queries {
 		parseResult := parseResults[i]
 
@@ -113,28 +125,23 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 			QueryRefID: query.RefID,
 		}
 
-		// Check if parsing failed
 		if parseResult.parseError != nil {
-			// Query failed to parse - treat as 0% compatible
 			errMsg := parseResult.parseError.Error()
 			queryResult.ParseError = &errMsg
 			queryResult.TotalMetrics = 0
 			queryResult.FoundMetrics = 0
 			queryResult.MissingMetrics = []string{}
 			queryResult.CompatibilityScore = 0.0
-
-			result.QueryBreakdown = append(result.QueryBreakdown, queryResult)
+			breakdown = append(breakdown, queryResult)
 			continue
 		}
 
-		// Query parsed successfully - proceed with normal validation
 		metrics := parseResult.metrics
 		queryResult.TotalMetrics = len(metrics)
 
-		// Check which metrics from this query are missing
 		queryMissing := make([]string, 0)
 		for _, metric := range metrics {
-			if missingMetricsMap[metric] {
+			if missingSet[metric] {
 				queryMissing = append(queryMissing, metric)
 			}
 		}
@@ -142,30 +149,53 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 		queryResult.MissingMetrics = queryMissing
 		queryResult.FoundMetrics = queryResult.TotalMetrics - len(queryMissing)
 
-		// Calculate query-level compatibility score
 		if queryResult.TotalMetrics > 0 {
 			queryResult.CompatibilityScore = float64(queryResult.FoundMetrics) / float64(queryResult.TotalMetrics)
 		} else {
-			queryResult.CompatibilityScore = 1.0 // No metrics = perfect compatibility
+			queryResult.CompatibilityScore = 1.0
 		}
 
-		result.QueryBreakdown = append(result.QueryBreakdown, queryResult)
+		breakdown = append(breakdown, queryResult)
 	}
 
-	// Step 5: Calculate overall compatibility score
-	if result.TotalMetrics > 0 {
-		result.CompatibilityScore = float64(result.FoundMetrics) / float64(result.TotalMetrics)
-	} else if result.TotalQueries == 0 {
-		// No queries at all - nothing to validate, treat as 100% compatible
-		result.CompatibilityScore = 1.0
-	} else if result.CheckedQueries > 0 {
-		// All queries parsed but extracted no metrics (e.g., time() or pure math expressions)
-		// This is valid - treat as 100% compatible
-		result.CompatibilityScore = 1.0
-	} else {
-		// All queries failed to parse - treat as 0% compatible
-		result.CompatibilityScore = 0.0
+	return breakdown
+}
+
+// calculateCompatibility checks which metrics are available and which are missing.
+// Returns the count of found metrics, a slice of missing metric names (for JSON),
+// and a set of missing metrics (for O(1) lookup in query breakdown).
+func calculateCompatibility(uniqueMetrics []string, availableSet map[string]bool) (foundCount int, missingMetrics []string, missingSet map[string]bool) {
+	missingSet = make(map[string]bool)
+	for _, metric := range uniqueMetrics {
+		if !availableSet[metric] {
+			missingSet[metric] = true
+		}
 	}
 
-	return result, nil
+	foundCount = len(uniqueMetrics) - len(missingSet)
+
+	missingMetrics = make([]string, 0, len(missingSet))
+	for metric := range missingSet {
+		missingMetrics = append(missingMetrics, metric)
+	}
+
+	return foundCount, missingMetrics, missingSet
+}
+
+// calculateOverallScore returns a compatibility score between 0.0 and 1.0.
+// When metrics exist, it returns foundMetrics/totalMetrics.
+// When no metrics were extracted, it uses totalQueries and checkedQueries
+// to distinguish "nothing to validate" (1.0) from "everything broke" (0.0).
+func calculateOverallScore(totalQueries, checkedQueries, totalMetrics, foundMetrics int) float64 {
+	if totalMetrics > 0 {
+		return float64(foundMetrics) / float64(totalMetrics)
+	}
+	// No metrics to check — distinguish why:
+	if totalQueries == 0 {
+		return 1.0 // Empty dashboard, nothing can break
+	}
+	if checkedQueries > 0 {
+		return 1.0 // Valid queries like time() or 1+1 that reference no metrics
+	}
+	return 0.0 // Every query failed to parse, can't verify compatibility
 }
