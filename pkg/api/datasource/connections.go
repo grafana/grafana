@@ -16,7 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TODO is there a better place for this client to live?
+// TODO: move this to /apis/query/v0alpha1 once DirectRestConfigProvider has been
+// moved to its own package (currently we get an import cycle)
 //
 // ConnectionClient provides access to datasource connection info via K8s API.
 // Methods that don't take a plugin type argument are deprecated and will be removed.
