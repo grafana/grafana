@@ -54,7 +54,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "34", info.Minor)
+		require.Equal(t, "35", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -121,7 +121,13 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
-		// }, { Temporarily disabled while we fix OpenAPI generation issues
+		// }, {
+		// In app-sdk v0.40+, the exported names changed
+		// The request/response payload is the same, so the existing generated clients
+		// based on the old OpenAPI will still work.
+		//
+		// This should be updated and replaced soon!
+		//
 		// 	Group:   "historian.alerting.grafana.app",
 		// 	Version: "v0alpha1",
 	}, {

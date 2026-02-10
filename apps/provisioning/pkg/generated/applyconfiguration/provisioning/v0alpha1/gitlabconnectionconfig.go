@@ -7,6 +7,7 @@ package v0alpha1
 // GitlabConnectionConfigApplyConfiguration represents a declarative configuration of the GitlabConnectionConfig type for use
 // with apply.
 type GitlabConnectionConfigApplyConfiguration struct {
+	// App client ID
 	ClientID *string `json:"clientID,omitempty"`
 }
 

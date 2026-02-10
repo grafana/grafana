@@ -126,7 +126,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
       padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
-      zIndex: 1,
+      zIndex: theme.zIndex.modal,
       minHeight: 26,
     }),
     itemsList: css({
