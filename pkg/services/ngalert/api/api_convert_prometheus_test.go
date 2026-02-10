@@ -2237,9 +2237,9 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 		expectedMatchers amconfig.Matchers
 	}{
 		{
-			name:          "empty header should return error",
+			name:          "empty header should not return error",
 			headerValue:   "",
-			expectedError: true,
+			expectedError: false,
 		},
 		{
 			name:          "single matcher should parse correctly",

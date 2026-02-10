@@ -296,7 +296,7 @@ receivers:
 			},
 		},
 		{
-			name: "empty identifier",
+			name: "empty matchers and identifier",
 			config: PostableUserConfig{
 				AlertmanagerConfig: alertmanagerCfg,
 				ExtraConfigs: []ExtraConfiguration{

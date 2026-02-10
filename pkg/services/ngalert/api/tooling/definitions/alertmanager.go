@@ -734,10 +734,6 @@ func (c ExtraConfiguration) Validate() error {
 		return errors.New("identifier is required")
 	}
 
-	if len(c.MergeMatchers) == 0 {
-		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
-	}
-
 	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
 			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))

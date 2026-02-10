@@ -846,7 +846,7 @@ func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, er
 	matchersStr := strings.TrimSpace(c.Req.Header.Get(mergeMatchersHeader))
 
 	if matchersStr == "" {
-		return amconfig.Matchers{}, errInvalidHeaderValue(mergeMatchersHeader, errors.New("value cannot be empty"))
+		return nil, nil
 	}
 
 	kvPairs, err := parseKeyValuePairs(matchersStr, mergeMatchersHeader)
