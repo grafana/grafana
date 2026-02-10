@@ -3967,21 +3967,6 @@
     },
     {
       "metadata": {
-        "name": "react18",
-        "resourceVersion": "1770716445324",
-        "creationTimestamp": "2026-02-10T09:40:45Z",
-        "deletionTimestamp": "2026-02-10T09:42:00Z"
-      },
-      "spec": {
-        "description": "Revert to React 18 for the frontend",
-        "stage": "preview",
-        "codeowner": "@grafana/grafana-frontend-platform",
-        "hideFromDocs": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "react19",
         "resourceVersion": "1770716520274",
         "creationTimestamp": "2026-02-10T09:42:00Z"
@@ -4860,24 +4845,6 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "useReact18",
-        "resourceVersion": "1770636136840",
-        "creationTimestamp": "2026-02-09T11:21:39Z",
-        "deletionTimestamp": "2026-02-10T09:40:45Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-02-09 11:22:16.840941 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Revert to React 18 for the frontend",
-        "stage": "preview",
-        "codeowner": "@grafana/grafana-frontend-platform",
-        "hideFromDocs": true,
-        "expression": "true"
       }
     },
     {
