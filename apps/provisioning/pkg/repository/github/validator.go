@@ -37,8 +37,10 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		_, _, err := ParseOwnerRepoGithub(gh.URL)
 		if err != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
-		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://github.com/"))
+		}
+		// Allow any HTTPS GitHub server (github.com, GitHub Enterprise, etc.)
+		if !strings.HasPrefix(gh.URL, "https://") {
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://"))
 		}
 	}
 
