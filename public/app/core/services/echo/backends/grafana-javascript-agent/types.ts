@@ -18,7 +18,6 @@ export interface GrafanaJavascriptAgentBackendOptions {
   customEndpoint?: string;
   internalLoggerLevel?: InternalLoggerLevel;
 
-  webVitalsAttribution: boolean;
   consoleInstrumentalizationEnabled: boolean;
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;

@@ -2057,6 +2057,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "vizPresets",
+			Description:  "Enable visualization presets",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
 			Stage:        FeatureStageExperimental,

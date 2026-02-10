@@ -10671,6 +10671,16 @@
       "message-same-name-general": "Já existe uma pasta ou um painel de controlo com o mesmo nome na pasta de raiz"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
   },
@@ -11511,9 +11521,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Nenhuma organização encontrada",
     "select-placeholder": "Selecionar organização"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12665,12 +12672,9 @@
       "error-starting-job": "Erro ao iniciar a tarefa"
     },
     "sync-repository": {
-      "body-edit-configuration": "Editar a configuração",
-      "button-edit": "Editar",
       "error-pulling-resources": "Erro ao extrair recursos",
       "pull": "Extração",
       "success-pull-started": "Extração iniciada",
-      "title-pull-not-enabled": "A extração não está ativada",
       "tooltip-unhealthy-repository": "Não foi possível obter um repositório que não está em bom estado"
     },
     "synchronize-step": {
@@ -12922,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Editar o nome da consulta"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID trace: {{traceId}})"
     },
     "query-group": {
@@ -13041,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14249,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Nenhum dado encontrado na resposta"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

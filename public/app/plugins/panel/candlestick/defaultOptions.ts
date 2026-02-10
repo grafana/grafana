@@ -1,16 +1,6 @@
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import {
-  defaultOptions as defaultOptionsBase,
-  defaultCandlestickColors,
-  Options,
-  CandlestickColors,
-  CandleStyle,
-  ColorStrategy,
-  VizDisplayMode,
-  CandlestickFieldMap,
-  FieldConfig,
-} from './panelcfg.gen';
+import { defaultOptions as defaultOptionsBase, Options } from './panelcfg.gen';
 
 export const defaultOptions: Partial<Options> = {
   ...defaultOptionsBase,
@@ -25,15 +15,4 @@ export const defaultOptions: Partial<Options> = {
     mode: TooltipDisplayMode.Multi,
     sort: SortOrder.None,
   },
-};
-
-export {
-  type Options,
-  type CandlestickColors,
-  defaultCandlestickColors,
-  CandleStyle,
-  ColorStrategy,
-  VizDisplayMode,
-  type CandlestickFieldMap,
-  type FieldConfig,
 };

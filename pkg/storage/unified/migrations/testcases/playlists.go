@@ -1,4 +1,4 @@
-package migrations_test
+package testcases
 
 import (
 	"context"
@@ -18,18 +18,18 @@ type playlistsTestCase struct {
 	playlistUIDs []string
 }
 
-// newPlaylistsTestCase creates a test case for the playlists migrator
-func newPlaylistsTestCase() resourceMigratorTestCase {
+// NewPlaylistsTestCase creates a test case for the playlists migrator
+func NewPlaylistsTestCase() ResourceMigratorTestCase {
 	return &playlistsTestCase{
 		playlistUIDs: []string{},
 	}
 }
 
-func (tc *playlistsTestCase) name() string {
+func (tc *playlistsTestCase) Name() string {
 	return "playlists"
 }
 
-func (tc *playlistsTestCase) resources() []schema.GroupVersionResource {
+func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{
 			Group:    "playlist.grafana.app",
@@ -39,7 +39,7 @@ func (tc *playlistsTestCase) resources() []schema.GroupVersionResource {
 	}
 }
 
-func (tc *playlistsTestCase) setup(t *testing.T, helper *apis.K8sTestHelper) {
+func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Helper()
 
 	// Get playlist service from the test environment
@@ -72,7 +72,7 @@ func (tc *playlistsTestCase) setup(t *testing.T, helper *apis.K8sTestHelper) {
 	tc.playlistUIDs = append(tc.playlistUIDs, playlist3UID)
 }
 
-func (tc *playlistsTestCase) verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
+func (tc *playlistsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
 	expectedPlaylistCount := 0
