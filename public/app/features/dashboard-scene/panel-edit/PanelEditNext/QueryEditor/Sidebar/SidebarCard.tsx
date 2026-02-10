@@ -35,12 +35,19 @@ export const SidebarCard = ({
   const typeText = config.getLabel();
 
   return (
-    <button
+    <div
       className={cx(styles.card, { [styles.hidden]: isHidden })}
       onClick={onClick}
-      type="button"
+      role="button"
+      tabIndex={0}
       aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
       aria-pressed={isSelected}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <div className={styles.cardHeader}>
         <Stack direction="row" alignItems="center" gap={1}>
@@ -54,7 +61,7 @@ export const SidebarCard = ({
         </div>
       </div>
       <div className={styles.cardContent}>{children}</div>
-    </button>
+    </div>
   );
 };
 
