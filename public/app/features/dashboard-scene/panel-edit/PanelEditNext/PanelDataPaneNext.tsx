@@ -6,7 +6,7 @@ import {
   getDataSourceRef,
   getNextRefId,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
@@ -25,6 +25,33 @@ import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { filterDataTransformerConfigs } from './QueryEditor/utils';
+
+/**
+ * Resolve the datasource ref to assign to a new query.
+ */
+function resolveNewQueryDatasource(
+  callerDs: DataSourceRef | undefined,
+  panelDsSettings: DataSourceInstanceSettings | undefined
+): DataSourceRef | undefined {
+  // Caller explicitly chose a datasource (e.g. ExpressionDatasourceRef).
+  if (callerDs) {
+    return callerDs;
+  }
+
+  if (!panelDsSettings) {
+    return undefined;
+  }
+
+  // "Mixed" isn't meaningful on a per-query basis; use the configured default.
+  // If missing a default datasource (unexpected), leave `undefined`
+  // so the query inherits the panel datasource at render time.
+  if (panelDsSettings.meta.mixed) {
+    const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+    return defaultDs ? getDataSourceRef(defaultDs) : undefined;
+  }
+
+  return getDataSourceRef(panelDsSettings);
+}
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -145,16 +172,12 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const currentQueries = queryRunner.state.queries;
 
     // Build new query with defaults.
-    // Preserve the caller-supplied datasource (e.g. ExpressionDatasourceRef)
-    // and only fall back to the panel datasource when none was provided.
     const newQuery: Partial<DataQuery> = {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
       ...query,
     };
 
-    if (!newQuery.datasource && dsSettings) {
-      newQuery.datasource = getDataSourceRef(dsSettings);
-    }
+    newQuery.datasource = resolveNewQueryDatasource(newQuery.datasource ?? undefined, dsSettings);
 
     const updatedQueries = addQuery(currentQueries, newQuery);
 

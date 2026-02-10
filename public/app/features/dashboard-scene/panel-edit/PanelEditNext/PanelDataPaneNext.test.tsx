@@ -1,9 +1,20 @@
-import { DataTransformerConfig } from '@grafana/data';
+import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
+
+const mockGetInstanceSettings = jest.fn();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: mockGetInstanceSettings,
+  }),
+}));
 
 // Mutable state object for the mock queryRunner
 const mockQueryRunnerState = {
@@ -327,6 +338,98 @@ describe('PanelDataPaneNext', () => {
 
         dataPane.toggleTransformationDisabled(5);
         expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('addQuery', () => {
+    const promDsSettings = {
+      uid: 'prom-1',
+      type: 'prometheus',
+      name: 'Prometheus',
+      meta: { mixed: false },
+    } as unknown as DataSourceInstanceSettings;
+
+    const mixedDsSettings = {
+      uid: '-- Mixed --',
+      type: 'mixed',
+      name: 'Mixed',
+      meta: { mixed: true },
+    } as unknown as DataSourceInstanceSettings;
+
+    const defaultDsSettings = {
+      uid: 'gdev-testdata',
+      type: 'testdata',
+      name: 'TestData',
+      meta: { mixed: false },
+    } as unknown as DataSourceInstanceSettings;
+
+    it('should assign the panel datasource when it is not Mixed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.setState({ dsSettings: promDsSettings });
+
+      const refId = dataPane.addQuery();
+
+      expect(refId).toBe('B');
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: expect.arrayContaining([
+          expect.objectContaining({
+            refId: 'B',
+            datasource: getDataSourceRef(promDsSettings),
+          }),
+        ]),
+      });
+    });
+
+    it('should assign the default datasource when the panel datasource is Mixed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }] as DataQuery[];
+
+      dataPane.setState({ dsSettings: mixedDsSettings });
+
+      const originalDefault = config.defaultDatasource;
+      config.defaultDatasource = 'gdev-testdata';
+
+      mockGetInstanceSettings.mockImplementation((ref: string) => {
+        if (ref === 'gdev-testdata') {
+          return defaultDsSettings;
+        }
+        return undefined;
+      });
+
+      try {
+        const refId = dataPane.addQuery();
+
+        expect(refId).toBe('B');
+        expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+          queries: expect.arrayContaining([
+            expect.objectContaining({
+              refId: 'B',
+              datasource: getDataSourceRef(defaultDsSettings),
+            }),
+          ]),
+        });
+      } finally {
+        config.defaultDatasource = originalDefault;
+      }
+    });
+
+    it('should preserve a caller-supplied datasource (e.g. expressions)', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.setState({ dsSettings: promDsSettings });
+
+      const expressionDs = { type: '__expr__', uid: '__expr__' };
+      const refId = dataPane.addQuery({ datasource: expressionDs });
+
+      expect(refId).toBe('B');
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: expect.arrayContaining([
+          expect.objectContaining({
+            refId: 'B',
+            datasource: expressionDs,
+          }),
+        ]),
       });
     });
   });
