@@ -67,62 +67,62 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
   [QueryOptionField.maxDataPoints]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.max-data-points-tooltip',
+        'query-editor-next.details-sidebar.max-data-points-tooltip',
         'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.max-data-points', 'Max data points'),
+    getLabel: () => t('query-editor-next.details-sidebar.max-data-points', 'Max data points'),
     inputType: 'number',
   },
   [QueryOptionField.minInterval]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.min-interval-tooltip',
+        'query-editor-next.details-sidebar.min-interval-tooltip',
         'A lower limit for the interval. Recommended to be set to write frequency, for example 1m if your data is written every minute.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.min-interval', 'Min interval'),
+    getLabel: () => t('query-editor-next.details-sidebar.min-interval', 'Min interval'),
   },
   [QueryOptionField.interval]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.interval-tooltip',
+        'query-editor-next.details-sidebar.interval-tooltip',
         'The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.interval', 'Interval'),
+    getLabel: () => t('query-editor-next.details-sidebar.interval', 'Interval'),
   },
   [QueryOptionField.relativeTime]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.relative-time-tooltip',
+        'query-editor-next.details-sidebar.relative-time-tooltip',
         'Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.relative-time', 'Relative time'),
+    getLabel: () => t('query-editor-next.details-sidebar.relative-time', 'Relative time'),
     placeholder: TIME_OPTION_PLACEHOLDER,
   },
   [QueryOptionField.timeShift]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.time-shift-tooltip',
+        'query-editor-next.details-sidebar.time-shift-tooltip',
         'Overrides the time range for individual panels by shifting its start and end relative to the time picker.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.time-shift', 'Time shift'),
+    getLabel: () => t('query-editor-next.details-sidebar.time-shift', 'Time shift'),
     placeholder: TIME_OPTION_PLACEHOLDER,
   },
   [QueryOptionField.cacheTimeout]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.cache-timeout-tooltip',
+        'query-editor-next.details-sidebar.cache-timeout-tooltip',
         'If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.cache-timeout', 'Cache timeout'),
+    getLabel: () => t('query-editor-next.details-sidebar.cache-timeout', 'Cache timeout'),
     placeholder: '60',
   },
   [QueryOptionField.queryCachingTTL]: {
     getTooltip: () =>
       t(
-        'query-editor.details-sidebar.cache-ttl-tooltip',
+        'query-editor-next.details-sidebar.cache-ttl-tooltip',
         'Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.'
       ),
-    getLabel: () => t('query-editor.details-sidebar.cache-ttl', 'Cache TTL'),
+    getLabel: () => t('query-editor-next.details-sidebar.cache-ttl', 'Cache TTL'),
     inputType: 'number',
   },
 };
