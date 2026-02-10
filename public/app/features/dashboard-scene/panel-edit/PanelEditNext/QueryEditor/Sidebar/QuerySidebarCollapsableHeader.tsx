@@ -18,6 +18,7 @@ export const QuerySidebarCollapsableHeader = ({ label, children }: { label: stri
       isOpen={isOpen}
       onToggle={setIsOpen}
       className={styles.collapsableSection}
+      contentClassName={styles.contentArea}
     >
       <div className={styles.queryStackCardsContainer}>
         <Stack direction="column" gap={2.5}>
@@ -30,10 +31,12 @@ export const QuerySidebarCollapsableHeader = ({ label, children }: { label: stri
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css({
+    marginTop: theme.spacing(1),
+  }),
+  contentArea: css({
     padding: 0,
-    marginTop: theme.spacing(2),
   }),
   queryStackCardsContainer: css({
-    paddingTop: theme.spacing(0.5),
+    paddingTop: theme.spacing(1),
   }),
 });
