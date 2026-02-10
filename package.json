@@ -286,6 +286,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/faro-core": "^2.2.3",
+    "@grafana/faro-instrumentation-replay": "^2.2.3",
     "@grafana/faro-web-sdk": "^2.2.3",
     "@grafana/faro-web-tracing": "^2.2.3",
     "@grafana/flamegraph": "workspace:*",
