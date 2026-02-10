@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
@@ -93,6 +94,23 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 		// Any authenticated user can access the API
 		return authorizer.DecisionAllow, "", nil
 	})
+}
+
+// InstallAPIs overrides the default InstallAPIs to wrap the server with our custom storage
+// This allows the automatic dual-writing mechanism to work with custom storage instead of unified storage
+func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, optsGetter generic.RESTOptionsGetter) error {
+	customStorage := NewCustomAnnotationStorage()
+	gvr := annotationV0.AnnotationKind().GroupVersionResource()
+	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
+		gvr: customStorage,
+	}
+
+	wrappedServer := &customStorageWrapper{
+		wrapped: server,
+		replace: replacedStorage,
+	}
+
+	return a.AppInstaller.InstallAPIs(wrappedServer, optsGetter)
 }
 
 func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
