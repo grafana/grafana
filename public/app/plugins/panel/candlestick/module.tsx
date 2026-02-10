@@ -7,9 +7,10 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
+import { defaultOptions } from './defaultOptions';
 import { CandlestickData, getCandlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
+import { defaultCandlestickColors, type Options, VizDisplayMode, ColorStrategy, CandleStyle } from './panelcfg.gen';
 import { candlestickSuggestionSupplier } from './suggestions';
-import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
