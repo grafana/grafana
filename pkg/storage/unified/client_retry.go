@@ -34,6 +34,14 @@ func unaryRetryInterceptor(cfg retryConfig) grpc.UnaryClientInterceptor {
 	)
 }
 
+func streamRetryInterceptor(cfg retryConfig) grpc.StreamClientInterceptor {
+	return grpc_retry.StreamClientInterceptor(
+		grpc_retry.WithMax(cfg.Max),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(cfg.Backoff, cfg.BackoffJitter)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
+	)
+}
+
 // unaryRetryInstrument creates an interceptor to count and log retry attempts.
 func unaryRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, resp interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {

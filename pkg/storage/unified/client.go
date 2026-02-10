@@ -316,6 +316,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	}
 	unary = append(unary, unaryRetryInterceptor(retryCfg))
 	unary = append(unary, unaryRetryInstrument(metrics.requestRetries))
+	stream = append(stream, streamRetryInterceptor(retryCfg))
 
 	cfg := grpcclient.Config{}
 	// Set the defaults that are normally set by Config.RegisterFlags.
