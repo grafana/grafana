@@ -1,4 +1,11 @@
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef, getNextRefId } from '@grafana/data';
+import {
+  CoreApp,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataTransformerConfig,
+  getDataSourceRef,
+  getNextRefId,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneDataTransformer,
@@ -8,7 +15,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -316,6 +323,33 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     panel.setState(panelStateUpdate);
     queryRunner.setState(dataObjStateUpdate);
+    queryRunner.runQueries();
+  };
+
+  public updateTransformation = (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => {
+    const panel = this.state.panelRef.resolve();
+    const queryRunner = getQueryRunnerFor(panel);
+    const dataTransformer = panel.state.$data;
+
+    if (!(dataTransformer instanceof SceneDataTransformer)) {
+      return;
+    }
+
+    const transformations = [...dataTransformer.state.transformations];
+    // Find by object reference - same reference from useTransformations hook
+    const index = transformations.findIndex((t) => t === oldConfig);
+
+    if (index === -1) {
+      return;
+    }
+
+    transformations[index] = newConfig;
+    dataTransformer.setState({ transformations });
+
+    if (!queryRunner) {
+      return;
+    }
+
     queryRunner.runQueries();
   };
 }
