@@ -18,6 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestManagedPermissionsActionSetsFilter(t *testing.T) {
+	filter := accesscontrol.ManagedPermissionsActionSetsFilter()
+
+	// The filter should exclude individual dashboard/folder actions from managed roles
+	assert.Contains(t, filter, "role.name LIKE 'managed:%'")
+	assert.Contains(t, filter, "permission.kind IN ('dashboards', 'folders')")
+	assert.Contains(t, filter, "AND NOT")
+
+	// The filter should preserve action set permissions
+	assert.Contains(t, filter, "'dashboards:view'")
+	assert.Contains(t, filter, "'dashboards:edit'")
+	assert.Contains(t, filter, "'dashboards:admin'")
+	assert.Contains(t, filter, "'folders:view'")
+	assert.Contains(t, filter, "'folders:edit'")
+	assert.Contains(t, filter, "'folders:admin'")
+}
+
 type filterDatasourcesTestCase struct {
 	desc        string
 	sqlID       string

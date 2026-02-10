@@ -46,6 +46,8 @@ func TestFindGroupKey_WildcardMatching(t *testing.T) {
 		// Wildcard match: group has suffix of wildcard key and is longer than suffix
 		{"foo.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
 		{"bar.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
+		// group with nested dots does not match wildcard
+		{"bar.baz.test.grafana.app", []string{testWildcardPattern}, "", false},
 		// Group starts with *: never matches
 		{"*.test.grafana.app", []string{testWildcardPattern}, "", false},
 		// Key not a wildcard (no *.): iterate and continue, no match

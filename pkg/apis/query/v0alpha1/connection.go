@@ -7,29 +7,50 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// Connection to a datasource instance
-// The connection name must be '{group}:{name}'
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourceConnection struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitzero,omitempty"`
+// Get all datasource connections -- this will be backed by search or duplicated resource in unified storage
+type DataSourceConnectionProvider interface {
+	// List lists all data sources the user in context can see
+	ListConnections(ctx context.Context, query DataSourceConnectionQuery) (*DataSourceConnectionList, error)
+}
 
+// List of all datasource instances across all datasource apiservers
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DataSourceConnectionQuery struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// the namespace
+	Namespace string `json:"namespace"`
+
+	// The datasource identifier inside the group/version (or UID within legacy grafana apis)
+	Name string `json:"name,omitempty"`
+
+	// The plugin ID
+	Plugin string `json:"plugin,omitempty"`
+}
+
+func (DataSourceConnectionQuery) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceConnectionQuery"
+}
+
+// Connection to a datasource instance
+type DataSourceConnection struct {
 	// The configured display name
 	Title string `json:"title"`
 
-	// Reference to the kubernets datasource
-	Datasource DataSourceConnectionRef `json:"datasource"`
+	// The datasource identifier inside the group/version (or UID within legacy grafana apis)
+	Name string `json:"name"`
+
+	APIGroup string `json:"group"`
+
+	APIVersion string `json:"version"`
+
+	Plugin string `json:"plugin,omitempty"`
+
+	// TODO: labels? things the UI would need to show in a list
 }
 
-type DataSourceConnectionRef struct {
-	Group   string `json:"group"`
-	Version string `json:"version"`
-	Name    string `json:"name"`
-}
-
-// The valid connection name for a group + identifier
-func DataSourceConnectionName(group, name string) string {
-	return group + ":" + name
+func (DataSourceConnection) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceConnection"
 }
 
 // List of all datasource instances across all datasource apiservers
@@ -39,6 +60,10 @@ type DataSourceConnectionList struct {
 	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
 
 	Items []DataSourceConnection `json:"items"`
+}
+
+func (DataSourceConnectionList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceConnectionList"
 }
 
 type DataSourceApiServerRegistry interface {
@@ -73,6 +98,10 @@ type DataSourceApiServer struct {
 	AliasIDs []string `json:"aliasIDs,omitempty"`
 }
 
+func (DataSourceApiServer) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceApiServer"
+}
+
 // List of datasource plugins
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceApiServerList struct {
@@ -80,4 +109,8 @@ type DataSourceApiServerList struct {
 	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
 
 	Items []DataSourceApiServer `json:"items"`
+}
+
+func (DataSourceApiServerList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceApiServerList"
 }

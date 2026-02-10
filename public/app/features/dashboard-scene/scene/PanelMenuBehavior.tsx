@@ -347,6 +347,48 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       }
     }
 
+    if (panel.state.pluginId === 'timeseries' && config.featureToggles.panelStyleActions && dashboard.state.isEditing) {
+      const stylesSubMenu: PanelMenuItem[] = [];
+
+      stylesSubMenu.push({
+        text: t('panel.header-menu.copy-styles', `Copy styles`),
+        iconClassName: 'copy',
+        onClick: () => {
+          DashboardInteractions.panelStylesMenuClicked(
+            'copy',
+            panel.state.pluginId,
+            getPanelIdForVizPanel(panel) ?? -1
+          );
+          dashboard.copyPanelStyles(panel);
+        },
+      });
+
+      if (DashboardScene.hasPanelStylesToPaste('timeseries')) {
+        stylesSubMenu.push({
+          text: t('panel.header-menu.paste-styles', `Paste styles`),
+          iconClassName: 'clipboard-alt',
+          onClick: () => {
+            DashboardInteractions.panelStylesMenuClicked(
+              'paste',
+              panel.state.pluginId,
+              getPanelIdForVizPanel(panel) ?? -1
+            );
+            dashboard.pastePanelStyles(panel);
+          },
+        });
+      }
+
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.styles', `Styles`),
+        iconClassName: 'palette',
+        subMenu: stylesSubMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    }
+
     if (moreSubMenu.length) {
       items.push({
         type: 'submenu',

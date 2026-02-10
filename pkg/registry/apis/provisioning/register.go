@@ -417,10 +417,17 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 // Uses the access checker with verb-based authorization.
 func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
-	// Repository CRUD - use access checker with the actual verb
+	// Repository CRUD - viewers can read, admins can write
 	case "":
-		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      a.GetVerb(),
+		verb := a.GetVerb()
+		// Read operations (get, list, watch) are allowed for viewers
+		// Write operations (create, update, patch, delete) require admin
+		accessChecker := b.accessWithAdmin
+		if verb == "get" || verb == "list" || verb == "watch" {
+			accessChecker = b.accessWithViewer
+		}
+		return toAuthorizerDecision(accessChecker.Check(ctx, authlib.CheckRequest{
+			Verb:      verb,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
@@ -809,9 +816,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 			)
-			// HACK: Set quota limits after construction to avoid changing NewSyncWorker signature.
-			// See SetQuotaLimits for details. Use the same quotaLimits constructed for the validator.
-			syncWorker.SetQuotaLimits(b.quotaLimits)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -884,7 +888,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			quotaGetter := quotas.NewFixedQuotaGetter(b.quotaLimits)
+			quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+				MaxResourcesPerRepository: b.quotaLimits.MaxResources,
+				MaxRepositories:           b.quotaLimits.MaxRepositories,
+			})
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -970,14 +977,14 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	defsBase := "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1."
-	refsBase := "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
+	refsBase := provisioning.OpenAPIPrefix
+	compBase := refsBase
 
 	// TODO: Remove this endpoint when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
-		repoSchema := defs[defsBase+"Repository"].Schema
+		repoSchema := defs[refsBase+"Repository"].Schema
 		sub.Post.Description = "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status"
 		sub.Post.Deprecated = true
 		sub.Post.RequestBody = &spec3.RequestBody{
@@ -1048,7 +1055,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[defsBase+"RefList"].Schema
+		s := defs[refsBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1066,7 +1073,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[defsBase+"FileList"].Schema
+		s := defs[refsBase+"FileList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1260,7 +1267,7 @@ spec:
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[defsBase+"ExternalRepositoryList"].Schema
+		s := defs[refsBase+"ExternalRepositoryList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1274,12 +1281,10 @@ spec:
 	// Add any missing definitions
 	//-----------------------------
 	for k, v := range defs {
-		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.", 1)
-		if oas.Components.Schemas[clean] == nil {
-			oas.Components.Schemas[clean] = &v.Schema
+		if oas.Components.Schemas[k] == nil {
+			oas.Components.Schemas[k] = &v.Schema
 		}
 	}
-	compBase := "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
 	schema := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
@@ -1302,7 +1307,7 @@ spec:
 				AllOf: []spec.Schema{
 					{
 						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
+							Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "ResourceCount"),
 						},
 					},
 				},

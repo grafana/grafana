@@ -223,6 +223,18 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		require.Equal(t, version, "1.0.0")
 	})
 
+	t.Run("When renderer responds with 408 it returns a ErrServerTimeout error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusRequestTimeout)
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererServerUrl = server.URL + "/render"
+
+		_, err := rs.getRemotePluginVersion()
+		require.ErrorIs(t, err, ErrServerTimeout)
+	})
+
 	t.Run("When renderer responds with 500 should retry until success", func(t *testing.T) {
 		tries := uint(0)
 		ctx, cancel := context.WithCancel(context.Background())

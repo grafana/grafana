@@ -74,6 +74,7 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("query_name", name),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
 
@@ -89,7 +90,13 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 
 	route := rev.GetManagedRoute(name)
 	if route == nil {
-		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
+		// Check if this is referring to the imported config.
+		if nps.includeImported() {
+			route = nps.getImportedRoute(ctx, span, rev)
+		}
+		if route == nil {
+			return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
+		}
 	}
 
 	span.AddEvent("Loaded route", trace.WithAttributes(
@@ -109,6 +116,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.getMany", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
 
@@ -124,12 +132,6 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 
 	// Backwards compatibility when managed routes FF is disabled. Don't include any custom managed routes.
 	managedRoutes := rev.GetManagedRoutes(nps.managedRoutesEnabled())
-
-	span.AddEvent("Loaded routes", trace.WithAttributes(
-		attribute.String("concurrency_token", rev.ConcurrencyToken),
-		attribute.Int("count", len(managedRoutes)),
-	))
-
 	for _, mr := range managedRoutes {
 		provenance, ok := provenances[mr.ResourceID()]
 		if !ok {
@@ -137,6 +139,28 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 		}
 		mr.Provenance = provenance
 	}
+
+	if nps.managedRoutesEnabled() && nps.includeImported() {
+		importedRoute := nps.getImportedRoute(ctx, span, rev)
+		if importedRoute != nil {
+			// This shouldn't happen under normal circumstances as we guard during create. However, if it happens, we error for now.
+			// When UIDs are introduced to managed routes, we can choose to de-duplicate the name as rules will reference the route by UID, not name.
+			if exists := managedRoutes.Contains(importedRoute.Name); exists {
+				nps.log.FromContext(ctx).Warn("Imported route name conflicts with existing managed route. Skipping imported route.", "route_name", importedRoute.Name)
+				span.AddEvent("Skipped imported route due to name conflict", trace.WithAttributes(
+					attribute.String("route_name", importedRoute.Name),
+				))
+			} else {
+				managedRoutes = append(managedRoutes, importedRoute)
+			}
+		}
+	}
+
+	span.AddEvent("Loaded routes", trace.WithAttributes(
+		attribute.String("concurrency_token", rev.ConcurrencyToken),
+		attribute.Int("count", len(managedRoutes)),
+	))
+
 	managedRoutes.Sort()
 	return managedRoutes, nil
 }
@@ -147,6 +171,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.String("route_name", name),
 		attribute.String("route_version", version),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
@@ -165,6 +190,12 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 
 	existing := revision.GetManagedRoute(name)
 	if existing == nil {
+		// Check if this is referring to the imported config to return a better error message.
+		if nps.includeImported() {
+			if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.Name == name {
+				return nil, models.MakeErrRouteOrigin(name, "update")
+			}
+		}
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
@@ -225,6 +256,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.String("route_name", name),
 		attribute.String("route_version", version),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
 
@@ -240,6 +272,12 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 
 	existing := revision.GetManagedRoute(name)
 	if existing == nil {
+		// Check if this is referring to the imported config to return a better error message.
+		if nps.includeImported() {
+			if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.Name == name {
+				return models.MakeErrRouteOrigin(name, "delete")
+			}
+		}
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
@@ -303,6 +341,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
+		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
 	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
@@ -325,9 +364,12 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
-	if err != nil {
-		return nil, fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
+	// Check if this conflicts with an imported config.
+	// When UIDs are introduced to managed routes, we can choose to de-duplicate the name as rules will reference the route by UID, not name.
+	if nps.includeImported() {
+		if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.Name == name {
+			return nil, models.ErrRouteExists.Errorf("cannot create a managed route with the name %q, as it conflicts with an imported route", name)
+		}
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -370,10 +412,39 @@ func (nps *Service) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_st
 	return rev.RenameTimeIntervalInRoutes(oldName, newName, nps.managedRoutesEnabled())
 }
 
+func (nps *Service) getImportedRoute(ctx context.Context, span trace.Span, revision *legacy_storage.ConfigRevision) *legacy_storage.ManagedRoute {
+	var result *legacy_storage.ManagedRoute
+	imported, err := revision.Imported()
+	if err == nil {
+		result, err = imported.GetManagedRoute()
+	}
+	if err != nil {
+		nps.log.FromContext(ctx).Warn("Unable to include imported route. Skipping", "err", err)
+		span.RecordError(err, trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+		))
+		return nil
+	} else if result != nil {
+		span.AddEvent("Loaded imported route", trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+		))
+	}
+
+	return result
+}
+
 func (nps *Service) managedRoutesEnabled() bool {
 	if nps.FeatureToggles == nil {
 		return false
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies)
+}
+
+func (nps *Service) includeImported() bool {
+	if nps.FeatureToggles == nil {
+		return false
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }

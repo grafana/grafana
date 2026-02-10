@@ -126,3 +126,27 @@ type KeeperSpec struct {
 func NewKeeperSpec() *KeeperSpec {
 	return &KeeperSpec{}
 }
+func (KeeperAWSConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAWSConfig"
+}
+func (KeeperAWSAccessKey) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAWSAccessKey"
+}
+func (KeeperCredentialValue) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperCredentialValue"
+}
+func (KeeperAWSAssumeRole) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAWSAssumeRole"
+}
+func (KeeperAzureConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAzureConfig"
+}
+func (KeeperGCPConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperGCPConfig"
+}
+func (KeeperHashiCorpConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperHashiCorpConfig"
+}
+func (KeeperSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperSpec"
+}

@@ -13,11 +13,9 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { useRepositoryStatus } from './useRepositoryStatus';
-
 export type UseResourceStatsOptions = {
-  enableRepositoryStatus?: boolean;
-  isHealthy?: boolean;
+  isHealthy?: boolean; // true only when healthy AND reconciled
+  healthStatusNotReady?: boolean; // true when waiting for reconciliation
 };
 
 function getManagedCount(managed?: ManagerStats[]) {
@@ -115,15 +113,15 @@ export function useResourceStats(
   migrateResources?: boolean,
   options?: UseResourceStatsOptions
 ) {
-  const enableRepositoryStatus = options?.enableRepositoryStatus ?? true; // provide option to skip repo status check
-  const { isHealthy: statusHealthy } = useRepositoryStatus(enableRepositoryStatus ? repoName : undefined);
-  const effectiveHealthy = enableRepositoryStatus ? statusHealthy : options?.isHealthy;
+  const { isHealthy, healthStatusNotReady } = options || {};
 
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  // files endpoint requires healthy repository
-  const filesQuery = useGetRepositoryFilesQuery(repoName && effectiveHealthy ? { name: repoName } : skipToken);
+  // isHealthy already includes reconciliation check - safe to fetch files
+  const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken, {
+    refetchOnMountOrArgChange: true,
+  });
 
-  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
+  const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),

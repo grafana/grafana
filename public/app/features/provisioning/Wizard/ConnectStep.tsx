@@ -91,6 +91,7 @@ export const ConnectStep = memo(function ConnectStep() {
                   placeholder={gitFields.branchConfig.placeholder}
                   options={branches || []}
                   loading={isBranchesLoading}
+                  disabled={isBranchesLoading}
                   createCustomValue
                   isClearable
                   {...field}

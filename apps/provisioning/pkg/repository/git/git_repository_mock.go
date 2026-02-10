@@ -275,6 +275,107 @@ func (_c *MockGitRepository_Delete_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// GetCurrentBranch provides a mock function with no fields
+func (_m *MockGitRepository) GetCurrentBranch() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCurrentBranch")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// MockGitRepository_GetCurrentBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCurrentBranch'
+type MockGitRepository_GetCurrentBranch_Call struct {
+	*mock.Call
+}
+
+// GetCurrentBranch is a helper method to define mock.On call
+func (_e *MockGitRepository_Expecter) GetCurrentBranch() *MockGitRepository_GetCurrentBranch_Call {
+	return &MockGitRepository_GetCurrentBranch_Call{Call: _e.mock.On("GetCurrentBranch")}
+}
+
+func (_c *MockGitRepository_GetCurrentBranch_Call) Run(run func()) *MockGitRepository_GetCurrentBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockGitRepository_GetCurrentBranch_Call) Return(_a0 string) *MockGitRepository_GetCurrentBranch_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGitRepository_GetCurrentBranch_Call) RunAndReturn(run func() string) *MockGitRepository_GetCurrentBranch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDefaultBranch provides a mock function with given fields: ctx
+func (_m *MockGitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefaultBranch")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGitRepository_GetDefaultBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDefaultBranch'
+type MockGitRepository_GetDefaultBranch_Call struct {
+	*mock.Call
+}
+
+// GetDefaultBranch is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockGitRepository_Expecter) GetDefaultBranch(ctx interface{}) *MockGitRepository_GetDefaultBranch_Call {
+	return &MockGitRepository_GetDefaultBranch_Call{Call: _e.mock.On("GetDefaultBranch", ctx)}
+}
+
+func (_c *MockGitRepository_GetDefaultBranch_Call) Run(run func(ctx context.Context)) *MockGitRepository_GetDefaultBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockGitRepository_GetDefaultBranch_Call) Return(_a0 string, _a1 error) *MockGitRepository_GetDefaultBranch_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGitRepository_GetDefaultBranch_Call) RunAndReturn(run func(context.Context) (string, error)) *MockGitRepository_GetDefaultBranch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // History provides a mock function with given fields: ctx, path, ref
 func (_m *MockGitRepository) History(ctx context.Context, path string, ref string) ([]v0alpha1.HistoryItem, error) {
 	ret := _m.Called(ctx, path, ref)
@@ -615,6 +716,39 @@ func (_c *MockGitRepository_ReadTree_Call) Return(_a0 []repository.FileTreeEntry
 
 func (_c *MockGitRepository_ReadTree_Call) RunAndReturn(run func(context.Context, string) ([]repository.FileTreeEntry, error)) *MockGitRepository_ReadTree_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// SetBranch provides a mock function with given fields: branch
+func (_m *MockGitRepository) SetBranch(branch string) {
+	_m.Called(branch)
+}
+
+// MockGitRepository_SetBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetBranch'
+type MockGitRepository_SetBranch_Call struct {
+	*mock.Call
+}
+
+// SetBranch is a helper method to define mock.On call
+//   - branch string
+func (_e *MockGitRepository_Expecter) SetBranch(branch interface{}) *MockGitRepository_SetBranch_Call {
+	return &MockGitRepository_SetBranch_Call{Call: _e.mock.On("SetBranch", branch)}
+}
+
+func (_c *MockGitRepository_SetBranch_Call) Run(run func(branch string)) *MockGitRepository_SetBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockGitRepository_SetBranch_Call) Return() *MockGitRepository_SetBranch_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockGitRepository_SetBranch_Call) RunAndReturn(run func(string)) *MockGitRepository_SetBranch_Call {
+	_c.Run(run)
 	return _c
 }
 

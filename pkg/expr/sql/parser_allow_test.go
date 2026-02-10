@@ -48,6 +48,16 @@ func TestAllowQuery(t *testing.T) {
 			err:  nil,
 		},
 		{
+			name: "allows NOT expression",
+			q:    `SELECT * FROM a_table WHERE NOT a_column`,
+			err:  nil,
+		},
+		{
+			name: "allows NOT with parenthesized expression",
+			q:    `SELECT * FROM a_table WHERE NOT (a_column > 5)`,
+			err:  nil,
+		},
+		{
 			name: "null literal",
 			q:    `SELECT 1 as id, NULL as null_col`,
 			err:  nil,

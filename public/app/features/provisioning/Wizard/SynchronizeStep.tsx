@@ -1,12 +1,11 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Checkbox, Field, Spinner, Stack, Text, TextLink } from '@grafana/ui';
+import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
-import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 
 import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
@@ -29,18 +28,17 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   ]);
 
   const {
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    isUnhealthy,
     healthMessage: repositoryHealthMessages,
-    checked,
     healthStatusNotReady,
     hasError,
     isLoading,
-    refetch: refetchRepositoryStatus,
   } = useRepositoryStatus(repoName);
 
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
-    enableRepositoryStatus: false,
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    healthStatusNotReady,
   });
 
   const { createSyncJob } = useCreateSyncJob({
@@ -49,7 +47,37 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   });
   const [job, setJob] = useState<Job>();
 
-  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
+  useEffect(() => {
+    if (hasError) {
+      setStepStatusInfo({
+        status: 'error',
+        error: {
+          title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
+          message: t(
+            'provisioning.synchronize-step.repository-error-message',
+            'Unable to check repository status. Please verify the repository configuration and try again.'
+          ),
+        },
+      });
+    } else if (isUnhealthy) {
+      setStepStatusInfo({
+        status: 'error',
+        error: {
+          title: t(
+            'provisioning.synchronize-step.repository-unhealthy',
+            'The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.'
+          ),
+          message: repositoryHealthMessages ?? '',
+        },
+      });
+    } else if (isLoading || healthStatusNotReady) {
+      setStepStatusInfo({ status: 'running' });
+    } else {
+      setStepStatusInfo({ status: 'idle' });
+    }
+  }, [isLoading, healthStatusNotReady, hasError, isUnhealthy, repositoryHealthMessages, setStepStatusInfo]);
+
+  const isButtonDisabled = hasError || !isHealthy;
 
   const startSynchronization = async () => {
     const response = await createSyncJob(requiresMigration);
@@ -58,8 +86,30 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     }
   };
 
-  if (isLoading) {
-    return <Spinner />;
+  if (isLoading || healthStatusNotReady) {
+    return (
+      <Box padding={4}>
+        <LoadingPlaceholder
+          text={t('provisioning.synchronize-step.text-checking-repository', 'Checking repository status...')}
+        />
+      </Box>
+    );
+  }
+  if (hasError || isUnhealthy) {
+    // Error message is handled by status context, only show cancel button
+    return (
+      <Stack direction="column" gap={3}>
+        <Field noMargin>
+          <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
+            {isCancelling ? (
+              <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
+            ) : (
+              <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
+            )}
+          </Button>
+        </Field>
+      </Stack>
+    );
   }
   if (job) {
     return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" />;
@@ -73,29 +123,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           to the repository and provisioned back into the instance.
         </Trans>
       </Text>
-      {hasError && (
-        <ProvisioningAlert
-          error={{
-            title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
-            message: t(
-              'provisioning.synchronize-step.repository-error-message',
-              'Unable to check repository status. Please verify the repository configuration and try again.'
-            ),
-          }}
-        />
-      )}
-      {repositoryHealthMessages && !isRepositoryHealthy && !hasError && (
-        <ProvisioningAlert
-          error={{
-            title: t(
-              'provisioning.synchronize-step.repository-unhealthy',
-              'The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.'
-            ),
-            message: repositoryHealthMessages,
-          }}
-        />
-      )}
-      {isRepositoryHealthy && (
+      {isHealthy && (
         <Alert
           title={t('provisioning.wizard.alert-title', 'Important: Review Git Sync limitations before proceeding')}
           severity={'warning'}
@@ -193,44 +221,18 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
               </Trans>
             ) : (
               <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                Import existing dashboards from all folders into the new provisioned folder
+                Import existing dashboards from connected external storage into the provisioning folder created in the
+                previous step
               </Trans>
             )
           }
         />
       </Field>
-      {healthStatusNotReady ? (
-        <>
-          <Stack>
-            <Trans i18nKey="provisioning.wizard.check-status-message">
-              Repository connecting, synchronize will be ready soon.
-            </Trans>
-          </Stack>
-          <Stack>
-            <Stack>
-              <Button onClick={refetchRepositoryStatus} disabled={isLoading}>
-                <Trans i18nKey="provisioning.wizard.check-status-button">Check repository status</Trans>
-              </Button>
-            </Stack>
-          </Stack>
-        </>
-      ) : (
-        <Field noMargin>
-          {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
-            <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
-              {isCancelling ? (
-                <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
-              ) : (
-                <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
-              )}
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
-              <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
-            </Button>
-          )}
-        </Field>
-      )}
+      <Field noMargin>
+        <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
+          <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
+        </Button>
+      </Field>
     </Stack>
   );
 });
