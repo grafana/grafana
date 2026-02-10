@@ -27,7 +27,7 @@ import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControls
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { prepareCandlestickFields } from './fields';
-import { Options, defaultCandlestickColors, VizDisplayMode } from './types';
+import { type Options, defaultCandlestickColors, VizDisplayMode } from './panelcfg.gen';
 import { drawMarkers, FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<Options> {}

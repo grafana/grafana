@@ -7,13 +7,12 @@ import { IconButton } from '@grafana/ui';
 
 import { FieldNameMetaStore } from '../../../explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from '../../../explore/Logs/utils/logs';
-import { LogListModel } from '../panel/processing';
 
-import { FIELD_SELECTOR_DEFAULT_WIDTH, FieldSelector, FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
+import { FIELD_SELECTOR_DEFAULT_WIDTH, FIELD_SELECTOR_MIN_WIDTH, FieldSelector, FieldWithStats } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
+import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';
 import { logsFieldSelectorWrapperStyles } from './styles';
-import { getSuggestedFields } from './suggestedFields';
 
 /**
  * FieldSelector wrapper for the LogsTable visualization.
@@ -22,22 +21,22 @@ interface LogsTableFieldSelectorProps {
   columnsWithMeta: FieldNameMetaStore;
   clear(): void;
   dataFrames: DataFrame[];
-  logs: LogListModel[];
   reorder(columns: string[]): void;
   setSidebarWidth(width: number): void;
   sidebarWidth: number;
   toggle(key: string): void;
+  getSuggestedFields?: (dataFrame: DataFrame, columns: string[], defaultColumns: string[]) => FieldWithStats[];
 }
 
 export const LogsTableFieldSelector = ({
   columnsWithMeta,
   clear: clearProp,
   dataFrames,
-  logs,
   reorder,
   setSidebarWidth,
   sidebarWidth,
   toggle,
+  getSuggestedFields = getSuggestedFieldsFromTable,
 }: LogsTableFieldSelectorProps) => {
   const setSidebarWidthWrapper = useCallback(
     (width: number) => {
@@ -96,10 +95,9 @@ export const LogsTableFieldSelector = ({
     [columnsWithMeta]
   );
 
-  const suggestedFields = useMemo(
-    () => getSuggestedFields(logs, displayedColumns, defaultColumns),
-    [defaultColumns, displayedColumns, logs]
-  );
+  const suggestedFields = useMemo(() => {
+    return getSuggestedFields(dataFrames[0], displayedColumns, defaultColumns);
+  }, [dataFrames, defaultColumns, displayedColumns, getSuggestedFields]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
   return sidebarWidth > FIELD_SELECTOR_MIN_WIDTH * 2 ? (

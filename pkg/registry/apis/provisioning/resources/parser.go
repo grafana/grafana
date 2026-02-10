@@ -187,7 +187,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if obj.GetName() == "" {
 		if obj.GetGenerateName() == "" {
-			return nil, ErrMissingName
+			return nil, NewResourceValidationError(ErrMissingName)
 		}
 		// Generate a new UID
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())

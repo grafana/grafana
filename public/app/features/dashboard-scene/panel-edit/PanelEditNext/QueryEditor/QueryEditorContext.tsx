@@ -1,13 +1,20 @@
 import { createContext, ReactNode, useContext } from 'react';
 
-import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
+import {
+  DataQueryError,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataTransformerConfig,
+  PanelData,
+} from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
-import { Transformation } from './types';
+import { QueryOptionField, Transformation } from './types';
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -27,11 +34,20 @@ export interface PanelState {
   transformations: Transformation[];
 }
 
+export interface QueryOptionsState {
+  options: QueryGroupOptions;
+  isQueryOptionsOpen: boolean;
+  openSidebar: (focusField?: QueryOptionField) => void;
+  closeSidebar: () => void;
+  focusedField: QueryOptionField | null;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
+  queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
     dsSettings?: DataSourceInstanceSettings;
@@ -51,6 +67,8 @@ export interface QueryEditorActions {
   toggleQueryHide: (refId: string) => void;
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
+  onQueryOptionsChange: (options: QueryGroupOptions) => void;
+  updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);
