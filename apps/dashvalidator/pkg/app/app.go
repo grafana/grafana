@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	validatorv1alpha1 "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/dashvalidator/v1alpha1"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -393,12 +392,5 @@ func getOrgIDFromNamespace(namespace string) (int64, error) {
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	gv := schema.GroupVersion{
-		Group:   "dashvalidator.grafana.app",
-		Version: "v1alpha1",
-	}
-
-	return map[schema.GroupVersion][]resource.Kind{
-		gv: {validatorv1alpha1.DashboardCompatibilityScoreKind()},
-	}
+	return map[schema.GroupVersion][]resource.Kind{}
 }
