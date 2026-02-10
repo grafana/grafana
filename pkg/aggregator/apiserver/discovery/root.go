@@ -54,7 +54,7 @@ func (a *RootDiscoveryHandler) Handle(req *restful.Request, resp *restful.Respon
 	apisHandlerWithAggregationSupport := aggregated.WrapAggregatedDiscoveryToHandler(
 		a.v1handler(chain),
 		a.v2handler(chain),
-		nil, // peer ??????
+		nil, // peerAggregatedHandler
 	)
 	apisHandlerWithAggregationSupport.ServeHTTP(resp.ResponseWriter, req.Request)
 }
