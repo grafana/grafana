@@ -157,11 +157,18 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const updatedQueries = addQuery(currentQueries, newQuery);
-    const newItem = updatedQueries[updatedQueries.length - 1];
 
-    // If afterRefId is specified, move the new query (currently at end) to just after it
-    if (afterRefId) {
-      updatedQueries.pop();
+    // Identify the newly added query by refId rather than position, so this
+    // is resilient to future changes in how addQuery orders the array.
+    const existingRefIds = new Set(currentQueries.map((q) => q.refId));
+    const newItem = updatedQueries.find((q) => !existingRefIds.has(q.refId));
+
+    // If afterRefId is specified, move the new query to just after it
+    if (afterRefId && newItem) {
+      const newItemIndex = updatedQueries.indexOf(newItem);
+      if (newItemIndex !== -1) {
+        updatedQueries.splice(newItemIndex, 1);
+      }
       const afterIndex = updatedQueries.findIndex((q) => q.refId === afterRefId);
       if (afterIndex !== -1) {
         updatedQueries.splice(afterIndex + 1, 0, newItem);
