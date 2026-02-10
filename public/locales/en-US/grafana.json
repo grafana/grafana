@@ -12968,14 +12968,12 @@
   "query-editor": {
     "action": {
       "coming-soon": "Transformation actions coming soon",
-      "delete": "Delete {{type}}",
-      "duplicate": "Duplicate query",
+      "duplicate": "Duplicate {{type}}",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "inspector": "Query inspector",
-      "more-actions": "More actions",
-      "remove-query": "Remove query",
-      "remove-transformation": "Remove transformation",
+      "more-actions": "More {{type}} actions",
+      "remove": "Remove {{type}}",
       "show": "Show {{type}}",
       "show-help": "Show data source help"
     },

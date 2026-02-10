@@ -1,7 +1,6 @@
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
-import { QueryEditorType } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface HoverActionsProps {
@@ -13,7 +12,6 @@ interface HoverActionsProps {
 
 export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: HoverActionsProps) {
   const { cardType } = useQueryEditorUIContext();
-  const typeText = cardType === QueryEditorType.Query ? 'query' : 'transformation';
 
   return (
     <Stack direction="row" gap={0}>
@@ -23,7 +21,7 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
           fill="text"
           icon="copy"
           variant="secondary"
-          aria-label={t('query-editor.action.duplicate', 'Duplicate query')}
+          aria-label={t('query-editor.action.duplicate', 'Duplicate {{type}}', { type: cardType })}
           onClick={(e) => {
             e.stopPropagation();
             onDuplicate();
@@ -35,7 +33,7 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         fill="text"
         icon="trash-alt"
         variant="secondary"
-        aria-label={t('query-editor.action.delete', 'Delete {{type}}', { type: typeText })}
+        aria-label={t('query-editor.action.remove', 'Remove {{type}}', { type: cardType })}
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
@@ -48,8 +46,8 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         variant="secondary"
         aria-label={
           isHidden
-            ? t('query-editor.action.show', 'Show {{type}}', { type: typeText })
-            : t('query-editor.action.hide', 'Hide {{type}}', { type: typeText })
+            ? t('query-editor.action.show', 'Show {{type}}', { type: cardType })
+            : t('query-editor.action.hide', 'Hide {{type}}', { type: cardType })
         }
         onClick={(e) => {
           e.stopPropagation();

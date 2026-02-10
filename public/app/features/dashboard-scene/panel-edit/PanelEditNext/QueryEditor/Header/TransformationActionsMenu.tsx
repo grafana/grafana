@@ -27,7 +27,7 @@ export function TransformationActionsMenu() {
           <Menu.Item label={t('query-editor.action.coming-soon', 'Transformation actions coming soon')} disabled />
           <Menu.Divider />
           <Menu.Item
-            label={t('query-editor.action.remove-transformation', 'Remove transformation')}
+            label={t('query-editor.action.remove', 'Remove {{type}}', { type: 'transformation' })}
             icon="trash-alt"
             onClick={() => {}} // noop for now
             destructive
@@ -41,8 +41,8 @@ export function TransformationActionsMenu() {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More actions')}
-        tooltip={t('query-editor.action.more-actions', 'More actions')}
+        aria-label={t('query-editor.action.more-actions', 'More {{type}} actions', { type: 'transformation' })}
+        tooltip={t('query-editor.action.more-actions', 'More {{type}} actions', { type: 'transformation' })}
       />
     </Dropdown>
   );

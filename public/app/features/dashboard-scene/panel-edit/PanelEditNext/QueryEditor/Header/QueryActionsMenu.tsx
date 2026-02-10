@@ -84,7 +84,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         <Menu>
           {!isEditingQuery && (
             <Menu.Item
-              label={t('query-editor.action.duplicate', 'Duplicate query')}
+              label={t('query-editor.action.duplicate', 'Duplicate {{type}}', { type: cardType })}
               icon="copy"
               onClick={() => duplicateQuery(selectedQuery.refId)}
             />
@@ -92,7 +92,9 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
 
           <Menu.Item
             label={
-              isHidden ? t('query-editor.action.show', 'Show response') : t('query-editor.action.hide', 'Hide response')
+              isHidden
+                ? t('query-editor.action.show', 'Show {{type}}', { type: cardType })
+                : t('query-editor.action.hide', 'Hide {{type}}', { type: cardType })
             }
             icon={isHidden ? 'eye-slash' : 'eye'}
             onClick={() => toggleQueryHide(selectedQuery.refId)}
@@ -133,7 +135,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
             <>
               <Menu.Divider />
               <Menu.Item
-                label={t('query-editor.action.remove-query', 'Remove query')}
+                label={t('query-editor.action.remove', 'Remove {{type}}', { type: cardType })}
                 icon="trash-alt"
                 onClick={() => deleteQuery(selectedQuery.refId)}
                 destructive
@@ -149,8 +151,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More query actions')}
-        tooltip={t('query-editor.action.more-actions', 'More query actions')}
+        aria-label={t('query-editor.action.more-actions', 'More {{type}} actions', { type: cardType })}
+        tooltip={t('query-editor.action.more-actions', 'More {{type}} actions', { type: cardType })}
       />
     </Dropdown>
   );
