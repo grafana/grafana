@@ -24,6 +24,7 @@ import { getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { filterDataTransformerConfigs } from './QueryEditor/utils';
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -159,6 +160,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index, 1);
       return queries;
     });
+    this.runQueries();
   };
 
   public duplicateQuery = (refId: string) => {
@@ -170,6 +172,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index + 1, 0, duplicated);
       return queries;
     });
+    this.runQueries();
   };
 
   public toggleQueryHide = (refId: string) => {
@@ -177,6 +180,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries[index] = { ...query, hide: !query.hide };
       return queries;
     });
+    this.runQueries();
   };
 
   public runQueries = () => {
@@ -184,6 +188,55 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (queryRunner) {
       queryRunner.runQueries();
     }
+  };
+
+  // Transformation Operations
+  private getSceneDataTransformer(): SceneDataTransformer | undefined {
+    const panel = this.state.panelRef.resolve();
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      return panel.state.$data;
+    }
+    return undefined;
+  }
+
+  private getTransformations(index: number): {
+    transformations: DataTransformerConfig[] | undefined;
+    transformer: SceneDataTransformer | undefined;
+  } {
+    const transformer = this.getSceneDataTransformer();
+
+    if (transformer) {
+      const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
+
+      if (index >= 0 && index < transformations.length) {
+        return { transformations, transformer };
+      }
+    }
+
+    return { transformations: undefined, transformer: undefined };
+  }
+
+  public deleteTransformation = (index: number) => {
+    const { transformations, transformer } = this.getTransformations(index);
+    if (!transformations || !transformer) {
+      return;
+    }
+
+    transformations.splice(index, 1);
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public toggleTransformationDisabled = (index: number) => {
+    const { transformations, transformer } = this.getTransformations(index);
+    if (!transformations || !transformer) {
+      return;
+    }
+
+    const transformation = transformations[index];
+    transformations[index] = { ...transformation, disabled: !transformation.disabled };
+    transformer.setState({ transformations });
+    this.runQueries();
   };
 
   public changeDataSource = async (dsRef: DataSourceRef, queryRefId: string) => {
