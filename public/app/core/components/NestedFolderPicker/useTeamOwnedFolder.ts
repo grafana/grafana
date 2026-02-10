@@ -33,10 +33,7 @@ export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFolder
     isLoading: foldersLoading,
   } = useSearchDashboardsAndFoldersQuery(
     {
-      // API supports multiple owner references but the client type expects a string because the typing isn't right
-      // in the openAPI spec.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      ownerReference: ownerReferences as unknown as string,
+      ownerReference: ownerReferences,
       type: 'folder',
     },
     { skip: shouldSkipSearch }
