@@ -42,12 +42,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
           tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
         />
       )}
-      <Badge
-        title={t('folder-repo.provisioned-badge', 'Provisioned')}
-        color="purple"
-        icon="exchange-alt"
-        tooltip={repoTooltipText}
-      />
+      <Badge color="purple" icon="exchange-alt" tooltip={repoTooltipText} />
     </Stack>
   );
 });
