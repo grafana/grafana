@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { useActionsContext, useDatasourceContext } from '../QueryEditorContext';
+import { useActionsContext, useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { Transformation } from '../types';
 
 interface UseSidebarDragAndDropArgs {
@@ -15,6 +15,7 @@ interface UseSidebarDragAndDropArgs {
 export function useSidebarDragAndDrop({ queries, transformations }: UseSidebarDragAndDropArgs) {
   const { dsSettings } = useDatasourceContext();
   const { updateQueries, reorderTransformations } = useActionsContext();
+  const { setSelectedQuery, setSelectedTransformation } = useQueryEditorUIContext();
 
   const onQueryDragStart = useCallback(() => {
     reportInteraction('query_row_reorder_started', {
@@ -42,10 +43,12 @@ export function useSidebarDragAndDrop({ queries, transformations }: UseSidebarDr
         return;
       }
 
+      const draggedQuery = queries[startIndex];
       const reordered = Array.from(queries);
       const [removed] = reordered.splice(startIndex, 1);
       reordered.splice(endIndex, 0, removed);
       updateQueries(reordered);
+      setSelectedQuery(draggedQuery);
 
       reportInteraction('query_row_reorder_ended', {
         startIndex,
@@ -54,7 +57,7 @@ export function useSidebarDragAndDrop({ queries, transformations }: UseSidebarDr
         datasourceType: dsSettings?.type,
       });
     },
-    [queries, updateQueries, dsSettings?.type]
+    [queries, updateQueries, setSelectedQuery, dsSettings?.type]
   );
 
   const onTransformationDragEnd = useCallback(
@@ -70,12 +73,18 @@ export function useSidebarDragAndDrop({ queries, transformations }: UseSidebarDr
         return;
       }
 
+      const draggedTransformation = transformations[startIndex];
       const reordered = Array.from(transformations);
       const [removed] = reordered.splice(startIndex, 1);
       reordered.splice(endIndex, 0, removed);
       reorderTransformations(reordered.map((t) => t.transformConfig));
+      // transformId is index-based (see useTransformations), so use the new index
+      setSelectedTransformation({
+        ...draggedTransformation,
+        transformId: `${draggedTransformation.transformConfig.id}-${endIndex}`,
+      });
     },
-    [transformations, reorderTransformations]
+    [transformations, reorderTransformations, setSelectedTransformation]
   );
 
   return { onQueryDragStart, onQueryDragEnd, onTransformationDragEnd };

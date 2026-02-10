@@ -9,6 +9,8 @@ import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 const mockUpdateQueries = jest.fn();
 const mockReorderTransformations = jest.fn();
+const mockSetSelectedQuery = jest.fn();
+const mockSetSelectedTransformation = jest.fn();
 const mockReportInteraction = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
@@ -23,6 +25,10 @@ jest.mock('../QueryEditorContext', () => ({
   useActionsContext: () => ({
     updateQueries: mockUpdateQueries,
     reorderTransformations: mockReorderTransformations,
+  }),
+  useQueryEditorUIContext: () => ({
+    setSelectedQuery: mockSetSelectedQuery,
+    setSelectedTransformation: mockSetSelectedTransformation,
   }),
 }));
 
@@ -92,6 +98,14 @@ describe('useSidebarDragAndDrop', () => {
       expect(mockReportInteraction).not.toHaveBeenCalled();
     });
 
+    it('should select the dragged query after reorder', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+
+      result.current.onQueryDragEnd(makeDropResult(0, 2));
+
+      expect(mockSetSelectedQuery).toHaveBeenCalledWith(queries[0]);
+    });
+
     it('should report canceled interaction when dropped at same index', () => {
       const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
 
@@ -134,6 +148,17 @@ describe('useSidebarDragAndDrop', () => {
       result.current.onTransformationDragEnd(makeDropResult(1, 1));
 
       expect(mockReorderTransformations).not.toHaveBeenCalled();
+    });
+
+    it('should select the dragged transformation with updated index-based id after reorder', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+
+      result.current.onTransformationDragEnd(makeDropResult(0, 2));
+
+      expect(mockSetSelectedTransformation).toHaveBeenCalledWith({
+        ...transformations[0],
+        transformId: `${transformations[0].transformConfig.id}-2`,
+      });
     });
 
     it('should not report analytics on transformation reorder', () => {
