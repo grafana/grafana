@@ -39,7 +39,6 @@ function grafana::codegen::gen_openapi() {
     local out_base=""
     local report="/dev/null"
     local update_report=""
-    local include_common_input_dirs=""
     local fix_common_ref_paths=""
     local boilerplate="${KUBE_CODEGEN_ROOT}/hack/boilerplate.go.txt"
     local v="${KUBE_VERBOSE:-0}"
