@@ -109,9 +109,7 @@ func (t *FolderTree) insert(id int64, uid string, title string, parentUID *strin
 			t.Nodes[i].ID = id
 			t.IDIndex[id] = i
 		}
-		if accessible {
-			t.Nodes[i].Accessible = true
-		}
+		t.Nodes[i].Accessible = accessible
 	}
 
 	return i
@@ -168,7 +166,10 @@ func (t *FolderTree) Contains(uid string) bool {
 // Returns empty string if the folder is not found.
 func (t *FolderTree) GetTitle(uid string) string {
 	if i, ok := t.Index[uid]; ok {
-		return t.Nodes[i].Title
+		node := t.Nodes[i]
+		if node.Accessible {
+			return node.Title
+		}
 	}
 	return ""
 }

@@ -24,7 +24,7 @@ func hasCache(ctx context.Context) bool {
 	return ok
 }
 
-// folderTreeCache provides request-scoped caching for folder trees.
+// folderTreeCache provides caching for folder trees.
 type folderTreeCache struct {
 	cache     *localcache.CacheService
 	folderSvc folder.Service
@@ -38,7 +38,7 @@ func newFolderTreeCache(folderSvc folder.Service) *folderTreeCache {
 }
 
 // get returns a folder tree for the given user, using request-scoped caching.
-// The tree is cached per (orgID, userUID, requestID).
+// The tree is cached per (orgID, userUID).
 func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*folder.FolderTree, error) {
 	cacheKey := fmt.Sprintf("folder_tree_%d_%s", user.GetOrgID(), user.GetUID())
 	if cached, ok := c.cache.Get(cacheKey); ok {
