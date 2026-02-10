@@ -10272,7 +10272,7 @@
     },
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
-    "description-show-controls": "Display table controls",
+    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Drag and drop icon",
@@ -10612,6 +10612,7 @@
   },
   "logstable": {
     "category-table": "Logs Table",
+    "description-show-controls": "Display table controls",
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
