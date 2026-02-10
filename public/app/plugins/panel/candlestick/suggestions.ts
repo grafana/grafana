@@ -1,8 +1,9 @@
 import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { defaultOptions } from './defaultOptions';
 import { prepareCandlestickFields } from './fields';
-import { defaultOptions, Options } from './types';
+import { type Options } from './panelcfg.gen';
 
 export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (

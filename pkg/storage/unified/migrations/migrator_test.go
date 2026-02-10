@@ -10,9 +10,12 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
+	dashboardpkg "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	playlistpkg "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations/testcases"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -21,25 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
-}
-
-// resourceMigratorTestCase defines the interface for testing a resource migrator.
-type resourceMigratorTestCase interface {
-	// name returns the test case name
-	name() string
-	// resources returns the GVRs that this migrator handles
-	resources() []schema.GroupVersionResource
-	// setup creates test resources in legacy storage (Mode0)
-	setup(t *testing.T, helper *apis.K8sTestHelper)
-	// verify checks that resources exist (or don't exist) in unified storage
-	verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }
 
 // TestIntegrationMigrations verifies that legacy storage data is correctly migrated to unified storage.
@@ -50,16 +39,16 @@ type resourceMigratorTestCase interface {
 func TestIntegrationMigrations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	migrationTestCases := []resourceMigratorTestCase{
-		newFoldersAndDashboardsTestCase(),
-		newPlaylistsTestCase(),
+	migrationTestCases := []testcases.ResourceMigratorTestCase{
+		testcases.NewFoldersAndDashboardsTestCase(),
+		testcases.NewPlaylistsTestCase(),
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
 }
 
 // runMigrationTestSuite executes the migration test suite for the given test cases
-func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
+func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorTestCase) {
 	if db.IsTestDbSQLite() {
 		// Share the same SQLite DB file between steps
 		tmpDir := t.TempDir()
@@ -79,7 +68,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 	// Store UIDs created by each test case
 	type testCaseState struct {
-		tc resourceMigratorTestCase
+		tc testcases.ResourceMigratorTestCase
 	}
 	testStates := make([]testCaseState, len(testCases))
 	for i, tc := range testCases {
@@ -93,7 +82,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		// Enforce Mode0 for all migrated resources
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
-			for _, gvr := range tc.resources() {
+			for _, gvr := range tc.Resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
 					DualWriterMode: grafanarest.Mode0,
@@ -116,10 +105,10 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 		for i := range testStates {
 			state := &testStates[i]
-			t.Run(state.tc.name(), func(t *testing.T) {
-				state.tc.setup(t, helper)
+			t.Run(state.tc.Name(), func(t *testing.T) {
+				state.tc.Setup(t, helper)
 				// Verify resources were created in legacy storage
-				state.tc.verify(t, helper, true)
+				state.tc.Verify(t, helper, true)
 			})
 		}
 	})
@@ -139,7 +128,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		// Build unified storage config for Mode5
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
-			for _, gvr := range tc.resources() {
+			for _, gvr := range tc.Resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
 					DualWriterMode: grafanarest.Mode5,
@@ -162,9 +151,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		t.Cleanup(helper.Shutdown)
 
 		for _, state := range testStates {
-			t.Run(state.tc.name(), func(t *testing.T) {
+			t.Run(state.tc.Name(), func(t *testing.T) {
 				// Verify resources don't exist in unified storage yet
-				state.tc.verify(t, helper, false)
+				state.tc.Verify(t, helper, false)
 			})
 		}
 	})
@@ -173,7 +162,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		// Build unified storage config for Mode5
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
-			for _, gvr := range tc.resources() {
+			for _, gvr := range tc.Resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
 					DualWriterMode:  grafanarest.Mode5,
@@ -196,9 +185,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		t.Cleanup(helper.Shutdown)
 
 		for _, state := range testStates {
-			t.Run(state.tc.name(), func(t *testing.T) {
+			t.Run(state.tc.Name(), func(t *testing.T) {
 				// Verify resources don't exist in unified storage yet
-				state.tc.verify(t, helper, false)
+				state.tc.Verify(t, helper, false)
 			})
 		}
 		verifyRegisteredMigrations(t, helper, false, true)
@@ -220,9 +209,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		t.Cleanup(helper.Shutdown)
 
 		for _, state := range testStates {
-			t.Run(state.tc.name(), func(t *testing.T) {
+			t.Run(state.tc.Name(), func(t *testing.T) {
 				shouldExist := true
-				for _, gvr := range state.tc.resources() {
+				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 					// Resources exist if they're either:
 					// 1. In MigratedUnifiedResources (enabled by default), OR
@@ -232,7 +221,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 						break
 					}
 				}
-				state.tc.verify(t, helper, shouldExist)
+				state.tc.Verify(t, helper, shouldExist)
 			})
 		}
 
@@ -244,7 +233,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		// Trigger migrations that are not enabled by default
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
-			for _, gvr := range tc.resources() {
+			for _, gvr := range tc.Resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
 					EnableMigration: true,
@@ -266,9 +255,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		t.Cleanup(helper.Shutdown)
 
 		for _, state := range testStates {
-			t.Run(state.tc.name(), func(t *testing.T) {
+			t.Run(state.tc.Name(), func(t *testing.T) {
 				// Verify resources still exist in unified storage after restart
-				state.tc.verify(t, helper, true)
+				state.tc.Verify(t, helper, true)
 			})
 		}
 
@@ -321,30 +310,6 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 	}
 	require.NoError(t, rows.Err())
 	require.Len(t, migrationIDs, len(expectedMigrationIDs))
-}
-
-// verifyResourceCount verifies that the expected number of resources exist in K8s storage
-func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedCount int) {
-	t.Helper()
-
-	l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err)
-
-	resources, err := meta.ExtractList(l)
-	require.NoError(t, err)
-	require.Equal(t, expectedCount, len(resources))
-}
-
-// verifyResource verifies that a resource with the given UID exists in K8s storage
-func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, shouldExist bool) {
-	t.Helper()
-
-	_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-	if shouldExist {
-		require.NoError(t, err)
-	} else {
-		require.Error(t, err)
-	}
 }
 
 // verifyKeyPathPopulated verifies that all rows in resource_history have a non-empty key_path.
@@ -436,7 +401,10 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 
 			// Create migrator with mock client
 			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-			registry := migrations.ProvideMigrationRegistry(mockAccessor)
+			mockPlaylist := &legacy.MockPlaylistMigrator{}
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 			migrator := migrations.ProvideUnifiedMigrator(
 				mockAccessor,
 				mockClient,
@@ -491,7 +459,10 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 
 	// Create migrator with mock client
 	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	registry := migrations.ProvideMigrationRegistry(mockAccessor)
+	mockPlaylist := &legacy.MockPlaylistMigrator{}
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 	migrator := migrations.ProvideUnifiedMigrator(
 		mockAccessor,
 		mockClient,
@@ -678,7 +649,10 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 
 			// Create migrator with mock client
 			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-			registry := migrations.ProvideMigrationRegistry(mockAccessor)
+			mockPlaylist := &legacy.MockPlaylistMigrator{}
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 			migrator := migrations.ProvideUnifiedMigrator(
 				mockAccessor,
 				mockClient,
@@ -749,7 +723,10 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 
 	// Create migrator with mock client
 	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	registry := migrations.ProvideMigrationRegistry(mockAccessor)
+	mockPlaylist := &legacy.MockPlaylistMigrator{}
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
+	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
 	migrator := migrations.ProvideUnifiedMigrator(
 		mockAccessor,
 		mockClient,

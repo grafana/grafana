@@ -174,12 +174,16 @@ export function QueryEditorDetailsSidebar() {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      height: '100%',
-      minHeight: '100vh',
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
       display: 'flex',
       flexDirection: 'column',
       width: CONTENT_SIDE_BAR.width,
       backgroundColor: theme.colors.background.primary,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      zIndex: 20,
     }),
     header: css({
       width: '100%',

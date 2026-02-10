@@ -4880,7 +4880,6 @@
       "paste-panel": "Tempel panel",
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
-      "un-group-panels": "Pisah grup",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9478,6 +9477,10 @@
     "secret-form-field": {
       "reset": "Atur ulang"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Gagal memuat opsi",
       "loading": "Memuat opsi...",
@@ -10485,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Batal terapkan wrap pada baris",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
@@ -10511,6 +10520,7 @@
     "name-show-controls": "Tampilkan kontrol",
     "name-time": "Tampilkan stempel waktu",
     "name-unique-labels": "Label unik",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Bungkus baris",
     "order-options": {
       "label-newest-first": "Terbaru lebih dulu",
@@ -10611,6 +10621,16 @@
       "message-same-name-current-folder": "Dasbor atau folder dengan nama yang sama sudah ada di folder saat ini",
       "message-same-name-general": "Folder atau dasbor dengan nama yang sama sudah ada di folder root"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Opsi tidak ditemukan"
@@ -11450,9 +11470,6 @@
     "noOptionsMessage-no-organizations-found": "Tidak ada organisasi yang ditemukan",
     "select-placeholder": "Pilih organisasi"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edit judul"
@@ -12080,7 +12097,6 @@
       "placeholder-my-repository-connection": "Koneksi repositori saya",
       "retry-action": "",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} dasbor",
@@ -12598,12 +12614,9 @@
       "error-starting-job": "Kesalahan saat memulai pekerjaan"
     },
     "sync-repository": {
-      "body-edit-configuration": "Edit konfigurasi",
-      "button-edit": "Edit",
       "error-pulling-resources": "Kesalahan saat melakukan pull pada sumber daya",
       "pull": "Pull",
       "success-pull-started": "Pull dimulai",
-      "title-pull-not-enabled": "Pull tidak diaktifkan",
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
@@ -12612,7 +12625,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "dan klik",
@@ -12649,8 +12663,6 @@
       "button-cancelling": "",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12855,6 +12867,9 @@
       "query-name-div-title-edit-query-name": "Edit nama kueri"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID Pelacakan: {{traceId}})"
     },
     "query-group": {
@@ -12973,6 +12988,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14177,6 +14197,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Tidak ada data yang ditemukan dalam respons"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {
