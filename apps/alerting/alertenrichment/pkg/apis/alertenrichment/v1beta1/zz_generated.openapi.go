@@ -15,8 +15,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		AlertEnrichment{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref),
-		"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1.AlertEnrichmentJSONCodec": schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentJSONCodec(ref),
+		AlertEnrichment{}.OpenAPIModelName():     schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref),
 		AlertEnrichmentList{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentList(ref),
 		AlertEnrichmentSpec{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentSpec(ref),
 		AssertsEnricher{}.OpenAPIModelName():     schema_pkg_apis_alertenrichment_v1beta1_AssertsEnricher(ref),
@@ -75,17 +74,6 @@ func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichment(ref common.Referenc
 		},
 		Dependencies: []string{
 			AlertEnrichmentSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_alertenrichment_v1beta1_AlertEnrichmentJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "AlertEnrichmentJSONCodec is a JSON codec for AlertEnrichment resources",
-				Type:        []string{"object"},
-			},
-		},
 	}
 }
 
