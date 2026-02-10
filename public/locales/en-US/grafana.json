@@ -12967,14 +12967,15 @@
   "query-editor": {
     "action": {
       "coming-soon": "Transformation actions coming soon",
+      "delete": "Delete {{type}}",
       "duplicate": "Duplicate query",
-      "hide": "Hide response",
+      "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "inspector": "Query inspector",
       "more-actions": "More actions",
       "remove-query": "Remove query",
       "remove-transformation": "Remove transformation",
-      "show": "Show response",
+      "show": "Show {{type}}",
       "show-help": "Show data source help"
     },
     "details-sidebar": {
