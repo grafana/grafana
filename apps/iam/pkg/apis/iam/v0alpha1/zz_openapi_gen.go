@@ -214,7 +214,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "All permissions for this role",
+							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -255,7 +255,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 						},
 					},
 				},
-				Required: []string{"title", "description", "group", "permissions"},
+				Required: []string{"title", "description", "group", "permissions", "permissionsOmitted"},
 			},
 		},
 		Dependencies: []string{
@@ -1344,7 +1344,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "All permissions for this role",
+							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -1385,7 +1385,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"title", "description", "group", "permissions"},
+				Required: []string{"title", "description", "group", "permissions", "permissionsOmitted"},
 			},
 		},
 		Dependencies: []string{
@@ -2236,7 +2236,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "All permissions for this role",
+							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -2277,7 +2277,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"title", "description", "group", "permissions"},
+				Required: []string{"title", "description", "group", "permissions", "permissionsOmitted"},
 			},
 		},
 		Dependencies: []string{

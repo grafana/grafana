@@ -20,11 +20,11 @@ RoleSpec: {
 	description: string
 	group: string
 
-	// All permissions for this role
+	// Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.
 	permissions: [...#Permission]
 
 	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
-	permissionsOmitted?: [...#Permission]
+	permissionsOmitted: [...#Permission] | *[]
 
 	// Roles to take permissions from (for now the list should be of size 1)
 	roleRefs?: [...#RoleRef]

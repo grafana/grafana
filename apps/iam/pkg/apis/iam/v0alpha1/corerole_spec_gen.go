@@ -34,10 +34,10 @@ type CoreRoleSpec struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Group       string `json:"group"`
-	// All permissions for this role
+	// Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.
 	Permissions []CoreRolespecPermission `json:"permissions"`
 	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
-	PermissionsOmitted []CoreRolespecPermission `json:"permissionsOmitted,omitempty"`
+	PermissionsOmitted []CoreRolespecPermission `json:"permissionsOmitted"`
 	// Roles to take permissions from (for now the list should be of size 1)
 	// TODO:
 	// delegatable?: bool
@@ -49,6 +49,7 @@ type CoreRoleSpec struct {
 // NewCoreRoleSpec creates a new CoreRoleSpec object.
 func NewCoreRoleSpec() *CoreRoleSpec {
 	return &CoreRoleSpec{
-		Permissions: []CoreRolespecPermission{},
+		Permissions:        []CoreRolespecPermission{},
+		PermissionsOmitted: []CoreRolespecPermission{},
 	}
 }

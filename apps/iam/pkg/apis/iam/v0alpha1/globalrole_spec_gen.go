@@ -34,10 +34,10 @@ type GlobalRoleSpec struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Group       string `json:"group"`
-	// All permissions for this role
+	// Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.
 	Permissions []GlobalRolespecPermission `json:"permissions"`
 	// Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only
-	PermissionsOmitted []GlobalRolespecPermission `json:"permissionsOmitted,omitempty"`
+	PermissionsOmitted []GlobalRolespecPermission `json:"permissionsOmitted"`
 	// Roles to take permissions from (for now the list should be of size 1)
 	// TODO:
 	// delegatable?: bool
@@ -49,6 +49,7 @@ type GlobalRoleSpec struct {
 // NewGlobalRoleSpec creates a new GlobalRoleSpec object.
 func NewGlobalRoleSpec() *GlobalRoleSpec {
 	return &GlobalRoleSpec{
-		Permissions: []GlobalRolespecPermission{},
+		Permissions:        []GlobalRolespecPermission{},
+		PermissionsOmitted: []GlobalRolespecPermission{},
 	}
 }
