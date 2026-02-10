@@ -220,55 +220,49 @@ func toSecureJsonData(ds *DataSource) map[string]string {
 	return secure
 }
 
-func (r Converter) AsLegacyDatasource(k8sDS *DataSource) (*datasources.DataSource, error) {
-	pluginType := extractPluginTypeFromAPIVersion(k8sDS.APIVersion)
+func (r Converter) AsLegacyDatasource(ds *DataSource) (*datasources.DataSource, error) {
 
-	ds := &datasources.DataSource{
-		UID:             k8sDS.Name, // K8s uses Name for UID
-		Name:            k8sDS.Spec.Title(),
-		Type:            pluginType,
-		Access:          datasources.DsAccess(k8sDS.Spec.Access()),
-		URL:             k8sDS.Spec.URL(),
-		Database:        k8sDS.Spec.Database(),
-		User:            k8sDS.Spec.User(),
-		BasicAuth:       k8sDS.Spec.BasicAuth(),
-		BasicAuthUser:   k8sDS.Spec.BasicAuthUser(),
-		WithCredentials: k8sDS.Spec.WithCredentials(),
-		IsDefault:       k8sDS.Spec.IsDefault(),
-		ReadOnly:        k8sDS.Spec.ReadOnly(),
-		Version:         int(k8sDS.Generation),
+	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
+		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
+	}
+	info, err := types.ParseNamespace(ds.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// This is nearly identical to AddDataSourceCommand, except for the SecureJsonData and ID
+	legacyDS := &datasources.DataSource{
+		Name:  ds.Spec.Title(),
+		UID:   ds.Name,
+		OrgID: info.OrgID,
+		Type:  r.plugin,
+
+		Access:          datasources.DsAccess(ds.Spec.Access()),
+		URL:             ds.Spec.URL(),
+		Database:        ds.Spec.Database(),
+		User:            ds.Spec.User(),
+		BasicAuth:       ds.Spec.BasicAuth(),
+		BasicAuthUser:   ds.Spec.BasicAuthUser(),
+		WithCredentials: ds.Spec.WithCredentials(),
+		IsDefault:       ds.Spec.IsDefault(),
+		ReadOnly:        ds.Spec.ReadOnly(),
 		SecureJsonData:  make(map[string][]byte),
 	}
 
-	if k8sDS.Labels != nil {
-		if idStr, ok := k8sDS.Labels[utils.LabelKeyDeprecatedInternalID]; ok {
-			ds.ID, _ = strconv.ParseInt(idStr, 10, 64)
+	if ds.Labels != nil {
+		if idStr, ok := ds.Labels[utils.LabelKeyDeprecatedInternalID]; ok {
+			legacyDS.ID, _ = strconv.ParseInt(idStr, 10, 64)
 		}
 	}
 
-	if info, err := types.ParseNamespace(k8sDS.Namespace); err == nil {
-		ds.OrgID = info.OrgID
-	}
-
-	if jsonData := k8sDS.Spec.JSONData(); jsonData != nil {
-		ds.JsonData = simplejson.NewFromAny(jsonData)
+	if jsonData := ds.Spec.JSONData(); jsonData != nil {
+		legacyDS.JsonData = simplejson.NewFromAny(jsonData)
 	}
 
 	// Only the keys are exposed, values are never returned
-	for k := range k8sDS.Secure {
-		ds.SecureJsonData[k] = []byte{}
+	for k := range ds.Secure {
+		legacyDS.SecureJsonData[k] = []byte{}
 	}
 
-	return ds, nil
-}
-
-// extractPluginTypeFromAPIVersion extracts the plugin type from a K8s APIVersion.
-// for example: prometheus.datasource.grafana.app/v0alpha1 -> prometheus
-func extractPluginTypeFromAPIVersion(apiVersion string) string {
-	group := strings.Split(apiVersion, "/")[0]
-	parts := strings.Split(group, ".")
-	if len(parts) > 0 {
-		return parts[0]
-	}
-	return ""
+	return legacyDS, nil
 }

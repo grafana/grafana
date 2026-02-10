@@ -149,4 +149,56 @@ func TestConverter(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("resource to legacy", func(t *testing.T) {
+		converter := NewConverter(
+			types.OrgNamespaceFormatter,
+			"testdata.grafana.datasource.app",
+			"grafana-testdata-datasource",
+			[]string{"testdata"},
+		)
+		tests := []struct {
+			name        string
+			expectedErr string
+		}{
+			{"convert-resource-full", ""},
+			{"convert-resource-empty", ""},
+			{"convert-resource-invalid", "expecting APIGroup: testdata.grafana.datasource.app"},
+			{"convert-resource-invalid2", "invalid stack id"},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				ds := &DataSource{}
+				fpath := filepath.Join("testdata", tt.name+".json")
+				raw, err := os.ReadFile(fpath) // nolint:gosec
+				require.NoError(t, err)
+				err = json.Unmarshal(raw, ds)
+				require.NoError(t, err)
+
+				legacyDS, err := converter.AsLegacyDatasource(ds)
+				if tt.expectedErr != "" {
+					require.ErrorContains(t, err, tt.expectedErr)
+					require.Nil(t, legacyDS, "object should be nil when error exists")
+				} else {
+					require.NoError(t, err)
+				}
+
+				// Verify the result
+				fpath = filepath.Join("testdata", tt.name+"-to-legacy.json")
+				if legacyDS == nil {
+					_, err := os.Stat(fpath)
+					require.Error(t, err, "file should not exist")
+					require.True(t, errors.Is(err, os.ErrNotExist))
+				} else {
+					out, err := json.MarshalIndent(legacyDS, "", "  ")
+					require.NoError(t, err)
+					raw, _ = os.ReadFile(fpath) // nolint:gosec
+					if !assert.JSONEq(t, string(raw), string(out)) {
+						_ = os.WriteFile(fpath, out, 0600)
+					}
+				}
+
+			})
+		}
+	})
 }
