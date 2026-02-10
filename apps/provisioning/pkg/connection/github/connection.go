@@ -218,7 +218,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
+	installation, err := ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		// Check for specific error types
 		switch {
@@ -288,6 +288,20 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		}
+	}
+
+	// Validate permissions
+	permissionErrors := validateInstallationPermissions(installation)
+	if len(permissionErrors) > 0 {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors:  permissionErrors,
+		}, nil
 	}
 
 	return &provisioning.TestResults{
@@ -414,6 +428,64 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 
 	// For the token to be valid, the issuer must be equal to the object appID
 	return claims.Issuer == c.obj.Spec.GitHub.AppID
+}
+
+// validateInstallationPermissions checks if the given installation has required permissions
+func validateInstallationPermissions(installation AppInstallation) []provisioning.ErrorDetails {
+	var errors []provisioning.ErrorDetails
+
+	requiredPerms := map[string]struct {
+		current  AppPermission
+		required AppPermission
+	}{
+		"contents": {
+			current:  installation.Permissions.Contents,
+			required: AppPermissionWrite,
+		},
+		"metadata": {
+			current:  installation.Permissions.Metadata,
+			required: AppPermissionRead,
+		},
+		"pull_requests": {
+			current:  installation.Permissions.PullRequests,
+			required: AppPermissionWrite,
+		},
+		"webhooks": {
+			current:  installation.Permissions.Webhooks,
+			required: AppPermissionWrite,
+		},
+	}
+
+	for name, perm := range requiredPerms {
+		if perm.current < perm.required {
+			detail := fmt.Sprintf(
+				"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
+				name,
+				toAppPermissionString(perm.required),
+				toAppPermissionString(perm.current),
+			)
+			errors = append(errors, provisioning.ErrorDetails{
+				Type:   metav1.CauseTypeForbidden,
+				Field:  field.NewPath("spec", "github", "appID").String(),
+				Detail: detail,
+			})
+		}
+	}
+
+	return errors
+}
+
+func toAppPermissionString(permissions AppPermission) string {
+	switch permissions {
+	case AppPermissionNone:
+		return ""
+	case AppPermissionRead:
+		return "read"
+	case AppPermissionWrite:
+		return "write"
+	}
+
+	return ""
 }
 
 var (

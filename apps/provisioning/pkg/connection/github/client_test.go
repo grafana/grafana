@@ -215,6 +215,104 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "get installation with all permissions",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+							Permissions: &github.InstallationPermissions{
+								Contents:        github.Ptr("write"),
+								Metadata:        github.Ptr("read"),
+								PullRequests:    github.Ptr("write"),
+								RepositoryHooks: github.Ptr("write"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
+				Permissions: conngh.AppPermissions{
+					Contents:     conngh.AppPermissionWrite,
+					Metadata:     conngh.AppPermissionRead,
+					PullRequests: conngh.AppPermissionWrite,
+					Webhooks:     conngh.AppPermissionWrite,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "get installation with nil permissions",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+							Permissions: nil,
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
+				Permissions: conngh.AppPermissions{
+					Contents:     conngh.AppPermissionNone,
+					Metadata:     conngh.AppPermissionNone,
+					PullRequests: conngh.AppPermissionNone,
+					Webhooks:     conngh.AppPermissionNone,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "get installation with partial permissions",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+							Permissions: &github.InstallationPermissions{
+								Contents: github.Ptr("read"),
+								Metadata: nil,
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
+				Permissions: conngh.AppPermissions{
+					Contents:     conngh.AppPermissionRead,
+					Metadata:     conngh.AppPermissionNone,
+					PullRequests: conngh.AppPermissionNone,
+					Webhooks:     conngh.AppPermissionNone,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name:             "invalid installation ID",
 			mockHandler:      mockhub.NewMockedHTTPClient(),
 			appToken:         "test-app-token",

@@ -162,7 +162,7 @@ func TestConnection_Test(t *testing.T) {
 		expectSuccess  bool
 	}{
 		{
-			name: "success - valid app and installation",
+			name: "success - valid app and installation with all permissions",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -180,7 +180,16 @@ func TestConnection_Test(t *testing.T) {
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{ID: 456, Enabled: true}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
 			},
 			expectedCode:  http.StatusOK,
 			expectSuccess: true,
@@ -534,6 +543,272 @@ func TestConnection_Test(t *testing.T) {
 					Detail: "installation not found",
 				},
 			},
+		},
+		{
+			name: "failure - missing contents permission",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionNone,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeForbidden,
+					Field:  "spec.github.appID",
+					Detail: "GitHub App lacks required 'contents' permission: requires 'write', has ''",
+				},
+			},
+		},
+		{
+			name: "failure - insufficient contents permission (read instead of write)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionRead,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeForbidden,
+					Field:  "spec.github.appID",
+					Detail: "GitHub App lacks required 'contents' permission: requires 'write', has 'read'",
+				},
+			},
+		},
+		{
+			name: "failure - missing metadata permission",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionNone,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeForbidden,
+					Field:  "spec.github.appID",
+					Detail: "GitHub App lacks required 'metadata' permission: requires 'read', has ''",
+				},
+			},
+		},
+		{
+			name: "failure - missing pull_requests permission",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionNone,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeForbidden,
+					Field:  "spec.github.appID",
+					Detail: "GitHub App lacks required 'pull_requests' permission: requires 'write', has ''",
+				},
+			},
+		},
+		{
+			name: "failure - missing webhooks permission",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionNone,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeForbidden,
+					Field:  "spec.github.appID",
+					Detail: "GitHub App lacks required 'webhooks' permission: requires 'write', has ''",
+				},
+			},
+		},
+		{
+			name: "failure - multiple missing permissions",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionRead,
+						Metadata:     github.AppPermissionNone,
+						PullRequests: github.AppPermissionNone,
+						Webhooks:     github.AppPermissionNone,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+		},
+		{
+			name: "success - write permission satisfies read requirement",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionWrite,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
 		},
 	}
 

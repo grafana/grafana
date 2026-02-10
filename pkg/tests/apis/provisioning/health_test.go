@@ -2,16 +2,24 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/google/go-github/v82/github"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -228,4 +236,204 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 	require.NoError(t, err)
 
 	return &testResults
+}
+
+func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	// Get the private key for GitHub connection
+	privateKeyBase64 := ""
+	// Read connection_test.go to get the test private key
+	// We'll use the same key that's defined there
+	privateKeyPEM := `-----BEGIN RSA PRIVATE KEY-----
+MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
+KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
+cqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyjpKOXuojJ9wN9a17D2cYU5WkXjoDC
+4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7DA9T8yiZwIWPp5YesgsAPyQLCFPgM
+s77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQohUID0BIxE7G5quL069RuuCZWZkoF
+oPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmXAgMBAAECggEADSs4Bc7ITZo+Kytb
+bfol3AQ2n8jcRrANN7mgBE7NRSVYUouDnvUlbnCC2t3QXPwLdxQa11GkygLSQ2bg
+GeVDgq1o4GUJTcvxFlFCcpU/hEANI/DQsxNAQ/4wUGoLOlHaO3HPvwBblHA70gGe
+Ux/xpG+lMAFAiB0EHEwZ4M0mClBEOQv3NzaFTWuBHtIMS8eid7M1q5qz9+rCgZSL
+KBBHo0OvUbajG4CWl8SM6LUYapASGg+U17E+4xA3npwpIdsk+CbtX+vvX324n4kn
+0EkrJqCjv8M1KiCKAP+UxwP00ywxOg4PN+x+dHI/I7xBvEKe/x6BltVSdGA+PlUK
+02wagQKBgQDF7gdQLFIagPH7X7dBP6qEGxj/Ck9Qdz3S1gotPkVeq+1/UtQijYZ1
+j44up/0yB2B9P4kW091n+iWcyfoU5UwBua9dHvCZP3QH05LR1ZscUHxLGjDPBASt
+l2xSq0hqqNWBspb1M0eCY0Yxi65iDkj3xsI2iN35BEb1FlWdR5KGvwKBgQCGS0ce
+wASWbZIPU2UoKGOQkIJU6QmLy0KZbfYkpyfE8IxGttYVEQ8puNvDDNZWHNf+LP85
+c8iV6SfnWiLmu1XkG2YmJFBCCAWgJ8Mq2XQD8E+a/xcaW3NqlcC5+I2czX367j3r
+69wZSxRbzR+DCfOiIkrekJImwN183ZYy2cBbKQKBgFj86IrSMmO6H5Ft+j06u5ZD
+fJyF7Rz3T3NwSgkHWzbyQ4ggHEIgsRg/36P4YSzSBj6phyAdRwkNfUWdxXMJmH+a
+FU7frzqnPaqbJAJ1cBRt10QI1XLtkpDdaJVObvONTtjOC3LYiEkGCzQRYeiyFXpZ
+AU51gJ8JnkFotjtNR4KPAoGAehVREDlLcl0lnN0ZZspgyPk2Im6/iOA9KTH3xBZZ
+ZwWu4FIyiHA7spgk4Ep5R0ttZ9oMI3SIcw/EgONGOy8uw/HMiPwWIhEc3B2JpRiO
+CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
+exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
++4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
+u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
+-----END RSA PRIVATE KEY-----`
+	privateKeyBase64 = base64.StdEncoding.EncodeToString([]byte(privateKeyPEM))
+
+	t.Run("test endpoint returns 403 for insufficient permissions", func(t *testing.T) {
+		// Setup mock with insufficient permissions
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+		app := &github.App{
+			ID:   github.Ptr(int64(123456)),
+			Slug: github.Ptr("test-app"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner"),
+			},
+		}
+
+		// Installation with only read permissions (insufficient)
+		installation := createInstallationWithPermissions(454545, map[string]string{
+			"contents":      "read", // needs write
+			"metadata":      "read",
+			"pull_requests": "read", // needs write
+			"webhooks":      "read", // needs write
+		})
+
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(app))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		// Create connection config for test
+		config := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name": "test",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			},
+		}
+
+		// Create with dryRun - that would test the connection
+		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+			DryRun: []string{"All"},
+		})
+		require.Error(t, err)
+		require.Nil(t, c)
+
+		var k8sErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &k8sErr))
+
+		require.Equal(t, metav1.StatusReasonInvalid, k8sErr.Status().Reason)
+		require.NotNil(t, k8sErr.Status().Details)
+
+		for _, reason := range k8sErr.Status().Details.Causes {
+			require.Equal(t, metav1.CauseTypeFieldValueInvalid, reason.Type)
+			require.Equal(t, "spec.github.appID", reason.Field)
+
+			switch {
+			case strings.Contains(reason.Message, "pull_requests"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "webhooks"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "contents"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "metadata"):
+				t.Fatalf("should not error on metadata")
+			}
+		}
+	})
+
+	t.Run("test endpoint succeeds with all permissions", func(t *testing.T) {
+		// Setup mock with all required permissions
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+		app := &github.App{
+			ID:   github.Ptr(int64(123456)),
+			Slug: github.Ptr("test-app"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner"),
+			},
+		}
+
+		installation := createInstallationWithPermissions(454545, map[string]string{
+			"contents":      "write",
+			"metadata":      "read",
+			"pull_requests": "write",
+			"webhooks":      "write",
+		})
+
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(app))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		config := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name": "test",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			},
+		}
+
+		// Create with dryRun - that would test the connection
+		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+			DryRun: []string{"All"},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, c)
+	})
 }

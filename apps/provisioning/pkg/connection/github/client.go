@@ -50,6 +50,21 @@ type App struct {
 	// Owner represents the GH account/org owning the app
 	Owner string
 }
+type AppPermission int
+
+const (
+	AppPermissionNone AppPermission = iota
+	AppPermissionRead
+	AppPermissionWrite
+)
+
+// AppPermissions represents the permissions granted to a GitHub App installation
+type AppPermissions struct {
+	Contents     AppPermission
+	Metadata     AppPermission
+	PullRequests AppPermission
+	Webhooks     AppPermission
+}
 
 // AppInstallation represents a Github App Installation.
 type AppInstallation struct {
@@ -57,6 +72,8 @@ type AppInstallation struct {
 	ID int64
 	// Whether the installation is enabled or not.
 	Enabled bool
+	// Permissions granted to the installation
+	Permissions AppPermissions
 }
 
 // InstallationToken represents a Github App Installation Access Token.
@@ -126,7 +143,24 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
+		Permissions: AppPermissions{
+			Contents:     toAppPermission(installation.GetPermissions().GetContents()),
+			Metadata:     toAppPermission(installation.GetPermissions().GetMetadata()),
+			PullRequests: toAppPermission(installation.GetPermissions().GetPullRequests()),
+			Webhooks:     toAppPermission(installation.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
+}
+
+func toAppPermission(permissions string) AppPermission {
+	switch permissions {
+	case "read":
+		return AppPermissionRead
+	case "write":
+		return AppPermissionWrite
+	default:
+		return AppPermissionNone
+	}
 }
 
 const (
