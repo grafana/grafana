@@ -55,3 +55,13 @@ const (
 	ResourcePermissionSpecPermissionKindTeam           ResourcePermissionSpecPermissionKind = "Team"
 	ResourcePermissionSpecPermissionKindBasicRole      ResourcePermissionSpecPermissionKind = "BasicRole"
 )
+
+func (ResourcePermissionspecResource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionspecResource"
+}
+func (ResourcePermissionspecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionspecPermission"
+}
+func (ResourcePermissionSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionSpec"
+}

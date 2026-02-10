@@ -725,6 +725,15 @@ func (s *Storage) GuaranteedUpdate(
 	return nil
 }
 
+// Added in k8s 1.35
+// See: https://github.com/kubernetes/kubernetes/blob/v1.35.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L668
+func (s *Storage) EnableResourceSizeEstimation(getKeys storage.KeysFunc) error {
+	if getKeys == nil {
+		return errors.New("KeysFunc cannot be nil")
+	}
+	return nil
+}
+
 // RequestWatchProgress requests the a watch stream progress status be sent in the
 // watch response stream as soon as possible.
 // Used for monitor watch progress even if watching resources with no changes.

@@ -42,3 +42,10 @@ const (
 	PluginStatusOperatorStateStateInProgress PluginStatusOperatorStateState = "in_progress"
 	PluginStatusOperatorStateStateFailed     PluginStatusOperatorStateState = "failed"
 )
+
+func (PluginstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginstatusOperatorState"
+}
+func (PluginStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginStatus"
+}
