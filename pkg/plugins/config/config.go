@@ -5,7 +5,7 @@ package config
 type PluginManagementCfg struct {
 	DevMode bool
 
-	PluginsPath string
+	PluginsPaths []string
 
 	PluginSettings       PluginSettings
 	PluginsAllowUnsigned []string
@@ -35,12 +35,12 @@ type Features struct {
 type PluginSettings map[string]map[string]string
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.
-func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
+func NewPluginManagementCfg(devMode bool, pluginsPaths []string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
 	grafanaComAPIURL string, disablePlugins []string, forwardHostEnvVars []string, grafanaComAPIToken string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
-		PluginsPath:           pluginsPath,
+		PluginsPaths:          pluginsPaths,
 		DevMode:               devMode,
 		PluginSettings:        pluginSettings,
 		PluginsAllowUnsigned:  pluginsAllowUnsigned,

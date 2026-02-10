@@ -150,7 +150,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
 	DataPath                              string
 	LogsPath                              string
-	PluginsPath                           string
+	PluginsPaths                          []string
 	EnterpriseLicensePath                 string
 
 	// Classic Provisioning settings
@@ -1218,8 +1218,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
-	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
-	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
+	plugins := iniFile.Section("paths").Key("plugins").Strings(",")
+	cfg.PluginsPaths = make([]string, len(plugins))
+	for i, plugin := range plugins {
+		cfg.PluginsPaths[i] = makeAbsolute(plugin, cfg.HomePath)
+	}
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1601,7 +1604,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Home", "path", cfg.HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
-	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPath)
+	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPaths)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + cfg.Env)
 }

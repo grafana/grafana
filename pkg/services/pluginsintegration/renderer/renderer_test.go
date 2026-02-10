@@ -40,7 +40,7 @@ func TestRenderer(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &config.PluginManagementCfg{PluginsPath: filepath.Join(testdataDir)}
+		cfg := &config.PluginManagementCfg{PluginsPaths: []string{filepath.Join(testdataDir)}}
 
 		m := NewManager(cfg, loader)
 
@@ -79,7 +79,7 @@ func TestRenderer(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &config.PluginManagementCfg{PluginsPath: filepath.Join(testdataDir)}
+		cfg := &config.PluginManagementCfg{PluginsPaths: []string{filepath.Join(testdataDir)}}
 
 		m := NewManager(cfg, loader)
 
