@@ -65,7 +65,7 @@ const (
 
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
 	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
-	defaultConfigIdentifier = "default"
+	defaultConfigIdentifier = "imported"
 
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
