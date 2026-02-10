@@ -108,7 +108,7 @@ export function TableNGWrap({
       <TablePanel
         initialRowIndex={initialRowIndex}
         data={data}
-        width={Math.max(tableWidth - fieldSelectorWidth, 0)}
+        width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
         id={id}
         timeRange={timeRange}
