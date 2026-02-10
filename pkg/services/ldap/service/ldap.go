@@ -26,8 +26,8 @@ var (
 
 // LDAP is the interface for the LDAP service.
 type LDAP interface {
-	ReloadConfig() error
 	Config() *ldap.ServersConfig
+	Enabled() bool
 	Client() multildap.IMultiLDAP
 
 	// Login authenticates the user against the LDAP server.
@@ -56,36 +56,19 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSe
 		ssoSettings:  ssoSettings,
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
-		s.ssoSettings.RegisterReloadable(social.LDAPProviderName, s)
+	s.ssoSettings.RegisterReloadable(social.LDAPProviderName, s)
 
-		ldapSettings, err := s.ssoSettings.GetForProvider(context.Background(), social.LDAPProviderName)
-		if err != nil {
-			s.log.Error("Failed to retrieve LDAP settings from SSO settings service", "error", err)
-			return s
-		}
-
-		err = s.Reload(context.Background(), *ldapSettings)
-		if err != nil {
-			s.log.Error("Failed to load LDAP settings", "error", err)
-			return s
-		}
-	} else {
-		s.cfg = ldap.GetLDAPConfig(cfg)
-		if !cfg.LDAPAuthEnabled {
-			return s
-		}
-
-		ldapCfg, err := multildap.GetConfig(s.cfg)
-		if err != nil {
-			s.log.Error("Failed to get LDAP config", "error", err)
-		} else {
-			s.ldapCfg = ldapCfg
-			s.client = multildap.New(s.ldapCfg.Servers, s.cfg)
-		}
+	ldapSettings, err := s.ssoSettings.GetForProvider(context.Background(), social.LDAPProviderName)
+	if err != nil {
+		s.log.Error("Failed to retrieve LDAP settings from SSO settings service", "error", err)
+		return s
 	}
 
+	err = s.Reload(context.Background(), *ldapSettings)
+	if err != nil {
+		s.log.Error("Failed to load LDAP settings", "error", err)
+		return s
+	}
 	return s
 }
 
@@ -138,6 +121,10 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 	return nil
 }
 
+func (s *LDAPImpl) Enabled() bool {
+	return s.cfg != nil && s.cfg.Enabled
+}
+
 func (s *LDAPImpl) Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error {
 	ldapCfg, err := resolveServerConfig(settings.Settings["config"])
 	if err != nil {
@@ -187,30 +174,6 @@ func (s *LDAPImpl) Validate(ctx context.Context, settings models.SSOSettings, ol
 			}
 		}
 	}
-
-	return nil
-}
-
-func (s *LDAPImpl) ReloadConfig() error {
-	if !s.cfg.Enabled {
-		return nil
-	}
-
-	s.loadingMutex.Lock()
-	defer s.loadingMutex.Unlock()
-
-	config, err := ldap.GetConfig(s.cfg)
-	if err != nil {
-		return err
-	}
-
-	client := multildap.New(config.Servers, s.cfg)
-	if client == nil {
-		return ErrUnableToCreateLDAPClient
-	}
-
-	s.ldapCfg = config
-	s.client = client
 
 	return nil
 }

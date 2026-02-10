@@ -38,19 +38,23 @@ const (
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, tracer trace.Tracer, env func() []string) (backendplugin.Plugin, error) {
-		return newGrpcPlugin(descriptor, logger, tracer, env), nil
+		return newGrpcPlugin(descriptor, logger, tracer, env)
 	}
 }
 
-func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.Tracer, env func() []string) *grpcPlugin {
+func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.Tracer, env func() []string) (*grpcPlugin, error) {
+	clientConfig, err := newClientConfig(descriptor, env(), logger, tracer)
+	if err != nil {
+		return nil, err
+	}
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
 		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor, env(), logger, tracer))
+			return plugin.NewClient(clientConfig)
 		},
 		state: pluginStateNotStarted,
-	}
+	}, nil
 }
 
 func (p *grpcPlugin) PluginID() string {

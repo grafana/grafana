@@ -688,8 +688,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
-  /** filter by owner reference in the format {Group}/{Kind}/{Name} */
-  ownerReference?: string;
+  /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
+  ownerReference?: string[];
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
   /** [experimental] optionally include matches from panel titles */
@@ -1193,6 +1193,8 @@ export type DashboardHit = {
   managedBy?: ManagedBy;
   /** The k8s "name" (eg, grafana UID) */
   name: string;
+  /** Owner references set on the resource metadata in the format {Group}/{Kind}/{Name} */
+  ownerReferences?: string[];
   /** Dashboard or folder */
   resource: string;
   /** When using "real" search, this is the score */

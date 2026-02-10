@@ -138,6 +138,7 @@ export function trackQuery(
       time_range_from: request?.range?.from?.toISOString(),
       time_range_to: request?.range?.to?.toISOString(),
       time_taken: Date.now() - startTime.getTime(),
+      editor_type: query.editorType || 'builder',
     });
   }
 }

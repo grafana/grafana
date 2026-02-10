@@ -109,6 +109,8 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"org_mapping":                   section.Key("org_mapping").Value(),
 		"org_attribute_path":            section.Key("org_attribute_path").Value(),
 		"login_prompt":                  section.Key("login_prompt").Value(),
+		"validate_id_token":             section.Key("validate_id_token").MustBool(false),
+		"jwk_set_url":                   section.Key("jwk_set_url").Value(),
 	}
 
 	extraKeys := extraKeysByProvider[provider]
