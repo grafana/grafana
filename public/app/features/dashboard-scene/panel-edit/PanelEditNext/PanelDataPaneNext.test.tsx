@@ -1,4 +1,5 @@
-import { sceneGraph, SceneQueryRunner, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { DataTransformerConfig } from '@grafana/data';
+import { sceneGraph, SceneDataTransformer, SceneQueryRunner, SceneObjectRef, VizPanel } from '@grafana/scenes';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
@@ -237,6 +238,32 @@ describe('PanelDataPaneNext', () => {
       });
 
       expect(mockQueryRunner.runQueries).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('reorderTransformations', () => {
+    it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
+      const transformer = new SceneDataTransformer({ transformations: [] });
+      jest.spyOn(transformer, 'setState').mockImplementation(() => {});
+      jest.spyOn(transformer, 'reprocessTransformations').mockImplementation(() => {});
+
+      mockPanel.state.$data = transformer;
+
+      const newOrder: DataTransformerConfig[] = [
+        { id: 'reduce', options: {} },
+        { id: 'organize', options: {} },
+      ];
+
+      dataPane.reorderTransformations(newOrder);
+
+      expect(transformer.setState).toHaveBeenCalledWith({ transformations: newOrder });
+      expect(transformer.reprocessTransformations).toHaveBeenCalled();
+    });
+
+    it('should not throw when $data is not SceneDataTransformer', () => {
+      const newOrder: DataTransformerConfig[] = [{ id: 'reduce', options: {} }];
+
+      expect(() => dataPane.reorderTransformations(newOrder)).not.toThrow();
     });
   });
 });
