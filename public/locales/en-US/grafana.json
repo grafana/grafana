@@ -3040,6 +3040,11 @@
       "title-preview-not-available": "Preview not available",
       "valid-matcher-affected-alerts": "Add a valid matcher to see affected alerts"
     },
+    "silences": {
+      "affected-instances": "Affected alert instances",
+      "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "preview-affected-instances": "Preview the alert instances affected by this silence."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Details about the silence",
       "label-comment": "Comment",
@@ -3061,11 +3066,6 @@
       "text-loading-silences": "Loading silences...",
       "title-error-loading-silences": "Error loading silences",
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
-    },
-    "silences": {
-      "affected-instances": "Affected alert instances",
-      "only-firing-instances": "Only alert instances in the firing state are displayed.",
-      "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "simple-condition-editor": {
       "label-of-query": "OF QUERY",
@@ -4057,11 +4057,11 @@
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
-      "all-failed_other": "Failed to restore {{count}} dashboards.",
+      "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboards restored successfully",
+      "success-count_other": "{{count}} dashboard restored successfully",
       "success-multiple": "Dashboards restored",
       "success-single": "Dashboard restored",
       "view-dashboard": "View dashboard",
@@ -5855,6 +5855,7 @@
       "title": "Variables"
     },
     "versions": {
+      "provisioned-warning": "This dashboard is managed by a repository. To restore a previous version, use the repository's Git history.",
       "title": "Versions"
     }
   },
