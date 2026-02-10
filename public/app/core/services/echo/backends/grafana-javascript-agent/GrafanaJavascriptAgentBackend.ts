@@ -1,5 +1,6 @@
 import { escapeRegex } from '@grafana/data';
 import { BaseTransport, defaultInternalLoggerLevel } from '@grafana/faro-core';
+import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import {
   initializeFaro,
   BrowserConfig,
@@ -9,6 +10,7 @@ import {
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -45,6 +47,20 @@ export class GrafanaJavascriptAgentBackend
 
     if (options.tracingInstrumentalizationEnabled) {
       instrumentations.push(new TracingInstrumentation());
+    }
+
+    if (evaluateBooleanFlag('faroSessionReplay', false)) {
+      instrumentations.push(
+        new ReplayInstrumentation({
+          maskAllInputs: true,
+          maskTextSelector: '*',
+          collectFonts: false,
+          inlineImages: false,
+          inlineStylesheet: false,
+          recordCanvas: false,
+          recordCrossOriginIframes: false,
+        })
+      );
     }
 
     const ignoreUrls = [...TRACKING_URLS, ...options.ignoreUrls];
