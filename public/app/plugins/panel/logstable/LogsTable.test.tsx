@@ -93,7 +93,6 @@ const setUp = (props?: Partial<React.ComponentProps<typeof LogsTable>>, options?
 };
 
 describe('LogsTable', () => {
-  let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
   let jestScrollIntoView = jest.fn();
@@ -104,7 +103,6 @@ describe('LogsTable', () => {
 
   beforeEach(() => {
     jestScrollIntoView = jest.fn();
-    user = userEvent.setup();
     origResizeObserver = global.ResizeObserver;
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
