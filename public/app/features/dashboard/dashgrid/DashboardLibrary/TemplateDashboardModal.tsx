@@ -77,7 +77,7 @@ export const TemplateDashboardModal = () => {
 
     try {
       const response = await getBackendSrv().get<GnetDashboardsResponse>(
-        `/api/gnet/dashboards?orgSlug=juanicabanas58&includeScreenshots=true`,
+        `/api/gnet/dashboards?orgSlug=raintank&categorySlug=templates&includeScreenshots=true`,
         undefined,
         undefined,
         {

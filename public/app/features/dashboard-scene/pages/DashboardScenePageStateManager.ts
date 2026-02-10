@@ -641,7 +641,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
     if (isDashboardV2Spec(interpolatedDashboard)) {
-      console.log('Plugin template dashboard is in V2 format; delegate to V2 state manager');
       throw new DashboardVersionError('v2beta1', 'Template dashboard is in V2 format; delegate to V2 state manager');
     }
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
