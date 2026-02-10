@@ -105,18 +105,17 @@ function getStyles(
 
       // Two slim pseudo-element strips extend the hover zone to the left and
       // below the card, covering the path to the <AddCardButton /> ("+" icon button)
-      // without overlapping the card's own clickable surface (which would interfere
-      // with selecting the query card).
+      // without overlapping the card's own clickable surface
 
       // Left strip: narrow gutter running along the card's left edge and below.
       '&::before': {
         content: '""',
         position: 'absolute',
-        top: '0%',
+        top: 0,
         left: `calc(-1 * ${theme.spacing(1.5)})`,
         width: theme.spacing(1.5),
         height: `calc(100% + ${theme.spacing(1.5)})`,
-        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone to the left of the card
+        background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone to the left of the card
       },
 
       // Bottom strip: runs along the card's bottom edge extending to the left.
@@ -127,7 +126,7 @@ function getStyles(
         left: `calc(-1 * ${theme.spacing(1.5)})`,
         width: `calc(100% + ${theme.spacing(1.5)})`,
         height: theme.spacing(1.5),
-        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone below the card
+        background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone below the card
       },
 
       '&:hover': {
