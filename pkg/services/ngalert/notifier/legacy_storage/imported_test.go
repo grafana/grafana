@@ -316,25 +316,62 @@ receivers:
 
 		result, err := imported.GetInhibitRules(true)
 		require.NoError(t, err)
-		// 2 rules * 2 managed routes (named_route, other_route) = 4 total rules
-		require.Len(t, result, 4)
-
-		// Check first rule (first imported rule with first managed route)
-		assert.Len(t, result[0].SourceMatchers, 2) // Original + managed route matcher
-		assert.Len(t, result[0].TargetMatchers, 2) // Original + managed route matcher
-		assert.Equal(t, []string{"cluster"}, result[0].Equal)
-
-		// Verify managed route matcher was added
-		for _, ms := range []config.Matchers{result[0].SourceMatchers, result[0].TargetMatchers} {
-			hasManagedRouteMatcher := false
-			for _, m := range ms {
-				if m.Name == "__grafana_managed_route__" {
-					hasManagedRouteMatcher = true
-					break
-				}
-			}
-			assert.True(t, hasManagedRouteMatcher, "Managed route matcher should be added to matcher")
-		}
+		require.Equal(t, []config.InhibitRule{
+			{
+				SourceMatchers: []*labels.Matcher{
+					{
+						Type:  labels.MatchEqual,
+						Name:  "alertname",
+						Value: "SourceAlert",
+					},
+					{
+						Type:  labels.MatchEqual,
+						Name:  "__grafana_managed_route__",
+						Value: "test",
+					},
+				},
+				TargetMatchers: []*labels.Matcher{
+					{
+						Type:  labels.MatchEqual,
+						Name:  "alertname",
+						Value: "TargetAlert",
+					},
+					{
+						Type:  labels.MatchEqual,
+						Name:  "__grafana_managed_route__",
+						Value: "test",
+					},
+				},
+				Equal: []string{"cluster"},
+			},
+			{
+				SourceMatchers: []*labels.Matcher{
+					{
+						Type:  labels.MatchEqual,
+						Name:  "severity",
+						Value: "critical",
+					},
+					{
+						Type:  labels.MatchEqual,
+						Name:  "__grafana_managed_route__",
+						Value: "test",
+					},
+				},
+				TargetMatchers: []*labels.Matcher{
+					{
+						Type:  labels.MatchEqual,
+						Name:  "severity",
+						Value: "warning",
+					},
+					{
+						Type:  labels.MatchEqual,
+						Name:  "__grafana_managed_route__",
+						Value: "test",
+					},
+				},
+				Equal: []string{"instance"},
+			},
+		}, result)
 	})
 }
 

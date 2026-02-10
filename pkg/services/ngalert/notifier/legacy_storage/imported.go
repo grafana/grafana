@@ -2,7 +2,6 @@ package legacy_storage
 
 import (
 	"fmt"
-	"maps"
 	"slices"
 
 	"github.com/grafana/alerting/definition"
@@ -168,36 +167,9 @@ func (e ImportedConfigRevision) GetInhibitRules(multiplePoliciesEnabled bool) ([
 		return nil, nil
 	}
 
-	managedRoutes := e.rev.Config.ManagedRoutes
-	if len(managedRoutes) == 0 {
+	if managedRoutes := e.rev.Config.ManagedRoutes; len(managedRoutes) == 0 {
 		return nil, nil
 	}
 
-	return expandInhibitRulesForManagedRoutes(importedRules, managedRoutes), nil
-}
-
-// expandInhibitRulesForManagedRoutes expands imported inhibition rules by duplicating them
-// for each managed route, adding both SubtreeMatchers and managed route matchers.
-// Each rule gets: baseMatchers (e.g., __imported=mimir) + __grafana_managed_route__=<route-name>
-func expandInhibitRulesForManagedRoutes(
-	importedRules []config.InhibitRule,
-	managedRoutes map[string]*definition.Route,
-) []config.InhibitRule {
-	result := make([]config.InhibitRule, 0, len(importedRules)*len(managedRoutes))
-
-	// Sort route names for deterministic ordering
-	routeNames := slices.Sorted(maps.Keys(managedRoutes))
-
-	for _, routeName := range routeNames {
-		// skip user-defined or nil routes for safety
-		if routeName == UserDefinedRoutingTreeName || managedRoutes[routeName] == nil {
-			continue
-		}
-
-		matchers := config.Matchers{managedRouteMatcher(routeName)}
-		scopedRules := definition.MergeInhibitRules(nil, importedRules, matchers)
-		result = append(result, scopedRules...)
-	}
-
-	return result
+	return definition.MergeInhibitRules(nil, importedRules, config.Matchers{managedRouteMatcher(e.identifier)}), nil
 }
