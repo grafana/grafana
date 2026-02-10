@@ -46,3 +46,9 @@ func NewDashboardCompatibilityScoreSpec() *DashboardCompatibilityScoreSpec {
 		DatasourceMappings: []DashboardCompatibilityScoreDataSourceMapping{},
 	}
 }
+func (DashboardCompatibilityScoreDataSourceMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreDataSourceMapping"
+}
+func (DashboardCompatibilityScoreSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreSpec"
+}

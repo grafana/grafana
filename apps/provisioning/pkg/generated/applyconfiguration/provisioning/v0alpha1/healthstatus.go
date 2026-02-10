@@ -11,10 +11,15 @@ import (
 // HealthStatusApplyConfiguration represents a declarative configuration of the HealthStatus type for use
 // with apply.
 type HealthStatusApplyConfiguration struct {
-	Healthy *bool                                   `json:"healthy,omitempty"`
-	Error   *provisioningv0alpha1.HealthFailureType `json:"error,omitempty"`
-	Checked *int64                                  `json:"checked,omitempty"`
-	Message []string                                `json:"message,omitempty"`
+	// When not healthy, requests will not be executed
+	Healthy *bool `json:"healthy,omitempty"`
+	// The type of the error
+	Error *provisioningv0alpha1.HealthFailureType `json:"error,omitempty"`
+	// When the health was checked last time
+	Checked *int64 `json:"checked,omitempty"`
+	// Summary messages (can be shown to users)
+	// Will only be populated when not healthy
+	Message []string `json:"message,omitempty"`
 }
 
 // HealthStatusApplyConfiguration constructs a declarative configuration of the HealthStatus type for use with

@@ -56,6 +56,7 @@ import (
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -244,6 +245,7 @@ var wireBasicSet = wire.NewSet(
 	provisioning.ProvideStubProvisioningService,
 	legacy.ProvideMigratorDashboardAccessor,
 	legacy.ProvidePlaylistMigrator,
+	legacy.ProvideShortURLMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -584,9 +586,11 @@ dependency parameter here and register it with the registry.
 func provideMigrationRegistry(
 	accessor legacy.MigrationDashboardAccessor,
 	playlistMigrator legacy.PlaylistMigrator,
+	shortURLMigrator legacy.ShortURLMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	return r
 }

@@ -2,18 +2,12 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  DataFrameType,
-  DataSourceWithLogsLabelTypesSupport,
-  GrafanaTheme2,
-  hasLogsLabelTypesSupport,
-  store,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrameType, DataSourceApi, GrafanaTheme2, hasLogsLabelTypesSupport, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
+import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
@@ -41,7 +35,7 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
-    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
+    const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -90,11 +84,13 @@ export const LogLineDetailsComponent = memo(
             }
           : {};
       }
-      return groupBy(
-        labelsWithLinks,
-        (label) => ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? ''
-      );
-    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex]);
+      return groupBy(labelsWithLinks, (label) => {
+        if (hasLogsLabelTypesSupport(ds)) {
+          return ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? '';
+        }
+        return getLabelTypeFromRow(label.key, log, true) ?? '';
+      });
+    }, [ds, labelsWithLinks, log]);
 
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
@@ -161,15 +157,16 @@ export const LogLineDetailsComponent = memo(
     }, []);
 
     useEffect(() => {
-      const setDatasource = async () => {
-        const datasource = await getDataSourceSrv().get(log.datasourceUid);
-        if (datasource && hasLogsLabelTypesSupport(datasource)) {
-          setDs(datasource);
-        }
-      };
-
-      setDatasource();
+      getDataSourceSrv()
+        .get(log.datasourceUid)
+        .then(setDs)
+        .catch(() => setDs(null));
     }, [log.datasourceUid]);
+
+    // Wait for ds to be resolved to DataSourceApi or null on error
+    if (ds === undefined) {
+      return null;
+    }
 
     return (
       <>
