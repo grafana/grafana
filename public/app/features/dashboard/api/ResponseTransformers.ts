@@ -12,8 +12,6 @@ import {
   ThresholdsMode as ThresholdsModeV1,
   MappingType as MappingTypeV1,
   SpecialValueMatch as SpecialValueMatchV1,
-  DashboardLink,
-  DataTransformerConfig,
 } from '@grafana/schema';
 import {
   AnnotationQueryKind,
@@ -47,6 +45,7 @@ import {
   defaultFieldConfigSource,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
