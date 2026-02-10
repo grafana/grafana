@@ -7,10 +7,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
@@ -115,32 +114,6 @@ func convertToK8sResourceWithVersion(v *PlaylistDTO, namespacer request.Namespac
 	p.Kind = gvk.Kind
 
 	return p
-}
-
-// v0alpha1 and v1 are type aliases, so this can be used for both
-func convertToLegacyUpdateCommand(obj runtime.Object, orgId int64) (*UpdatePlaylistCommand, error) {
-	p, ok := obj.(*playlistv1.Playlist)
-	if !ok {
-		return nil, fmt.Errorf("unsupported playlist type: %T", obj)
-	}
-
-	spec := p.Spec
-	cmd := &UpdatePlaylistCommand{
-		UID:      p.Name,
-		Name:     spec.Title,
-		Interval: spec.Interval,
-		OrgId:    orgId,
-	}
-	for _, item := range spec.Items {
-		if item.Type == playlistv1.PlaylistPlaylistItemTypeDashboardById {
-			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
-		}
-		cmd.Items = append(cmd.Items, PlaylistItem{
-			Type:  string(item.Type),
-			Value: item.Value,
-		})
-	}
-	return cmd, nil
 }
 
 // Read legacy ID from metadata annotations
