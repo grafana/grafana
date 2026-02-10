@@ -3921,11 +3921,11 @@ func TestGitRepository_Move_ErrorConditions(t *testing.T) {
 
 func TestGitRepository_GetDefaultBranch(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupMock     func(*mocks.FakeClient)
+		name           string
+		setupMock      func(*mocks.FakeClient)
 		expectedBranch string
-		wantError     bool
-		errorContains string
+		wantError      bool
+		errorContains  string
 	}{
 		{
 			name: "returns main when main branch exists",
@@ -3982,8 +3982,8 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 					{Name: "refs/tags/v1.0", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
 				}, nil)
 			},
-			wantError:      true,
-			errorContains:  "no branches found",
+			wantError:     true,
+			errorContains: "no branches found",
 		},
 		{
 			name: "returns error when ListRefs fails",
