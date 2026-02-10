@@ -911,7 +911,6 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
     }
 
     const panel = context?.state?.datasource;
-
     if (!panel) {
       return datasource;
     }
@@ -923,7 +922,6 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
       datasource = panel;
     }
 
-    console.log('returned', datasource);
     return datasource;
   }
 
