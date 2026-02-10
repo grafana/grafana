@@ -14,7 +14,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
     return result;
   }
 
-  const metas = await fetch(`/apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`);
+  const metas = await fetch(`apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`);
   if (!metas.ok) {
     throw new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
   }

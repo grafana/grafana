@@ -1,4 +1,4 @@
-package migrations_test
+package testcases
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ type foldersAndDashboardsTestCase struct {
 	libPanelUID     string
 }
 
-// newFoldersAndDashboardsTestCase creates a test case for the compound folders+dashboards migrator
-func newFoldersAndDashboardsTestCase() resourceMigratorTestCase {
+// NewFoldersAndDashboardsTestCase creates a test case for the compound folders+dashboards migrator
+func NewFoldersAndDashboardsTestCase() ResourceMigratorTestCase {
 	return &foldersAndDashboardsTestCase{
 		parentFolderUID: "parent-folder-uid",
 		childFolderUID:  "child-folder-uid",
@@ -30,11 +30,11 @@ func newFoldersAndDashboardsTestCase() resourceMigratorTestCase {
 	}
 }
 
-func (tc *foldersAndDashboardsTestCase) name() string {
+func (tc *foldersAndDashboardsTestCase) Name() string {
 	return "folders-dashboards"
 }
 
-func (tc *foldersAndDashboardsTestCase) resources() []schema.GroupVersionResource {
+func (tc *foldersAndDashboardsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{
 			Group:    "folder.grafana.app",
@@ -49,7 +49,7 @@ func (tc *foldersAndDashboardsTestCase) resources() []schema.GroupVersionResourc
 	}
 }
 
-func (tc *foldersAndDashboardsTestCase) setup(t *testing.T, helper *apis.K8sTestHelper) {
+func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Helper()
 
 	// Create parent folder
@@ -66,7 +66,7 @@ func (tc *foldersAndDashboardsTestCase) setup(t *testing.T, helper *apis.K8sTest
 		tc.libPanelUID, "Test LP in dashboard", child.UID)
 }
 
-func (tc *foldersAndDashboardsTestCase) verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
+func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
 	// Build maps of UIDs by resource type

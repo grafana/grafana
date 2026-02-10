@@ -10,11 +10,19 @@ import (
 
 // ConnectionStatusApplyConfiguration represents a declarative configuration of the ConnectionStatus type for use
 // with apply.
+//
+// The status of a Connection.
+// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatusApplyConfiguration struct {
-	ObservedGeneration *int64                           `json:"observedGeneration,omitempty"`
-	FieldErrors        []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
-	Conditions         []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
-	Health             *HealthStatusApplyConfiguration  `json:"health,omitempty"`
+	// The generation of the spec last time reconciliation ran
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
+	// FieldErrors are errors that occurred during validation of the connection spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
+	// Conditions represent the latest available observations of the connection's state.
+	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	// The connection health status
+	Health *HealthStatusApplyConfiguration `json:"health,omitempty"`
 }
 
 // ConnectionStatusApplyConfiguration constructs a declarative configuration of the ConnectionStatus type for use with
