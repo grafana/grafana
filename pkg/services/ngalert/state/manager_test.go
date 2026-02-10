@@ -705,17 +705,18 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 3, // Normal -> Pending, Pending -> NoData, NoData -> Pending
+			expectedAnnotations: 3, // Normal -> Pending, Pending -> Pending (NoData), Pending (NoData) -> Alerting
 			expectedStates: []*state.State{
 				{
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
-					State:              eval.Pending,
+					State:              eval.Alerting,
 					LatestResult:       newEvaluation(tn(5), eval.Alerting),
 					StartsAt:           tn(4),
-					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					EndsAt:             tn(5).Add(state.ResendDelay * 4),
+					FiredAt:            util.Pointer(tn(4)),
 					LastEvaluationTime: tn(5),
-					LastSentAt:         util.Pointer(tn(3)), // 30s resend delay causing the last sent at to be t3.
+					LastSentAt:         util.Pointer(tn(4)),
 				},
 			},
 		},
