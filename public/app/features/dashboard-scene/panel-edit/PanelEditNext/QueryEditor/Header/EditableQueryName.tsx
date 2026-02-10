@@ -34,11 +34,11 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
     }
 
     if (name.length === 0) {
-      return t('query-editor.validation.empty-name', 'An empty query name is not allowed');
+      return t('query-editor-next.validation.empty-name', 'An empty query name is not allowed');
     }
 
     if (existingRefIds.has(name)) {
-      return t('query-editor.validation.duplicate-name', 'Query name already exists');
+      return t('query-editor-next.validation.duplicate-name', 'Query name already exists');
     }
 
     return null;
@@ -112,8 +112,8 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       className={styles.queryNameWrapper}
       onClick={onEditQuery}
       type="button"
-      aria-label={t('query-editor.edit-query-name', 'Edit query name')}
-      title={t('query-editor.edit-query-name', 'Edit query name')}
+      aria-label={t('query-editor-next.edit-query-name', 'Edit query name')}
+      title={t('query-editor-next.edit-query-name', 'Edit query name')}
     >
       <span className={styles.queryNameText}>
         <Text color="primary" element="p" truncate variant="code">

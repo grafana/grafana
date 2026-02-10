@@ -85,7 +85,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         <Menu>
           {!isEditingQuery && (
             <Menu.Item
-              label={t('query-editor.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
+              label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
               icon="copy"
               onClick={() => duplicateQuery(selectedQuery.refId)}
             />
@@ -94,8 +94,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
           <Menu.Item
             label={
               isHidden
-                ? t('query-editor.action.show', 'Show {{type}}', { type: typeLabel })
-                : t('query-editor.action.hide', 'Hide {{type}}', { type: typeLabel })
+                ? t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel })
+                : t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel })
             }
             icon={isHidden ? 'eye-slash' : 'eye'}
             onClick={() => toggleQueryHide(selectedQuery.refId)}
@@ -122,8 +122,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
               <Menu.Item
                 label={
                   showingDatasourceHelp
-                    ? t('query-editor.action.hide-help', 'Hide data source help')
-                    : t('query-editor.action.show-help', 'Show data source help')
+                    ? t('query-editor-next.action.hide-help', 'Hide data source help')
+                    : t('query-editor-next.action.show-help', 'Show data source help')
                 }
                 icon="question-circle"
                 onClick={toggleDatasourceHelp}
@@ -136,7 +136,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
             <>
               <Menu.Divider />
               <Menu.Item
-                label={t('query-editor.action.remove', 'Remove {{type}}', { type: typeLabel })}
+                label={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
                 icon="trash-alt"
                 onClick={() => deleteQuery(selectedQuery.refId)}
                 destructive
@@ -152,8 +152,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
-        tooltip={t('query-editor.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        aria-label={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        tooltip={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
       />
     </Dropdown>
   );

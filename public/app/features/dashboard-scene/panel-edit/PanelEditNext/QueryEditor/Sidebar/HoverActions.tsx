@@ -23,7 +23,7 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
           fill="text"
           icon="copy"
           variant="secondary"
-          aria-label={t('query-editor.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
+          aria-label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
           onClick={(e) => {
             e.stopPropagation();
             onDuplicate();
@@ -35,7 +35,7 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         fill="text"
         icon="trash-alt"
         variant="secondary"
-        aria-label={t('query-editor.action.remove', 'Remove {{type}}', { type: typeLabel })}
+        aria-label={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
@@ -48,8 +48,8 @@ export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: 
         variant="secondary"
         aria-label={
           isHidden
-            ? t('query-editor.action.show', 'Show {{type}}', { type: typeLabel })
-            : t('query-editor.action.hide', 'Hide {{type}}', { type: typeLabel })
+            ? t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel })
+            : t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel })
         }
         onClick={(e) => {
           e.stopPropagation();

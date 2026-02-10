@@ -27,10 +27,10 @@ export function TransformationActionsMenu() {
     <Dropdown
       overlay={
         <Menu>
-          <Menu.Item label={t('query-editor.action.coming-soon', 'Transformation actions coming soon')} disabled />
+          <Menu.Item label={t('query-editor-next.action.coming-soon', 'Transformation actions coming soon')} disabled />
           <Menu.Divider />
           <Menu.Item
-            label={t('query-editor.action.remove', 'Remove {{type}}', { type: typeLabel })}
+            label={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
             icon="trash-alt"
             onClick={() => {}} // noop for now
             destructive
@@ -44,8 +44,8 @@ export function TransformationActionsMenu() {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
-        tooltip={t('query-editor.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        aria-label={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        tooltip={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
       />
     </Dropdown>
   );
