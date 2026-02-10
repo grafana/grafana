@@ -65,18 +65,18 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	client := openfeature.GetApiInstance().GetClient()
 
 	// Evaluate the feature flag
-	enabled := client.Boolean(
+	useReact19 := client.Boolean(
 		ctx,                                 // Request context
-		featuremgmt.FlagUseReact18,          // Feature flag name
+		featuremgmt.FlagReact19,             // Feature flag name
 		true,                                // Default value if evaluation fails
 		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
 	)
 
 	var assetsFilename string
-	if enabled {
-		assetsFilename = "assets-manifest-react18.json"
-	} else {
+	if useReact19 {
 		assetsFilename = "assets-manifest.json"
+	} else {
+		assetsFilename = "assets-manifest-react18.json"
 	}
 
 	if result == nil {

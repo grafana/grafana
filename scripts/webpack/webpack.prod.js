@@ -81,7 +81,7 @@ module.exports = (env = {}) =>
         resource.request = require.resolve('./empty.js');
       }),
       new MiniCssExtractPlugin({
-        filename: !env.useReact18 ? 'grafana.[name].[contenthash].css' : 'grafana.[name]-react18.[contenthash].css',
+        filename: env.react19 ? 'grafana.[name].[contenthash].css' : 'grafana.[name]-react18.[contenthash].css',
       }),
       new SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
@@ -109,10 +109,10 @@ module.exports = (env = {}) =>
 
           return result;
         },
-        output: env.useReact18 ? 'assets-manifest-react18.json' : 'assets-manifest.json',
+        output: env.react19 ? 'assets-manifest.json' : 'assets-manifest-react18.json',
       }),
       new WebpackManifestPlugin({
-        fileName: path.join(process.cwd(), env.useReact18 ? 'manifest-react18.json' : 'manifest.json'),
+        fileName: path.join(process.cwd(), env.react19 ? 'manifest.json' : 'manifest-react18.json'),
         filter: (file) => !file.name.endsWith('.map'),
       }),
       function () {

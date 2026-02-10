@@ -286,4 +286,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-20,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
 2026-02-04,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-01-27,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
-2026-02-09,useReact18,preview,@grafana/grafana-frontend-platform,false,false,false
+2026-02-10,react19,preview,@grafana/grafana-frontend-platform,false,false,false

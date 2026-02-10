@@ -15,9 +15,9 @@ module.exports = (env = {}) => ({
     asyncWebAssembly: true,
   },
   output: {
-    clean: env.useReact18 ? false : true,
+    clean: env.react19 ? true : false,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: !env.useReact18 ? '[name].[contenthash].js' : '[name]-react18.[contenthash].js',
+    filename: env.react19 ? '[name].[contenthash].js' : '[name]-react18.[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
@@ -66,7 +66,7 @@ module.exports = (env = {}) => ({
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
     }),
-    ...(!env.useReact18
+    ...(env.react19
       ? []
       : [
           new webpack.NormalModuleReplacementPlugin(/^react$/, (resource) => {

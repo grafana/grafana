@@ -810,7 +810,7 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagUseReact18
-	// Revert to React 18 for the frontend
-	FlagUseReact18 = "useReact18"
+	// FlagReact19
+	// Use React 19 for the frontend
+	FlagReact19 = "react19"
 )
