@@ -65,7 +65,7 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       id: 'view.dashboardVariableName',
       path: 'view.dashboardVariableName',
       name: 'Variable name',
-      description: 'Specify the dashboard variable to store view bounds.',
+      description: 'Specify the dashboard variable to store view bounds',
       editor: VariableNameEditor,
       showIf: (config) => config.view?.dashboardVariable === true,
     });
