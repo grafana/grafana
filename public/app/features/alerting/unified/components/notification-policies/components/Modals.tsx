@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
 
 import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -10,6 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
+import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
 
 export interface DeleteModalProps {
   isOpen: boolean;
@@ -140,35 +142,42 @@ export interface CreateModalProps {
   isOpen: boolean;
   onConfirm: (route: Partial<FormAmRoute>) => Promise<unknown>;
   onDismiss: () => void;
+  existingPolicyNames?: string[];
 }
 
-export const CreateModal = React.memo(({ onConfirm, onDismiss, isOpen }: CreateModalProps) => {
+export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismiss, isOpen }: CreateModalProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
+  const [nameError, setNameError] = useState<string | undefined>();
   const [route, setRoute] = useState<RouteWithID>(emptyRouteWithID);
 
   const onCreateDismiss = () => {
     onDismiss();
     setError(undefined);
+    setNameError(undefined);
     setRoute(emptyRouteWithID);
   };
 
   const onCreateConfirm = async (newRoute: Partial<FormAmRoute>) => {
     if (newRoute) {
       setIsCreating(true);
+      setError(undefined);
+      setNameError(undefined);
       onConfirm(newRoute)
         .then(() => {
           onCreateDismiss();
         })
-        .catch(setError)
+        .catch((err) => {
+          setError(err);
+          if (isFetchError(err) && err.status === 409) {
+            setNameError(stringifyErrorLike(err));
+          }
+        })
         .finally(() => {
           setIsCreating(false);
         });
     }
   };
-  if (error) {
-    return <ErrorModal isOpen={isOpen} onDismiss={onCreateDismiss} error={error} />;
-  }
 
   if (isCreating) {
     return <CreatingModal isOpen={isOpen} onDismiss={onCreateDismiss} />;
@@ -182,7 +191,10 @@ export const CreateModal = React.memo(({ onConfirm, onDismiss, isOpen }: CreateM
       closeOnEscape={true}
       title={t('alerting.policies.create-modal.title-new-notification-policy', 'New notification policy')}
     >
+      {error ? <NotificationPoliciesErrorAlert error={error} /> : null}
       <AmRootRouteForm
+        existingPolicyNames={existingPolicyNames}
+        nameError={nameError}
         route={route}
         showNameField={true}
         onSubmit={onCreateConfirm}

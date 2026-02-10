@@ -69,14 +69,27 @@ const getNamespacedRoutingTreeHandler = () =>
   );
 
 const createNamespacedRoutingTreeHandler = () =>
-  http.post<
-    { namespace: string; name: string },
-    ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
-  >(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, async ({ params: { name }, request }) => {
-    const routingTree = await request.json();
-    setRoutingTree(name, routingTree);
-    return HttpResponse.json(routingTree);
-  });
+  http.post<{ namespace: string }, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`,
+    async ({ request }) => {
+      const routingTree =
+        (await request.json()) as ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+      const name = routingTree.metadata?.name;
+      if (name && getRoutingTree(name)) {
+        return HttpResponse.json(
+          {
+            ...HTTP_RESPONSE_CONFLICT,
+            message: 'Route with this name already exists. Use a different name or update an existing one.',
+          },
+          { status: 409 }
+        );
+      }
+      if (name) {
+        setRoutingTree(name, routingTree);
+      }
+      return HttpResponse.json(routingTree);
+    }
+  );
 
 const deleteNamespacedRoutingTreeHandler = () =>
   http.delete<{ namespace: string; name: string }>(
