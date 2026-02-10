@@ -25,7 +25,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch,
+    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
     path: data.path,
   };
 
@@ -47,7 +47,10 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       spec.gitlab = baseConfig;
       break;
     case 'bitbucket':
-      spec.bitbucket = baseConfig;
+      spec.bitbucket = {
+        ...baseConfig,
+        tokenUser: data.tokenUser,
+      };
       break;
     case 'git':
       spec.git = baseConfig;
@@ -66,6 +69,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+  const tokenUser = spec.bitbucket?.tokenUser;
 
   return structuredClone({
     ...spec,
@@ -73,6 +77,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec.local,
     branch: remoteConfig?.branch || '',
     url: remoteConfig?.url || '',
+    tokenUser: tokenUser || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),

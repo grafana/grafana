@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
+	shorturlv1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -111,6 +112,17 @@ func ProvidePlaylistMigrator(
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) PlaylistMigrator {
+	return newMigratorAccess(sql, provisioning, accessControl)
+}
+
+// ProvideShortURLMigrator creates a ShortURLMigrator for migration purposes.
+// This is wired separately from MigrationDashboardAccessor so that short URL
+// migrations are decoupled from the dashboard accessor interface.
+func ProvideShortURLMigrator(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+) ShortURLMigrator {
 	return newMigratorAccess(sql, provisioning, accessControl)
 }
 
@@ -269,6 +281,14 @@ func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOpt
 						JOIN `+sql.Table("dashboard")+`         as dd
 						ON dd.id = dv.dashboard_id
 						WHERE org_id=?`, orgId).Get(&summary.History)
+
+			case "shorturl.grafana.app/shorturls":
+				summary := &resourcepb.BulkResponse_Summary{}
+				summary.Group = shorturlv1beta1.APIGroup
+				summary.Resource = "shorturls"
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("short_url")+
+					" WHERE org_id=?", orgId).Get(&summary.Count)
+				rsp.Summary = append(rsp.Summary, summary)
 			}
 			if err != nil {
 				return err
@@ -1353,4 +1373,115 @@ func (a *dashboardSqlAccess) ListPlaylists(ctx context.Context, orgID int64) (*s
 		return nil, err
 	}
 	return rows, err
+}
+
+func (a *dashboardSqlAccess) ListShortURLs(ctx context.Context, orgID int64) (*sql.Rows, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListShortURLs")
+	defer span.End()
+
+	helper, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newShortURLQueryReq(helper, &ShortURLQuery{
+		OrgID: orgID,
+	})
+
+	rawQuery, err := sqltemplate.Execute(sqlQueryShortURLs, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryShortURLs.Name(), err)
+	}
+
+	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
+	if err != nil && rows != nil {
+		_ = rows.Close()
+		return nil, err
+	}
+	return rows, err
+}
+
+// MigrateShortURLs handles the short URL migration logic
+func (a *dashboardSqlAccess) MigrateShortURLs(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	opts.Progress(-1, "migrating short URLs...")
+	rows, err := a.ListShortURLs(ctx, orgId)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if err != nil {
+		return err
+	}
+
+	var id int64
+	var orgID int64
+	var uid, path string
+	var createdBy int64
+	var createdAt int64
+	var lastSeenAt int64
+
+	count := 0
+	for rows.Next() {
+		err = rows.Scan(&id, &orgID, &uid, &path, &createdBy, &createdAt, &lastSeenAt)
+		if err != nil {
+			return err
+		}
+
+		shortURL := &shorturlv1beta1.ShortURL{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: shorturlv1beta1.GroupVersion.String(),
+				Kind:       "ShortURL",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              uid,
+				Namespace:         opts.Namespace,
+				CreationTimestamp: metav1.NewTime(time.Unix(createdAt, 0)),
+			},
+			Spec: shorturlv1beta1.ShortURLSpec{
+				Path: path,
+			},
+			Status: shorturlv1beta1.ShortURLStatus{
+				LastSeenAt: lastSeenAt,
+			},
+		}
+
+		if createdBy > 0 {
+			shortURL.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(createdBy, 10)))
+		}
+
+		body, err := json.Marshal(shortURL)
+		if err != nil {
+			return err
+		}
+
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     shorturlv1beta1.APIGroup,
+				Resource:  "shorturls",
+				Name:      uid,
+			},
+			Value:  body,
+			Action: resourcepb.BulkRequest_ADDED,
+		}
+
+		opts.Progress(count, fmt.Sprintf("%s (%d)", uid, len(req.Value)))
+		count++
+
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return err
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return err
+	}
+
+	opts.Progress(-2, fmt.Sprintf("finished short URLs... (%d)", count))
+	return nil
 }

@@ -2,71 +2,55 @@ module github.com/grafana/grafana/apps/iam
 
 go 1.25.7
 
-replace github.com/grafana/grafana => ../../
+// transitive dependencies that need replaced
+// TODO: stop depending on grafana core(
+replace (
+	github.com/grafana/grafana => ../..
 
-replace github.com/grafana/grafana/apps/folder => ../folder
+	github.com/grafana/grafana/apps/advisor => ../advisor
+	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
+	github.com/grafana/grafana/apps/alerting/historian => ../alerting/historian
+	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
+	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
+	github.com/grafana/grafana/apps/annotation => ../annotation
+	github.com/grafana/grafana/apps/collections => ../collections
+	github.com/grafana/grafana/apps/correlations => ../correlations
+	github.com/grafana/grafana/apps/dashboard => ../dashboard
+	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
+	github.com/grafana/grafana/apps/folder => ../folder
+	github.com/grafana/grafana/apps/iam => ../iam
+	github.com/grafana/grafana/apps/live => ../live
+	github.com/grafana/grafana/apps/logsdrilldown => ../logsdrilldown
+	github.com/grafana/grafana/apps/playlist => ../playlist
+	github.com/grafana/grafana/apps/plugins => ../plugins
+	github.com/grafana/grafana/apps/preferences => ../preferences
+	github.com/grafana/grafana/apps/provisioning => ../provisioning
+	github.com/grafana/grafana/apps/scope => ../scope
+	github.com/grafana/grafana/apps/secret => ../secret
+	github.com/grafana/grafana/apps/shorturl => ../shorturl
 
-replace github.com/grafana/grafana/apps/dashboard => ../dashboard
+	// Packages
+	github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
+	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
+	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
+	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
+	github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
+	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
 
-replace github.com/grafana/grafana/apps/secret => ../secret
-
-replace github.com/grafana/grafana/apps/provisioning => ../provisioning
-
-replace github.com/grafana/grafana/apps/live => ../live
-
-replace github.com/grafana/grafana/apps/advisor => ../advisor
-
-replace github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
-
-replace github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
-
-replace github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
-
-replace github.com/grafana/grafana/apps/alerting/historian => ../alerting/historian
-
-replace github.com/grafana/grafana/apps/correlations => ../correlations
-
-replace github.com/grafana/grafana/apps/logsdrilldown => ../logsdrilldown
-
-replace github.com/grafana/grafana/apps/playlist => ../playlist
-
-replace github.com/grafana/grafana/apps/plugins => ../plugins
-
-replace github.com/grafana/grafana/apps/preferences => ../preferences
-
-replace github.com/grafana/grafana/apps/scope => ../scope
-
-replace github.com/grafana/grafana/apps/shorturl => ../shorturl
-
-replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
-
-replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
-
-replace github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
-
-replace github.com/grafana/grafana/apps/annotation => ../annotation
-
-replace github.com/grafana/grafana/apps/collections => ../collections
-
-replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
-
-replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
-
-replace github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
-
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
+)
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.49.1
-	github.com/grafana/grafana-app-sdk/logging v0.49.0
+	github.com/grafana/grafana-app-sdk v0.50.1
+	github.com/grafana/grafana-app-sdk/logging v0.50.1
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/client_golang v1.23.2
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
-	k8s.io/apimachinery v0.34.3
-	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
+	k8s.io/apimachinery v0.35.0
+	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 )
 
 require (
@@ -471,14 +455,14 @@ require (
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.3 // indirect
-	k8s.io/apiextensions-apiserver v0.34.3 // indirect
-	k8s.io/apiserver v0.34.3 // indirect
-	k8s.io/client-go v0.34.3 // indirect
-	k8s.io/component-base v0.34.3 // indirect
+	k8s.io/api v0.35.0 // indirect
+	k8s.io/apiextensions-apiserver v0.35.0 // indirect
+	k8s.io/apiserver v0.35.0 // indirect
+	k8s.io/client-go v0.35.0 // indirect
+	k8s.io/component-base v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kms v0.34.3 // indirect
-	k8s.io/kube-aggregator v0.34.3 // indirect
+	k8s.io/kms v0.35.0 // indirect
+	k8s.io/kube-aggregator v0.35.0 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
