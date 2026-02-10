@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -24,11 +23,10 @@ func TestValidateKeeper(t *testing.T) {
 				Spec: secretv1beta1.KeeperSpec{
 					Aws: &secretv1beta1.KeeperAWSConfig{
 						Region: "us-east-1",
-						AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-							AccessKeyID:     secretv1beta1.KeeperCredentialValue{SecureValueName: "some-value"},
-							SecretAccessKey: secretv1beta1.KeeperCredentialValue{SecureValueName: "some-value"},
+						AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+							AssumeRoleArn: "arn",
+							ExternalID:    "id",
 						},
-						KmsKeyID: ptr.To("kms-key-id"),
 					},
 				},
 			}
@@ -46,18 +44,16 @@ func TestValidateKeeper(t *testing.T) {
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID: secretv1beta1.KeeperCredentialValue{
-							SecureValueName: "some-value",
-						},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{
-							SecureValueName: "some-value",
-						},
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn",
+						ExternalID:    "id",
 					},
-					KmsKeyID: ptr.To("optional"),
 				},
 			},
 		}
+
+		errs := validator.Validate(validKeeperAWS, nil, admission.Create)
+		require.Len(t, errs, 0)
 
 		t.Run("aws keeper feature flag must be enabled", func(t *testing.T) {
 			// Validator with feature disabled
@@ -68,38 +64,14 @@ func TestValidateKeeper(t *testing.T) {
 			require.Contains(t, errs[0].Detail, "secretsManagementAppPlatformAwsKeeper")
 		})
 
-		t.Run("`accessKeyID` must be present", func(t *testing.T) {
+		t.Run("assumeRole must be present", func(t *testing.T) {
 			keeper := validKeeperAWS.DeepCopy()
-			keeper.Spec.Aws.AccessKey.AccessKeyID = secretv1beta1.KeeperCredentialValue{}
+			keeper.Spec.Aws.AssumeRole = nil
 
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
-			require.Equal(t, "spec.aws.accessKey.accessKeyID", errs[0].Field)
-		})
-
-		t.Run("`secretAccessKey` must be present", func(t *testing.T) {
-			keeper := validKeeperAWS.DeepCopy()
-			keeper.Spec.Aws.AccessKey.SecretAccessKey = secretv1beta1.KeeperCredentialValue{}
-
-			errs := validator.Validate(keeper, nil, admission.Create)
-			require.Len(t, errs, 1)
-			require.Equal(t, "spec.aws.accessKey.secretAccessKey", errs[0].Field)
-
-			t.Run("only one of accessKey or assumeRole can be present", func(t *testing.T) {
-				keeper := validKeeperAWS.DeepCopy()
-				keeper.Spec.Aws.AccessKey.SecretAccessKey = secretv1beta1.KeeperCredentialValue{
-					SecureValueName: "a",
-				}
-				keeper.Spec.Aws.AssumeRole = &secretv1beta1.KeeperAWSAssumeRole{
-					AssumeRoleArn: "arn",
-					ExternalID:    "id",
-				}
-
-				errs := validator.Validate(keeper, nil, admission.Create)
-				require.Len(t, errs, 1)
-				require.Equal(t, "spec.aws", errs[0].Field)
-				require.Equal(t, "only one of `accessKey` or `assumeRole` can be present", errs[0].Detail)
-			})
+			require.Equal(t, "spec.aws", errs[0].Field)
+			require.Equal(t, "`assumeRole` must be present", errs[0].Detail)
 		})
 	})
 
@@ -112,9 +84,9 @@ func TestValidateKeeper(t *testing.T) {
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID:     secretv1beta1.KeeperCredentialValue{SecureValueName: "test"},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{SecureValueName: "test"},
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn",
+						ExternalID:    "id",
 					},
 				},
 			},
@@ -145,9 +117,9 @@ func TestValidateKeeper(t *testing.T) {
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID:     secretv1beta1.KeeperCredentialValue{SecureValueName: "test"},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{SecureValueName: "test"},
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn",
+						ExternalID:    "id",
 					},
 				},
 			},
@@ -179,9 +151,9 @@ func TestValidateKeeper(t *testing.T) {
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID:     secretv1beta1.KeeperCredentialValue{SecureValueName: "test"},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{SecureValueName: "test"},
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn",
+						ExternalID:    "id",
 					},
 				},
 			},

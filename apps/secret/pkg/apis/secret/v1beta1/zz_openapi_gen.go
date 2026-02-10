@@ -9,10 +9,8 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		Keeper{}.OpenAPIModelName():                         schema_pkg_apis_secret_v1beta1_Keeper(ref),
-		KeeperAWSAccessKey{}.OpenAPIModelName():             schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref),
 		KeeperAWSAssumeRole{}.OpenAPIModelName():            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
 		KeeperAWSConfig{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
-		KeeperCredentialValue{}.OpenAPIModelName():          schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref),
 		KeeperList{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperList(ref),
 		KeeperSpec{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperSpec(ref),
 		KeeperStatus{}.OpenAPIModelName():                   schema_pkg_apis_secret_v1beta1_KeeperStatus(ref),
@@ -73,33 +71,6 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 	}
 }
 
-func schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"accessKeyID": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(KeeperCredentialValue{}.OpenAPIModelName()),
-						},
-					},
-					"secretAccessKey": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(KeeperCredentialValue{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"accessKeyID", "secretAccessKey"},
-			},
-		},
-		Dependencies: []string{
-			KeeperCredentialValue{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -140,20 +111,9 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
-					"accessKey": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(KeeperAWSAccessKey{}.OpenAPIModelName()),
-						},
-					},
 					"assumeRole": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(KeeperAWSAssumeRole{}.OpenAPIModelName()),
-						},
-					},
-					"kmsKeyID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
 						},
 					},
 				},
@@ -161,27 +121,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			KeeperAWSAccessKey{}.OpenAPIModelName(), KeeperAWSAssumeRole{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"secureValueName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The name of the secure value that holds the actual value.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
+			KeeperAWSAssumeRole{}.OpenAPIModelName()},
 	}
 }
 

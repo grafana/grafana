@@ -216,25 +216,7 @@ func parseKeeperConfigJson(keeperName string, keeperType secretv1beta1.KeeperTyp
 
 // extractSecureValues extracts unique securevalues referenced by the keeper, if any.
 func extractSecureValues(kp *secretv1beta1.Keeper) map[string]struct{} {
-	switch {
-	case kp.Spec.Aws != nil:
-		secureValues := make(map[string]struct{}, 0)
-
-		if kp.Spec.Aws.AccessKey == nil {
-			return secureValues
-		}
-
-		if kp.Spec.Aws.AccessKey.AccessKeyID.SecureValueName != "" {
-			secureValues[kp.Spec.Aws.AccessKey.AccessKeyID.SecureValueName] = struct{}{}
-		}
-
-		if kp.Spec.Aws.AccessKey.SecretAccessKey.SecureValueName != "" {
-			secureValues[kp.Spec.Aws.AccessKey.SecretAccessKey.SecureValueName] = struct{}{}
-		}
-
-		return secureValues
-	}
-
+	// TODO: implement for keepers that will reference secure value names in their configs
 	return nil
 }
 

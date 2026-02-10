@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -193,7 +192,6 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 						AssumeRoleArn: "arn",
 						ExternalID:    "external-id",
 					},
-					KmsKeyID: ptr.To("kms-key-id-1"),
 				},
 			},
 		}
@@ -210,7 +208,6 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.Equal(t, "us-east-1", keeper.Spec.Aws.Region)
 		require.Equal(t, "arn", keeper.Spec.Aws.AssumeRole.AssumeRoleArn)
 		require.Equal(t, "external-id", keeper.Spec.Aws.AssumeRole.ExternalID)
-		require.Equal(t, "kms-key-id-1", *keeper.Spec.Aws.KmsKeyID)
 
 		// Update with new AWS config
 		updatedKeeper := &secretv1beta1.Keeper{
@@ -222,7 +219,6 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 						AssumeRoleArn: "arn-2",
 						ExternalID:    "external-id-2",
 					},
-					KmsKeyID: ptr.To("kms-key-id-2"),
 				},
 			},
 		}
@@ -239,7 +235,6 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.Equal(t, "us-east-2", updatedKeeper.Spec.Aws.Region)
 		require.Equal(t, "arn-2", updatedKeeper.Spec.Aws.AssumeRole.AssumeRoleArn)
 		require.Equal(t, "external-id-2", updatedKeeper.Spec.Aws.AssumeRole.ExternalID)
-		require.Equal(t, "kms-key-id-2", *updatedKeeper.Spec.Aws.KmsKeyID)
 	})
 
 	t.Run("list keepers in empty namespace", func(t *testing.T) {

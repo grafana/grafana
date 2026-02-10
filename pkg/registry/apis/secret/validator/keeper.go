@@ -83,26 +83,15 @@ func validateAws(cfg *secretv1beta1.KeeperAWSConfig) field.ErrorList {
 	}
 
 	switch {
-	case cfg.AccessKey == nil && cfg.AssumeRole == nil:
-		errs = append(errs, field.Required(field.NewPath("spec", "aws"), "one of `accessKey` or `assumeRole` must be present"))
-
-	case cfg.AccessKey != nil && cfg.AssumeRole != nil:
-		errs = append(errs, field.Required(field.NewPath("spec", "aws"), "only one of `accessKey` or `assumeRole` can be present"))
-
-	case cfg.AccessKey != nil:
-		if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKey", "accessKeyID"), cfg.AccessKey.AccessKeyID); err != nil {
-			errs = append(errs, err)
-		}
-		if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKey", "secretAccessKey"), cfg.AccessKey.SecretAccessKey); err != nil {
-			errs = append(errs, err)
-		}
+	case cfg.AssumeRole == nil:
+		errs = append(errs, field.Required(field.NewPath("spec", "aws"), "`assumeRole` must be present"))
 
 	case cfg.AssumeRole != nil:
 		if cfg.AssumeRole.AssumeRoleArn == "" {
 			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "assumeRoleArn"), "arn of the role to assume must be present"))
 		}
 		if cfg.AssumeRole.ExternalID == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "externalId"), "externalId must be present"))
+			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "externalID"), "externalID must be present"))
 		}
 	}
 
@@ -132,26 +121,6 @@ func validateKeepers(keeper *secretv1beta1.Keeper) *field.Error {
 			strings.Join(configuredKeepers, " & "),
 			"only one `keeper` can be present at a time but found more",
 		)
-	}
-
-	return nil
-}
-
-func validateCredentialValue(path *field.Path, credentials secretv1beta1.KeeperCredentialValue) *field.Error {
-	availableOptions := map[string]bool{
-		"secureValueName": credentials.SecureValueName != "",
-	}
-
-	configuredCredentials := make([]string, 0)
-
-	for credentialKind, notEmpty := range availableOptions {
-		if notEmpty {
-			configuredCredentials = append(configuredCredentials, credentialKind)
-		}
-	}
-
-	if len(configuredCredentials) != 1 {
-		return field.Required(path, "`secureValueName` must be present")
 	}
 
 	return nil
