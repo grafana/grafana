@@ -36,6 +36,12 @@ func TestGithubClient_GetApp(t *testing.T) {
 							Owner: &github.User{
 								Login: github.Ptr("grafana"),
 							},
+							Permissions: &github.InstallationPermissions{
+								Contents:        github.Ptr("write"),
+								Metadata:        github.Ptr("read"),
+								PullRequests:    github.Ptr("write"),
+								RepositoryHooks: github.Ptr("write"),
+							},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(app))
@@ -47,6 +53,12 @@ func TestGithubClient_GetApp(t *testing.T) {
 				ID:    12345,
 				Slug:  "my-test-app",
 				Owner: "grafana",
+				Permissions: conngh.AppPermissions{
+					Contents:     conngh.AppPermissionWrite,
+					Metadata:     conngh.AppPermissionRead,
+					PullRequests: conngh.AppPermissionWrite,
+					Webhooks:     conngh.AppPermissionWrite,
+				},
 			},
 			wantErr: nil,
 		},
@@ -240,12 +252,6 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
-				Permissions: conngh.AppPermissions{
-					Contents:     conngh.AppPermissionWrite,
-					Metadata:     conngh.AppPermissionRead,
-					PullRequests: conngh.AppPermissionWrite,
-					Webhooks:     conngh.AppPermissionWrite,
-				},
 			},
 			wantErr: false,
 		},
@@ -270,12 +276,6 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
-				Permissions: conngh.AppPermissions{
-					Contents:     conngh.AppPermissionNone,
-					Metadata:     conngh.AppPermissionNone,
-					PullRequests: conngh.AppPermissionNone,
-					Webhooks:     conngh.AppPermissionNone,
-				},
 			},
 			wantErr: false,
 		},
@@ -303,12 +303,6 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
-				Permissions: conngh.AppPermissions{
-					Contents:     conngh.AppPermissionRead,
-					Metadata:     conngh.AppPermissionNone,
-					PullRequests: conngh.AppPermissionNone,
-					Webhooks:     conngh.AppPermissionNone,
-				},
 			},
 			wantErr: false,
 		},

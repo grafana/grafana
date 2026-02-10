@@ -179,16 +179,19 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionWrite,
 						Metadata:     github.AppPermissionRead,
 						PullRequests: github.AppPermissionWrite,
 						Webhooks:     github.AppPermissionWrite,
 					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
 				}, nil)
 			},
 			expectedCode:  http.StatusOK,
@@ -387,68 +390,6 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			name: "failure - GetAppInstallation returns service unavailable",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          appID,
-						InstallationID: "456",
-					},
-				},
-			},
-			secrets: github.ConnectionSecrets{
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-				Token:      token,
-			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
-				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrServiceUnavailable)
-			},
-			expectedCode:  http.StatusServiceUnavailable,
-			expectSuccess: false,
-			expectedErrors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: github.ErrServiceUnavailable.Error(),
-				},
-			},
-		},
-		{
-			name: "failure - GetAppInstallation returns other error (invalid installation)",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          appID,
-						InstallationID: "456",
-					},
-				},
-			},
-			secrets: github.ConnectionSecrets{
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-				Token:      token,
-			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
-				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, errors.New("not found"))
-			},
-			expectedCode:  http.StatusUnprocessableEntity,
-			expectSuccess: false,
-			expectedErrors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: "invalid installation ID: 456",
-				},
-			},
-		},
-		{
 			name: "failure - GetApp returns authentication error (401)",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -514,37 +455,6 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			name: "failure - GetAppInstallation returns not found (404)",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          appID,
-						InstallationID: "456",
-					},
-				},
-			},
-			secrets: github.ConnectionSecrets{
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-				Token:      token,
-			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
-				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrNotFound)
-			},
-			expectedCode:  http.StatusNotFound,
-			expectSuccess: false,
-			expectedErrors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: "installation not found",
-				},
-			},
-		},
-		{
 			name: "failure - missing contents permission",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -562,10 +472,9 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionNone,
 						Metadata:     github.AppPermissionRead,
@@ -602,10 +511,9 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionRead,
 						Metadata:     github.AppPermissionRead,
@@ -642,10 +550,9 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionWrite,
 						Metadata:     github.AppPermissionNone,
@@ -682,10 +589,9 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionWrite,
 						Metadata:     github.AppPermissionRead,
@@ -722,10 +628,9 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionWrite,
 						Metadata:     github.AppPermissionRead,
@@ -762,10 +667,9 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionRead,
 						Metadata:     github.AppPermissionNone,
@@ -776,6 +680,208 @@ func TestConnection_Test(t *testing.T) {
 			},
 			expectedCode:  http.StatusForbidden,
 			expectSuccess: false,
+		},
+		{
+			name: "failure - GetAppInstallation returns not found (404)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrNotFound)
+			},
+			expectedCode:  http.StatusNotFound,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.installationID",
+					Detail: "installation not found",
+				},
+			},
+		},
+		{
+			name: "failure - GetAppInstallation returns authentication error (401)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrAuthentication)
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.installationID",
+					Detail: github.ErrAuthentication.Error(),
+				},
+			},
+		},
+		{
+			name: "failure - GetAppInstallation returns service unavailable (503)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrServiceUnavailable)
+			},
+			expectedCode:  http.StatusServiceUnavailable,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeInternal,
+					Detail: github.ErrServiceUnavailable.Error(),
+				},
+			},
+		},
+		{
+			name: "failure - GetAppInstallation returns generic error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, errors.New("unexpected error"))
+			},
+			expectedCode:  http.StatusUnprocessableEntity,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.installationID",
+					Detail: "failed to validate installation",
+				},
+			},
+		},
+		{
+			name: "failure - installation is suspended",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: false,
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.installationID",
+					Detail: "installation is suspended",
+				},
+			},
 		},
 		{
 			name: "success - write permission satisfies read requirement",
@@ -795,16 +901,19 @@ func TestConnection_Test(t *testing.T) {
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: true,
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
 					Permissions: github.AppPermissions{
 						Contents:     github.AppPermissionWrite,
 						Metadata:     github.AppPermissionWrite,
 						PullRequests: github.AppPermissionWrite,
 						Webhooks:     github.AppPermissionWrite,
 					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
 				}, nil)
 			},
 			expectedCode:  http.StatusOK,

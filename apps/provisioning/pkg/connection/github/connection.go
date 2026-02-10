@@ -218,6 +218,20 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
+	// Validate permissions from the app
+	permissionErrors := validateAppPermissions(app.Permissions)
+	if len(permissionErrors) > 0 {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors:  permissionErrors,
+		}, nil
+	}
+
 	installation, err := ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		// Check for specific error types
@@ -264,8 +278,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "installationID").String(),
+						Type:   metav1.CauseTypeInternal,
 						Detail: ErrServiceUnavailable.Error(),
 					},
 				},
@@ -283,16 +296,15 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("spec", "github", "installationID").String(),
-						Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
+						Detail: "failed to validate installation",
 					},
 				},
 			}, nil
 		}
 	}
 
-	// Validate permissions
-	permissionErrors := validateInstallationPermissions(installation)
-	if len(permissionErrors) > 0 {
+	// Check if installation is enabled (not suspended)
+	if !installation.Enabled {
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
@@ -300,7 +312,13 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 			},
 			Code:    http.StatusForbidden,
 			Success: false,
-			Errors:  permissionErrors,
+			Errors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("spec", "github", "installationID").String(),
+					Detail: "installation is suspended",
+				},
+			},
 		}, nil
 	}
 
@@ -430,8 +448,8 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 	return claims.Issuer == c.obj.Spec.GitHub.AppID
 }
 
-// validateInstallationPermissions checks if the given installation has required permissions
-func validateInstallationPermissions(installation AppInstallation) []provisioning.ErrorDetails {
+// validateAppPermissions checks if the given app has required permissions
+func validateAppPermissions(permissions AppPermissions) []provisioning.ErrorDetails {
 	var errors []provisioning.ErrorDetails
 
 	requiredPerms := map[string]struct {
@@ -439,19 +457,19 @@ func validateInstallationPermissions(installation AppInstallation) []provisionin
 		required AppPermission
 	}{
 		"contents": {
-			current:  installation.Permissions.Contents,
+			current:  permissions.Contents,
 			required: AppPermissionWrite,
 		},
 		"metadata": {
-			current:  installation.Permissions.Metadata,
+			current:  permissions.Metadata,
 			required: AppPermissionRead,
 		},
 		"pull_requests": {
-			current:  installation.Permissions.PullRequests,
+			current:  permissions.PullRequests,
 			required: AppPermissionWrite,
 		},
 		"webhooks": {
-			current:  installation.Permissions.Webhooks,
+			current:  permissions.Webhooks,
 			required: AppPermissionWrite,
 		},
 	}

@@ -281,21 +281,15 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 		// Setup mock with insufficient permissions
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 
-		app := &github.App{
-			ID:   github.Ptr(int64(123456)),
-			Slug: github.Ptr("test-app"),
-			Owner: &github.User{
-				Login: github.Ptr("test-owner"),
-			},
-		}
-
-		// Installation with only read permissions (insufficient)
-		installation := createInstallationWithPermissions(454545, map[string]string{
+		app := createAppWithPermissions(123456, map[string]string{
 			"contents":      "read", // needs write
 			"metadata":      "read",
 			"pull_requests": "read", // needs write
 			"webhooks":      "read", // needs write
 		})
+		installation := &github.Installation{
+			ID: github.Ptr(int64(454545)),
+		}
 
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatchHandler(
@@ -372,21 +366,16 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 	t.Run("test endpoint succeeds with all permissions", func(t *testing.T) {
 		// Setup mock with all required permissions
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-
-		app := &github.App{
-			ID:   github.Ptr(int64(123456)),
-			Slug: github.Ptr("test-app"),
-			Owner: &github.User{
-				Login: github.Ptr("test-owner"),
-			},
-		}
-
-		installation := createInstallationWithPermissions(454545, map[string]string{
+		
+		app := createAppWithPermissions(123456, map[string]string{
 			"contents":      "write",
 			"metadata":      "read",
 			"pull_requests": "write",
 			"webhooks":      "write",
 		})
+		installation := &github.Installation{
+			ID: github.Ptr(int64(454545)),
+		}
 
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatchHandler(

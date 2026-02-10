@@ -49,6 +49,8 @@ type App struct {
 	Slug string
 	// Owner represents the GH account/org owning the app
 	Owner string
+	// Permissions granted to the GitHub App
+	Permissions AppPermissions
 }
 type AppPermission int
 
@@ -72,8 +74,6 @@ type AppInstallation struct {
 	ID int64
 	// Whether the installation is enabled or not.
 	Enabled bool
-	// Permissions granted to the installation
-	Permissions AppPermissions
 }
 
 // InstallationToken represents a Github App Installation Access Token.
@@ -114,6 +114,12 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
 		Owner: app.GetOwner().GetLogin(),
+		Permissions: AppPermissions{
+			Contents:     toAppPermission(app.GetPermissions().GetContents()),
+			Metadata:     toAppPermission(app.GetPermissions().GetMetadata()),
+			PullRequests: toAppPermission(app.GetPermissions().GetPullRequests()),
+			Webhooks:     toAppPermission(app.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
 }
 
@@ -143,12 +149,6 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
-		Permissions: AppPermissions{
-			Contents:     toAppPermission(installation.GetPermissions().GetContents()),
-			Metadata:     toAppPermission(installation.GetPermissions().GetMetadata()),
-			PullRequests: toAppPermission(installation.GetPermissions().GetPullRequests()),
-			Webhooks:     toAppPermission(installation.GetPermissions().GetRepositoryHooks()),
-		},
 	}, nil
 }
 

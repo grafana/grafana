@@ -2275,9 +2275,13 @@ func verifyToken(t *testing.T, appID, token string) (bool, error) {
 }
 
 // createInstallationWithPermissions creates a GitHub installation with specific permissions
-func createInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
-	installation := &github.Installation{
-		ID: github.Ptr(id),
+func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
+	app := &github.App{
+		ID:   github.Ptr(id),
+		Slug: github.Ptr("test-app"),
+		Owner: &github.User{
+			Login: github.Ptr("test-owner"),
+		},
 	}
 
 	// Set permissions based on the map
@@ -2297,10 +2301,10 @@ func createInstallationWithPermissions(id int64, permissions map[string]string) 
 			installationPerms.RepositoryHooks = github.Ptr(hooks)
 		}
 
-		installation.Permissions = installationPerms
+		app.Permissions = installationPerms
 	}
 
-	return installation
+	return app
 }
 
 func TestIntegrationProvisioning_GithubPermissionValidation(t *testing.T) {
@@ -2399,15 +2403,10 @@ func TestIntegrationProvisioning_GithubPermissionValidation(t *testing.T) {
 			// Setup mock GitHub client
 			connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 
-			app := &github.App{
-				ID:   github.Ptr(int64(123456)),
-				Slug: github.Ptr("test-app"),
-				Owner: &github.User{
-					Login: github.Ptr("test-owner"),
-				},
+			app := createAppWithPermissions(123456, tc.permissions)
+			installation := &github.Installation{
+				ID: github.Ptr(int64(454545)),
 			}
-
-			installation := createInstallationWithPermissions(454545, tc.permissions)
 
 			connectionFactory.Client = ghmock.NewMockedHTTPClient(
 				ghmock.WithRequestMatchHandler(
