@@ -12947,35 +12947,15 @@
     }
   },
   "query-editor-next": {
-    "labels": {
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
-    },
-    "sidebar": {
-      "card-click": "Select card {{id}}",
-      "queries-expressions": "Queries & Expressions",
-      "query-stack": "Query Stack",
-      "toggle-size": "Toggle sidebar size",
-      "transformations": "Transformations"
-    }
-  },
-  "query-editor-renderer": {
-    "datasource-load-error-title": "Failed to load datasource for this query",
-    "loading-datasource": "Loading datasource",
-    "no-query-editor-component": "Data source plugin does not export any query editor component"
-  },
-  "query-editor": {
     "action": {
       "coming-soon": "Transformation actions coming soon",
-      "duplicate": "Duplicate query",
-      "hide": "Hide response",
+      "duplicate": "Duplicate {{type}}",
+      "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "inspector": "Query inspector",
-      "more-actions": "More actions",
-      "remove-query": "Remove query",
-      "remove-transformation": "Remove transformation",
-      "show": "Show response",
+      "more-actions": "More {{type}} actions",
+      "remove": "Remove {{type}}",
+      "show": "Show {{type}}",
       "show-help": "Show data source help"
     },
     "details-sidebar": {
@@ -13024,10 +13004,27 @@
       "close": "Close help",
       "close-aria": "Close help panel"
     },
+    "labels": {
+      "expression": "Expression",
+      "query": "Query",
+      "transformation": "Transformation"
+    },
+    "sidebar": {
+      "card-click": "Select card {{id}}",
+      "queries-expressions": "Queries & Expressions",
+      "query-stack": "Query Stack",
+      "toggle-size": "Toggle sidebar size",
+      "transformations": "Transformations"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "Failed to load datasource for this query",
+    "loading-datasource": "Loading datasource",
+    "no-query-editor-component": "Data source plugin does not export any query editor component"
   },
   "query-library": {
     "exposed-compoment": {
