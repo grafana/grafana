@@ -3,23 +3,13 @@ package validator
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 )
 
-// DashboardCompatibilityRequest contains the dashboard and datasource mappings to validate
+// DashboardCompatibilityRequest contains the dashboard and datasources to validate
 type DashboardCompatibilityRequest struct {
-	DashboardJSON      map[string]interface{} // Dashboard JSON structure
-	DatasourceMappings []DatasourceMapping    // List of datasources to validate against
-}
-
-// DatasourceMapping maps a datasource UID to its type and optionally name/URL
-type DatasourceMapping struct {
-	UID        string       // Datasource UID
-	Type       string       // Datasource type (prometheus, mysql, etc.)
-	Name       string       // Optional: Datasource name
-	URL        string       // Datasource URL
-	HTTPClient *http.Client // Authenticated HTTP client
+	DashboardJSON map[string]interface{} // Dashboard JSON structure
+	Datasources   []Datasource           // List of datasources to validate against
 }
 
 // DashboardCompatibilityResult contains the validation results for a dashboard
@@ -28,18 +18,13 @@ type DashboardCompatibilityResult struct {
 	DatasourceResults  []DatasourceValidationResult // Per-datasource results
 }
 
-// DatasourceValidationResult contains validation results for one datasource
+// DatasourceValidationResult contains validation results for one datasource.
+// It embeds ValidationResult and adds datasource identification fields.
 type DatasourceValidationResult struct {
-	UID                string
-	Type               string
-	Name               string
-	TotalQueries       int
-	CheckedQueries     int
-	TotalMetrics       int
-	FoundMetrics       int
-	MissingMetrics     []string
-	QueryBreakdown     []QueryResult
-	CompatibilityScore float64
+	ValidationResult        // Embedded: contains all validation metrics
+	UID              string `json:"uid"`  // Datasource UID
+	Type             string `json:"type"` // Datasource type (prometheus, mysql, etc.)
+	Name             string `json:"name"` // Datasource name for display
 }
 
 // ValidateDashboardCompatibility is the main entry point for validating dashboard compatibility
@@ -47,14 +32,14 @@ type DatasourceValidationResult struct {
 // validators is a map of datasource type -> validator (e.g., "prometheus" -> PrometheusValidator)
 func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibilityRequest, validators map[string]DatasourceValidator) (*DashboardCompatibilityResult, error) {
 	// MVP: Only support single datasource validation
-	if len(req.DatasourceMappings) != 1 {
-		return nil, fmt.Errorf("MVP only supports single datasource validation, got %d datasources", len(req.DatasourceMappings))
+	if len(req.Datasources) != 1 {
+		return nil, fmt.Errorf("MVP only supports single datasource validation, got %d datasources", len(req.Datasources))
 	}
 
-	singleDatasource := req.DatasourceMappings[0]
+	singleDatasource := req.Datasources[0]
 
 	result := &DashboardCompatibilityResult{
-		DatasourceResults: make([]DatasourceValidationResult, 0, len(req.DatasourceMappings)),
+		DatasourceResults: make([]DatasourceValidationResult, 0, len(req.Datasources)),
 	}
 
 	// Step 1: Extract queries from dashboard JSON
@@ -70,44 +55,35 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 	var totalCompatibility float64
 	validatedCount := 0
 
-	for _, dsMapping := range req.DatasourceMappings {
+	for _, ds := range req.Datasources {
 		// Get queries for this datasource
-		dsQueries, ok := queriesByDatasource[dsMapping.UID]
+		dsQueries, ok := queriesByDatasource[ds.UID]
 		if !ok || len(dsQueries) == 0 {
 			// No queries for this datasource, skip
 			continue
 		}
 
 		// Get validator for this datasource type
-		v, ok := validators[dsMapping.Type]
+		v, ok := validators[ds.Type]
 		if !ok {
 			// Unsupported datasource type, skip
 			continue
 		}
-
-		// Convert DatasourceMapping to Datasource (identical field layout)
-		ds := Datasource(dsMapping)
 
 		// Validate queries
 		validationResult, err := v.ValidateQueries(ctx, dsQueries, ds)
 		if err != nil {
 			// Validation failed for this datasource - return error to caller
 			// This could be a connection error, auth error, or other critical failure
-			return nil, fmt.Errorf("validation failed for datasource %s: %w", dsMapping.UID, err)
+			return nil, fmt.Errorf("validation failed for datasource %s: %w", ds.UID, err)
 		}
 
-		// Convert to DatasourceValidationResult
+		// Build result using embedded ValidationResult
 		dsResult := DatasourceValidationResult{
-			UID:                dsMapping.UID,
-			Type:               dsMapping.Type,
-			Name:               dsMapping.Name,
-			TotalQueries:       validationResult.TotalQueries,
-			CheckedQueries:     validationResult.CheckedQueries,
-			TotalMetrics:       validationResult.TotalMetrics,
-			FoundMetrics:       validationResult.FoundMetrics,
-			MissingMetrics:     validationResult.MissingMetrics,
-			QueryBreakdown:     validationResult.QueryBreakdown,
-			CompatibilityScore: validationResult.CompatibilityScore,
+			ValidationResult: *validationResult,
+			UID:              ds.UID,
+			Type:             ds.Type,
+			Name:             ds.Name,
 		}
 
 		result.DatasourceResults = append(result.DatasourceResults, dsResult)

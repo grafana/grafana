@@ -17,11 +17,14 @@ import (
 // Mock Implementations for Testing
 // ============================================================================
 
-// mockParser implements parserLike for testing
+// mockParser implements validator.MetricExtractor for testing
 type mockParser struct {
 	metricsToReturn map[string][]string // queryText -> metrics
 	errorToReturn   map[string]error    // queryText -> error
 }
+
+// Compile-time check that mock implements the interface
+var _ validator.MetricExtractor = (*mockParser)(nil)
 
 func (m *mockParser) ExtractMetrics(queryText string) ([]string, error) {
 	if err, ok := m.errorToReturn[queryText]; ok {
@@ -56,7 +59,7 @@ func (m *mockProvider) GetMetrics(ctx context.Context, datasourceUID, datasource
 // newTestValidator creates a validator with mock parser and mock provider wrapped in real cache.
 // It creates a fresh MetricsCache and registers the mock provider for "prometheus" type.
 // This is a test-only helper - production code uses NewValidator() which creates the real parser.
-func newTestValidator(mockPar *mockParser, mockProv *mockProvider) *Validator {
+func newTestValidator(mockPar validator.MetricExtractor, mockProv *mockProvider) *Validator {
 	metricsCache := cache.NewMetricsCache()
 	metricsCache.RegisterProvider("prometheus", mockProv)
 	return &Validator{

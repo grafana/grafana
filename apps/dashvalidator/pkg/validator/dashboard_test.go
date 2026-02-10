@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -102,6 +103,47 @@ func TestIsV1Dashboard(t *testing.T) {
 			require.Equal(t, tt.expected, result, "isV1Dashboard() returned unexpected result")
 		})
 	}
+}
+
+func TestDatasourceValidationResult_JSONSerialization(t *testing.T) {
+	// Verify that embedded struct produces the expected flat JSON structure
+	result := DatasourceValidationResult{
+		ValidationResult: ValidationResult{
+			TotalQueries:   10,
+			CheckedQueries: 10,
+			QueryBreakdown: []QueryResult{},
+			CompatibilityResult: CompatibilityResult{
+				TotalMetrics:       5,
+				FoundMetrics:       4,
+				MissingMetrics:     []string{"missing_metric"},
+				CompatibilityScore: 0.8,
+			},
+		},
+		UID:  "test-uid",
+		Type: "prometheus",
+		Name: "Test Datasource",
+	}
+
+	jsonBytes, err := json.Marshal(result)
+	require.NoError(t, err)
+
+	var parsed map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &parsed)
+	require.NoError(t, err)
+
+	// Verify all fields are at top level (not nested)
+	require.Equal(t, "test-uid", parsed["uid"])
+	require.Equal(t, "prometheus", parsed["type"])
+	require.Equal(t, "Test Datasource", parsed["name"])
+	require.Equal(t, float64(10), parsed["totalQueries"])
+	require.Equal(t, float64(10), parsed["checkedQueries"])
+	require.Equal(t, float64(5), parsed["totalMetrics"])
+	require.Equal(t, float64(4), parsed["foundMetrics"])
+	require.Equal(t, float64(0.8), parsed["compatibilityScore"])
+
+	// Verify no nested "ValidationResult" key exists
+	_, hasNestedKey := parsed["ValidationResult"]
+	require.False(t, hasNestedKey, "ValidationResult should not be a nested key in JSON")
 }
 
 func TestExtractQueriesFromDashboard_VersionValidation(t *testing.T) {

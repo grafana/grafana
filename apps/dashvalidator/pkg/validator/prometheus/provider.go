@@ -6,17 +6,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 )
-
-// fetcherLike defines minimal interface for the Fetcher (used for testing)
-type fetcherLike interface {
-	FetchMetrics(ctx context.Context, datasourceURL string, client *http.Client) ([]string, error)
-}
 
 // PrometheusProvider implements cache.MetricsProvider for Prometheus datasources.
 // It wraps the existing Fetcher and returns results with a configurable TTL.
 type PrometheusProvider struct {
-	fetcher fetcherLike
+	fetcher validator.MetricsFetcher
 	ttl     time.Duration
 }
 

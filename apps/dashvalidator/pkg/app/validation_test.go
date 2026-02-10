@@ -227,24 +227,30 @@ func TestConvertToCheckResponse(t *testing.T) {
 			CompatibilityScore: 0.85,
 			DatasourceResults: []validator.DatasourceValidationResult{
 				{
-					UID:                "ds-1",
-					Type:               "prometheus",
-					Name:               "My Prometheus",
-					TotalQueries:       10,
-					CheckedQueries:     10,
-					TotalMetrics:       20,
-					FoundMetrics:       17,
-					MissingMetrics:     []string{"missing_1", "missing_2", "missing_3"},
-					CompatibilityScore: 0.85,
-					QueryBreakdown: []validator.QueryResult{
-						{
-							PanelTitle:         "CPU Usage",
-							PanelID:            1,
-							QueryRefID:         "A",
-							TotalMetrics:       5,
-							FoundMetrics:       4,
-							MissingMetrics:     []string{"missing_1"},
-							CompatibilityScore: 0.8,
+					UID:  "ds-1",
+					Type: "prometheus",
+					Name: "My Prometheus",
+					ValidationResult: validator.ValidationResult{
+						TotalQueries:   10,
+						CheckedQueries: 10,
+						CompatibilityResult: validator.CompatibilityResult{
+							TotalMetrics:       20,
+							FoundMetrics:       17,
+							MissingMetrics:     []string{"missing_1", "missing_2", "missing_3"},
+							CompatibilityScore: 0.85,
+						},
+						QueryBreakdown: []validator.QueryResult{
+							{
+								PanelTitle: "CPU Usage",
+								PanelID:    1,
+								QueryRefID: "A",
+								CompatibilityResult: validator.CompatibilityResult{
+									TotalMetrics:       5,
+									FoundMetrics:       4,
+									MissingMetrics:     []string{"missing_1"},
+									CompatibilityScore: 0.8,
+								},
+							},
 						},
 					},
 				},
@@ -299,10 +305,12 @@ func TestConvertToCheckResponse(t *testing.T) {
 				{
 					UID:  "ds-1",
 					Type: "prometheus",
-					QueryBreakdown: []validator.QueryResult{
-						{
-							PanelTitle: "Broken Query",
-							ParseError: &parseErr,
+					ValidationResult: validator.ValidationResult{
+						QueryBreakdown: []validator.QueryResult{
+							{
+								PanelTitle: "Broken Query",
+								ParseError: &parseErr,
+							},
 						},
 					},
 				},

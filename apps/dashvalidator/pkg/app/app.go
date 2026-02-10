@@ -193,8 +193,8 @@ func handleCheckRoute(
 
 		// Step 2: Build validator request
 		validatorReq := validator.DashboardCompatibilityRequest{
-			DashboardJSON:      req.DashboardJSON,
-			DatasourceMappings: make([]validator.DatasourceMapping, 0, len(req.DatasourceMappings)),
+			DashboardJSON: req.DashboardJSON,
+			Datasources:   make([]validator.Datasource, 0, len(req.DatasourceMappings)),
 		}
 
 		logger.Info("Processing request", "dashboardTitle", req.DashboardJSON["title"], "numMappings", len(req.DatasourceMappings))
@@ -289,7 +289,7 @@ func handleCheckRoute(
 				Timeout:   30 * time.Second,
 			}
 
-			validatorReq.DatasourceMappings = append(validatorReq.DatasourceMappings, validator.DatasourceMapping{
+			validatorReq.Datasources = append(validatorReq.Datasources, validator.Datasource{
 				UID:        dsMapping.UID,
 				Type:       dsMapping.Type,
 				Name:       name,

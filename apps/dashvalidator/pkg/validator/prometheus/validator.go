@@ -9,14 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-// parserLike defines minimal interface for dependency injection
-type parserLike interface {
-	ExtractMetrics(queryText string) ([]string, error)
-}
-
 // Validator implements validator.DatasourceValidator for Prometheus datasources
 type Validator struct {
-	parser parserLike
+	parser validator.MetricExtractor
 	cache  *cache.MetricsCache
 }
 
