@@ -430,8 +430,10 @@ function useTeamFolders(
     return teamFoldersIsOpen ? [parentItem, ...children] : [parentItem];
   }, [foldersByTeam, foldersOpenState]);
 
+  const preselectDidRun = useRef(false);
   useEffect(() => {
-    if (!value && firstTeamFolder && onChange) {
+    if (value === '' && firstTeamFolder && onChange && !preselectDidRun.current) {
+      preselectDidRun.current = true;
       onChange(firstTeamFolder.name, firstTeamFolder.title);
     }
   }, [value, firstTeamFolder, onChange]);
