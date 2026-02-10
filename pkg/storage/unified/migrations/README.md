@@ -128,7 +128,7 @@ SQL table and streams resources to unified storage:
 func (a *myAccess) MigrateMyResources(
     ctx context.Context,
     orgId int64,
-    opts resources.MigrateOptions,
+    opts MigrateOptions,
     stream resourcepb.BulkStore_BulkProcessClient,
 ) error {
     rows, err := a.listResources(ctx, orgId)
@@ -156,7 +156,7 @@ Define a small interface in the legacy or types package so that Wire can provide
 
 ```go
 type MyResourceMigrator interface {
-    MigrateMyResources(ctx context.Context, orgId int64, opts resources.MigrateOptions,
+    MigrateMyResources(ctx context.Context, orgId int64, opts MigrateOptions,
         stream resourcepb.BulkStore_BulkProcessClient) error
 }
 ```
@@ -218,12 +218,13 @@ myresource.ProvideMyResourceMigrator,
 
 ```go
 func provideMigrationRegistry(
-    svc resources.ResourceMigrationService,
+    dashMigrator dashboardmigrator.DashboardMigrator,
+    playlistMigrator playlistmigrator.PlaylistMigrator,
     myResourceMigrator myresource.MyResourceMigrator, // <-- add parameter
 ) *unifiedmigrations.MigrationRegistry {
     r := unifiedmigrations.NewMigrationRegistry()
-    r.Register(dashboardmigration.FoldersDashboardsMigration(svc))
-    r.Register(playlistmigration.PlaylistMigration(svc))
+    r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
+    r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
     r.Register(myresource.MyResourceMigration(myResourceMigrator)) // <-- register
     return r
 }

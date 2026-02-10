@@ -43,7 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -56,6 +57,7 @@ import (
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -185,7 +187,6 @@ import (
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
-	migresources "github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -243,7 +244,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
-	legacy.ProvideResourceMigrationService,
+	dashboardlegacy.ProvideMigrator,
+	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	playlistmigrator.ProvidePlaylistMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -577,15 +580,16 @@ func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSuppl
 }
 
 /*
-provideMigrationRegistry builds the MigrationRegistry directly from the
-ResourceMigrationService. When adding a new resource migration, register
+provideMigrationRegistry builds the MigrationRegistry from individual
+resource migrators. When adding a new resource migration, register
 it with the registry here.
 */
 func provideMigrationRegistry(
-	svc migresources.ResourceMigrationService,
+	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
+	playlistMigrator playlistmigrator.PlaylistMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
-	r.Register(dashboardmigration.FoldersDashboardsMigration(svc))
-	r.Register(playlistmigration.PlaylistMigration(svc))
+	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
+	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	return r
 }

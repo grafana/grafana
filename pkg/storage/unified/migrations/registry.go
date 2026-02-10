@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,7 +22,7 @@ type Validator interface {
 type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName string) Validator
 
 // MigratorFunc is the signature for resource migration functions.
-type MigratorFunc = func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+type MigratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 
 // ResourceInfo extends GroupResource with additional metadata needed for migration.
 type ResourceInfo struct {

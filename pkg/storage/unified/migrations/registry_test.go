@@ -5,7 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -95,7 +94,7 @@ func TestMigrationRegistry_Register(t *testing.T) {
 			MigrationID: "widgets migration log id",
 			Resources:   []ResourceInfo{ri},
 			Migrators: map[schema.GroupResource]MigratorFunc{
-				gr: func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 					return nil
 				},
 			},
@@ -242,7 +241,7 @@ func TestMigrationRegistry_All(t *testing.T) {
 }
 
 func TestMigrationRegistry_HasResource(t *testing.T) {
-	noopMigrator := func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	noopMigrator := func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 		return nil
 	}
 
@@ -392,7 +391,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 		called := false
 		def := MigrationDefinition{
 			Migrators: map[schema.GroupResource]MigratorFunc{
-				gr: func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 					called = true
 					return nil
 				},
@@ -402,7 +401,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 		result := def.GetMigratorFunc(gr)
 
 		require.NotNil(t, result)
-		err := result(context.Background(), 1, resources.MigrateOptions{}, nil)
+		err := result(context.Background(), 1, MigrateOptions{}, nil)
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -411,7 +410,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 		existingGR := testGroupResource("existing.group", "widgets")
 		def := MigrationDefinition{
 			Migrators: map[schema.GroupResource]MigratorFunc{
-				existingGR: func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				existingGR: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 					return nil
 				},
 			},
@@ -435,7 +434,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 }
 
 func TestMigrationRegistry_GetMigratorFunc(t *testing.T) {
-	noopMigrator := func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	noopMigrator := func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 		return nil
 	}
 
@@ -495,7 +494,7 @@ func TestMigrationRegistry_GetMigratorFunc(t *testing.T) {
 }
 
 func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
-	noopMigrator := func(ctx context.Context, orgId int64, opts resources.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	noopMigrator := func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 		return nil
 	}
 
