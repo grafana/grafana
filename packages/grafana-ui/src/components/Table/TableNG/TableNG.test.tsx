@@ -344,36 +344,36 @@ describe('TableNG', () => {
   describe('initialRowIndex', () => {
     it('should not scroll by default', async () => {
       const { container } = render(
-        <TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={10} />
+        <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={100} height={10} />
       );
       expect(jestScrollIntoView).not.toHaveBeenCalled();
-      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).not.toBeInTheDocument();
+      expect(container.querySelector('[aria-selected="true"][role="row"]')).not.toBeInTheDocument();
     });
     it('initialRowIndex should scroll', async () => {
       const { container } = render(
         <TableNG
           initialRowIndex={4}
-          enableVirtualization={true}
+          enableVirtualization={false}
           data={createSortingTestDataFrame()}
           width={100}
           height={10}
         />
       );
       expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
-      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).toBeVisible();
+      expect(container.querySelector('[aria-selected="true"][role="row"]')).toBeVisible();
     });
     it('sorting should not retrigger initialRowIndex scroll', async () => {
       const { container } = render(
         <TableNG
           initialRowIndex={4}
-          enableVirtualization={true}
+          enableVirtualization={false}
           data={createSortingTestDataFrame()}
           width={100}
           height={10}
         />
       );
 
-      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).toBeVisible();
+      expect(container.querySelector('[aria-selected="true"][role="row"]')).toBeVisible();
       const columnHeader = container.querySelector('[role="columnheader"]');
 
       // Find the sort button within the first header
@@ -401,7 +401,7 @@ describe('TableNG', () => {
               },
             ]}
             initialRowIndex={5}
-            enableVirtualization={true}
+            enableVirtualization={false}
             data={createSortingTestDataFrame(6)}
             width={100}
             height={10}
@@ -409,10 +409,10 @@ describe('TableNG', () => {
         );
 
         // The first column in our selected row
-        const initiallySelectedCell = container.querySelector('[aria-selected="true"][role="gridcell"]');
+        const initiallySelectedCell = container.querySelector('[aria-selected="true"][role="row"]');
         const initiallySelectedCellContent = initiallySelectedCell?.textContent;
         expect(initiallySelectedCell).toBeVisible();
-        expect(initiallySelectedCellContent).toEqual('C');
+        expect(initiallySelectedCellContent).toEqual('C3Emily');
         expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       }
     );

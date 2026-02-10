@@ -49,6 +49,10 @@ import {
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
 
+export function rowKeyGetter(row: TableRow): string {
+  return row.__index + '_' + row.__depth;
+}
+
 /**
  * @internal
  * Returns the default row height based on the theme and cell height setting.

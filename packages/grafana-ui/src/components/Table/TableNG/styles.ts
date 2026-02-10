@@ -13,6 +13,10 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
   const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
+  const selectedRowColor = theme.isDark
+    ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(25).toHexString()
+    : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
+  const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.1);
 
   return {
     grid: css({
@@ -31,6 +35,8 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       '--rdg-row-hover-background-color': transparent
         ? theme.colors.background.primary
         : theme.colors.background.secondary,
+      '--rdg-row-selected-background-color': selectedRowColor,
+      '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
       // TODO: magic 32px number is unfortunate. it would be better to have the content
       // flow using flexbox rather than hard-coding this size via a calc
@@ -65,6 +71,18 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
         zIndex: theme.zIndex.tooltip - 4,
         ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
+      },
+
+      // have to override styles for row selection to workaround safari styles workaround
+      '[role="row"][aria-selected="true"]': {
+        '&:hover': {
+          '.rdg-cell.rdg-cell-frozen': {
+            backgroundColor: 'var(--rdg-row-selected-hover-background-color)',
+          },
+        },
+        '.rdg-cell.rdg-cell-frozen': {
+          backgroundColor: 'var(--rdg-row-selected-background-color)',
+        },
       },
 
       '.rdg-header-row, .rdg-summary-row': {
