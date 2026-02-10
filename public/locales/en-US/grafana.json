@@ -2212,6 +2212,9 @@
       "recipient": "Recipient",
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
+    "open-drawer-icon-button": {
+      "details": "Details"
+    },
     "option-customfield": {
       "label-custom-template": "Custom template",
       "placeholder": "Enter plain text or reference a template, e.g. {{template \"default.message\" .}}",
