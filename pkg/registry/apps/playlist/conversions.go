@@ -7,21 +7,19 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) unstructured.Unstructured {
+func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.Unstructured {
 	items := []map[string]string{}
 	for _, item := range cmd.Items {
 		items = append(items, map[string]string{
@@ -45,9 +43,9 @@ func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) un
 	return obj
 }
 
-func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlistsvc.Playlist {
+func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *Playlist {
 	spec := item.Object["spec"].(map[string]any)
-	return &playlistsvc.Playlist{
+	return &Playlist{
 		UID:      item.GetName(),
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
@@ -55,9 +53,9 @@ func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlistsvc.P
 	}
 }
 
-func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlistsvc.PlaylistDTO {
+func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *PlaylistDTO {
 	spec := item.Object["spec"].(map[string]any)
-	dto := &playlistsvc.PlaylistDTO{
+	dto := &PlaylistDTO{
 		Uid:      item.GetName(),
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
@@ -73,13 +71,13 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlistsv
 	return dto
 }
 
-func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper) *playlistv0alpha1.Playlist {
+func convertToK8sResource(v *PlaylistDTO, namespacer request.NamespaceMapper) *playlistv0alpha1.Playlist {
 	gvk := playlistv1.PlaylistKind().GroupVersionKind()
 	return convertToK8sResourceWithVersion(v, namespacer, gvk).(*playlistv1.Playlist)
 }
 
 // v0alpha1 and v1 are type aliases, so this can be used for both. the gvk param is only used to set the correct metadata, which is handled by the kind's zerovalue
-func convertToK8sResourceWithVersion(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper, gvk schema.GroupVersionKind) runtime.Object {
+func convertToK8sResourceWithVersion(v *PlaylistDTO, namespacer request.NamespaceMapper, gvk schema.GroupVersionKind) runtime.Object {
 	spec := playlistv1.PlaylistSpec{
 		Title:    v.Name,
 		Interval: v.Interval,
@@ -116,32 +114,6 @@ func convertToK8sResourceWithVersion(v *playlistsvc.PlaylistDTO, namespacer requ
 	p.Kind = gvk.Kind
 
 	return p
-}
-
-// v0alpha1 and v1 are type aliases, so this can be used for both
-func convertToLegacyUpdateCommand(obj runtime.Object, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {
-	p, ok := obj.(*playlistv1.Playlist)
-	if !ok {
-		return nil, fmt.Errorf("unsupported playlist type: %T", obj)
-	}
-
-	spec := p.Spec
-	cmd := &playlistsvc.UpdatePlaylistCommand{
-		UID:      p.Name,
-		Name:     spec.Title,
-		Interval: spec.Interval,
-		OrgId:    orgId,
-	}
-	for _, item := range spec.Items {
-		if item.Type == playlistv1.PlaylistPlaylistItemTypeDashboardById {
-			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
-		}
-		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
-			Type:  string(item.Type),
-			Value: item.Value,
-		})
-	}
-	return cmd, nil
 }
 
 // Read legacy ID from metadata annotations

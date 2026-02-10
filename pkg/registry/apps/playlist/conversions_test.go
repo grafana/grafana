@@ -7,11 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 func TestPlaylistConversion(t *testing.T) {
-	src := &playlist.PlaylistDTO{
+	src := &PlaylistDTO{
 		Id:        123,
 		OrgID:     3,
 		Uid:       "abc",         // becomes k8s name
@@ -19,7 +18,7 @@ func TestPlaylistConversion(t *testing.T) {
 		Interval:  "10s",
 		CreatedAt: 12345,
 		UpdatedAt: 54321,
-		Items: []playlist.PlaylistItemDTO{
+		Items: []PlaylistItemDTO{
 			{Type: "dashboard_by_uid", Value: "UID0"},
 			{Type: "dashboard_by_tag", Value: "tagA"},
 			{Type: "dashboard_by_id", Value: "123"}, // deprecated
