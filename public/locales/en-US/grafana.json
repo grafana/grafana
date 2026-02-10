@@ -12738,6 +12738,7 @@
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "connect-step": "Connect",
+      "connect-step-local": "File Provisioning",
       "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
@@ -12760,6 +12761,7 @@
       "github-app-select-connection": "Select a GitHub App connection",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
+      "step-connect": "Connect",
       "step-finish": "Choose additional settings",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",

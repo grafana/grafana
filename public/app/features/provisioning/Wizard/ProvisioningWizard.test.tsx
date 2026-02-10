@@ -110,7 +110,10 @@ async function navigateToConnectionStep(
     await user.type(screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
   }
 
-  await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+  if (type !== 'local') {
+    await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+  }
+  // For local, the wizard starts on the connection step (authType is pre-completed), so no click needed
 
   if (type === 'local') {
     expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
