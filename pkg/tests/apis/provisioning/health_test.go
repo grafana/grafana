@@ -366,7 +366,7 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 	t.Run("test endpoint succeeds with all permissions", func(t *testing.T) {
 		// Setup mock with all required permissions
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-		
+
 		app := createAppWithPermissions(123456, map[string]string{
 			"contents":      "write",
 			"metadata":      "read",
