@@ -65,9 +65,10 @@ export function QueryEditorDetailsSidebar() {
         return;
       }
 
+      const stringValue = emptyToNull(value);
+
       // Handle time range fields
       if (field === QueryOptionField.relativeTime || field === QueryOptionField.timeShift) {
-        const stringValue = emptyToNull(value);
         const isValid = timeRangeValidation(stringValue);
         const timeRangeField = field === QueryOptionField.relativeTime ? 'from' : 'shift';
         if (isValid && stringValue !== options.timeRange?.[timeRangeField]) {
@@ -81,7 +82,6 @@ export function QueryEditorDetailsSidebar() {
 
       // Handle min interval (time span validation)
       if (field === QueryOptionField.minInterval) {
-        const stringValue = emptyToNull(value);
         const isValid = timeRangeValidation(stringValue);
         if (isValid && stringValue !== options.minInterval) {
           onQueryOptionsChange({ ...options, minInterval: stringValue });
@@ -90,7 +90,6 @@ export function QueryEditorDetailsSidebar() {
       }
 
       // Handle string fields (cacheTimeout)
-      const stringValue = emptyToNull(value);
       if (field === QueryOptionField.cacheTimeout && stringValue !== options.cacheTimeout) {
         onQueryOptionsChange({ ...options, cacheTimeout: stringValue });
       }
