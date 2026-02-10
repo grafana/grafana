@@ -44,7 +44,7 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<MenuView>('main');
 
-  // Fcuses the expressions submenu as soon as it mounts so keyboard
+  // Focuses the expressions submenu as soon as it mounts so keyboard
   // navigation (arrow keys) works as expected.
   const focusOnMount = useCallback((el: HTMLDivElement | null) => el?.focus(), []);
 
