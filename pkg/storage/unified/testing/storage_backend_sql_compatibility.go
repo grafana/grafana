@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -76,6 +77,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
 		{"cross backend consistency", runTestCrossBackendConsistency},
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
+		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
 	}
 
 	for _, tc := range cases {
@@ -102,6 +104,11 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 
 		runTestSearchOperationsCompatibility(t, sqlbackend, kvbackend, opts.NSPrefix, db, opts.SearchServerFactory)
 	})
+}
+
+func newIntegrationTestContext(t *testing.T) context.Context {
+	t.Helper()
+	return testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
@@ -666,7 +673,7 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 
 // runTestCrossBackendConsistency tests basic consistency between SQL and KV backends (lightweight)
 func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := newIntegrationTestContext(t)
 
 	// Create storage servers from both backends
 	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -705,7 +712,7 @@ func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resou
 		t.Skip("Skipping concurrent operations stress test on SQLite")
 	}
 
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := newIntegrationTestContext(t)
 
 	// Create storage servers from both backends
 	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -741,6 +748,445 @@ func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resou
 	t.Run("Mixed Concurrent Operations", func(t *testing.T) {
 		runMixedConcurrentOperations(t, sqlServer, kvServer, mixedNamespace, ctx)
 	})
+}
+
+func runTestOptimisticLockingDatabaseIntegrity(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	// Skip on SQLite due to concurrency limitations
+	if db.DriverName() == "sqlite3" {
+		t.Skip("Skipping optimistic locking database integrity test on SQLite")
+	}
+
+	// Keep this short: namespace has a 63-char limit and test prefixes are random.
+	baseNamespace := nsPrefix + "-oldb"
+
+	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
+		runOptimisticLockingDatabaseIntegrityForBackend(t, sqlBackend, baseNamespace+"-sql", db, ctx)
+	})
+
+	t.Run("KV Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
+		runOptimisticLockingDatabaseIntegrityForBackend(t, kvBackend, baseNamespace+"-kv", db, ctx)
+	})
+}
+
+type optimisticResourceState struct {
+	name      string
+	currentRV int64
+	exists    bool
+}
+
+type writeRaceResult struct {
+	rv      int64
+	err     error
+	payload string
+}
+
+func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resource.StorageBackend, namespace string, db sqldb.DB, ctx context.Context) {
+	const (
+		resourceCount      = 5
+		concurrentRequests = 5
+		group              = "dashboard.grafana.app"
+		resourceName       = "dashboards"
+	)
+
+	states := make([]optimisticResourceState, 0, resourceCount)
+
+	// Create 5 resources. For each resource name, send 5 concurrent create requests with different titles.
+	for i := range resourceCount {
+		name := fmt.Sprintf("db-int-dashboard-%d", i+1)
+		sentTitles := make(map[string]struct{}, concurrentRequests*3)
+
+		var (
+			createdSuccessfully bool
+			currentRV           int64
+		)
+
+		// Retry the concurrent create race a few times to avoid flaky all-failed batches.
+		for attempt := 1; attempt <= 3 && !createdSuccessfully; attempt++ {
+			start := make(chan struct{})
+			results := make(chan writeRaceResult, concurrentRequests)
+			var wg sync.WaitGroup
+
+			for j := range concurrentRequests {
+				reqIdx := j
+				wg.Go(func() {
+					<-start
+					// Intentional tiny stagger avoids all requests entering the same RV manager batch.
+					time.Sleep(time.Duration(reqIdx) * 2 * time.Millisecond)
+
+					title := fmt.Sprintf("create-title-%d-%d-attempt-%d", i+1, reqIdx+1, attempt)
+					rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+						WithNamespace(namespace),
+						WithGroup(group),
+						WithResource(resourceName),
+						WithFolder(""),
+						WithValue(title))
+					results <- writeRaceResult{rv: rv, err: err, payload: title}
+				})
+			}
+			close(start)
+			wg.Wait()
+			close(results)
+
+			successes := 0
+			for res := range results {
+				sentTitles[res.payload] = struct{}{}
+				if res.err == nil {
+					successes++
+				}
+			}
+			require.LessOrEqual(t, successes, 1, "at most one create should succeed for %s", name)
+
+			history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
+			require.LessOrEqual(t, len(history), 1, "expected at most one resource_history record after concurrent create for %s", name)
+
+			resourceRow, existsInResourceTable := queryResourceRow(t, db, namespace, group, resourceName, name)
+			require.Equal(t, len(history) == 1, existsInResourceTable, "resource and resource_history existence mismatch for %s", name)
+			if len(history) == 0 {
+				continue
+			}
+
+			require.Equal(t, 1, history[0].Action, "create action should be persisted for %s", name)
+			_, titleWasSent := sentTitles[extractSpecValue(t, history[0].Value)]
+			require.True(t, titleWasSent, "stored create payload must be one of the attempted create payloads for %s", name)
+
+			requireResourceMatchesHistory(t, *resourceRow, history[0], name)
+
+			existsInBackend, rv := readBackendResourceState(t, backend, namespace, group, resourceName, name)
+			require.True(t, existsInBackend, "resource should exist in backend after successful create for %s", name)
+			currentRV = rv
+			createdSuccessfully = true
+		}
+
+		if !createdSuccessfully {
+			// KV + RV manager may batch same-key concurrent creates and roll back all of them.
+			// Seed one deterministic create so the remaining integrity scenarios can proceed.
+			title := fmt.Sprintf("create-title-%d-bootstrap", i+1)
+			rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+				WithNamespace(namespace),
+				WithGroup(group),
+				WithResource(resourceName),
+				WithFolder(""),
+				WithValue(title))
+			require.NoError(t, err, "bootstrap create must succeed for %s", name)
+
+			history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
+			require.Len(t, history, 1, "expected a single resource_history record after bootstrap create for %s", name)
+			resourceRow, ok := queryResourceRow(t, db, namespace, group, resourceName, name)
+			require.True(t, ok, "resource row should exist after bootstrap create for %s", name)
+			require.Equal(t, title, extractSpecValue(t, history[0].Value), "bootstrap create payload mismatch for %s", name)
+			requireResourceMatchesHistory(t, *resourceRow, history[0], name)
+
+			currentRV = rv
+			createdSuccessfully = true
+		}
+
+		require.True(t, createdSuccessfully, "failed to create resource %s", name)
+		states = append(states, optimisticResourceState{
+			name:      name,
+			currentRV: currentRV,
+			exists:    true,
+		})
+	}
+
+	// For each resource, send 5 concurrent updates with the same previous RV and different titles.
+	for i := range states {
+		state := &states[i]
+		require.True(t, state.exists, "resource must exist before update race: %s", state.name)
+
+		start := make(chan struct{})
+		results := make(chan writeRaceResult, concurrentRequests)
+		var wg sync.WaitGroup
+		baseRV := state.currentRV
+
+		for j := range concurrentRequests {
+			reqIdx := j
+			wg.Go(func() {
+				<-start
+				// Keep updates concurrent but reduce same-batch rollback flakiness.
+				time.Sleep(time.Duration(reqIdx) * 2 * time.Millisecond)
+
+				title := fmt.Sprintf("update-title-%d-%d", i+1, reqIdx+1)
+				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
+					WithNamespaceAndRV(namespace, baseRV),
+					WithGroup(group),
+					WithResource(resourceName),
+					WithFolder(""),
+					WithValue(title))
+				results <- writeRaceResult{rv: rv, err: err, payload: title}
+			})
+		}
+		close(start)
+		wg.Wait()
+		close(results)
+
+		successes := 0
+		for res := range results {
+			if res.err == nil {
+				successes++
+				state.currentRV = res.rv
+			}
+		}
+		require.LessOrEqual(t, successes, 1, "at most one update should succeed for %s", state.name)
+
+		assertLatestHistoryAndResourceAreSynced(t, db, namespace, group, resourceName, state.name)
+		existsInBackend, rv := readBackendResourceState(t, backend, namespace, group, resourceName, state.name)
+		state.exists = existsInBackend
+		if existsInBackend {
+			state.currentRV = rv
+		}
+	}
+
+	// Update + delete race. Update request is intentionally fired first, delete shortly after.
+	for i := range states {
+		state := &states[i]
+		require.True(t, state.exists, "resource must exist before update+delete race: %s", state.name)
+
+		baseRV := state.currentRV
+		start := make(chan struct{})
+		results := make(chan struct {
+			op string
+			writeRaceResult
+		}, 2)
+		var wg sync.WaitGroup
+
+		raceIdx := i
+		wg.Go(func() {
+			<-start
+			title := fmt.Sprintf("race-update-title-%d", raceIdx+1)
+			rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
+				WithNamespaceAndRV(namespace, baseRV),
+				WithGroup(group),
+				WithResource(resourceName),
+				WithFolder(""),
+				WithValue(title))
+			results <- struct {
+				op string
+				writeRaceResult
+			}{op: "update", writeRaceResult: writeRaceResult{rv: rv, err: err, payload: title}}
+		})
+
+		wg.Go(func() {
+			<-start
+			// Keep requests concurrent while making update reach storage first.
+			time.Sleep(5 * time.Millisecond)
+			rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_DELETED,
+				WithNamespaceAndRV(namespace, baseRV),
+				WithGroup(group),
+				WithResource(resourceName),
+				WithFolder(""),
+				WithValue(fmt.Sprintf("race-delete-%d", raceIdx+1)))
+			results <- struct {
+				op string
+				writeRaceResult
+			}{op: "delete", writeRaceResult: writeRaceResult{rv: rv, err: err}}
+		})
+
+		close(start)
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			if res.err != nil {
+				continue
+			}
+			if res.op == "update" {
+				state.currentRV = res.rv
+				state.exists = true
+			} else {
+				state.currentRV = res.rv
+				state.exists = false
+			}
+		}
+
+		assertLatestHistoryAndResourceAreSynced(t, db, namespace, group, resourceName, state.name)
+		existsInBackend, rv := readBackendResourceState(t, backend, namespace, group, resourceName, state.name)
+		state.exists = existsInBackend
+		if existsInBackend {
+			state.currentRV = rv
+		}
+	}
+
+	// Send 5 concurrent deletes for each resource and verify one delete history entry in total per resource.
+	for i := range states {
+		state := &states[i]
+		start := make(chan struct{})
+		results := make(chan writeRaceResult, concurrentRequests)
+		var wg sync.WaitGroup
+		baseRV := state.currentRV
+
+		for j := range concurrentRequests {
+			reqIdx := j
+			wg.Go(func() {
+				<-start
+				// Keep requests concurrent but avoid same-batch rollback behavior.
+				time.Sleep(time.Duration(reqIdx) * 2 * time.Millisecond)
+				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_DELETED,
+					WithNamespaceAndRV(namespace, baseRV),
+					WithGroup(group),
+					WithResource(resourceName),
+					WithFolder(""),
+					WithValue(fmt.Sprintf("delete-title-%d-%d", i+1, reqIdx+1)))
+				results <- writeRaceResult{rv: rv, err: err}
+			})
+		}
+		close(start)
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			if res.err == nil {
+				state.currentRV = res.rv
+				state.exists = false
+			}
+		}
+
+		history := queryResourceHistoryRows(t, db, namespace, group, resourceName, state.name)
+		deleteCount := 0
+		for _, h := range history {
+			if h.Action == 3 {
+				deleteCount++
+			}
+		}
+		require.Equal(t, 1, deleteCount, "expected exactly one delete history record for %s", state.name)
+
+		_, ok := queryResourceRow(t, db, namespace, group, resourceName, state.name)
+		require.False(t, ok, "resource should not exist after delete race for %s", state.name)
+	}
+}
+
+func queryResourceHistoryRows(t *testing.T, db sqldb.DB, namespace, group, resourceName, name string) []ResourceHistoryRecord {
+	t.Helper()
+	ctx := t.Context()
+	query := buildCrossDatabaseQuery(db.DriverName(), `
+		SELECT guid, "group", resource, namespace, name, value, action, folder,
+		       previous_resource_version, generation, resource_version
+		FROM resource_history
+		WHERE namespace = ? AND "group" = ? AND resource = ? AND name = ?
+		ORDER BY resource_version ASC
+	`)
+
+	rows, err := db.QueryContext(ctx, query, namespace, group, resourceName, name)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var out []ResourceHistoryRecord
+	for rows.Next() {
+		var record ResourceHistoryRecord
+		err := rows.Scan(
+			&record.GUID, &record.Group, &record.Resource, &record.Namespace, &record.Name,
+			&record.Value, &record.Action, &record.Folder, &record.PreviousResourceVersion,
+			&record.Generation, &record.ResourceVersion,
+		)
+		require.NoError(t, err)
+		out = append(out, record)
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+func queryResourceRow(t *testing.T, db sqldb.DB, namespace, group, resourceName, name string) (*ResourceRecord, bool) {
+	t.Helper()
+	ctx := t.Context()
+	query := buildCrossDatabaseQuery(db.DriverName(), `
+		SELECT guid, "group", resource, namespace, name, value, action, folder,
+		       previous_resource_version, resource_version
+		FROM resource
+		WHERE namespace = ? AND "group" = ? AND resource = ? AND name = ?
+	`)
+
+	rows, err := db.QueryContext(ctx, query, namespace, group, resourceName, name)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var out []ResourceRecord
+	for rows.Next() {
+		var record ResourceRecord
+		err := rows.Scan(
+			&record.GUID, &record.Group, &record.Resource, &record.Namespace, &record.Name,
+			&record.Value, &record.Action, &record.Folder, &record.PreviousResourceVersion,
+			&record.ResourceVersion,
+		)
+		require.NoError(t, err)
+		out = append(out, record)
+	}
+	require.NoError(t, rows.Err())
+
+	require.LessOrEqual(t, len(out), 1, "resource table must have at most one row for a unique key")
+	if len(out) == 0 {
+		return nil, false
+	}
+	return &out[0], true
+}
+
+func extractSpecValue(t *testing.T, rawJSON string) string {
+	t.Helper()
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(rawJSON), &payload))
+
+	spec, ok := payload["spec"].(map[string]any)
+	require.True(t, ok, "resource value should include spec object")
+
+	value, ok := spec["value"].(string)
+	require.True(t, ok, "resource value should include spec.value string")
+	return value
+}
+
+func requireResourceMatchesHistory(t *testing.T, resourceRow ResourceRecord, historyRow ResourceHistoryRecord, name string) {
+	t.Helper()
+	require.Equal(t, historyRow.GUID, resourceRow.GUID, "guid mismatch for %s", name)
+	require.Equal(t, historyRow.Group, resourceRow.Group, "group mismatch for %s", name)
+	require.Equal(t, historyRow.Resource, resourceRow.Resource, "resource mismatch for %s", name)
+	require.Equal(t, historyRow.Namespace, resourceRow.Namespace, "namespace mismatch for %s", name)
+	require.Equal(t, historyRow.Name, resourceRow.Name, "name mismatch for %s", name)
+	require.Equal(t, historyRow.Action, resourceRow.Action, "action mismatch for %s", name)
+	require.Equal(t, historyRow.Folder, resourceRow.Folder, "folder mismatch for %s", name)
+	require.Equal(t, historyRow.ResourceVersion, resourceRow.ResourceVersion, "resource_version mismatch for %s", name)
+	require.JSONEq(t, historyRow.Value, resourceRow.Value, "value mismatch for %s", name)
+}
+
+func assertLatestHistoryAndResourceAreSynced(t *testing.T, db sqldb.DB, namespace, group, resourceName, name string) {
+	t.Helper()
+	history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
+	require.NotEmpty(t, history, "resource_history must contain rows for %s", name)
+	latest := history[len(history)-1]
+
+	resourceRow, exists := queryResourceRow(t, db, namespace, group, resourceName, name)
+	if latest.Action == 3 {
+		require.False(t, exists, "resource row must not exist when latest history action is delete for %s", name)
+		return
+	}
+
+	require.True(t, exists, "resource row must exist for non-deleted latest history row %s", name)
+	requireResourceMatchesHistory(t, *resourceRow, latest, name)
+}
+
+func readBackendResourceState(t *testing.T, backend resource.StorageBackend, namespace, group, resourceName, name string) (bool, int64) {
+	t.Helper()
+
+	resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     group,
+			Resource:  resourceName,
+			Name:      name,
+		},
+	})
+
+	if resp.Error != nil {
+		if resp.Error.Code == int32(http.StatusNotFound) {
+			return false, 0
+		}
+		require.Failf(t, "unexpected backend read error", "name=%s code=%d message=%s", name, resp.Error.Code, resp.Error.Message)
+		return false, 0
+	}
+
+	return true, resp.ResourceVersion
 }
 
 // runWriteToOneReadFromBoth writes resources to one backend then reads from both to verify consistency
@@ -1421,7 +1867,7 @@ type searchCompatibilityTestConfig struct {
 // with create, update, and delete phases
 func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestConfig) {
 	t.Helper()
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := newIntegrationTestContext(t)
 
 	searchServer := cfg.searchServer
 
