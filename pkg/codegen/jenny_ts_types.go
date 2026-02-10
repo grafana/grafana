@@ -1,8 +1,6 @@
 package codegen
 
 import (
-	"strings"
-
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts/ast"
@@ -40,10 +38,5 @@ func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	outputName := strings.ToLower(sfg.Name)
-	if sfg.OutputName != "" {
-		outputName = strings.ToLower(sfg.OutputName)
-	}
-
-	return codejen.NewFile(outputName+"_types.gen.ts", []byte(f.String()), j), nil
+	return codejen.NewFile("types.gen.ts", []byte(f.String()), j), nil
 }
