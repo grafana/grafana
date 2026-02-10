@@ -83,7 +83,7 @@ export const StateIcon = memo(function StateIcon({
   let stateName: string = state ? stateNames[state] : 'unknown';
 
   if (type === 'recording') {
-    iconName = 'record-audio';
+    iconName = 'square-shape';
     iconColor = 'success';
     stateName = 'Recording';
   }

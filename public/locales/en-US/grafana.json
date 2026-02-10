@@ -1918,10 +1918,6 @@
         "export": {
           "aria-label": "Export rules folder",
           "label": "Export rules folder"
-        },
-        "view": {
-          "aria-label": "View folder",
-          "label": "View folder"
         }
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
@@ -2747,9 +2743,11 @@
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
+      "edit-group": "Edit",
       "empty-data-source": "No rules found",
       "error-button": "Error",
       "export-all-grafana-rules": "Export all Grafana rules",
+      "export-group": "Export rules group",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",

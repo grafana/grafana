@@ -1,14 +1,19 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import MoreButton from '../components/MoreButton';
+import { WithReturnButton } from '../components/WithReturnButton';
+import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
@@ -136,9 +141,14 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
               title={
                 <Stack direction="row" gap={1} alignItems="center">
                   <Icon name="folder" />{' '}
-                  <Text variant="body" element="h3">
-                    {folderName}
-                  </Text>
+                  <WithReturnButton
+                    title={t('alerting.rule-list.return-button.title', 'Alert rules')}
+                    component={
+                      <TextLink href={makeFolderAlertsLink(folderUid, folderName)} inline={false}>
+                        {folderName}
+                      </TextLink>
+                    }
+                  />
                 </Stack>
               }
               actions={<FolderActionsButton folderUID={folderUid} />}
@@ -196,10 +206,68 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
       key={group.name}
       name={groupDisplayName}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
+      actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
       href={detailsLink}
       isOpen={false}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
     </ListGroup>
+  );
+}
+
+interface GrafanaGroupActionsProps {
+  folderUid: string;
+  groupName: string;
+}
+
+function GrafanaGroupActions({ folderUid, groupName }: GrafanaGroupActionsProps) {
+  const [showExportDrawer, setShowExportDrawer] = useState(false);
+
+  const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateAlertRule);
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+
+  const canEdit = editRuleSupported && editRuleAllowed;
+  const canExport = exportRulesSupported && exportRulesAllowed;
+
+  const editLink = groups.editPageLink(GRAFANA_RULES_SOURCE_NAME, folderUid, groupName);
+
+  return (
+    <Stack gap={0} alignItems="center">
+      {canEdit && (
+        <LinkButton
+          title={t('alerting.rule-list.edit-group', 'Edit')}
+          size="sm"
+          variant="secondary"
+          fill="text"
+          href={editLink}
+        >
+          <Trans i18nKey="common.edit">Edit</Trans>
+        </LinkButton>
+      )}
+      {canExport && (
+        <>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  label={t('alerting.rule-list.export-group', 'Export rules group')}
+                  icon="download-alt"
+                  onClick={() => setShowExportDrawer(true)}
+                />
+              </Menu>
+            }
+          >
+            <MoreButton fill="text" size="sm" />
+          </Dropdown>
+          {showExportDrawer && (
+            <GrafanaRuleGroupExporter
+              folderUid={folderUid}
+              groupName={groupName}
+              onClose={() => setShowExportDrawer(false)}
+            />
+          )}
+        </>
+      )}
+    </Stack>
   );
 }

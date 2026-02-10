@@ -1,10 +1,12 @@
 import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
@@ -178,8 +180,44 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
       isOpen={false}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
+      actions={
+        <DataSourceGroupActions
+          dsUid={rulesSourceIdentifier.uid}
+          namespaceName={namespaceName}
+          groupName={group.name}
+        />
+      }
     >
       <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>
+  );
+}
+
+interface DataSourceGroupActionsProps {
+  dsUid: string;
+  namespaceName: string;
+  groupName: string;
+}
+
+function DataSourceGroupActions({ dsUid, namespaceName, groupName }: DataSourceGroupActionsProps) {
+  const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateExternalAlertRule);
+  const canEdit = editRuleSupported && editRuleAllowed;
+
+  if (!canEdit) {
+    return null;
+  }
+
+  const editLink = groups.editPageLink(dsUid, namespaceName, groupName);
+
+  return (
+    <LinkButton
+      title={t('alerting.rule-list.edit-group', 'Edit')}
+      size="sm"
+      variant="secondary"
+      fill="text"
+      href={editLink}
+    >
+      <Trans i18nKey="common.edit">Edit</Trans>
+    </LinkButton>
   );
 }

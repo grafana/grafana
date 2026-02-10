@@ -16,7 +16,6 @@ import {
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { makeFolderLink } from '../../utils/misc';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -45,7 +44,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
 
   const { folder } = useFolder(folderUID);
   const folderName = folder?.title || 'unknown folder';
-  const folderUrl = makeFolderLink(folderUID);
   const viewComponent = listView2Enabled ? 'list' : 'grouped';
 
   // URLs
@@ -62,12 +60,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
 
   const menuItems = (
     <>
-      <Menu.Item
-        url={folderUrl}
-        icon="eye"
-        aria-label={t('alerting.list-view.folder-actions.view.aria-label', 'View folder')}
-        label={t('alerting.list-view.folder-actions.view.label', 'View folder')}
-      />
       <BulkActions folderUID={folderUID} onClickDelete={setIsDeleteModalOpen} isLoading={deleteState.isLoading} />
       {canExportRules && (
         <>
