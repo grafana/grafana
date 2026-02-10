@@ -97,6 +97,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `newGauge`                        | Enable new gauge visualization                                                                         |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
+| `vizPresets`                      | Enable visualization presets                                                                           |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |

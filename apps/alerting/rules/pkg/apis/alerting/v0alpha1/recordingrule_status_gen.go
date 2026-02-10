@@ -42,3 +42,10 @@ const (
 	RecordingRuleStatusOperatorStateStateInProgress RecordingRuleStatusOperatorStateState = "in_progress"
 	RecordingRuleStatusOperatorStateStateFailed     RecordingRuleStatusOperatorStateState = "failed"
 )
+
+func (RecordingRulestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulestatusOperatorState"
+}
+func (RecordingRuleStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleStatus"
+}

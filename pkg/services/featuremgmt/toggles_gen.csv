@@ -258,6 +258,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-20,newGauge,preview,@grafana/dataviz-squad,false,false,true
 2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 2026-01-28,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
+2026-02-09,vizPresets,preview,@grafana/dataviz-squad,false,false,true
 2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-19,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true

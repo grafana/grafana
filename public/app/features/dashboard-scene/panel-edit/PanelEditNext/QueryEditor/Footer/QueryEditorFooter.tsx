@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { QUERY_EDITOR_COLORS, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
@@ -81,7 +81,7 @@ export function QueryEditorFooter() {
     <div className={styles.container}>
       <ul className={styles.itemsList}>
         {items.map((item) => (
-          <li key={item.id} className={styles.item}>
+          <li key={item.id}>
             <Button
               fill="text"
               size="sm"
@@ -96,16 +96,18 @@ export function QueryEditorFooter() {
           </li>
         ))}
       </ul>
-      <Button
-        fill="text"
-        size="sm"
-        icon="angle-left"
-        iconPlacement="right"
-        onClick={(e) => handleItemClick(e)}
-        aria-label={t('query-editor.footer.query-options', 'Query Options')}
-      >
-        <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
-      </Button>
+      <div className={styles.queryOptionsWrapper}>
+        <Button
+          fill="text"
+          size="sm"
+          icon="angle-left"
+          iconPlacement="right"
+          onClick={(e) => handleItemClick(e)}
+          aria-label={t('query-editor.footer.query-options', 'Query Options')}
+        >
+          <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -115,19 +117,16 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       position: 'sticky',
       bottom: 0,
-      left: 0,
-      right: 0,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing(2),
-      backgroundColor: theme.colors.background.secondary,
+      backgroundColor: QUERY_EDITOR_COLORS.footerBackground,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
       padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
-      zIndex: 1,
+      zIndex: theme.zIndex.modal,
       minHeight: 26,
+      overflow: 'hidden',
     }),
     itemsList: css({
       display: 'flex',
@@ -136,12 +135,9 @@ function getStyles(theme: GrafanaTheme2) {
       listStyle: 'none',
       margin: 0,
       padding: 0,
-      flexWrap: 'wrap',
       flex: 1,
-    }),
-    item: css({
-      display: 'flex',
-      alignItems: 'center',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
     }),
     itemButton: css({
       // Override Button's default padding and add gap for children
@@ -170,6 +166,23 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.circle,
       backgroundColor: theme.colors.success.text,
       flexShrink: 0,
+    }),
+    queryOptionsWrapper: css({
+      position: 'relative',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        right: '100%',
+        top: 0,
+        bottom: 0,
+        width: theme.spacing(4),
+        background: `linear-gradient(to right, transparent, ${QUERY_EDITOR_COLORS.footerBackground})`,
+        pointerEvents: 'none',
+      },
     }),
   };
 }

@@ -265,7 +265,7 @@ type ResourceServerOptions struct {
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
 
-	storageMetrics *StorageMetrics
+	StorageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
 
@@ -376,7 +376,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		now:                            opts.Now,
 		ctx:                            ctx,
 		cancel:                         cancel,
-		storageMetrics:                 opts.storageMetrics,
+		storageMetrics:                 opts.StorageMetrics,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		reg:                            opts.Reg,
 		queue:                          opts.QOSQueue,
@@ -1080,8 +1080,10 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
+//nolint:gocyclo
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
 
 	// The history + trash queries do not yet support additional filters
@@ -1124,6 +1126,10 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if s.useFieldSelectorSearch(req) {
 		// If we get here, we're doing list with selectable fields. Let's do search instead, since
 		// we index all selectable fields, and fetch resulting documents one by one.
+		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+		if s.storageMetrics != nil {
+			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		}
 		return s.listWithFieldSelectors(ctx, req)
 	}
 
@@ -1213,6 +1219,10 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		return rsp, nil
 	}
 	rsp.ResourceVersion = rv
+	gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+	if s.storageMetrics != nil {
+		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
+	}
 	return rsp, err
 }
 

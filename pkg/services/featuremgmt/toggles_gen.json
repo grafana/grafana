@@ -4960,6 +4960,20 @@
     },
     {
       "metadata": {
+        "name": "vizPresets",
+        "resourceVersion": "1770650117614",
+        "creationTimestamp": "2026-02-09T15:15:17Z"
+      },
+      "spec": {
+        "description": "Enable visualization presets",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzana",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-19T13:59:47Z",
