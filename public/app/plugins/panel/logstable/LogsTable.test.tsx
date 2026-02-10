@@ -152,7 +152,7 @@ describe('LogsTable', () => {
     it('should publish app event', async () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
       setUp({ onOptionsChange }, { showControls: true });
-      await waitFor(() => expect(screen.getByLabelText('Expand')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByLabelText('Collapse sidebar')).toBeInTheDocument());
 
       // Expand the options
       expect(publishMockFn).toHaveBeenCalledTimes(0);
