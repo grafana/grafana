@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -112,19 +113,19 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		err = json.NewDecoder(resp.Body).Decode(&dto)
 		require.NoError(t, err)
 
-		require.Equal(t, uid, dto.UID)
-		require.Equal(t, "Test Prometheus", dto.Name)
-		require.Equal(t, "prometheus", dto.Type)
-		require.Equal(t, datasources.DsAccess(datasources.DS_ACCESS_PROXY), dto.Access)
-		require.Equal(t, "http://localhost:9090", dto.Url)
-		require.Equal(t, "testuser", dto.User)
-		require.Equal(t, "testdb", dto.Database)
-		require.True(t, dto.BasicAuth)
-		require.Equal(t, "basicuser", dto.BasicAuthUser)
-		require.NotNil(t, dto.JsonData)
-		require.True(t, dto.SecureJsonFields["basicAuthPassword"])
-		require.Greater(t, dto.Id, int64(0))
-		require.Equal(t, int64(1), dto.OrgId)
+		assert.Equal(t, uid, dto.UID)
+		assert.Equal(t, "Test Prometheus", dto.Name)
+		assert.Equal(t, "prometheus", dto.Type)
+		assert.Equal(t, datasources.DsAccess(datasources.DS_ACCESS_PROXY), dto.Access)
+		assert.Equal(t, "http://localhost:9090", dto.Url)
+		assert.Equal(t, "testuser", dto.User)
+		assert.Equal(t, "testdb", dto.Database)
+		assert.True(t, dto.BasicAuth)
+		assert.Equal(t, "basicuser", dto.BasicAuthUser)
+		assert.NotNil(t, dto.JsonData)
+		assert.True(t, dto.SecureJsonFields["basicAuthPassword"])
+		assert.Greater(t, dto.Id, int64(0))
+		assert.Equal(t, int64(1), dto.OrgId)
 	})
 
 	t.Run("GET - not found", func(t *testing.T) {
@@ -133,69 +134,63 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	// TODO: support resource-scoped tests against the k8s-reroute path (currently they give 403)
-	if modePrefix == "legacy" {
-		t.Run("GET - specific UID scope granted", func(t *testing.T) {
-			dsUID := fmt.Sprintf("%s-ds-get-perms-0", modePrefix)
-			createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for GET Permissions 0")
+	t.Run("GET - specific UID scope granted", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-get-perms-0", modePrefix)
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for GET Permissions 0")
 
-			login := fmt.Sprintf("%s-user-get-0", modePrefix)
-			createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
-				{
-					Actions:           []string{datasources.ActionRead},
-					Resource:          "datasources",
-					ResourceAttribute: "uid",
-					ResourceID:        dsUID,
-				},
-			})
-
-			url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
-			resp, err := http.Get(url)
-			require.NoError(t, err)
-			defer resp.Body.Close()
-
-			require.Equal(t, http.StatusOK, resp.StatusCode)
+		login := fmt.Sprintf("%s-user-get-0", modePrefix)
+		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{datasources.ActionRead},
+				Resource:          "datasources",
+				ResourceAttribute: "uid",
+				ResourceID:        dsUID,
+			},
 		})
-	}
 
-	// TODO: support wildcard resource-scoped tests against the k8s-reroute path (currently they give 403)
-	if modePrefix == "legacy" {
-		t.Run("GET - wildcard UID scope granted", func(t *testing.T) {
-			dsUID := fmt.Sprintf("%s-ds-get-perms-1", modePrefix)
-			_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
-				&datasources.AddDataSourceCommand{
-					OrgID:  1,
-					Access: datasources.DS_ACCESS_PROXY,
-					Name:   "Test DS for GET Permissions 1",
-					Type:   datasources.DS_PROMETHEUS,
-					UID:    dsUID,
-					URL:    "http://localhost:9090",
-				})
-			require.NoError(t, err)
+		url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
 
-			login := fmt.Sprintf("%s-user-get-1", modePrefix)
-			password := "testpass"
-			createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
-				{
-					Actions:           []string{datasources.ActionRead},
-					Resource:          "datasources",
-					ResourceAttribute: "uid",
-					ResourceID:        "*",
-				},
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("GET - wildcard UID scope granted", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-get-perms-1", modePrefix)
+		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
+			&datasources.AddDataSourceCommand{
+				OrgID:  1,
+				Access: datasources.DS_ACCESS_PROXY,
+				Name:   "Test DS for GET Permissions 1",
+				Type:   datasources.DS_PROMETHEUS,
+				UID:    dsUID,
+				URL:    "http://localhost:9090",
 			})
+		require.NoError(t, err)
 
-			url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
-				login, password, grafanaListeningAddr, dsUID)
-			resp, err := http.Get(url)
-			require.NoError(t, err)
-			defer resp.Body.Close()
-
-			require.Equal(t, http.StatusOK, resp.StatusCode)
+		login := fmt.Sprintf("%s-user-get-1", modePrefix)
+		password := "testpass"
+		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{datasources.ActionRead},
+				Resource:          "datasources",
+				ResourceAttribute: "uid",
+				ResourceID:        "*",
+			},
 		})
-	}
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
+			login, password, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 
 	t.Run("GET - permission denied (wrong UID scope)", func(t *testing.T) {
 		dsUID := fmt.Sprintf("%s-ds-get-perms-2", modePrefix)
@@ -227,7 +222,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("GET - permission denied (no permissions)", func(t *testing.T) {
@@ -255,7 +250,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	// Role-based access GET tests
@@ -268,7 +263,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("GET - Editor role succeeds", func(t *testing.T) {
@@ -289,7 +284,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("GET - Viewer role succeeds", func(t *testing.T) {
@@ -310,7 +305,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 }
 
@@ -372,12 +367,12 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		err = json.Unmarshal(b, &dto)
 		require.NoError(t, err)
-		require.Equal(t, "Updated Name", dto.Name)
-		require.Equal(t, "http://localhost:9091", dto.Url)
-		require.Equal(t, datasources.DsAccess(datasources.DS_ACCESS_PROXY), dto.Access)
-		require.Equal(t, "prometheus", dto.Type)
-		require.NotNil(t, dto.JsonData)
-		require.Equal(t, int64(1), dto.OrgId)
+		assert.Equal(t, "Updated Name", dto.Name)
+		assert.Equal(t, "http://localhost:9091", dto.Url)
+		assert.Equal(t, datasources.DsAccess(datasources.DS_ACCESS_PROXY), dto.Access)
+		assert.Equal(t, "prometheus", dto.Type)
+		assert.NotNil(t, dto.JsonData)
+		assert.Equal(t, int64(1), dto.OrgId)
 	})
 
 	t.Run("PUT - not found", func(t *testing.T) {
@@ -397,7 +392,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("PUT - specific UID scope granted", func(t *testing.T) {
@@ -441,7 +436,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("PUT - wildcard scope granted", func(t *testing.T) {
@@ -485,7 +480,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("PUT - permission denied (wrong UID scope)", func(t *testing.T) {
@@ -529,7 +524,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("PUT - permission denied (read only)", func(t *testing.T) {
@@ -573,7 +568,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("PUT - permission denied (no permissions)", func(t *testing.T) {
@@ -610,7 +605,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	// Role-based PUT tests
@@ -643,7 +638,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("PUT - Editor role denied", func(t *testing.T) {
@@ -675,7 +670,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("PUT - Viewer role denied", func(t *testing.T) {
@@ -707,7 +702,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 }
 
@@ -751,7 +746,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer getResp.Body.Close()
 
-		require.Equal(t, http.StatusNotFound, getResp.StatusCode)
+		assert.Equal(t, http.StatusNotFound, getResp.StatusCode)
 	})
 
 	t.Run("DELETE - not found", func(t *testing.T) {
@@ -797,7 +792,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("DELETE - wildcard scope granted", func(t *testing.T) {
@@ -832,7 +827,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("DELETE - permission denied (wrong UID scope)", func(t *testing.T) {
@@ -867,7 +862,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("DELETE - permission denied (read only)", func(t *testing.T) {
@@ -902,7 +897,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("DELETE - permission denied (no permissions)", func(t *testing.T) {
@@ -930,7 +925,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	// Role-based DELETE tests
@@ -954,7 +949,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("DELETE - Editor role denied", func(t *testing.T) {
@@ -977,7 +972,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("DELETE - Viewer role denied", func(t *testing.T) {
@@ -1000,7 +995,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 }
 
