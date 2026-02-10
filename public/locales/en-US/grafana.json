@@ -5316,7 +5316,6 @@
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
