@@ -70,6 +70,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
   test('Show inspect button', async ({ page, gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '2' }),
     });
 
     await expect(
@@ -98,14 +99,25 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
   });
 
   test.describe('Options', () => {
-    test.skip('Options: Inspect button', async ({ page, gotoDashboardPage, selectors }) => {
+    test('Options: Inspect button', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '2' }),
       });
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
+
+      const optionWrapper = page.getByLabel('Logs Table Show inspect button field property editor');
+      const option = optionWrapper.getByLabel(/Show inspect button/);
+      const inspectLogLineButton = page.getByLabel('View log line');
+      await expect(option).toHaveCount(1);
+      await expect(option).toBeChecked();
+      await expect(inspectLogLineButton.nth(0)).toBeVisible();
+      await optionWrapper.click();
+      await expect(option).not.toBeChecked({ timeout: 1000 });
+      await expect(inspectLogLineButton).toHaveCount(0);
     });
 
     test.skip('Options: Copy log line button', async ({ page, gotoDashboardPage, selectors }) => {
