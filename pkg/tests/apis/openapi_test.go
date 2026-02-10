@@ -121,7 +121,13 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
-		// }, { Temporarily disabled while we fix OpenAPI generation issues
+		// }, {
+		// In app-sdk v0.40+, the exported names changed
+		// The request/response payload is the same, so the existing generated clients
+		// based on the old OpenAPI will still work.
+		//
+		// This should be updated and replaced soon!
+		//
 		// 	Group:   "historian.alerting.grafana.app",
 		// 	Version: "v0alpha1",
 	}, {
