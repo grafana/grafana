@@ -144,7 +144,7 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
   });
 
-  it('hides folders specififed by UID', async () => {
+  it('hides folders specified by UID', async () => {
     const { user } = render(<NestedFolderPicker excludeUIDs={[folderC.item.uid]} onChange={mockOnChange} />);
 
     // Open the picker and wait for children to load
@@ -267,9 +267,16 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
   });
 
-  it('does not auto-select a team folder when root is selected', () => {
+  it('does auto-select a team folder when root is selected', () => {
     config.featureToggles.teamFolders = true;
     render(<NestedFolderPicker value="" onChange={mockOnChange} />);
+
+    expect(mockOnChange).toHaveBeenCalled();
+  });
+
+  it('does not auto-select a team folder when no value', () => {
+    config.featureToggles.teamFolders = true;
+    render(<NestedFolderPicker onChange={mockOnChange} />);
 
     expect(mockOnChange).not.toHaveBeenCalled();
   });
