@@ -518,12 +518,11 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		opts := testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			DisableAnonymous:      true,
+			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
+				"unifiedStorageSearch",
 				"kubernetesLibraryPanels",
 			},
-			UnifiedStorageEnableSearch: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: dualWriterMode,
@@ -532,7 +531,6 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 					DualWriterMode: dualWriterMode,
 				},
 			},
-			DisableAuthZClientCache: true,
 		}
 		// Test 1: Parent folder access grants access to child folder library elements (inherited permissions)
 		t.Run(fmt.Sprintf("DualWriterMode %d/parent access grants child access", dualWriterMode), func(t *testing.T) {
@@ -593,8 +591,6 @@ func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, t
 	if err != nil {
 		return nil, err
 	}
-
-	apis.AwaitZanzanaReconcileNext(t, helper)
 
 	meta, _ := utils.MetaAccessor(createdFolder)
 
