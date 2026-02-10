@@ -6,39 +6,49 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
+import { useGetTeamFolders } from './useTeamOwnedFolder';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
 
 setupMockServer();
 setBackendSrv(backendSrv);
 
-jest.mock('./useTeamOwnedFolder', () => ({
-  useGetTeamFolders: (options?: { skip: boolean }) => {
-    if (options?.skip) {
-      return { foldersByTeam: [], isLoading: false, error: undefined };
-    }
-
-    return {
-      foldersByTeam: [
-        {
-          team: { name: 'Team A', avatarUrl: 'https://example.com/avatar.png' },
-          folders: [{ name: 'team-folder-1', title: 'Team Folder One' }],
-        },
-      ],
-      isLoading: false,
-      error: undefined,
-    };
-  },
-}));
+jest.mock('./useTeamOwnedFolder', () => {
+  const actual = jest.requireActual('./useTeamOwnedFolder');
+  return {
+    ...actual,
+    useGetTeamFolders: jest.fn(),
+  };
+});
 
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
   let featureTogglesBackup: typeof config.featureToggles;
+  const useGetTeamFoldersMock = useGetTeamFolders as jest.Mock;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
     featureTogglesBackup = { ...config.featureToggles };
+  });
+
+  beforeEach(() => {
+    useGetTeamFoldersMock.mockImplementation((options?: { skip: boolean }) => {
+      if (options?.skip) {
+        return { foldersByTeam: [], isLoading: false, error: undefined };
+      }
+
+      return {
+        foldersByTeam: [
+          {
+            team: { name: 'Team A', avatarUrl: 'https://example.com/avatar.png' },
+            folders: [{ name: 'team-folder-1', title: 'Team Folder One' }],
+          },
+        ],
+        isLoading: false,
+        error: undefined,
+      };
+    });
   });
 
   afterAll(() => {
@@ -255,5 +265,12 @@ describe('NestedFolderPicker', () => {
 
     expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
+  });
+
+  it('does not auto-select a team folder when root is selected', () => {
+    config.featureToggles.teamFolders = true;
+    render(<NestedFolderPicker value="" onChange={mockOnChange} />);
+
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 });

@@ -22,7 +22,7 @@ type UseGetTeamFoldersResult = {
  * Returns folders owned by teams the current user belongs to.
  */
 export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFoldersResult {
-  const { data: teams, error: teamError } = useTeams(options);
+  const { data: teams, error: teamError, isLoading: teamsLoading } = useTeams(options);
 
   const ownerReferences = teams?.map(teamOwnerRef);
   const shouldSkipSearch = !ownerReferences?.length;
@@ -46,7 +46,7 @@ export function useGetTeamFolders(options?: { skip: boolean }): UseGetTeamFolder
 
   return {
     foldersByTeam,
-    isLoading: (teams === null && !teamError) || foldersLoading,
+    isLoading: teamsLoading || foldersLoading,
     error: teamError ?? coercedError(foldersError, 'Failed to load team folders'),
   };
 }
@@ -59,7 +59,7 @@ function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: DashboardHit[]
   // Map folders to their owner ownerRef strings
   const foldersMap = folders.reduce<Record<string, DashboardHit[]>>((acc, folder) => {
     // Folder can be owned by multiple teams technically
-    for (const ref of folder.ownerReferences!) {
+    for (const ref of folder.ownerReferences ?? []) {
       if (!acc[ref]) {
         acc[ref] = [];
       }
@@ -76,7 +76,7 @@ function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: DashboardHit[]
         folders: foldersMap[teamOwnerRef(team)],
       };
     })
-    .filter((group) => group.folders?.length > 0);
+    .filter((group) => group.folders && group.folders.length > 0);
 }
 
 /**

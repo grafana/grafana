@@ -256,7 +256,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         </label>
         {teamOwner && (
           <div className={styles.teamOwner}>
-            <Avatar src={teamOwner.avatarUrl ?? ''} alt={teamOwner.name} />
+            {teamOwner.avatarUrl && <Avatar src={teamOwner.avatarUrl} alt={teamOwner.name} />}
             <Text truncate color="secondary" variant="bodySmall">
               {teamOwner.name}
             </Text>

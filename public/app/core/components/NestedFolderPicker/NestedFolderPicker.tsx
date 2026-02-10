@@ -380,7 +380,8 @@ function useTeamFolders(
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
 ) {
   const { foldersByTeam } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
-  const firstTeamFolder = foldersByTeam[0]?.folders[0];
+  const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
+  const firstTeamFolder = teamFolders[0];
 
   const teamFolderOwnersByUid = useMemo(() => {
     return foldersByTeam.reduce<Record<string, { name: string; avatarUrl?: string }>>((acc, { team, folders }) => {
@@ -458,12 +459,20 @@ function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeIte
 }
 
 function filterRootItem(items: DashboardsTreeItem[]) {
+  const rootUid = getRootFolderItem().item.uid;
+  const hasRootItem = items.some((item) => item.item.uid === rootUid);
+  if (!hasRootItem) {
+    return items;
+  }
+
   const itemsFiltered: DashboardsTreeItem[] = [];
   for (const item of items) {
     // We remove the root item and also adjust the level of all items that should have been under it.
-    if (item.item.uid !== getRootFolderItem().item.uid) {
-      item.level = item.level - 1;
-      itemsFiltered.push(item);
+    if (item.item.uid !== rootUid) {
+      itemsFiltered.push({
+        ...item,
+        level: item.level - 1,
+      });
     }
   }
   return itemsFiltered;
