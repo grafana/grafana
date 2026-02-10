@@ -145,9 +145,7 @@ describe('updateFrame', () => {
     const inputFrame: DataFrame = {
       name: 'test',
       length: 6,
-      fields: [
-        field('id', FieldType.string, ['A', 'B', 'A', 'C', 'B', 'D']),
-      ],
+      fields: [field('id', FieldType.string, ['A', 'B', 'A', 'C', 'B', 'D'])],
     };
     const result = updateFrame(inputFrame);
     expect(result.length).toBe(4);
@@ -188,10 +186,7 @@ describe('updateFrame', () => {
     const inputFrame: DataFrame = {
       name: 'test',
       length: 2,
-      fields: [
-        field('__text', FieldType.string, ['a', 'b']),
-        field('__value', FieldType.string, ['1', '2']),
-      ],
+      fields: [field('__text', FieldType.string, ['a', 'b']), field('__value', FieldType.string, ['1', '2'])],
     };
     const result = updateFrame(inputFrame);
     expect(result.length).toBe(2);
