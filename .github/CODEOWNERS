@@ -232,6 +232,7 @@
 /devenv/datasources.yaml @grafana/grafana-backend-group
 /devenv/datasources_docker.yaml @grafana/grafana-backend-group
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
+/devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
@@ -488,6 +489,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
+/e2e-playwright/panels-suite/logstable.spec.ts @grafana/observability-logs
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
