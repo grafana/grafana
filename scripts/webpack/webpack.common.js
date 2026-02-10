@@ -15,9 +15,9 @@ module.exports = (env = {}) => ({
     asyncWebAssembly: true,
   },
   output: {
-    clean: env.react19 ? true : false,
+    clean: env.react18 ? false : true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: env.react19 ? '[name].[contenthash].js' : '[name]-react18.[contenthash].js',
+    filename: env.react18 ? '[name]-react18.[contenthash].js' : '[name].[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
@@ -66,9 +66,8 @@ module.exports = (env = {}) => ({
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
     }),
-    ...(env.react19
-      ? []
-      : [
+    ...(env.react18
+      ? [
           new webpack.NormalModuleReplacementPlugin(/^react$/, (resource) => {
             resource.request = resource.request.replace('react', 'react-18');
           }),
@@ -81,7 +80,8 @@ module.exports = (env = {}) => ({
           new webpack.NormalModuleReplacementPlugin(/^react\/jsx-dev-runtime/, (resource) => {
             resource.request = resource.request.replace('react/jsx-dev-runtime', 'react-18/jsx-dev-runtime');
           }),
-        ]),
+        ]
+      : []),
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],

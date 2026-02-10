@@ -62,7 +62,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	}
 
 	// Get an OpenFeature client instance for feature flag evaluation
-	client := openfeature.GetApiInstance().GetClient()
+	client := openfeature.NewDefaultClient()
 
 	// Evaluate the feature flag
 	useReact19 := client.Boolean(
