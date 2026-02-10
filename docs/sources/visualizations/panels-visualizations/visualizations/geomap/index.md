@@ -197,7 +197,12 @@ This is particularly useful for dynamically querying data based on the map's cur
 1. Create a Custom dashboard variable first
 2. Enable this option
 3. Select the variable name from the dropdown
-4. Use the variable in your queries
+To use the option, follow these steps:
+
+1. Create a **Custom** type dashboard variable.
+1. Return to panel configuration and toggle on this switch.
+1. Select the newly created variable from the **Variable name** drop-down list.
+4. Use the variable in your queries.
 
 The variable contains comma-separated coordinates (EPSG:4326): `minLon,minLat,maxLon,maxLat`
 
