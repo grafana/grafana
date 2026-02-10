@@ -21,9 +21,7 @@ type Reconciler struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 
-	workQueue       chan string
-	lastReconcileAt time.Time
-	mu              sync.Mutex
+	workQueue chan string
 }
 
 // Config holds the reconciler configuration.
@@ -93,9 +91,6 @@ func (r *Reconciler) Run(ctx context.Context) error {
 			wg.Wait()          // Wait for all workers to finish
 			return ctx.Err()
 		case <-ticker.C:
-			if !r.shouldReconcile() {
-				continue
-			}
 			r.queueAllNamespaces(ctx)
 		}
 	}
@@ -155,23 +150,6 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 			}
 		}
 	}
-}
-
-// shouldReconcile checks if enough time has passed since the last reconciliation.
-func (r *Reconciler) shouldReconcile() bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if time.Since(r.lastReconcileAt) < r.cfg.Interval {
-		r.logger.Debug("Skipping reconciliation, not enough time has passed",
-			"timeSinceLastReconcile", time.Since(r.lastReconcileAt),
-			"interval", r.cfg.Interval,
-		)
-		return false
-	}
-
-	r.lastReconcileAt = time.Now()
-	return true
 }
 
 // reconcileNamespace performs reconciliation for a single namespace.
