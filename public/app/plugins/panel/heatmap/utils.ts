@@ -896,43 +896,21 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
  * @returns A valid expansion factor, or 1 as fallback
  */
 export function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues: unknown[]): number {
-  let bucketFactor = 1;
-
-  if (yMaxValues.length > 0 && yMinValues.length > 0) {
-    const firstYMin = yMinValues[0];
-    const firstYMax = yMaxValues[0];
-    if (typeof firstYMin === 'number' && typeof firstYMax === 'number') {
-      const factor = firstYMax / firstYMin;
-      if (Number.isFinite(factor) && factor > 0) {
-        bucketFactor = factor;
-      }
-    }
-  }
-
   // Guard against invalid bucket factors (e.g., division by zero when first bucket starts at 0)
-  if (bucketFactor === 1 && yMinValues.length > 1 && yMaxValues.length > 1) {
-    const validIndex = yMinValues.findIndex((yMin, i) => {
-      if (i === 0 || typeof yMin !== 'number' || yMin === 0) {
-        return false;
-      }
-      const yMax = yMaxValues[i];
-      if (typeof yMax !== 'number') {
-        return false;
-      }
-      const factor = yMax / yMin;
-      return Number.isFinite(factor) && factor > 0;
-    });
-
-    if (validIndex !== -1) {
-      const yMin = yMinValues[validIndex];
-      const yMax = yMaxValues[validIndex];
-      if (typeof yMin === 'number' && typeof yMax === 'number') {
-        bucketFactor = yMax / yMin;
-      }
+  for (let i = 0; i < yMinValues.length; i++) {
+    const yMin = yMinValues[i];
+    const yMax = yMaxValues[i];
+    if (typeof yMin !== 'number' || typeof yMax !== 'number') {
+      continue;
+    }
+    const factor = yMax / yMin;
+    // finite checks for divide-by-zero
+    if (Number.isFinite(factor) && factor > 0) {
+      return factor;
     }
   }
 
-  return bucketFactor;
+  return 1;
 }
 
 export const boundedMinMax = (
