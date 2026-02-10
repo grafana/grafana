@@ -1,16 +1,16 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.3
-	github.com/grafana/authlib v0.0.0-20260203092119-c346f8341c0b // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260203092119-c346f8341c0b // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc // @grafana/identity-access-team
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4
-	k8s.io/apimachinery v0.34.3
-	k8s.io/apiserver v0.34.3
-	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
+	k8s.io/apimachinery v0.35.0
+	k8s.io/apiserver v0.35.0
+	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 )
 
@@ -35,7 +35,6 @@ require (
 	github.com/go-openapi/swag/stringutils v0.25.4 // indirect
 	github.com/go-openapi/swag/typeutils v0.25.4 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.4 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -55,6 +54,7 @@ require (
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
+	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

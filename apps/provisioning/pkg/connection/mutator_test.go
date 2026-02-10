@@ -33,27 +33,45 @@ func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) a
 	)
 }
 
-func TestNewAdmissionMutator(t *testing.T) {
-	factory := NewMockFactory(t)
-	m := NewAdmissionMutator(factory)
-	require.NotNil(t, m)
-	assert.Equal(t, factory, m.factory)
-}
-
 func TestAdmissionMutator_Mutate(t *testing.T) {
 	tests := []struct {
-		name            string
-		obj             runtime.Object
-		factoryErr      error
-		wantErr         bool
-		wantErrContains string
+		name                     string
+		obj                      runtime.Object
+		factoryErr               error
+		expectObjectNameContains string
+		wantErr                  bool
+		wantErrContains          string
 	}{
 		{
-			name: "calls factory mutate for connection",
+			name: "doesn't generate name calls factory mutate for connection",
 			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{Name: "existing-name"},
 				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
 			},
+			expectObjectNameContains: "existing-name",
+			wantErr:                  false,
+		},
+		{
+			name: "generates name with given prefix and calls factory mutate for connection",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{GenerateName: "test-"},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			expectObjectNameContains: "test-",
+			wantErr:                  false,
+		},
+		{
+			name: "generates name with type prefix and calls factory mutate for connection",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			expectObjectNameContains: "github-",
+			wantErr:                  false,
+		},
+		{
+			name:    "returns nil for nil object",
+			obj:     nil,
 			wantErr: false,
 		},
 		{
@@ -61,11 +79,6 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj:             &provisioning.Repository{},
 			wantErr:         true,
 			wantErrContains: "expected connection configuration",
-		},
-		{
-			name:    "returns nil for nil object",
-			obj:     nil,
-			wantErr: false,
 		},
 		{
 			name: "propagates factory mutate error",
@@ -104,6 +117,9 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+			if tt.obj != nil {
+				require.Contains(t, tt.obj.(*provisioning.Connection).Name, tt.expectObjectNameContains)
+			}
 		})
 	}
 }

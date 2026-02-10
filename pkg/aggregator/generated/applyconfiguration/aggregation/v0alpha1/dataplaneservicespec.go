@@ -15,7 +15,8 @@ type DataPlaneServiceSpecApplyConfiguration struct {
 	PluginType *aggregationv0alpha1.PluginType `json:"pluginType,omitempty"`
 	Group      *string                         `json:"group,omitempty"`
 	Version    *string                         `json:"version,omitempty"`
-	Services   []ServiceApplyConfiguration     `json:"services,omitempty"`
+	// Services is a list of services that the proxied service provides.
+	Services []ServiceApplyConfiguration `json:"services,omitempty"`
 }
 
 // DataPlaneServiceSpecApplyConfiguration constructs a declarative configuration of the DataPlaneServiceSpec type for use with

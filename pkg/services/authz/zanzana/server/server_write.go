@@ -19,7 +19,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	defer span.End()
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Write", req.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Write").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.write(ctx, req)
@@ -73,7 +73,7 @@ func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 		}
 	}
 
-	_, err = s.openfga.Write(ctx, writeReq)
+	_, err = s.openFGAClient.Write(ctx, writeReq)
 	if err != nil {
 		s.logger.Error("failed to perform openfga Write request", "error", errors.Unwrap(err))
 		return nil, err
