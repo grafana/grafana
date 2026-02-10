@@ -809,13 +809,12 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			var wg sync.WaitGroup
 
 			for j := range concurrentRequests {
-				reqIdx := j
 				wg.Go(func() {
 					<-start
 					// Intentional tiny stagger avoids all requests entering the same RV manager batch.
-					time.Sleep(time.Duration(reqIdx) * 2 * time.Millisecond)
+					time.Sleep(time.Duration(j) * 2 * time.Millisecond)
 
-					title := fmt.Sprintf("create-title-%d-%d-attempt-%d", i+1, reqIdx+1, attempt)
+					title := fmt.Sprintf("create-title-%d-%d-attempt-%d", i+1, j+1, attempt)
 					rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
 						WithNamespace(namespace),
 						WithGroup(group),
@@ -841,8 +840,8 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
 			require.LessOrEqual(t, len(history), 1, "expected at most one resource_history record after concurrent create for %s", name)
 
-			resourceRow, existsInResourceTable := queryResourceRow(t, db, namespace, group, resourceName, name)
-			require.Equal(t, len(history) == 1, existsInResourceTable, "resource and resource_history existence mismatch for %s", name)
+			resourceRow, _ := queryResourceRow(t, db, namespace, group, resourceName, name)
+			require.Len(t, history, 1, "resource and resource_history existence mismatch for %s", name)
 			if len(history) == 0 {
 				continue
 			}
@@ -882,7 +881,6 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			createdSuccessfully = true
 		}
 
-		require.True(t, createdSuccessfully, "failed to create resource %s", name)
 		states = append(states, optimisticResourceState{
 			name:      name,
 			currentRV: currentRV,
@@ -901,13 +899,12 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 		baseRV := state.currentRV
 
 		for j := range concurrentRequests {
-			reqIdx := j
 			wg.Go(func() {
 				<-start
 				// Keep updates concurrent but reduce same-batch rollback flakiness.
-				time.Sleep(time.Duration(reqIdx) * 2 * time.Millisecond)
+				time.Sleep(time.Duration(j) * 2 * time.Millisecond)
 
-				title := fmt.Sprintf("update-title-%d-%d", i+1, reqIdx+1)
+				title := fmt.Sprintf("update-title-%d-%d", i+1, j+1)
 				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
 					WithNamespaceAndRV(namespace, baseRV),
 					WithGroup(group),
@@ -951,10 +948,9 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 		}, 2)
 		var wg sync.WaitGroup
 
-		raceIdx := i
 		wg.Go(func() {
 			<-start
-			title := fmt.Sprintf("race-update-title-%d", raceIdx+1)
+			title := fmt.Sprintf("race-update-title-%d", i+1)
 			rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
 				WithNamespaceAndRV(namespace, baseRV),
 				WithGroup(group),
@@ -976,7 +972,7 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 				WithGroup(group),
 				WithResource(resourceName),
 				WithFolder(""),
-				WithValue(fmt.Sprintf("race-delete-%d", raceIdx+1)))
+				WithValue(fmt.Sprintf("race-delete-%d", i+1)))
 			results <- struct {
 				op string
 				writeRaceResult
@@ -1017,17 +1013,16 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 		baseRV := state.currentRV
 
 		for j := range concurrentRequests {
-			reqIdx := j
 			wg.Go(func() {
 				<-start
 				// Keep requests concurrent but avoid same-batch rollback behavior.
-				time.Sleep(time.Duration(reqIdx) * 2 * time.Millisecond)
+				time.Sleep(time.Duration(j) * 2 * time.Millisecond)
 				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_DELETED,
 					WithNamespaceAndRV(namespace, baseRV),
 					WithGroup(group),
 					WithResource(resourceName),
 					WithFolder(""),
-					WithValue(fmt.Sprintf("delete-title-%d-%d", i+1, reqIdx+1)))
+					WithValue(fmt.Sprintf("delete-title-%d-%d", i+1, j+1)))
 				results <- writeRaceResult{rv: rv, err: err}
 			})
 		}

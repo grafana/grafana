@@ -40,14 +40,6 @@ FROM (
     LIMIT 1
 ) h
 WHERE h.{{ .Ident "action" }} != 3
-   OR EXISTS (
-      SELECT 1
-      FROM {{ .Ident "resource" }} r
-      WHERE r.{{ .Ident "group" }} = {{ .Arg .Group }}
-        AND r.{{ .Ident "resource" }} = {{ .Arg .Resource }}
-        AND r.{{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-        AND r.{{ .Ident "name" }} = {{ .Arg .Name }}
-   )
 ON DUPLICATE KEY UPDATE
   {{ .Ident "guid" }} = VALUES({{ .Ident "guid" }}),
   {{ .Ident "value" }} = VALUES({{ .Ident "value" }}),
@@ -97,14 +89,6 @@ FROM (
     LIMIT 1
 ) h
 WHERE h.{{ .Ident "action" }} != 3
-   OR EXISTS (
-      SELECT 1
-      FROM {{ .Ident "resource" }} r
-      WHERE r.{{ .Ident "group" }} = {{ .Arg .Group }}
-        AND r.{{ .Ident "resource" }} = {{ .Arg .Resource }}
-        AND r.{{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-        AND r.{{ .Ident "name" }} = {{ .Arg .Name }}
-   )
 ON CONFLICT (
   {{ .Ident "namespace" }},
   {{ .Ident "group" }},
