@@ -29,10 +29,6 @@
       "@grafana-app/source": "./src/schema/dashboard/*/index.ts",
       "types": "./dist/types/schema/dashboard/*/index.d.ts"
     },
-    "./apis/preferences.grafana.app/v1alpha1": {
-      "@grafana-app/source": "./src/raw/preferences/x/types.gen.ts",
-      "types": "./dist/types/raw/preferences/x/types.gen.d.ts"
-    },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/annotationslist/panelcfg/x/types.gen.d.ts",
