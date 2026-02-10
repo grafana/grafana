@@ -151,6 +151,7 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
+					Files:      map[string]string{"plugin.json": "203ef4a613c5693c437a665cd67f95e2756a0f71b336b2ffb265db7c180d0b19"},
 				},
 			},
 			{
@@ -211,6 +212,7 @@ func TestCalculate(t *testing.T) {
 			Status:     plugins.SignatureStatusValid,
 			Type:       plugins.SignatureTypeGrafana,
 			SigningOrg: "Grafana Labs",
+			Files:      map[string]string{"plugin.json": "2f8fc554d0a080b9719ba43c0a8df366a88500eb129dfd4aedd9e3d147178273"},
 		}, sig)
 	})
 
@@ -279,6 +281,10 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
+					Files: map[string]string{
+						"child/plugin.json": "66ba0dffaf3b1bfa17eb9a8672918fc66d1001f465b1061f4fc19c2f2c100f51",
+						"plugin.json":       "1abecfd0229814f6c284ff3c8dd744548f8d676ab3250cd7902c99dabf11480e",
+					},
 				}, sig)
 			})
 		}

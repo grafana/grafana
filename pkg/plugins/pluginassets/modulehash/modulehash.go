@@ -76,6 +76,10 @@ func (c *Calculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSB
 		return "", nil
 	}
 
+	if p.ModuleHash != "" {
+		return convertHashForSRI(p.ModuleHash)
+	}
+
 	if p.Parent != nil {
 		// The module hash is contained within the parent's MANIFEST.txt file.
 		// For example, the parent's MANIFEST.txt will contain an entry similar to this:
