@@ -3968,6 +3968,11 @@
       "select-checkbox": "Select",
       "tags-column": "Tags"
     },
+    "delete": {
+      "success-multiple": "Dashboards deleted",
+      "success-single": "Dashboard deleted",
+      "view-recently-deleted": "View deleted dashboards"
+    },
     "delete-folder": {
       "read-only-message": "To delete this folder, please remove the folder from your repository."
     },
@@ -4052,11 +4057,15 @@
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
-      "all-failed_other": "Failed to restore {{count}} dashboard.",
+      "all-failed_other": "Failed to restore {{count}} dashboards.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboard restored successfully"
+      "success-count_other": "{{count}} dashboards restored successfully",
+      "success-multiple": "Dashboards restored",
+      "success-single": "Dashboard restored",
+      "view-dashboard": "View dashboard",
+      "view-folder": "View folder"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
