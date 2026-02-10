@@ -159,6 +159,7 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 			UID:        web.Params(c.Req)[":uid"],
 			FolderName: dashboards.RootFolderName,
 		},
+		nil,
 	)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library element")
@@ -198,6 +199,8 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		FolderFilter:     c.Query("folderFilter"),
 		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
+	// Add cache entry to context for enabling folder tree caching
+	c.Req = c.Req.WithContext(withCache(c.Req.Context()))
 	elementsResult, err := l.getAllLibraryElements(c.Req.Context(), c.SignedInUser, query)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library elements")
@@ -292,7 +295,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 	// make sure the library element exists
 	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, model.GetLibraryElementCommand{
 		UID: libraryPanelUID,
-	})
+	}, nil)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library element")
 	}
