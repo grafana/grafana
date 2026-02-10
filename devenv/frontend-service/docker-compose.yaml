@@ -78,9 +78,22 @@ services:
       OTEL_SERVICE_NAME: frontend-service
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
       GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
+      GF_FEATURE_TOGGLES_OPENFEATURE_PROVIDER: ofrep
+      GF_FEATURE_TOGGLES_OPENFEATURE_URL: http://goff:1031
       # Faro (Grafana JavaScript Agent) configuration - sends frontend observability data to Loki via Alloy
       GF_LOG_FRONTEND_ENABLED: true
       GF_LOG_FRONTEND_CUSTOM_ENDPOINT: http://localhost:12347/collect
+
+  goff:
+    image: gofeatureflag/go-feature-flag:latest
+    command: /go-feature-flag --config /config/config.yaml
+    ports:
+      - 1031:1031/tcp
+    configs:
+      - source: goff_config
+        target: /config/config.yaml
+      - source: goff_flags
+        target: /flags/flags.yaml
 
   postgres:
     image: postgres:16.1-alpine3.19@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
@@ -154,6 +167,21 @@ services:
     depends_on:
       tempo-init:
         condition: service_completed_successfully
+
+configs:
+  goff_config:
+    content: |
+      logLevel: debug
+      logFormat: logfmt
+      listen: 1031
+      evaluationContextEnrichment:
+        cluster: localdev
+      retrievers:
+        - kind: "file"
+          path: "/flags/flags.yaml"
+
+  goff_flags:
+    file: ./goff-flags.yaml
 
 volumes:
   backend-data:
