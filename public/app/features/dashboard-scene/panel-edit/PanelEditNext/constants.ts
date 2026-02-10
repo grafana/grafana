@@ -23,6 +23,7 @@ export const QUERY_EDITOR_COLORS = {
 };
 
 export interface QueryEditorTypeConfig {
+  __type__: QueryEditorType;
   icon: IconName;
   color: string;
   getLabel: () => string;
@@ -30,16 +31,19 @@ export interface QueryEditorTypeConfig {
 
 export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
   [QueryEditorType.Query]: {
+    __type__: QueryEditorType.Query,
     icon: 'database',
     color: QUERY_EDITOR_COLORS.query,
     getLabel: () => t('query-editor-next.labels.query', 'Query'),
   },
   [QueryEditorType.Expression]: {
+    __type__: QueryEditorType.Expression,
     icon: 'calculator-alt',
     color: QUERY_EDITOR_COLORS.expression,
     getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
   },
   [QueryEditorType.Transformation]: {
+    __type__: QueryEditorType.Transformation,
     icon: 'process',
     color: QUERY_EDITOR_COLORS.transformation,
     getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
@@ -136,3 +140,9 @@ export const EXPRESSION_ICON_MAP = {
   [ExpressionQueryType.threshold]: 'sliders-v-alt',
   [ExpressionQueryType.sql]: 'database',
 } as const satisfies Record<ExpressionQueryType, string>;
+
+export const QUERY_EDITOR_TYPE_HAS_ADD_BUTTON: Record<QueryEditorType, boolean> = {
+  [QueryEditorType.Query]: true,
+  [QueryEditorType.Expression]: true,
+  [QueryEditorType.Transformation]: false,
+};

@@ -164,7 +164,7 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
   });
 
-  it('should render an "Add below" button for every card', () => {
+  it('should render "Add below" buttons only for query/expression cards, not transformations', () => {
     const queries: DataQuery[] = [
       { refId: 'A', datasource: { type: 'test', uid: 'test' } },
       { refId: 'B', datasource: { type: 'test', uid: 'test' } },
@@ -197,9 +197,11 @@ describe('QueryEditorSidebar', () => {
       </QueryEditorProvider>
     );
 
-    // Every card (2 queries + 1 transformation) should have an "Add below" button
+    // Query cards should have an "Add below" button
     expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add below B/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add below organize/i })).toBeInTheDocument();
+
+    // Transformation cards should NOT have an "Add below" button
+    expect(screen.queryByRole('button', { name: /add below organize/i })).not.toBeInTheDocument();
   });
 });

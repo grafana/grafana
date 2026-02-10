@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QueryEditorTypeConfig } from '../../constants';
+import { QUERY_EDITOR_TYPE_HAS_ADD_BUTTON, QueryEditorTypeConfig } from '../../constants';
 
 import { AddCardButton } from './AddCardButton';
 import { HoverActions } from './HoverActions';
@@ -21,11 +21,6 @@ interface SidebarCardProps {
   isHidden: boolean;
 }
 
-/**
- * The various menu views for the sidebar card.
- */
-type MenuView = 'main' | 'expressionTypes';
-
 export const SidebarCard = ({
   config,
   isSelected,
@@ -37,7 +32,8 @@ export const SidebarCard = ({
   onToggleHide,
   isHidden,
 }: SidebarCardProps) => {
-  const styles = useStyles2(getStyles, { config, isSelected });
+  const hasAddButton = QUERY_EDITOR_TYPE_HAS_ADD_BUTTON[config.__type__];
+  const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
   const typeText = config.getLabel();
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -78,14 +74,14 @@ export const SidebarCard = ({
         </div>
         <div className={styles.cardContent}>{children}</div>
       </div>
-      <AddCardButton afterRefId={id} />
+      {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
   );
 };
 
 function getStyles(
   theme: GrafanaTheme2,
-  { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
+  { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
 ) {
   const hoverActions = css({
     opacity: 0,
@@ -103,41 +99,42 @@ function getStyles(
       position: 'relative',
       marginInline: theme.spacing(2),
 
-      // Two slim pseudo-element strips extend the hover zone to the left and
-      // below the card, covering the path to the <AddCardButton /> ("+" icon button)
-      // without overlapping the card's own clickable surface
+      // The hover-zone pseudo-elements and add-button visibility rules are
+      // only needed when the card has an AddCardButton.
+      ...(hasAddButton && {
+        // Two slim pseudo-element strips extend the hover zone to the left and
+        // below the card, covering the path to the "+" button without overlapping
+        // the card's clickable area.
 
-      // Left strip: narrow gutter running along the card's left edge and below.
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: `calc(-1 * ${theme.spacing(1.5)})`,
-        width: theme.spacing(1.5),
-        height: `calc(100% + ${theme.spacing(1.5)})`,
-        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone to the left of the card
-      },
+        // Left strip: narrow gutter running along the card's left edge and below.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: `calc(-1 * ${theme.spacing(1.5)})`,
+          width: theme.spacing(1.5),
+          height: `calc(100% + ${theme.spacing(1.5)})`,
+        },
 
-      // Bottom strip: runs along the card's bottom edge extending to the left.
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: '100%',
-        left: `calc(-1 * ${theme.spacing(1.5)})`,
-        width: `calc(100% + ${theme.spacing(1.5)})`,
-        height: theme.spacing(1.5),
-        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone below the card
-      },
+        // Bottom strip: runs along the card's bottom edge extending to the left.
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: '100%',
+          left: `calc(-1 * ${theme.spacing(1.5)})`,
+          width: `calc(100% + ${theme.spacing(1.5)})`,
+          height: theme.spacing(1.5),
+        },
 
-      '&:hover': {
-        zIndex: 1,
-      },
+        '&:hover': {
+          zIndex: 1,
+        },
 
-      // Show add button on hover, or when its dropdown menu is open
-      '&:hover [data-add-button], [data-menu-open]': {
-        opacity: 1,
-        pointerEvents: 'auto',
-      },
+        '&:hover [data-add-button], [data-menu-open]': {
+          opacity: 1,
+          pointerEvents: 'auto',
+        },
+      }),
     }),
     card: css({
       display: 'flex',
