@@ -1218,11 +1218,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
-	plugins := iniFile.Section("paths").Key("plugins").Strings(",")
-	cfg.PluginsPaths = make([]string, len(plugins))
-	for i, plugin := range plugins {
-		cfg.PluginsPaths[i] = makeAbsolute(plugin, cfg.HomePath)
-	}
+	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
+	bundledPlugins := valueAsString(iniFile.Section("paths"), "bundled_plugins", "data/plugins-bundled")
+	cfg.PluginsPaths = []string{makeAbsolute(plugins, cfg.HomePath), makeAbsolute(bundledPlugins, cfg.HomePath)}
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
