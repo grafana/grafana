@@ -2335,6 +2335,11 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			headerValue:   "   ",
 			expectedValue: defaultConfigIdentifier,
 		},
+		{
+			name:          "invalid identifier should return error",
+			headerValue:   "invalid identifier",
+			expectedError: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2342,8 +2347,13 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			rc := createRequestCtx()
 			rc.Req.Header.Set(configIdentifierHeader, tc.headerValue)
 
-			identifier := parseConfigIdentifierHeader(rc)
-			require.Equal(t, tc.expectedValue, identifier)
+			identifier, err := parseConfigIdentifierHeader(rc)
+			if tc.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedValue, identifier)
+			}
 		})
 	}
 }

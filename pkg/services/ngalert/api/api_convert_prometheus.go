@@ -17,6 +17,8 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -592,7 +595,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	identifier := parseConfigIdentifierHeader(c)
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
 
 	mergeMatchers, err := parseMergeMatchersHeader(c)
 	if err != nil {
@@ -631,7 +638,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 	logger := srv.logger.FromContext(c.Req.Context())
 	ctx := c.Req.Context()
 
-	identifier := parseConfigIdentifierHeader(c)
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
 
 	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false, false)
 	if err != nil {
@@ -676,9 +687,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	identifier := parseConfigIdentifierHeader(c)
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
 
-	err := srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	err = srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
 	if err != nil {
 		logger.Error("Failed to delete alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to delete alertmanager configuration: %w", err))
@@ -893,12 +908,19 @@ func formatMergeMatchers(matchers amconfig.Matchers) string {
 	return strings.Join(pairs, ",")
 }
 
-func parseConfigIdentifierHeader(c *contextmodel.ReqContext) string {
+func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
 	identifier := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader))
 	if identifier == "" {
-		return defaultConfigIdentifier
+		return defaultConfigIdentifier, nil
 	}
-	return identifier
+	if errs := k8svalidation.IsDNS1123Subdomain(identifier); len(errs) > 0 {
+		return "", errInvalidHeaderValue(configIdentifierHeader, errors.New(strings.Join(errs, ",")))
+	}
+	if len(identifier) > ualert.UIDMaxLength {
+		return "", errInvalidHeaderValue(configIdentifierHeader,
+			fmt.Errorf("must be less than %d characters", ualert.UIDMaxLength))
+	}
+	return identifier, nil
 }
 
 // convertPrometheusResponse returns a JSON or YAML response based on the Accept header.
