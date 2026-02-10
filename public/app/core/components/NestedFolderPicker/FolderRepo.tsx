@@ -26,11 +26,11 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
     skipQuery: skipRender,
   });
 
-  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
-
   if (skipRender) {
     return null;
   }
+
+  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
