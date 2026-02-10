@@ -59,7 +59,7 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, netCh
 	var currentCount int64
 	for _, manager := range stats.Managed {
 		for _, resourceCount := range manager.Stats {
-			// Exclude folders from quota count
+			// Exclude folders from quota count, as the limit is worded per dashboard, not including folders.
 			if resourceCount.Group == "folder.grafana.app" {
 				continue
 			}
