@@ -4952,6 +4952,29 @@
         "new-panel": "New panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "Add event data to graphs",
+      "label-annotation-query": "Annotation query",
+      "tooltip-add-new-annotation-query": "Add new annotation query"
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": "Reorder annotations list"
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": "Annotation"
+      }
+    },
+    "annotation-query-editor-button": {
+      "aria-label-toggle-menu": "Toggle menu"
+    },
+    "annotation-query-library-dropdown": {
+      "menu-overlay": {
+        "label-use-saved-query": "Use saved query"
+      }
+    },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
       "control-display-options": {
@@ -5105,6 +5128,9 @@
       "message": {
         "dashboard-not-found": "Dashboard not found"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": "Dashboard controls"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
