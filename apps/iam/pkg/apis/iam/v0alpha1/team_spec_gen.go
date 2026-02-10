@@ -14,3 +14,6 @@ type TeamSpec struct {
 func NewTeamSpec() *TeamSpec {
 	return &TeamSpec{}
 }
+func (TeamSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamSpec"
+}

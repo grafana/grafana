@@ -43,7 +43,7 @@ func NewJobInformer(client versioned.Interface, namespace string, resyncPeriod t
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredJobInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
@@ -68,7 +68,7 @@ func NewFilteredJobInformer(client versioned.Interface, namespace string, resync
 				}
 				return client.ProvisioningV0alpha1().Jobs(namespace).Watch(ctx, options)
 			},
-		},
+		}, client),
 		&apisprovisioningv0alpha1.Job{},
 		resyncPeriod,
 		indexers,

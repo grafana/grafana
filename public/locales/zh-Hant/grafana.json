@@ -10622,6 +10622,16 @@
       "message-same-name-general": "根資料夾中已存在同名的資料夾或儀表板"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到選項"
   },
@@ -11459,9 +11469,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "未找到組織",
     "select-placeholder": "選取組織"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12607,12 +12614,9 @@
       "error-starting-job": "開始作業時發生錯誤"
     },
     "sync-repository": {
-      "body-edit-configuration": "編輯設定",
-      "button-edit": "編輯",
       "error-pulling-resources": "拉取資源時發生錯誤",
       "pull": "拉取",
       "success-pull-started": "拉取已開始",
-      "title-pull-not-enabled": "拉取未啟用",
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
@@ -12863,6 +12867,9 @@
       "query-name-div-title-edit-query-name": "編輯查詢名稱"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "（追蹤 ID：{{traceId}}）"
     },
     "query-group": {
@@ -12981,6 +12988,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14185,6 +14197,9 @@
     "traces-panel": {
       "no-data-found-in-response": "回應中找不到資料"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

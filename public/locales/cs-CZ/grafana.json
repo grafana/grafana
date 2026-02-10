@@ -10769,6 +10769,16 @@
       "message-same-name-general": "V kořenové složce již existuje složka nebo nástěnka se stejným názvem"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nebyly nalezeny žádné možnosti"
   },
@@ -11615,9 +11625,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Nebyly nalezeny žádné organizace",
     "select-placeholder": "Vyberte organizaci"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12781,12 +12788,9 @@
       "error-starting-job": "Chyba při spouštění úlohy"
     },
     "sync-repository": {
-      "body-edit-configuration": "Upravit konfiguraci",
-      "button-edit": "Upravit",
       "error-pulling-resources": "Chyba při stahování zdrojů",
       "pull": "Stáhnout",
       "success-pull-started": "Stažení zahájeno",
-      "title-pull-not-enabled": "Stažení není povoleno",
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
@@ -13040,6 +13044,9 @@
       "query-name-div-title-edit-query-name": "Upravit název dotazu"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID trasování: {{traceId}})"
     },
     "query-group": {
@@ -13161,6 +13168,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14377,6 +14389,9 @@
     "traces-panel": {
       "no-data-found-in-response": "V odpovědi nebyla nalezena žádná data"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {
