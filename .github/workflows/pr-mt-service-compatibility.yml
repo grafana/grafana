@@ -3,7 +3,7 @@ name: "MT Service Compatibility"
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches: [main, test/frontend-backend-separation-action]
+    branches: [main]
 
 permissions:
   contents: read
