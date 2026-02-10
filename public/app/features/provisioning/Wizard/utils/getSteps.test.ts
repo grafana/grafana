@@ -16,8 +16,8 @@ describe('getSteps', () => {
     const authTypeStep = steps.find((s) => s.id === 'authType');
     const connectionStep = steps.find((s) => s.id === 'connection');
 
-    expect(authTypeStep?.name).toBe('File Provisioning');
-    expect(authTypeStep?.title).toBe('File Provisioning');
+    expect(authTypeStep?.name).toBe('File provisioning');
+    expect(authTypeStep?.title).toBe('File provisioning');
     expect(connectionStep?.name).toBe('Connect');
     expect(connectionStep?.title).toBe('Connect to external storage');
   });
