@@ -44,8 +44,6 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<MenuView>('main');
 
-  // Focuses the expressions submenu as soon as it mounts so keyboard
-  // navigation (arrow keys) works as expected.
   const focusOnMount = useCallback((el: HTMLDivElement | null) => el?.focus(), []);
 
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
@@ -55,7 +53,6 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
 
-  /** Add a query after this card and auto-select it in the sidebar. */
   const addAndSelect = useCallback(
     (query?: Partial<DataQuery>) => {
       const newRefId = addQuery(query, afterRefId);
@@ -67,7 +64,6 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
     [addQuery, afterRefId, setSelectedQuery]
   );
 
-  /** Create an expression of a certain type and add it. */
   const addExpressionOfType = useCallback(
     (type: ExpressionQueryType) => {
       const baseQuery = expressionDatasource.newQuery();
@@ -78,7 +74,6 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
     [addAndSelect]
   );
 
-  /** Reset the menu to the main view when it closes. */
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
     setMenuOpen(visible);
     if (!visible) {
