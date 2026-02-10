@@ -56,7 +56,6 @@ import (
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
-	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -186,6 +185,7 @@ import (
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
+	migresources "github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -243,9 +243,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
-	legacy.ProvideMigratorDashboardAccessor,
-	legacy.ProvidePlaylistMigrator,
-	legacy.ProvideShortURLMigrator,
+	legacy.ProvideResourceMigrationService,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -580,17 +578,14 @@ func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSuppl
 
 /*
 provideMigrationRegistry builds the MigrationRegistry directly from the
-underlying dependencies. When adding a new resource migration, add the
-dependency parameter here and register it with the registry.
+ResourceMigrationService. When adding a new resource migration, register
+it with the registry here.
 */
 func provideMigrationRegistry(
-	accessor legacy.MigrationDashboardAccessor,
-	playlistMigrator legacy.PlaylistMigrator,
-	shortURLMigrator legacy.ShortURLMigrator,
+	svc migresources.ResourceMigrationService,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
-	r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
-	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
-	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+	r.Register(dashboardmigration.FoldersDashboardsMigration(svc))
+	r.Register(playlistmigration.PlaylistMigration(svc))
 	return r
 }

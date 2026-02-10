@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
@@ -43,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -52,13 +52,8 @@ var (
 	tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy")
 )
 
-type MigrateOptions struct {
-	Namespace   string
-	Resources   []schema.GroupResource
-	WithHistory bool // only applies to dashboards
-	OnlyCount   bool // just count the values
-	Progress    func(count int, msg string)
-}
+// MigrateOptions is an alias for the type defined in the resources package.
+type MigrateOptions = resources.MigrateOptions
 
 type dashboardRow struct {
 	// The numeric version for this dashboard
@@ -94,35 +89,14 @@ type dashboardSqlAccess struct {
 	log         log.Logger
 }
 
-// ProvideMigratorDashboardAccessor creates a DashboardAccess specifically for migration purposes.
-// This provider is used by Wire DI and only includes the minimal dependencies needed for migrations.
-func ProvideMigratorDashboardAccessor(
+// ProvideResourceMigrationService creates the central ResourceMigrationService for
+// unified storage migrations. It includes the minimal dependencies needed to migrate
+// all resource types (dashboards, folders, library panels, playlists).
+func ProvideResourceMigrationService(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
-) MigrationDashboardAccessor {
-	return newMigratorAccess(sql, provisioning, accessControl)
-}
-
-// ProvidePlaylistMigrator creates a PlaylistMigrator for migration purposes.
-// This is wired separately from MigrationDashboardAccessor so that playlist
-// migrations are decoupled from the dashboard accessor interface.
-func ProvidePlaylistMigrator(
-	sql legacysql.LegacyDatabaseProvider,
-	provisioning provisioning.StubProvisioningService,
-	accessControl accesscontrol.AccessControl,
-) PlaylistMigrator {
-	return newMigratorAccess(sql, provisioning, accessControl)
-}
-
-// ProvideShortURLMigrator creates a ShortURLMigrator for migration purposes.
-// This is wired separately from MigrationDashboardAccessor so that short URL
-// migrations are decoupled from the dashboard accessor interface.
-func ProvideShortURLMigrator(
-	sql legacysql.LegacyDatabaseProvider,
-	provisioning provisioning.StubProvisioningService,
-	accessControl accesscontrol.AccessControl,
-) ShortURLMigrator {
+) resources.ResourceMigrationService {
 	return newMigratorAccess(sql, provisioning, accessControl)
 }
 
@@ -282,14 +256,15 @@ func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOpt
 						ON dd.id = dv.dashboard_id
 						WHERE org_id=?`, orgId).Get(&summary.History)
 
-			case "shorturl.grafana.app/shorturls":
+			case "playlist.grafana.app/playlists":
 				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = shorturlv1beta1.APIGroup
-				summary.Resource = "shorturls"
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("short_url")+
+				summary.Group = "playlist.grafana.app"
+				summary.Resource = "playlists"
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("playlist")+
 					" WHERE org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
 			}
+
 			if err != nil {
 				return err
 			}

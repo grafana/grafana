@@ -71,20 +71,3 @@ type DashboardAccessor interface {
 	// Get a typed list
 	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error)
 }
-
-//go:generate mockery --name MigrationDashboardAccessor --structname MockMigrationDashboardAccessor --inpackage --filename migration_dashboard_accessor_mock.go --with-expecter
-type MigrationDashboardAccessor interface {
-	CountResources(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
-	MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-	MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-}
-
-//go:generate mockery --name PlaylistMigrator --structname MockPlaylistMigrator --inpackage --filename playlist_migrator_mock.go --with-expecter
-type PlaylistMigrator interface {
-	MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-}
-
-//go:generate mockery --name ShortURLMigrator --structname MockShortURLMigrator --inpackage --filename shorturl_migrator_mock.go --with-expecter
-type ShortURLMigrator interface {
-	MigrateShortURLs(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-}

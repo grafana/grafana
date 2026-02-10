@@ -5,7 +5,7 @@ package migrations
 import (
 	context "context"
 
-	legacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	resources "github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	mock "github.com/stretchr/testify/mock"
 
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,7 +25,7 @@ func (_m *MockUnifiedMigrator) EXPECT() *MockUnifiedMigrator_Expecter {
 }
 
 // Migrate provides a mock function with given fields: ctx, opts
-func (_m *MockUnifiedMigrator) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
+func (_m *MockUnifiedMigrator) Migrate(ctx context.Context, opts resources.MigrateOptions) (*resourcepb.BulkResponse, error) {
 	ret := _m.Called(ctx, opts)
 
 	if len(ret) == 0 {
@@ -34,10 +34,10 @@ func (_m *MockUnifiedMigrator) Migrate(ctx context.Context, opts legacy.MigrateO
 
 	var r0 *resourcepb.BulkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, legacy.MigrateOptions) (*resourcepb.BulkResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, resources.MigrateOptions) (*resourcepb.BulkResponse, error)); ok {
 		return rf(ctx, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, legacy.MigrateOptions) *resourcepb.BulkResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, resources.MigrateOptions) *resourcepb.BulkResponse); ok {
 		r0 = rf(ctx, opts)
 	} else {
 		if ret.Get(0) != nil {
@@ -45,7 +45,7 @@ func (_m *MockUnifiedMigrator) Migrate(ctx context.Context, opts legacy.MigrateO
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, legacy.MigrateOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, resources.MigrateOptions) error); ok {
 		r1 = rf(ctx, opts)
 	} else {
 		r1 = ret.Error(1)
@@ -61,14 +61,14 @@ type MockUnifiedMigrator_Migrate_Call struct {
 
 // Migrate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts legacy.MigrateOptions
+//   - opts resources.MigrateOptions
 func (_e *MockUnifiedMigrator_Expecter) Migrate(ctx interface{}, opts interface{}) *MockUnifiedMigrator_Migrate_Call {
 	return &MockUnifiedMigrator_Migrate_Call{Call: _e.mock.On("Migrate", ctx, opts)}
 }
 
-func (_c *MockUnifiedMigrator_Migrate_Call) Run(run func(ctx context.Context, opts legacy.MigrateOptions)) *MockUnifiedMigrator_Migrate_Call {
+func (_c *MockUnifiedMigrator_Migrate_Call) Run(run func(ctx context.Context, opts resources.MigrateOptions)) *MockUnifiedMigrator_Migrate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(legacy.MigrateOptions))
+		run(args[0].(context.Context), args[1].(resources.MigrateOptions))
 	})
 	return _c
 }
@@ -78,7 +78,7 @@ func (_c *MockUnifiedMigrator_Migrate_Call) Return(_a0 *resourcepb.BulkResponse,
 	return _c
 }
 
-func (_c *MockUnifiedMigrator_Migrate_Call) RunAndReturn(run func(context.Context, legacy.MigrateOptions) (*resourcepb.BulkResponse, error)) *MockUnifiedMigrator_Migrate_Call {
+func (_c *MockUnifiedMigrator_Migrate_Call) RunAndReturn(run func(context.Context, resources.MigrateOptions) (*resourcepb.BulkResponse, error)) *MockUnifiedMigrator_Migrate_Call {
 	_c.Call.Return(run)
 	return _c
 }

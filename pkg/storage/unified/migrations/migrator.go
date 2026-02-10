@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations/resources"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -21,13 +21,13 @@ import (
 //
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
-	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
+	Migrate(ctx context.Context, opts resources.MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
-	legacy.MigrationDashboardAccessor
+	resources.ResourceMigrationService
 	streamProvider streamProvider
 	client         resource.SearchClient
 	log            log.Logger
@@ -36,10 +36,10 @@ type unifiedMigration struct {
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts resources.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts legacy.MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
+func buildCollectionSettings(opts resources.MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
 		key := buildResourceKey(res, opts.Namespace, registry)
@@ -54,20 +54,20 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts resources.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
 	settings := buildCollectionSettings(opts, registry)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
 }
 
-// This can migrate Folders, Dashboards and LibraryPanels
+// This can migrate Folders, Dashboards, LibraryPanels and Playlists
 func ProvideUnifiedMigrator(
-	dashboardAccess legacy.MigrationDashboardAccessor,
+	resourceMigrator resources.ResourceMigrationService,
 	client resource.ResourceClient,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
-		dashboardAccess,
+		resourceMigrator,
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
@@ -76,22 +76,22 @@ func ProvideUnifiedMigrator(
 }
 
 func newUnifiedMigrator(
-	dashboardAccess legacy.MigrationDashboardAccessor,
+	resourceMigrator resources.ResourceMigrationService,
 	streamProvider streamProvider,
 	client resource.SearchClient,
 	log log.Logger,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return &unifiedMigration{
-		MigrationDashboardAccessor: dashboardAccess,
-		streamProvider:             streamProvider,
-		client:                     client,
-		log:                        log,
-		registry:                   registry,
+		ResourceMigrationService: resourceMigrator,
+		streamProvider:           streamProvider,
+		client:                   client,
+		log:                      log,
+		registry:                 registry,
 	}
 }
 
-func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
+func (m *unifiedMigration) Migrate(ctx context.Context, opts resources.MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
