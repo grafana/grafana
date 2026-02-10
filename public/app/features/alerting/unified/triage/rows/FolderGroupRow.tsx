@@ -9,6 +9,7 @@ import { MetaText } from '../../components/MetaText';
 import { GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
+import { DrawerButtonSpacer, InstanceCountBadges } from './InstanceCountBadges';
 
 interface FolderGroupRowProps {
   row: GenericGroupedRow;
@@ -29,6 +30,12 @@ export const FolderGroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, childr
         <Stack direction="row" gap={0.5} alignItems="center">
           <MetaText icon="folder" />
           {isString(row.metadata.value) && <Text color="primary">{row.metadata.value}</Text>}
+        </Stack>
+      }
+      actions={
+        <Stack direction="row" gap={2} alignItems="center">
+          <InstanceCountBadges counts={row.instanceCounts} />
+          <DrawerButtonSpacer />
         </Stack>
       }
       isOpenByDefault={true}

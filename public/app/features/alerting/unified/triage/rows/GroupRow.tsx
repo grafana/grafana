@@ -3,11 +3,12 @@ import React from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 
 import { EmptyLabelValue, GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
+import { DrawerButtonSpacer, InstanceCountBadges } from './InstanceCountBadges';
 import { formatLabelValue } from './utils';
 
 interface GroupRowProps {
@@ -33,6 +34,12 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
           value={formatLabelValue(row.metadata.value)}
           colorBy="key"
         />
+      }
+      actions={
+        <Stack direction="row" gap={2} alignItems="center">
+          <InstanceCountBadges counts={row.instanceCounts} />
+          <DrawerButtonSpacer />
+        </Stack>
       }
       isOpenByDefault={!isEmptyValue}
       leftColumnClassName={styles.groupRow}

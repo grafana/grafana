@@ -4,7 +4,7 @@ import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
-import { Box, ErrorBoundaryAlert, Grid, useStyles2 } from '@grafana/ui';
+import { Box, ErrorBoundaryAlert, Grid, Icon, type IconName, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { METRIC_NAME } from '../constants';
@@ -79,10 +79,11 @@ interface StatBoxProps {
   i18nKey: string;
   value: number;
   color: 'error' | 'warning';
+  icon?: IconName;
   children: React.ReactNode;
 }
 
-function StatBox({ i18nKey, value, color, children }: StatBoxProps) {
+function StatBox({ i18nKey, value, color, icon, children }: StatBoxProps) {
   const styles = useStyles2(getStatBoxStyles);
   const colorClass = color === 'error' ? styles.errorColor : styles.warningColor;
 
@@ -98,7 +99,10 @@ function StatBox({ i18nKey, value, color, children }: StatBoxProps) {
       gap={1}
       height="100%"
     >
-      <div className={styles.label}>{children}</div>
+      <div className={styles.label}>
+        {icon && <Icon name={icon} size="sm" className={colorClass} />}
+        {children}
+      </div>
       <div className={`${styles.value} ${colorClass}`}>{value}</div>
     </Box>
   );
@@ -106,6 +110,10 @@ function StatBox({ i18nKey, value, color, children }: StatBoxProps) {
 
 const getStatBoxStyles = (theme: GrafanaTheme2) => ({
   label: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(0.5),
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.primary,
     wordWrap: 'break-word',
@@ -180,20 +188,40 @@ function SummaryStatsContent() {
     <Grid gap={2}>
       {alertstateFilter.includes(PromAlertingRuleState.Firing) && (
         <Grid columns={2} gap={2}>
-          <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error">
+          <StatBox
+            i18nKey="alerting.triage.firing-instances-count"
+            value={instances.firing}
+            color="error"
+            icon="exclamation-circle"
+          >
             <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
           </StatBox>
-          <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error">
+          <StatBox
+            i18nKey="alerting.triage.firing-rules-count"
+            value={rules.firing}
+            color="error"
+            icon="exclamation-circle"
+          >
             <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
           </StatBox>
         </Grid>
       )}
       {alertstateFilter.includes(PromAlertingRuleState.Pending) && (
         <Grid columns={2} gap={2}>
-          <StatBox i18nKey="alerting.triage.pending-instances-count" value={instances.pending} color="warning">
+          <StatBox
+            i18nKey="alerting.triage.pending-instances-count"
+            value={instances.pending}
+            color="warning"
+            icon="circle"
+          >
             <Trans i18nKey="alerting.triage.pending-instances-count">Pending alert instances</Trans>
           </StatBox>
-          <StatBox i18nKey="alerting.triage.rules-with-pending-instances" value={rules.pending} color="warning">
+          <StatBox
+            i18nKey="alerting.triage.rules-with-pending-instances"
+            value={rules.pending}
+            color="warning"
+            icon="circle"
+          >
             <Trans i18nKey="alerting.triage.rules-with-pending-instances">Alert rules with pending instances</Trans>
           </StatBox>
         </Grid>

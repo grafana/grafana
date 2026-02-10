@@ -1,6 +1,82 @@
 import { DataFrame } from '@grafana/data';
 
-import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, WorkbenchRow } from '../types';
+import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, InstanceCounts, WorkbenchRow } from '../types';
+
+const EMPTY_COUNTS: InstanceCounts = { firing: 0, pending: 0 };
+
+function sumCounts(rows: WorkbenchRow[]): InstanceCounts {
+  let firing = 0;
+  let pending = 0;
+  for (const row of rows) {
+    firing += row.instanceCounts.firing;
+    pending += row.instanceCounts.pending;
+  }
+  return { firing, pending };
+}
+
+/**
+ * Pre-computes a map of ruleUID → InstanceCounts by scanning the DataFrame.
+ * For each (ruleUID, alertstate) pair, keeps the Value from the row with the latest timestamp.
+ */
+function buildRuleCountsMap(
+  frame: DataFrame,
+  fieldIndex: Map<string, number>,
+  ruleUIDValues: DataFrame['fields'][number]['values']
+): Map<string, InstanceCounts> {
+  const timeIdx = fieldIndex.get('Time');
+  const alertstateIdx = fieldIndex.get('alertstate');
+  const valueIdx = fieldIndex.get('Value');
+
+  // If Value field is missing, we can't compute counts
+  if (timeIdx === undefined || alertstateIdx === undefined || valueIdx === undefined) {
+    return new Map();
+  }
+
+  const timeValues = frame.fields[timeIdx].values;
+  const alertstateValues = frame.fields[alertstateIdx].values;
+  const valueValues = frame.fields[valueIdx].values;
+
+  // Track latest (time, value) per (ruleUID, alertstate)
+  const latestByRule = new Map<
+    string,
+    { firingTime: number; firingCount: number; pendingTime: number; pendingCount: number }
+  >();
+
+  for (let i = 0; i < frame.length; i++) {
+    const ruleUID = ruleUIDValues[i];
+    const alertstate = alertstateValues[i];
+    const time = Number(timeValues[i]);
+    const value = valueValues[i] ?? 0;
+
+    if (!ruleUID || (alertstate !== 'firing' && alertstate !== 'pending')) {
+      continue;
+    }
+
+    let entry = latestByRule.get(ruleUID);
+    if (!entry) {
+      entry = { firingTime: -Infinity, firingCount: 0, pendingTime: -Infinity, pendingCount: 0 };
+      latestByRule.set(ruleUID, entry);
+    }
+
+    if (alertstate === 'firing' && time > entry.firingTime) {
+      entry.firingTime = time;
+      entry.firingCount = value;
+    } else if (alertstate === 'pending' && time > entry.pendingTime) {
+      entry.pendingTime = time;
+      entry.pendingCount = value;
+    }
+  }
+
+  // Convert to InstanceCounts
+  const result = new Map<string, InstanceCounts>();
+  for (const [ruleUID, entry] of latestByRule) {
+    result.set(ruleUID, {
+      firing: entry.firingCount,
+      pending: entry.pendingCount,
+    });
+  }
+  return result;
+}
 
 // Builds tree structure in one pass through data, avoiding intermediate row objects
 export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = []): WorkbenchRow[] {
@@ -41,6 +117,13 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
   const folderValues = frame.fields[folderIndex].values;
   const ruleUIDValues = frame.fields[ruleUIDIndex].values;
 
+  // Pre-compute instance counts per rule
+  const ruleCountsMap = buildRuleCountsMap(frame, fieldIndex, ruleUIDValues);
+
+  function getRuleCounts(ruleUID: string): InstanceCounts {
+    return ruleCountsMap.get(ruleUID) ?? EMPTY_COUNTS;
+  }
+
   // Get groupBy field value arrays
   const groupByValueArrays = groupBy.map((key) => {
     const index = fieldIndex.get(key);
@@ -63,6 +146,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
             folder: folderValues[i],
             ruleUID: ruleUID,
           },
+          instanceCounts: getRuleCounts(ruleUID),
         });
       }
     }
@@ -123,6 +207,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
               folder: folderValues[rowIdx],
               ruleUID: ruleUID,
             },
+            instanceCounts: getRuleCounts(ruleUID),
           });
         }
       }
@@ -134,13 +219,15 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
     const emptyGroups: GenericGroupedRow[] = [];
 
     for (const [value, childNode] of node.children.entries()) {
+      const childRows = nodeToRows(childNode, depth + 1);
       const group: GenericGroupedRow = {
         type: 'group',
         metadata: {
           label: groupBy[depth],
           value: value,
         },
-        rows: nodeToRows(childNode, depth + 1),
+        rows: childRows,
+        instanceCounts: sumCounts(childRows),
       };
 
       if (value === EmptyLabelValue) {
