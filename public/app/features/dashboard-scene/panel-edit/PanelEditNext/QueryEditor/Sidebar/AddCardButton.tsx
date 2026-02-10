@@ -13,16 +13,8 @@ import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/t
 import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { EXPRESSION_ICON_MAP } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
-
-const EXPRESSION_ICON_MAP = {
-  [ExpressionQueryType.math]: 'calculator-alt',
-  [ExpressionQueryType.reduce]: 'compress-arrows',
-  [ExpressionQueryType.resample]: 'sync',
-  [ExpressionQueryType.classic]: 'cog',
-  [ExpressionQueryType.threshold]: 'sliders-v-alt',
-  [ExpressionQueryType.sql]: 'database',
-} as const satisfies Record<ExpressionQueryType, string>;
 
 function isExpressionType(
   item: SelectableValue<ExpressionQueryType>
