@@ -36,7 +36,6 @@ import (
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -149,6 +148,7 @@ func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
+	roleBindingsStorage RoleBindingStorageBackend,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
@@ -179,7 +179,7 @@ func NewAPIService(
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		coreRolesStorage:           coreRoleStorage,
-		roleBindingsStorage:        noopstorage.ProvideStorageBackend(), // TODO: add a proper storage backend
+		roleBindingsStorage:        roleBindingsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
 		accessClient:               accessClient,
