@@ -6,7 +6,9 @@ import { Stack } from '@grafana/ui';
 
 import { ActionsMenu } from './ActionsMenu';
 import { AssistantButton } from './AssistantButton';
-import { InspectorButton } from './InspectorButton';
+import { HideButton } from './HideButton';
+import { PluginActions } from './PluginActions';
+import { RemoveButton } from './RemoveButton';
 import { SaveButton } from './SaveButton';
 import { WarningBadges } from './WarningBadges';
 
@@ -32,7 +34,9 @@ export function HeaderActions({ containerRef, queries }: HeaderActionsProps) {
       <AssistantButton queries={queries} />
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
-      <InspectorButton />
+      <PluginActions app={CoreApp.PanelEditor} />
+      <HideButton />
+      <RemoveButton />
       <ActionsMenu app={CoreApp.PanelEditor} />
     </Stack>
   );

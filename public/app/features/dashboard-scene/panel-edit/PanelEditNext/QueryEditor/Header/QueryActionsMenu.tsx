@@ -1,22 +1,15 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback } from 'react';
 
-import {
-  CoreApp,
-  GrafanaTheme2,
-  PluginExtensionPoints,
-  PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
-} from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
+import { InspectTab } from 'app/features/inspector/types';
 
+import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
+import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface QueryActionsMenuProps {
   app?: CoreApp;
@@ -24,11 +17,11 @@ interface QueryActionsMenuProps {
 
 /**
  * Actions menu for queries and expressions.
- * Handles duplicate, hide/show, plugin actions, help, and delete.
+ * Contains duplicate, data source help, and inspector actions.
  */
 export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
-  const { queries, data } = useQueryRunnerContext();
-  const { duplicateQuery, deleteQuery, toggleQueryHide, addQuery } = useActionsContext();
+  const { duplicateQuery } = useActionsContext();
+  const { panel } = usePanelContext();
   const {
     selectedQuery,
     selectedQueryDsData,
@@ -37,109 +30,53 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
     toggleDatasourceHelp,
     cardType,
   } = useQueryEditorUIContext();
-  const { isEditingQuery } = useQueryLibraryContext();
 
   const styles = useStyles2(getStyles);
 
-  // Extra actions from plugins
-  const extraActions = useMemo(() => {
-    if (!selectedQuery) {
-      return [];
-    }
-    const unscopedActions = RowActionComponents.getAllExtraRenderAction();
-
-    let scopedActions: QueryActionComponent[] = [];
-    if (app !== undefined) {
-      scopedActions = RowActionComponents.getScopedExtraRenderAction(app);
-    }
-
-    return [...unscopedActions, ...scopedActions]
-      .map((action, index) =>
-        action({
-          query: selectedQuery,
-          queries,
-          timeRange: data?.timeRange,
-          onAddQuery: addQuery,
-          dataSource: selectedQueryDsData?.dsSettings,
-          key: index,
-        })
-      )
-      .filter(Boolean);
-  }, [selectedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
-
-  // Adaptive telemetry plugin extensions
-  const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
+  const onOpenInspector = useCallback(() => {
+    const dashboard = getDashboardSceneFor(panel);
+    dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
+  }, [panel]);
 
   if (!selectedQuery) {
     return null;
   }
 
   const isExpression = cardType === QueryEditorType.Expression;
-  const isHidden = !!selectedQuery.hide;
   const hasEditorHelp = !selectedQueryDsLoading && selectedQueryDsData?.datasource?.components?.QueryEditorHelp;
 
   return (
     <Dropdown
       overlay={
         <Menu>
-          {!isEditingQuery && (
+          <Menu.Item
+            className={styles.menuItem}
+            label={t('query-editor.action.duplicate', 'Duplicate query')}
+            icon="copy"
+            onClick={() => duplicateQuery(selectedQuery.refId)}
+          />
+
+          {/* Data source help (queries only, not expressions) */}
+          {hasEditorHelp && !isExpression && (
             <Menu.Item
-              label={t('query-editor.action.duplicate', 'Duplicate query')}
-              icon="copy"
-              onClick={() => duplicateQuery(selectedQuery.refId)}
+              className={styles.menuItem}
+              label={
+                showingDatasourceHelp
+                  ? t('query-editor.action.hide-help', 'Hide data source help')
+                  : t('query-editor.action.show-help', 'Show data source help')
+              }
+              icon="question-circle"
+              onClick={toggleDatasourceHelp}
+              active={showingDatasourceHelp}
             />
           )}
 
           <Menu.Item
-            label={
-              isHidden ? t('query-editor.action.show', 'Show response') : t('query-editor.action.hide', 'Hide response')
-            }
-            icon={isHidden ? 'eye-slash' : 'eye'}
-            onClick={() => toggleQueryHide(selectedQuery.refId)}
-            data-testid={selectors.components.QueryEditorRow.actionButton('Hide response')}
+            className={styles.menuItem}
+            label={t('query-editor.action.inspector', 'Query inspector')}
+            icon="brackets-curly"
+            onClick={onOpenInspector}
           />
-
-          {/* Extra actions from plugins */}
-          {(extraActions.length > 0 || telemetryComponents) && (
-            <>
-              <Menu.Divider />
-              {extraActions.map((action, i) => (
-                <div key={i} className={styles.extraAction}>
-                  {action}
-                </div>
-              ))}
-              {telemetryComponents && <div className={styles.extraAction}>{telemetryComponents}</div>}
-            </>
-          )}
-
-          {/* Data source help (queries only, not expressions) */}
-          {hasEditorHelp && !isExpression && (
-            <>
-              <Menu.Divider />
-              <Menu.Item
-                label={
-                  showingDatasourceHelp
-                    ? t('query-editor.action.hide-help', 'Hide data source help')
-                    : t('query-editor.action.show-help', 'Show data source help')
-                }
-                icon="question-circle"
-                onClick={toggleDatasourceHelp}
-                active={showingDatasourceHelp}
-              />
-            </>
-          )}
-
-          {!isEditingQuery && (
-            <>
-              <Menu.Divider />
-              <Menu.Item
-                label={t('query-editor.action.remove-query', 'Remove query')}
-                icon="trash-alt"
-                onClick={() => deleteQuery(selectedQuery.refId)}
-                destructive
-              />
-            </>
-          )}
         </Menu>
       }
       placement="bottom-end"
@@ -157,33 +94,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  extraAction: css({
-    padding: theme.spacing(0.5, 1),
+  menuItem: css({
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });
-
-/**
- * Hook to render adaptive telemetry plugin extensions.
- * Matches legacy AdaptiveTelemetryQueryActions component behavior.
- */
-function useAdaptiveTelemetryComponents(query: DataQuery | null) {
-  const { isLoading, components } = usePluginComponents<PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context>({
-    extensionPointId: PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1,
-  });
-
-  if (isLoading || !components.length || !query) {
-    return null;
-  }
-
-  try {
-    return renderLimitedComponents({
-      props: { query, contextHints: ['queryeditorrow', 'header'] },
-      components,
-      limit: 1,
-      pluginId: /grafana-adaptive.*/,
-    });
-  } catch (error) {
-    console.error('Failed to render adaptive telemetry components:', error);
-    return null;
-  }
-}
