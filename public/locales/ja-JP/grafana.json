@@ -4880,7 +4880,6 @@
       "paste-panel": "パネルを貼り付け",
       "paste-row": "行を貼り付け",
       "paste-tab": "タブを貼り付け",
-      "un-group-panels": "グループ解除",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9478,6 +9477,10 @@
     "secret-form-field": {
       "reset": "リセット"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "オプションの読み込みに失敗しました",
       "loading": "オプションを読み込み中...",
@@ -10485,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "行の折り返しを解除",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
@@ -10511,6 +10520,7 @@
     "name-show-controls": "コントロールを表示",
     "name-time": "タイムスタンプを表示",
     "name-unique-labels": "一意のラベル",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "行を折り返す",
     "order-options": {
       "label-newest-first": "新しいものから表示",
@@ -10611,6 +10621,16 @@
       "message-same-name-current-folder": "現在のフォルダに、同じ名前のダッシュボードまたはフォルダがすでに存在します",
       "message-same-name-general": "同じ名前のフォルダまたはダッシュボードがルートフォルダにすでに存在します"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -11450,9 +11470,6 @@
     "noOptionsMessage-no-organizations-found": "組織が見つかりません",
     "select-placeholder": "組織を選択"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "タイトルを編集"
@@ -12080,7 +12097,6 @@
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "retry-action": "",
       "text-loading-resource-information": "リソース情報読み込み中...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
@@ -12598,12 +12614,9 @@
       "error-starting-job": "ジョブ開始時のエラー"
     },
     "sync-repository": {
-      "body-edit-configuration": "設定を編集",
-      "button-edit": "編集",
       "error-pulling-resources": "リソース取得時のエラー",
       "pull": "取得",
       "success-pull-started": "プルが開始されました",
-      "title-pull-not-enabled": "取得は無効です",
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
@@ -12612,7 +12625,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
@@ -12649,8 +12663,6 @@
       "button-cancelling": "",
       "button-next": "完了",
       "button-start": "同期を開始",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12855,6 +12867,9 @@
       "query-name-div-title-edit-query-name": "クエリ名を編集"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "トレースID：{{traceId}}"
     },
     "query-group": {
@@ -12973,6 +12988,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14177,6 +14197,9 @@
     "traces-panel": {
       "no-data-found-in-response": "応答にデータが見つかりません"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

@@ -218,6 +218,7 @@ export interface GrafanaConfig {
   publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
+  /** @deprecated it will be removed in a future release */
   panels: { [key: string]: PanelPluginMeta };
   /** @deprecated it will be removed in a future release */
   apps: Record<string, AppPluginConfig>;

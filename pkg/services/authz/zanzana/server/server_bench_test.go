@@ -35,14 +35,14 @@ const (
 	// Timeout for List operations
 	listTimeout = 30 * time.Second
 
+	// BenchmarkBatchCheck measures the performance of BatchCheck requests with 50 items per batch.
+	batchCheckSize = 50
+
 	// Resource type constants for benchmarks
 	benchDashboardGroup    = "dashboard.grafana.app"
 	benchDashboardResource = "dashboards"
 	benchFolderGroup       = "folder.grafana.app"
 	benchFolderResource    = "folders"
-
-	// BenchmarkBatchCheck measures the performance of BatchCheck requests with 50 items per batch.
-	_ = 50 // batchCheckSize - kept for documentation
 )
 
 // benchmarkData holds all the generated test data for benchmarks
@@ -336,6 +336,15 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	}
 
 	cfg := setting.NewCfg()
+
+	// Enable all caching options for optimal performance
+	cfg.ZanzanaServer.CacheSettings.CheckCacheLimit = 100000             // Cache check results
+	cfg.ZanzanaServer.CacheSettings.CheckQueryCacheEnabled = true        // Cache check subproblems
+	cfg.ZanzanaServer.CacheSettings.CheckIteratorCacheEnabled = true     // Cache DB iterators for checks
+	cfg.ZanzanaServer.CacheSettings.CheckIteratorCacheMaxResults = 10000 // Max results per iterator
+	cfg.ZanzanaServer.CacheSettings.SharedIteratorEnabled = true         // Share iterators across concurrent checks
+	cfg.ZanzanaServer.CacheSettings.SharedIteratorLimit = 10000          // Max shared iterators
+
 	testStore := sqlstore.NewTestStore(b, sqlstore.WithCfg(cfg))
 
 	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
@@ -746,4 +755,199 @@ func BenchmarkList(b *testing.B) {
 			})
 		}
 	})
+}
+
+// BenchmarkBatchCheck measures the performance of BatchCheck requests
+func BenchmarkBatchCheck(b *testing.B) {
+	srv, data := setupBenchmarkServer(b)
+	ctx := newContextWithNamespace()
+
+	// Helper to create batch check requests
+	newBatchCheckReq := func(subject string, items []*authzv1.BatchCheckItem) *authzv1.BatchCheckRequest {
+		return &authzv1.BatchCheckRequest{
+			Namespace: benchNamespace,
+			Subject:   subject,
+			Checks:    items,
+		}
+	}
+
+	// Helper to create batch items for resources in folders
+	createBatchItems := func(resources []string, resourceFolders map[string]string) []*authzv1.BatchCheckItem {
+		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
+		for i := 0; i < batchCheckSize && i < len(resources); i++ {
+			resource := resources[i]
+			items = append(items, &authzv1.BatchCheckItem{
+				Verb:          utils.VerbGet,
+				Group:         benchDashboardGroup,
+				Resource:      benchDashboardResource,
+				Name:          resource,
+				Folder:        resourceFolders[resource],
+				CorrelationId: fmt.Sprintf("item-%d", i),
+			})
+		}
+		return items
+	}
+
+	// Helper to create batch items for folders at a specific depth
+	createFolderBatchItems := func(folders []string, depth int, folderDepths map[string]int) []*authzv1.BatchCheckItem {
+		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
+		for _, folder := range folders {
+			if folderDepths[folder] == depth && len(items) < batchCheckSize {
+				items = append(items, &authzv1.BatchCheckItem{
+					Verb:          utils.VerbGet,
+					Group:         benchDashboardGroup,
+					Resource:      benchDashboardResource,
+					Name:          fmt.Sprintf("resource-in-%s", folder),
+					Folder:        folder,
+					CorrelationId: fmt.Sprintf("item-%d", len(items)),
+				})
+			}
+		}
+		// Fill remaining slots if needed
+		for len(items) < batchCheckSize && len(folders) > 0 {
+			folder := folders[len(items)%len(folders)]
+			items = append(items, &authzv1.BatchCheckItem{
+				Verb:          utils.VerbGet,
+				Group:         benchDashboardGroup,
+				Resource:      benchDashboardResource,
+				Name:          fmt.Sprintf("resource-%d", len(items)),
+				Folder:        folder,
+				CorrelationId: fmt.Sprintf("item-%d", len(items)),
+			})
+		}
+		return items
+	}
+
+	usersPerPattern := len(data.users) / numPermissionPatterns
+
+	b.Run("GroupResourceDirect", func(b *testing.B) {
+		// User with group_resource permission - should have access to everything
+		user := data.users[0]
+		items := createBatchItems(data.resources, data.resourceFolders)
+		b.Logf("Testing BatchCheck with %d items, user has group_resource permission (all access)", len(items))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+			if err != nil {
+				b.Fatal(err)
+			}
+			_ = res.Results
+		}
+	})
+
+	b.Run("FolderInheritance/Depth1", func(b *testing.B) {
+		// User with folder permission on shallow folder
+		user := data.users[usersPerPattern]
+		items := createFolderBatchItems(data.folders, 1, data.folderDepths)
+		b.Logf("Testing BatchCheck with %d items at depth 1", len(items))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+			if err != nil {
+				b.Fatal(err)
+			}
+			_ = res.Results
+		}
+	})
+
+	b.Run("FolderInheritance/Depth4", func(b *testing.B) {
+		// User with folder permission on mid-depth folder
+		user := data.users[2*usersPerPattern]
+		items := createFolderBatchItems(data.folders, 4, data.folderDepths)
+		b.Logf("Testing BatchCheck with %d items at depth 4", len(items))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+			if err != nil {
+				b.Fatal(err)
+			}
+			_ = res.Results
+		}
+	})
+
+	b.Run("DirectResource", func(b *testing.B) {
+		// User with direct resource permission
+		user := data.users[4*usersPerPattern]
+		items := createBatchItems(data.resources, data.resourceFolders)
+		b.Logf("Testing BatchCheck with %d items, user has direct resource permission", len(items))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+			if err != nil {
+				b.Fatal(err)
+			}
+			_ = res.Results
+		}
+	})
+
+	b.Run("NoAccess", func(b *testing.B) {
+		// User with no permissions - tests denial path
+		user := data.users[len(data.users)-1]
+		items := createBatchItems(data.resources, data.resourceFolders)
+		b.Logf("Testing BatchCheck with %d items, user has NO permissions (denial case)", len(items))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+			if err != nil {
+				b.Fatal(err)
+			}
+			_ = res.Results
+		}
+	})
+
+	b.Run("MixedAccess", func(b *testing.B) {
+		// Create items from different folders - user has access to some but not all
+		user := data.users[3*usersPerPattern] // folder-scoped resource permission
+		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
+
+		// Mix of accessible and inaccessible resources
+		for i := 0; i < batchCheckSize; i++ {
+			folder := data.folders[i%len(data.folders)]
+			items = append(items, &authzv1.BatchCheckItem{
+				Verb:          utils.VerbGet,
+				Group:         benchDashboardGroup,
+				Resource:      benchDashboardResource,
+				Name:          fmt.Sprintf("resource-%d", i),
+				Folder:        folder,
+				CorrelationId: fmt.Sprintf("item-%d", i),
+			})
+		}
+		b.Logf("Testing BatchCheck with %d items, user has mixed access (some allowed, some denied)", len(items))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+			if err != nil {
+				b.Fatal(err)
+			}
+			_ = res.Results
+		}
+	})
+
+	// Test BatchCheck at various folder depths
+	for depth := 0; depth <= data.maxDepth; depth++ {
+		depth := depth // capture for closure
+		if len(data.foldersByDepth[depth]) == 0 {
+			continue
+		}
+		b.Run(fmt.Sprintf("ByDepth/Depth%d", depth), func(b *testing.B) {
+			user := fmt.Sprintf("user:depth-%d-access", depth)
+			items := createFolderBatchItems(data.folders, depth, data.folderDepths)
+			b.Logf("Testing BatchCheck with %d items at depth %d", len(items), depth)
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
+				if err != nil {
+					b.Fatal(err)
+				}
+				_ = res.Results
+			}
+		})
+	}
 }

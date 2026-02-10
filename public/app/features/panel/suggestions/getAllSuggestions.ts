@@ -103,12 +103,14 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
 
     // if a preferred visualisation type matches the data, prioritize it
     const mappedA = mapPreferredVisualisationTypeToPlugin(a.pluginId);
-    if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
-      return -1;
-    }
     const mappedB = mapPreferredVisualisationTypeToPlugin(b.pluginId);
-    if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
-      return 1;
+    if (mappedA !== mappedB) {
+      if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
+        return -1;
+      }
+      if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
+        return 1;
+      }
     }
 
     // compare scores directly if there are no other factors
