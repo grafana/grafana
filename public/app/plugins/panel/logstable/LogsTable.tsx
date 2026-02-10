@@ -143,7 +143,10 @@ export const LogsTable = ({
   }, [organizedFrame, data, frameIndex]);
 
   // Show no data state if query returns nothing
-  if (data.series.length === 0 && data.state === LoadingState.Done) {
+  if (
+    (data.series.length === 0 || data.series[frameIndex].fields[0].values.length === 0) &&
+    data.state === LoadingState.Done
+  ) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 

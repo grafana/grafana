@@ -10671,6 +10671,16 @@
       "message-same-name-general": "Un dossier ou un tableau de bord portant le même nom existe déjà dans le dossier racine"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
   },
@@ -11511,9 +11521,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Aucune organisation trouvée",
     "select-placeholder": "Sélectionner l’organisation"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12665,12 +12672,9 @@
       "error-starting-job": "Erreur lors du démarrage de la tâche"
     },
     "sync-repository": {
-      "body-edit-configuration": "Modifier la configuration",
-      "button-edit": "Modifier",
       "error-pulling-resources": "Erreur lors de la fusion des ressources",
       "pull": "Fusion",
       "success-pull-started": "Fusion commencée",
-      "title-pull-not-enabled": "La fusion n’est pas activée",
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
@@ -12922,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Modifier le nom de la requête"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID de trace : {{traceId}})"
     },
     "query-group": {
@@ -13041,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14249,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Aucune donnée trouvée dans la réponse"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

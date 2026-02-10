@@ -1,8 +1,14 @@
 import { createContext, ReactNode, useContext } from 'react';
 
-import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
+import {
+  DataQueryError,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataTransformerConfig,
+  PanelData,
+} from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -62,6 +68,7 @@ export interface QueryEditorActions {
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
+  updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
 }
 
