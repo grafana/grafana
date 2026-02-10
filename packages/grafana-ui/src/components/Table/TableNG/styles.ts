@@ -14,9 +14,10 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
   // unpredictable for background color cells
   const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
   const selectedRowColor = theme.isDark
-    ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(25).toHexString()
+    ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
     : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
-  const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.1);
+
+  const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
   return {
     grid: css({
