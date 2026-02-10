@@ -3040,11 +3040,6 @@
       "title-preview-not-available": "Preview not available",
       "valid-matcher-affected-alerts": "Add a valid matcher to see affected alerts"
     },
-    "silences": {
-      "affected-instances": "Affected alert instances",
-      "only-firing-instances": "Only alert instances in the firing state are displayed.",
-      "preview-affected-instances": "Preview the alert instances affected by this silence."
-    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Details about the silence",
       "label-comment": "Comment",
@@ -3066,6 +3061,11 @@
       "text-loading-silences": "Loading silences...",
       "title-error-loading-silences": "Error loading silences",
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
+    },
+    "silences": {
+      "affected-instances": "Affected alert instances",
+      "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "simple-condition-editor": {
       "label-of-query": "OF QUERY",
