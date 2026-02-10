@@ -83,3 +83,8 @@ type MigrationDashboardAccessor interface {
 type PlaylistMigrator interface {
 	MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }
+
+//go:generate mockery --name ShortURLMigrator --structname MockShortURLMigrator --inpackage --filename shorturl_migrator_mock.go --with-expecter
+type ShortURLMigrator interface {
+	MigrateShortURLs(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+}
