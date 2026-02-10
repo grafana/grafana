@@ -2375,6 +2375,22 @@
     "policy-page": {
       "text-subtitle": "Determine how alerts are routed to contact points for alert rules configured to use this notification policy."
     },
+    "policy-tree-selector": {
+      "aria-label": "Select notification policy",
+      "change": "Change",
+      "change-aria": "Change notification policy",
+      "custom-policy-desc": "Route alerts through the {{name}} policy tree",
+      "default-badge": "Default policy",
+      "default-info": "Alert instances are routed using the default notification policy tree.",
+      "default-policy": "Default policy",
+      "default-policy-desc": "Routes alerts using the default notification policy tree",
+      "description": "Select which notification policy tree should handle routing for this alert rule.",
+      "placeholder": "Select a policy...",
+      "reset": "Reset to default",
+      "reset-aria": "Reset to default policy",
+      "view-policies": "View policies",
+      "view-policies-aria": "View notification policies"
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
       "preview-alerts": "Preview alerts",
@@ -13048,6 +13064,11 @@
       "transformations": "Transformations"
     }
   },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "Failed to load datasource for this query",
+    "loading-datasource": "Loading datasource",
+    "no-query-editor-component": "Data source plugin does not export any query editor component"
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
@@ -14255,6 +14276,9 @@
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": "Transformation does not have an editor component"
   },
   "transformations": {
     "empty": {
