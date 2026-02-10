@@ -409,10 +409,10 @@ describe('TableNG', () => {
         );
 
         // The first column in our selected row
-        const initiallySelectedCell = container.querySelector('[aria-selected="true"][role="row"]');
-        const initiallySelectedCellContent = initiallySelectedCell?.textContent;
-        expect(initiallySelectedCell).toBeVisible();
-        expect(initiallySelectedCellContent).toEqual('C3Emily');
+        const initiallySelectedRow = container.querySelector('[aria-selected="true"][role="row"]');
+        const initiallySelectedRowContent = initiallySelectedRow?.textContent;
+        expect(initiallySelectedRow).toBeVisible();
+        expect(initiallySelectedRowContent).toEqual('C3Emily');
         expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       }
     );
