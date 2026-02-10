@@ -8,7 +8,7 @@ import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
-import { QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface QueryActionsMenuProps {
@@ -42,6 +42,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
     return null;
   }
 
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
   const isExpression = cardType === QueryEditorType.Expression;
   const hasEditorHelp = !selectedQueryDsLoading && selectedQueryDsData?.datasource?.components?.QueryEditorHelp;
 
@@ -86,8 +87,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More query actions')}
-        tooltip={t('query-editor.action.more-actions', 'More query actions')}
+        aria-label={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        tooltip={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
       />
     </Dropdown>
   );
