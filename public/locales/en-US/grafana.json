@@ -8225,7 +8225,6 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
   },
   "folders": {
