@@ -24,6 +24,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2023-04-24,enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
+2026-02-10,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
 2023-07-12,logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
@@ -256,6 +257,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-20,newGauge,preview,@grafana/dataviz-squad,false,false,true
 2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 2026-01-28,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
+2026-02-09,vizPresets,preview,@grafana/dataviz-squad,false,false,true
 2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true

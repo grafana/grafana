@@ -70,6 +70,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		withSearch,
 		withSearchClient,
 		withQuotaConfig,
+		withStorageMetrics,
 	)
 	if err != nil {
 		return nil, err
@@ -275,6 +276,11 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 		EnforceQuotas:  opts.Cfg.EnforceQuotas,
 		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
+	return nil
+}
+
+func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.StorageMetrics = opts.StorageMetrics
 	return nil
 }
 

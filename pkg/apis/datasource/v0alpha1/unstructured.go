@@ -16,6 +16,10 @@ import (
 // +k8s:openapi-gen=true
 type UnstructuredSpec common.Unstructured
 
+func (UnstructuredSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "UnstructuredSpec"
+}
+
 func (u *UnstructuredSpec) GetString(key string) string {
 	if u.Object == nil {
 		return ""
