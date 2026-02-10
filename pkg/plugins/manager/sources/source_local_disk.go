@@ -267,7 +267,7 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 		}
 		d, err := os.ReadDir(pluginsPath)
 		if err != nil {
-			return []*LocalSource{}, errors.New("failed to open plugins path")
+			return []*LocalSource{}, fmt.Errorf("failed to open plugins path: %w", err)
 		}
 
 		var pluginDirs []string

@@ -5,6 +5,8 @@ package config
 type PluginManagementCfg struct {
 	DevMode bool
 
+	// PluginsPaths: list of paths where Grafana will look for plugins.
+	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
 
 	PluginSettings       PluginSettings

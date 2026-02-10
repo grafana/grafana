@@ -123,6 +123,12 @@ func TestDirAsLocalSources(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "Non existing directories are skipped",
+			cfg:          &config.PluginManagementCfg{},
+			pluginsPaths: []string{filepath.Join(testdataDir, "pluginRootWithDist", "nope")},
+			expected:     []*LocalSource{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

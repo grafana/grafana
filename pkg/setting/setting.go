@@ -150,8 +150,10 @@ type Cfg struct {
 	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
 	DataPath                              string
 	LogsPath                              string
-	PluginsPaths                          []string
 	EnterpriseLicensePath                 string
+	// PluginsPaths: list of paths where Grafana will look for plugins.
+	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
+	PluginsPaths []string
 
 	// Classic Provisioning settings
 	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
