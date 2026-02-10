@@ -82,6 +82,8 @@ jobs:
             echo "• Add the 'no-check-mt-service-compatibility' label to this PR"
             echo "• Explain in the PR description why these changes cannot be separated"
             echo "• Get platform team approval"
+            echo ""
+            echo "For more information: https://enghub.grafana-ops.net/docs/default/component/deployment-tools/grafana-frontend-service/#guide-for-development-process-in-a-decoupled-deployment"
             exit 1
           fi
         env:
