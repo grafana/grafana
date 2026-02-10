@@ -17,6 +17,7 @@ import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogL
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 
+import { SETTING_KEY_ROOT } from '../../../features/explore/Logs/utils/logs';
 import { TablePanel } from '../table/TablePanel';
 
 import { Options } from './options/types';
@@ -95,6 +96,7 @@ export function TableNGWrap({
       {showControls && (
         <div className={styles.listControlsWrapper}>
           <LogTableControls
+            logOptionsStorageKey={SETTING_KEY_ROOT}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}
             sortOrder={sortOrder}
@@ -107,7 +109,7 @@ export function TableNGWrap({
       <TablePanel
         initialRowIndex={initialRowIndex}
         data={data}
-        width={tableWidth - fieldSelectorWidth}
+        width={Math.max(tableWidth - fieldSelectorWidth, 0)}
         height={height}
         id={id}
         timeRange={timeRange}

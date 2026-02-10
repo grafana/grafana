@@ -16,7 +16,7 @@ type Props = {
   setControlsExpanded: (expanded: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   timestampResolution: LogLineTimestampResolution;
-  logOptionsStorageKey?: string;
+  logOptionsStorageKey: string;
   sortOrder: LogsSortOrder;
 };
 
