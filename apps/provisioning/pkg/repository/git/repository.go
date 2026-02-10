@@ -107,9 +107,10 @@ func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 		branchName := strings.TrimPrefix(ref.Name, "refs/heads/")
 
 		// Check for main or master
-		if branchName == "main" {
+		switch branchName {
+		case "main":
 			hasMain = true
-		} else if branchName == "master" {
+		case "master":
 			hasMaster = true
 		}
 
