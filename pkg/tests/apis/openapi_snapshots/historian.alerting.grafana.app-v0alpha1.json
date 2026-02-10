@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "historian.alerting.grafana.app/v0alpha1",
-    "description": "NOTE, this spec is out-of-sync and should be regenerated"
+    "description": "NOTE, this spec is out-of-sync and should be regenerated!"
   },
   "paths": {
     "/apis/historian.alerting.grafana.app/v0alpha1/": {
