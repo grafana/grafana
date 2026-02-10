@@ -1003,7 +1003,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> pending when For is set but not exceeded, result is Error and ExecErrState is Error",
+			desc:      "normal -> pending when 'for' is set but not exceeded, result is Error and ExecErrState is Error",
 			alertRule: baseRuleWith(m.WithForNTimes(6), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1030,7 +1030,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> error when For is exceeded, result is Error and ExecErrState is Error",
+			desc:      "normal -> error when 'for' is exceeded, result is Error and ExecErrState is Error",
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1066,7 +1066,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "pending+error -> normal when Error resolves before For exceeded",
+			desc:      "pending+error -> normal when Error resolves before 'for' exceeded",
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1093,7 +1093,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> pending when For is set but not exceeded, result is NoData and NoDataState is NoData",
+			desc:      "normal -> pending when 'for' is set but not exceeded, result is NoData and NoDataState is NoData",
 			alertRule: baseRuleWith(m.WithForNTimes(6)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1118,7 +1118,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> nodata when For is exceeded, result is NoData and NoDataState is NoData",
+			desc:      "normal -> nodata when 'for' is exceeded, result is NoData and NoDataState is NoData",
 			alertRule: baseRuleWith(m.WithForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1152,7 +1152,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "pending+nodata -> pending+alerting when NoData resolves to Alerting before For exceeded",
+			desc:      "pending+nodata -> pending+alerting when NoData resolves to Alerting before 'for' exceeded",
 			alertRule: baseRuleWith(m.WithForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1175,6 +1175,180 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t3,
+				},
+			},
+		},
+		{
+			desc:      "pending(alerting) + error stays pending when 'for' not exceeded and ExecErrState is Error",
+			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending, Pending -> Pending (Error)
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Pending,
+					StateReason:        eval.Error.String(),
+					Error:              errors.New("with_state_error"),
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
+					LatestResult:       newEvaluation(t3, eval.Error),
+					StartsAt:           t2,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t3,
+				},
+			},
+		},
+		{
+			desc:      "pending(alerting) + nodata stays pending when 'for' not exceeded and NoDataState is NoData",
+			alertRule: baseRuleWith(m.WithForNTimes(3)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending, Pending -> Pending (NoData)
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Pending,
+					StateReason:        eval.NoData.String(),
+					LatestResult:       newEvaluation(t3, eval.NoData),
+					StartsAt:           t2,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t3,
+				},
+			},
+		},
+		{
+			desc:      "pending(nodata) + error stays pending when 'for' not exceeded and ExecErrState is Error",
+			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending (NoData), Pending (NoData) -> Pending (Error)
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Pending,
+					StateReason:        eval.Error.String(),
+					Error:              errors.New("with_state_error"),
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
+					LatestResult:       newEvaluation(t3, eval.Error),
+					StartsAt:           t2,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t3,
+				},
+			},
+		},
+		{
+			desc:      "pending(error) + nodata stays pending when 'for' not exceeded and NoDataState is NoData",
+			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending (Error), Pending (Error) -> Pending (NoData)
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Pending,
+					StateReason:        eval.NoData.String(),
+					LatestResult:       newEvaluation(t3, eval.NoData),
+					StartsAt:           t2,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t3,
+				},
+			},
+		},
+		{
+			desc:      "pending(alerting) + error transitions to Error when 'for' exceeded and ExecErrState is Error",
+			alertRule: baseRuleWith(m.WithForNTimes(1), m.WithErrorExecAs(models.ErrorErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending, Pending -> Error
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Error,
+					Error:              errors.New("with_state_error"),
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
+					LatestResult:       newEvaluation(t3, eval.Error),
+					StartsAt:           t3,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t3,
+					LastSentAt:         util.Pointer(t3),
+				},
+			},
+		},
+		{
+			desc:      "pending(alerting) + nodata transitions to NoData when 'for' exceeded and NoDataState is NoData",
+			alertRule: baseRuleWith(m.WithForNTimes(1)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending, Pending -> NoData
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.NoData,
+					LatestResult:       newEvaluation(t3, eval.NoData),
+					StartsAt:           t3,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t3,
+					LastSentAt:         util.Pointer(t3),
 				},
 			},
 		},

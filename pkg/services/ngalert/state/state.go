@@ -554,6 +554,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 			} else {
 				// Still pending, maintain.
 				prevEndsAt := state.EndsAt
+				state.Error = nil
 				state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 				logger.Debug("Keeping state", "state", state.State, "previous_ends_at", prevEndsAt, "next_ends_at", state.EndsAt)
 			}
