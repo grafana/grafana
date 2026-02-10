@@ -3,7 +3,6 @@ package frontend
 import (
 	"net/http"
 
-	"go.opentelemetry.io/otel/baggage"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -29,17 +28,6 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			ctx, span := tracing.Start(r.Context(), "frontend.RequestConfigMiddleware")
 			defer span.End()
 
-			// Parse namespace from W3C baggage header
-			var namespace string
-			if baggageHeader := r.Header.Get("baggage"); baggageHeader != "" {
-				if bag, err := baggage.Parse(baggageHeader); err == nil {
-					if member := bag.Member("namespace"); member.Value() != "" {
-						namespace = member.Value()
-					}
-				}
-			}
-			ctx = request.WithNamespace(ctx, namespace)
-
 			reqCtx := contexthandler.FromContext(ctx)
 			logger := reqCtx.Logger
 
@@ -47,29 +35,32 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			// This is the default configuration that will be used for all requests
 			requestConfig := NewFSRequestConfig(cfg, license)
 
-			// Fetch tenant-specific configuration if namespace is present
-			if namespace != "" && settingsService != nil {
-				// Fetch tenant overrides for relevant sections only
-				selector := metav1.LabelSelector{
-					MatchExpressions: []metav1.LabelSelectorRequirement{{
-						Key:      "section",
-						Operator: metav1.LabelSelectorOpIn,
-						Values:   []string{"security"}, // TODO: get correct list
-					}, {
-						// don't return values from defaults.ini as they conflict with the services's own defaults
-						Key:      "source",
-						Operator: metav1.LabelSelectorOpNotIn,
-						Values:   []string{"defaults"},
-					}},
-				}
+			// Extract namespace from context (set by contextMiddleware)
+			if namespace, ok := request.NamespaceFrom(ctx); ok {
+				// Fetch tenant-specific configuration if namespace is present
+				if settingsService != nil {
+					// Fetch tenant overrides for relevant sections only
+					selector := metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{{
+							Key:      "section",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"security"}, // TODO: get correct list
+						}, {
+							// don't return values from defaults.ini as they conflict with the services's own defaults
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpNotIn,
+							Values:   []string{"defaults"},
+						}},
+					}
 
-				settings, err := settingsService.ListAsIni(ctx, selector)
-				if err != nil {
-					logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
-					// Fall back to base config
-				} else {
-					// Merge tenant overrides with base config
-					requestConfig.ApplyOverrides(settings, logger)
+					settings, err := settingsService.ListAsIni(ctx, selector)
+					if err != nil {
+						logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
+						// Fall back to base config
+					} else {
+						// Merge tenant overrides with base config
+						requestConfig.ApplyOverrides(settings, logger)
+					}
 				}
 			}
 
