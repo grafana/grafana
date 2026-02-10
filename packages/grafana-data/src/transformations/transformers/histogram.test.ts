@@ -897,6 +897,58 @@ describe('getHistogramFields', () => {
     `);
   });
 
+  it('drops buckets which are too small', () => {
+    expect(
+      getHistogramFields(
+        toDataFrame({
+          meta: {
+            type: DataFrameType.HeatmapCells,
+          },
+          fields: [
+            { name: 'yMin', type: FieldType.number, values: [1e-16, 512, 2048] },
+            { name: 'yMax', type: FieldType.number, values: [1e-15, 1024, 4096] },
+            { name: 'count', type: FieldType.number, values: [5, 10, 10] },
+          ],
+        })
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "counts": [
+          {
+            "config": {},
+            "name": "count",
+            "type": "number",
+            "values": [
+              10,
+              0,
+              10,
+            ],
+          },
+        ],
+        "xMax": {
+          "config": {},
+          "name": "xMax",
+          "type": "number",
+          "values": [
+            1024,
+            2048,
+            4096,
+          ],
+        },
+        "xMin": {
+          "config": {},
+          "name": "xMin",
+          "type": "number",
+          "values": [
+            512,
+            1024,
+            2048,
+          ],
+        },
+      }
+  `);
+  });
+
   it('should prevent excessive densification when sparse histogram has large gaps', () => {
     const result = getHistogramFields(
       toDataFrame({
