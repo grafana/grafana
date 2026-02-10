@@ -285,3 +285,21 @@ export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selec
   await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }
+
+export async function fillVariableValue(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  varName: string,
+  text: string
+)  {
+  const variable = dashboardPage
+    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
+    .locator('..')
+    .locator('input');
+  await variable.click();
+  await variable.clear();
+  await variable.fill(text);
+  await variable.press('Enter');
+  await page.waitForLoadState('networkidle');
+};

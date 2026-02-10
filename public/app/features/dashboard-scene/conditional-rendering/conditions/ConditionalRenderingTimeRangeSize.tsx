@@ -12,6 +12,7 @@ import { getLowerTranslatedObjectType } from '../object';
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
 import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObjectType } from './utils';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface ConditionalRenderingTimeRangeSizeState extends SceneObjectState {
   value: string;
@@ -246,6 +247,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
         noMargin
       >
         <Select
+        data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select}
           isClearable={false}
           allowCustomValue
           onCreateOption={(value) => handleChange(value)}
