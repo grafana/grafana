@@ -1180,6 +1180,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			}
 		}
 
+		var lastContinueToken string
 		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn, authz.WithTracer(tracer)) {
 			if err != nil {
 				return err
@@ -1193,16 +1194,19 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				}
 			}
 
+			// If the page is already full, this extra authorized item confirms
+			// there are more results. Set the continue token and stop.
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				nextToken = lastContinueToken
+				break
+			}
+
 			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 				ResourceVersion: item.resourceVersion,
 				Value:           item.value,
 			})
 			pageBytes += len(item.value)
-
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
-				nextToken = item.continueToken
-				break
-			}
+			lastContinueToken = item.continueToken
 		}
 
 		return iter.Error()
