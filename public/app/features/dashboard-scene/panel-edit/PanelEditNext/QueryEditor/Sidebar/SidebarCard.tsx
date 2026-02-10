@@ -115,7 +115,7 @@ function getStyles(
         left: `calc(-1 * ${theme.spacing(1.5)})`,
         width: theme.spacing(1.5),
         height: `calc(100% + ${theme.spacing(1.5)})`,
-        background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone to the left of the card
+        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone to the left of the card
       },
 
       // Bottom strip: runs along the card's bottom edge extending to the left.
@@ -126,7 +126,7 @@ function getStyles(
         left: `calc(-1 * ${theme.spacing(1.5)})`,
         width: `calc(100% + ${theme.spacing(1.5)})`,
         height: theme.spacing(1.5),
-        background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone below the card
+        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone below the card
       },
 
       '&:hover': {
