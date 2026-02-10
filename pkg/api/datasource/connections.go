@@ -29,14 +29,8 @@ type ConnectionClient interface {
 	// If more that one connection is returned, it should be considered an error
 	// as we cannot guarantee which resource the caller intended to get.
 	//
-	// Deprecated: Use GetConnectionByTypeAndUID instead when type is known.
+	// Deprecated: Use /apis/<type>.datasource.grafana.app/v0alpha1/namespaces/{ns}/datasources/{uid} instead.
 	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error)
-
-	// GetConnectionByTypeAndUID looks up a datasource connection by type and UID.
-	// Preferred method when the plugin type is already known.  If more that one
-	// connection is returned, it should be considered an error as we cannot
-	// guarantee which resource the caller intended to get.
-	GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnectionList, error)
 }
 
 var _ ConnectionClient = (*connectionClientImpl)(nil)
@@ -53,12 +47,6 @@ func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.DirectRestC
 		clientConfigProvider: provider,
 		namespaceMapper:      request.GetNamespaceMapper(cfg),
 	}
-}
-
-var connectionsGVR = schema.GroupVersionResource{
-	Group:    "query.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "connections",
 }
 
 // GetConnectionByUID queries GET /apis/query.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
@@ -92,12 +80,4 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 	}
 
 	return &conn, nil
-}
-
-// GetConnectionByTypeAndUID looks up a datasource connection when the plugin type is already known.
-func (cl *connectionClientImpl) GetConnectionByTypeAndUID(c *contextmodel.ReqContext, pluginType, uid string) (*queryV0.DataSourceConnectionList, error) {
-	// When type is known, we can construct the connection name directly: {group}:{uid}
-	group := pluginType + ".datasource.grafana.app"
-	name := group + ":" + uid
-	return cl.GetConnectionByUID(c, name)
 }
