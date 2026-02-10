@@ -363,6 +363,8 @@ export const browseDashboardsAPI = createApi({
         // TODO error handling here
         try {
           for (const dashboardUID of dashboardUIDs) {
+            // It's not possible to select a mix of provisioned and non-provisioned dashboards
+            // from the UI, so this is mostly a guard in case that somehow happens
             if (config.featureToggles.provisioning) {
               const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
               if (isProvisionedDashboard(dto)) {
