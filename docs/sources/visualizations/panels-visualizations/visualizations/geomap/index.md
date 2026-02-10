@@ -191,7 +191,8 @@ The **No map repeating** option prevents the base map tiles from repeating horiz
 
 #### Enable dashboard variable
 
-Stores the current map viewport bounding box in a dashboard variable.
+Stores the current map's view extents in a dashboard variable of your choosing.
+This is particularly useful for dynamically querying data based on the map's current extents.
 
 1. Create a Custom dashboard variable first
 2. Enable this option
