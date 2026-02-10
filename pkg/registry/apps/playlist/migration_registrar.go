@@ -1,24 +1,13 @@
 package playlist
 
 import (
-	"context"
-
 	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
+	migrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type PlaylistMigrator interface {
-	MigratePlaylists(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-}
-
-/*
-PlaylistMigration returns the migration definition for playlists.
-It lives in the playlist package so the playlist team owns their migration
-definition and migration logic.
-*/
-func PlaylistMigration(migrator PlaylistMigrator) migrations.MigrationDefinition {
+func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationDefinition {
 	playlistGR := schema.GroupResource{Group: playlists.APIGroup, Resource: "playlists"}
 
 	return migrations.MigrationDefinition{

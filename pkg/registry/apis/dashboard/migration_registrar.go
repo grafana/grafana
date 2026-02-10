@@ -8,11 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-/*
-FoldersDashboardsMigration returns the migration definition for folders and dashboards.
-This is owned by the dashboard team and uses the DashboardMigrator
-to stream folder and dashboard resources from legacy SQL storage.
-*/
 func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) migrations.MigrationDefinition {
 	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
 	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
