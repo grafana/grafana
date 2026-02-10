@@ -1,4 +1,4 @@
-package datasource
+package v0alpha1
 
 import (
 	"crypto/sha256"
@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/authlib/types"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -24,25 +23,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-type converter struct {
+type Converter struct {
 	mapper request.NamespaceMapper
 	group  string   // the expected group
 	plugin string   // the expected pluginId
 	alias  []string // optional alias for the pluginId
 }
 
-func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
+func NewConverter(mapper request.NamespaceMapper, group string, plugin string, alias []string) *Converter {
+	return &Converter{
+		mapper: mapper,
+		group:  group,
+		plugin: plugin,
+		alias:  alias,
+	}
+}
+
+func (r Converter) Mapper() request.NamespaceMapper {
+	return r.mapper
+}
+
+func (r *Converter) AsDataSource(ds *datasources.DataSource) (*DataSource, error) {
 	if ds.Type != r.plugin && !slices.Contains(r.alias, ds.Type) {
 		return nil, fmt.Errorf("expected datasource type: %s %v // not: %s", r.plugin, r.alias, ds.Type)
 	}
 
-	obj := &datasourceV0.DataSource{
+	obj := &DataSource{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       ds.UID,
 			Namespace:  r.mapper(ds.OrgID),
 			Generation: int64(ds.Version),
 		},
-		Spec:   datasourceV0.UnstructuredSpec{},
+		Spec:   UnstructuredSpec{},
 		Secure: ToInlineSecureValues(ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
 	obj.UID = gapiutil.CalculateClusterWideUID(obj)
@@ -101,7 +113,7 @@ func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecu
 	values := make(common.InlineSecureValues)
 	for k := range keys {
 		values[k] = common.InlineSecureValue{
-			Name: getLegacySecureValueName(dsUID, k),
+			Name: GetLegacySecureValueName(dsUID, k),
 		}
 	}
 	if len(values) == 0 {
@@ -110,7 +122,7 @@ func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecu
 	return values
 }
 
-func getLegacySecureValueName(dsUID string, key string) string {
+func GetLegacySecureValueName(dsUID string, key string) string {
 	h := sha256.New()
 	h.Write([]byte(dsUID)) // unique identifier
 	h.Write([]byte("|"))
@@ -119,7 +131,7 @@ func getLegacySecureValueName(dsUID string, key string) string {
 	return apistore.LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX + n[0:10] // predictable name for dual writing
 }
 
-func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
+func (r *Converter) ToAddCommand(ds *DataSource) (*datasources.AddDataSourceCommand, error) {
 	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -154,7 +166,7 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 	return cmd, nil
 }
 
-func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
+func (r *Converter) ToUpdateCommand(ds *DataSource) (*datasources.UpdateDataSourceCommand, error) {
 	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -191,7 +203,7 @@ func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	return cmd, err
 }
 
-func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
+func toSecureJsonData(ds *DataSource) map[string]string {
 	if ds == nil || len(ds.Secure) < 1 {
 		return nil
 	}
@@ -206,4 +218,57 @@ func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
 		}
 	}
 	return secure
+}
+
+func (r Converter) AsLegacyDatasource(k8sDS *DataSource) (*datasources.DataSource, error) {
+	pluginType := extractPluginTypeFromAPIVersion(k8sDS.APIVersion)
+
+	ds := &datasources.DataSource{
+		UID:             k8sDS.Name, // K8s uses Name for UID
+		Name:            k8sDS.Spec.Title(),
+		Type:            pluginType,
+		Access:          datasources.DsAccess(k8sDS.Spec.Access()),
+		URL:             k8sDS.Spec.URL(),
+		Database:        k8sDS.Spec.Database(),
+		User:            k8sDS.Spec.User(),
+		BasicAuth:       k8sDS.Spec.BasicAuth(),
+		BasicAuthUser:   k8sDS.Spec.BasicAuthUser(),
+		WithCredentials: k8sDS.Spec.WithCredentials(),
+		IsDefault:       k8sDS.Spec.IsDefault(),
+		ReadOnly:        k8sDS.Spec.ReadOnly(),
+		Version:         int(k8sDS.Generation),
+		SecureJsonData:  make(map[string][]byte),
+	}
+
+	if k8sDS.Labels != nil {
+		if idStr, ok := k8sDS.Labels[utils.LabelKeyDeprecatedInternalID]; ok {
+			ds.ID, _ = strconv.ParseInt(idStr, 10, 64)
+		}
+	}
+
+	if info, err := types.ParseNamespace(k8sDS.Namespace); err == nil {
+		ds.OrgID = info.OrgID
+	}
+
+	if jsonData := k8sDS.Spec.JSONData(); jsonData != nil {
+		ds.JsonData = simplejson.NewFromAny(jsonData)
+	}
+
+	// Only the keys are exposed, values are never returned
+	for k := range k8sDS.Secure {
+		ds.SecureJsonData[k] = []byte{}
+	}
+
+	return ds, nil
+}
+
+// extractPluginTypeFromAPIVersion extracts the plugin type from a K8s APIVersion.
+// for example: prometheus.datasource.grafana.app/v0alpha1 -> prometheus
+func extractPluginTypeFromAPIVersion(apiVersion string) string {
+	group := strings.Split(apiVersion, "/")[0]
+	parts := strings.Split(group, ".")
+	if len(parts) > 0 {
+		return parts[0]
+	}
+	return ""
 }

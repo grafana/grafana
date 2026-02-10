@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,14 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/datasource"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -77,19 +72,18 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 			return hs.handleK8sError(err)
 		}
 
-		// fetch the logo URL from the plugin store.
-		var logoURL string
-		pluginType := extractPluginTypeFromAPIVersion(k8sDS.APIVersion)
-		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginType); exists {
-			logoURL = plugin.Info.Logos.Small
-
+		converter := datasourceV0.NewConverter(hs.namespacer, conn.APIGroup, conn.APIVersion, []string{})
+		legacyDS, err := converter.AsLegacyDatasource(k8sDS)
+		if err != nil {
+			return hs.handleK8sError(err)
 		}
-		legacyDTO := k8sDataSourceToLegacyDTO(k8sDS, logoURL)
+
+		dto := hs.convertModelToDtos(c.Req.Context(), legacyDS)
 
 		// TODO get access control from the new api endpoint too.
-		legacyDTO.AccessControl = getAccessControlMetadata(c, datasources.ScopePrefix, legacyDTO.UID)
+		dto.AccessControl = getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
 
-		return response.JSON(http.StatusOK, &legacyDTO)
+		return response.JSON(http.StatusOK, &dto)
 	})
 }
 
@@ -123,70 +117,6 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 	}
 
 	return &ds, nil
-}
-
-// TODO: should this conversion logic live in pkg/registry/apis/datasource/converter.go?
-// Maybe convert to the datasource.Datasource model and then to DTO, like the
-// legacy handler?
-//
-// k8sDataSourceToLegacyDTO converts a datasourceV0.Datasource to the legacy dtos.DataSource format.
-// logoURL is optional - there is a default icon.
-func k8sDataSourceToLegacyDTO(k8sDS *datasourceV0.DataSource, logoURL string) dtos.DataSource {
-	pluginType := extractPluginTypeFromAPIVersion(k8sDS.APIVersion)
-
-	dto := dtos.DataSource{
-		UID:              k8sDS.Name, // K8s uses Name for UID
-		Name:             k8sDS.Spec.Title(),
-		Type:             pluginType,
-		TypeLogoUrl:      "public/img/icn-datasource.svg", // default icon
-		Access:           datasources.DsAccess(k8sDS.Spec.Access()),
-		Url:              k8sDS.Spec.URL(),
-		Database:         k8sDS.Spec.Database(),
-		User:             k8sDS.Spec.User(),
-		BasicAuth:        k8sDS.Spec.BasicAuth(),
-		BasicAuthUser:    k8sDS.Spec.BasicAuthUser(),
-		WithCredentials:  k8sDS.Spec.WithCredentials(),
-		IsDefault:        k8sDS.Spec.IsDefault(),
-		ReadOnly:         k8sDS.Spec.ReadOnly(),
-		Version:          int(k8sDS.Generation),
-		SecureJsonFields: make(map[string]bool),
-	}
-
-	if k8sDS.Labels != nil {
-		if idStr, ok := k8sDS.Labels[utils.LabelKeyDeprecatedInternalID]; ok {
-			dto.Id, _ = strconv.ParseInt(idStr, 10, 64)
-		}
-	}
-
-	if info, err := types.ParseNamespace(k8sDS.Namespace); err == nil {
-		dto.OrgId = info.OrgID
-	}
-
-	if jsonData := k8sDS.Spec.JSONData(); jsonData != nil {
-		dto.JsonData = simplejson.NewFromAny(jsonData)
-	}
-
-	// Only the keys are exposed, values are never returned
-	for k := range k8sDS.Secure {
-		dto.SecureJsonFields[k] = true
-	}
-
-	if logoURL != "" {
-		dto.TypeLogoUrl = logoURL
-	}
-
-	return dto
-}
-
-// extractPluginTypeFromAPIVersion extracts the plugin type from a K8s APIVersion.
-// for example: prometheus.datasource.grafana.app/v0alpha1 -> prometheus
-func extractPluginTypeFromAPIVersion(apiVersion string) string {
-	group := strings.Split(apiVersion, "/")[0]
-	parts := strings.Split(group, ".")
-	if len(parts) > 0 {
-		return parts[0]
-	}
-	return ""
 }
 
 // TODO: there might be a place where this is handled already?

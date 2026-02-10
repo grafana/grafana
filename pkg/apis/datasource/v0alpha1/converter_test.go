@@ -1,4 +1,4 @@
-package datasource
+package v0alpha1
 
 import (
 	"encoding/json"
@@ -11,18 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestConverter(t *testing.T) {
 	t.Run("resource to command", func(t *testing.T) {
-		converter := converter{
-			mapper: types.OrgNamespaceFormatter,
-			plugin: "grafana-testdata-datasource",
-			alias:  []string{"testdata"},
-			group:  "testdata.grafana.datasource.app",
-		}
+		converter := NewConverter(
+			types.OrgNamespaceFormatter,
+			"testdata.grafana.datasource.app",
+			"grafana-testdata-datasource",
+			[]string{"testdata"},
+		)
 		tests := []struct {
 			name        string
 			expectedErr string
@@ -34,7 +33,7 @@ func TestConverter(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				obj := &v0alpha1.DataSource{}
+				obj := &DataSource{}
 				fpath := filepath.Join("testdata", tt.name+".json")
 				raw, err := os.ReadFile(fpath) // nolint:gosec
 				require.NoError(t, err)
@@ -43,12 +42,12 @@ func TestConverter(t *testing.T) {
 
 				// The add command
 				fpath = filepath.Join("testdata", tt.name+"-to-cmd-add.json")
-				add, err := converter.toAddCommand(obj)
+				add, err := converter.ToAddCommand(obj)
 				if tt.expectedErr != "" {
 					require.ErrorContains(t, err, tt.expectedErr)
 					require.Nil(t, add, "cmd should be nil when error exists")
 
-					update, err := converter.toUpdateCommand(obj)
+					update, err := converter.ToUpdateCommand(obj)
 					require.ErrorContains(t, err, tt.expectedErr)
 					require.Nil(t, update, "cmd should be nil when error exists")
 					return
@@ -64,7 +63,7 @@ func TestConverter(t *testing.T) {
 
 				// The update command
 				fpath = filepath.Join("testdata", tt.name+"-to-cmd-update.json")
-				update, err := converter.toUpdateCommand(obj)
+				update, err := converter.ToUpdateCommand(obj)
 				require.NoError(t, err)
 
 				out, err = json.MarshalIndent(update, "", "  ")
@@ -79,7 +78,7 @@ func TestConverter(t *testing.T) {
 				err = json.Unmarshal(raw, ds) // the add command is also a DataSource
 				require.NoError(t, err)
 
-				roundtrip, err := converter.asDataSource(ds)
+				roundtrip, err := converter.AsDataSource(ds)
 				require.NoError(t, err)
 
 				fpath = filepath.Join("testdata", tt.name+"-to-cmd-update-roundtrip.json")
@@ -94,12 +93,12 @@ func TestConverter(t *testing.T) {
 	})
 
 	t.Run("dto to resource", func(t *testing.T) {
-		converter := converter{
-			mapper: types.OrgNamespaceFormatter,
-			plugin: "grafana-testdata-datasource",
-			alias:  []string{"testdata"},
-			group:  "testdata.grafana.datasource.app",
-		}
+		converter := NewConverter(
+			types.OrgNamespaceFormatter,
+			"testdata.grafana.datasource.app",
+			"grafana-testdata-datasource",
+			[]string{"testdata"},
+		)
 		tests := []struct {
 			name        string
 			expectedErr string
@@ -125,7 +124,7 @@ func TestConverter(t *testing.T) {
 				err = json.Unmarshal(raw, ds)
 				require.NoError(t, err)
 
-				obj, err := converter.asDataSource(ds)
+				obj, err := converter.AsDataSource(ds)
 				if tt.expectedErr != "" {
 					require.ErrorContains(t, err, tt.expectedErr)
 					require.Nil(t, obj, "object should be nil when error exists")
