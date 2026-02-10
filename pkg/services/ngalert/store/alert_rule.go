@@ -177,7 +177,7 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 // Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
 func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
 	if st.FolderService == nil {
-		return nil, nil
+		return nil, fmt.Errorf("folder service is not configured")
 	}
 	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
 		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
@@ -205,7 +205,7 @@ func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int
 		return nil
 	}
 
-	logger := st.Logger.New("org_id", orgID, "folder_uids", folderUIDs)
+	logger := st.Logger.New("org_id", orgID, "folder_uid_count", len(folderUIDs))
 
 	folderPaths, err := st.getFolderFullpaths(ctx, orgID, folderUIDs)
 	if err != nil {
@@ -223,10 +223,10 @@ func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int
 			}
 
 			// Update all rules in this folder
-			_, err := sess.Exec(
-				"UPDATE alert_rule SET folder_fullpath = ? WHERE org_id = ? AND namespace_uid = ?",
-				fullpath, orgID, folderUID,
-			)
+			_, err := sess.Table(alertRule{}).
+				Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).
+				MustCols("folder_fullpath").
+				Update(map[string]any{"folder_fullpath": fullpath})
 			if err != nil {
 				logger.Error("Failed to update folder_fullpath for folder", "error", err, "folder_uid", folderUID)
 				return err
