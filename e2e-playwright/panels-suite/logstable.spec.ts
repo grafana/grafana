@@ -180,7 +180,8 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await expect(option, 'Inspect button panel option is no longer checked').not.toBeChecked({ timeout: 400 });
       await expect(inspectLogLineButton, 'Inspect button is no longer in the logs table viz').toHaveCount(0);
     });
-    test('Copy log line button', async ({ page, gotoDashboardPage, selectors }) => {
+    test.only('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
@@ -200,6 +201,20 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await optionWrapper.click();
       await expect(option, 'Show log line panel option is now checked').toBeChecked();
       await expect(copyLogLineButton.nth(0), 'Show log line button is visible in the table viz').toBeVisible();
+
+      await copyLogLineButton.nth(9).click();
+      const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
+      const clipboardContent = await handle.jsonValue();
+      await page.goto(clipboardContent);
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
+      ).toBeVisible();
+
+      // @todo update when row selection is available
+      const selectedCell = page.locator('[role="gridcell"][aria-selected="true"]');
+      await expect(selectedCell, 'Cell is selected').toBeVisible();
+      await expect(selectedCell, 'Selected cell contains expected timestamp').toContainText('2026-02-06 12:42:46.020');
     });
     test('Show controls', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
