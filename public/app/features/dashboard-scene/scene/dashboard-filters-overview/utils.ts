@@ -112,16 +112,14 @@ export function buildAdHocApplyFilters({
 }: ApplyFiltersInput): ApplyFiltersOutput {
   const nextFilters: AdHocFilterWithLabels[] = [];
   const nextOriginFilters: AdHocFilterWithLabels[] = [];
-  const seenKeys = new Set<string>();
   const nonApplicableOriginFilters = existingOriginFilters.filter((filter) => filter.nonApplicable);
   const nonApplicableFilters = existingFilters.filter((filter) => filter.nonApplicable);
 
   for (const keyOption of keys) {
     const keyValue = keyOption.value ?? keyOption.label;
-    if (!keyValue || seenKeys.has(keyValue)) {
+    if (!keyValue) {
       continue;
     }
-    seenKeys.add(keyValue);
 
     const isOrigin = isOriginByKey[keyValue] ?? false;
     const existingOrigin = existingOriginFilters.find((filter) => filter.key === keyValue && !filter.nonApplicable);

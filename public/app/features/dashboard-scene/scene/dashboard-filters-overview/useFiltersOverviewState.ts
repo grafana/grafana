@@ -6,7 +6,6 @@ import { ComboboxOption } from '@grafana/ui';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState } from './utils';
 
-// Types
 export type ListItem =
   | { type: 'group'; group: string }
   | { type: 'row'; keyOption: SelectableValue<string>; keyValue: string };
@@ -146,7 +145,6 @@ export function useFiltersOverviewState({
 
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
 
-  // Operator config (stable)
   const operatorConfig = useMemo(
     () => ({
       options: OPERATORS.map((op) => ({ label: op.value, value: op.value })),
@@ -186,6 +184,10 @@ export function useFiltersOverviewState({
         }
       }
 
+      // Groups come from keys and only change on init; set all to open
+      const { groupNames } = splitKeysByGroup(keys);
+      const openGroups: Record<string, boolean> = Object.fromEntries(groupNames.map((g) => [g, true]));
+
       setState((prev) => ({
         ...prev,
         keys,
@@ -194,31 +196,14 @@ export function useFiltersOverviewState({
         singleValuesByKey,
         isOriginByKey,
         isGrouped,
+        openGroups,
       }));
     };
 
     init();
   }, [adhocFilters, groupByVariable]);
 
-  // Initialize openGroups when new groups appear
   const { groupNames } = useMemo(() => splitKeysByGroup(state.keys), [state.keys]);
-
-  useEffect(() => {
-    if (groupNames.length === 0) {
-      return;
-    }
-    setState((prev) => {
-      const next = { ...prev.openGroups };
-      let changed = false;
-      for (const g of groupNames) {
-        if (next[g] === undefined) {
-          next[g] = true;
-          changed = true;
-        }
-      }
-      return changed ? { ...prev, openGroups: next } : prev;
-    });
-  }, [groupNames]);
 
   // Filter and build list items
   const searchTerm = searchQuery.trim();
@@ -262,11 +247,11 @@ export function useFiltersOverviewState({
 
         let options = valueOptionsByKey[key];
         if (!options) {
-          const filter: AdHocFilterWithLabels = { key, operator, value: '', condition: '' };
+          const filter: AdHocFilterWithLabels = { key, operator, value: '' };
           const values = await adhocFilters._getValuesFor(filter);
           options = values.map((v) => ({
             label: v.label ?? v.value ?? '',
-            value: v.value ?? v.label ?? '',
+            value: v.value ?? '',
           }));
           setValueOptionsByKey((prev) => ({ ...prev, [key]: options }));
         }
