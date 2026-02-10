@@ -19,12 +19,6 @@ labels:
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
-refs:
-  query-and-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Elasticsearch query editor
@@ -38,7 +32,7 @@ When composing Lucene queries, ensure that you use uppercase boolean operators: 
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](ref:query-and-transform-data).
+For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Aggregation types
 
