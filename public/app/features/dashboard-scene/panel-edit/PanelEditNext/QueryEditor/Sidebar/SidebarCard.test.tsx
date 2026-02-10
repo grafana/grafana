@@ -40,7 +40,7 @@ function renderSidebarCard({
       dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
       qrState={{ queries, data: undefined, isLoading: false }}
       panelState={{
-        panel: {} as never,
+        panel: new VizPanel({ key: 'panel-1' }),
         transformations: [],
       }}
       uiState={{
