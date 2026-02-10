@@ -263,7 +263,7 @@ export function TableNG(props: TableNGProps) {
         rowIdx,
       });
       setScrollToIndex(undefined);
-      setSelectedRows(new Set<string>().add(rowKeyGetter(sortedRows[rowIdx])));
+      setSelectedRows(new Set<string>([rowKeyGetter(sortedRows[rowIdx])]));
     }
   }, [scrollToIndex, sortedRows]);
 
