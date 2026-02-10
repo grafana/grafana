@@ -36,12 +36,6 @@ describe('provisioning data mapping', () => {
     expect(spec.bitbucket?.tokenUser).toBe('test-user');
   });
 
-  it('adds tokenUser to git spec', () => {
-    const spec = dataToSpec(makeFormData('git'));
-
-    expect(spec.git?.tokenUser).toBe('test-user');
-  });
-
   it('reads tokenUser from bitbucket spec', () => {
     const spec: RepositorySpec = {
       type: 'bitbucket',
@@ -59,24 +53,5 @@ describe('provisioning data mapping', () => {
 
     const data = specToData(spec);
     expect(data.tokenUser).toBe('x-token-auth');
-  });
-
-  it('reads tokenUser from git spec', () => {
-    const spec: RepositorySpec = {
-      type: 'git',
-      title: 'repo',
-      description: '',
-      sync: baseSync,
-      workflows: [],
-      git: {
-        url: 'https://git.example.com/owner/repo.git',
-        branch: 'main',
-        path: '',
-        tokenUser: 'git-user',
-      },
-    };
-
-    const data = specToData(spec);
-    expect(data.tokenUser).toBe('git-user');
   });
 });

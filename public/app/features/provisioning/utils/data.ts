@@ -25,7 +25,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch,
+    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
     path: data.path,
   };
 
@@ -53,10 +53,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       break;
     case 'git':
-      spec.git = {
-        ...baseConfig,
-        tokenUser: data.tokenUser,
-      };
+      spec.git = baseConfig;
       break;
     case 'local':
       spec.local = {
@@ -72,7 +69,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
-  const tokenUser = spec.bitbucket?.tokenUser || spec.git?.tokenUser;
+  const tokenUser = spec.bitbucket?.tokenUser;
 
   return structuredClone({
     ...spec,
