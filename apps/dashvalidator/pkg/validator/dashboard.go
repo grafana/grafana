@@ -102,7 +102,7 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 }
 
 // extractQueriesFromDashboard parses the dashboard JSON and extracts all queries
-// Supports both v1 (legacy) and v2 (new) dashboard formats
+// Both formats v1 (legacy) and v2 (new) can be passed, but we only support v1 in MVP
 func extractQueriesFromDashboard(dashboardJSON map[string]interface{}) ([]DashboardQuery, error) {
 	var queries []DashboardQuery
 
