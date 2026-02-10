@@ -14,9 +14,9 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage":     schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref),
-		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageList": schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref),
-		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec": schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref),
+		UserStorage{}.OpenAPIModelName():     schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref),
+		UserStorageList{}.OpenAPIModelName(): schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref),
+		UserStorageSpec{}.OpenAPIModelName(): schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref),
 	}
 }
 
@@ -49,14 +49,14 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec"),
+							Ref:     ref(UserStorageSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			UserStorageSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -93,7 +93,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage"),
+										Ref:     ref(UserStorage{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -104,7 +104,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			UserStorage{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
