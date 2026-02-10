@@ -37,6 +37,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   currentUserAuth: boolean;
   currentUserAuthFallbackAvailable: boolean;
   defaultSubscriptionId?: string;
+  batchAPIEnabled?: boolean;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -82,6 +83,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
+    this.batchAPIEnabled = instanceSettings.jsonData.batchAPIEnabled;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {

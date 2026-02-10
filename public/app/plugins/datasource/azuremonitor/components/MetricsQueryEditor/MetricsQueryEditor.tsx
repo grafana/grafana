@@ -54,6 +54,10 @@ const MetricsQueryEditor = ({
     return multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
   };
 
+  const crossSubscriptionCheck = (rowSub?: string, selectedSub?: string) => {
+    return rowSub !== selectedSub && !datasource.batchAPIEnabled;
+  };
+
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
@@ -63,12 +67,12 @@ const MetricsQueryEditor = ({
     const rowResource = parseResourceDetails(row.uri, row.location);
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
     // Only resources:
-    // - in the same subscription
+    // - in the same subscription if batchAPI is not enabled
     // - in the same region
     // - with the same metric namespace
     // - with a metric namespace that is compatible with multi-resource queries
     return (
-      rowResource.subscription !== selectedRowSample.subscription ||
+      crossSubscriptionCheck(rowResource.subscription, selectedRowSample.subscription)||
       rowResource.region !== selectedRowSample.region ||
       rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
       !supportMultipleResource(rowResource.metricNamespace)

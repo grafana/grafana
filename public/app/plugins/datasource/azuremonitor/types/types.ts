@@ -25,6 +25,7 @@ export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData 
   // monitor
   subscriptionId?: string;
   basicLogsEnabled?: boolean;
+  batchAPIEnabled?: boolean;
 
   // logs
   /** @deprecated Azure Logs credentials */

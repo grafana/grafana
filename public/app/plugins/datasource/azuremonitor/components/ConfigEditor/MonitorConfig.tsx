@@ -10,6 +10,7 @@ import { AzureMonitorDataSourceSettings } from '../../types/types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
+import { BatchAPIToggle } from './BatchAPIToggle';
 import { DefaultSubscription } from './DefaultSubscription';
 
 export interface Props {
@@ -41,6 +42,9 @@ export const MonitorConfig = (props: Props) => {
   const onBasicLogsEnabledChange = (enableBasicLogs: boolean) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, basicLogsEnabled: enableBasicLogs } }));
 
+  const onBatchAPIEnabledChange = (enableBatchAPI: boolean) =>
+    updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, batchAPIEnabled: enableBatchAPI } }));
+
   // The auth type needs to be set on the first load of the data source
   useEffectOnce(() => {
     if (!options.jsonData.authType || !credentials.authType) {
@@ -70,6 +74,7 @@ export const MonitorConfig = (props: Props) => {
             options={options.jsonData}
           />
           <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
+          <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
         </>
       </AzureCredentialsForm>
     </>
