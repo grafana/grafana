@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 
@@ -1114,69 +1115,103 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	key := req.Options.Key
-	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
-	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	var trashChecker claims.ItemChecker // only for trash
+
+	// Determine the verb for authorization
+	verb := utils.VerbGet
 	if req.Source == resourcepb.ListRequest_TRASH {
-		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
-		trashChecker, _, err = s.access.Compile(ctx, user, claims.ListRequest{
+		verb = utils.VerbSetPermissions // Basically Admin for trash
+	}
+
+	// For trash, also determine if user is admin upfront so we can combine
+	// with "user deleted the object" check per item.
+	var isTrashAdmin bool
+	if req.Source == resourcepb.ListRequest_TRASH {
+		adminResp, err := s.access.Check(ctx, user, claims.CheckRequest{
+			Verb:      utils.VerbSetPermissions,
 			Group:     key.Group,
 			Resource:  key.Resource,
 			Namespace: key.Namespace,
-			Verb:      utils.VerbSetPermissions, // Basically Admin
-		})
+		}, "")
 		if err != nil {
 			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 		}
-	}
-	if err != nil {
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-	}
-	if checker == nil {
-		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
-			Code: http.StatusForbidden,
-		}}, nil
+		isTrashAdmin = adminResp.Allowed
 	}
 
+	// candidateItem holds metadata from the ListIterator for batch authorization.
+	type candidateItem struct {
+		name            string
+		folder          string
+		resourceVersion int64
+		value           []byte
+		continueToken   string
+	}
+
+	var nextToken string
+	maxPageBytes := s.maxPageSizeBytes
+
 	iterFunc := func(iter ListIterator) error {
-		for iter.Next() {
-			if err := iter.Error(); err != nil {
+		// Convert ListIterator to iter.Seq for FilterAuthorized
+		candidates := func(yield func(candidateItem) bool) {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return
+				}
+				if !yield(candidateItem{
+					name:            iter.Name(),
+					folder:          iter.Folder(),
+					resourceVersion: iter.ResourceVersion(),
+					value:           iter.Value(),
+					continueToken:   iter.ContinueToken(),
+				}) {
+					return
+				}
+			}
+		}
+
+		extractFn := func(c candidateItem) authz.BatchCheckItem {
+			return authz.BatchCheckItem{
+				Name:      c.name,
+				Folder:    c.folder,
+				Verb:      verb,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			}
+		}
+
+		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn, authz.WithTracer(tracer)) {
+			if err != nil {
 				return err
 			}
 
-			// Trash is only accessible to admins or the user who deleted the object
+			// Trash items need an additional check: provisioned objects excluded,
+			// and either the user deleted the object or the user is admin.
 			if req.Source == resourcepb.ListRequest_TRASH {
-				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
+				if !s.isTrashItemAuthorizedByValue(ctx, item.value, isTrashAdmin) {
 					continue
 				}
-			} else if !checker(iter.Name(), iter.Folder()) {
-				continue
 			}
 
-			item := &resourcepb.ResourceWrapper{
-				ResourceVersion: iter.ResourceVersion(),
-				Value:           iter.Value(),
-			}
+			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+				ResourceVersion: item.resourceVersion,
+				Value:           item.value,
+			})
+			pageBytes += len(item.value)
 
-			pageBytes += len(item.Value)
-			rsp.Items = append(rsp.Items, item)
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-				t := iter.ContinueToken()
-				if iter.Next() {
-					rsp.NextPageToken = t
-				}
-				return iter.Error()
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				nextToken = item.continueToken
+				break
 			}
 		}
+
 		return iter.Error()
 	}
 
-	var rv int64
+	var (
+		rv  int64
+		err error
+	)
 	switch req.Source {
 	case resourcepb.ListRequest_STORE:
 		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
@@ -1199,22 +1234,24 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		return rsp, nil
 	}
 	rsp.ResourceVersion = rv
+	rsp.NextPageToken = nextToken
 	gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 	if s.storageMetrics != nil {
 		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	}
-	return rsp, err
+	return rsp, nil
 }
 
-// isTrashItemAuthorized checks if the user has access to the trash item.
-func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
+// isTrashItemAuthorizedByValue checks if the user has access to the trash item using the raw value.
+// hasAdminPermission indicates whether the user has admin permission (from a Check call).
+func (s *server) isTrashItemAuthorizedByValue(ctx context.Context, value []byte, hasAdminPermission bool) bool {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return false
 	}
 
 	partial := &metav1.PartialObjectMetadata{}
-	err := json.Unmarshal(iter.Value(), partial)
+	err := json.Unmarshal(value, partial)
 	if err != nil {
 		return false
 	}
@@ -1230,7 +1267,7 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 	}
 
 	// Trash is only accessible to admins or the user who deleted the object
-	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
+	return obj.GetUpdatedBy() == user.GetUID() || hasAdminPermission
 }
 
 // Start the server.broadcaster (requires that the backend storage services are enabled)
