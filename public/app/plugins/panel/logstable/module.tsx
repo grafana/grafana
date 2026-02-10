@@ -51,7 +51,7 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         path: 'showControls',
         name: t('logs.name-show-controls', 'Show controls'),
         category: logsTableCategory,
-        description: t('logs.description-show-controls', 'Display table controls'),
+        description: t('logstable.description-show-controls', 'Display table controls'),
         defaultValue: false,
       });
   });
