@@ -6,6 +6,7 @@ import { SortingRule } from 'react-table';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
+  Button,
   CellProps,
   Column,
   DeleteButton,
@@ -27,8 +28,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 import { TeamWithRoles } from 'app/types/teams';
 
+import { appEvents } from '../../core/app_events';
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
+import { ShowModalReactEvent } from '../../types/events';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
+import { DeleteModal } from '../browse-dashboards/components/BrowseActions/DeleteModal';
 
 import { useDeleteTeam, useGetTeams } from './hooks';
 
@@ -197,6 +201,18 @@ const TeamList = () => {
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+
+          const showDeleteModal = () => {
+            appEvents.publish(
+              new ShowModalReactEvent({
+                component: DeleteModal,
+                props: {
+                  selectedItems,
+                  onConfirm: onDelete,
+                },
+              })
+            );
+          };
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
@@ -219,6 +235,9 @@ const TeamList = () => {
                 disabled={!canDelete}
                 onConfirm={() => deleteTeam({ uid: original.uid })}
               />
+              <Button onClick={showDeleteModal} variant="destructive">
+                <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+              </Button>
             </Stack>
           );
         },
