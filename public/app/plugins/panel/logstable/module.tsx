@@ -52,6 +52,6 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         name: t('logs.name-show-controls', 'Show controls'),
         category: logsTableCategory,
         description: t('logstable.description-show-controls', 'Display table controls'),
-        defaultValue: false,
+        defaultValue: defaultOptions.showControls ?? false,
       });
   });
