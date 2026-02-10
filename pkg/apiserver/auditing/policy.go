@@ -38,6 +38,13 @@ func (defaultGrafanaPolicyRuleEvaluator) EvaluatePolicyRule(attrs authorizer.Att
 		}
 	}
 
+	// Skip namespace-less events as we can't route them.
+	if len(attrs.GetNamespace()) == 0 {
+		return audit.RequestAuditConfig{
+			Level: auditinternal.LevelNone,
+		}
+	}
+
 	// Skip auditing if the user is part of the privileged group.
 	// The loopback client uses this group, so requests initiated in `/api/` would be duplicated.
 	if u := attrs.GetUser(); u != nil && slices.Contains(u.GetGroups(), user.SystemPrivilegedGroup) {

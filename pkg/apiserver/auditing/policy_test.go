@@ -40,11 +40,24 @@ func TestDefaultGrafanaPolicyRuleEvaluator(t *testing.T) {
 		require.Equal(t, auditinternal.LevelNone, config.Level)
 	})
 
+	t.Run("returns audit level none for namespaceless events", func(t *testing.T) {
+		t.Parallel()
+
+		attrs := authorizer.AttributesRecord{
+			ResourceRequest: true,
+			Verb:            utils.VerbGet,
+		}
+
+		config := evaluator.EvaluatePolicyRule(attrs)
+		require.Equal(t, auditinternal.LevelNone, config.Level)
+	})
+
 	t.Run("returns audit level none for requests from privileged group", func(t *testing.T) {
 		t.Parallel()
 
 		attrs := authorizer.AttributesRecord{
 			ResourceRequest: true,
+			Namespace:       "default",
 			Verb:            utils.VerbCreate,
 			User: &user.DefaultInfo{
 				Groups: []string{"test-group", user.SystemPrivilegedGroup},
@@ -60,6 +73,7 @@ func TestDefaultGrafanaPolicyRuleEvaluator(t *testing.T) {
 
 		attrs := authorizer.AttributesRecord{
 			ResourceRequest: true,
+			Namespace:       "default",
 			Verb:            utils.VerbCreate,
 			User: &user.DefaultInfo{
 				Name:   "test-user",
@@ -76,6 +90,7 @@ func TestDefaultGrafanaPolicyRuleEvaluator(t *testing.T) {
 
 		attrs := authorizer.AttributesRecord{
 			ResourceRequest: true,
+			Namespace:       "default",
 			Verb:            utils.VerbGet,
 			User: &user.DefaultInfo{
 				Name:   "test-user",
