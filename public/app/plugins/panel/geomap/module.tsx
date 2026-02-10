@@ -55,7 +55,7 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
     builder.addBooleanSwitch({
       category,
       path: 'view.dashboardVariable',
-      description: 'Store view bounds into a dashboard variable for use in queries.',
+      description: 'Store view bounds in a dashboard variable for use in queries',
       name: 'Enable dashboard variable',
       defaultValue: false,
     });
