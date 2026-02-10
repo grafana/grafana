@@ -243,6 +243,10 @@ func (o *ShortURL) DeepCopyInto(dst *ShortURL) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (ShortURL) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &ShortURL{}
 
@@ -294,6 +298,10 @@ func (o *ShortURLList) DeepCopy() *ShortURLList {
 
 func (o *ShortURLList) DeepCopyInto(dst *ShortURLList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (ShortURLList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList"
 }
 
 // Interface compliance compile-time check

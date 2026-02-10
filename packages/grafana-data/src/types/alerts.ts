@@ -16,7 +16,7 @@ export enum AlertState {
  */
 export interface AlertStateInfo {
   id: number;
-  dashboardId: number;
+  dashboardUID: string | undefined;
   panelId: number;
   state: AlertState;
 }
