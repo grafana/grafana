@@ -1,30 +1,31 @@
 package v0alpha1
 
 import (
+	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		AlertRule{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
-		AlertRuleExpression{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
-		AlertRuleIntervalTrigger{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
-		AlertRuleList{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
-		AlertRuleRelativeTimeRange{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
-		AlertRuleSpec{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
-		AlertRuleStatus{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
-		AlertRuleV0alpha1SpecNotificationSettings{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings(ref),
-		AlertRuleV0alpha1SpecPanelRef{}.OpenAPIModelName():             schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecPanelRef(ref),
-		AlertRulestatusOperatorState{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
-		RecordingRule{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
-		RecordingRuleExpression{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
-		RecordingRuleIntervalTrigger{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
-		RecordingRuleList{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
-		RecordingRuleRelativeTimeRange{}.OpenAPIModelName():            schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
-		RecordingRuleSpec{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
-		RecordingRuleStatus{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
-		RecordingRulestatusOperatorState{}.OpenAPIModelName():          schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
+		alertingv0alpha1.AlertRule{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
+		alertingv0alpha1.AlertRuleExpression{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
+		alertingv0alpha1.AlertRuleIntervalTrigger{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
+		alertingv0alpha1.AlertRuleList{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
+		alertingv0alpha1.AlertRuleRelativeTimeRange{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
+		alertingv0alpha1.AlertRuleSpec{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
+		alertingv0alpha1.AlertRuleStatus{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
+		alertingv0alpha1.AlertRuleV0alpha1SpecNotificationSettings{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings(ref),
+		alertingv0alpha1.AlertRuleV0alpha1SpecPanelRef{}.OpenAPIModelName():             schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecPanelRef(ref),
+		alertingv0alpha1.AlertRulestatusOperatorState{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
+		alertingv0alpha1.RecordingRule{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
+		alertingv0alpha1.RecordingRuleExpression{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
+		alertingv0alpha1.RecordingRuleIntervalTrigger{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
+		alertingv0alpha1.RecordingRuleList{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
+		alertingv0alpha1.RecordingRuleRelativeTimeRange{}.OpenAPIModelName():            schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
+		alertingv0alpha1.RecordingRuleSpec{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
+		alertingv0alpha1.RecordingRuleStatus{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
+		alertingv0alpha1.RecordingRulestatusOperatorState{}.OpenAPIModelName():          schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
 	}
 }
 
@@ -51,20 +52,20 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the AlertRule",
 							Default:     map[string]interface{}{},
-							Ref:         ref(AlertRuleSpec{}.OpenAPIModelName()),
+							Ref:         ref(alertingv0alpha1.AlertRuleSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(AlertRuleStatus{}.OpenAPIModelName()),
+							Ref:     ref(alertingv0alpha1.AlertRuleStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -72,7 +73,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			AlertRuleSpec{}.OpenAPIModelName(), AlertRuleStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			alertingv0alpha1.AlertRuleSpec{}.OpenAPIModelName(), alertingv0alpha1.AlertRuleStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -91,7 +92,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref common.ReferenceC
 					},
 					"relativeTimeRange": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(AlertRuleRelativeTimeRange{}.OpenAPIModelName()),
+							Ref: ref(alertingv0alpha1.AlertRuleRelativeTimeRange{}.OpenAPIModelName()),
 						},
 					},
 					"datasourceUID": {
@@ -119,7 +120,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			AlertRuleRelativeTimeRange{}.OpenAPIModelName()},
+			alertingv0alpha1.AlertRuleRelativeTimeRange{}.OpenAPIModelName()},
 	}
 }
 
@@ -166,7 +167,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -176,7 +177,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(AlertRule{}.OpenAPIModelName()),
+										Ref:     ref(alertingv0alpha1.AlertRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -187,7 +188,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			AlertRule{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			alertingv0alpha1.AlertRule{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -240,7 +241,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 					"trigger": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(AlertRuleIntervalTrigger{}.OpenAPIModelName()),
+							Ref:     ref(alertingv0alpha1.AlertRuleIntervalTrigger{}.OpenAPIModelName()),
 						},
 					},
 					"labels": {
@@ -307,7 +308,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 					},
 					"notificationSettings": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(AlertRuleV0alpha1SpecNotificationSettings{}.OpenAPIModelName()),
+							Ref: ref(alertingv0alpha1.AlertRuleV0alpha1SpecNotificationSettings{}.OpenAPIModelName()),
 						},
 					},
 					"expressions": {
@@ -318,7 +319,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(AlertRuleExpression{}.OpenAPIModelName()),
+										Ref:     ref(alertingv0alpha1.AlertRuleExpression{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -326,7 +327,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 					},
 					"panelRef": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(AlertRuleV0alpha1SpecPanelRef{}.OpenAPIModelName()),
+							Ref: ref(alertingv0alpha1.AlertRuleV0alpha1SpecPanelRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -334,7 +335,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			AlertRuleExpression{}.OpenAPIModelName(), AlertRuleIntervalTrigger{}.OpenAPIModelName(), AlertRuleV0alpha1SpecNotificationSettings{}.OpenAPIModelName(), AlertRuleV0alpha1SpecPanelRef{}.OpenAPIModelName()},
+			alertingv0alpha1.AlertRuleExpression{}.OpenAPIModelName(), alertingv0alpha1.AlertRuleIntervalTrigger{}.OpenAPIModelName(), alertingv0alpha1.AlertRuleV0alpha1SpecNotificationSettings{}.OpenAPIModelName(), alertingv0alpha1.AlertRuleV0alpha1SpecPanelRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -353,7 +354,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(AlertRulestatusOperatorState{}.OpenAPIModelName()),
+										Ref:     ref(alertingv0alpha1.AlertRulestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -378,7 +379,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			AlertRulestatusOperatorState{}.OpenAPIModelName()},
+			alertingv0alpha1.AlertRulestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
@@ -563,20 +564,20 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the RecordingRule",
 							Default:     map[string]interface{}{},
-							Ref:         ref(RecordingRuleSpec{}.OpenAPIModelName()),
+							Ref:         ref(alertingv0alpha1.RecordingRuleSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(RecordingRuleStatus{}.OpenAPIModelName()),
+							Ref:     ref(alertingv0alpha1.RecordingRuleStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -584,7 +585,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			RecordingRuleSpec{}.OpenAPIModelName(), RecordingRuleStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			alertingv0alpha1.RecordingRuleSpec{}.OpenAPIModelName(), alertingv0alpha1.RecordingRuleStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -603,7 +604,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref common.Refere
 					},
 					"relativeTimeRange": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(RecordingRuleRelativeTimeRange{}.OpenAPIModelName()),
+							Ref: ref(alertingv0alpha1.RecordingRuleRelativeTimeRange{}.OpenAPIModelName()),
 						},
 					},
 					"datasourceUID": {
@@ -631,7 +632,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			RecordingRuleRelativeTimeRange{}.OpenAPIModelName()},
+			alertingv0alpha1.RecordingRuleRelativeTimeRange{}.OpenAPIModelName()},
 	}
 }
 
@@ -678,7 +679,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -688,7 +689,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RecordingRule{}.OpenAPIModelName()),
+										Ref:     ref(alertingv0alpha1.RecordingRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -699,7 +700,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			RecordingRule{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			alertingv0alpha1.RecordingRule{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -752,7 +753,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 					"trigger": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(RecordingRuleIntervalTrigger{}.OpenAPIModelName()),
+							Ref:     ref(alertingv0alpha1.RecordingRuleIntervalTrigger{}.OpenAPIModelName()),
 						},
 					},
 					"labels": {
@@ -785,7 +786,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RecordingRuleExpression{}.OpenAPIModelName()),
+										Ref:     ref(alertingv0alpha1.RecordingRuleExpression{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -803,7 +804,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			RecordingRuleExpression{}.OpenAPIModelName(), RecordingRuleIntervalTrigger{}.OpenAPIModelName()},
+			alertingv0alpha1.RecordingRuleExpression{}.OpenAPIModelName(), alertingv0alpha1.RecordingRuleIntervalTrigger{}.OpenAPIModelName()},
 	}
 }
 
@@ -822,7 +823,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RecordingRulestatusOperatorState{}.OpenAPIModelName()),
+										Ref:     ref(alertingv0alpha1.RecordingRulestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -847,7 +848,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			RecordingRulestatusOperatorState{}.OpenAPIModelName()},
+			alertingv0alpha1.RecordingRulestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
