@@ -391,6 +391,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
 	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
+	dryRun bool,
 ) error {
 	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
@@ -415,6 +416,11 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
+	if dryRun {
+		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
+		return nil
+	}
+
 	am, err := moa.AlertmanagerFor(org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
@@ -433,7 +439,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration, replace bool) error {
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration, replace bool, dryRun bool) error {
 	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
 		if !replace {
 			// for now we validate that after the update there will be just one extra config.
@@ -446,12 +452,16 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 		return []definitions.ExtraConfiguration{extraConfig}, nil
 	}
 
-	err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc)
+	err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
 	if err != nil {
 		return err
 	}
 
-	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
+	if dryRun {
+		moa.logger.Info("Dry run: validated alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
+	} else {
+		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
+	}
 	return nil
 }
 
@@ -467,7 +477,7 @@ func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, o
 		return filtered, nil
 	}
 
-	return moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc)
+	return moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, false)
 }
 
 // assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
