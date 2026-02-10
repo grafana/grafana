@@ -22,10 +22,11 @@ import (
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,7 +40,7 @@ var (
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg    *setting.Cfg
-	legacy *legacyStorage
+	legacy apiserverrest.Storage
 }
 
 func RegisterAppInstaller(
@@ -47,6 +48,7 @@ func RegisterAppInstaller(
 	features featuremgmt.FeatureToggles,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
+	authService *accesscontrol.AuthService,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		cfg: cfg,
@@ -56,10 +58,14 @@ func RegisterAppInstaller(
 	if service != nil {
 		mapper := grafrequest.GetNamespaceMapper(cfg)
 		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
-		installer.legacy = &legacyStorage{
-			store:  sqlAdapter,
-			mapper: mapper,
+		legacy := &legacyStorage{
+			store:          sqlAdapter,
+			mapper:         mapper,
+			tableConverter: tableConverter,
 		}
+		authorizer := NewAnnotationAuthorizer(authService, mapper)
+		authWrapper := storewrapper.New(legacy, authorizer)
+		installer.legacy = authWrapper
 		// Create the tags handler using the sqlAdapter as TagProvider
 		tagHandler = newTagsHandler(sqlAdapter)
 	}
@@ -91,40 +97,16 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 		}
 
 		// Any authenticated user can access the API
+		// Fine-grained authorization checks are done within the storage layer (see AnnotationAuthorizer)
 		return authorizer.DecisionAllow, "", nil
 	})
 }
 
 func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
-	kind := annotationV0.AnnotationKind()
-	gvr := schema.GroupVersionResource{
-		Group:    kind.Group(),
-		Version:  kind.Version(),
-		Resource: kind.Plural(),
-	}
-
+	gvr := annotationV0.AnnotationKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil
 	}
-
-	a.legacy.tableConverter = utils.NewTableConverter(
-		gvr.GroupResource(),
-		utils.TableColumns{
-			Definition: []metav1.TableColumnDefinition{
-				{Name: "Text", Type: "string", Format: "name"},
-			},
-			Reader: func(obj any) ([]any, error) {
-				m, ok := obj.(*annotationV0.Annotation)
-				if !ok {
-					return nil, fmt.Errorf("expected Annotation")
-				}
-				return []any{
-					m.Spec.Text,
-				}, nil
-			},
-		},
-	)
-
 	return a.legacy
 }
 
