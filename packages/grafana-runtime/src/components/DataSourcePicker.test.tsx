@@ -37,8 +37,8 @@ describe('DataSourcePicker', () => {
           type: 'datasource',
           info: {
             logos: {
-              small: 'public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
-              large: 'public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+              small: 'prometheus_logo.svg',
+              large: 'prometheus_logo.svg',
             },
             author: { name: 'Grafana Labs' },
             description: 'Prometheus data source',
