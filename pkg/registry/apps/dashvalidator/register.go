@@ -40,11 +40,11 @@ func RegisterAppInstaller(
 
 	// Create and register Prometheus provider
 	prometheusProvider := prometheus.NewPrometheusProvider(cache.DefaultMetricsCacheTTL)
-	metricsCache.RegisterProvider("prometheus", prometheusProvider)
+	metricsCache.RegisterProvider(datasources.DS_PROMETHEUS, prometheusProvider)
 
 	// Create validators map - keyed by datasource type
 	validators := map[string]validator.DatasourceValidator{
-		"prometheus": prometheus.NewValidator(metricsCache),
+		datasources.DS_PROMETHEUS: prometheus.NewValidator(metricsCache),
 	}
 
 	// Create specific config for the app with all components

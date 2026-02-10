@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // parserLike defines minimal interface for dependency injection
@@ -18,6 +19,9 @@ type Validator struct {
 	parser parserLike
 	cache  *cache.MetricsCache
 }
+
+// evaluate at compile time that Validator implements DatasourceValidator interface
+var _ validator.DatasourceValidator = (*Validator)(nil)
 
 // NewValidator creates a new Prometheus validator.
 // The metricsCache parameter is required - pass nil will cause a panic.
@@ -78,7 +82,7 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 	result.TotalMetrics = len(metricsToCheck)
 
 	// Step 2: Fetch available metrics from Prometheus (via cache)
-	availableMetrics, err := v.cache.GetMetrics(ctx, "prometheus", datasource.UID, datasource.URL, datasource.HTTPClient)
+	availableMetrics, err := v.cache.GetMetrics(ctx, datasources.DS_PROMETHEUS, datasource.UID, datasource.URL, datasource.HTTPClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
 	}

@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -204,7 +204,13 @@ func handleCheckRoute(
 		namespace := r.ResourceIdentifier.Namespace
 
 		// Extract orgID from namespace for logging context
-		orgID := extractOrgIDFromNamespace(namespace)
+		orgID, err := getOrgIDFromNamespace(namespace)
+		if err != nil {
+			logger.Warn("Failed to parse namespace for orgID",
+				"namespace", namespace,
+				"error", err,
+			)
+		}
 		logger = logger.With("orgID", orgID, "namespace", namespace)
 
 		for _, dsMapping := range req.DatasourceMappings {
@@ -255,8 +261,8 @@ func handleCheckRoute(
 			}
 
 			// Validate that this is a supported datasource type
-			// For MVP, we only support Prometheus
-			if !isSupportedDatasourceType(ds.Type) {
+			// Supported types are determined by the validators map (single source of truth)
+			if _, supported := validators[ds.Type]; !supported {
 				dsLogger.Error("Unsupported datasource type", "type", ds.Type)
 				w.WriteHeader(http.StatusBadRequest)
 				return json.NewEncoder(w).Encode(map[string]string{
@@ -377,23 +383,13 @@ func convertToCheckResponse(result *validator.DashboardCompatibilityResult) chec
 	return response
 }
 
-// extractOrgIDFromNamespace extracts the org ID from a namespace string
-// Namespace format is typically "org-{orgID}"
-func extractOrgIDFromNamespace(namespace string) string {
-	parts := strings.Split(namespace, "-")
-	if len(parts) >= 2 && parts[0] == "org" {
-		return parts[1]
+// getOrgIDFromNamespace extracts the org ID from a namespace using the standard authlib parser.
+func getOrgIDFromNamespace(namespace string) (int64, error) {
+	info, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse namespace %s: %w", namespace, err)
 	}
-	return "unknown"
-}
-
-// isSupportedDatasourceType checks if a datasource type is supported
-// For MVP, we only support Prometheus
-func isSupportedDatasourceType(dsType string) bool {
-	supportedTypes := map[string]bool{
-		"prometheus": true,
-	}
-	return supportedTypes[strings.ToLower(dsType)]
+	return info.OrgID, nil
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
