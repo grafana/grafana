@@ -232,7 +232,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	installation, err := ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
+	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		// Check for specific error types
 		switch {
@@ -278,7 +278,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeInternal,
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "github", "installationID").String(),
 						Detail: ErrServiceUnavailable.Error(),
 					},
 				},
@@ -296,30 +297,11 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("spec", "github", "installationID").String(),
-						Detail: "failed to validate installation",
+						Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
 					},
 				},
 			}, nil
 		}
-	}
-
-	// Check if installation is enabled (not suspended)
-	if !installation.Enabled {
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusForbidden,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", "github", "installationID").String(),
-					Detail: "installation is suspended",
-				},
-			},
-		}, nil
 	}
 
 	return &provisioning.TestResults{

@@ -795,7 +795,8 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeInternal,
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.installationID",
 					Detail: github.ErrServiceUnavailable.Error(),
 				},
 			},
@@ -836,50 +837,7 @@ func TestConnection_Test(t *testing.T) {
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  "spec.github.installationID",
-					Detail: "failed to validate installation",
-				},
-			},
-		},
-		{
-			name: "failure - installation is suspended",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          appID,
-						InstallationID: "456",
-					},
-				},
-			},
-			secrets: github.ConnectionSecrets{
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-				Token:      token,
-			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
-				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
-					ID:   123,
-					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
-					},
-				}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
-					ID:      456,
-					Enabled: false,
-				}, nil)
-			},
-			expectedCode:  http.StatusForbidden,
-			expectSuccess: false,
-			expectedErrors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: "installation is suspended",
+					Detail: "invalid installation ID: 456",
 				},
 			},
 		},
