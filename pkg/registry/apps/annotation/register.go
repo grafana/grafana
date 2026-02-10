@@ -232,9 +232,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	// Return list with continue token for pagination
-	list := &annotationV0.AnnotationList{Items: result.Items}
-	list.Continue = result.Continue
-	return list, nil
+	return &annotationV0.AnnotationList{
+		Items:    result.Items,
+		ListMeta: metav1.ListMeta{Continue: result.Continue},
+	}, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {

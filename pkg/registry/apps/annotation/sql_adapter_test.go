@@ -91,7 +91,6 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 	tests := []struct {
 		desc                string
 		limit               int64
-		continueToken       string
 		expectedCount       int
 		expectedHasContinue bool
 		expectedFirstID     string
@@ -126,8 +125,7 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			opts := ListOptions{
-				Limit:    tt.limit,
-				Continue: tt.continueToken,
+				Limit: tt.limit,
 			}
 
 			result, err := adapter.List(ctx, namespace, opts)
