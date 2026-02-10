@@ -5,15 +5,14 @@ import { RepoType, WizardStep } from '../types';
 
 export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
   const isLocal = type === 'local';
+  const authStepText = isLocal
+    ? t('provisioning.wizard.connect-step-local', 'File provisioning')
+    : t('provisioning.wizard.connect-step', 'Connect');
   return [
     {
       id: 'authType',
-      name: isLocal
-        ? t('provisioning.wizard.connect-step-local', 'File Provisioning')
-        : t('provisioning.wizard.connect-step', 'Connect'),
-      title: isLocal
-        ? t('provisioning.wizard.connect-step-local', 'File Provisioning')
-        : t('provisioning.wizard.connect-step', 'Connect'),
+      name: authStepText,
+      title: authStepText,
       submitOnNext: true,
     },
     {
