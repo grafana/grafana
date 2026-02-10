@@ -25,7 +25,7 @@ func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {
   receiver: test-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, 999, extraConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, 999, extraConfig, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "failed to get current configuration")
 	})
@@ -45,7 +45,7 @@ receivers:
   - name: test-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false)
 		require.NoError(t, err)
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
@@ -80,7 +80,7 @@ receivers:
   - name: original-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig, false)
 		require.NoError(t, err)
 
 		// Now replace it
@@ -94,7 +94,7 @@ receivers:
   - name: updated-receiver`,
 		}
 
-		err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, updatedConfig)
+		err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, updatedConfig, false)
 		require.NoError(t, err)
 
 		// Verify only one config exists with updated content
@@ -125,7 +125,7 @@ receivers:
 			}`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, firstConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, firstConfig, false)
 		require.NoError(t, err)
 
 		secondConfig := definitions.ExtraConfiguration{
@@ -143,10 +143,20 @@ receivers:
 			}`,
 		}
 
-		err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig)
+		err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "multiple extra configurations are not supported")
 		require.ErrorContains(t, err, "first-config")
+
+		t.Run("replaces if replace=true", func(t *testing.T) {
+			err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig, true)
+			require.NoError(t, err)
+
+			gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
+			require.NoError(t, err)
+			require.Len(t, gettableConfig.ExtraConfigs, 1)
+			require.Equal(t, secondConfig.Identifier, gettableConfig.ExtraConfigs[0].Identifier)
+		})
 	})
 
 	t.Run("fail to create extra configuration with identifier that used in managed routes", func(t *testing.T) {
@@ -185,7 +195,7 @@ receivers:
   - name: original-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig, false)
 		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
 	})
 }
@@ -208,7 +218,7 @@ receivers:
   - name: extra-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false)
 		require.NoError(t, err)
 
 		// Verify extra config was saved
@@ -467,7 +477,7 @@ receivers:
   - name: test-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig)
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false)
 		require.NoError(t, err)
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)

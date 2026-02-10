@@ -433,15 +433,16 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration) error {
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration, replace bool) error {
 	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
-		// for now we validate that after the update there will be just one extra config.
-		for _, c := range configs {
-			if c.Identifier != extraConfig.Identifier {
-				return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+		if !replace {
+			// for now we validate that after the update there will be just one extra config.
+			for _, c := range configs {
+				if c.Identifier != extraConfig.Identifier {
+					return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+				}
 			}
 		}
-
 		return []definitions.ExtraConfiguration{extraConfig}, nil
 	}
 

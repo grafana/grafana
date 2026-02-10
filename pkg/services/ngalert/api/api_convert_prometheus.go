@@ -66,6 +66,8 @@ const (
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
 	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
 	defaultConfigIdentifier = "imported"
+	// configForceReplaceHeader if specified, will forcibly replace existing configuration ignoring same identifier restriction
+	configForceReplaceHeader = "X-Grafana-Alerting-Config-Force-Replace"
 
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
@@ -140,7 +142,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool) error
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
 }
 
@@ -619,13 +621,19 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	err = srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec)
+	replace, err := parseBooleanHeader(c.Req.Header.Get(configForceReplaceHeader), configForceReplaceHeader)
+	if err != nil {
+		logger.Error("Failed to parse boolean header", "error", err, "header", configForceReplaceHeader)
+		return errorToResponse(err)
+	}
+
+	err = srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec, replace)
 	if err != nil {
 		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier)
+	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier, "replace", replace)
 	return successfulResponse()
 }
 

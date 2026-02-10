@@ -324,9 +324,10 @@ type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
 	// configuration to alerts matching both environment=production AND team=backend.
 	// in: header
 	MergeMatchers string `json:"x-grafana-alerting-merge-matchers"`
-	// Alertmanager configuration including routing rules, receivers, and template files
-	// in:body
-	Body AlertmanagerUserConfig
+	// If true, the configuration will replace an existing configuration regardless of its identifier
+	// in:query
+	Replace bool `json:"x-grafana-alerting-config-force-replace"`
+	Body    AlertmanagerUserConfig
 }
 
 // swagger:parameters RouteConvertPrometheusGetAlertmanagerConfig
