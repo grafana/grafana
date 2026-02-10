@@ -831,10 +831,13 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 	}
 
+	route := mcfg.Route
+	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
+
 	return MergeResult{
 		MergeResult: m,
 		Identifier:  mimirCfg.Identifier,
-		ExtraRoute:  mcfg.Route,
+		ExtraRoute:  route,
 	}, nil
 }
 

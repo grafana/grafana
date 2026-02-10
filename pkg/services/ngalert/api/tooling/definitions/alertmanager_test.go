@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
@@ -15,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 //go:embed test-data/*.*
@@ -266,11 +269,31 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 		name          string
 		config        PostableUserConfig
 		expectedError string
+		expected      MergeResult
 	}{
 		{
 			name: "no extra configs",
 			config: PostableUserConfig{
 				AlertmanagerConfig: alertmanagerCfg,
+			},
+			expected: MergeResult{
+				MergeResult: definition.MergeResult{
+					Config: definition.PostableApiAlertingConfig{
+						Config: Config{
+							Route: &Route{
+								Receiver: "default",
+							},
+						},
+						Receivers: []*PostableApiReceiver{
+							{
+								Receiver: config.Receiver{
+									Name: "default",
+								},
+							},
+						},
+					},
+					RenameResources: definition.RenameResources{},
+				},
 			},
 		},
 		{
@@ -289,8 +312,175 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 						},
 						AlertmanagerConfig: `route:
   receiver: mimir-receiver
+  group_by: ['alertname']
+  routes:
+    - receiver: default
+      matchers:
+        - severity="critical"
 receivers:
-  - name: mimir-receiver`,
+  - name: mimir-receiver
+  - name: default`,
+					},
+				},
+			},
+			expected: MergeResult{
+				MergeResult: definition.MergeResult{
+					Config: definition.PostableApiAlertingConfig{
+						Config: Config{
+							Route: &Route{
+								Receiver: "default",
+								Routes: []*Route{
+									{
+										Matchers: []*labels.Matcher{
+											{
+												Type:  labels.MatchEqual,
+												Name:  "cluster",
+												Value: "prod",
+											},
+										},
+										GroupInterval:  util.Pointer(model.Duration(5 * time.Minute)),
+										GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
+										RepeatInterval: util.Pointer(model.Duration(4 * time.Hour)),
+										Continue:       false,
+										Receiver:       "mimir-receiver",
+										GroupByStr:     []string{"alertname"},
+										GroupBy:        []model.LabelName{"alertname"},
+										Routes: []*Route{
+											{
+												Matchers: []*labels.Matcher{
+													{
+														Type:  labels.MatchEqual,
+														Name:  "severity",
+														Value: "critical",
+													},
+												},
+												Receiver: "defaultmimir-1",
+												Routes:   []*Route{},
+											},
+										},
+									},
+								},
+							},
+							InhibitRules:  []config.InhibitRule{},
+							TimeIntervals: []config.TimeInterval{},
+						},
+						Receivers: []*PostableApiReceiver{
+							{
+								Receiver: config.Receiver{
+									Name: "default",
+								},
+							},
+							{
+								Receiver: config.Receiver{
+									Name: "mimir-receiver",
+								},
+							},
+							{
+								Receiver: config.Receiver{
+									Name: "defaultmimir-1",
+								},
+							},
+						},
+					},
+					RenameResources: definition.RenameResources{
+						Receivers: map[string]string{
+							"default": "defaultmimir-1",
+						},
+						TimeIntervals: map[string]string{},
+					},
+				},
+				Identifier: "mimir-1",
+				ExtraRoute: &Route{
+					Receiver:   "mimir-receiver",
+					GroupByStr: []string{"alertname"},
+					GroupBy:    []model.LabelName{"alertname"},
+					Routes: []*Route{
+						{
+							Matchers: []*labels.Matcher{
+								{
+									Type:  labels.MatchEqual,
+									Name:  "severity",
+									Value: "critical",
+								},
+							},
+							Receiver: "defaultmimir-1",
+							Routes:   []*Route{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid mimir config without merging matchers",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier: "mimir-1",
+						AlertmanagerConfig: `route:
+  receiver: mimir-receiver
+  group_by: ['alertname']
+  routes:
+    - receiver: default
+      matchers:
+        - severity="critical"
+receivers:
+  - name: mimir-receiver
+  - name: default`,
+					},
+				},
+			},
+			expected: MergeResult{
+				MergeResult: definition.MergeResult{
+					Config: definition.PostableApiAlertingConfig{
+						Config: Config{
+							Route: &Route{
+								Receiver: "default",
+							},
+							TimeIntervals: []config.TimeInterval{},
+						},
+						Receivers: []*PostableApiReceiver{
+							{
+								Receiver: config.Receiver{
+									Name: "default",
+								},
+							},
+							{
+								Receiver: config.Receiver{
+									Name: "mimir-receiver",
+								},
+							},
+							{
+								Receiver: config.Receiver{
+									Name: "defaultmimir-1",
+								},
+							},
+						},
+					},
+					RenameResources: definition.RenameResources{
+						Receivers: map[string]string{
+							"default": "defaultmimir-1",
+						},
+						TimeIntervals: map[string]string{},
+					},
+				},
+				Identifier: "mimir-1",
+				ExtraRoute: &Route{
+					Receiver:   "mimir-receiver",
+					GroupByStr: []string{"alertname"},
+					GroupBy:    []model.LabelName{"alertname"},
+					Routes: []*Route{
+						{
+							Matchers: []*labels.Matcher{
+								{
+									Type:  labels.MatchEqual,
+									Name:  "severity",
+									Value: "critical",
+								},
+							},
+							Receiver: "defaultmimir-1",
+							Routes:   []*Route{},
+						},
 					},
 				},
 			},
@@ -343,6 +533,7 @@ receivers:
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result.Config)
+				require.EqualValues(t, tc.expected, result)
 			}
 		})
 	}
