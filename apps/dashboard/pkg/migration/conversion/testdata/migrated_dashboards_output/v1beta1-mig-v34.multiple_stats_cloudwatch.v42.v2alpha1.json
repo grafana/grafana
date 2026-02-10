@@ -1172,7 +1172,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "default-ds-uid"
+                      "uid": "prometheus"
                     },
                     "refId": "A",
                     "hidden": false
@@ -1214,7 +1214,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "default-ds-uid"
+                      "uid": "prometheus"
                     },
                     "refId": "C",
                     "hidden": false
@@ -1239,7 +1239,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "default-ds-uid"
+                      "uid": "prometheus"
                     },
                     "refId": "D",
                     "hidden": false

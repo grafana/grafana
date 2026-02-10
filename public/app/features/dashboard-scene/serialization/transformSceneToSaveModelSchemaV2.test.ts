@@ -491,13 +491,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
       expect(resultA).toBeUndefined();
 
-      // Test the query with DS originally - should return the original datasource
+      // Test the query with DS that differs from panel - same as PanelQueryRunner: use panel ref
       const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
-      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+      expect(resultB).toEqual({ uid: 'default-ds', type: 'default' });
 
-      // Test the query with only type defined - should return the type
+      // Query with only type (no uid) differs from panel - use panel ref
       const resultC = getPersistedDSFor(queryWithOnlyDSType, dsReferencesMap, 'query', queryRunner);
-      expect(resultC).toEqual({ type: 'prometheus' });
+      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
 
       // Test a query with no DS originally but not in the mapping - should get the runner's datasource
       const queryNotInMapping: SceneDataQuery = {
@@ -687,15 +687,15 @@ describe('getElementDatasource', () => {
       annotations: new Map<string, string>(),
     };
 
-    // Call the function with the panel and query with DS
+    // Query with DS that differs from panel → same as PanelQueryRunner: use panel ref
     const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner, dsReferencesMapping);
-    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    expect(resultWithDS).toEqual({ uid: 'default-ds', type: 'default' });
 
     // Call the function with the panel and query without DS
     const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
     expect(resultWithoutDS).toBeUndefined();
 
-    // Call the function with the panel and query with only type
+    // Query with only type differs from panel → use panel ref
     const resultWithOnlyType = getElementDatasource(
       vizPanel,
       queryWithOnlyType,
@@ -703,7 +703,7 @@ describe('getElementDatasource', () => {
       queryRunner,
       dsReferencesMapping
     );
-    expect(resultWithOnlyType).toEqual({ type: 'prometheus' });
+    expect(resultWithOnlyType).toEqual({ uid: 'default-ds', type: 'default' });
   });
 
   it('should handle variable datasources correctly', () => {
@@ -952,7 +952,8 @@ describe('getVizPanelQueries', () => {
     expect(result[0].spec.query.version).toBe('v0');
 
     expect(result[1].spec.query.kind).toBe('DataQuery');
-    expect(result[1].spec.query.datasource?.name).toBe('prometheus-uid');
+    // Query ref differs from panel → persist panel ref (same as PanelQueryRunner); schema stores uid as .name
+    expect(result[1].spec.query.datasource?.name).toBe('default-ds');
     expect(result[1].spec.query.group).toBe('prometheus');
     expect(result[1].spec.query.version).toBe('v0');
   });

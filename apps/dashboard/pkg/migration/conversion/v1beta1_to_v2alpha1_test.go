@@ -32,7 +32,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		validateV2alpha1 func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard)
 	}{
 		{
-			name: "panel datasource type datasource with no UID - resolves to grafana UID",
+			name: "panel type datasource with no UID - use panel ref (query empty), resolve to grafana UID",
 			createV1beta1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
@@ -84,7 +84,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "empty target datasource objects inherit from panel datasource",
+			name: "targets with empty datasource {} - use panel ref (query has no ref), get panel DS",
 			createV1beta1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
@@ -94,7 +94,6 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 								map[string]interface{}{
 									"id":   1,
 									"type": "bargauge",
-									// Panel datasource is set
 									"datasource": map[string]interface{}{
 										"type": "prometheus",
 										"uid":  "prometheus-uid",
@@ -103,7 +102,6 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 										map[string]interface{}{
 											"refId":      "A",
 											"scenarioId": "random_walk",
-											// Target datasource is empty object {} - should inherit from panel
 											"datasource": map[string]interface{}{},
 										},
 										map[string]interface{}{
@@ -123,10 +121,10 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
 				require.NotNil(t, panel)
 
-				// Verify queries inherit panel datasource
+				// Query has no ref (empty {}) → use panel ref; both queries get panel DS
 				require.Len(t, panel.Spec.Data.Spec.Queries, 2)
 				for _, query := range panel.Spec.Data.Spec.Queries {
-					require.NotNil(t, query.Spec.Datasource, "Query should inherit datasource from panel when target datasource is empty")
+					require.NotNil(t, query.Spec.Datasource)
 					assert.Equal(t, "prometheus", *query.Spec.Datasource.Type)
 					assert.Equal(t, "prometheus-uid", *query.Spec.Datasource.Uid)
 					assert.Equal(t, "prometheus", query.Spec.Query.Kind)
@@ -134,7 +132,171 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "panel datasource null without empty target datasource objects - no default set",
+			// Same condition as frontend (SceneQueryRunner): use panel when query has no ref, or when
+			// query ref != panel ref and panel is not mixed and query is not expression.
+			name: "panel ref used when query ref differs from panel ref (panel not mixed, query not expression)",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":   1,
+									"type": "bargauge",
+									"datasource": map[string]interface{}{
+										"type": "prometheus",
+										"uid":  "prometheus-uid",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"scenarioId": "random_walk",
+											"datasource": map[string]interface{}{
+												"type": "loki",
+												"uid":  "loki-uid",
+											},
+										},
+										map[string]interface{}{
+											"refId":      "B",
+											"scenarioId": "random_walk",
+											"datasource": map[string]interface{}{
+												"type": "elasticsearch",
+												"uid":  "elasticsearch-uid",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
+				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
+				require.NotNil(t, panel)
+
+				// Query ref != panel ref and panel not mixed → use panel ref (matches frontend)
+				require.Len(t, panel.Spec.Data.Spec.Queries, 2)
+				for _, query := range panel.Spec.Data.Spec.Queries {
+					require.NotNil(t, query.Spec.Datasource)
+					assert.Equal(t, "prometheus", *query.Spec.Datasource.Type)
+					assert.Equal(t, "prometheus-uid", *query.Spec.Datasource.Uid)
+					assert.Equal(t, "prometheus", query.Spec.Query.Kind)
+				}
+			},
+		},
+		{
+			// Mixed is identified by panel uid "-- Mixed --". When panel is mixed we do not use panel ref.
+			name: "mixed panel (uid -- Mixed --) - each query keeps its target datasource",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":   1,
+									"type": "bargauge",
+									"datasource": map[string]interface{}{
+										"type": "datasource",
+										"uid":  "-- Mixed --",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"scenarioId": "random_walk",
+											"datasource": map[string]interface{}{
+												"type": "prometheus",
+												"uid":  "prometheus-uid",
+											},
+										},
+										map[string]interface{}{
+											"refId":      "B",
+											"scenarioId": "random_walk",
+											"datasource": map[string]interface{}{
+												"type": "loki",
+												"uid":  "loki-uid",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
+				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
+				require.NotNil(t, panel)
+
+				require.Len(t, panel.Spec.Data.Spec.Queries, 2)
+				// Query A: prometheus
+				assert.Equal(t, "prometheus", *panel.Spec.Data.Spec.Queries[0].Spec.Datasource.Type)
+				assert.Equal(t, "prometheus-uid", *panel.Spec.Data.Spec.Queries[0].Spec.Datasource.Uid)
+				// Query B: loki
+				assert.Equal(t, "loki", *panel.Spec.Data.Spec.Queries[1].Spec.Datasource.Type)
+				assert.Equal(t, "loki-uid", *panel.Spec.Data.Spec.Queries[1].Spec.Datasource.Uid)
+			},
+		},
+		{
+			// Expression queries (__expr__) are never overwritten by panel ref (same as frontend).
+			name: "expression query (__expr__) keeps expression ref when panel has different datasource",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":   1,
+									"type": "bargauge",
+									"datasource": map[string]interface{}{
+										"type": "prometheus",
+										"uid":  "prometheus-uid",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"scenarioId": "random_walk",
+											"datasource": map[string]interface{}{},
+										},
+										map[string]interface{}{
+											"refId":      "B",
+											"scenarioId": "random_walk",
+											"datasource": map[string]interface{}{
+												"type": "__expr__",
+												"uid":  "__expr__",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
+				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
+				require.NotNil(t, panel)
+
+				require.Len(t, panel.Spec.Data.Spec.Queries, 2)
+				// Query A: no ref → uses panel
+				require.NotNil(t, panel.Spec.Data.Spec.Queries[0].Spec.Datasource)
+				assert.Equal(t, "prometheus", *panel.Spec.Data.Spec.Queries[0].Spec.Datasource.Type)
+				assert.Equal(t, "prometheus-uid", *panel.Spec.Data.Spec.Queries[0].Spec.Datasource.Uid)
+				// Query B: expression → not overwritten by panel
+				require.NotNil(t, panel.Spec.Data.Spec.Queries[1].Spec.Datasource)
+				assert.Equal(t, "__expr__", *panel.Spec.Data.Spec.Queries[1].Spec.Datasource.Type)
+				assert.Equal(t, "__expr__", *panel.Spec.Data.Spec.Queries[1].Spec.Datasource.Uid)
+				assert.Equal(t, "__expr__", panel.Spec.Data.Spec.Queries[1].Spec.Query.Kind)
+			},
+		},
+		{
+			name: "panel datasource null and target has no datasource field - no default set",
 			createV1beta1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
@@ -164,15 +326,14 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
 				require.NotNil(t, panel)
 
-				// Verify queries don't have datasource when panel is null and targets don't have empty datasource objects
+				// usePanelRef true (query empty) but hasPanelRef false (panel null) → query keeps no ref
 				require.Len(t, panel.Spec.Data.Spec.Queries, 1)
 				query := panel.Spec.Data.Spec.Queries[0]
-				// Query should not have datasource when panel datasource is null and target doesn't have empty datasource object
-				assert.Nil(t, query.Spec.Datasource, "Query should not have datasource when panel datasource is null and target has no empty datasource object")
+				assert.Nil(t, query.Spec.Datasource)
 			},
 		},
 		{
-			name: "empty panel datasource object preserved as empty",
+			name: "empty panel and target datasource {} - preserved as empty (no panel ref to apply)",
 			createV1beta1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
@@ -202,12 +363,11 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
 				require.NotNil(t, panel)
 
-				// Verify queries don't have datasource when panel datasource is empty object {}
+				// usePanelRef true (query empty) but hasPanelRef false (panel {} → nil panelDatasource) → query stays empty
 				require.Len(t, panel.Spec.Data.Spec.Queries, 1)
 				query := panel.Spec.Data.Spec.Queries[0]
-				// Empty objects {} should be preserved as empty, not converted to defaults
-				assert.Nil(t, query.Spec.Datasource, "Query should not have datasource when panel datasource is empty object {}")
-				assert.Equal(t, "", query.Spec.Query.Kind, "Query kind should be empty when datasource is empty object {}")
+				assert.Nil(t, query.Spec.Datasource)
+				assert.Equal(t, "", query.Spec.Query.Kind)
 			},
 		},
 		{

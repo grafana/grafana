@@ -2,6 +2,7 @@ import { omit } from 'lodash';
 
 import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
@@ -899,22 +900,31 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
     return dsType ? { type: dsType } : undefined;
   }
 
-  // Return appropriate datasource reference based on element type
   if (type === 'query') {
+    let datasource: DataSourceRef | undefined;
     if ('datasource' in element && element.datasource) {
-      // Check if datasource is empty object {} (no keys), treat it as missing
-      // and fall through to use panel datasource (matches backend behavior)
       const isEmptyDatasourceObject =
         typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
-
       if (!isEmptyDatasourceObject) {
-        // If element has its own datasource (and it's not empty), use that
-        return element.datasource;
+        datasource = element.datasource;
       }
     }
 
-    // For queries missing a datasource or with empty datasource object, use datasource from context (queryRunner)
-    return context?.state?.datasource;
+    const panel = context?.state?.datasource;
+
+    if (!panel) {
+      return datasource;
+    }
+
+    const notExpr =
+      !datasource ||
+      (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
+    if (!datasource || (panel?.uid && panel?.uid !== datasource.uid && panel?.uid !== '-- Mixed --' && notExpr)) {
+      datasource = panel;
+    }
+
+    console.log('returned', datasource);
+    return datasource;
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
