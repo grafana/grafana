@@ -12747,6 +12747,7 @@
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "connect-step": "Connect",
+      "connect-step-local": "File provisioning",
       "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
