@@ -168,7 +168,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     button: css({
       position: 'absolute',
-      top: 'calc(100%)',
+      top: '100%',
       left: 0,
       transform: 'translate(-100%, 0)',
       zIndex: 1,
