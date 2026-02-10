@@ -10637,6 +10637,7 @@
   },
   "logstable": {
     "category-table": "Logs Table",
+    "description-show-controls": "Display table controls",
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
