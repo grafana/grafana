@@ -82,6 +82,8 @@ export const groupToNestedTable: DataTransformerInfo<GroupToNestedTableTransform
           // Group data into sub frames so they will display as tables
           const subFrames: DataFrame[][] = groupToSubframes(valuesByGroupKey, options);
 
+          console.log(subFrames);
+
           // Then for each calculations configured, compute and add a new field (column)
           for (let i = 0; i < frame.fields.length; i++) {
             const field = frame.fields[i];
@@ -219,6 +221,7 @@ function groupToSubframes(
     const nestedFields: Field[] = [];
 
     for (const [fieldName, field] of Object.entries(value)) {
+      console.log(fieldName, field);
       const fieldOpts = options.fields[fieldName];
 
       if (fieldOpts === undefined) {

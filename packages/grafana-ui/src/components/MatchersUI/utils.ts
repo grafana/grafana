@@ -61,6 +61,7 @@ export function getFrameFieldsDisplayNames(
         continue;
       }
       const disp = getFieldDisplayName(field, frame, parentData);
+      console.log('disp', disp, field.name);
       names.display.add(disp);
       names.fields.set(disp, field);
       if (field.name && disp !== field.name) {
@@ -92,7 +93,6 @@ export function useSelectOptions(
   baseNameMode?: FieldNamePickerBaseNameMode
 ): Array<SelectableValue<string>> {
   return useMemo(() => {
-    console.log('displayNames', displayNames);
     let found = false;
     const options: Array<SelectableValue<string>> = [];
     if (firstItem) {
