@@ -50,6 +50,13 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
+	// Check if batch API should be used
+	// Batch API is disabled for alerts to maintain backward compatibility
+	if dsInfo.Settings.BatchAPIEnabled && !fromAlert {
+		return e.ExecuteTimeSeriesQueryWithBatch(ctx, originalQueries, dsInfo, client, url)
+	}
+
+	// Use original implementation
 	result := backend.NewQueryDataResponse()
 
 	for _, query := range originalQueries {
@@ -64,6 +71,94 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 			continue
 		}
 		result.Responses[query.RefID] = *res
+	}
+
+	return result, nil
+}
+
+// ExecuteTimeSeriesQueryWithBatch executes time series queries using the batch API when possible
+func (e *AzureMonitorDatasource) ExecuteTimeSeriesQueryWithBatch(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+
+	// Build all queries first
+	azureQueries := []*types.AzureMonitorQuery{}
+	queryMap := make(map[string]backend.DataQuery) // Map RefID to original query for error handling
+
+	for _, query := range originalQueries {
+		queryMap[query.RefID] = query
+		azureQuery, err := e.buildQuery(query, dsInfo)
+		if err != nil {
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
+		}
+		azureQueries = append(azureQueries, azureQuery)
+	}
+
+	// Separate queries into batchable and non-batchable
+	batchable, nonBatchable := partitionQueries(azureQueries)
+
+	// Execute non-batchable queries with old API
+	for _, query := range nonBatchable {
+		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
+		if err != nil {
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
+		}
+		result.Responses[query.RefID] = *res
+	}
+
+	// Group batchable queries
+	batches := groupQueriesIntoBatches(batchable)
+
+	// Execute batches
+	for _, batch := range batches {
+		// Try batch execution
+		batchResponse, err := e.executeBatchQuery(ctx, batch, dsInfo, client)
+		if err != nil {
+			// Fallback: execute individually
+			e.Logger.Warn("Batch query failed, falling back to individual queries", "error", err, "resourceCount", len(batch.ResourceIds))
+			for _, query := range batch.Queries {
+				res, execErr := e.executeQuery(ctx, query, dsInfo, client, url)
+				if execErr != nil {
+					result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(execErr)
+					continue
+				}
+				result.Responses[query.RefID] = *res
+			}
+			continue
+		}
+
+		// Get subscription details for deep linking
+		subscription := ""
+		if len(batch.Queries) > 0 && batch.Queries[0].Subscription != "" {
+			sub, err := e.retrieveSubscriptionDetails(client, ctx, batch.Queries[0].Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+			if err != nil {
+				e.Logger.Warn("Failed to retrieve subscription details", "error", err)
+			} else {
+				subscription = sub
+			}
+		}
+
+		// Parse batch results and distribute to queries
+		batchResults, err := e.parseBatchResponse(batchResponse, batch, dsInfo.Routes["Azure Portal"].URL, subscription)
+		if err != nil {
+			e.Logger.Error("Failed to parse batch response", "error", err)
+			// Fallback to individual queries
+			for _, query := range batch.Queries {
+				res, execErr := e.executeQuery(ctx, query, dsInfo, client, url)
+				if execErr != nil {
+					result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(execErr)
+					continue
+				}
+				result.Responses[query.RefID] = *res
+			}
+			continue
+		}
+
+		// Add batch results to response
+		for refID, dataResponse := range batchResults {
+			result.Responses[refID] = dataResponse
+		}
 	}
 
 	return result, nil

@@ -29,6 +29,7 @@ type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
+	BatchAPIEnabled              bool   `json:"batchAPIEnabled"`
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
@@ -325,4 +326,68 @@ type Resources struct {
 type Workspaces struct {
 	DenyTables []string `json:"denyTables"`
 	ResourceId string   `json:"resourceId"`
+}
+
+// Batch API Types
+
+// AzureMonitorBatchRequest represents the request body for the batch API
+type AzureMonitorBatchRequest struct {
+	ResourceIds []string `json:"resourceids"`
+}
+
+// AzureMonitorBatchResponse is the json response from the Azure Monitor Batch API
+type AzureMonitorBatchResponse struct {
+	Values []AzureMonitorBatchValue `json:"values"`
+}
+
+// AzureMonitorBatchValue represents a single resource's metrics in the batch response
+type AzureMonitorBatchValue struct {
+	ResourceId     string `json:"resourceid"`
+	StartTime      string `json:"starttime"`
+	EndTime        string `json:"endtime"`
+	Interval       string `json:"interval"`
+	Namespace      string `json:"namespace"`
+	ResourceRegion string `json:"resourceregion"`
+	Value          []struct {
+		Name struct {
+			Value          string `json:"value"`
+			LocalizedValue string `json:"localizedValue"`
+		} `json:"name"`
+		Unit       string `json:"unit"`
+		Timeseries []struct {
+			Metadatavalues []struct {
+				Name struct {
+					Value          string `json:"value"`
+					LocalizedValue string `json:"localizedValue"`
+				} `json:"name"`
+				Value string `json:"value"`
+			} `json:"metadatavalues"`
+			Data []struct {
+				TimeStamp time.Time `json:"timeStamp"`
+				Average   *float64  `json:"average,omitempty"`
+				Total     *float64  `json:"total,omitempty"`
+				Count     *float64  `json:"count,omitempty"`
+				Maximum   *float64  `json:"maximum,omitempty"`
+				Minimum   *float64  `json:"minimum,omitempty"`
+			} `json:"data"`
+		} `json:"timeseries"`
+		ErrorCode    string `json:"errorCode"`
+		ErrorMessage string `json:"errorMessage,omitempty"`
+	} `json:"value"`
+}
+
+// BatchQueryGroup represents a group of queries that can be batched together
+type BatchQueryGroup struct {
+	Region       string
+	Subscription string
+	Namespace    string
+	MetricNames  []string
+	TimeRange    backend.TimeRange
+	Interval     string
+	Aggregation  string
+	Filter       string
+	Top          string
+	OrderBy      string
+	ResourceIds  []string
+	Queries      []*AzureMonitorQuery
 }
