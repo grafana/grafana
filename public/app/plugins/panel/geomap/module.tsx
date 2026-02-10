@@ -56,7 +56,7 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       category,
       path: 'view.dashboardVariable',
       description: 'Store view bounds in a dashboard variable for use in queries',
-      name: 'Enable dashboard variable',
+      name: 'Sync view to dashboard variable',
       defaultValue: false,
     });
 
