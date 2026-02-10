@@ -131,6 +131,7 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:      cmd.UserId,
+		UserUID:     cmd.UserUID,
 		AuthModule:  cmd.AuthModule,
 		AuthId:      cmd.AuthId,
 		ExternalUID: cmd.ExternalUID,

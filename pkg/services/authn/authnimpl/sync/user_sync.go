@@ -439,7 +439,7 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
 }
 
-func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
+func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, identity *authn.Identity, createConnection bool) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.upsertAuthConnection")
 	defer span.End()
 
@@ -452,7 +452,8 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	// changing to new auth client
 	if createConnection {
 		setAuthInfoCmd := &login.SetAuthInfoCommand{
-			UserId:     userID,
+			UserId:     usr.ID,
+			UserUID:    usr.UID,
 			AuthModule: identity.AuthenticatedBy,
 			AuthId:     identity.AuthID,
 		}
@@ -465,7 +466,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	}
 
 	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
-		UserId:     userID,
+		UserId:     usr.ID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
 	}
@@ -594,7 +595,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		}
 	}
 
-	return s.upsertAuthConnection(ctx, usr.ID, id, needsConnectionCreation)
+	return s.upsertAuthConnection(ctx, usr, id, needsConnectionCreation)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
@@ -631,7 +632,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		return nil, err
 	}
 
-	if err := s.upsertAuthConnection(ctx, usr.ID, id, true); err != nil {
+	if err := s.upsertAuthConnection(ctx, usr, id, true); err != nil {
 		return nil, err
 	}
 
