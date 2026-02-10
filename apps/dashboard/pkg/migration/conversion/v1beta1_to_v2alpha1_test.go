@@ -132,7 +132,6 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
-			// Same condition as frontend (SceneQueryRunner): use panel when query has no ref, or when
 			// query ref != panel ref and panel is not mixed and query is not expression.
 			name: "panel ref used when query ref differs from panel ref (panel not mixed, query not expression)",
 			createV1beta1: func() *dashv1.Dashboard {
@@ -470,7 +469,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 						totalQueries += len(element.PanelKind.Spec.Data.Spec.Queries)
 					}
 				}
-				assert.Equal(t, 3, totalQueries, "All 3 queries should be preserved")
+				assert.Equal(t, 3, totalQueries, "all 3 queries should be preserved")
 			},
 		},
 	}
