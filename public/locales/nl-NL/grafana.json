@@ -10671,6 +10671,16 @@
       "message-same-name-general": "Er bestaat al een dashboard of een map met dezelfde naam in de hoofdmap"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
   },
@@ -11511,9 +11521,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Geen organisaties gevonden",
     "select-placeholder": "Organisatie selecteren"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12665,12 +12672,9 @@
       "error-starting-job": "Er is een fout opgetreden bij het starten van de taak"
     },
     "sync-repository": {
-      "body-edit-configuration": "De configuratie bewerken",
-      "button-edit": "Bewerken",
       "error-pulling-resources": "Er is een fout opgetreden bij het ophalen van de bronnen",
       "pull": "Pull",
       "success-pull-started": "Pull is gestart",
-      "title-pull-not-enabled": "Pull is niet ingeschakeld",
       "tooltip-unhealthy-repository": "Kan geen ongezonde repository ophalen"
     },
     "synchronize-step": {
@@ -12922,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Querynaam bewerken"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(Tracerings-id: {{traceId}})"
     },
     "query-group": {
@@ -13041,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14249,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Geen gegevens gevonden in reactie"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {
