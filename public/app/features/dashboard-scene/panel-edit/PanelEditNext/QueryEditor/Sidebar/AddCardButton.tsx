@@ -22,7 +22,6 @@ function isExpressionType(
   return typeof item.value === 'string' && item.value in EXPRESSION_ICON_MAP;
 }
 
-/** The various menus when adding a card. */
 type MenuView = 'main' | 'expressionTypes';
 
 interface AddCardButtonProps {
@@ -30,10 +29,6 @@ interface AddCardButtonProps {
   afterRefId: string;
 }
 
-/**
- * A plus ("+") icon button with dropdown menu for adding queries, saved
- * queries, or expressions below a given card in the sidebar.
- */
 export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
