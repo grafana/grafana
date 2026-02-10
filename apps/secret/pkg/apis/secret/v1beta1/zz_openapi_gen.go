@@ -12,10 +12,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		KeeperAWSAccessKey{}.OpenAPIModelName():             schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref),
 		KeeperAWSAssumeRole{}.OpenAPIModelName():            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
 		KeeperAWSConfig{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
-		KeeperAzureConfig{}.OpenAPIModelName():              schema_pkg_apis_secret_v1beta1_KeeperAzureConfig(ref),
 		KeeperCredentialValue{}.OpenAPIModelName():          schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref),
-		KeeperGCPConfig{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_KeeperGCPConfig(ref),
-		KeeperHashiCorpConfig{}.OpenAPIModelName():          schema_pkg_apis_secret_v1beta1_KeeperHashiCorpConfig(ref),
 		KeeperList{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperList(ref),
 		KeeperSpec{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperSpec(ref),
 		KeeperStatus{}.OpenAPIModelName():                   schema_pkg_apis_secret_v1beta1_KeeperStatus(ref),
@@ -168,48 +165,6 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_secret_v1beta1_KeeperAzureConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"keyVaultName": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"tenantID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"clientID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"clientSecret": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(KeeperCredentialValue{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"keyVaultName", "tenantID", "clientID", "clientSecret"},
-			},
-		},
-		Dependencies: []string{
-			KeeperCredentialValue{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -224,80 +179,9 @@ func schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"valueFromEnv": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The value is taken from the environment variable.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"valueFromConfig": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The value is taken from the Grafana config file.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperGCPConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"projectID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"credentialsFile": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"projectID", "credentialsFile"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperHashiCorpConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"address": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"token": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(KeeperCredentialValue{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"address", "token"},
-			},
-		},
-		Dependencies: []string{
-			KeeperCredentialValue{}.OpenAPIModelName()},
 	}
 }
 
@@ -376,45 +260,12 @@ func schema_pkg_apis_secret_v1beta1_KeeperSpec(ref common.ReferenceCallback) com
 							Ref:         ref(KeeperAWSConfig{}.OpenAPIModelName()),
 						},
 					},
-					"azure": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Azure Keeper Configuration.",
-							Ref:         ref(KeeperAzureConfig{}.OpenAPIModelName()),
-						},
-					},
-					"gcp": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "GCP Keeper Configuration.",
-							Ref:         ref(KeeperGCPConfig{}.OpenAPIModelName()),
-						},
-					},
-					"hashiCorpVault": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "HashiCorp Vault Keeper Configuration.",
-							Ref:         ref(KeeperHashiCorpConfig{}.OpenAPIModelName()),
-						},
-					},
 				},
 				Required: []string{"description"},
 			},
 		},
 		Dependencies: []string{
-			KeeperAWSConfig{}.OpenAPIModelName(), KeeperAzureConfig{}.OpenAPIModelName(), KeeperGCPConfig{}.OpenAPIModelName(), KeeperHashiCorpConfig{}.OpenAPIModelName()},
+			KeeperAWSConfig{}.OpenAPIModelName()},
 	}
 }
 

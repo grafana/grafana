@@ -12,68 +12,27 @@ KeeperSpec: {
 	// +structType=atomic
 	// +optional
 	aws?: #AWSConfig
-
-	// Azure Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	azure?: #AzureConfig
-
-	// GCP Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	gcp?: #GCPConfig
-
-	// HashiCorp Vault Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	hashiCorpVault?: #HashiCorpConfig
 }
 
 #AWSConfig: {
-  region:          string
-  accessKey?:      #AWSAccessKey
-  assumeRole?:     #AWSAssumeRole
-	kmsKeyID?:       string
+	region:      string
+	accessKey?:  #AWSAccessKey
+	assumeRole?: #AWSAssumeRole
+	kmsKeyID?:   string
 }
 
 #AWSAccessKey: {
-  accessKeyID:     #CredentialValue
+	accessKeyID:     #CredentialValue
 	secretAccessKey: #CredentialValue
 }
 
 #AWSAssumeRole: {
-  assumeRoleArn: string
-  externalID:    string
-}
-
-#AzureConfig: {
-	keyVaultName: string
-	tenantID:     string
-	clientID:     string
-	clientSecret: #CredentialValue
-}
-
-#GCPConfig: {
-	projectID:       string
-	credentialsFile: string
-}
-
-#HashiCorpConfig: {
-	address: string
-	token:   #CredentialValue
+	assumeRoleArn: string
+	externalID:    string
 }
 
 #CredentialValue: {
 	// The name of the secure value that holds the actual value.
 	// +optional
 	secureValueName: string
-
-	// The value is taken from the environment variable.
-	// +optional
-	valueFromEnv: string
-
-	// The value is taken from the Grafana config file.
-	// TODO: how do we explain that this is a path to the config file?
-	// +optional
-	valueFromConfig: string
 }

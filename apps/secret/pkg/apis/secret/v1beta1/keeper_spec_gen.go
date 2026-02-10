@@ -34,13 +34,6 @@ type KeeperCredentialValue struct {
 	// The name of the secure value that holds the actual value.
 	// +optional
 	SecureValueName string `json:"secureValueName"`
-	// The value is taken from the environment variable.
-	// +optional
-	ValueFromEnv string `json:"valueFromEnv"`
-	// The value is taken from the Grafana config file.
-	// TODO: how do we explain that this is a path to the config file?
-	// +optional
-	ValueFromConfig string `json:"valueFromConfig"`
 }
 
 // NewKeeperCredentialValue creates a new KeeperCredentialValue object.
@@ -60,45 +53,6 @@ func NewKeeperAWSAssumeRole() *KeeperAWSAssumeRole {
 }
 
 // +k8s:openapi-gen=true
-type KeeperAzureConfig struct {
-	KeyVaultName string                `json:"keyVaultName"`
-	TenantID     string                `json:"tenantID"`
-	ClientID     string                `json:"clientID"`
-	ClientSecret KeeperCredentialValue `json:"clientSecret"`
-}
-
-// NewKeeperAzureConfig creates a new KeeperAzureConfig object.
-func NewKeeperAzureConfig() *KeeperAzureConfig {
-	return &KeeperAzureConfig{
-		ClientSecret: *NewKeeperCredentialValue(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type KeeperGCPConfig struct {
-	ProjectID       string `json:"projectID"`
-	CredentialsFile string `json:"credentialsFile"`
-}
-
-// NewKeeperGCPConfig creates a new KeeperGCPConfig object.
-func NewKeeperGCPConfig() *KeeperGCPConfig {
-	return &KeeperGCPConfig{}
-}
-
-// +k8s:openapi-gen=true
-type KeeperHashiCorpConfig struct {
-	Address string                `json:"address"`
-	Token   KeeperCredentialValue `json:"token"`
-}
-
-// NewKeeperHashiCorpConfig creates a new KeeperHashiCorpConfig object.
-func NewKeeperHashiCorpConfig() *KeeperHashiCorpConfig {
-	return &KeeperHashiCorpConfig{
-		Token: *NewKeeperCredentialValue(),
-	}
-}
-
-// +k8s:openapi-gen=true
 type KeeperSpec struct {
 	// Short description for the Keeper.
 	// +k8s:validation:minLength=1
@@ -108,18 +62,6 @@ type KeeperSpec struct {
 	// +structType=atomic
 	// +optional
 	Aws *KeeperAWSConfig `json:"aws,omitempty"`
-	// Azure Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	Azure *KeeperAzureConfig `json:"azure,omitempty"`
-	// GCP Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	Gcp *KeeperGCPConfig `json:"gcp,omitempty"`
-	// HashiCorp Vault Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	HashiCorpVault *KeeperHashiCorpConfig `json:"hashiCorpVault,omitempty"`
 }
 
 // NewKeeperSpec creates a new KeeperSpec object.
@@ -137,15 +79,6 @@ func (KeeperCredentialValue) OpenAPIModelName() string {
 }
 func (KeeperAWSAssumeRole) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAWSAssumeRole"
-}
-func (KeeperAzureConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAzureConfig"
-}
-func (KeeperGCPConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperGCPConfig"
-}
-func (KeeperHashiCorpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperHashiCorpConfig"
 }
 func (KeeperSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperSpec"
