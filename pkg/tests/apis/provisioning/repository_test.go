@@ -339,6 +339,35 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name: "should accept GitHub Enterprise URL",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-github-enterprise",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "GitHub Enterprise Repository",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url":    "https://github.enterprise.example.com/org/repo",
+						"branch": "main",
+					},
+					"workflows": []string{},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": "someToken",
+					},
+				},
+			}},
+		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})

@@ -42,3 +42,10 @@ const (
 	LogsDrilldownStatusOperatorStateStateInProgress LogsDrilldownStatusOperatorStateState = "in_progress"
 	LogsDrilldownStatusOperatorStateStateFailed     LogsDrilldownStatusOperatorStateState = "failed"
 )
+
+func (LogsDrilldownstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownstatusOperatorState"
+}
+func (LogsDrilldownStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownStatus"
+}

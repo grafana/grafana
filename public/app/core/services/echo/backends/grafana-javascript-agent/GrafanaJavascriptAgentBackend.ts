@@ -77,7 +77,6 @@ export class GrafanaJavascriptAgentBackend
       consoleInstrumentation: {
         serializeErrors: true,
       },
-      trackWebVitalsAttribution: options.webVitalsAttribution,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',

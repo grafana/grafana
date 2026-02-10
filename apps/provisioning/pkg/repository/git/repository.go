@@ -82,6 +82,64 @@ func (r *gitRepository) SetBranch(branch string) {
 	r.gitConfig.Branch = branch
 }
 
+func (r *gitRepository) GetCurrentBranch() string {
+	return r.gitConfig.Branch
+}
+
+func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+	ctx, _ = r.withGitContext(ctx, "")
+
+	// Get all refs to find the default branch
+	refs, err := r.client.ListRefs(ctx)
+	if err != nil {
+		return "", fmt.Errorf("list refs: %w", err)
+	}
+
+	var hasMain, hasMaster bool
+	var firstBranch string
+
+	// Single pass through refs to find main, master, or first branch alphabetically
+	for _, ref := range refs {
+		if !strings.HasPrefix(ref.Name, "refs/heads/") {
+			continue
+		}
+
+		branchName := strings.TrimPrefix(ref.Name, "refs/heads/")
+
+		// Check for main or master
+		switch branchName {
+		case "main":
+			hasMain = true
+		case "master":
+			hasMaster = true
+		}
+
+		// Track first branch alphabetically as fallback
+		if firstBranch == "" || branchName < firstBranch {
+			firstBranch = branchName
+		}
+	}
+
+	// No branches found
+	if firstBranch == "" {
+		return "", fmt.Errorf("no branches found in repository")
+	}
+
+	// Prefer main, then master, then first branch alphabetically
+	if hasMain {
+		return "main", nil
+	}
+	if hasMaster {
+		return "master", nil
+	}
+
+	// If neither main nor master exists, return the first branch alphabetically.
+	// This provides deterministic behavior when working with repositories that use
+	// non-standard default branch names (e.g., "develop", "trunk", custom names).
+	// Users can always change the branch afterward or specify it directly in the repository configuration.
+	return firstBranch, nil
+}
+
 func (r *gitRepository) Config() *provisioning.Repository {
 	return r.config
 }
