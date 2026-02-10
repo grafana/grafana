@@ -311,7 +311,7 @@ receivers:
 					},
 				},
 			},
-			expectedError: "invalid merge options",
+			expectedError: "identifier is required",
 		},
 		{
 			name: "bad matcher type",
@@ -330,7 +330,7 @@ receivers:
 					},
 				},
 			},
-			expectedError: "only equality matchers are allowed",
+			expectedError: "only matchers with type equal are supported",
 		},
 	}
 

@@ -157,6 +157,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 					}
 				}
 				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
+				b.reportStatus(ctx, *statusCode)
 			},
 
 			func(err error) {
@@ -168,6 +169,18 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				}
 
 				span.RecordError(err)
+
+				statusCode := 0
+				var k8sErr *errorsK8s.StatusError
+				if errors.As(err, &k8sErr) {
+					statusCode = int(k8sErr.Status().Code)
+				} else {
+					// we do not know what kind of error it is,
+					// we do not know what status code will get assigned to it,
+					// so we use the zero to indicate the unknown.
+					connectLogger.Debug("Connect: unknown error returned", "error", err)
+				}
+				b.reportStatus(ctx, statusCode)
 			})
 
 		raw := &query.QueryDataRequest{}
