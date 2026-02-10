@@ -120,18 +120,18 @@ This section shows how to configure Okta to send group memberships in the SAML a
 1. Scroll to **GROUP ATTRIBUTE STATEMENTS**.
 1. Add a group attribute with the following settings:
 
-   | Field      | Value           |
-   | ---------- | --------------- |
-   | **Name**   | `Group`         |
-   | **Filter** | Matches regex   |
-   | **Value**  | `.*`            |
+   | Field      | Value         |
+   | ---------- | ------------- |
+   | **Name**   | `Group`       |
+   | **Filter** | Matches regular expression |
+   | **Value**  | `.*`          |
 
 1. Click **Save**.
 
 This configuration sends all Okta groups the user belongs to in the SAML assertion under the `Group` attribute.
 
 {{< admonition type="note" >}}
-To send only specific groups, change the regex filter. For example, `grafana-.*` sends only groups starting with "grafana-".
+To send only specific groups, change the regular expression filter. For example, `grafana-.*` sends only groups starting with `grafana-`.
 {{< /admonition >}}
 
 ### Step 2: Configure Grafana to map groups to roles
