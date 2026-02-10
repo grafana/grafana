@@ -253,15 +253,30 @@ function getStyles(
       position: 'relative',
       marginInline: theme.spacing(2),
 
-      // Invisible pseudo-element extends the hover zone to cover the "+" button
-      // which sits outside the card's bottom-left corner.
+      // Two slim pseudo-element strips extend the hover zone to the left and
+      // below the card, covering the path to the "+" button without overlapping
+      // the card's own clickable surface (which would interfere with selecting
+      // the query card).
+
+      // Left strip: narrow gutter running along the card's left edge and below.
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: '0%',
+        left: `calc(-1 * ${theme.spacing(1.5)})`,
+        width: theme.spacing(1.5),
+        height: `calc(100% + ${theme.spacing(1.5)})`,
+        // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone
+      },
+
+      // Bottom strip: runs along the card's bottom edge extending to the left.
       '&::after': {
         content: '""',
         position: 'absolute',
-        bottom: '-1em',
+        top: '100%',
         left: `calc(-1 * ${theme.spacing(1.5)})`,
         width: `calc(100% + ${theme.spacing(1.5)})`,
-        height: `calc(100% + 1em)`,
+        height: theme.spacing(1.5),
         // background: 'hsla(333, 83%, 33%, 0.5)', // uncomment to debug hover zone
       },
 
