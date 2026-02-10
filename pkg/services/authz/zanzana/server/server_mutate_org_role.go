@@ -69,7 +69,7 @@ func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *storeInf
 			Object: zanzana.NewTupleEntry(zanzana.TypeRole, "", ""),
 		},
 	}
-	res, err := s.openfga.Read(ctx, readReq)
+	res, err := s.openFGAClient.Read(ctx, readReq)
 	if err != nil {
 		return nil, nil, err
 	}

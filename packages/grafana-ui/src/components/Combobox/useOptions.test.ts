@@ -69,6 +69,23 @@ describe('useOptions', () => {
     ]);
   });
 
+  it('should use custom description when provided', () => {
+    const options = [
+      { label: 'Apple', value: 'apple' },
+      { label: 'Carrot', value: 'carrot' },
+    ];
+    const { result } = renderHook(() => useOptions(options, true, 'Create new item'));
+
+    act(() => {
+      result.current.updateOptions('car');
+    });
+
+    expect(result.current.options).toEqual([
+      { label: 'car', value: 'car', description: 'Create new item' },
+      { label: 'Carrot', value: 'carrot' },
+    ]);
+  });
+
   it('should not add a custom value if it already exists', () => {
     const options = [
       { label: 'Apple', value: 'apple' },

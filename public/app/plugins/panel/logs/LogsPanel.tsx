@@ -179,6 +179,7 @@ export const LogsPanel = ({
     noInteractions,
     timestampResolution,
     showLogAttributes,
+    unwrappedColumns,
     ...options
   },
   height,
@@ -572,8 +573,6 @@ export const LogsPanel = ({
           logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
-          onClickShowField={showField}
-          onClickHideField={hideField}
         />
       )}
       {config.featureToggles.newLogsPanel && (
@@ -636,6 +635,7 @@ export const LogsPanel = ({
               timeRange={data.timeRange}
               timestampResolution={timestampResolution}
               timeZone={timeZone}
+              unwrappedColumns={unwrappedColumns}
               wrapLogMessage={wrapLogMessage}
             />
           )}

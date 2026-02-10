@@ -1,19 +1,19 @@
 module github.com/grafana/grafana/apps/alerting/historian
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e
-	github.com/grafana/grafana-app-sdk v0.49.0
+	github.com/grafana/grafana-app-sdk v0.50.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
-	k8s.io/apimachinery v0.34.3
+	k8s.io/apimachinery v0.35.0
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
 )
 
@@ -67,7 +67,6 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
@@ -88,7 +87,6 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
@@ -105,8 +103,6 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
-	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -168,6 +164,7 @@ require (
 	golang.org/x/tools v0.41.0 // indirect
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
+	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
 	google.golang.org/grpc v1.78.0 // indirect
@@ -177,9 +174,9 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.3 // indirect
-	k8s.io/apiextensions-apiserver v0.34.3 // indirect
-	k8s.io/client-go v0.34.3 // indirect
+	k8s.io/api v0.35.0 // indirect
+	k8s.io/apiextensions-apiserver v0.35.0 // indirect
+	k8s.io/client-go v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect

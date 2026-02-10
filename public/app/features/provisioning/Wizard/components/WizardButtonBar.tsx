@@ -23,7 +23,7 @@ export function WizardButtonBar({
       <Button variant="secondary" onClick={onPrevious} disabled={isPreviousDisabled}>
         {previousText}
       </Button>
-      <Button type="submit" disabled={isNextDisabled}>
+      <Button type="submit" disabled={isNextDisabled || isSubmitting}>
         {isSubmitting ? t('provisioning.wizard-content.button-submitting', 'Submitting...') : nextText}
       </Button>
     </Stack>

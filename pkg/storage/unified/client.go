@@ -7,6 +7,9 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/fullstorydev/grpchan"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -232,6 +235,42 @@ func newClient(opts options.StorageOptions,
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+	var searchClient resourcepb.ResourceIndexClient
+	var err error
+	if cfg.EnableSearchClient {
+		searchClient, err = NewSearchClient(cfg, features)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create search client: %w", err)
+		}
+	}
+	return searchClient, nil
+}
+
+func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
+	grpcClientKeepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0)
+
+	if searchServerAddress == "" {
+		return nil, fmt.Errorf("expecting search_server_address to be set for search client under grafana-apiserver section")
+	}
+
+	var (
+		conn    grpc.ClientConnInterface
+		err     error
+		metrics = newClientMetrics(prometheus.NewRegistry())
+	)
+
+	conn, err = newGrpcConn(searchServerAddress, metrics, features, grpcClientKeepaliveTime)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return resourcepb.NewResourceIndexClient(cc), nil
 }
 
 func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles, clientKeepaliveTime time.Duration) (grpc.ClientConnInterface, error) {

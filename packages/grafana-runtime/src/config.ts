@@ -85,6 +85,7 @@ export class GrafanaBootConfig {
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
+  /** @deprecated it will be removed in a future release, use isPanelPluginInstalled, getPanelPluginVersion or getListedPanelPluginIds instead */
   panels: { [key: string]: PanelPluginMeta } = {};
   /** @deprecated it will be removed in a future release, use isAppPluginInstalled or getAppPluginVersion instead */
   apps: Record<string, AppPluginConfigGrafanaData> = {};
@@ -161,7 +162,6 @@ export class GrafanaBootConfig {
     performanceInstrumentalizationEnabled: false,
     cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
-    webVitalsAttribution: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
   };
@@ -176,6 +176,7 @@ export class GrafanaBootConfig {
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  awsPerDatasourceHTTPProxyEnabled = false;
   azure: AzureSettingsGrafanaData = {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
@@ -323,7 +324,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
   // Although most flags can not be changed from the URL in production,
   // some of them are safe (and useful!) to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI', 'dashboardSceneSolo']);
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {

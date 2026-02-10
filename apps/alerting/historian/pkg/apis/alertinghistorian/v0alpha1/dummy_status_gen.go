@@ -42,3 +42,10 @@ const (
 	DummyStatusOperatorStateStateInProgress DummyStatusOperatorStateState = "in_progress"
 	DummyStatusOperatorStateStateFailed     DummyStatusOperatorStateState = "failed"
 )
+
+func (DummystatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummystatusOperatorState"
+}
+func (DummyStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatus"
+}

@@ -249,17 +249,25 @@ export function TableNG(props: TableNGProps) {
     width: availableWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0,
+    headerHeight: hasHeader ? TABLE.HEADER_HEIGHT : 0,
     rowHeight,
   });
 
+  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
-    if (initialRowIndex && gridRef.current?.scrollToCell) {
+    if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
+      const rowIdx = sortedRows.findIndex((row) => row.__index === scrollToIndex);
       gridRef.current.scrollToCell({
-        rowIdx: initialRowIndex,
+        rowIdx,
       });
+      // Select the first cell so there's something visually different about the row
+      gridRef.current.selectCell({
+        rowIdx,
+        idx: 0,
+      });
+      setScrollToIndex(undefined);
     }
-  }, [initialRowIndex]);
+  }, [scrollToIndex, sortedRows]);
 
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];
@@ -329,7 +337,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
         summaryRowHeight: footerHeight,
         headerRowClass: styles.headerRow,
-        headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
+        headerRowHeight: noHeader ? 0 : TABLE.HEADER_HEIGHT,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
@@ -700,10 +708,14 @@ export function TableNG(props: TableNGProps) {
               field={field}
               filter={filter}
               setFilter={setFilter}
+              disableKeyboardEvents={disableKeyboardEvents}
               crossFilterOrder={crossFilterOrder}
               crossFilterRows={crossFilterRows}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
+              selectFirstCell={() => {
+                gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+              }}
             />
           ),
           renderSummaryCell: () => (
@@ -723,29 +735,30 @@ export function TableNG(props: TableNGProps) {
       return result;
     },
     [
+      theme,
+      onCellFilterAdded,
+      rowHeight,
+      maxRowHeight,
       applyToRowBgFn,
+      data,
+      frozenColumns,
+      numFrozenColsFullyInView,
+      getCellColorInlineStyles,
+      rowHeightFn,
+      timeRange,
+      getCellActions,
+      disableSanitizeHtml,
+      getTextColorForBackground,
+      rows,
+      filter,
+      setFilter,
+      disableKeyboardEvents,
       crossFilterOrder,
       crossFilterRows,
-      data,
-      disableSanitizeHtml,
-      filter,
-      footers,
-      frozenColumns,
-      getCellActions,
-      getCellColorInlineStyles,
-      getTextColorForBackground,
-      isUniformFooter,
-      maxRowHeight,
-      numFrozenColsFullyInView,
-      onCellFilterAdded,
-      rows,
-      rowHeight,
-      rowHeightFn,
-      setFilter,
-      sortedRows,
       showTypeIcons,
-      theme,
-      timeRange,
+      sortedRows,
+      footers,
+      isUniformFooter,
     ]
   );
 
@@ -846,16 +859,21 @@ export function TableNG(props: TableNGProps) {
             preventGridDefault();
           }
         }}
-        onCellKeyDown={
-          hasNestedFrames || disableKeyboardEvents
-            ? (_, event) => {
-                if (disableKeyboardEvents || event.isDefaultPrevented()) {
-                  // skip parent grid keyboard navigation if nested grid handled it
-                  event.preventGridDefault();
-                }
-              }
-            : null
-        }
+        onCellKeyDown={({ column, row }, event) => {
+          // if top-left cell, use default browser tabbing and
+          if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+            event.preventGridDefault();
+            gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 }); // select the far right cell of the header
+            return;
+          }
+
+          if (
+            disableKeyboardEvents ||
+            (hasNestedFrames && event.isDefaultPrevented()) // skip parent grid keyboard navigation if nested grid handled it
+          ) {
+            event.preventGridDefault();
+          }
+        }}
         renderers={{ renderRow, renderCell: renderCellRoot }}
       />
 

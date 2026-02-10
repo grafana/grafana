@@ -6,16 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/aws/smithy-go"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-
+	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"golang.org/x/sync/errgroup"
@@ -30,7 +29,23 @@ const (
 	defaultLogGroupLimit        = int32(50)
 	logIdentifierInternal       = "__log__grafana_internal__"
 	logStreamIdentifierInternal = "__logstream__grafana_internal__"
+	logGroupsMacro              = "$__logGroups"
+
+	// Only for CWLI queries.
+	// The fields @log and @logStream are always included in the results of a user's query
+	// so that a row's context can be retrieved later if necessary.
+	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
+	// CloudWatch wouldn't consider a query using a non-aliased @log/@logStream valid.
+	logContextFieldsClause = "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal
+
+	// SOURCE command limits as defined by AWS CloudWatch Logs Insights
+	// See: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html
+	maxSourceLogGroupPrefixes   = 5
+	minSourceLogGroupPrefixLen  = 3
+	maxSourceAccountIdentifiers = 20
 )
+
+var sourceCommandRegex = regexp.MustCompile(`(?i)^\s*source\s+`)
 
 type AWSError struct {
 	Code    string
@@ -189,15 +204,33 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 		logsQuery.QueryLanguage = &cwli
 	}
 
-	finalQueryString := logsQuery.QueryString
-	// Only for CWLI queries
-	// The fields @log and @logStream are always included in the results of a user's query
-	// so that a row's context can be retrieved later if necessary.
-	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
-	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
-	if *logsQuery.QueryLanguage == dataquery.LogsQueryLanguageCWLI {
-		finalQueryString = "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " +
-			logStreamIdentifierInternal + "|" + logsQuery.QueryString
+	region := logsQuery.Region
+	if region == "" || region == defaultRegion {
+		region = ds.Settings.Region
+	}
+
+	isMonitoringAccount := false
+	if features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) && region != "" {
+		monitoringAccountStatus, err := ds.isMonitoringAccount(ctx, region)
+		if err != nil {
+			ds.logger.FromContext(ctx).Debug("failed to determine monitoring account status", "err", err)
+		} else {
+			isMonitoringAccount = monitoringAccountStatus
+		}
+	}
+
+	logGroupIdentifiers := buildLogGroupIdentifiers(logsQuery.LogGroups, isMonitoringAccount)
+
+	isCWLIQuery := *logsQuery.QueryLanguage == dataquery.LogsQueryLanguageCWLI
+	finalQueryString, usesSourceCommand, err := buildFinalQueryString(logsQuery, isMonitoringAccount, isCWLIQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	// Expand $__logGroups macro for SQL queries
+	finalQueryString, err = expandLogGroupsMacro(*logsQuery.QueryLanguage, finalQueryString, logGroupIdentifiers)
+	if err != nil {
+		return nil, err
 	}
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
@@ -211,49 +244,18 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 		QueryString: aws.String(finalQueryString),
 	}
 
-	// log group identifiers can be left out if the query is an SQL query
-	if *logsQuery.QueryLanguage != dataquery.LogsQueryLanguageSQL {
-		useLogGroupIdentifiers := false
-		logGroupsFromQuery := len(logsQuery.LogGroups) > 0
-		if logGroupsFromQuery && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
-			region := logsQuery.Region
-			if region == "" || region == defaultRegion {
-				region = ds.Settings.Region
-			}
-			if region != "" {
-				isMonitoringAccount, err := ds.isMonitoringAccount(ctx, region)
-				if err != nil {
-					ds.logger.FromContext(ctx).Debug("failed to determine monitoring account status", "err", err)
-				} else if isMonitoringAccount {
-					// monitoring accounts require querying by log group identifiers because log group names are not unique across accounts.
-					var logGroupIdentifiers []string
-					for _, lg := range logsQuery.LogGroups {
-						// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
-						arn := strings.TrimSuffix(lg.Arn, "*")
-						logGroupIdentifiers = append(logGroupIdentifiers, arn)
-					}
-					startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
-					useLogGroupIdentifiers = true
-				}
-			}
-		}
-
-		if !useLogGroupIdentifiers {
+	// When using SOURCE command (namePrefix or allLogGroups mode), log groups are specified
+	// in the query string, so we should NOT set LogGroupNames or LogGroupIdentifiers
+	// log group identifiers can be left out if the query is an SQL query or uses SOURCE command
+	if *logsQuery.QueryLanguage != dataquery.LogsQueryLanguageSQL && !usesSourceCommand {
+		useLogGroupIdentifiers := len(logsQuery.LogGroups) > 0 && isMonitoringAccount
+		if useLogGroupIdentifiers {
+			startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
+		} else {
 			// even though logsQuery.LogGroupNames is deprecated, we still need to support it for backwards compatibility and alert queries
 			startQueryInput.LogGroupNames = append([]string(nil), logsQuery.LogGroupNames...)
-			if len(startQueryInput.LogGroupNames) == 0 && logGroupsFromQuery {
-				// deduplicate log group names because we only deduplicate log groups by their ARNs instead of their names when the query is created
-				seenLogGroupNames := make(map[string]struct{}, len(logsQuery.LogGroups))
-				for _, lg := range logsQuery.LogGroups {
-					if lg.Name == "" {
-						continue
-					}
-					if _, exists := seenLogGroupNames[lg.Name]; exists {
-						continue
-					}
-					seenLogGroupNames[lg.Name] = struct{}{}
-					startQueryInput.LogGroupNames = append(startQueryInput.LogGroupNames, lg.Name)
-				}
+			if len(startQueryInput.LogGroupNames) == 0 && len(logGroupIdentifiers) > 0 {
+				startQueryInput.LogGroupNames = logGroupIdentifiers
 			}
 		}
 	}
@@ -276,6 +278,96 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 		err = backend.DownstreamError(err)
 	}
 	return resp, err
+}
+
+func buildLogGroupIdentifiers(logGroups []dataquery.LogGroup, isMonitoringAccount bool) []string {
+	if len(logGroups) == 0 {
+		return nil
+	}
+
+	var logGroupIdentifiers []string
+	// Log queries should use ARNs when querying a monitoring account because log group names are not unique across accounts.
+	if isMonitoringAccount {
+		for _, lg := range logGroups {
+			if lg.Arn == "" {
+				continue
+			}
+			// The startQuery API does not support ARNs with a trailing * so we need to remove it.
+			trimmedArn := strings.TrimSuffix(lg.Arn, "*")
+			if trimmedArn == "" {
+				continue
+			}
+			logGroupIdentifiers = append(logGroupIdentifiers, trimmedArn)
+		}
+		return logGroupIdentifiers
+	}
+
+	// Deduplicate log group names because we only deduplicate log groups by their ARNs instead of their names when the query is created.
+	seen := make(map[string]struct{}, len(logGroups))
+	for _, lg := range logGroups {
+		if lg.Name == "" {
+			continue
+		}
+		if _, exists := seen[lg.Name]; !exists {
+			seen[lg.Name] = struct{}{}
+			logGroupIdentifiers = append(logGroupIdentifiers, lg.Name)
+		}
+	}
+	return logGroupIdentifiers
+}
+
+func buildFinalQueryString(logsQuery models.LogsQuery, isMonitoringAccount bool, isCWLIQuery bool) (string, bool, error) {
+	finalQueryString := logsQuery.QueryString
+	if !isCWLIQuery {
+		return finalQueryString, false, nil
+	}
+
+	usesNamePrefixScope := logsQuery.LogsQueryScope != nil && *logsQuery.LogsQueryScope == dataquery.LogsQueryScopeNamePrefix
+	usesAllLogGroupsScope := logsQuery.LogsQueryScope != nil && *logsQuery.LogsQueryScope == dataquery.LogsQueryScopeAllLogGroups
+	usesSourceCommand := usesNamePrefixScope || usesAllLogGroupsScope
+
+	if usesSourceCommand {
+		if containsSourceCommand(logsQuery.QueryString) {
+			return "", false, backend.DownstreamError(fmt.Errorf("query cannot contain SOURCE command when using Name prefix or All log groups mode"))
+		}
+
+		if usesNamePrefixScope {
+			if err := validateLogGroupPrefixes(logsQuery.LogGroupPrefixes); err != nil {
+				return "", false, backend.DownstreamError(err)
+			}
+		}
+
+		if err := validateAccountIdentifiers(logsQuery.SelectedAccountIds); err != nil {
+			return "", false, backend.DownstreamError(err)
+		}
+
+		includeAccounts := isMonitoringAccount && len(logsQuery.SelectedAccountIds) > 0
+
+		sourceClause := buildSourceClause(logsQuery, includeAccounts)
+		return sourceClause + " | " + logContextFieldsClause + "|" + logsQuery.QueryString, true, nil
+	}
+
+	finalQueryString = logContextFieldsClause + "|" + finalQueryString
+	return finalQueryString, false, nil
+}
+
+func expandLogGroupsMacro(queryLanguage dataquery.LogsQueryLanguage, queryString string, logGroupIdentifiers []string) (string, error) {
+	if queryLanguage != dataquery.LogsQueryLanguageSQL {
+		return queryString, nil
+	}
+	if !strings.Contains(queryString, logGroupsMacro) {
+		return queryString, nil
+	}
+	if len(logGroupIdentifiers) == 0 {
+		return "", backend.DownstreamError(fmt.Errorf("query contains %s but no log groups are selected", logGroupsMacro))
+	}
+
+	quoted := make([]string, len(logGroupIdentifiers))
+	for i, id := range logGroupIdentifiers {
+		quoted[i] = fmt.Sprintf("'%s'", id)
+	}
+	replacement := fmt.Sprintf("logGroups(logGroupIdentifier: [%s])", strings.Join(quoted, ", "))
+	return strings.Replace(queryString, logGroupsMacro, replacement, 1), nil
 }
 
 func (ds *DataSource) handleStartQuery(ctx context.Context, logsClient models.CWLogsClient,
@@ -416,4 +508,74 @@ func hasTimeField(frame *data.Frame) bool {
 		}
 	}
 	return false
+}
+
+// containsSourceCommand checks if the query string contains a SOURCE command
+func containsSourceCommand(queryString string) bool {
+	return sourceCommandRegex.MatchString(queryString)
+}
+
+// buildSourceClause constructs the SOURCE logGroups(...) clause for CWLI queries
+// includeAccounts controls whether account identifiers should be included (only valid for monitoring accounts)
+func buildSourceClause(logsQuery models.LogsQuery, includeAccounts bool) string {
+	var parts []string
+
+	// Only include namePrefix if we're in namePrefix mode (not allLogGroups mode)
+	// This ensures that when user switches from namePrefix to allLogGroups, leftover prefixes aren't included
+	isNamePrefixMode := logsQuery.LogsQueryScope != nil && *logsQuery.LogsQueryScope == dataquery.LogsQueryScopeNamePrefix
+
+	if isNamePrefixMode && len(logsQuery.LogGroupPrefixes) > 0 {
+		prefixes := formatStringArrayForSource(logsQuery.LogGroupPrefixes)
+		parts = append(parts, fmt.Sprintf("namePrefix: %s", prefixes))
+	}
+
+	// Add class only if not STANDARD which is the default behaviour if not specified
+	if logsQuery.LogGroupClass != nil && *logsQuery.LogGroupClass != dataquery.LogGroupClassSTANDARD {
+		parts = append(parts, fmt.Sprintf("class: ['%s']", *logsQuery.LogGroupClass))
+	}
+
+	if includeAccounts && len(logsQuery.SelectedAccountIds) > 0 {
+		accounts := formatStringArrayForSource(logsQuery.SelectedAccountIds)
+		parts = append(parts, fmt.Sprintf("accountIdentifier: %s", accounts))
+	}
+
+	if len(parts) == 0 {
+		// For allLogGroups mode with no additional filters, we still need a valid SOURCE clause
+		return "SOURCE logGroups()"
+	}
+
+	return fmt.Sprintf("SOURCE logGroups(%s)", strings.Join(parts, ", "))
+}
+
+func formatStringArrayForSource(arr []string) string {
+	quoted := make([]string, len(arr))
+	for i, s := range arr {
+		quoted[i] = fmt.Sprintf("'%s'", s)
+	}
+	return fmt.Sprintf("[%s]", strings.Join(quoted, ", "))
+}
+
+func validateLogGroupPrefixes(prefixes []string) error {
+	if len(prefixes) == 0 {
+		return fmt.Errorf("at least one log group prefix is required for Name prefix mode")
+	}
+	if len(prefixes) > maxSourceLogGroupPrefixes {
+		return fmt.Errorf("maximum of %d log group prefixes allowed, got %d", maxSourceLogGroupPrefixes, len(prefixes))
+	}
+	for _, prefix := range prefixes {
+		if len(prefix) < minSourceLogGroupPrefixLen {
+			return fmt.Errorf("log group prefix %q must be at least %d characters", prefix, minSourceLogGroupPrefixLen)
+		}
+		if strings.Contains(prefix, "*") {
+			return fmt.Errorf("log group prefix %q cannot contain wildcard character '*'", prefix)
+		}
+	}
+	return nil
+}
+
+func validateAccountIdentifiers(accounts []string) error {
+	if len(accounts) > maxSourceAccountIdentifiers {
+		return fmt.Errorf("maximum of %d account identifiers allowed, got %d", maxSourceAccountIdentifiers, len(accounts))
+	}
+	return nil
 }

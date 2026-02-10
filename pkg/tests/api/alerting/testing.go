@@ -1074,6 +1074,22 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	return sendRequestJSON[apimodels.AlertGroups](t, req, http.StatusOK)
 }
 
+// GetPrometheusRulesWithStatus fetches rules from the Prometheus-compatible rules API.
+func (a apiClient) GetPrometheusRulesWithStatus(t *testing.T) (apimodels.RuleResponse, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/prometheus/grafana/api/v1/rules", a.url), nil)
+	require.NoError(t, err)
+	return sendRequestJSON[apimodels.RuleResponse](t, req, http.StatusOK)
+}
+
+// GetPrometheusRules fetches rules from the Prometheus-compatible rules API, asserting success.
+func (a apiClient) GetPrometheusRules(t *testing.T) apimodels.RuleResponse {
+	t.Helper()
+	resp, status, body := a.GetPrometheusRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return resp
+}
+
 func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)

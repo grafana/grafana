@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
-	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
 )
 
 func (r ChannelRule) Valid() (bool, string) {
@@ -127,23 +126,6 @@ type WriteConfigs struct {
 
 type ChannelRules struct {
 	Rules []ChannelRule `json:"rules"`
-}
-
-func checkRulesValid(orgID int64, rules []ChannelRule) (ok bool, reason string) {
-	t := tree.New()
-	defer func() {
-		if r := recover(); r != nil {
-			reason = fmt.Sprintf("%v", r)
-			ok = false
-		}
-	}()
-	for _, rule := range rules {
-		if rule.OrgId == orgID || (rule.OrgId == 0 && orgID == 1) {
-			t.AddRoute("/"+rule.Pattern, struct{}{})
-		}
-	}
-	ok = true
-	return ok, reason
 }
 
 type ChannelRuleCreateCmd struct {

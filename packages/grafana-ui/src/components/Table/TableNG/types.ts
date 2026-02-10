@@ -40,13 +40,24 @@ export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
 
+export enum FilterOperator {
+  CONTAINS = 'Contains',
+  EQUALS = '=',
+  NOT_EQUALS = '!=',
+  GREATER = '>',
+  GREATER_OR_EQUAL = '>=',
+  LESS = '<',
+  LESS_OR_EQUAL = '<=',
+  EXPRESSION = 'Expression',
+}
+
 export type FilterType = Record<
   string,
   {
     filteredSet: Set<string>;
     filtered?: Array<SelectableValue<unknown>>;
     searchFilter?: string;
-    operator?: SelectableValue<string>;
+    operator?: SelectableValue<FilterOperator>;
   }
 >;
 

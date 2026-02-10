@@ -102,7 +102,7 @@ type TVirtualizedTraceViewOwnProps = {
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement | null>;
   datasourceType: string;
   datasourceUid: string;
   headerHeight: number;
