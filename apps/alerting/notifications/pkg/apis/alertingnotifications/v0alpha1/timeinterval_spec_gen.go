@@ -40,3 +40,12 @@ func NewTimeIntervalSpec() *TimeIntervalSpec {
 		TimeIntervals: []TimeIntervalInterval{},
 	}
 }
+func (TimeIntervalInterval) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalInterval"
+}
+func (TimeIntervalTimeRange) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalTimeRange"
+}
+func (TimeIntervalSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalSpec"
+}
