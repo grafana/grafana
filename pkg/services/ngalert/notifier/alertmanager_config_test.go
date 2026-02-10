@@ -25,7 +25,7 @@ func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {
   receiver: test-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, 999, extraConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, 999, extraConfig, false, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "failed to get current configuration")
 	})
@@ -45,8 +45,10 @@ receivers:
   - name: test-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, false)
+		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, false)
 		require.NoError(t, err)
+		require.Empty(t, renamed.Receivers, "no renaming should occur")
+		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
 		require.NoError(t, err)
@@ -79,7 +81,7 @@ receivers:
 		}
 
 		// Call with dryRun=true
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, true)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, true)
 		require.NoError(t, err)
 
 		// Verify configuration was NOT saved
@@ -105,7 +107,7 @@ receivers:
   - name: original-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig, false, false)
 		require.NoError(t, err)
 
 		// Now replace it
@@ -119,7 +121,7 @@ receivers:
   - name: updated-receiver`,
 		}
 
-		err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, updatedConfig, false, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, updatedConfig, false, false)
 		require.NoError(t, err)
 
 		// Verify only one config exists with updated content
@@ -150,7 +152,7 @@ receivers:
 			}`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, firstConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, firstConfig, false, false)
 		require.NoError(t, err)
 
 		secondConfig := definitions.ExtraConfiguration{
@@ -168,13 +170,13 @@ receivers:
 			}`,
 		}
 
-		err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig, false, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig, false, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "multiple extra configurations are not supported")
 		require.ErrorContains(t, err, "first-config")
 
 		t.Run("replaces if replace=true", func(t *testing.T) {
-			err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig, true, false)
+			_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, secondConfig, true, false)
 			require.NoError(t, err)
 
 			gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
@@ -220,7 +222,7 @@ receivers:
   - name: original-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig, false, false)
 		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
 	})
 }
@@ -243,8 +245,10 @@ receivers:
   - name: extra-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, false)
+		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, false)
 		require.NoError(t, err)
+		require.Empty(t, renamed.Receivers, "no renaming should occur")
+		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
 
 		// Verify extra config was saved
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
@@ -502,8 +506,10 @@ receivers:
   - name: test-receiver`,
 		}
 
-		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, false)
+		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig, false, false)
 		require.NoError(t, err)
+		require.Empty(t, renamed.Receivers, "no renaming should occur")
+		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
 		require.NoError(t, err)

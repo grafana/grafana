@@ -312,6 +312,22 @@ type ConvertPrometheusResponse struct {
 	Error     string `json:"error"`
 }
 
+type ConvertAlertmanagerResponse struct {
+	Status    string `json:"status"`
+	ErrorType string `json:"errorType"`
+	Error     string `json:"error"`
+	// RenameResources contains information about renamed resources during configuration merge
+	RenameResources *RenameResources `json:"rename_resources,omitempty"`
+}
+
+// RenameResources describes which resources were renamed to avoid conflicts
+type RenameResources struct {
+	// Receivers maps old receiver names to new receiver names
+	Receivers map[string]string `json:"receivers,omitempty"`
+	// TimeIntervals maps old time interval names to new time interval names
+	TimeIntervals map[string]string `json:"time_intervals,omitempty"`
+}
+
 // swagger:parameters RouteConvertPrometheusPostAlertmanagerConfig
 type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
 	// Unique identifier for this Alertmanager configuration.
