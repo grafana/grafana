@@ -171,6 +171,7 @@ describe('useWizardNavigation', () => {
       mockCreateSyncJob.mockResolvedValue({ success: true });
       // Create steps without finish step to test edge case
       const shortSteps: Array<Step<WizardStep>> = [
+        { id: 'authType', name: 'Connect', title: 'Authentication method' },
         { id: 'connection', name: 'Connection', title: 'Connection' },
         { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap' },
       ];

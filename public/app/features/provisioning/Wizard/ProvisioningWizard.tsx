@@ -74,7 +74,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     'githubAppMode',
   ]);
 
-  const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
+  const steps = useMemo(() => getSteps(repoType), [repoType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {

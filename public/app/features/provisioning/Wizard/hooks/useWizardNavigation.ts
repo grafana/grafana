@@ -41,8 +41,10 @@ export function useWizardNavigation({
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState<WizardStep>('authType');
-  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
+  // local file provisioning has no auth type step
+  const [activeStep, setActiveStep] = useState<WizardStep>(repoType === 'local' ? 'connection' : 'authType');
+  // local file provisioning will always have the first step (authType) step completed since we skipped it
+  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>(() => (repoType === 'local' ? ['authType'] : []));
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
