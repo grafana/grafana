@@ -63,12 +63,6 @@ func (kp *keeperDB) toKubernetes() (*secretv1beta1.Keeper, error) {
 	switch v := provider.(type) {
 	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperAWSConfig]:
 		resource.Spec.Aws = v.Cfg
-	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperAzureConfig]:
-		resource.Spec.Azure = v.Cfg
-	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperGCPConfig]:
-		resource.Spec.Gcp = v.Cfg
-	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperHashiCorpConfig]:
-		resource.Spec.HashiCorpVault = v.Cfg
 	}
 
 	// Set all meta fields here for consistency.
@@ -200,15 +194,6 @@ func toTypeAndPayload(kp *secretv1beta1.Keeper) (secretv1beta1.KeeperType, strin
 	if kp.Spec.Aws != nil {
 		payload, err := json.Marshal(kp.Spec.Aws)
 		return secretv1beta1.AWSKeeperType, string(payload), err
-	} else if kp.Spec.Azure != nil {
-		payload, err := json.Marshal(kp.Spec.Azure)
-		return secretv1beta1.AzureKeeperType, string(payload), err
-	} else if kp.Spec.Gcp != nil {
-		payload, err := json.Marshal(kp.Spec.Gcp)
-		return secretv1beta1.GCPKeeperType, string(payload), err
-	} else if kp.Spec.HashiCorpVault != nil {
-		payload, err := json.Marshal(kp.Spec.HashiCorpVault)
-		return secretv1beta1.HashiCorpKeeperType, string(payload), err
 	}
 
 	return "", "", fmt.Errorf("no keeper type found")
@@ -224,24 +209,6 @@ func parseKeeperConfigJson(keeperName string, keeperType secretv1beta1.KeeperTyp
 			return nil
 		}
 		return secretv1beta1.NewNamedKeeperConfig(keeperName, aws)
-	case secretv1beta1.AzureKeeperType:
-		azure := &secretv1beta1.KeeperAzureConfig{}
-		if err := json.Unmarshal([]byte(payload), azure); err != nil {
-			return nil
-		}
-		return secretv1beta1.NewNamedKeeperConfig(keeperName, azure)
-	case secretv1beta1.GCPKeeperType:
-		gcp := &secretv1beta1.KeeperGCPConfig{}
-		if err := json.Unmarshal([]byte(payload), gcp); err != nil {
-			return nil
-		}
-		return secretv1beta1.NewNamedKeeperConfig(keeperName, gcp)
-	case secretv1beta1.HashiCorpKeeperType:
-		hashicorp := &secretv1beta1.KeeperHashiCorpConfig{}
-		if err := json.Unmarshal([]byte(payload), hashicorp); err != nil {
-			return nil
-		}
-		return secretv1beta1.NewNamedKeeperConfig(keeperName, hashicorp)
 	default:
 		return nil
 	}
@@ -249,39 +216,7 @@ func parseKeeperConfigJson(keeperName string, keeperType secretv1beta1.KeeperTyp
 
 // extractSecureValues extracts unique securevalues referenced by the keeper, if any.
 func extractSecureValues(kp *secretv1beta1.Keeper) map[string]struct{} {
-	switch {
-	case kp.Spec.Aws != nil:
-		secureValues := make(map[string]struct{}, 0)
-
-		if kp.Spec.Aws.AccessKey == nil {
-			return secureValues
-		}
-
-		if kp.Spec.Aws.AccessKey.AccessKeyID.SecureValueName != "" {
-			secureValues[kp.Spec.Aws.AccessKey.AccessKeyID.SecureValueName] = struct{}{}
-		}
-
-		if kp.Spec.Aws.AccessKey.SecretAccessKey.SecureValueName != "" {
-			secureValues[kp.Spec.Aws.AccessKey.SecretAccessKey.SecureValueName] = struct{}{}
-		}
-
-		return secureValues
-
-	case kp.Spec.Azure != nil:
-		if kp.Spec.Azure.ClientSecret.SecureValueName != "" {
-			return map[string]struct{}{kp.Spec.Azure.ClientSecret.SecureValueName: {}}
-		}
-
-	// GCP does not reference secureValues.
-	case kp.Spec.Gcp != nil:
-		return nil
-
-	case kp.Spec.HashiCorpVault != nil:
-		if kp.Spec.HashiCorpVault.Token.SecureValueName != "" {
-			return map[string]struct{}{kp.Spec.HashiCorpVault.Token.SecureValueName: {}}
-		}
-	}
-
+	// TODO: implement for keepers that will reference secure value names in their configs
 	return nil
 }
 
@@ -289,12 +224,6 @@ func getKeeperConfig(keeper *secretv1beta1.Keeper) secretv1beta1.KeeperConfig {
 	switch keeper.Spec.GetType() {
 	case secretv1beta1.AWSKeeperType:
 		return secretv1beta1.NewNamedKeeperConfig(keeper.Name, keeper.Spec.Aws)
-	case secretv1beta1.AzureKeeperType:
-		return secretv1beta1.NewNamedKeeperConfig(keeper.Name, keeper.Spec.Azure)
-	case secretv1beta1.GCPKeeperType:
-		return secretv1beta1.NewNamedKeeperConfig(keeper.Name, keeper.Spec.Gcp)
-	case secretv1beta1.HashiCorpKeeperType:
-		return secretv1beta1.NewNamedKeeperConfig(keeper.Name, keeper.Spec.HashiCorpVault)
 	default:
 		return nil
 	}
