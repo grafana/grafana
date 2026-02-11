@@ -12952,12 +12952,10 @@
       "coming-soon": "Transformation actions coming soon",
       "duplicate": "Duplicate {{type}}",
       "hide": "Hide {{type}}",
-      "hide-help": "Hide data source help",
       "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
-      "show": "Show {{type}}",
-      "show-help": "Show data source help"
+      "show": "Show {{type}}"
     },
     "details-sidebar": {
       "cache-timeout": "Cache timeout",
@@ -12995,11 +12993,7 @@
     },
     "header": {
       "expression": "Expression",
-      "transformation": "Transformation",
-      "warning-badges": {
-        "text_one": "{{count}} {{type}}",
-        "text_other": "{{count}} {{type}}"
-      }
+      "transformation": "Transformation"
     },
     "help": {
       "close": "Close help",
@@ -13026,6 +13020,17 @@
     "datasource-load-error-title": "Failed to load datasource for this query",
     "loading-datasource": "Loading datasource",
     "no-query-editor-component": "Data source plugin does not export any query editor component"
+  },
+  "query-editor": {
+    "action": {
+      "duplicate": "Duplicate query",
+      "hide": "Hide response",
+      "hide-help": "Hide data source help",
+      "inspector": "Query inspector",
+      "remove-query": "Remove query",
+      "show": "Show response",
+      "show-help": "Show data source help"
+    }
   },
   "query-library": {
     "exposed-compoment": {
