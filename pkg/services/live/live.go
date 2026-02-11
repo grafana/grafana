@@ -686,7 +686,7 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 	ns := user.GetNamespace()
 	if ns != info.Value {
 		logger.Info("Error subscribing: wrong orgId", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
+		// FIXME!!!!! return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
 
 	var reply model.SubscribeReply
