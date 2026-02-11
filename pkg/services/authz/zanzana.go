@@ -106,20 +106,63 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 }
 
 // ProvideEmbeddedZanzanaService creates a background service wrapper for the embedded zanzana server
-// to ensure proper cleanup when Grafana shuts down.
-func ProvideEmbeddedZanzanaService(server zanzana.Server) *EmbeddedZanzanaService {
+// to ensure proper cleanup when Grafana shuts down, and optionally starts the MT reconciler.
+func ProvideEmbeddedZanzanaService(
+	cfg *setting.Cfg,
+	server zanzana.Server,
+	restConfig apiserver.RestConfigProvider,
+	tracer tracing.Tracer,
+) *EmbeddedZanzanaService {
 	return &EmbeddedZanzanaService{
-		server: server,
+		cfg:        cfg,
+		server:     server,
+		restConfig: restConfig,
+		tracer:     tracer,
 	}
 }
 
 // EmbeddedZanzanaService wraps the embedded zanzana server as a background service
 // to ensure Close() is called during shutdown.
 type EmbeddedZanzanaService struct {
-	server zanzana.Server
+	cfg        *setting.Cfg
+	server     zanzana.Server
+	restConfig apiserver.RestConfigProvider
+	tracer     tracing.Tracer
 }
 
 func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
+	if s.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		srv, ok := s.server.(*zServer.Server)
+		if !ok {
+			// noop server, reconciler can't run
+			<-ctx.Done()
+			if s.server != nil {
+				s.server.Close()
+			}
+			return nil
+		}
+
+		clientFactory := resources.NewClientFactory(s.restConfig)
+		logger := log.New("zanzana.mt-reconciler")
+		rec := reconciler.NewReconciler(
+			srv,
+			clientFactory,
+			reconciler.Config{
+				Workers:        s.cfg.ZanzanaReconciler.Workers,
+				Interval:       s.cfg.ZanzanaReconciler.Interval,
+				WriteBatchSize: s.cfg.ZanzanaReconciler.WriteBatchSize,
+			},
+			logger,
+			s.tracer,
+		)
+
+		go func() {
+			if err := rec.Run(ctx); err != nil {
+				logger.Error("MT reconciler stopped with error", "error", err)
+			}
+		}()
+	}
+
 	// The zanzana server doesn't have a blocking Run method,
 	// so we just wait for shutdown
 	<-ctx.Done()
@@ -230,12 +273,12 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	}
 
 	var clientFactory resources.ClientFactory
-	if cfg.ZanzanaServer.ReconcilerEnabled {
-		if cfg.ZanzanaServer.ReconcilerFolderAPIServerURL == "" {
-			return nil, fmt.Errorf("reconciler_folder_apiserver_url must be set when reconciler_enabled is true")
+	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
+			return nil, fmt.Errorf("reconciler_folder_apiserver_url must be set when reconciler mode is mt")
 		}
-		if cfg.ZanzanaServer.ReconcilerIAMAPIServerURL == "" {
-			return nil, fmt.Errorf("reconciler_iam_apiserver_url must be set when reconciler_enabled is true")
+		if cfg.ZanzanaReconciler.IAMAPIServerURL == "" {
+			return nil, fmt.Errorf("reconciler_iam_apiserver_url must be set when reconciler mode is mt")
 		}
 
 		grpcAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
@@ -256,8 +299,8 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 
 		// Build per-group REST configs with group-specific audiences
 		apiServerURLs := map[string]string{
-			"folder.grafana.app": cfg.ZanzanaServer.ReconcilerFolderAPIServerURL,
-			"iam.grafana.app":    cfg.ZanzanaServer.ReconcilerIAMAPIServerURL,
+			"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
+			"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
 		}
 
 		configProviders := make(map[string]apiserver.RestConfigProvider)
@@ -270,7 +313,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 				Host:    url,
 				APIPath: "/apis",
 				TLSClientConfig: clientrest.TLSClientConfig{
-					Insecure: cfg.ZanzanaServer.ReconcilerTLSInsecure,
+					Insecure: cfg.ZanzanaReconciler.TLSInsecure,
 				},
 				WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 					tokenExchangeClient,
@@ -383,16 +426,16 @@ func (z *Zanzana) running(ctx context.Context) error {
 		}()
 	}
 
-	if z.cfg.ZanzanaServer.ReconcilerEnabled {
+	if z.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		go func() {
 			reconcilerLogger := log.New("zanzana.mt-reconciler")
 			rec := reconciler.NewReconciler(
 				z.zanzanaServer.(*zServer.Server),
 				z.clientFactory,
 				reconciler.Config{
-					Workers:        z.cfg.ZanzanaServer.ReconcilerWorkers,
-					Interval:       z.cfg.ZanzanaServer.ReconcilerInterval,
-					WriteBatchSize: z.cfg.ZanzanaServer.ReconcilerWriteBatchSize,
+					Workers:        z.cfg.ZanzanaReconciler.Workers,
+					Interval:       z.cfg.ZanzanaReconciler.Interval,
+					WriteBatchSize: z.cfg.ZanzanaReconciler.WriteBatchSize,
 				},
 				reconcilerLogger,
 				z.tracer,

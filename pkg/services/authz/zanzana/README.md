@@ -235,43 +235,54 @@ address = localhost:4317
 
 ### Reconciler configuration
 
-There are two reconcilers for syncing authorization data to Zanzana:
+There are two reconcilers for syncing authorization data to Zanzana. Only one should be active at a time:
 
-**1. Multi-tenant (MT) reconciler** - runs in standalone Zanzana server and reads from CRDs in Unistore:
+**1. Multi-tenant (MT) reconciler** - reads from CRDs in Unistore. Can run in standalone Zanzana server or embedded in Grafana.
+
+**2. Legacy RBAC reconciler** - reads from Grafana's SQL database. Runs in the main Grafana process.
+
+Both reconcilers are controlled by the `[zanzana.reconciler]` section:
 
 ```ini
-[zanzana.server]
-reconciler_enabled = true
-reconciler_folder_apiserver_url = https://folder-apiserver.default.svc.cluster.local:6446
-reconciler_iam_apiserver_url = https://iam-apiserver.default.svc.cluster.local:6452
-reconciler_resources = folders,users,teambindings,roles,rolebindings,resourcepermissions
-reconciler_tls_insecure = true
-reconciler_workers = 4
-reconciler_interval = 1h
-reconciler_write_batch_size = 100
+[zanzana.reconciler]
+# Which reconciler to run: "legacy" (default), "mt", or "disabled"
+mode = legacy
 
+# --- MT reconciler settings (only used when mode = mt) ---
+
+# For standalone Zanzana server, set API server URLs:
+# folder_apiserver_url = https://folder-apiserver.default.svc.cluster.local:6446
+# iam_apiserver_url = https://iam-apiserver.default.svc.cluster.local:6452
+# tls_insecure = true
+
+# Operational settings:
+workers = 4
+interval = 1h
+write_batch_size = 100
+
+# For standalone mode, token exchange for API server authentication:
 [grpc_client_authentication]
 token = <TOKEN>
 token_exchange_url = <TOKEN_EXCHANGE_URL>
 token_namespace = *
 ```
 
-The reconciler connects to individual API servers for each API group:
-- `reconciler_folder_apiserver_url` - Folder API server for `folder.grafana.app` resources (folders)
-- `reconciler_iam_apiserver_url` - IAM API server for `iam.grafana.app` resources (roles, rolebindings, resourcepermissions, teambindings, users)
-- `reconciler_resources` - Comma-separated list of resources to reconcile. If not set, reconciles all known resources. Use this to limit reconciliation to resources that are properly configured in your environment.
+**Reconciler modes:**
+- `mode = legacy` (default) - Legacy RBAC reconciler runs, reads from SQL tables
+- `mode = mt` - MT reconciler runs, reads from Unistore CRDs
+  - In standalone Zanzana: requires `folder_apiserver_url` and `iam_apiserver_url`
+  - In embedded Grafana: uses local apiserver automatically
+- `mode = disabled` - No reconciler runs
 
-Each API group uses its own audience for token scoping. The `[grpc_client_authentication]` section configures the token exchange used to authenticate against the API servers.
-
-**2. Legacy RBAC reconciler** - runs in the main Grafana process and reads from Grafana's SQL database:
+**Legacy reconciler interval:**
+The legacy reconciler's tick rate is configured separately in the `[rbac]` section:
 
 ```ini
 [rbac]
-zanzana_reconciliation_enabled = true
 zanzana_reconciliation_interval = 1h
 ```
 
-**Important:** When using the MT reconciler with CRDs as the source of truth, set `zanzana_reconciliation_enabled = false` in the Grafana client to avoid duplicate reconciliation from both the legacy SQL database and the CRDs.
+This setting only applies when `[zanzana.reconciler] mode = legacy`.
 
 Now you can run zanzana server:
 

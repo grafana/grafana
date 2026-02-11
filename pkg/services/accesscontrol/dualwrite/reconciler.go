@@ -128,8 +128,9 @@ func (r *ZanzanaReconciler) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if !r.cfg.RBAC.ZanzanaReconciliationEnabled {
-		r.log.Info("Legacy Zanzana reconciler is disabled via configuration")
+	if r.cfg.ZanzanaReconciler.Mode != setting.ZanzanaReconcilerModeLegacy {
+		r.log.Info("Legacy RBAC reconciler is not selected",
+			"mode", r.cfg.ZanzanaReconciler.Mode)
 		return nil
 	}
 
