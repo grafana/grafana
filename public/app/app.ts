@@ -187,7 +187,7 @@ export class GrafanaApp {
       setCorrelationsService(new CorrelationsService());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
-      await initGrafanaLive();
+      initGrafanaLive();
       setCurrentUser(contextSrv.user);
 
       // Expose the app-wide eventbus

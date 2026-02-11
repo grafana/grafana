@@ -1096,8 +1096,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 }
 
 type streamChannelListResponse struct {
-	Namespaced bool                            `json:"namespaced"`
-	Channels   []*managedstream.ManagedChannel `json:"channels"`
+	Channels []*managedstream.ManagedChannel `json:"channels"`
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
@@ -1113,8 +1112,7 @@ func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 	}
 	info := streamChannelListResponse{
-		Namespaced: true, // the channel prefix is namespaced (not orgId)
-		Channels:   channels,
+		Channels: channels,
 	}
 	return response.JSONStreaming(http.StatusOK, info)
 }
