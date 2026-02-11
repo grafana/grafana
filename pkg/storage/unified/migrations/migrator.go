@@ -21,7 +21,6 @@ type MigrateOptions struct {
 	Namespace   string
 	Resources   []schema.GroupResource
 	WithHistory bool // only applies to dashboards
-	OnlyCount   bool // just count the values
 	Progress    func(count int, msg string)
 }
 

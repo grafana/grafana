@@ -22,7 +22,6 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -196,74 +195,6 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.Lega
 		a:       a,
 		history: query.GetHistory,
 	}, err
-}
-
-// CountResources counts resources without migrating them
-func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts migrations.MigrateOptions) (*resourcepb.BulkResponse, error) {
-	sql, err := a.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ns, err := claims.ParseNamespace(opts.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	orgId := ns.OrgID
-	rsp := &resourcepb.BulkResponse{}
-	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, res := range opts.Resources {
-			switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
-			case "folder.grafana.app/folders":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = folders.GROUP
-				summary.Resource = folders.RESOURCE
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
-					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
-				rsp.Summary = append(rsp.Summary, summary)
-
-			case "dashboard.grafana.app/librarypanels":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = dashboardV1.GROUP
-				summary.Resource = dashboardV1.LIBRARY_PANEL_RESOURCE
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("library_element")+
-					" WHERE org_id=?", orgId).Get(&summary.Count)
-				rsp.Summary = append(rsp.Summary, summary)
-
-			case "dashboard.grafana.app/dashboards":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = dashboardV1.GROUP
-				summary.Resource = dashboardV1.DASHBOARD_RESOURCE
-				rsp.Summary = append(rsp.Summary, summary)
-
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
-					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
-				if err != nil {
-					return err
-				}
-
-				// Also count history
-				_, err = sess.SQL(`SELECT COUNT(*)
-						FROM `+sql.Table("dashboard_version")+` as dv
-						JOIN `+sql.Table("dashboard")+`         as dd
-						ON dd.id = dv.dashboard_id
-						WHERE org_id=?`, orgId).Get(&summary.History)
-
-			case "playlist.grafana.app/playlists":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = "playlist.grafana.app"
-				summary.Resource = "playlists"
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("playlist")+
-					" WHERE org_id=?", orgId).Get(&summary.Count)
-				rsp.Summary = append(rsp.Summary, summary)
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return rsp, nil
 }
 
 // MigrateDashboards handles the dashboard migration logic
