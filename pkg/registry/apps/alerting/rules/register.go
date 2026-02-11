@@ -101,7 +101,7 @@ func RegisterAppInstaller(
 				return true, nil
 			}
 			// Only validate receiver presence; construct minimal settings
-			if err := vd.Validate(ngmodels.NotificationSettings{Receiver: receiver}); err != nil {
+			if err := vd.Validate(ngmodels.NotificationSettingsFromContact(ngmodels.ContactPointRouting{Receiver: receiver})); err != nil {
 				return false, nil
 			}
 			return true, nil

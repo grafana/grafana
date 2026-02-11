@@ -187,14 +187,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	}
 	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
 
-	newRule.NoDataState = ""
-	newRule.ExecErrState = ""
-	newRule.Condition = ""
-	newRule.For = 0
-	newRule.KeepFiringFor = 0
-	newRule.NotificationSettings = nil
-	newRule.MissingSeriesEvalsToResolve = nil
-
+	ngmodels.ClearRecordingRuleIgnoredFields(&newRule)
 	return newRule, nil
 }
 
@@ -400,23 +393,13 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
-	s := ngmodels.NotificationSettings{
-		Receiver:            n.Receiver,
-		GroupBy:             n.GroupBy,
-		GroupWait:           n.GroupWait,
-		GroupInterval:       n.GroupInterval,
-		RepeatInterval:      n.RepeatInterval,
-		MuteTimeIntervals:   n.MuteTimeIntervals,
-		ActiveTimeIntervals: n.ActiveTimeIntervals,
-	}
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) (*ngmodels.NotificationSettings, error) {
+	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
 
 	if err := s.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}
-	return []ngmodels.NotificationSettings{
-		s,
-	}, nil
+	return s, nil
 }
 
 func ValidateBacktestConfig(orgId int64, config apimodels.BacktestConfig, limits RuleLimits) (*ngmodels.AlertRule, error) {
