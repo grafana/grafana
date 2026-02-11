@@ -74,10 +74,9 @@ export const SidebarCard = ({
               typeLabel={typeText}
             />
           </div>
-          <div className={styles.cardContent}>{children}</div>
         </div>
-        {hasAddButton && <AddCardButton afterRefId={id} />}
       </div>
+      {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
   );
 };
