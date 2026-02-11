@@ -43,6 +43,16 @@ func TestTracingMiddleware(t *testing.T) {
 			expSpanName: "PluginClient.queryData",
 		},
 		{
+			name: "QueryChunkedData",
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				err := cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+				}, &nopChunkedDataWriter{})
+				return err
+			},
+			expSpanName: "PluginClient.queryChunkedData",
+		},
+		{
 			name: "CallResource",
 			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
 				return cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{
@@ -175,7 +185,7 @@ func TestTracingMiddleware(t *testing.T) {
 	}
 }
 
-func TestTracingMiddlewareAttributes(t *testing.T) {
+func TestTracingMiddlewareAttributes_QueryData(t *testing.T) {
 	defaultPluginContextRequestMut := func(ctx *context.Context, req *backend.QueryDataRequest) {
 		req.PluginContext.PluginID = "my_plugin_id"
 		req.PluginContext.OrgID = 1337
@@ -319,6 +329,164 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 			)
 
 			_, err := cdt.MiddlewareHandler.QueryData(ctx, req)
+			require.NoError(t, err)
+			spans := spanRecorder.Ended()
+			require.Len(t, spans, 1, "must have 1 span")
+			span := spans[0]
+			assert.Len(t, span.Events(), 0, "span should not have an error")
+			assert.Equal(t, codes.Unset, span.Status().Code, "span should not have a status code")
+
+			if tc.assert != nil {
+				tc.assert(t, span)
+			}
+		})
+	}
+}
+
+func TestTracingMiddlewareAttributes_QueryChunkedData(t *testing.T) {
+	defaultPluginContextRequestMut := func(ctx *context.Context, req *backend.QueryChunkedDataRequest) {
+		req.PluginContext.PluginID = "my_plugin_id"
+		req.PluginContext.OrgID = 1337
+	}
+
+	for _, tc := range []struct {
+		name       string
+		requestMut []func(ctx *context.Context, req *backend.QueryChunkedDataRequest)
+		assert     func(t *testing.T, span trace.ReadOnlySpan)
+	}{
+		{
+			name: "default",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){
+				defaultPluginContextRequestMut,
+			},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 2, "should have correct number of span attributes")
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "my_plugin_id")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 1337)))
+			},
+		},
+		{
+			name: "with user",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){
+				defaultPluginContextRequestMut,
+				func(ctx *context.Context, req *backend.QueryChunkedDataRequest) {
+					req.PluginContext.User = &backend.User{Login: "admin"}
+				},
+			},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				assert.Len(t, attribs, 3, "should have correct number of span attributes")
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "my_plugin_id")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 1337)))
+				require.True(t, spanAttributesContains(attribs, attribute.String("user", "admin")))
+			},
+		},
+		{
+			name:       "empty retains zero values",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 2, "should have correct number of span attributes")
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+			},
+		},
+		{
+			name: "no http headers",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){
+				func(ctx *context.Context, req *backend.QueryChunkedDataRequest) {
+					*ctx = ctxkey.Set(*ctx, &contextmodel.ReqContext{Context: &web.Context{Req: &http.Request{Header: nil}}})
+				},
+			},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+			},
+		},
+		{
+			name: "datasource settings",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){
+				func(ctx *context.Context, req *backend.QueryChunkedDataRequest) {
+					req.PluginContext.DataSourceInstanceSettings = &backend.DataSourceInstanceSettings{
+						UID:  "uid",
+						Name: "name",
+						Type: "type",
+					}
+				},
+			},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 4)
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+				require.True(t, spanAttributesContains(attribs, attribute.String("datasource_uid", "uid")))
+				require.True(t, spanAttributesContains(attribs, attribute.String("datasource_name", "name")))
+			},
+		},
+		{
+			name: "http headers",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){
+				func(ctx *context.Context, req *backend.QueryChunkedDataRequest) {
+					*ctx = ctxkey.Set(*ctx, newReqContextWithRequest(&http.Request{
+						Header: map[string][]string{
+							"X-Panel-Id":       {"10"},
+							"X-Dashboard-Uid":  {"dashboard uid"},
+							"X-Query-Group-Id": {"query group id"},
+							"X-Other":          {"30"},
+						},
+					}))
+				},
+			},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 5)
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("panel_id", 10)))
+				require.True(t, spanAttributesContains(attribs, attribute.String("query_group_id", "query group id")))
+				require.True(t, spanAttributesContains(attribs, attribute.String("dashboard_uid", "dashboard uid")))
+			},
+		},
+		{
+			name: "single http headers are skipped if not present or empty",
+			requestMut: []func(ctx *context.Context, req *backend.QueryChunkedDataRequest){
+				func(ctx *context.Context, req *backend.QueryChunkedDataRequest) {
+					*ctx = ctxkey.Set(*ctx, newReqContextWithRequest(&http.Request{
+						Header: map[string][]string{
+							"X-Dashboard-Uid": {""},
+							"X-Other":         {"30"},
+						},
+					}))
+				},
+			},
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 2)
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			req := &backend.QueryChunkedDataRequest{
+				PluginContext: backend.PluginContext{},
+			}
+			for _, mut := range tc.requestMut {
+				mut(&ctx, req)
+			}
+
+			spanRecorder := tracetest.NewSpanRecorder()
+			tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
+
+			cdt := handlertest.NewHandlerMiddlewareTest(
+				t,
+				handlertest.WithMiddlewares(NewTracingMiddleware(tracer)),
+			)
+
+			err := cdt.MiddlewareHandler.QueryChunkedData(ctx, req, &nopChunkedDataWriter{})
 			require.NoError(t, err)
 			spans := spanRecorder.Ended()
 			require.Len(t, spans, 1, "must have 1 span")

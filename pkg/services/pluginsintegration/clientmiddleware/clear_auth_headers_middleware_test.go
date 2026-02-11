@@ -45,6 +45,22 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 		})
 
+		t.Run("Should clear auth headers when calling QueryChunkedData", func(t *testing.T) {
+			err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+				Headers: map[string]string{
+					otherHeader:           "test",
+					"Authorization":       "secret",
+					"X-Grafana-Device-Id": "secret",
+				},
+			}, &nopChunkedDataWriter{})
+			require.NoError(t, err)
+			require.NotNil(t, cdt.QueryChunkedDataReq)
+			require.Len(t, cdt.QueryChunkedDataReq.Headers, 1)
+			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
+			require.Empty(t, cdt.QueryChunkedDataReq.GetHTTPHeaders())
+		})
+
 		t.Run("Should clear auth headers when calling CallResource", func(t *testing.T) {
 			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,

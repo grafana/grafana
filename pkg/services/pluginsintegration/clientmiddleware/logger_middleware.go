@@ -105,6 +105,19 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	return resp, err
 }
 
+func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, w)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return err
+}
+
 func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)

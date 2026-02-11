@@ -36,6 +36,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 				require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 			})
 
+			t.Run("Should not set forwarded id header if not present for QueryChunkedData", func(t *testing.T) {
+				err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+					PluginContext: pluginContext,
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.Empty(t, cdt.QueryChunkedDataReq.GetHTTPHeaders())
+			})
+
 			t.Run("Should not set forwarded id header if not present for CallResource", func(t *testing.T) {
 				err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 					PluginContext: pluginContext,
@@ -99,6 +107,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 				require.Equal(t, "some-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
 			})
 
+			t.Run("Should set forwarded id header if present for QueryChunkedData", func(t *testing.T) {
+				err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+					PluginContext: pluginContext,
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.Equal(t, "some-token", cdt.QueryChunkedDataReq.GetHTTPHeader(forwardIDHeaderName))
+			})
+
 			t.Run("Should set forwarded id header if present for CallResource", func(t *testing.T) {
 				err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 					PluginContext: pluginContext,
@@ -158,6 +174,21 @@ func TestForwardIDMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, "some-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
+			})
+
+			t.Run("Should set forwarded id header to app plugin if present for QueryChunkedData", func(t *testing.T) {
+				cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware()))
+
+				ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
+					Context:      &web.Context{Req: &http.Request{}},
+					SignedInUser: &user.SignedInUser{IDToken: "some-token"},
+				})
+
+				err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+					PluginContext: pluginContext,
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.Equal(t, "some-token", cdt.QueryChunkedDataReq.GetHTTPHeader(forwardIDHeaderName))
 			})
 
 			t.Run("Should set forwarded id header to app plugin if present for CallResource", func(t *testing.T) {
@@ -259,6 +290,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 				require.Equal(t, "requester-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
 			})
 
+			t.Run("Should set forwarded id header from Requester for QueryChunkedData", func(t *testing.T) {
+				err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+					PluginContext: pluginContext,
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.Equal(t, "requester-token", cdt.QueryChunkedDataReq.GetHTTPHeader(forwardIDHeaderName))
+			})
+
 			t.Run("Should set forwarded id header from Requester for CallResource", func(t *testing.T) {
 				err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 					PluginContext: pluginContext,
@@ -314,7 +353,7 @@ func TestForwardIDMiddleware(t *testing.T) {
 			SignedInUser: &user.SignedInUser{IDToken: "signed-in-token"},
 		})
 
-		t.Run("Should prefer SignedInUser token over Requester token", func(t *testing.T) {
+		t.Run("Should prefer SignedInUser token over Requester token for QueryData", func(t *testing.T) {
 			pluginContext := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}
@@ -324,6 +363,18 @@ func TestForwardIDMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.Equal(t, "signed-in-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
+		})
+
+		t.Run("Should prefer SignedInUser token over Requester token for QueryChunkedData", func(t *testing.T) {
+			pluginContext := backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}
+
+			err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+				PluginContext: pluginContext,
+			}, &nopChunkedDataWriter{})
+			require.NoError(t, err)
+			require.Equal(t, "signed-in-token", cdt.QueryChunkedDataReq.GetHTTPHeader(forwardIDHeaderName))
 		})
 	})
 }

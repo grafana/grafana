@@ -39,6 +39,16 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.Empty(t, cdt.QueryDataReq.Headers)
 			})
 
+			t.Run("Should not forward user header when calling QueryChunkedData", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.QueryChunkedDataReq)
+				require.Empty(t, cdt.QueryChunkedDataReq.Headers)
+			})
+
 			t.Run("Should not forward user header when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
@@ -111,6 +121,16 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Empty(t, cdt.QueryDataReq.Headers)
+			})
+
+			t.Run("Should not forward user header when calling QueryChunkedData", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.QueryChunkedDataReq)
+				require.Empty(t, cdt.QueryChunkedDataReq.Headers)
 			})
 
 			t.Run("Should not forward user header when calling CallResource", func(t *testing.T) {
@@ -192,6 +212,17 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.Equal(t, "admin", cdt.QueryDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
 			})
 
+			t.Run("Should forward user header when calling QueryChunkedData", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.QueryChunkedDataReq)
+				require.Len(t, cdt.QueryChunkedDataReq.Headers, 1)
+				require.Equal(t, "admin", cdt.QueryChunkedDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
 			t.Run("Should forward user header when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
@@ -269,6 +300,17 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
 				require.Equal(t, "admin", cdt.QueryDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
+			})
+
+			t.Run("Should forward user header when calling QueryChunkedData", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+					Headers:       map[string]string{},
+				}, &nopChunkedDataWriter{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.QueryChunkedDataReq)
+				require.Len(t, cdt.QueryChunkedDataReq.Headers, 1)
+				require.Equal(t, "admin", cdt.QueryChunkedDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
 			})
 
 			t.Run("Should forward user header when calling CallResource", func(t *testing.T) {
