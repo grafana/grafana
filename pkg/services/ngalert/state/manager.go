@@ -57,6 +57,8 @@ type Manager struct {
 	rulesPerRuleGroupLimit int64
 
 	persister StatePersister
+
+	skipPendingForNoDataAndError bool
 }
 
 type ManagerCfg struct {
@@ -85,6 +87,8 @@ type ManagerCfg struct {
 
 	Tracer tracing.Tracer
 	Log    log.Logger
+
+	SkipPendingForNoDataAndError bool // TODO: Remove
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
@@ -109,6 +113,8 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
 		persister:              statePersister,
 		tracer:                 cfg.Tracer,
+
+		skipPendingForNoDataAndError: cfg.SkipPendingForNoDataAndError,
 	}
 
 	return m
@@ -430,7 +436,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
-		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL, st.skipPendingForNoDataAndError)
 		if curState := st.cache.get(alertRule.OrgID, alertRule.UID, newState.CacheID); curState != nil {
 			patch(newState, curState, result)
 		}

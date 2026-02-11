@@ -151,6 +151,8 @@ type UnifiedAlertingSettings struct {
 	AlertmanagerMaxTemplateOutputSize int64
 
 	BacktestingMaxEvaluations int
+
+	SkipPendingForNoDataAndError bool
 }
 
 type RecordingRuleSettings struct {
@@ -594,6 +596,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.BacktestingMaxEvaluations < 0 {
 		uaCfg.BacktestingMaxEvaluations = 100
 	}
+
+	uaCfg.SkipPendingForNoDataAndError = ua.Key("skip_pending_for_no_data_and_error").MustBool(false)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
