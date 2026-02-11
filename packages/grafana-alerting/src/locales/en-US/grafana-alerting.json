@@ -15,6 +15,11 @@
     },
     "paused-badge": {
       "paused": "Paused"
+    },
+    "routing-tree-selector": {
+      "custom-policy-desc": "Route alerts through the {{name}} policy tree",
+      "default-policy": "Default policy",
+      "default-policy-desc": "Routes alerts using the default notification policy tree"
     }
   }
 }
