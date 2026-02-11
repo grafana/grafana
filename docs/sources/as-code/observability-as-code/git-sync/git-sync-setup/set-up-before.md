@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Set up Git Sync
+title: Setup prerequisites
 weight: 120
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/
 aliases:
@@ -88,7 +88,7 @@ If you chose to authenticate with a newly created GitHub App, you'll need the fo
 - GitHub App Private Key
 - GitHub App Installation ID
 
-There are many ways to create a GitHub App. The following instructions are orientative, always refer to official GitHub documentation for more details.
+There are many ways to create a GitHub App. The following instructions are informative only, always refer to official GitHub documentation for more details.
 
 To create the GitHub App, follow these steps:
 
