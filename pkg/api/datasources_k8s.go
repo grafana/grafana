@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -119,9 +118,7 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 	return &ds, nil
 }
 
-// TODO: there might be a place where this is handled already?
-//
-// handleK8sError converts K8s API errors to HTTP responses.
+// handleK8sError converts K8s API errors to HTTP responses
 func (hs *HTTPServer) handleK8sError(err error) response.Response {
 	statusError, ok := err.(*errors.StatusError)
 	if ok {
@@ -136,9 +133,4 @@ func (hs *HTTPServer) handleK8sError(err error) response.Response {
 		}
 	}
 	return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
-}
-
-// ProvideConnectionClient creates the datasource connection client.
-func ProvideConnectionClient(hs *HTTPServer) datasource.ConnectionClient {
-	return datasource.NewConnectionClient(hs.Cfg, hs.clientConfigProvider)
 }
