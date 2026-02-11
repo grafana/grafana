@@ -128,7 +128,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "dashboard3.json"), dashboard3Content, 0o600)
 		require.NoError(t, err, "should be able to write dashboard3.json")
 
-		// Sould fail due to quota (net change +1, final count 3 > limit 1)
+		// Should fail due to quota (net change +1, final count 3 > limit 1)
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},

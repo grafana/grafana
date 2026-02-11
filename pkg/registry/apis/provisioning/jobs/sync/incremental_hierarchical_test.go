@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -336,19 +335,12 @@ func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 	progress := jobs.NewMockJobProgressRecorder(t)
 
 	// For tests that need cleanup (folder deletion), use composite repo
-	var mockReader *repository.MockReader
 	if tt.name == "file deletion fails, folder cleanup skipped" {
-		mockReader = repository.NewMockReader(t)
+		mockReader := repository.NewMockReader(t)
 		repo = &compositeRepoForTest{
 			MockVersioned: mockVersioned,
 			MockReader:    mockReader,
 		}
-		// Mock Config() for quota check - return empty quota (unlimited)
-		mockReader.On("Config").Return(&provisioning.Repository{
-			Status: provisioning.RepositoryStatus{
-				Quota: provisioning.QuotaStatus{},
-			},
-		})
 	} else {
 		repo = mockVersioned
 	}
@@ -445,12 +437,6 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 	}
 
 	mockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-	// Mock Config() for quota check - return empty quota (unlimited)
-	mockReader.On("Config").Return(&provisioning.Repository{
-		Status: provisioning.RepositoryStatus{
-			Quota: provisioning.QuotaStatus{},
-		},
-	})
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
