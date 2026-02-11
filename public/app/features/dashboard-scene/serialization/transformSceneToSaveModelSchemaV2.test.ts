@@ -555,21 +555,21 @@ describe('transformSceneToSaveModelSchemaV2', () => {
   });
 
   describe('getDataQueryKind', () => {
-    it('should preserve original query datasource type when available', () => {
-      // 1. Test with a query that has its own datasource type
-      const queryWithDS: SceneDataQuery = {
+    it('should use panel datasource type when panel UID differs from query UID (panel ref applied)', () => {
+      // Query-level datasource (original target) — will be overridden by panel ref
+      const query: SceneDataQuery = {
         refId: 'A',
         datasource: { uid: 'prometheus-1', type: 'prometheus' },
       };
 
-      // Create a query runner with a different datasource type
+      // Panel-level datasource — different UID means panel ref was applied
       const queryRunner = new SceneQueryRunner({
         datasource: { uid: 'default-ds', type: 'loki' },
         queries: [],
       });
 
-      // Should use the query's own datasource type (prometheus)
-      expect(getDataQueryKind(queryWithDS, queryRunner)).toBe('prometheus');
+      // Panel ref takes precedence over stale query datasource (matches backend behavior)
+      expect(getDataQueryKind(query, queryRunner)).toBe('loki');
     });
 
     it('should use queryRunner datasource type as fallback when query has no datasource', () => {
@@ -589,21 +589,64 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     });
 
     it('should fall back to default datasource when neither query nor queryRunner has datasource type', () => {
-      // 3. Test with neither query nor queryRunner having a datasource type
       const queryWithoutDS: SceneDataQuery = {
         refId: 'A',
       };
 
-      // Create a query runner with no datasource
       const queryRunner = new SceneQueryRunner({
         queries: [],
       });
 
       expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('loki');
+      expect(queryWithoutDS.datasource?.type).toBeUndefined();
+      expect(queryRunner.state.datasource?.type).toBeUndefined();
+    });
 
-      // Also verify the function's behavior by checking the args
-      expect(queryWithoutDS.datasource?.type).toBeUndefined(); // No query datasource
-      expect(queryRunner.state.datasource?.type).toBeUndefined(); // No queryRunner datasource
+    it('should fall back to default when panel ref applied but queryRunner has no type', () => {
+      // Query has type, but panel overrides with unknown datasource (no type)
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Panel has UID but no type (unknown datasource)
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'unknown-ds' },
+        queries: [],
+      });
+
+      // queryRunner has no type → fall back to default
+      expect(getDataQueryKind(query, queryRunner)).toBe('loki');
+    });
+
+    it('should use queryRunner type when query and queryRunner have the same UID', () => {
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1' }, // same UID, no type
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+        queries: [],
+      });
+
+      // Same UID — use queryRunner's type
+      expect(getDataQueryKind(query, queryRunner)).toBe('prometheus');
+    });
+
+    it('should fall back to default when no queryRunner is provided', () => {
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // No queryRunner — fall back to default
+      expect(getDataQueryKind(query, undefined)).toBe('loki');
+    });
+
+    it('should return default datasource type for undefined or string queries', () => {
+      expect(getDataQueryKind(undefined)).toBe('loki');
+      expect(getDataQueryKind('some-string')).toBe('loki');
     });
   });
 
@@ -954,7 +997,7 @@ describe('getVizPanelQueries', () => {
     expect(result[1].spec.query.kind).toBe('DataQuery');
     // Query ref differs from panel → persist panel ref (same as PanelQueryRunner); schema stores uid as .name
     expect(result[1].spec.query.datasource?.name).toBe('default-ds');
-    expect(result[1].spec.query.group).toBe('prometheus');
+    expect(result[1].spec.query.group).toBe('default');
     expect(result[1].spec.query.version).toBe('v0');
   });
 
