@@ -394,7 +394,7 @@ describe('TableNG', () => {
       async (desc) => {
         const { container } = render(
           <TableNG
-            initialSortBy={[
+            sortBy={[
               {
                 displayName: 'Category',
                 desc,

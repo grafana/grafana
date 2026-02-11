@@ -74,12 +74,12 @@ export function TableNGWrap({
 
   const handleSortOrderChange = useCallback(
     (sortOrder: LogsSortOrder) => {
-      onOptionsChange({ ...options, sortOrder });
       getAppEvents().publish(
         new LogSortOrderChangeEvent({
           order: sortOrder,
         })
       );
+      onOptionsChange({ ...options, sortOrder });
     },
     [onOptionsChange, options]
   );
@@ -107,6 +107,7 @@ export function TableNGWrap({
       )}
 
       <TablePanel
+        sortByBehavior={'managed'}
         initialRowIndex={initialRowIndex}
         data={data}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}

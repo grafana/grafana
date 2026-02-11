@@ -2,7 +2,7 @@ import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, useEffect, type JSX } from 'react';
+import { CSSProperties, type JSX, Key, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -63,19 +63,19 @@ import {
   getTooltipStyles,
 } from './styles';
 import {
+  CellRootRenderer,
+  FromFieldsResult,
+  InspectCellProps,
+  TableCellStyleOptions,
+  TableColumn,
   TableNGProps,
   TableRow,
   TableSummaryRow,
-  TableColumn,
-  InspectCellProps,
-  TableCellStyleOptions,
-  FromFieldsResult,
-  CellRootRenderer,
 } from './types';
 import {
   applySort,
-  canFieldBeColorized,
   calculateFooterHeight,
+  canFieldBeColorized,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -89,15 +89,15 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getSummaryCellTextAlign,
   getVisibleFields,
+  IS_SAFARI_26,
   isCellInspectEnabled,
+  parseStyleJson,
   predicateByName,
+  rowKeyGetter,
   shouldTextOverflow,
   shouldTextWrap,
-  getSummaryCellTextAlign,
-  parseStyleJson,
-  IS_SAFARI_26,
-  rowKeyGetter,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -114,7 +114,6 @@ export function TableNG(props: TableNGProps) {
     frozenColumns = 0,
     getActions = () => [],
     height,
-    initialSortBy,
     maxRowHeight: _maxRowHeight,
     noHeader,
     onCellFilterAdded,
@@ -126,8 +125,9 @@ export function TableNG(props: TableNGProps) {
     transparent,
     width,
     initialRowIndex,
+    sortBy,
+    sortByBehavior = 'initial',
   } = props;
-
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
@@ -182,7 +182,18 @@ export function TableNG(props: TableNGProps) {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
+  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, sortBy, sortByBehavior });
+
+  useEffect(() => {
+    if (sortByBehavior === 'managed' && setSortColumns && sortBy) {
+      setSortColumns?.(
+        sortBy.map(({ displayName, desc }) => ({
+          columnKey: displayName,
+          direction: desc === true ? 'DESC' : 'ASC',
+        }))
+      );
+    }
+  }, [sortBy, sortByBehavior, setSortColumns]);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();

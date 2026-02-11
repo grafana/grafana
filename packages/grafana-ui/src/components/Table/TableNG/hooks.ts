@@ -6,7 +6,15 @@ import { compareArrayValues, Field, FieldType, formattedValueToString, reduceFie
 import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, FooterFieldState, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
+import {
+  FilterType,
+  FooterFieldState,
+  SortByBehavior,
+  TableRow,
+  TableSortByFieldState,
+  TableSummaryRow,
+  TypographyCtx,
+} from './types';
 import {
   getDisplayName,
   processNestedTableRows,
@@ -89,7 +97,8 @@ export function useFilteredRows(
 
 export interface SortedRowsOptions {
   hasNestedFrames: boolean;
-  initialSortBy?: TableSortByFieldState[];
+  sortBy?: TableSortByFieldState[];
+  sortByBehavior: SortByBehavior;
 }
 
 export interface SortedRowsResult {
@@ -101,11 +110,11 @@ export interface SortedRowsResult {
 export function useSortedRows(
   rows: TableRow[],
   fields: Field[],
-  { initialSortBy, hasNestedFrames }: SortedRowsOptions
+  { sortBy, hasNestedFrames, sortByBehavior }: SortedRowsOptions
 ): SortedRowsResult {
   const initialSortColumns = useMemo<SortColumn[]>(
     () =>
-      initialSortBy?.flatMap(({ displayName, desc }) => {
+      sortBy?.flatMap(({ displayName, desc }) => {
         if (!fields.some((f) => getDisplayName(f) === displayName)) {
           return [];
         }

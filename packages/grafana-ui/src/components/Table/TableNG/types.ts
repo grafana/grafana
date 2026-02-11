@@ -115,6 +115,8 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
+export type SortByBehavior = 'initial' | 'managed';
+
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -126,7 +128,8 @@ export interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
-  initialSortBy?: TableSortByFieldState[];
+  sortBy?: TableSortByFieldState[];
+  sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;

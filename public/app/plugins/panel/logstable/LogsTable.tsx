@@ -11,7 +11,6 @@ import {
   PanelData,
   PanelProps,
 } from '@grafana/data';
-import type { Options as TableOptions } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
@@ -29,6 +28,7 @@ import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
+import { onSortOrderChange } from './options/onSortOrderChange';
 import { Options } from './options/types';
 import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
 import { defaultOptions, Options as LogsTableOptions } from './panelcfg.gen';
@@ -69,6 +69,7 @@ export const LogsTable = ({
   const initialRowIndex = permalinkedLogId
     ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
     : undefined;
+  const sortOrder = options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending;
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
@@ -78,10 +79,11 @@ export const LogsTable = ({
 
   // Callbacks
   const handleTableOptionsChange = useCallback(
-    (options: TableOptions) => {
+    (newOptions: Options) => {
+      const options = onSortOrderChange(newOptions, sortOrder, timeFieldName);
       onLogsTableOptionsChange?.(options);
     },
-    [onLogsTableOptionsChange]
+    [onLogsTableOptionsChange, sortOrder, timeFieldName]
   );
 
   const handleLogsTableOptionsChange = useCallback(
@@ -156,6 +158,8 @@ export const LogsTable = ({
   // Don't render the table if we don't have the required data to show the visualization
   const renderTable = timeFieldName && bodyFieldName && logsFrame && organizedFrame && extractedFrame;
 
+  console.log('rendered options', options);
+
   return (
     <div className={styles.wrapper} ref={containerElement}>
       {renderTable && containerElement.current && (
@@ -194,7 +198,7 @@ export const LogsTable = ({
             onChangeTimeRange={onChangeTimeRange}
             logOptionsStorageKey={SETTING_KEY_ROOT}
             fieldSelectorWidth={fieldSelectorWidth}
-            sortOrder={options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending}
+            sortOrder={sortOrder}
           />
         </>
       )}
