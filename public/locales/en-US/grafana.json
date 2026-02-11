@@ -3968,6 +3968,11 @@
       "select-checkbox": "Select",
       "tags-column": "Tags"
     },
+    "delete": {
+      "success-multiple": "Dashboards deleted",
+      "success-single": "Dashboard deleted",
+      "view-recently-deleted": "View deleted dashboards"
+    },
     "delete-folder": {
       "read-only-message": "To delete this folder, please remove the folder from your repository."
     },
@@ -4052,11 +4057,15 @@
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
-      "all-failed_other": "Failed to restore {{count}} dashboard.",
+      "all-failed_other": "Failed to restore {{count}} dashboards.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboard restored successfully"
+      "success-count_other": "{{count}} dashboards restored successfully",
+      "success-multiple": "Dashboards restored",
+      "success-single": "Dashboard restored",
+      "view-dashboard": "View dashboard",
+      "view-folder": "View folder"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
@@ -10693,6 +10702,7 @@
   },
   "logstable": {
     "category-table": "Logs Table",
+    "description-show-controls": "Display table controls",
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
@@ -12518,8 +12528,8 @@
       "success-all-repositories-deleted": "All configured repositories deleted",
       "tab-connections": "Connections",
       "tab-connections-title": "List of connections",
-      "tab-getting-started": "Getting started",
-      "tab-getting-started-title": "Getting started",
+      "tab-getting-started": "Get started",
+      "tab-getting-started-title": "Get started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
@@ -12803,6 +12813,7 @@
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "connect-step": "Connect",
+      "connect-step-local": "File provisioning",
       "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
@@ -13002,35 +13013,15 @@
     }
   },
   "query-editor-next": {
-    "labels": {
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
-    },
-    "sidebar": {
-      "card-click": "Select card {{id}}",
-      "queries-expressions": "Queries & Expressions",
-      "query-stack": "Query Stack",
-      "toggle-size": "Toggle sidebar size",
-      "transformations": "Transformations"
-    }
-  },
-  "query-editor-renderer": {
-    "datasource-load-error-title": "Failed to load datasource for this query",
-    "loading-datasource": "Loading datasource",
-    "no-query-editor-component": "Data source plugin does not export any query editor component"
-  },
-  "query-editor": {
     "action": {
       "coming-soon": "Transformation actions coming soon",
-      "duplicate": "Duplicate query",
-      "hide": "Hide response",
+      "duplicate": "Duplicate {{type}}",
+      "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "inspector": "Query inspector",
-      "more-actions": "More actions",
-      "remove-query": "Remove query",
-      "remove-transformation": "Remove transformation",
-      "show": "Show response",
+      "more-actions": "More {{type}} actions",
+      "remove": "Remove {{type}}",
+      "show": "Show {{type}}",
       "show-help": "Show data source help"
     },
     "details-sidebar": {
@@ -13079,10 +13070,27 @@
       "close": "Close help",
       "close-aria": "Close help panel"
     },
+    "labels": {
+      "expression": "Expression",
+      "query": "Query",
+      "transformation": "Transformation"
+    },
+    "sidebar": {
+      "card-click": "Select card {{id}}",
+      "queries-expressions": "Queries & Expressions",
+      "query-stack": "Query Stack",
+      "toggle-size": "Toggle sidebar size",
+      "transformations": "Transformations"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "Failed to load datasource for this query",
+    "loading-datasource": "Loading datasource",
+    "no-query-editor-component": "Data source plugin does not export any query editor component"
   },
   "query-library": {
     "exposed-compoment": {

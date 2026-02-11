@@ -209,6 +209,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "faroSessionReplay",
+			Description:  "Enable Faro session replay for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaSessionReplaySquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,

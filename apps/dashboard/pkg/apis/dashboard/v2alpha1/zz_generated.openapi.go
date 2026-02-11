@@ -77,7 +77,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardLibraryPanelRef{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardLibraryPanelRef(ref),
 		DashboardList{}.OpenAPIModelName():                                                                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardList(ref),
 		DashboardMatcherConfig{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2alpha1_DashboardMatcherConfig(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardMetadata":                                           schema_pkg_apis_dashboard_v2alpha1_DashboardMetadata(ref),
 		DashboardMetricFindValue{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardMetricFindValue(ref),
 		DashboardPanelKind{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2alpha1_DashboardPanelKind(ref),
 		DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName():                                                                           schema_pkg_apis_dashboard_v2alpha1_DashboardPanelKindOrLibraryPanelKind(ref),
@@ -3042,102 +3041,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardMatcherConfig(ref common.Refere
 					},
 				},
 				Required: []string{"id"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2alpha1_DashboardMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "metadata contains embedded CommonMetadata and can be extended with custom string fields without external reference as using the CommonMetadata reference breaks thema codegen.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"updateTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
-					"createdBy": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"creationTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
-					"deletionTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
-					"finalizers": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"resourceVersion": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"generation": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-					"updatedBy": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"updateTimestamp", "createdBy", "uid", "creationTimestamp", "finalizers", "resourceVersion", "generation", "updatedBy", "labels"},
 			},
 		},
 	}

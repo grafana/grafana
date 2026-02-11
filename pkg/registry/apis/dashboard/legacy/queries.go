@@ -29,6 +29,7 @@ var (
 	sqlQueryDashboards = mustTemplate("query_dashboards.sql")
 	sqlQueryPanels     = mustTemplate("query_panels.sql")
 	sqlQueryPlaylists  = mustTemplate("query_playlists.sql")
+	sqlQueryShortURLs  = mustTemplate("query_shorturls.sql")
 )
 
 type sqlQuery struct {
@@ -108,5 +109,29 @@ func newPlaylistQueryReq(sql *legacysql.LegacyDatabaseHelper, query *PlaylistQue
 
 		PlaylistTable:     sql.Table("playlist"),
 		PlaylistItemTable: sql.Table("playlist_item"),
+	}
+}
+
+type ShortURLQuery struct {
+	OrgID int64
+}
+
+type sqlShortURLQuery struct {
+	sqltemplate.SQLTemplate
+	Query *ShortURLQuery
+
+	ShortURLTable string
+}
+
+func (r sqlShortURLQuery) Validate() error {
+	return nil
+}
+
+func newShortURLQueryReq(sql *legacysql.LegacyDatabaseHelper, query *ShortURLQuery) sqlShortURLQuery {
+	return sqlShortURLQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		Query:       query,
+
+		ShortURLTable: sql.Table("short_url"),
 	}
 }

@@ -15,7 +15,7 @@ import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
 
-import { QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 interface QueryActionsMenuProps {
@@ -74,6 +74,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
     return null;
   }
 
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
   const isExpression = cardType === QueryEditorType.Expression;
   const isHidden = !!selectedQuery.hide;
   const hasEditorHelp = !selectedQueryDsLoading && selectedQueryDsData?.datasource?.components?.QueryEditorHelp;
@@ -84,7 +85,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         <Menu>
           {!isEditingQuery && (
             <Menu.Item
-              label={t('query-editor.action.duplicate', 'Duplicate query')}
+              label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
               icon="copy"
               onClick={() => duplicateQuery(selectedQuery.refId)}
             />
@@ -92,7 +93,9 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
 
           <Menu.Item
             label={
-              isHidden ? t('query-editor.action.show', 'Show response') : t('query-editor.action.hide', 'Hide response')
+              isHidden
+                ? t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel })
+                : t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel })
             }
             icon={isHidden ? 'eye-slash' : 'eye'}
             onClick={() => toggleQueryHide(selectedQuery.refId)}
@@ -119,8 +122,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
               <Menu.Item
                 label={
                   showingDatasourceHelp
-                    ? t('query-editor.action.hide-help', 'Hide data source help')
-                    : t('query-editor.action.show-help', 'Show data source help')
+                    ? t('query-editor-next.action.hide-help', 'Hide data source help')
+                    : t('query-editor-next.action.show-help', 'Show data source help')
                 }
                 icon="question-circle"
                 onClick={toggleDatasourceHelp}
@@ -133,7 +136,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
             <>
               <Menu.Divider />
               <Menu.Item
-                label={t('query-editor.action.remove-query', 'Remove query')}
+                label={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
                 icon="trash-alt"
                 onClick={() => deleteQuery(selectedQuery.refId)}
                 destructive
@@ -149,8 +152,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More query actions')}
-        tooltip={t('query-editor.action.more-actions', 'More query actions')}
+        aria-label={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        tooltip={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
       />
     </Dropdown>
   );
