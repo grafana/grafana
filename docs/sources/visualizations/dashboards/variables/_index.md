@@ -72,7 +72,7 @@ The following image shows a panel in edit mode using the query:
 
 ### Variables in URLs
 
-Variable values are always synced to the URL using [query parameter syntax](https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
+By default, variable values are synced to the URL using [query parameter syntax](https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
 For example:
 
 ```text
@@ -80,6 +80,12 @@ https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolati
 ```
 
 In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
+
+You can prevent a variable from being synced to the URL by enabling the **Skip URL sync** option in the variable settings. When enabled, the variable value won't appear as a `var-` query parameter in the URL. This is useful when you want to keep URLs clean or prevent users from overriding a variable value through the URL. All variable types support this option.
+
+{{< admonition type="note">}}
+Constant variables have **Skip URL sync** enabled by default, since their value is fixed and not intended to be changed through the URL.
+{{< /admonition >}}
 
 ## Additional examples
 
