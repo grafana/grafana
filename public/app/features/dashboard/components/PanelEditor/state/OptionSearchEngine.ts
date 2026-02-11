@@ -42,8 +42,16 @@ export class OptionSearchEngine {
           hits.push({ item: item, rank: 2 });
           continue;
         }
+        if (item.props.value != null) {
+          const valueStr =
+            typeof item.props.value === 'object' ? JSON.stringify(item.props.value) : String(item.props.value);
+          if (searchRegex.test(valueStr)) {
+            hits.push({ item: item, rank: 3 });
+            continue;
+          }
+        }
         if (categoryNameMatch) {
-          hits.push({ item: item, rank: 3 });
+          hits.push({ item: item, rank: 4 });
         }
       }
 
