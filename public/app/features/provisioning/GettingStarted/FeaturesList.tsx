@@ -53,7 +53,7 @@ export const FeaturesList = ({
           Want to learn more? See our{' '}
           <TextLink
             external
-            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
+            href={'https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/'}
           >
             documentation
           </TextLink>
