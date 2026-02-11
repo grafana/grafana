@@ -13,6 +13,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type resourceMockClient struct {
@@ -338,17 +345,22 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		require.Contains(t, responder.lastErr.Error(), "plugin error")
 	})
 
-	t.Run("forwards headers to plugin", func(t *testing.T) {
+	t.Run("ClearAuthHeadersMiddleware clears auth headers before request reaches plugin", func(t *testing.T) {
 		var capturedHeaders http.Header
 
-		mockClient := &resourceMockClient{
-			callResourceFunc: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-				capturedHeaders = req.Headers
-				return sender.Send(&backend.CallResourceResponse{
-					Status: http.StatusOK,
-				})
-			},
+		innerMock := &pluginfakes.FakePluginClient{}
+		innerMock.CallResourceHandlerFunc = func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+			capturedHeaders = req.Headers
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusOK,
+			})
 		}
+
+		cfg := setting.NewCfg()
+		wrappedClient, err := backend.HandlerFromMiddlewares(innerMock,
+			clientmiddleware.NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy))
+		require.NoError(t, err)
+
 		mockProvider := &resourceMockDatasourceProvider{
 			instanceSettings: &backend.DataSourceInstanceSettings{UID: "test-ds"},
 		}
@@ -357,28 +369,37 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		}
 
 		builder := &DataSourceAPIBuilder{
-			client:          mockClient,
+			client:          wrappedClient,
 			datasources:     mockProvider,
 			contextProvider: mockContext,
 		}
 		r := &subResourceREST{builder: builder}
 
-		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
-		require.NoError(t, err)
-
 		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resource/path", nil)
 		req.Header.Set("Authorization", "Bearer token123")
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Accept", "application/json")
+		req.Header.Set("X-Grafana-Device-Id", "device-secret")
 		req.Header.Set("X-Custom-Header", "custom-value")
+
+		reqContext := &contextmodel.ReqContext{
+			Context: &web.Context{
+				Req:  req,
+				Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+			},
+			SignedInUser: &user.SignedInUser{},
+		}
+		ctx := ctxkey.Set(context.Background(), reqContext)
+
+		handler, err := r.Connect(ctx, "test-ds", nil, &resourceMockResponder{})
+		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 
 		require.NotNil(t, capturedHeaders)
-		require.Equal(t, "Bearer token123", capturedHeaders.Get("Authorization"))
-		require.Equal(t, "application/json", capturedHeaders.Get("Content-Type"))
-		require.Equal(t, "application/json", capturedHeaders.Get("Accept"))
+
+		require.Empty(t, capturedHeaders.Get("Authorization"), "Authorization header should be cleared by ClearAuthHeadersMiddleware")
+		require.Empty(t, capturedHeaders.Get("X-Grafana-Device-Id"), "X-Grafana-Device-Id header should be cleared by ClearAuthHeadersMiddleware")
+		// Non-auth headers must still be forwarded
 		require.Equal(t, "custom-value", capturedHeaders.Get("X-Custom-Header"))
 	})
 
