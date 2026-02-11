@@ -1222,14 +1222,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
   }
 
-  public setDefaultGrid(defaultGrid: 'GridLayout' | 'AutoGridLayout', changeBody: boolean) {
+  public setDefaultGrid(defaultGrid: 'GridLayout' | 'AutoGridLayout') {
     const newState: Partial<Pick<DashboardSceneState, 'body' | 'defaultGrid'>> = {};
 
     if (defaultGrid !== this.state.defaultGrid) {
       newState.defaultGrid = defaultGrid;
     }
 
-    if (changeBody && this.state.body.descriptor.id !== defaultGrid) {
+    if (this.state.body.getVizPanels().length === 0) {
       newState.body =
         defaultGrid === 'GridLayout'
           ? DefaultGridLayoutManager.createFromLayout(this.state.body)

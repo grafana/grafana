@@ -758,7 +758,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           cursorSync: 'Off',
           links: [],
           tags: [],
-          defaultGrid: 'AutoGridLayout',
           timeSettings: {
             from: 'now-6h',
             to: 'now',

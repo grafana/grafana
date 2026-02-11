@@ -114,7 +114,7 @@ export class GeneralSettingsEditView
   };
 
   public onDefaultGridChange = (value: 'AutoGridLayout' | 'GridLayout') => {
-    this._dashboard.setDefaultGrid(value, false);
+    this._dashboard.setDefaultGrid(value);
   };
 
   public onTimeZoneChange = (value: TimeZone) => {

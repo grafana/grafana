@@ -1778,7 +1778,6 @@ function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV
     links: [],
     preload: false,
     tags: [],
-    defaultGrid: 'AutoGridLayout',
     timeSettings: {
       timezone: 'browser',
       from: 'now-6h',
@@ -1872,7 +1871,6 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
     editable: true,
     links: [],
     preload: false,
-    defaultGrid: 'AutoGridLayout',
     tags: [],
     timeSettings: {
       timezone: 'browser',

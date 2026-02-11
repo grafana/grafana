@@ -122,7 +122,6 @@ describe('UnifiedDashboardAPI', () => {
           tags: [],
           links: [],
           preload: false,
-          defaultGrid: 'AutoGridLayout',
           timeSettings: {
             from: 'now-1h',
             to: 'now',

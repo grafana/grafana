@@ -77,7 +77,6 @@ describe('ShareExportTab', () => {
       liveNow: false,
       preload: false,
       tags: [],
-      defaultGrid: 'AutoGridLayout',
       timeSettings: {
         from: 'now-6h',
         to: 'now',
@@ -384,7 +383,6 @@ describe('ShareExportTab', () => {
       cursorSync: 'Off',
       description: 'Test V2 dashboard',
       editable: true,
-      defaultGrid: 'AutoGridLayout',
       elements: hasLibraryPanels
         ? {
             'element-1': {

@@ -1941,7 +1941,7 @@ type DashboardSpec struct {
 	// The default grid to use in edit mode
 	// This is here only for PoC purposes as this should be a custom resource
 	// However the dashboards API is using manual API registration and the custom resources are not exposed automatically
-	DefaultGrid DashboardSpecDefaultGrid                                                    `json:"defaultGrid"`
+	DefaultGrid *DashboardSpecDefaultGrid                                                   `json:"defaultGrid,omitempty"`
 	Elements    map[string]DashboardElement                                                 `json:"elements"`
 	Layout      DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	// Links with references to other dashboards or external websites.
@@ -1970,7 +1970,6 @@ func NewDashboardSpec() *DashboardSpec {
 		Annotations:  []DashboardAnnotationQueryKind{},
 		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
-		DefaultGrid:  DashboardSpecDefaultGridAutoGridLayout,
 		Elements:     map[string]DashboardElement{},
 		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
 		Links:        []DashboardDashboardLink{},

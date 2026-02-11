@@ -22,7 +22,7 @@ export const NewDashboardEmptyGridSelector = ({ dashboard }: Props) => {
       evt.preventDefault();
       evt.stopPropagation();
 
-      dashboard.setDefaultGrid(grid, true);
+      dashboard.setDefaultGrid(grid);
 
       if (editPane.state.openPane !== 'add') {
         editPane.enableSelection();

@@ -44,6 +44,10 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
+  GridLayoutKind,
+  RowsLayoutKind,
+  AutoGridLayoutKind,
+  TabsLayoutKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
@@ -195,6 +199,17 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     dashboardProfiler
   );
 
+  let defaultGrid = dashboard.defaultGrid;
+
+  if (!defaultGrid) {
+    if (config.featureToggles.dashboardNewLayouts) {
+      defaultGrid = 'GridLayout';
+    } else {
+      const { auto, custom } = countGridUsage(dashboard.layout, { auto: 0, custom: 0 });
+      defaultGrid = auto > custom ? 'AutoGridLayout' : 'GridLayout';
+    }
+  }
+
   const dashboardScene = new DashboardScene(
     {
       description: dashboard.description,
@@ -207,7 +222,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       title: dashboard.title,
       uid: metadata.name,
       version: metadata.generation,
-      defaultGrid: dashboard.defaultGrid,
+      defaultGrid,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
         // Use defaults when time is empty to match DashboardModel behavior
@@ -261,6 +276,30 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   enablePanelProfilingForDashboard(dashboardScene, metadata.name);
 
   return dashboardScene;
+}
+
+function countGridUsage(
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind,
+  acc: { auto: number; custom: number }
+): { auto: number; custom: number } {
+  switch (layout.kind) {
+    case 'GridLayout':
+      acc.custom += 1;
+      return acc;
+
+    case 'AutoGridLayout':
+      acc.auto += 1;
+      return acc;
+
+    case 'RowsLayout':
+      return layout.spec.rows.reduce((acc, row) => countGridUsage(row.spec.layout, acc), acc);
+
+    case 'TabsLayout':
+      return layout.spec.tabs.reduce((acc, tab) => countGridUsage(tab.spec.layout, acc), acc);
+
+    default:
+      return acc;
+  }
 }
 
 function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {

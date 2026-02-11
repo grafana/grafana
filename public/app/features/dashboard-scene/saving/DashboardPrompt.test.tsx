@@ -299,7 +299,6 @@ describe('DashboardPrompt', () => {
             links: [],
             variables: [],
             annotations: [],
-            defaultGrid: 'AutoGridLayout',
             timeSettings: {
               from: 'now-6h',
               to: 'now',

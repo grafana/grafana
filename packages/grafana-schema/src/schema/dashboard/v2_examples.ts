@@ -8,7 +8,6 @@ export const handyTestingSchema: Spec = {
   preload: false,
   editable: true,
   tags: ['tag1', 'tag2'],
-  defaultGrid: 'AutoGridLayout',
   timeSettings: {
     autoRefresh: '5s',
     autoRefreshIntervals: ['5s', '10s', '30s'],

@@ -3972,7 +3972,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 					"defaultGrid": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The default grid to use in edit mode This is here only for PoC purposes as this should be a custom resource However the dashboards API is using manual API registration and the custom resources are not exposed automatically",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -4074,7 +4073,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"annotations", "cursorSync", "defaultGrid", "elements", "layout", "links", "preload", "tags", "timeSettings", "title", "variables"},
+				Required: []string{"annotations", "cursorSync", "elements", "layout", "links", "preload", "tags", "timeSettings", "title", "variables"},
 			},
 		},
 		Dependencies: []string{

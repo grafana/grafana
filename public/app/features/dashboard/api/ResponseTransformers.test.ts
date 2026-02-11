@@ -863,7 +863,6 @@ describe('ResponseTransformers', () => {
           liveNow: false,
           editable: true,
           revision: 225,
-          defaultGrid: 'AutoGridLayout',
           timeSettings: {
             from: 'now-6h',
             to: 'now',
