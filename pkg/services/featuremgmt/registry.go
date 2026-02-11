@@ -701,13 +701,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "secretsManagementAppPlatform",
-			Description: "Enable the secrets management API and services under app platform",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "secretsManagementAppPlatformUI",
 			Description: "Enable the secrets management app platform UI",
 			Stage:       FeatureStageExperimental,
