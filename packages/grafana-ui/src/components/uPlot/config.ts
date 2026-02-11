@@ -176,7 +176,6 @@ export const getGraphFieldOptions: () => {
       value: StackingMode.Percent,
     },
   ],
-
   thresholdsDisplayModes: [
     {
       label: t('grafana-ui.u-plot.config.get-graph-field-options.thresholds-display-mode.label-off', 'Off'),
