@@ -544,11 +544,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Cascader/Cascader.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Cascader/styles.ts": {
     "@grafana/no-unreduced-motion": {
       "count": 17
@@ -2810,11 +2805,6 @@
   "public/app/features/plugins/importPanelPlugin.ts": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {

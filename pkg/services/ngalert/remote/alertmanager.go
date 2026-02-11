@@ -338,15 +338,27 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
 	}
 
-	// Add managed routes to the configuration.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
-	}
-
 	mergeResult, err := c.GetMergedAlertmanagerConfig()
 	if err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
+	}
+	amConfig := mergeResult.Config
+
+	// Add managed routes and extra route as managed route to the configuration.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		managed := maps.Clone(c.ManagedRoutes)
+		if managed == nil {
+			managed = make(map[string]*apimodels.Route)
+		}
+		if mergeResult.ExtraRoute != nil {
+			if _, ok := managed[mergeResult.Identifier]; ok {
+				am.log.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
+			} else {
+				managed[mergeResult.Identifier] = mergeResult.ExtraRoute
+			}
+		}
+		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managed)
 	}
 
 	var templates []definition.PostableApiTemplate
@@ -357,7 +369,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 	payload := remoteClient.UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: remoteClient.GrafanaAlertmanagerConfig{
 			TemplateFiles:      c.TemplateFiles,
-			AlertmanagerConfig: mergeResult.Config,
+			AlertmanagerConfig: amConfig,
 			Templates:          templates,
 		},
 		CreatedAt:     createdAtEpoch,

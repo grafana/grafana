@@ -454,15 +454,15 @@ export interface FeatureToggles {
   */
   auditLoggingAppPlatform?: boolean;
   /**
-  * Enable the secrets management API and services under app platform
-  * @default false
-  */
-  secretsManagementAppPlatform?: boolean;
-  /**
   * Enable the secrets management app platform UI
   * @default false
   */
   secretsManagementAppPlatformUI?: boolean;
+  /**
+  * Enable the Secrets Keeper management UI for configuring external secret storage
+  * @default false
+  */
+  secretsKeeperUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   * @default false

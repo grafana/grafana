@@ -46,7 +46,7 @@ type routeService interface {
 
 type alertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 type secretService interface {
@@ -541,7 +541,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 }
 
 func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name string) ([]models.AlertRuleKey, error) {
-	keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+	keys, err := rs.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, ReceiverName: name})
 	if err != nil {
 		return nil, err
 	}
@@ -594,20 +594,18 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	receiverUsesInRules := map[string][]models.AlertRuleKey{}
 	if hasGrafanaOrigin {
 		receiverUsesInRoutes = rs.routeService.ReceiverUseByName(ctx, revision)
-		q := models.ListNotificationSettingsQuery{OrgID: orgID}
+		q := models.ListContactPointRoutingsQuery{OrgID: orgID}
 		if len(receivers) == 1 {
 			q.ReceiverName = receivers[0].Name
 		}
-		keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
+		keys, err := rs.ruleNotificationsStore.ListContactPointRoutings(ctx, q)
 		if err != nil {
 			return nil, err
 		}
 
 		for key, settings := range keys {
-			for _, s := range settings {
-				if s.Receiver != "" {
-					receiverUsesInRules[s.Receiver] = append(receiverUsesInRules[s.Receiver], key)
-				}
+			if settings.Receiver != "" {
+				receiverUsesInRules[settings.Receiver] = append(receiverUsesInRules[settings.Receiver], key)
 			}
 		}
 	}
