@@ -37,8 +37,7 @@ import { CentrifugeLiveChannel } from './channel';
 export type CentrifugeSrvDeps = {
   grafanaAuthToken: string | null;
   appUrl: string;
-  //  namespace: string; // k8s namespace
-  orgId: number; // replace with namespace once full cloud rollout!
+  namespace: string; // k8s namespace
   orgRole: string;
   liveEnabled: boolean;
   dataStreamSubscriberReadiness: Observable<boolean>;
@@ -155,8 +154,7 @@ export class CentrifugeService implements CentrifugeSrv {
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    // TODO: replace `this.deps.orgId` with namespace after full cloud rollout
-    const id = `${this.deps.orgId}/${addr.scope}/${addr.stream}/${addr.path}`;
+    const id = `${this.deps.namespace}/${addr.scope}/${addr.stream}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;

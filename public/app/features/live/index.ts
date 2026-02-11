@@ -8,10 +8,13 @@ import { CentrifugeService } from './centrifuge/service';
 import { GrafanaLiveService } from './live';
 
 export function initGrafanaLive() {
+  let namespace = config.namespace;
+  if (namespace.startsWith('stack')) {
+    namespace = `${contextSrv.user.orgId}`; // use OrgID until this is fully rolled out in cloud
+  }
   const centrifugeServiceDeps = {
     appUrl: `${window.location.origin}${config.appSubUrl}`,
-    namespace: config.namespace,
-    orgId: contextSrv.user.orgId, // temporary for transition to namespace
+    namespace,
     orgRole: contextSrv.user.orgRole,
     liveEnabled: config.liveEnabled,
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),
