@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.2.5";
+export const pluginVersion = "12.2.6";
 
 export interface Options {
   /**
