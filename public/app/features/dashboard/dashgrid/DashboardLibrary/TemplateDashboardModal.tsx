@@ -21,6 +21,7 @@ import {
   TemplateDashboardSourceEntryPoint,
 } from './interactions';
 import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
+import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 
 const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
   quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
@@ -66,19 +67,7 @@ export const TemplateDashboardModal = () => {
       discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
-    const params = new URLSearchParams({
-      datasource: testDataSource?.uid || '',
-      title: dashboard.name,
-      pluginId: String(testDataSource?.type) || '',
-      gnetId: String(dashboard.id),
-      // tracking event purpose values
-      sourceEntryPoint,
-      libraryItemId: String(dashboard.id),
-      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD,
-      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-    });
-
-    const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
+    const templateUrl = getTemplateDashboardUrl(dashboard, sourceEntryPoint);
     locationService.push(templateUrl);
   };
 

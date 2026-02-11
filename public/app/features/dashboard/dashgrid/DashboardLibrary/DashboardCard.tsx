@@ -58,14 +58,15 @@ function DashboardCardComponent({
   const templateContext = useMemo(
     () =>
       createAssistantContextItem('structured', {
-        title: buildTemplateContextTitle(dashboard, title),
-        data: buildTemplateContextData(dashboard, title, kind),
+        hidden: false,
+        title: buildTemplateContextTitle(dashboard),
+        data: buildTemplateContextData(dashboard, kind),
       }),
-    [dashboard, title, kind]
+    [dashboard, kind]
   );
 
   // Build the enhanced prompt with template details
-  const assistantPrompt = useMemo(() => buildAssistantPrompt(dashboard, title, kind), [dashboard, title, kind]);
+  const assistantPrompt = useMemo(() => buildAssistantPrompt(title), [title]);
 
   const onUseAssistantClick = () => {
     if (assistantAvailable) {
@@ -74,7 +75,6 @@ function DashboardCardComponent({
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
         // @ts-expect-error - 'dashboarding' mode is valid but not in current type definitions
-        // TODO: Is there a better way to do this?
         mode: 'dashboarding',
         prompt: assistantPrompt,
         context: [templateContext],
