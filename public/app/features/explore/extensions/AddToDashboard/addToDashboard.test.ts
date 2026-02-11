@@ -134,6 +134,7 @@ function createEmptyQueryResponse(): ExplorePanelData {
     traceFrames: [],
     nodeGraphFrames: [],
     flameGraphFrames: [],
+    heatmapFrames: [],
     customFrames: [],
     tableFrames: [],
     rawPrometheusFrames: [],
