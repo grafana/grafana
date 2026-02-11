@@ -14,7 +14,6 @@ const GROUPBY_PROMOTED: MetricFindValue[] = [{ value: 'grafana_folder', text: 'F
 
 /** Labels promoted to the top of the Filter dropdown */
 const FILTER_PROMOTED: MetricFindValue[] = [
-  { value: 'grafana_alertstate', text: 'Health', group: COMMON_GROUP },
   { value: 'alertstate', text: 'State', group: COMMON_GROUP },
   { value: 'alertname', text: 'Rule name', group: COMMON_GROUP },
   { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
