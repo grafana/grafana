@@ -29,6 +29,8 @@ jobs:
             frontend_strict:
               - 'public/**'
               - 'packages/**'
+              - '!public/**/*.gen.ts'
+              - '!packages/**/*.gen.ts'
               - 'scripts/webpack/**'
               - '.eslintrc*'
               - '.prettierrc*'
@@ -81,7 +83,9 @@ jobs:
             echo "Exception process (if changes MUST be coupled):"
             echo "• Add the 'no-check-mt-service-compatibility' label to this PR"
             echo "• Explain in the PR description why these changes cannot be separated"
-            echo "• Get platform team approval"
+            echo ""
+            echo "For more details, see: https://enghub.grafana-ops.net/docs/default/component/deployment-tools/grafana-frontend-service/#guide-for-development-process-in-a-decoupled-deployment"
+            echo "If you need help or have feedback, reach us in #proj-mt-frontend"
             exit 1
           fi
         env:
