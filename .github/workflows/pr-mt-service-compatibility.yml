@@ -1,0 +1,88 @@
+name: "MT Service Compatibility"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main, test/frontend-backend-separation-action]
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-strict: ${{ steps.changed-files.outputs.frontend_strict_any_changed }}
+      backend-strict: ${{ steps.changed-files.outputs.backend_strict_any_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+
+      - name: Detect changes
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          files_yaml: |
+            frontend_strict:
+              - 'public/**'
+              - 'packages/**'
+              - 'scripts/webpack/**'
+              - '.eslintrc*'
+              - '.prettierrc*'
+              - '.stylelintrc*'
+              - 'tsconfig*'
+              - 'yarn.lock'
+              - 'package.json'
+              - '.betterer*'
+              - 'jest.config*'
+              - 'playwright**'
+            backend_strict:
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'Makefile'
+              - 'conf/**'
+              - '.golangci*'
+              - 'build.go'
+              - 'apiserver/**'
+              - 'pkg-gen/**'
+              - 'devenv/**'
+              - 'scripts/drone/**'
+              - 'scripts/go/**'
+              - '.air.toml'
+
+  check-separation:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for exception label
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "no-check-mt-service-compatibility"; then
+            echo "✅ Mixed changes allowed - exception label 'no-check-mt-service-compatibility' is present"
+            exit 0
+          else
+            echo "❌ This PR contains both frontend and backend changes."
+            echo ""
+            echo "Why this check failed:"
+            echo "• Frontend and backend are deployed independently in our SaaS architecture"
+            echo "• Frontend serves all customers with a single deployment"
+            echo "• Mixed changes break compatibility between frontend and backend versions"
+            echo ""
+            echo "How to fix:"
+            echo "• Split this PR into two separate PRs (recommended):"
+            echo "  - One PR for frontend changes (public/, packages/, *.ts, *.tsx)"
+            echo "  - One PR for backend changes (pkg/, *.go, go.mod)"
+            echo ""
+            echo "Exception process (if changes MUST be coupled):"
+            echo "• Add the 'no-check-mt-service-compatibility' label to this PR"
+            echo "• Explain in the PR description why these changes cannot be separated"
+            echo "• Get platform team approval"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

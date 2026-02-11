@@ -47,29 +47,29 @@ Third-party plugins can define their own RBAC roles. This page documents roles f
 
 When you assign a user a basic organization role (Viewer, Editor, or Admin), they automatically receive default plugin permissions. The following table summarizes the default access level for each Grafana Cloud plugin.
 
-| Plugin                          | Viewer                                  | Editor                                                      | Admin                                         |
-| ------------------------------- | --------------------------------------- | ----------------------------------------------------------- | --------------------------------------------- |
-| **Adaptive Logs**               | Read exemptions                         | Read exemptions                                             | Admin access                                  |
-| **Adaptive Metrics**            | Read recommendations, exemptions        | Read recommendations, exemptions                            | Admin access                                  |
-| **Adaptive Traces**             | Read recommendations                    | Read recommendations                                        | Admin access                                  |
-| **Application Observability**   | View access                             | View access                                                 | Admin access                                  |
-| **Assistant**                   | Chat access, user rules/quickstarts     | + MCP servers, investigations                               | + Tenant-wide settings                        |
-| **Cloud Provider**              | Read access                             | Read access                                                 | Provider-specific write access                |
-| **Collector**                   | Read access                             | Read access                                                 | Full access                                   |
-| **Cost Attributions**           | Read attributions                       | Read attributions                                           | Read attributions                             |
-| **Cost Management and Billing** | —                                       | —                                                           | Full access                                   |
-| **Frontend Observability**      | Read apps, source maps                  | + Write apps, source maps                                   | + Delete apps                                 |
-| **Grafana Auth**                | —                                       | —                                                           | Write access policies                         |
-| **IRM**                         | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
-| **k6**                          | Read settings                           | + Write settings                                            | Admin access                                  |
-| **Knowledge Graph**             | Read assertions                         | + Write configuration and rules                             | + Full write access                           |
-| **Kubernetes Monitoring**       | Read all                                | Read all                                                    | Admin access                                  |
-| **Labels**                      | Read labels                             | + Create, edit, delete labels                               | + Full write access                           |
-| **Machine Learning**            | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
-| **OnCall**                      | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
-| **Private Data Connect**        | —                                       | —                                                           | Full access                                   |
-| **SLO**                         | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
-| **Synthetic Monitoring**        | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
+| Plugin                           | Viewer                                  | Editor                                                      | Admin                                         |
+| -------------------------------- | --------------------------------------- | ----------------------------------------------------------- | --------------------------------------------- |
+| **Adaptive Logs**                | Read exemptions                         | Read exemptions                                             | Admin access                                  |
+| **Adaptive Metrics**             | Read recommendations, exemptions        | Read recommendations, exemptions                            | Admin access                                  |
+| **Adaptive Traces**              | Read recommendations                    | Read recommendations                                        | Admin access                                  |
+| **Application Observability**    | View access                             | View access                                                 | Admin access                                  |
+| **Assistant**                    | Chat access, user rules/quickstarts     | + MCP servers, investigations                               | + Tenant-wide settings                        |
+| **Cloud Provider**               | Read access                             | Read access                                                 | Provider-specific write access                |
+| **Cost Attributions**            | Read attributions                       | Read attributions                                           | Read attributions                             |
+| **Cost Management and Billing**  | —                                       | —                                                           | Full access                                   |
+| **Fleet Management (Collector)** | Read access                             | Read access                                                 | Full access                                   |
+| **Frontend Observability**       | Read apps, source maps                  | + Write apps, source maps                                   | + Delete apps                                 |
+| **Grafana Auth**                 | —                                       | —                                                           | Write access policies                         |
+| **IRM**                          | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
+| **k6**                           | Read settings                           | + Write settings                                            | Admin access                                  |
+| **Knowledge Graph**              | Read assertions                         | + Write configuration and rules                             | + Full write access                           |
+| **Kubernetes Monitoring**        | Read all                                | Read all                                                    | Admin access                                  |
+| **Labels**                       | Read labels                             | + Create, edit, delete labels                               | + Full write access                           |
+| **Machine Learning**             | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
+| **OnCall**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
+| **Private Data Connect**         | —                                       | —                                                           | Full access                                   |
+| **SLO**                          | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
+| **Synthetic Monitoring**         | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
 
 {{< admonition type="note" >}}
 The permissions above are automatically granted based on the user's organization role. You can assign additional plugin-specific roles (listed below) to grant more granular access.
@@ -133,15 +133,6 @@ Plugin ID: `grafana-csp-app`
 | `plugins:grafana-csp-app:gcp-writer`   | Read/Write access to GCP in Cloud provider plugin   |
 | `plugins:grafana-csp-app:reader`       | Read access in Cloud provider plugin                |
 
-## Collector App
-
-Plugin ID: `grafana-collector-app`
-
-| Plugin role                                          | Description                               |
-| ---------------------------------------------------- | ----------------------------------------- |
-| `plugins:grafana-collector-app:collector-app-admin`  | Full access to the Collector App          |
-| `plugins:grafana-collector-app:collector-app-reader` | Read-only access to Grafana Collector App |
-
 ## Cost Attributions plugin
 
 Plugin ID: `grafana-attributions-app`
@@ -171,6 +162,15 @@ Plugin ID: `grafana-easystart-app`
 | Plugin role                                         | Description             |
 | --------------------------------------------------- | ----------------------- |
 | `plugins:grafana-easystart-app:integrations-writer` | Administer integrations |
+
+## Fleet Management (Collector plugin)
+
+Plugin ID: `grafana-collector-app`
+
+| Plugin role                                          | Description                          |
+| ---------------------------------------------------- | ------------------------------------ |
+| `plugins:grafana-collector-app:collector-app-admin`  | Full access to Fleet Management      |
+| `plugins:grafana-collector-app:collector-app-reader` | Read-only access to Fleet Management |
 
 ## Frontend Observability plugin
 
