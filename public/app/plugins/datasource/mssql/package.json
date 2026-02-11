@@ -11,7 +11,7 @@
     "@grafana/runtime": "12.3.3",
     "@grafana/sql": "12.3.3",
     "@grafana/ui": "12.3.3",
-    "lodash": "4.17.21",
+    "lodash": "^4.17.23",
     "react": "18.3.1",
     "rxjs": "7.8.2",
     "tslib": "2.8.1"
