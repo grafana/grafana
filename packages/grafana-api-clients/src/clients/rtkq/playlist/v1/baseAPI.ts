@@ -25,7 +25,7 @@ function createBaseQueryWithFallback(): BaseQueryFn<RequestOptions> {
     const result = await v1BaseQuery(args, api, extraOptions);
 
     if (result.error && isFetchError(result.error) && result.error.status === 404) {
-        return v0alpha1BaseQuery(args, api, extraOptions);
+      return v0alpha1BaseQuery(args, api, extraOptions);
     }
 
     return result;
