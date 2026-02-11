@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -1010,7 +1011,12 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user identity.R
 
 // Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(ns string, channel string, data []byte) error {
-	_, err := g.node.Publish(orgchannel.PrependK8sNamespace(ns, channel), data)
+	// Temporarily publish to BOTH channel prefix in cloud
+	info, err := authlib.ParseNamespace(ns)
+	if err == nil {
+		_, _ = g.node.Publish(fmt.Sprintf("%d/%s", info.OrgID, channel), data) // legacy numeric format
+	}
+	_, err = g.node.Publish(orgchannel.PrependK8sNamespace(ns, channel), data)
 	return err
 }
 

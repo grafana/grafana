@@ -2,6 +2,7 @@ package orgchannel
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	authlib "github.com/grafana/authlib/types"
@@ -19,6 +20,17 @@ func StripK8sNamespace(channel string) (authlib.NamespaceInfo, string, error) {
 	if len(parts) != 2 {
 		return authlib.NamespaceInfo{}, "", fmt.Errorf("malformed channel: %s", channel)
 	}
+
+	// Temporarily support the
+	orgId, err := strconv.ParseInt(parts[0], 16, 64)
+	if err == nil && orgId > 0 {
+		return authlib.NamespaceInfo{
+			Value:   authlib.OrgNamespaceFormatter(orgId), // default or org-XYZ
+			OrgID:   orgId,
+			StackID: 0,
+		}, parts[1], nil
+	}
+
 	ns, err := authlib.ParseNamespace(parts[0])
 	if err == nil && ns.OrgID < 1 {
 		return ns, "", fmt.Errorf("namespace does not reference a valid org ID: %s", parts[0])

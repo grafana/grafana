@@ -25,11 +25,11 @@ func NewChannelLocalPublisher(node *centrifuge.Node, pipeline *pipeline.Pipeline
 }
 
 func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error {
+	ns, channelID, err := orgchannel.StripK8sNamespace(channel)
+	if err != nil {
+		return err
+	}
 	if p.pipeline != nil {
-		ns, channelID, err := orgchannel.StripK8sNamespace(channel)
-		if err != nil {
-			return err
-		}
 		ok, err := p.pipeline.ProcessInput(context.Background(), ns.Value, channelID, data)
 		if err != nil {
 			return err
@@ -42,10 +42,13 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error 
 	pub := &centrifuge.Publication{
 		Data: data,
 	}
-	err := p.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
+	err = p.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
 	if err != nil {
 		return fmt.Errorf("error publishing %s: %w", string(data), err)
 	}
+
+	// Temporarily publish to both flavors
+	_ = p.node.Hub().BroadcastPublication(fmt.Sprintf("%d/%s", ns.OrgID, channelID), pub, centrifuge.StreamPosition{})
 	return nil
 }
 
