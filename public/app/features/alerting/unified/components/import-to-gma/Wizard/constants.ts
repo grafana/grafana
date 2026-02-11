@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { NotificationsSourceOption, PolicyOption, RulesSourceOption, StepKey, WizardStep } from './types';
+import { NotificationsSourceOption, RulesSourceOption, StepKey, WizardStep } from './types';
 
 /**
  * Label name used in X-Grafana-Alerting-Merge-Matchers header.
@@ -106,49 +106,6 @@ export const getRulesSourceOptions = (includeYaml: boolean): RulesSourceOption[]
       value: 'yaml',
     });
   }
-
-  return options;
-};
-
-/**
- * Returns the notification policy options for routing imported rules (Step 2).
- */
-export const getPolicyOptions = (params: { step1Completed: boolean; policyTreeName: string }): PolicyOption[] => {
-  const { step1Completed, policyTreeName } = params;
-  const options: PolicyOption[] = [
-    {
-      label: t('alerting.import-to-gma.step2.policy.default', 'Use Grafana default policy'),
-      value: 'default',
-      description: t(
-        'alerting.import-to-gma.step2.policy.default-desc',
-        'Alerts will be routed using the default Grafana notification policy'
-      ),
-    },
-  ];
-
-  if (step1Completed) {
-    options.push({
-      label: t('alerting.import-to-gma.step2.policy.imported', 'Use imported policy'),
-      value: 'imported',
-      description: t(
-        'alerting.import-to-gma.step2.policy.imported-desc',
-        'Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.',
-        {
-          label: MERGE_MATCHERS_LABEL_NAME,
-          value: policyTreeName,
-        }
-      ),
-    });
-  }
-
-  options.push({
-    label: t('alerting.import-to-gma.step2.policy.manual', 'Enter label manually'),
-    value: 'manual',
-    description: t(
-      'alerting.import-to-gma.step2.policy.manual-desc',
-      'Specify a custom label to add to all imported rules'
-    ),
-  });
 
   return options;
 };

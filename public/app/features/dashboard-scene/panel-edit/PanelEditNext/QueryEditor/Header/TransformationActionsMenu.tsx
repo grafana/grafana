@@ -1,0 +1,52 @@
+import { t } from '@grafana/i18n';
+import { Button, Dropdown, Menu } from '@grafana/ui';
+
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { useQueryEditorUIContext } from '../QueryEditorContext';
+
+/**
+ * Actions menu for transformations.
+ * Currently simplified - only supports delete action.
+ *
+ * @remarks
+ * TODO: Implement full transformation actions when needed:
+ * - Duplicate transformation
+ * - Move up/down
+ * - Transformation-specific settings
+ */
+export function TransformationActionsMenu() {
+  const { selectedTransformation } = useQueryEditorUIContext();
+
+  if (!selectedTransformation) {
+    return null;
+  }
+
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].getLabel();
+
+  return (
+    <Dropdown
+      overlay={
+        <Menu>
+          <Menu.Item label={t('query-editor-next.action.coming-soon', 'Transformation actions coming soon')} disabled />
+          <Menu.Divider />
+          <Menu.Item
+            label={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
+            icon="trash-alt"
+            onClick={() => {}} // noop for now
+            destructive
+          />
+        </Menu>
+      }
+      placement="bottom-end"
+    >
+      <Button
+        size="sm"
+        fill="text"
+        icon="ellipsis-v"
+        variant="secondary"
+        aria-label={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        tooltip={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+      />
+    </Dropdown>
+  );
+}

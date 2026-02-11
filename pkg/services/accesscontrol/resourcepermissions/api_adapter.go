@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -79,6 +80,31 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace strin
 		a.logger.Warn("Failed to get inherited permissions from k8s API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 	} else {
 		dto = append(dto, inheritedDTO...)
+	}
+
+	// Get provisioned permissions from legacy API
+	provisionedDTO, err := a.getProvisionedPermissions(ctx, namespace, resourceID)
+	if err != nil {
+		a.logger.Warn("Failed to get provisioned permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+	} else {
+		dto = append(dto, provisionedDTO...)
+	}
+
+	// Add default Admin role when access control enforcement is disabled
+	// This maintains parity with the legacy API behavior
+	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
+		permission := a.service.MapActions(accesscontrol.ResourcePermission{
+			Actions: a.service.actions,
+		})
+		if permission != "" {
+			dto = append(dto, resourcePermissionDTO{
+				BuiltInRole: string(org.RoleAdmin),
+				Actions:     a.service.actions,
+				Permission:  permission,
+				IsManaged:   false,
+				IsInherited: false,
+			})
+		}
 	}
 
 	return dto, nil
@@ -264,6 +290,69 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 	}
 
 	return allInheritedPermissions, nil
+}
+
+// getProvisionedPermissions retrieves provisioned permissions from the legacy SQL database
+// These are permissions that are neither managed (from K8s) nor inherited
+func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	namespaceInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
+	}
+	orgID := namespaceInfo.OrgID
+
+	legacyPermissions, err := a.service.store.GetResourcePermissions(ctx, orgID, GetResourcePermissionsQuery{
+		Actions:              a.service.actions,
+		Resource:             a.service.options.Resource,
+		ResourceID:           resourceID,
+		ResourceAttribute:    a.service.options.ResourceAttribute,
+		OnlyManaged:          false,
+		ExcludeManaged:       true, // SQL-level filter: exclude "managed:" roles to get only provisioned
+		EnforceAccessControl: false,
+		User:                 nil,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
+	}
+
+	var provisionedPermissions []accesscontrol.ResourcePermission
+	for _, perm := range legacyPermissions {
+		if !perm.IsInherited {
+			provisionedPermissions = append(provisionedPermissions, perm)
+		}
+	}
+
+	// Convert to DTOs
+	dto := make(getResourcePermissionsResponse, 0, len(provisionedPermissions))
+	for _, p := range provisionedPermissions {
+		if permission := a.service.MapActions(p); permission != "" {
+			teamAvatarUrl := ""
+			if p.TeamID != 0 {
+				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, p.TeamEmail, p.Team)
+			}
+
+			dto = append(dto, resourcePermissionDTO{
+				ID:               p.ID,
+				RoleName:         p.RoleName,
+				UserID:           p.UserID,
+				UserUID:          p.UserUID,
+				UserLogin:        p.UserLogin,
+				UserAvatarUrl:    dtos.GetGravatarUrl(a.cfg, p.UserEmail),
+				Team:             p.Team,
+				TeamID:           p.TeamID,
+				TeamUID:          p.TeamUID,
+				TeamAvatarUrl:    teamAvatarUrl,
+				BuiltInRole:      p.BuiltInRole,
+				Actions:          p.Actions,
+				Permission:       permission,
+				IsManaged:        false,
+				IsInherited:      false,
+				IsServiceAccount: p.IsServiceAccount,
+			})
+		}
+	}
+
+	return dto, nil
 }
 
 func (a *api) buildResourcePermissionName(resourceID string) string {

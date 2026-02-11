@@ -63,6 +63,12 @@ describe('dashboard tracking', () => {
           cloudwatch: 5,
           datasource: 1,
         },
+        variable_type_custom_count: 3,
+        variable_type_custom_csv_count: 2,
+        variable_type_custom_json_count: 1,
+        variable_type_query_count: 1,
+        variable_type_datasource_count: 1,
+        variable_type_adhoc_count: 1,
       });
     });
 
@@ -89,6 +95,12 @@ describe('dashboard tracking', () => {
           cloudwatch: 5,
           datasource: 1,
         },
+        variable_type_custom_count: 3,
+        variable_type_custom_csv_count: 2,
+        variable_type_custom_json_count: 1,
+        variable_type_query_count: 1,
+        variable_type_datasource_count: 1,
+        variable_type_adhoc_count: 1,
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
       });

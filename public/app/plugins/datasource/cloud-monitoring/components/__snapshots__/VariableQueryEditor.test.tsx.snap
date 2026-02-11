@@ -72,7 +72,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
               <svg
                 aria-hidden="true"
                 class="css-1d3xu67-Icon"
-                data-testid="angle-down"
+                data-testid="icon-angle-down"
                 height="16"
                 loader="[object Object]"
                 title=""

@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.6
+GO_VERSION = 1.25.7
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -174,7 +174,12 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 
 .PHONY: gen-apps
 gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt
+## NOTE: codegen produces some openapi files that result in circular dependencies
+## for now, we revert the zz_openapi_gen.go files before comparison  	  
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+	  git checkout HEAD -- apps/alerting/rules/pkg/apis/alerting/v0alpha1/zz_openapi_gen.go; \
+		git checkout HEAD -- apps/iam/pkg/apis/iam/v0alpha1/zz_openapi_gen.go; \
+    git checkout HEAD -- apps/secret/pkg/apis/secret/v1beta1/zz_openapi_gen.go; \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
 			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \

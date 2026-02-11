@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 )
 
 const (
@@ -393,12 +394,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
-		&GetSearchTeams{},
+		&GetSearchTeamsResponse{},
 		&TeamBinding{},
 		&TeamBindingList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
-		&GetGroups{},
+		&GetGroupsResponse{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},
@@ -412,17 +413,7 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 	)
 
 	// Enable field selectors for TeamBinding
-	err := scheme.AddFieldLabelConversionFunc(
-		TeamBindingResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)
-			}
-		},
-	)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, TeamBindingKind())
 	if err != nil {
 		return err
 	}

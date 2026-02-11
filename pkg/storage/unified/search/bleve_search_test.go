@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/require"
@@ -280,7 +281,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", writer, nil, false)
+	}, size, info.Fields, "test", writer, nil, false, time.Time{})
 	require.NoError(t, err)
 
 	return index
@@ -351,7 +352,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, nil, "test", noop, nil, false)
+	}, 10, nil, "test", noop, nil, false, time.Time{})
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{
@@ -389,6 +390,17 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 					},
 				},
 			},
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc3"},
+					Title: "Document with field values with token terminating characters",
+					SelectableFields: map[string]string{
+						"spec.some.field":       "doc3-field#value!",
+						"spec.some.other.field": "some other.field>value",
+					},
+				},
+			},
 		},
 	})
 	require.NoError(t, err)
@@ -396,6 +408,10 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc1_field_value"), []string{"doc1"})
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc2_field_value"), []string{"doc2"})
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "other_field_value"), []string{"doc1", "doc2"})
+
+	// tests for doc3 with token-terminating characters
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
 
 	// Only known selectable fields are indexed.
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil)
