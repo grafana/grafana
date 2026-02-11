@@ -1,16 +1,8 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
-import { v4 } from 'uuid';
 
-import {
-  DataSourceInstanceSettings,
-  getDataSourceRef,
-  LoadingState,
-  standardTransformersRegistry,
-} from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -18,9 +10,12 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { useSelectedCard } from './hooks/useSelectedCard';
+import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
+import { useTransformations } from './hooks/useTransformations';
 import { QueryOptionField, Transformation } from './types';
 import { useQueryOptions } from './useQueryOptions';
-import { getEditorType, isDataTransformerConfig } from './utils';
+import { getEditorType } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -43,25 +38,8 @@ export function QueryEditorContextWrapper({
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
-  const transformations: Transformation[] = useMemo(() => {
-    if (panel.state.$data instanceof SceneDataTransformer) {
-      // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-      const transformationList = panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
-        isDataTransformerConfig(t)
-      );
-
-      const transformationsList: Transformation[] = transformationList.map((t) => {
-        return {
-          transformConfig: t,
-          registryItem: standardTransformersRegistry.getIfExists(t.id),
-          transformId: v4(),
-        };
-      });
-
-      return transformationsList;
-    }
-    return [];
-  }, [panel]);
+  const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
+  const transformations = useTransformations(dataTransformer);
 
   // NOTE: This is the datasource for the panel, not the query
   const dsState = useMemo(
@@ -109,52 +87,14 @@ export function QueryEditorContextWrapper({
     setFocusedField(null);
   }, []);
 
-  const selectedQuery = useMemo(() => {
-    const queries = queryRunnerState?.queries ?? [];
+  const { selectedQuery, selectedTransformation } = useSelectedCard(
+    selectedQueryRefId,
+    selectedTransformationId,
+    queryRunnerState?.queries ?? [],
+    transformations
+  );
 
-    // If we have a selected query refId, try to find that query
-    if (selectedQueryRefId) {
-      const query = queries.find((q) => q.refId === selectedQueryRefId);
-      if (query) {
-        return query;
-      }
-    }
-
-    // If a transformation is selected, don't select any query
-    if (selectedTransformationId) {
-      return null;
-    }
-
-    // Otherwise, default to the first query if available
-    return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedQueryRefId, selectedTransformationId]);
-
-  const selectedTransformation = useMemo(() => {
-    // If we have a selected transformation id, try to find that transformation
-    if (selectedTransformationId) {
-      const transformation = transformations.find((t) => t.transformId === selectedTransformationId);
-      if (transformation) {
-        return transformation;
-      }
-    }
-
-    return null;
-  }, [transformations, selectedTransformationId]);
-
-  const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
-    if (!selectedQuery?.datasource) {
-      return undefined;
-    }
-
-    try {
-      const dsSettings = getDataSourceSrv().getInstanceSettings(selectedQuery.datasource);
-      const datasource = await getDataSourceSrv().get(selectedQuery.datasource);
-      return { datasource, dsSettings };
-    } catch (err) {
-      console.error('Failed to load datasource for selected query:', err);
-      return undefined;
-    }
-  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type]);
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
   const uiState = useMemo(
     () => ({
@@ -179,7 +119,7 @@ export function QueryEditorContextWrapper({
         closeSidebar,
         focusedField,
       },
-      selectedQueryDsData: selectedQueryDsData ?? null,
+      selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
@@ -199,6 +139,13 @@ export function QueryEditorContextWrapper({
     ]
   );
 
+  const findTransformationIndex = useCallback(
+    (transformId: string) => {
+      return transformations.findIndex((t) => t.transformId === transformId);
+    },
+    [transformations]
+  );
+
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
@@ -214,8 +161,21 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      deleteTransformation: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.deleteTransformation(index);
+        }
+      },
+      toggleTransformationDisabled: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.toggleTransformationDisabled(index);
+        }
+      },
+      updateTransformation: dataPane.updateTransformation,
     }),
-    [dataPane]
+    [dataPane, findTransformationIndex]
   );
 
   return (

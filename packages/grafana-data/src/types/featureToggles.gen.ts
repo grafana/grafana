@@ -144,6 +144,11 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
+  * Enable Faro session replay for Grafana
+  * @default false
+  */
+  faroSessionReplay?: boolean;
+  /**
   * A table visualisation for logs in Explore
   * @default true
   */
@@ -448,11 +453,6 @@ export interface FeatureToggles {
   * @default false
   */
   auditLoggingAppPlatform?: boolean;
-  /**
-  * Enable the secrets management API and services under app platform
-  * @default false
-  */
-  secretsManagementAppPlatform?: boolean;
   /**
   * Enable the secrets management app platform UI
   * @default false
@@ -1307,6 +1307,11 @@ export interface FeatureToggles {
   * @default false
   */
   panelStyleActions?: boolean;
+  /**
+  * Enable visualization presets
+  * @default false
+  */
+  vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false

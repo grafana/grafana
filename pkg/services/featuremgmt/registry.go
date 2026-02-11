@@ -209,6 +209,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "faroSessionReplay",
+			Description:  "Enable Faro session replay for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaSessionReplaySquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,
@@ -691,13 +699,6 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
-		},
-		{
-			Name:        "secretsManagementAppPlatform",
-			Description: "Enable the secrets management API and services under app platform",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
 		},
 		{
 			Name:        "secretsManagementAppPlatformUI",
@@ -2052,6 +2053,14 @@ var (
 			Name:         "panelStyleActions",
 			Description:  "Enable style actions (copy/paste) in the panel editor",
 			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "vizPresets",
+			Description:  "Enable visualization presets",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
