@@ -54,6 +54,10 @@ describe('when useMTPlugins toggle is enabled and cache is not initialized', () 
 });
 
 describe('when useMTPlugins toggle is enabled and cache is initialized', () => {
+  beforeEach(() => {
+    evaluateBooleanFlagMock.mockReturnValue(true);
+  });
+
   it('initPluginMetas should call loadPluginMetas once', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
