@@ -2870,6 +2870,20 @@
     },
     {
       "metadata": {
+        "name": "liveChannelNamespacePrefix",
+        "resourceVersion": "1770776221909",
+        "creationTimestamp": "2026-02-11T02:17:01Z"
+      },
+      "spec": {
+        "description": "Use k8s namespace string (instead of numeric orgID) as channel prefix in Live streaming",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1769012601213",
         "creationTimestamp": "2025-03-31T13:59:07Z",

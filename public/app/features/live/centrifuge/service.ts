@@ -27,6 +27,7 @@ import {
   StreamingFrameOptions,
   BackendDataSourceResponse,
   getBackendSrv,
+  config,
 } from '@grafana/runtime';
 
 import { StreamingResponseData } from '../data/utils';
@@ -38,6 +39,7 @@ export type CentrifugeSrvDeps = {
   grafanaAuthToken: string | null;
   appUrl: string;
   namespace: string; // k8s namespace
+  orgId: number; // numeric org ID for backward compatibility
   orgRole: string;
   liveEnabled: boolean;
   dataStreamSubscriberReadiness: Observable<boolean>;
@@ -154,7 +156,12 @@ export class CentrifugeService implements CentrifugeSrv {
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${this.deps.namespace}/${addr.scope}/${addr.stream}/${addr.path}`;
+    // use namespace if feature toggle is enabled, otherwise use orgId
+    const channelPrefix = config.featureToggles.liveChannelNamespacePrefix
+      ? this.deps.namespace
+      : String(this.deps.orgId);
+
+    const id = `${channelPrefix}/${addr.scope}/${addr.stream}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;

@@ -94,6 +94,11 @@ export interface FeatureToggles {
   */
   liveAPIServer?: boolean;
   /**
+  * Use k8s namespace string (instead of numeric orgID) as channel prefix in Live streaming
+  * @default false
+  */
+  liveChannelNamespacePrefix?: boolean;
+  /**
   * populate star status from apiserver
   * @default false
   */

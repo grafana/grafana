@@ -11,6 +11,7 @@ export function initGrafanaLive() {
   const centrifugeServiceDeps = {
     appUrl: `${window.location.origin}${config.appSubUrl}`,
     namespace: config.namespace,
+    orgId: contextSrv.user.orgId,
     orgRole: contextSrv.user.orgRole,
     liveEnabled: config.liveEnabled,
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),

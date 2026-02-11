@@ -133,6 +133,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:         "liveChannelNamespacePrefix",
+			Description:  "Use k8s namespace string (instead of orgID) as channel prefix in live streaming",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "true",
+		},
+		{
 			Name:         "starsFromAPIServer",
 			Description:  "populate star status from apiserver",
 			Stage:        FeatureStageExperimental,
