@@ -37,11 +37,13 @@ Navigate to **Administration > Settings > Server settings** to view system infor
 ### Issue: Cannot connect to data source
 
 **Symptoms:**
+
 - Error message: "Connection failed"
 - Error message: "HTTP Error 502: Bad Gateway"
 - Red "Failed" indicator when testing the data source
 
 **Possible causes:**
+
 - Incorrect URL or endpoint
 - Network connectivity issues
 - Firewall blocking requests
@@ -76,10 +78,12 @@ tail -f /var/log/grafana/grafana.log | grep [plugin-id]
 ### Issue: Timeout errors
 
 **Symptoms:**
+
 - Error message: "Timeout exceeded"
 - Queries take too long and eventually fail
 
 **Possible causes:**
+
 - Query returns too much data
 - Data source is slow or overloaded
 - Network latency is high
@@ -102,10 +106,12 @@ tail -f /var/log/grafana/grafana.log | grep [plugin-id]
 ### Issue: SSL/TLS certificate errors
 
 **Symptoms:**
+
 - Error message: "x509: certificate signed by unknown authority"
 - Error message: "SSL certificate problem"
 
 **Possible causes:**
+
 - Self-signed certificate
 - Certificate chain is incomplete
 - Certificate has expired
@@ -133,11 +139,13 @@ openssl s_client -connect [host]:[port] -showcerts
 ### Issue: Authentication failed
 
 **Symptoms:**
+
 - Error message: "401 Unauthorized"
 - Error message: "403 Forbidden"
 - Error message: "Invalid credentials"
 
 **Possible causes:**
+
 - Incorrect username or password
 - API key is invalid or expired
 - OAuth token is expired
@@ -167,6 +175,7 @@ openssl s_client -connect [host]:[port] -showcerts
 ### Issue: Token expired
 
 **Symptoms:**
+
 - Error message: "Token expired"
 - Queries work initially but fail after some time
 
@@ -183,10 +192,12 @@ openssl s_client -connect [host]:[port] -showcerts
 ### Issue: No data returned
 
 **Symptoms:**
+
 - Empty graphs or tables
 - Message: "No data"
 
 **Possible causes:**
+
 - Query syntax is incorrect
 - Time range doesn't contain data
 - Filters exclude all data
@@ -209,11 +220,13 @@ openssl s_client -connect [host]:[port] -showcerts
 ### Issue: Query syntax errors
 
 **Symptoms:**
+
 - Error message: "Parse error"
 - Error message: "Invalid query"
 - Red error indicators in the query editor
 
 **Possible causes:**
+
 - Syntax errors in the query
 - Invalid field or metric names
 - Unsupported query features
@@ -234,11 +247,13 @@ openssl s_client -connect [host]:[port] -showcerts
 ### Issue: Slow queries
 
 **Symptoms:**
+
 - Queries take a long time to execute
 - Dashboard loading is slow
 - Timeout errors
 
 **Possible causes:**
+
 - Query returns too much data
 - Data source is slow or overloaded
 - Inefficient query structure
@@ -263,10 +278,12 @@ openssl s_client -connect [host]:[port] -showcerts
 ### Issue: Plugin not appearing
 
 **Symptoms:**
+
 - Plugin doesn't appear in the plugins list
 - Data source or panel type not available
 
 **Possible causes:**
+
 - Plugin not installed correctly
 - Plugin files are in the wrong directory
 - Grafana hasn't restarted after installation
@@ -308,6 +325,7 @@ grep "plugin" /var/log/grafana/grafana.log
 ### Issue: Plugin version incompatibility
 
 **Symptoms:**
+
 - Error message: "Plugin not compatible with Grafana version"
 - Plugin fails to load
 
@@ -324,6 +342,7 @@ grep "plugin" /var/log/grafana/grafana.log
 ### Issue: Plugin crashes or errors
 
 **Symptoms:**
+
 - Browser console errors
 - White screen or broken UI
 - JavaScript errors in the console
@@ -353,6 +372,7 @@ Cmd+Shift+R (macOS)
 ### Issue: High memory usage
 
 **Symptoms:**
+
 - Grafana uses excessive memory
 - System becomes slow or unresponsive
 - Out of memory errors
@@ -372,6 +392,7 @@ Cmd+Shift+R (macOS)
 ### Issue: High CPU usage
 
 **Symptoms:**
+
 - Grafana server uses high CPU
 - Queries are slow
 - System becomes unresponsive
@@ -391,11 +412,13 @@ Cmd+Shift+R (macOS)
 ### Issue: Incorrect or unexpected data
 
 **Symptoms:**
+
 - Data doesn't match expectations
 - Values are wrong
 - Incorrect aggregations
 
 **Possible causes:**
+
 - Query returns wrong data
 - Time zone issues
 - Incorrect aggregation functions
@@ -418,10 +441,12 @@ Cmd+Shift+R (macOS)
 ### Issue: Missing data points
 
 **Symptoms:**
+
 - Gaps in time series graphs
 - Some data points are missing
 
 **Possible causes:**
+
 - Data source has gaps in data
 - Data resolution is too low
 - Filters exclude some data points

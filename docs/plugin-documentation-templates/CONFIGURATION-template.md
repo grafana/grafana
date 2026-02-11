@@ -30,6 +30,7 @@ Enter the URL endpoint for your [service/database/API].
 **Format**: `[protocol]://[host]:[port]/[path]`
 
 **Examples**:
+
 - `https://api.example.com`
 - `http://localhost:9090`
 - `https://example.com/api/v1`
@@ -115,6 +116,7 @@ Add custom HTTP headers to include with every request:
 3. Click **Add** to save the header.
 
 **Example headers**:
+
 - `X-Custom-Header: value`
 - `X-API-Version: 1.0`
 
@@ -133,6 +135,7 @@ Lower values improve performance but may reduce visualization detail.
 Set the minimum time interval between data points.
 
 **Examples**:
+
 - `1s` for 1 second
 - `1m` for 1 minute
 - `1h` for 1 hour
@@ -160,8 +163,8 @@ If the connection fails, refer to the [Troubleshooting guide](troubleshooting.md
 
 You can configure [Plugin Name] using environment variables:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
+| Variable                | Description   | Default         |
+| ----------------------- | ------------- | --------------- |
 | `GF_[PLUGIN]_[SETTING]` | [Description] | [Default value] |
 
 **Example**:

@@ -36,36 +36,40 @@ cp -r plugin-documentation-templates/* your-plugin-repo/docs/
 
 These files are essential for every plugin:
 
-| File | Purpose | Required |
-|------|---------|----------|
-| `README-template.md` | Main entry point, overview, quick start | Yes |
-| `INSTALLATION-template.md` | Installation instructions for all methods | Yes |
-| `CONFIGURATION-template.md` | Configuration and setup guide | Yes |
-| `TROUBLESHOOTING-template.md` | Common issues and solutions | Yes |
-| `CHANGELOG-template.md` | Version history and changes | Yes |
-| `QUICK-START-template.md` | Quick start guide with examples | Recommended |
+| File                          | Purpose                                   | Required    |
+| ----------------------------- | ----------------------------------------- | ----------- |
+| `README-template.md`          | Main entry point, overview, quick start   | Yes         |
+| `INSTALLATION-template.md`    | Installation instructions for all methods | Yes         |
+| `CONFIGURATION-template.md`   | Configuration and setup guide             | Yes         |
+| `TROUBLESHOOTING-template.md` | Common issues and solutions               | Yes         |
+| `CHANGELOG-template.md`       | Version history and changes               | Yes         |
+| `QUICK-START-template.md`     | Quick start guide with examples           | Recommended |
 
 ### Additional Documentation
 
 Create additional files based on your plugin type and features:
 
 **For Data Source Plugins:**
+
 - `QUERYING.md` - Query editor and syntax
 - `QUERY-SYNTAX-REFERENCE.md` - Complete query language reference
 - `AUTHENTICATION.md` - Authentication methods and setup
 - `DATA-TRANSFORMATION.md` - Data transformation features
 
 **For Panel Plugins:**
+
 - `VISUALIZATION-OPTIONS.md` - Panel configuration options
 - `CUSTOMIZATION.md` - Customization and styling
 - `DATA-HANDLING.md` - How the panel processes data
 
 **For App Plugins:**
+
 - `FEATURES.md` - Overview of app features
 - `NAVIGATION.md` - How to navigate the app
 - `INTEGRATIONS.md` - Integration with other plugins or services
 
 **Common Optional Files:**
+
 - `FAQ.md` - Frequently asked questions
 - `CONTRIBUTING.md` - Contribution guidelines
 - `DEVELOPMENT.md` - Development setup and guidelines
@@ -88,6 +92,7 @@ For data source plugins, focus on:
 6. **Data transformation** - Any data transformation features
 
 **Essential files**:
+
 - README.md
 - INSTALLATION.md
 - CONFIGURATION.md
@@ -126,6 +131,7 @@ For panel plugins, focus on:
 5. **Use cases** - When to use this panel type
 
 **Essential files**:
+
 - README.md
 - INSTALLATION.md
 - CONFIGURATION.md
@@ -163,6 +169,7 @@ For app plugins, focus on:
 5. **Permissions** - Required permissions and RBAC
 
 **Essential files**:
+
 - README.md
 - INSTALLATION.md
 - CONFIGURATION.md
@@ -227,15 +234,17 @@ Follow these guidelines when customizing templates:
 
 **Example**:
 
-```markdown
+````markdown
 To configure the API endpoint, set the following environment variable:
 
 ```bash
 export API_ENDPOINT="<API_ENDPOINT>"
 ```
+````
 
 Replace `<API_ENDPOINT>` with your actual API endpoint URL, for example `https://api.example.com`.
-```
+
+````
 
 ### Links
 
@@ -243,7 +252,7 @@ Replace `<API_ENDPOINT>` with your actual API endpoint URL, for example `https:/
 - Use descriptive link text, not "click here"
 - Use "refer to" instead of "see" or "check out"
 
-**Good**: Refer to the [Configuration guide](configuration.md) for details.  
+**Good**: Refer to the [Configuration guide](configuration.md) for details.
 **Bad**: For more info, see [this page](configuration.md).
 
 ## Screenshots and Images
@@ -272,7 +281,7 @@ Include screenshots to help users:
 
 ```markdown
 ![Data source configuration page with connection settings filled](images/configuration.png)
-```
+````
 
 ## Examples and Use Cases
 
@@ -284,6 +293,7 @@ Include practical examples throughout documentation:
 4. **Code snippets** - Reusable configuration
 
 **Tips for examples**:
+
 - Make examples copy-pastable
 - Use realistic data and scenarios
 - Explain what each example does

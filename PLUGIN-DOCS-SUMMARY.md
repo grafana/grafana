@@ -13,6 +13,7 @@ I've analyzed the Grafana plugins documentation and created a comprehensive docu
 **Location**: `/workspace/docs/recommended-plugin-doc-structure.md`
 
 This file contains:
+
 - Complete overview of recommended documentation structure
 - Detailed breakdown of each documentation section
 - Section-by-section examples with proper formatting
@@ -83,6 +84,7 @@ Seven template files plugin developers can copy and customize:
 ### Follows Grafana Standards
 
 All templates follow the Grafana documentation style guide:
+
 - Present simple tense, active voice
 - Second person perspective ("you")
 - Simple, direct language with contractions
@@ -92,6 +94,7 @@ All templates follow the Grafana documentation style guide:
 ### Comprehensive Coverage
 
 The structure covers:
+
 - Getting started (installation, configuration, quick start)
 - Concepts (overview, architecture, terminology)
 - Configuration (detailed setup options)
@@ -104,6 +107,7 @@ The structure covers:
 ### Plugin Type Specific
 
 Guidance provided for:
+
 - **Data source plugins**: Query syntax, authentication, data transformation
 - **Panel plugins**: Visualization options, customization, data handling
 - **App plugins**: Features, navigation, integrations, permissions
@@ -111,6 +115,7 @@ Guidance provided for:
 ### Ready to Use
 
 Templates include:
+
 - Placeholders for easy customization (`[Plugin Name]`, `<API_KEY>`, etc.)
 - Realistic examples and structure
 - Proper Markdown formatting
@@ -140,6 +145,7 @@ git checkout cursor/branch-location-issue-96b6
 ### On GitHub
 
 You can also view the files directly on GitHub:
+
 - Branch: `cursor/branch-location-issue-96b6`
 - Path: `docs/recommended-plugin-doc-structure.md`
 - Path: `docs/plugin-documentation-templates/`
@@ -169,6 +175,7 @@ You can also view the files directly on GitHub:
 ### For Documentation Writers
 
 The structure can be used as:
+
 - A checklist for complete documentation coverage
 - A starting point for new plugin documentation
 - A reference for documentation best practices
@@ -216,6 +223,7 @@ docs/
 ### Minimal Viable Documentation
 
 For simple plugins, start with:
+
 - README.md (overview and quick start)
 - INSTALLATION.md
 - CONFIGURATION.md
@@ -251,6 +259,7 @@ For simple plugins, start with:
 ## Feedback
 
 If you have suggestions for improving these templates:
+
 - Open an issue on the repository
 - Submit a pull request with improvements
 - Share feedback in the Grafana community forum

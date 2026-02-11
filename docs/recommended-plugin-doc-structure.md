@@ -50,6 +50,7 @@ docs/
 The README should be the entry point for users. It should include:
 
 **Structure:**
+
 ```markdown
 # [Plugin Name]
 
@@ -95,7 +96,7 @@ License information.
 
 #### installation.md
 
-```markdown
+````markdown
 # Install [Plugin Name]
 
 This guide shows you how to install [Plugin Name].
@@ -123,6 +124,7 @@ To install the plugin using the Grafana CLI:
 ```bash
 grafana-cli plugins install [plugin-id]
 ```
+````
 
 Restart Grafana after installation.
 
@@ -146,7 +148,8 @@ To verify the plugin installed successfully:
 
 - [Configure the plugin](configuration.md)
 - [Quick start guide](quick-start.md)
-```
+
+````
 
 #### configuration.md
 
@@ -204,7 +207,7 @@ If the connection fails, refer to the [Troubleshooting guide](../troubleshooting
 
 - [Quick start guide](quick-start.md)
 - [Query syntax](../features/querying.md)
-```
+````
 
 #### quick-start.md
 
@@ -410,15 +413,18 @@ To create a basic query:
 **Example queries:**
 
 Query metrics:
-
 ```
+
 [example query 1]
+
 ```
 
 Filter by label:
 
 ```
+
 [example query 2]
+
 ```
 
 ### Query options
@@ -433,7 +439,9 @@ Configure the following query options:
 You can use dashboard variables in queries:
 
 ```
+
 [example with variable]
+
 ```
 
 ## Ad-hoc filters
@@ -479,11 +487,11 @@ This document provides a complete reference for all [Plugin Name] configuration 
 
 ### Connection settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| Name | string | (required) | Display name for the data source |
-| URL | string | (required) | Service endpoint URL |
-| Access | string | server | Access mode: server or browser |
+| Setting | Type   | Default    | Description                      |
+| ------- | ------ | ---------- | -------------------------------- |
+| Name    | string | (required) | Display name for the data source |
+| URL     | string | (required) | Service endpoint URL             |
+| Access  | string | server     | Access mode: server or browser   |
 
 ### Authentication settings
 
@@ -512,9 +520,11 @@ This guide helps you resolve common issues with [Plugin Name].
 ### Issue: Cannot connect to data source
 
 **Symptoms:**
+
 - Error message: "[error message]"
 
 **Possible causes:**
+
 - Cause 1
 - Cause 2
 
