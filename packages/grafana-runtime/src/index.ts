@@ -85,4 +85,4 @@ export {
   usePanelPluginInstalled,
   usePanelPluginVersion,
 } from './services/pluginMeta/hooks';
-export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
+export { getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
