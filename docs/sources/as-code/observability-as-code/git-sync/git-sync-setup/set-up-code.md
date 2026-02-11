@@ -1,5 +1,5 @@
 ---
-description: Instructions for setting up Git Sync, so you can provision GitHub repositories for use with Grafana.
+description: Instructions for setting up Git Sync as code, so you can provision GitHub repositories for use with Grafana.
 keywords:
   - set up
   - git integration

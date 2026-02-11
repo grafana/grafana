@@ -31,7 +31,7 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
-1. Read [Before you begin](#before-you-begin) carefully
+1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/) carefully
 1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui) or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code/)
 1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana)
 1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/)
@@ -42,106 +42,12 @@ You can configure a local file system instead of using GitHub. Refer to [Set up 
 
 {{< /admonition >}}
 
-## Before you begin
-
-Before you begin, ensure you have the following:
-
-- A Grafana instance (Cloud, OSS, or Enterprise)
-- If you're [using webhooks or image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering), a public instance with external access
-- Administration rights in your Grafana organization
-- An **authentication method** for your connection: either a [GitHub private access token](#create-a-github-access-token) or a [GitHub App](#create-a-github-app)
-- A GitHub repository to store your dashboards in
-- Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
-
-Get acquainted with the following topics:
-
-- [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources)
-- [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
-
-For further details on how Git Sync operates refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts).
-
-### Enable required feature toggles
-
-In Grafana Cloud, Git Sync is being rolled out gradually. For more details refer to [Rolling release channels for Grafana Cloud](https://grafana.com/docs/rolling-release/).
-
-To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature toggle to `true`:
-
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
-1. Add this value:
-
-   ```ini
-   [feature_toggles]
-   provisioning = true
-   ```
-
-1. Save the changes to the file and restart Grafana.
-
-For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
-
-### Create a GitHub access token
-
-If you chose to authenticate with a GitHub Personal Access Token, create one with the repository permissions described below, and add it to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
-
-To create a GitHub access token:
-
-1. [Create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
-1. Under **Permissions**, click **Select permissions** and select the following:
-   - **Contents**: Read and write permission
-   - **Metadata**: Read-only permission
-   - **Pull requests**: Read and write permission
-   - **Webhooks**: Read and write permission
-1. Select any additional options and then press **Generate token**.
-1. Copy the access token. Leave the browser window available with the token until you've completed configuration.
-
-### Create a GitHub App
-
-GitHub Apps are tools that extend GitHub functionality. They use fine-grained permissions and short-lived tokens, giving you more control over which repositories are being accessed. Find out more in the [GitHub Apps official documentation](https://docs.github.com/en/apps/overview).
-
-If you chose to authenticate with a newly created GitHub App, you'll need the following parameters:
-
-- GitHub App ID
-- GitHub App Private Key
-- GitHub App Installation ID
-
-There are many ways to create a GitHub App. The following instructions are orientative, always refer to official GitHub documentation for more details.
-
-To create the GitHub App, follow these steps:
-
-1. Go to https://github.com/settings/apps and click on **New Github App**, or navigate directly to https://github.com/settings/apps/new
-1. Fill in the following fields:
-   - Name: Must be unique
-   - Homepage URL: For example, your Grafana Cloud instance URL
-1. Scroll down to the **Webhook** section and uncheck the **Active** box
-1. In the **Permissions** section, go to **Repository permissions** and set these parameters:
-   - **Contents**: Read and write permission
-   - **Metadata**: Read-only permission
-   - **Pull requests**: Read and write permission
-   - **Webhooks**: Read and write permission
-1. Finally, under **Where can this GitHub App be installed?**, select **Only on this account**
-1. Click on **Create Github App** to complete the process.
-
-On the app page:
-
-1. Copy the **AppID** from the **About** section
-1. Select the **Generate private key** from the banner or scroll down to to the **Private Keys** section to generate a key
-1. A PEM file containing your private key will be downloaded to your computer
-
-Finally, install the app:
-
-1. At the top left of the App page, click on **Install App**
-1. Choose for which user you need to install it, you’ll be redirected to the repository selection screen
-1. Choose for which repositories you want to install the app
-1. Click **Install**.
-1. On the installation page, copy **`installationID`** from the page URL https://github.com/settings/installations/installationID
-
-## Set up Git Sync using the UI
-
 To set up Git Sync from the Grafana UI, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. If you already have an active Git Sync connection, go to the **Getting Started** tab.
 1. [Select your provider](#select-your-provider) 
-1. [Choose the connection type](#choose-the-connection-type). There's two methods to connect Git Sync: with a Personal Access Token or via GitHub App
+1. [Choose the connection type](#choose-the-connection-type). There's two methods to connect Git Sync: with a Personal Access Token or via GitHub App TBC
 1. [Configure the provisioning repository](#configure-repository)
 1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
 1. [Synchronize with external storage](#synchronize-with-external-storage)

@@ -1,5 +1,5 @@
 ---
-description: Key concepts to understand how Git Sync works.
+description: Git Sync usage tiers and known issues and limitations.
 keywords:
   - as code
   - as-code
@@ -39,10 +39,6 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
-## Compatible services and providers
-
-At the moment Git Sync is available for GitHub only. Support for native Git and other providers, such as GitLab or Bitbucket, is on the roadmap.
-
 ## Usage tiers
 
 The following Git Sync per-tier limits apply:
@@ -52,9 +48,17 @@ The following Git Sync per-tier limits apply:
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
 | Amount of synced resources per repository | 20               | Grafana limit     | No limit        | No limit               |
 
-## Authentication
+## Compatible services and providers
+
+Git Sync is available for GitHub, native Git, GitLab, and Bitbucket.
+
+TBC
+
+### Authentication
 
 You can authenticate in GitHub using a Personal Access Token token or GitHub App. Refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for more details.
+
+TBC
 
 ## Known issues
 

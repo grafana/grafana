@@ -1,5 +1,5 @@
 ---
-description: Instructions for extending Git Sync.
+description: Instructions for extending Git Sync for real-time notification and image rendering.
 keywords:
   - set up
   - git integration
