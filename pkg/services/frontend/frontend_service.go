@@ -55,11 +55,8 @@ type frontendService struct {
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	logger := log.New("frontend-service")
-	err := featuremgmt.InitOpenFeatureWithCfg(cfg)
-	if err != nil {
-		logger.Error("failed to initialize OpenFeature", "error", err)
-		return nil, err
-	}
+	// Note: OpenFeature is already initialized by target.go before this service starts.
+	// The frontend service only needs to set evaluation context per request (done in context_middleware.go)
 
 	index, err := NewIndexProvider(cfg, license, hooksService)
 	if err != nil {
