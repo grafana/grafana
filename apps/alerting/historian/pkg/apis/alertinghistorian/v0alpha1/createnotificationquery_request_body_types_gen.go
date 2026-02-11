@@ -65,3 +65,10 @@ const (
 	CreateNotificationqueryRequestMatcherTypeEqualRegex    CreateNotificationqueryRequestMatcherType = "=~"
 	CreateNotificationqueryRequestMatcherTypeNotEqualRegex CreateNotificationqueryRequestMatcherType = "!~"
 )
+
+func (CreateNotificationqueryRequestMatcher) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestMatcher"
+}
+func (CreateNotificationqueryRequestBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
+}

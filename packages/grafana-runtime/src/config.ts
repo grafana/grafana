@@ -85,6 +85,7 @@ export class GrafanaBootConfig {
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
+  /** @deprecated it will be removed in a future release, use isPanelPluginInstalled, getPanelPluginVersion or getListedPanelPluginIds instead */
   panels: { [key: string]: PanelPluginMeta } = {};
   /** @deprecated it will be removed in a future release, use isAppPluginInstalled or getAppPluginVersion instead */
   apps: Record<string, AppPluginConfigGrafanaData> = {};
@@ -137,6 +138,7 @@ export class GrafanaBootConfig {
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
   liveEnabled = true;
+  liveNamespaced = false; // orgId vs namespace
   liveMessageSizeLimit = 65536;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
@@ -161,7 +163,6 @@ export class GrafanaBootConfig {
     performanceInstrumentalizationEnabled: false,
     cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
-    webVitalsAttribution: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
   };

@@ -2,7 +2,8 @@ import { http, HttpResponse } from 'msw';
 import { ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { render as testRender, screen, waitFor } from 'test/test-utils';
+import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
+import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -18,6 +19,8 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
+
+comboboxTestSetup();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -199,6 +202,50 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       // Check the actions are no longer visible
       expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+
+    describe('folder owner', () => {
+      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI', 'teamFolders'] });
+      beforeEach(() => {
+        jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
+      });
+
+      it('allows choosing a team to own the folder', async () => {
+        (useParams as jest.Mock).mockReturnValue({ uid: folderA_folderA.item.uid });
+        const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
+
+        await user.click(await screen.findByRole('button', { name: 'Folder actions' }));
+        await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owner' }));
+
+        expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('combobox'));
+        await user.click(await screen.findByText(/test team/i));
+
+        await user.click(screen.getByRole('button', { name: 'Save owner' }));
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        });
+      });
+
+      it('allows removing the team that owns the folder', async () => {
+        (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
+        const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
+
+        await screen.findByText(/owned by/i);
+
+        await user.click(await screen.findByRole('button', { name: 'Folder actions' }));
+        await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owner' }));
+
+        expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
+
+        await user.click(await screen.findByTitle(/clear value/i));
+
+        await user.click(screen.getByRole('button', { name: 'Save owner' }));
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        });
+      });
     });
   });
 

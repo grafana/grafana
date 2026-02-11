@@ -14,3 +14,6 @@ type PluginSpec struct {
 func NewPluginSpec() *PluginSpec {
 	return &PluginSpec{}
 }
+func (PluginSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginSpec"
+}

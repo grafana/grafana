@@ -338,10 +338,10 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, states, fn)
+	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
-		attribute.Int64("state_transitions", int64(len(states))),
-		attribute.Int64("stale_states", staleCount),
+		attribute.Int("state_transitions", len(states)),
+		attribute.Int("stale_states", staleCount),
 	))
 
 	allChanges := StateTransitions(append(states, missingSeriesStates...))
@@ -487,9 +487,9 @@ func (st *Manager) Put(states []*State) {
 
 // processMissingSeriesStates finds cached states missing from the current evaluation,
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
-func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int64) {
+func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
 	missingTransitions := []StateTransition{}
-	var staleStatesCount int64 = 0
+	var staleStatesCount int
 
 	toDelete := func(s *State) bool {
 		// Skip states that were just evaluated. They're not missing.
@@ -502,10 +502,11 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		oldReason := s.StateReason
 
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
-		// 'Error' and 'NoData' states should be resolved after 1 missing evaluation instead of waiting
-		// for the configured missing series evaluations. This ensures resolved notifications are sent
-		// immediately when the alert transitions from these states.
-		if s.State == eval.Error || s.State == eval.NoData {
+		// 'Error' and 'NoData' states (including Pending with Error/NoData reason) should be resolved
+		// after 1 missing evaluation instead of waiting for the configured missing series evaluations.
+		// This ensures these transient error conditions are cleaned up promptly when the series disappears.
+		if s.State == eval.Error || s.State == eval.NoData ||
+			(s.State == eval.Pending && (s.StateReason == ngModels.StateReasonError || s.StateReason == ngModels.StateReasonNoData)) {
 			missingEvalsToResolve = 1
 		}
 		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
