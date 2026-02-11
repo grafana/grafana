@@ -181,7 +181,7 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
   row: css({
     display: 'flex',
     alignItems: 'flex-start',
-    gap: theme.spacing(1),
+    gap: 0,
     width: '100%',
   }),
   labelCell: css({
@@ -191,12 +191,40 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
   operatorCell: css({
     flex: '0 0 auto',
     width: theme.spacing(8),
-    '& > *': { width: '100%' },
+    '& > *': {
+      width: '100%',
+      paddingLeft: 0,
+      paddingRight: 0,
+      borderRadius: '0 !important',
+      '& input': {
+        borderRadius: '0 !important',
+      },
+    },
   }),
   valueCell: css({
     flex: '0 0 auto',
     width: theme.spacing(26),
-    '& > *': { width: '100%' },
+    '& > *': {
+      width: '100%',
+      paddingLeft: 0,
+      borderTopLeftRadius: '0 !important',
+      borderBottomLeftRadius: '0 !important',
+      borderTopRightRadius: `${theme.shape.radius.default} !important`,
+      borderBottomRightRadius: `${theme.shape.radius.default} !important`,
+      '& input': {
+        borderTopLeftRadius: '0 !important',
+        borderBottomLeftRadius: '0 !important',
+        borderTopRightRadius: `${theme.shape.radius.default} !important`,
+        borderBottomRightRadius: `${theme.shape.radius.default} !important`,
+      },
+      // MultiCombobox: container > wrapper (has border radius)
+      '& > *': {
+        borderTopLeftRadius: '0 !important',
+        borderBottomLeftRadius: '0 !important',
+        borderTopRightRadius: `${theme.shape.radius.default} !important`,
+        borderBottomRightRadius: `${theme.shape.radius.default} !important`,
+      },
+    },
   }),
   groupByCell: css({
     flex: '0 0 auto',
@@ -204,17 +232,22 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     alignSelf: 'center',
+    marginLeft: theme.spacing(1),
   }),
   labelShell: css({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(0, 1),
+    paddingLeft: theme.spacing(1),
+    paddingRight: 0,
     fontWeight: theme.typography.fontWeightMedium,
     fontSize: theme.typography.size.sm,
     backgroundColor: theme.colors.background.secondary,
     height: theme.spacing(theme.components.height.md),
     lineHeight: theme.spacing(theme.components.height.md),
-    borderRadius: theme.shape.radius.default,
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderBottomLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
     width: '100%',
     minWidth: 0,
     boxSizing: 'border-box',
