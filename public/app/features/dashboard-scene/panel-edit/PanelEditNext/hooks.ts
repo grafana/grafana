@@ -139,7 +139,7 @@ export function usePanelEditorShell(model: PanelEditor) {
 }
 
 export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: number) {
-  const CONTROLS_ROW_HEIGHT_PX = 'auto';
+  const CONTROLS_ROW_HEIGHT = 'auto';
   const SIDEBAR_MIN_WIDTH = 285;
   const SIDEBAR_MAX_WIDTH = 380;
   const VIZ_MIN_HEIGHT = 0;
@@ -190,11 +190,11 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
         controlsEnabled: Boolean(controls),
         hasDataPane: Boolean(dataPane),
         isSidebarFullWidth: sidebarSize === SidebarSize.Full,
-        controlsRowHeightPx: CONTROLS_ROW_HEIGHT_PX,
+        controlsRowHeight: CONTROLS_ROW_HEIGHT,
         vizHeight: vizResize.height,
         sidebarWidth: sidebarResize.width,
       }),
-    [controls, dataPane, sidebarSize, CONTROLS_ROW_HEIGHT_PX, vizResize.height, sidebarResize.width]
+    [controls, dataPane, sidebarSize, CONTROLS_ROW_HEIGHT, vizResize.height, sidebarResize.width]
   );
 
   const expandedSidebarHeight = containerHeight - SIDEBAR_EXPANDED_PADDING;
@@ -227,7 +227,7 @@ type VizAndDataPaneGridInput = {
   controlsEnabled: boolean;
   hasDataPane: boolean;
   isSidebarFullWidth: boolean;
-  controlsRowHeightPx: string;
+  controlsRowHeight: string;
   vizHeight: number;
   sidebarWidth: number;
 };
@@ -236,7 +236,7 @@ function buildVizAndDataPaneGrid({
   controlsEnabled,
   hasDataPane,
   isSidebarFullWidth,
-  controlsRowHeightPx,
+  controlsRowHeight,
   vizHeight,
   sidebarWidth,
 }: VizAndDataPaneGridInput) {
@@ -244,7 +244,7 @@ function buildVizAndDataPaneGrid({
   const grid: Array<[string, string]> = [];
 
   if (controlsEnabled) {
-    rows.push(controlsRowHeightPx);
+    rows.push(controlsRowHeight);
     grid.push(['controls', 'controls']);
   }
 
