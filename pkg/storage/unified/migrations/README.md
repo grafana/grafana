@@ -109,7 +109,7 @@ error: storage.unified.migration_runner Migration validation failed
 Query the migration log table to check status:
 
 ```sql
-SELECT * FROM unifiedstorage_migration_log WHERE migration_id LIKE '%folders-dashboards%';
+SELECT * FROM unifiedstorage_migration_log;
 ```
 
 ## Development
@@ -276,3 +276,48 @@ type Validator interface {
 
 Add your validator factory to the `Validators` slice in your migration definition's
 `MigrationDefinition`.
+
+## Testing
+
+### Pre-migration delete
+
+Before migrating each resource type, the migration system performs a **full delete** of all existing data for that resource in unified storage. This ensures a clean state and prevents duplicate or stale data. The delete happens within the same transaction as the migration write, so if the migration fails, the delete is rolled back.
+
+### Re-running a migration
+
+After a successful migration, a row is recorded in the `unifiedstorage_migration_log` table. On subsequent startups, Grafana checks this table and **skips** any migration that already has an entry.
+
+To re-run a migration (e.g., for testing), delete the corresponding row from the log table:
+
+```sql
+-- View existing migration entries
+SELECT * FROM unifiedstorage_migration_log;
+
+-- Delete a specific entry to allow re-running that migration
+DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'folders and dashboards migration';
+DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'playlists migration';
+```
+
+After removing the row, restart Grafana to trigger the migration again. Since the migration performs a full delete of the target resources before writing, re-running is safe and will not result in duplicate data.
+
+### Test cases
+
+The `testcases/` package provides reusable test cases for each resource migration. Each test case implements the `ResourceMigratorTestCase` interface:
+
+```go
+type ResourceMigratorTestCase interface {
+    Name() string
+    Resources() []schema.GroupVersionResource
+    Setup(t *testing.T, helper *apis.K8sTestHelper)
+    Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
+}
+```
+
+Existing test cases:
+
+| Test case | File | What it covers |
+|-----------|------|----------------|
+| `NewFoldersAndDashboardsTestCase` | `testcases/folders_dashboards.go` | Nested folders, dashboards with library panels |
+| `NewPlaylistsTestCase` | `testcases/playlists.go` | Playlists with dashboard UID, tag, and mixed items |
+
+Each resource owner is responsible for writing and maintaining a test case for their resource as part of the development process. When adding a new resource migration, create a corresponding test case in `testcases/` that sets up representative data via `Setup` and verifies it via `Verify`. Extend existing test cases to cover additional scenarios as needed (e.g., edge cases, specific field mappings, or error conditions).
