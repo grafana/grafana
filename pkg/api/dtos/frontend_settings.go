@@ -78,9 +78,8 @@ type FrontendSettingsAzureDTO struct {
 }
 
 type FrontendSettingsCachingDTO struct {
-	Enabled           bool  `json:"enabled"`
-	CleanCacheEnabled bool  `json:"cleanCacheEnabled"`
-	DefaultTTLMs      int64 `json:"defaultTTLMs"`
+	Enabled           bool `json:"enabled"`
+	CleanCacheEnabled bool `json:"cleanCacheEnabled"`
 }
 
 type FrontendSettingsRecordedQueriesDTO struct {
