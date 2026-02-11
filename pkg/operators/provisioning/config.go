@@ -554,6 +554,8 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
 			extras = append(extras, local.Extra(homePath, permittedPrefixes))
+		default:
+			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
 	}
 
