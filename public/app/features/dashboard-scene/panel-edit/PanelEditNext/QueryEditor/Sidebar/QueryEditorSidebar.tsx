@@ -8,9 +8,11 @@ import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/u
 import { SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
 import { TransformationCard } from './TransformationCard';
+import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
@@ -25,6 +27,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
+  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
@@ -48,15 +51,23 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
         <QuerySidebarCollapsableHeader
           label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         >
-          {queries.map((query) => (
-            <QueryCard key={query.refId} query={query} />
-          ))}
+          <DraggableList
+            droppableId="query-sidebar-queries"
+            items={queries}
+            keyExtractor={(query) => query.refId}
+            renderItem={(query) => <QueryCard query={query} />}
+            onDragEnd={onQueryDragEnd}
+          />
         </QuerySidebarCollapsableHeader>
         {transformations.length > 0 && (
           <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
-            {transformations.map((transformation) => (
-              <TransformationCard key={transformation.transformId} transformation={transformation} />
-            ))}
+            <DraggableList
+              droppableId="query-sidebar-transformations"
+              items={transformations}
+              keyExtractor={(t) => t.transformId}
+              renderItem={(t) => <TransformationCard transformation={t} />}
+              onDragEnd={onTransformationDragEnd}
+            />
           </QuerySidebarCollapsableHeader>
         )}
       </ScrollContainer>

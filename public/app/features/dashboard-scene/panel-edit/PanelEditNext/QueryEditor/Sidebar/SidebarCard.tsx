@@ -34,20 +34,24 @@ export const SidebarCard = ({
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
 
+  // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
+  // so we manually handle Enter and Space key activation.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className={cx(styles.card, { [styles.hidden]: isHidden })}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
       aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
       aria-pressed={isSelected}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
     >
       <div className={styles.cardHeader}>
         <Stack direction="row" alignItems="center" gap={1}>

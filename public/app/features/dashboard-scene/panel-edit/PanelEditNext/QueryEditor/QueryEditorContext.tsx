@@ -71,6 +71,7 @@ export interface QueryEditorActions {
   deleteTransformation: (transformId: string) => void;
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
+  reorderTransformations: (transformations: DataTransformerConfig[]) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

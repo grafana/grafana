@@ -216,6 +216,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     return { transformations: undefined, transformer: undefined };
   }
 
+  public reorderTransformations = (transformations: DataTransformerConfig[]) => {
+    const transformer = this.getSceneDataTransformer();
+    if (transformer) {
+      transformer.setState({ transformations });
+      transformer.reprocessTransformations();
+    }
+  };
+
   public deleteTransformation = (index: number) => {
     const { transformations, transformer } = this.getTransformations(index);
     if (!transformations || !transformer) {
