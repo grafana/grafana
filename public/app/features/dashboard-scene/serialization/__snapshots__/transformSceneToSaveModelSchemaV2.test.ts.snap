@@ -41,6 +41,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     },
   ],
   "cursorSync": "Crosshair",
+  "defaultGrid": "GridLayout",
   "description": "Test Description",
   "editable": true,
   "elements": {
