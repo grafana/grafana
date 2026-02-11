@@ -165,6 +165,12 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       return;
     }
 
+    // Only auto-apply the first suggestion for new or unconfigured panels.
+    // For existing panels, do not auto-select when navigating back to the suggestions tab.
+    if (!isNewPanel && !isUnconfiguredPanel) {
+      return;
+    }
+
     // if the first suggestion has changed, we're going to change the currently selected suggestion and
     // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if
     // the previously selected suggestion is no longer present in the list.
@@ -174,7 +180,15 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
       return;
     }
-  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
+  }, [
+    suggestions,
+    suggestionHash,
+    firstCardHash,
+    isNewVizSuggestionsEnabled,
+    isNewPanel,
+    isUnconfiguredPanel,
+    applySuggestion,
+  ]);
 
   if (loading || !data) {
     return (
