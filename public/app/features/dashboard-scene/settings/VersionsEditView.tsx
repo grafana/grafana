@@ -274,8 +274,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
       {isProvisioned ? (
         <Alert title="" severity="info">
           <Trans i18nKey="dashboard-settings.versions.provisioned-warning">
-            This dashboard is managed by a repository. To restore a previous version, use the repository&apos;s Git
-            history.
+            This dashboard is managed by a repository. Version history is not available for provisioned dashboards.
           </Trans>
         </Alert>
       ) : viewMode === 'compare' ? (

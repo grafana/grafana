@@ -5855,7 +5855,7 @@
       "title": "Variables"
     },
     "versions": {
-      "provisioned-warning": "This dashboard is managed by a repository. To restore a previous version, use the repository's Git history.",
+      "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
       "title": "Versions"
     }
   },
