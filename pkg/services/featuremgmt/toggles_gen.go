@@ -805,4 +805,8 @@ const (
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagAppPluginAPIServer
+	// Registers an API server for each backend app plugin exposing a settings endpoint
+	FlagAppPluginAPIServer = "appPluginAPIServer"
 )
