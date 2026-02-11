@@ -1750,6 +1750,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				ghmock.GetApp, github.App{
 					ID:   &appID,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				},
 			),
 			ghmock.WithRequestMatchHandler(
@@ -1805,6 +1811,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				ghmock.GetApp, github.App{
 					ID:   &appID,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				},
 			),
 			ghmock.WithRequestMatch(
