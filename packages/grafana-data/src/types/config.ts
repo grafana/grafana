@@ -337,6 +337,8 @@ export interface GrafanaConfig {
   namespace: string;
   caching: {
     enabled: boolean;
+    cleanCacheEnabled: boolean;
+    defaultTTLMs: number;
   };
   recordedQueries: {
     enabled: boolean;
