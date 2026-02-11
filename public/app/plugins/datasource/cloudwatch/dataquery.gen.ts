@@ -230,6 +230,16 @@ export enum LogsQueryLanguage {
 }
 
 /**
+ * Log group selection scope - determines how log groups are selected for the query
+ */
+export type LogsQueryScope = ('logGroupName' | 'namePrefix' | 'allLogGroups');
+
+/**
+ * Log group class filter
+ */
+export type LogGroupClass = ('STANDARD' | 'INFREQUENT_ACCESS');
+
+/**
  * Shape of a CloudWatch Logs query
  */
 export interface CloudWatchLogsQuery extends common.DataQuery {
@@ -239,9 +249,17 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;
   id: string;
   /**
+   * Log group class filter for namePrefix and allLogGroups scope modes
+   */
+  logGroupClass?: LogGroupClass;
+  /**
    * @deprecated use logGroups
    */
   logGroupNames?: Array<string>;
+  /**
+   * Log group name prefixes for namePrefix scope mode (max 5)
+   */
+  logGroupPrefixes?: Array<string>;
   /**
    * Log groups to query
    */
@@ -250,6 +268,10 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    * Whether a query is a Logs Insights or Log Anomalies query
    */
   logsMode?: LogsMode;
+  /**
+   * Log group selection scope - determines how log groups are selected for the query
+   */
+  logsQueryScope?: LogsQueryScope;
   /**
    * Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
    */
@@ -263,6 +285,10 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    */
   region: string;
   /**
+   * Selected account IDs for cross-account queries (max 20)
+   */
+  selectedAccountIds?: Array<string>;
+  /**
    * Fields to group the results by, this field is automatically populated whenever the query is updated
    */
   statsGroups?: Array<string>;
@@ -270,7 +296,9 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
 
 export const defaultCloudWatchLogsQuery: Partial<CloudWatchLogsQuery> = {
   logGroupNames: [],
+  logGroupPrefixes: [],
   logGroups: [],
+  selectedAccountIds: [],
   statsGroups: [],
 };
 

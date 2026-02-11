@@ -1737,19 +1737,27 @@
           {
             "name": "ownerReference",
             "in": "query",
-            "description": "filter by owner reference in the format {Group}/{Kind}/{Name}",
+            "description": "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "examples": {
               "": {},
               "team": {
-                "summary": "Team owner reference",
-                "value": "iam.grafana.app/Team/xyz"
+                "summary": "Owner references of team xyz or abc",
+                "value": [
+                  "iam.grafana.app/Team/xyz",
+                  "iam.grafana.app/Team/abc"
+                ]
               },
               "user": {
                 "summary": "User owner reference",
-                "value": "iam.grafana.app/User/abc"
+                "value": [
+                  "iam.grafana.app/User/abc"
+                ]
               }
             }
           },
@@ -1806,29 +1814,7 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "fields"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "fields": {
-                      "description": "Sortable fields (depends on backend support)",
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }
@@ -2473,7 +2459,7 @@
           }
         }
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery": {
+      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataResponse": {
         "description": "Generic query properties",
         "type": "object",
         "properties": {
@@ -3078,7 +3064,7 @@
             "description": "The datasource queries",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery"
+              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataResponse"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -3659,8 +3645,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

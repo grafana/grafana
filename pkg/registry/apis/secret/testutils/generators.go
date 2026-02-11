@@ -65,16 +65,10 @@ var (
 			Description: rapid.String().Draw(t, "description"),
 		}
 
-		keeperType := rapid.SampledFrom([]string{"isAwsKeeper", "isAzureKeeper", "isGcpKeeper", "isVaultKeeper"}).Draw(t, "keeperType")
+		keeperType := rapid.SampledFrom([]string{"isAwsKeeper"}).Draw(t, "keeperType")
 		switch keeperType {
 		case "isAwsKeeper":
 			spec.Aws = &secretv1beta1.KeeperAWSConfig{}
-		case "isAzureKeeper":
-			spec.Azure = &secretv1beta1.KeeperAzureConfig{}
-		case "isGcpKeeper":
-			spec.Gcp = &secretv1beta1.KeeperGCPConfig{}
-		case "isVaultKeeper":
-			spec.HashiCorpVault = &secretv1beta1.KeeperHashiCorpConfig{}
 		default:
 			panic(fmt.Sprintf("unhandled keeper type '%+v', did you forget a switch case?", keeperType))
 		}

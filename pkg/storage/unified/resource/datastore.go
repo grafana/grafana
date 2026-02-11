@@ -785,6 +785,7 @@ var (
 	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
 	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
+	sqlKVRestoreLegacyResource       = mustTemplate("sqlkv_restore_legacy_resource.sql")
 )
 
 // TODO: remove when backwards compatibility is no longer needed.
@@ -813,6 +814,19 @@ type sqlKVLegacyUpdateHistoryRequest struct {
 }
 
 func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
+	return nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacyRestoreRequest struct {
+	sqltemplate.SQLTemplate
+	Group     string
+	Resource  string
+	Namespace string
+	Name      string
+}
+
+func (req sqlKVLegacyRestoreRequest) Validate() error {
 	return nil
 }
 
@@ -908,6 +922,30 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// applyBackwardsCompatibleOptimisticLockFailure updates the latest state of the object to the `resource` table
+// after an optimistic locking failure. When a losing write's resource_history entry is deleted, the resource table
+// may still point to the deleted GUID. This method restores the resource row to match the latest (winning) entry
+// in resource_history for the given (group, resource, namespace, name).
+// TODO: remove when backwards compatibility is no longer needed
+func (d *dataStore) applyBackwardsCompatibleOptimisticLockFailure(ctx context.Context, x db.ContextExecer, key DataKey) error {
+	if d.legacyDialect == nil {
+		return nil
+	}
+
+	_, err := dbutil.Exec(ctx, x, sqlKVRestoreLegacyResource, sqlKVLegacyRestoreRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		Group:       key.Group,
+		Resource:    key.Resource,
+		Namespace:   key.Namespace,
+		Name:        key.Name,
+	})
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to restore resource after optimistic lock failure: %w", err)
 	}
 
 	return nil
