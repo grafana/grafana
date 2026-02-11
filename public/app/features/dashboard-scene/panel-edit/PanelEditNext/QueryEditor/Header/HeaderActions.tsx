@@ -5,7 +5,6 @@ import { DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 
 import { ActionsMenu } from './ActionsMenu';
-import { AssistantButton } from './AssistantButton';
 import { HideButton } from './HideButton';
 import { PluginActions } from './PluginActions';
 import { RemoveButton } from './RemoveButton';
@@ -31,7 +30,6 @@ interface HeaderActionsProps {
 export function HeaderActions({ containerRef, queries }: HeaderActionsProps) {
   return (
     <Stack gap={1} alignItems="center">
-      <AssistantButton queries={queries} />
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
