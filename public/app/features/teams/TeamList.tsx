@@ -6,12 +6,11 @@ import { SortingRule } from 'react-table';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
-  Button,
   CellProps,
   Column,
   EmptyState,
   FilterInput,
-  Icon,
+  IconButton,
   InlineField,
   InteractiveTable,
   LinkButton,
@@ -226,17 +225,19 @@ const TeamList = () => {
                   tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
                 />
               )}
-              {/*<DeleteButton*/}
-              {/*  aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {*/}
-              {/*    teamName: original.name,*/}
-              {/*  })}*/}
-              {/*  size="sm"*/}
-              {/*  disabled={!canDelete}*/}
-              {/*  onConfirm={() => deleteTeam({ uid: original.uid })}*/}
-              {/*/>*/}
-              <Button onClick={showDeleteModal} variant="destructive" disabled={!canDelete}>
-                <Icon name="times" size="sm" />
-              </Button>
+              <IconButton
+                onClick={showDeleteModal}
+                variant="destructive"
+                disabled={!canDelete}
+                name="times"
+                size="md"
+                tooltip={t('teams.team-list.columns.tooltip-delete-button', 'Delete {{teamName}}', {
+                  teamName: original.name,
+                })}
+                aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
+                  teamName: original.name,
+                })}
+              />
             </Stack>
           );
         },
