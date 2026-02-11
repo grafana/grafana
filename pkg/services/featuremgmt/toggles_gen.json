@@ -4285,6 +4285,7 @@
         "name": "secretsManagementAppPlatform",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-03-19T09:25:14Z",
+        "deletionTimestamp": "2026-02-11T10:16:17Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }

@@ -29,36 +29,36 @@ export function QueryEditorFooter() {
   const items: FooterLabelValue[] = useMemo(() => {
     const realMaxDataPoints = data?.request?.maxDataPoints;
     const realInterval = data?.request?.interval;
-    const minIntervalOnDs = datasource?.interval ?? t('query-editor.footer.placeholder.no-limit', 'No limit');
+    const minIntervalOnDs = datasource?.interval ?? t('query-editor-next.footer.placeholder.no-limit', 'No limit');
 
     return [
       {
         id: QueryOptionField.maxDataPoints,
-        label: t('query-editor.footer.label.max-data-points', 'Max data points'),
+        label: t('query-editor-next.footer.label.max-data-points', 'Max data points'),
         value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
         isActive: options.maxDataPoints != null,
       },
       {
         id: QueryOptionField.minInterval,
-        label: t('query-editor.footer.label.min-interval', 'Min interval'),
+        label: t('query-editor-next.footer.label.min-interval', 'Min interval'),
         value: options.minInterval ?? minIntervalOnDs,
         isActive: options.minInterval != null,
       },
       {
         id: QueryOptionField.interval,
-        label: t('query-editor.footer.label.interval', 'Interval'),
+        label: t('query-editor-next.footer.label.interval', 'Interval'),
         value: realInterval ?? '-',
         isActive: false, // Interval is always computed, never user-set
       },
       {
         id: QueryOptionField.relativeTime,
-        label: t('query-editor.footer.label.relative-time', 'Relative time'),
+        label: t('query-editor-next.footer.label.relative-time', 'Relative time'),
         value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.from != null,
       },
       {
         id: QueryOptionField.timeShift,
-        label: t('query-editor.footer.label.time-shift', 'Time shift'),
+        label: t('query-editor-next.footer.label.time-shift', 'Time shift'),
         value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.shift != null,
       },
@@ -87,7 +87,7 @@ export function QueryEditorFooter() {
               size="sm"
               className={styles.itemButton}
               onClick={(e) => handleItemClick(e, item.id)}
-              aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
+              aria-label={t('query-editor-next.footer.edit-option', 'Edit {{label}}', { label: item.label })}
             >
               {item.isActive && <span className={styles.activeIndicator} />}
               <span className={styles.label}>{item.label}</span>
@@ -103,9 +103,9 @@ export function QueryEditorFooter() {
           icon="angle-left"
           iconPlacement="right"
           onClick={(e) => handleItemClick(e)}
-          aria-label={t('query-editor.footer.query-options', 'Query Options')}
+          aria-label={t('query-editor-next.footer.query-options', 'Query Options')}
         >
-          <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
+          <Trans i18nKey="query-editor-next.footer.query-options">Query Options</Trans>
         </Button>
       </div>
     </div>
