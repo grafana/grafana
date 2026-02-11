@@ -153,11 +153,6 @@ const getStyles = (
       paddingRight: controlsWidth,
       height,
       width: tableWidth,
-      // @todo better row selection UI
-      '[aria-selected=true]': {
-        backgroundColor: theme.colors.background.secondary,
-        outline: `solid 1px ${theme.colors.warning.border}`,
-      },
     }),
   };
 };

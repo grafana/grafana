@@ -4014,6 +4014,7 @@
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
+      "team-folders": "Team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -5316,7 +5317,6 @@
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
@@ -8252,7 +8252,6 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
   },
   "folders": {
@@ -12498,6 +12497,8 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-by-repository-tooltip": "Managed by: Repository",
+    "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
