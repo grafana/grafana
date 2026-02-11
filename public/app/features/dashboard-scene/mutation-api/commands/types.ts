@@ -8,30 +8,14 @@
 import { z } from 'zod';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
-import type { MutationChange, MutationResult, MutationTransaction } from '../types';
+import type { MutationResult } from '../types';
 
-/**
- * Context passed to all mutation handlers.
- */
 export interface MutationContext {
   scene: DashboardScene;
-  transaction: MutationTransactionInternal;
-  /** All registered command names, for read-only introspection (e.g., GET_DASHBOARD_SETTINGS). */
-  availableCommands: string[];
-}
-
-/**
- * Internal transaction type with mutable changes array.
- */
-export interface MutationTransactionInternal extends MutationTransaction {
-  changes: MutationChange[];
 }
 
 export type PermissionCheckResult = { allowed: true } | { allowed: false; error: string };
 
-/**
- * Checks whether the current scene allows executing a command.
- */
 export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
 
 /**

@@ -35,25 +35,3 @@ export interface MutationClient {
 export interface ListVariablesData {
   variables: Array<{ kind: string; spec: { name: string; [key: string]: unknown } }>;
 }
-
-export interface Mutation {
-  type: string;
-  payload: unknown;
-}
-
-export interface MutationTransaction {
-  id: string;
-  mutations: Mutation[];
-  status: 'pending' | 'committed' | 'failed';
-  startedAt: number;
-  completedAt?: number;
-}
-
-export interface MutationEvent {
-  type: 'mutation_applied' | 'mutation_failed';
-  mutation: Mutation;
-  result: MutationResult;
-  transaction?: MutationTransaction;
-  timestamp: number;
-  source: 'assistant' | 'ui' | 'api';
-}

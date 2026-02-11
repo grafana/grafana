@@ -16,7 +16,7 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
   permission: requiresEdit,
 
   handler: async (_payload, context) => {
-    const { scene, transaction } = context;
+    const { scene } = context;
 
     try {
       const wasEditing = scene.state.isEditing ?? false;
@@ -25,22 +25,10 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
         scene.onEnterEditMode();
       }
 
-      const changes = [
-        {
-          path: '/isEditing',
-          previousValue: wasEditing,
-          newValue: true,
-        },
-      ];
-      transaction.changes.push(...changes);
-
       return {
         success: true,
-        changes,
-        data: {
-          wasAlreadyEditing: wasEditing,
-          isEditing: true,
-        },
+        changes: [{ path: '/isEditing', previousValue: wasEditing, newValue: true }],
+        data: { wasAlreadyEditing: wasEditing, isEditing: true },
       };
     } catch (error) {
       return {

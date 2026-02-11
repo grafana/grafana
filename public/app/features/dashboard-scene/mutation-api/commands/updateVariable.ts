@@ -27,7 +27,7 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   permission: requiresEdit,
 
   handler: async (payload, context) => {
-    const { scene, transaction } = context;
+    const { scene } = context;
     enterEditModeIfNeeded(scene);
 
     try {
@@ -54,19 +54,16 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       replaceVariableSet(scene, currentVariables);
       newSceneVariable.activate();
 
-      const changes = [
-        {
-          path: `/variables/${name}`,
-          previousValue: previousState,
-          newValue: { kind: variableKind.kind, name: variableKind.spec.name },
-        },
-      ];
-      transaction.changes.push(...changes);
-
       return {
         success: true,
         data: { name: variableKind.spec.name, kind: variableKind.kind },
-        changes,
+        changes: [
+          {
+            path: `/variables/${name}`,
+            previousValue: previousState,
+            newValue: { kind: variableKind.kind, name: variableKind.spec.name },
+          },
+        ],
       };
     } catch (error) {
       return {

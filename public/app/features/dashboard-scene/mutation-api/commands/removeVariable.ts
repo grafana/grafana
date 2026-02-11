@@ -22,7 +22,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   permission: requiresEdit,
 
   handler: async (payload, context) => {
-    const { scene, transaction } = context;
+    const { scene } = context;
     const { name } = payload;
     enterEditModeIfNeeded(scene);
 
@@ -42,12 +42,9 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
       const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
       replaceVariableSet(scene, updatedVariables);
 
-      const changes = [{ path: `/variables/${name}`, previousValue: previousState, newValue: undefined }];
-      transaction.changes.push(...changes);
-
       return {
         success: true,
-        changes,
+        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: undefined }],
       };
     } catch (error) {
       return {

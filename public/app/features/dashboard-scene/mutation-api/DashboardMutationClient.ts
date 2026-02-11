@@ -1,9 +1,11 @@
 /**
  * Dashboard Mutation Client
  *
- * Implements the MutationClient interface, providing a clean public API
- * for dashboard mutations. Lifecycle is managed by DashboardScene via
- * the module-level store in dashboardMutationApi.ts.
+ * API for programmatic dashboard mutations. Provides
+ * a declarative, command-based API where callers describe *what* to
+ * change (e.g. ADD_VARIABLE, UPDATE_VARIABLE) and the executor handles Scenes
+ * internals, payload validation (via Zod schemas), permission checks, and
+ * transactional execution with structured error responses.
  */
 
 import type { DashboardScene } from '../scene/DashboardScene';

@@ -40,7 +40,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   permission: requiresEdit,
 
   handler: async (payload, context) => {
-    const { scene, transaction } = context;
+    const { scene } = context;
     enterEditModeIfNeeded(scene);
 
     try {
@@ -74,15 +74,12 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       replaceVariableSet(scene, currentVariables);
       sceneVariable.activate();
 
-      const changes = [
-        { path: `/variables/${name}`, previousValue: undefined, newValue: { kind: variableKind.kind, name } },
-      ];
-      transaction.changes.push(...changes);
-
       return {
         success: true,
         data: { name, kind: variableKind.kind },
-        changes,
+        changes: [
+          { path: `/variables/${name}`, previousValue: undefined, newValue: { kind: variableKind.kind, name } },
+        ],
       };
     } catch (error) {
       return {

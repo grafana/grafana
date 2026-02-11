@@ -25,7 +25,7 @@ import { z } from 'zod';
 export const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
   group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
-  version: z.string().optional().default(''),
+  version: z.string().optional().default('v0'),
   datasource: z
     .object({
       name: z.string().optional(),
@@ -40,6 +40,7 @@ export const variableOptionSchema = z.object({
   selected: z.boolean().optional().describe('Flag indicating if the value is selected'),
   text: z.string().or(z.array(z.string())).describe('The text or list of texts of the current value'),
   value: z.string().or(z.array(z.string())).describe('The value or list of values of the current value'),
+  properties: z.record(z.string(), z.string()).optional().describe('Additional properties for multi-props variables'),
 });
 
 const variableHideSchema = z

@@ -10,16 +10,7 @@
  */
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export type {
-  Mutation,
-  MutationRequest,
-  MutationResult,
-  MutationChange,
-  MutationClient,
-  MutationTransaction,
-  MutationEvent,
-  ListVariablesData,
-} from './types';
+export type { MutationRequest, MutationResult, MutationChange, MutationClient, ListVariablesData } from './types';
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
