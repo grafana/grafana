@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -42,6 +42,11 @@ export const PoliciesList = () => {
   );
 
   const { currentData: allPolicies, isLoading, error: fetchPoliciesError } = useListNotificationPolicyRoutes();
+
+  const existingPolicyNames = useMemo(
+    () => (allPolicies ?? []).map((p) => p.name).filter((name): name is string => name !== undefined),
+    [allPolicies]
+  );
 
   const [createTrigger] = useCreateRoutingTree();
 
@@ -93,6 +98,7 @@ export const PoliciesList = () => {
         />
       )}
       <CreateModal
+        existingPolicyNames={existingPolicyNames}
         isOpen={isCreateModalOpen}
         onConfirm={(route) => createTrigger.execute(route)}
         onDismiss={() => setIsCreateModalOpen(false)}
