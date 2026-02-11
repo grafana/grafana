@@ -228,6 +228,10 @@ func (o *Folder) DeepCopyInto(dst *Folder) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Folder) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Folder{}
 
@@ -279,6 +283,10 @@ func (o *FolderList) DeepCopy() *FolderList {
 
 func (o *FolderList) DeepCopyInto(dst *FolderList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (FolderList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
 }
 
 // Interface compliance compile-time check
