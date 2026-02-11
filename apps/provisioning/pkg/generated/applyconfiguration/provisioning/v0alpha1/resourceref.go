@@ -7,8 +7,11 @@ package v0alpha1
 // ResourceRefApplyConfiguration represents a declarative configuration of the ResourceRef type for use
 // with apply.
 type ResourceRefApplyConfiguration struct {
-	Name  *string `json:"name,omitempty"`
-	Kind  *string `json:"kind,omitempty"`
+	// Name is the name of the resource, such as a dashboard UID.
+	Name *string `json:"name,omitempty"`
+	// Kind is the type of resource, for example, "Dashboard".
+	Kind *string `json:"kind,omitempty"`
+	// Group is the group of the resource, such as "dashboard.grafana.app".
 	Group *string `json:"group,omitempty"`
 }
 

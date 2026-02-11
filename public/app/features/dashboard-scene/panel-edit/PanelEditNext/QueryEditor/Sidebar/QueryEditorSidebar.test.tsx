@@ -117,7 +117,7 @@ describe('QueryEditorSidebar', () => {
     // Count total transformation cards (should be 2)
     const transformCards = screen.getAllByRole('button').filter((button) => {
       const label = button.getAttribute('aria-label') || '';
-      return label.includes('organize') || label.includes('reduce');
+      return label.startsWith('Select card') && (label.includes('organize') || label.includes('reduce'));
     });
     expect(transformCards).toHaveLength(2);
   });

@@ -243,6 +243,10 @@ func (o *LogsDrilldownDefaultColumns) DeepCopyInto(dst *LogsDrilldownDefaultColu
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (LogsDrilldownDefaultColumns) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumns"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &LogsDrilldownDefaultColumns{}
 
@@ -294,6 +298,10 @@ func (o *LogsDrilldownDefaultColumnsList) DeepCopy() *LogsDrilldownDefaultColumn
 
 func (o *LogsDrilldownDefaultColumnsList) DeepCopyInto(dst *LogsDrilldownDefaultColumnsList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (LogsDrilldownDefaultColumnsList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsList"
 }
 
 // Interface compliance compile-time check

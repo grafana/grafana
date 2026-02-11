@@ -11,14 +11,22 @@ import (
 // SyncStatusApplyConfiguration represents a declarative configuration of the SyncStatus type for use
 // with apply.
 type SyncStatusApplyConfiguration struct {
-	State       *provisioningv0alpha1.JobState `json:"state,omitempty"`
-	JobID       *string                        `json:"job,omitempty"`
-	Started     *int64                         `json:"started,omitempty"`
-	Finished    *int64                         `json:"finished,omitempty"`
-	Scheduled   *int64                         `json:"scheduled,omitempty"`
-	Message     []string                       `json:"message,omitempty"`
-	LastRef     *string                        `json:"lastRef,omitempty"`
-	Incremental *bool                          `json:"incremental,omitempty"`
+	// pending, running, success, error
+	State *provisioningv0alpha1.JobState `json:"state,omitempty"`
+	// The ID for the job that ran this sync
+	JobID *string `json:"job,omitempty"`
+	// When the sync job started
+	Started *int64 `json:"started,omitempty"`
+	// When the sync job finished
+	Finished *int64 `json:"finished,omitempty"`
+	// When the next sync check is scheduled
+	Scheduled *int64 `json:"scheduled,omitempty"`
+	// Summary messages (will be shown to users)
+	Message []string `json:"message,omitempty"`
+	// The repository ref when the last successful sync ran
+	LastRef *string `json:"lastRef,omitempty"`
+	// Incremental synchronization for versioned repositories
+	Incremental *bool `json:"incremental,omitempty"`
 }
 
 // SyncStatusApplyConfiguration constructs a declarative configuration of the SyncStatus type for use with

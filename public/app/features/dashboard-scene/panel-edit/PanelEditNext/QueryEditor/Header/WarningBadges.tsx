@@ -35,7 +35,7 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
       icon={icon}
       text={
         <Trans
-          i18nKey="query-editor.header.warning-badges.text"
+          i18nKey="query-editor-next.header.warning-badges.text"
           values={{ count: notices.length, type: pluralize(type, notices.length) }}
         >
           {'{{count}} {{type}}'}
