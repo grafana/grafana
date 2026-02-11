@@ -2097,7 +2097,9 @@
       "select-namespace": "Select namespace"
     },
     "navigation": {
+      "active-notifications": "Active notifications",
       "alert-rules": "Alert rules",
+      "alerts": "Alerts",
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
@@ -2223,8 +2225,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
-        "title": "Alerts"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues."
       }
     },
     "panel-alert-tab-content": {
