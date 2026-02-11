@@ -224,7 +224,12 @@ func ProvideDSKitService(
 	registerer prometheus.Registerer,
 	serviceName string,
 ) (*DSKitService, error) {
-	grpcService, err := provideService(cfg, features, nil, tracer, registerer, true)
+	// Use a passthrough authenticator so the grpc_auth interceptor is
+	// registered. This enables per-service auth via ServiceAuthFuncOverride.
+	passthrough := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		return ctx, nil
+	})
+	grpcService, err := provideService(cfg, features, passthrough, tracer, registerer, true)
 	if err != nil {
 		return nil, err
 	}
