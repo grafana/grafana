@@ -25,7 +25,8 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t)
-	store := ProvideStore(sql, secretstest.NewFakeSecretsService())
+	store, err := ProvideStore(sql, secretstest.NewFakeSecretsService())
+	require.NoError(t, err)
 
 	t.Run("should be able to auth lables for users", func(t *testing.T) {
 		ctx := context.Background()

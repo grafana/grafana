@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -20,14 +21,18 @@ type Store struct {
 	logger         log.Logger
 }
 
-func ProvideStore(sqlStore db.DB, secretsService secrets.Service) login.Store {
+func ProvideStore(sqlStore db.DB, secretsService secrets.Service) (login.Store, error) {
 	store := &Store{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
 
-	return store
+	if err := store.authInfoUserUIDMigration(); err != nil {
+		return nil, err
+	}
+
+	return store, nil
 }
 
 // GetAuthInfo returns the auth info for a user
@@ -277,4 +282,25 @@ func (s *Store) encryptAndEncode(str string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(encrypted), nil
+}
+
+// authInfoUserUIDMigration ensures that all auth_info user_uids are set.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
+func (s *Store) authInfoUserUIDMigration() error {
+	return s.sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		switch s.sqlStore.GetDBType() {
+		case migrator.SQLite:
+			_, err := sess.Exec("UPDATE user_auth SET user_uid = (SELECT uid FROM user WHERE user.id = user_auth.user_id) WHERE user_id IN (SELECT id FROM user) AND user_uid IS NULL;")
+			return err
+		case migrator.Postgres:
+			_, err := sess.Exec("UPDATE user_auth SET user_uid = u.uid FROM \"user\" u WHERE u.id = user_auth.user_id AND user_auth.user_uid IS NULL")
+			return err
+		case migrator.MySQL:
+			_, err := sess.Exec("UPDATE user_auth INNER JOIN user ON user_auth.user_id = user.id SET user_auth.user_uid = user.uid WHERE user_auth.user_uid IS NULL")
+			return err
+		default:
+			// this branch should be unreachable
+			return nil
+		}
+	})
 }
