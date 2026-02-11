@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
@@ -148,13 +148,14 @@ export interface CreateModalProps {
 export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismiss, isOpen }: CreateModalProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
-  const [nameError, setNameError] = useState<string | undefined>();
   const [route, setRoute] = useState<RouteWithID>(emptyRouteWithID);
+  const nameError = useMemo(() => {
+    return isFetchError(error) && error.status === 409 ? stringifyErrorLike(error) : undefined;
+  }, [error]);
 
   const onCreateDismiss = () => {
     onDismiss();
     setError(undefined);
-    setNameError(undefined);
     setRoute(emptyRouteWithID);
   };
 
@@ -162,16 +163,12 @@ export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismi
     if (newRoute) {
       setIsCreating(true);
       setError(undefined);
-      setNameError(undefined);
       onConfirm(newRoute)
         .then(() => {
           onCreateDismiss();
         })
         .catch((err) => {
           setError(err);
-          if (isFetchError(err) && err.status === 409) {
-            setNameError(stringifyErrorLike(err));
-          }
         })
         .finally(() => {
           setIsCreating(false);
@@ -191,7 +188,7 @@ export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismi
       closeOnEscape={true}
       title={t('alerting.policies.create-modal.title-new-notification-policy', 'New notification policy')}
     >
-      {error ? <NotificationPoliciesErrorAlert error={error} /> : null}
+      {!nameError && error ? <NotificationPoliciesErrorAlert error={error} /> : null}
       <AmRootRouteForm
         existingPolicyNames={existingPolicyNames}
         nameError={nameError}

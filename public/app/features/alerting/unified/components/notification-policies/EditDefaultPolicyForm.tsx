@@ -76,7 +76,7 @@ export const AmRootRouteForm = ({
               'alerting.am-root-route-form.description-unique-routing',
               'A unique name for the routing tree'
             )}
-            invalid={(nameError ?? errors.name) ? true : undefined}
+            invalid={!!(nameError ?? errors.name?.message)}
             error={nameError ?? errors.name?.message}
           >
             <Input

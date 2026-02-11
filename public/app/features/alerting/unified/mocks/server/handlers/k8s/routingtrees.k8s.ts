@@ -75,7 +75,10 @@ const createNamespacedRoutingTreeHandler = () =>
       const routingTree =
         (await request.json()) as ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
       const name = routingTree.metadata?.name;
-      if (name && getRoutingTree(name)) {
+      if (!name) {
+        return HttpResponse.json({ message: 'Route name is required' }, { status: 400 });
+      }
+      if (getRoutingTree(name)) {
         return HttpResponse.json(
           {
             ...HTTP_RESPONSE_CONFLICT,
@@ -84,9 +87,7 @@ const createNamespacedRoutingTreeHandler = () =>
           { status: 409 }
         );
       }
-      if (name) {
-        setRoutingTree(name, routingTree);
-      }
+      setRoutingTree(name, routingTree);
       return HttpResponse.json(routingTree);
     }
   );
