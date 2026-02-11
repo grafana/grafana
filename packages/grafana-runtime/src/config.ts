@@ -188,7 +188,6 @@ export class GrafanaBootConfig {
   caching = {
     enabled: false,
     cleanCacheEnabled: true,
-    defaultTTLMs: 300000,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
