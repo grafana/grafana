@@ -3,12 +3,12 @@ import { useMemo, useRef } from 'react';
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
-import { getErrorMessage } from '../utils/httpUtils';
 import { getStatusColor } from '../utils/repositoryStatus';
 import { formatTimestamp } from '../utils/time';
 
