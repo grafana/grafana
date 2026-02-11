@@ -166,6 +166,7 @@ Frontend uses Redux Toolkit for state management and React Router for routing. E
 ### Workspace Organization
 
 **Frontend packages** (`packages/`): Shared libraries published to npm:
+
 - `@grafana/data`: Core data structures, transformations
 - `@grafana/ui`: React component library
 - `@grafana/runtime`: Runtime services and APIs
@@ -173,6 +174,7 @@ Frontend uses Redux Toolkit for state management and React Router for routing. E
 - `@grafana/scenes`: Dashboard/panel framework
 
 **Backend apps** (`apps/`): Standalone Go apps using Grafana App SDK:
+
 - `apps/dashboard/`: Dashboard API service
 - `apps/folder/`: Folder API service
 - `apps/alerting/`: Alerting services
@@ -182,12 +184,14 @@ Frontend uses Redux Toolkit for state management and React Router for routing. E
 ### Key Architectural Patterns
 
 **Backend**:
+
 - Dependency injection via Wire (generate with `make gen-go`)
 - Services implement interfaces and are registered in Wire provider sets
 - Database access through `sqlstore` with migration system
 - Plugin communication via gRPC/protobuf
 
 **Frontend**:
+
 - Redux Toolkit for state management (avoid old Redux patterns)
 - React Hooks preferred over class components
 - Emotion CSS-in-JS for styling
@@ -222,6 +226,7 @@ Frontend uses Redux Toolkit for state management and React Router for routing. E
 ### Running Specific Tests
 
 Use Go's `-run` flag for specific tests:
+
 ```bash
 go test -run TestSpecificFunction ./pkg/services/myservice/
 ```
@@ -239,6 +244,7 @@ go test -run TestSpecificFunction ./pkg/services/myservice/
 ### Plugin Development
 
 Many built-in plugins in `public/app/plugins` are Yarn workspaces requiring separate builds:
+
 - `azuremonitor`, `cloud-monitoring`, `grafana-postgresql-datasource`, `loki`, `tempo`, `jaeger`, `mysql`, `parca`, `zipkin`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`
 
 When working on these plugins, run `yarn workspace <plugin-name> dev` to watch and rebuild.
@@ -246,6 +252,7 @@ When working on these plugins, run `yarn workspace <plugin-name> dev` to watch a
 ### Running Specific Tests
 
 Use Jest's pattern matching:
+
 ```bash
 yarn test -t "test name pattern"
 yarn test path/to/test/file
@@ -318,11 +325,35 @@ make i18n-extract
 
 **Important**: After running code generation, verify changes with `git diff` to ensure generated code is correct.
 
+## When Linting
+
+Grafana uses several linting and formatting tools across the project. Make sure to run the appropriate lint steps before submitting changes.
+
+### Backend (Go)
+
+- **Go Linter**:  
+  Run `make lint-go` to check Go code with standard linters and code style rules.
+
+### Frontend (TypeScript/JavaScript):
+
+- **ESLint**:  
+  Run `yarn lint` to check for TypeScript/JavaScript code style and common errors.  
+  Run `yarn lint:fix` to auto-fix fixable problems.
+
+- **Prettier**:  
+  Run `yarn prettier:write` to auto-format code using Prettier's styles.  
+  This ensures consistent formatting for all frontend and documentation files.
+
+> **Tip:**  
+> Always run the above lint commands before opening a pull request to catch errors early.  
+> Many lint issues can be fixed automatically by using `yarn lint:fix` and `yarn prettier:write`.
+
 ## When Working on Database Schemas or Migrations
 
 - Migrations live in `pkg/services/sqlstore/migrations/`
 - Create new migrations using the migration framework
 - Test migrations with both SQLite, PostgreSQL, and MySQL:
+
   ```bash
   make devenv sources=postgres_tests,mysql_tests
   make test-go-integration-postgres
@@ -334,6 +365,7 @@ make i18n-extract
 ### Wire Dependency Injection
 
 Backend changes to service initialization often require regenerating Wire code:
+
 ```bash
 make gen-go
 ```
@@ -343,6 +375,7 @@ Wire detects circular dependencies and generates compile-time errors if the depe
 ### Go Workspace
 
 Grafana uses Go workspaces defined in `go.work`. When adding new Go modules, update the workspace with:
+
 ```bash
 make update-workspace
 ```
@@ -350,6 +383,7 @@ make update-workspace
 ### CUE Code Generation
 
 Grafana uses CUE for schema definitions (kinds) that generate Go and TypeScript code:
+
 ```bash
 make gen-cue
 ```
@@ -359,6 +393,7 @@ Dashboard and panel schemas live in `kinds/` and generate code for both backend 
 ### Feature Toggles
 
 Feature flags are defined in `pkg/services/featuremgmt/` and auto-generate code. After modifying feature definitions, run:
+
 ```bash
 make gen-feature-toggles
 ```
@@ -366,6 +401,7 @@ make gen-feature-toggles
 ### Pre-commit Hooks
 
 Install lefthook for pre-commit linting and formatting:
+
 ```bash
 make lefthook-install
 ```
@@ -384,11 +420,13 @@ This keeps `eslint-suppressions.json` in sync and auto-formats code.
 ### Docker Development Environment
 
 Start backing services (databases, etc.) for development:
+
 ```bash
 make devenv sources=postgres,mysql,influxdb,loki
 ```
 
 Stop services:
+
 ```bash
 make devenv-down
 ```
@@ -401,6 +439,7 @@ Default config: `conf/defaults.ini`
 Custom config: `conf/custom.ini` (create this file, only override what you need)
 
 Enable development mode in `custom.ini`:
+
 ```ini
 app_mode = development
 ```
@@ -408,6 +447,7 @@ app_mode = development
 ## Build Tags
 
 Grafana supports build tags for different editions:
+
 - `oss`: Open source only (default)
 - `enterprise`: Enterprise features
 - `pro`: Professional features
