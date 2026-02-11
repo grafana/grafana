@@ -6,7 +6,6 @@ import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPag
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
@@ -24,7 +23,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
-import { isDashboardSceneSoloEnabled } from '../features/dashboard-scene/utils/utils';
+import { isDashboardSceneEnabled } from '../features/dashboard-scene/utils/utils';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
@@ -110,7 +109,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        isDashboardSceneSoloEnabled()
+        isDashboardSceneEnabled()
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -121,7 +120,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        isDashboardSceneSoloEnabled()
+        isDashboardSceneEnabled()
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -329,11 +328,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: config.featureToggles.ssoSettingsLDAP
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
-          )
-        : LdapPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+      ),
     },
     {
       path: '/admin/authentication/:provider',
@@ -547,7 +544,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.restoreDashboards && {
       path: '/dashboard/recently-deleted',
-      roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),

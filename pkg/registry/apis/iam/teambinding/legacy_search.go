@@ -3,7 +3,7 @@ package teambinding
 import (
 	"context"
 	"fmt"
-	"log/slog"
+
 	"math"
 	"strings"
 
@@ -12,6 +12,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -23,7 +24,7 @@ var _ resourcepb.ResourceIndexClient = (*LegacyTeamBindingSearchClient)(nil)
 
 type LegacyTeamBindingSearchClient struct {
 	store  legacy.LegacyIdentityStore
-	log    *slog.Logger
+	log    log.Logger
 	tracer trace.Tracer
 }
 
@@ -31,12 +32,12 @@ func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer t
 	return &LegacyTeamBindingSearchClient{
 		store:  store,
 		tracer: tracer,
-		log:    slog.Default().With("logger", "legacy-teambinding-search-client"),
+		log:    log.New("grafana-apiserver.teambindings.legacy-search"),
 	}
 }
 
 func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := c.tracer.Start(ctx, "teambinding.legacy.search")
+	ctx, span := c.tracer.Start(ctx, "teambinding.legacysearch")
 	defer span.End()
 
 	if req == nil || req.Options == nil || req.Options.Key == nil {
@@ -65,14 +66,19 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 	}
 
 	subjectUID := subjectUIDFromRequirements(req.Options.Fields)
-	if subjectUID == "" {
-		return nil, fmt.Errorf("missing required field filter %q", resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_SUBJECT_NAME)
+	teamRef := teamRefFromRequirements(req.Options.Fields)
+	if subjectUID == "" && teamRef == "" {
+		return nil, fmt.Errorf("missing required field filters: %q or %q",
+			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_SUBJECT,
+			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_TEAM,
+		)
 	}
 
 	fields := req.Fields
 	if len(fields) == 0 {
 		fields = []string{
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 		}
@@ -91,6 +97,7 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 	for p := int64(1); p <= req.Page; p++ {
 		res, err := c.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
 			UserUID: subjectUID,
+			TeamUID: teamRef,
 			Pagination: common.Pagination{
 				Limit:    req.Limit,
 				Continue: continueToken,
@@ -138,14 +145,23 @@ func (c *LegacyTeamBindingSearchClient) RebuildIndexes(ctx context.Context, in *
 }
 
 func subjectUIDFromRequirements(reqs []*resourcepb.Requirement) string {
-	want1 := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME // fields.subject.name
-	want2 := builders.TEAM_BINDING_SUBJECT_NAME                                // subject.name
+	subjectUIDKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT // fields.subject_name
 
+	return getFieldValueFromRequirements(reqs, subjectUIDKey)
+}
+
+func teamRefFromRequirements(reqs []*resourcepb.Requirement) string {
+	teamRefKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM // fields.team_ref
+
+	return getFieldValueFromRequirements(reqs, teamRefKey)
+}
+
+func getFieldValueFromRequirements(reqs []*resourcepb.Requirement, key string) string {
 	for _, r := range reqs {
 		if r == nil {
 			continue
 		}
-		if r.Key != want1 && r.Key != want2 {
+		if r.Key != key {
 			continue
 		}
 		if len(r.Values) < 1 {
@@ -153,7 +169,6 @@ func subjectUIDFromRequirements(reqs []*resourcepb.Requirement) string {
 		}
 		return r.Values[0]
 	}
-
 	return ""
 }
 
@@ -173,9 +188,9 @@ func teamBindingCells(t legacy.TeamMember, fields []string) [][]byte {
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
 		switch name {
-		case builders.TEAM_BINDING_SUBJECT_NAME:
+		case builders.TEAM_BINDING_SUBJECT:
 			cells = append(cells, []byte(t.UserUID))
-		case builders.TEAM_BINDING_TEAM_REF:
+		case builders.TEAM_BINDING_TEAM:
 			cells = append(cells, []byte(t.TeamUID))
 		case builders.TEAM_BINDING_PERMISSION:
 			cells = append(cells, []byte(string(common.MapTeamPermission(t.Permission))))

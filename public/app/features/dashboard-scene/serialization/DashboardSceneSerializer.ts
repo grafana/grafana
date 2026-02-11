@@ -1,3 +1,4 @@
+import { logWarning } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
@@ -215,7 +216,6 @@ export class V1DashboardSerializer
   onSaveComplete(saveModel: Dashboard, result: SaveDashboardResponseDTO): void {
     this.initialSaveModel = {
       ...saveModel,
-      id: result.id,
       uid: result.uid,
       version: result.version,
     };
@@ -345,10 +345,16 @@ export class V2DashboardSerializer
     // initialize autossigned variable ds references map
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
-        // for query variables that dont have a ds defined add them to the list
-        if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
-          const datasourceType = variable.spec.query.group || undefined;
-          this.defaultDsReferencesMap.variables.set(variable.spec.name, datasourceType);
+        if (variable) {
+          // for query variables that dont have a ds defined add them to the list
+          if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
+            const datasourceType = variable.spec.query.group || undefined;
+            this.defaultDsReferencesMap.variables.set(variable.spec.name, datasourceType);
+          }
+        } else {
+          const warningMsg = 'Dashboard serializer: Undefined variable found in dashboard save model, ignoring it';
+          console.warn(warningMsg);
+          logWarning(warningMsg);
         }
       }
     }

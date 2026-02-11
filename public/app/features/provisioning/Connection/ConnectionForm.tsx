@@ -64,6 +64,15 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     }
   }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
+  useEffect(() => {
+    if (isEdit && data?.status?.fieldErrors?.length) {
+      const errors = getConnectionFormErrors(data.status.fieldErrors);
+      for (const [field, errorMessage] of errors) {
+        setError(field, errorMessage);
+      }
+    }
+  }, [isEdit, data?.status?.fieldErrors, setError]);
+
   const onSubmit = async (form: ConnectionFormData) => {
     try {
       const spec = {

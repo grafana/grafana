@@ -509,7 +509,7 @@ function runGrafanaLiveQuery(
   return getGrafanaLiveSrv().getDataStream({
     addr: {
       scope: LiveChannelScope.Plugin,
-      namespace: 'testdata',
+      stream: 'testdata',
       path: target.channel,
     },
     key: `testStream.${liveQueryCounter++}`,

@@ -57,9 +57,8 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 		}
 	}
 
-	if branch == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(branch) {
+	// Validate branch name format if a branch is provided (applies to all repository types)
+	if branch != "" && !IsValidGitBranchName(branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), branch, "invalid branch name"))
 	}
 

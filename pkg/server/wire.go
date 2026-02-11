@@ -42,7 +42,9 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -54,6 +56,10 @@ import (
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -240,7 +246,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
-	legacy.ProvideMigratorDashboardAccessor,
+	dashboardlegacy.ProvideMigrator,
+	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	playlistmigrator.ProvidePlaylistMigrator,
+	shorturlmigrator.ProvideShortURLMigrator,
+	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
@@ -515,7 +525,7 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
-	ngmetrics.ProvideServiceForTest,
+	ngmetrics.ProvideService,
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
@@ -570,4 +580,21 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
 	wire.Build(wireExtsSet)
 	return &unifiedsearch.StandardDocumentBuilders{}, nil
+}
+
+/*
+provideMigrationRegistry builds the MigrationRegistry from individual
+resource migrators. When adding a new resource migration, register
+it with the registry here.
+*/
+func provideMigrationRegistry(
+	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
+	playlistMigrator playlistmigrator.PlaylistMigrator,
+	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+) *unifiedmigrations.MigrationRegistry {
+	r := unifiedmigrations.NewMigrationRegistry()
+	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
+	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+	return r
 }

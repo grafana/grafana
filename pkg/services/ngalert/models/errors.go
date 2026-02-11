@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -52,13 +53,28 @@ var (
 
 // Route errors.
 var (
+	ErrRouteNotFound = errutil.NotFound("alerting.notifications.routes.notFound", errutil.WithPublicMessage("Route not found"))
+
 	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
-		"Invalid format of the submitted route.",
+		"Invalid format of the submitted route: {{.Public.Error}}.",
 		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
 	)
 
 	ErrRouteConflictingMatchers = errutil.BadRequest("alerting.notifications.routes.conflictingMatchers").MustTemplate("Routing tree conflicts with the external configuration",
 		errutil.WithPublic("Cannot add\\update route: matchers conflict with an external routing tree merging matchers {{ .Public.Matchers }}, making the added\\updated route unreachable."),
+	)
+
+	ErrMultipleRoutesNotSupported = errutil.NotImplemented("alerting.notifications.routes.multipleNotSupported", errutil.WithPublicMessage(fmt.Sprintf("Multiple routes are not supported, see feature toggle %q", featuremgmt.FlagAlertingMultiplePolicies)))
+
+	ErrRouteVersionConflict = errutil.Conflict("alerting.notifications.routes.conflict").MustTemplate(
+		"Provided version '{{ .Public.Version }}' of route '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
+		errutil.WithPublic("Provided version '{{ .Public.Version }}' of route '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
+	)
+	ErrRouteExists = errutil.Conflict("alerting.notifications.routes.exists", errutil.WithPublicMessage("Route with this name already exists. Use a different name or update an existing one."))
+
+	ErrRouteOrigin = errutil.BadRequest("alerting.notifications.routes.originInvalid").MustTemplate(
+		"Route '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Route '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 )
 
@@ -108,4 +124,19 @@ func MakeErrRouteConflictingMatchers(matchers string) error {
 			"Matchers": matchers,
 		},
 	})
+}
+
+func MakeErrRouteVersionConflict(name, currentVersion, desiredVersion string) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Version":        desiredVersion,
+			"CurrentVersion": currentVersion,
+			"Name":           name,
+		},
+	}
+	return ErrRouteVersionConflict.Build(data)
+}
+
+func MakeErrRouteOrigin(routeName, action string) error {
+	return ErrRouteOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": routeName}})
 }

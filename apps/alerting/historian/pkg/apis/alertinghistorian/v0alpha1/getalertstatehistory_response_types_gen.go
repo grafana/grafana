@@ -3,13 +3,16 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetAlertstatehistory struct {
+type GetAlertstatehistoryResponse struct {
 	Body map[string]interface{} `json:"body"`
 }
 
-// NewGetAlertstatehistory creates a new GetAlertstatehistory object.
-func NewGetAlertstatehistory() *GetAlertstatehistory {
-	return &GetAlertstatehistory{
+// NewGetAlertstatehistoryResponse creates a new GetAlertstatehistoryResponse object.
+func NewGetAlertstatehistoryResponse() *GetAlertstatehistoryResponse {
+	return &GetAlertstatehistoryResponse{
 		Body: map[string]interface{}{},
 	}
+}
+func (GetAlertstatehistoryResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
 }

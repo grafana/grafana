@@ -5,10 +5,11 @@ import { LoadingState, VariableType, TypedVariableModel, VariableOption } from '
 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
+import { ensureStringValues } from '../ensureStringValues';
 import { hasOptions } from '../guard';
-import { ensureStringValues } from '../utils';
 
-import { getInstanceState, getNextVariableIndex } from './selectors';
+import { getInstanceState } from './getInstanceState';
+import { getNextVariableIndex } from './getNextVariableIndex';
 import { AddVariable, initialVariablesState, VariablePayload, VariablesState } from './types';
 
 const sharedReducerSlice = createSlice({

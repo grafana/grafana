@@ -16,8 +16,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,6 +34,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -840,6 +840,17 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	return repo
 }
 
+func repositoryToUnstructured(t *testing.T, obj *provisioning.Repository) *unstructured.Unstructured {
+	bytes, err := json.Marshal(obj)
+	require.NoError(t, err)
+
+	res := &unstructured.Unstructured{}
+	err = res.UnmarshalJSON(bytes)
+	require.NoError(t, err)
+
+	return res
+}
+
 func unstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *provisioning.Connection {
 	bytes, err := obj.MarshalJSON()
 	require.NoError(t, err)
@@ -1069,6 +1080,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				app := github.App{
 					ID:   &id,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(app))
 			}),

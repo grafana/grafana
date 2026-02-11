@@ -34,11 +34,11 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
     }
 
     if (name.length === 0) {
-      return t('query-editor.validation.empty-name', 'An empty query name is not allowed');
+      return t('query-editor-next.validation.empty-name', 'An empty query name is not allowed');
     }
 
     if (existingRefIds.has(name)) {
-      return t('query-editor.validation.duplicate-name', 'Query name already exists');
+      return t('query-editor-next.validation.duplicate-name', 'Query name already exists');
     }
 
     return null;
@@ -112,11 +112,11 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       className={styles.queryNameWrapper}
       onClick={onEditQuery}
       type="button"
-      aria-label={t('query-editor.edit-query-name', 'Edit query name')}
-      title={t('query-editor.edit-query-name', 'Edit query name')}
+      aria-label={t('query-editor-next.edit-query-name', 'Edit query name')}
+      title={t('query-editor-next.edit-query-name', 'Edit query name')}
     >
       <span className={styles.queryNameText}>
-        <Text color="primary" element="p" truncate>
+        <Text color="primary" element="p" truncate variant="code">
           {query.refId}
         </Text>
       </span>
@@ -129,7 +129,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   queryNameWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
+    gap: theme.spacing(1.5),
     cursor: 'pointer',
     border: '1px solid transparent',
     borderRadius: theme.shape.radius.default,
@@ -146,15 +146,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:focus-visible': {
       border: `2px solid ${theme.colors.primary.border}`,
     },
-
-    '&:hover, &:focus-visible': {
-      '[data-edit-icon]': {
-        visibility: 'visible',
-      },
-    },
-  }),
-  queryEditIcon: css({
-    visibility: 'hidden',
   }),
   queryNameText: css({
     display: 'block',
@@ -164,9 +155,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   queryNameInput: css({
     maxWidth: '300px',
+
+    input: {
+      fontFamily: theme.typography.fontFamilyMonospace,
+    },
   }),
   inputRow: css({
     position: 'relative',
+  }),
+  queryEditIcon: css({
+    color: theme.colors.text.secondary,
   }),
   validationMessage: css({
     position: 'absolute',

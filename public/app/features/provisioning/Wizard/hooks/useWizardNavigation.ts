@@ -9,11 +9,10 @@ import { Step } from '../Stepper';
 import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
-  initialStep: WizardStep;
   steps: Array<Step<WizardStep>>;
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
-  createSyncJob: (requiresMigration: boolean) => Promise<unknown>;
+  createSyncJob: (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => Promise<unknown>;
   getValues: () => WizardFormData;
   repoType: RepoType;
   syncTarget: string;
@@ -25,14 +24,13 @@ export interface UseWizardNavigationReturn {
   completedSteps: WizardStep[];
   currentStepIndex: number;
   currentStepConfig: Step<WizardStep> | undefined;
-  visibleSteps: Array<Step<WizardStep>>;
+  steps: Array<Step<WizardStep>>;
   visibleStepIndex: number;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
 }
 
 export function useWizardNavigation({
-  initialStep,
   steps,
   canSkipSync,
   setStepStatusInfo,
@@ -43,17 +41,14 @@ export function useWizardNavigation({
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
-  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-
-  const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
+  // local file provisioning has no auth type step
+  const [activeStep, setActiveStep] = useState<WizardStep>(repoType === 'local' ? 'connection' : 'authType');
+  // local file provisioning will always have the first step (authType) step completed since we skipped it
+  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>(() => (repoType === 'local' ? ['authType'] : []));
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
-  const visibleStepIndex = useMemo(
-    () => visibleSteps.findIndex((s) => s.id === activeStep),
-    [visibleSteps, activeStep]
-  );
+  const visibleStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStepIndex > 0) {
@@ -96,10 +91,9 @@ export function useWizardNavigation({
       if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2;
 
-        const job = await createSyncJob(false);
-        if (!job) {
-          return;
-        }
+        // Fire job in background, don't wait for result - the job will be done in the background
+        // and we don't care about it when skipping sync
+        createSyncJob(false, { skipStatusUpdates: true });
       }
 
       if (nextStepIndex >= steps.length) {
@@ -136,7 +130,7 @@ export function useWizardNavigation({
     completedSteps,
     currentStepIndex,
     currentStepConfig,
-    visibleSteps,
+    steps,
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,

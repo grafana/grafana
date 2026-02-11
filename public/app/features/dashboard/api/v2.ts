@@ -23,7 +23,13 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import {
+  DashboardAPI,
+  DashboardVersionError,
+  DashboardWithAccessInfo,
+  ListDashboardHistoryOptions,
+  ListDeletedDashboardsOptions,
+} from './types';
 import { isV0V1StoredVersion } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
@@ -139,12 +145,15 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
+      delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
       ...obj.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
+    delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -160,19 +169,59 @@ export class K8sDashboardV2API
       })
     );
 
-    let dashId = 0;
-    if (v.metadata.labels?.[DeprecatedInternalId]) {
-      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
-    }
-
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: dashId,
       status: 'success',
       url,
       slug,
     };
+  }
+
+  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
+    return this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+      limit: options?.limit ?? 10,
+      continue: options?.continueToken,
+    });
+  }
+
+  async getDashboardHistoryVersions(uid: string, versions: number[]) {
+    const results: Array<Resource<DashboardV2Spec>> = [];
+    const versionsToFind = new Set(versions);
+    let continueToken: string | undefined;
+
+    do {
+      // using high limit to attempt finding the versions in one request
+      // if not found, pagination will kick in
+      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      for (const item of history.items) {
+        if (versionsToFind.has(item.metadata.generation ?? 0)) {
+          results.push(item);
+          versionsToFind.delete(item.metadata.generation ?? 0);
+        }
+      }
+      continueToken = versionsToFind.size > 0 ? history.metadata.continue : undefined;
+    } while (continueToken);
+
+    if (versionsToFind.size > 0) {
+      throw new Error(`Dashboard version not found: ${[...versionsToFind].join(', ')}`);
+    }
+    return results;
+  }
+
+  async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
+    // get version to restore to, and save as new one
+    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    return await this.saveDashboard({
+      dashboard: historicalVersion.spec,
+      k8s: {
+        name: uid,
+      },
+      message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+    });
   }
 
   listDeletedDashboards(options: ListDeletedDashboardsOptions) {

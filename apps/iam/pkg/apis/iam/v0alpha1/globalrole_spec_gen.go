@@ -20,7 +20,6 @@ type GlobalRoleSpec struct {
 	// Display name of the role
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Version     int64  `json:"version"`
 	Group       string `json:"group"`
 	// TODO:
 	// delegatable?: bool
@@ -34,4 +33,10 @@ func NewGlobalRoleSpec() *GlobalRoleSpec {
 	return &GlobalRoleSpec{
 		Permissions: []GlobalRolespecPermission{},
 	}
+}
+func (GlobalRolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecPermission"
+}
+func (GlobalRoleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleSpec"
 }

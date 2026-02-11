@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/extensions"
-	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/google/go-github/v82/github"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,7 +26,9 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -69,16 +71,25 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			returnedRepo := unstructuredToRepository(t, output)
 			require.Equal(t, expectedRepo.Spec, returnedRepo.Spec)
 
-			// A viewer should not be able to see the same thing
+			// A viewer should be able to read the repository
 			var statusCode int
 			rsp := helper.ViewerREST.Get().
 				Namespace("default").
 				Resource("repositories").
 				Name(name).
 				Do(context.Background())
-			require.Error(t, rsp.Error())
+			require.NoError(t, rsp.Error(), "viewer should be able to read repository")
 			rsp.StatusCode(&statusCode)
-			require.Equal(t, http.StatusForbidden, statusCode)
+			require.Equal(t, http.StatusOK, statusCode)
+
+			viewerOutput, err := rsp.Get()
+			require.NoError(t, err, "should get repository object")
+			viewerUnstruct, ok := viewerOutput.(*unstructured.Unstructured)
+			require.True(t, ok, "expecting unstructured object")
+
+			// Verify viewer gets the same repository data
+			viewerRepo := unstructuredToRepository(t, viewerUnstruct)
+			require.Equal(t, expectedRepo.Spec, viewerRepo.Spec, "viewer should see same repository spec")
 
 			// Viewer can see file listing
 			rsp = helper.AdminREST.Get().
@@ -168,6 +179,39 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}, settings.AvailableRepositoryTypes)
 			}
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
+	})
+
+	// Viewer can list repositories
+	t.Run("viewer can list repositories", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			rsp := helper.ViewerREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Do(context.Background())
+			if !assert.NoError(collect, rsp.Error(), "viewer should be able to list repositories") {
+				return
+			}
+
+			repos := &unstructured.UnstructuredList{}
+			err := rsp.Into(repos)
+			if !assert.NoError(collect, err, "should parse repository list") {
+				return
+			}
+
+			// Should see the repositories created in this test
+			assert.Len(collect, repos.Items, len(inputFiles), "viewer should see all repositories")
+
+			// Verify each repository has expected data
+			for _, repo := range repos.Items {
+				name := repo.GetName()
+				assert.NotEmpty(collect, name, "repository should have a name")
+
+				spec, found, err := unstructured.NestedMap(repo.Object, "spec")
+				assert.NoError(collect, err, "should have spec")
+				assert.True(collect, found, "spec should be found")
+				assert.NotEmpty(collect, spec, "spec should not be empty")
+			}
+		}, time.Second*10, time.Millisecond*100, "Expected viewer to list repositories")
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
@@ -262,6 +306,66 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					},
 				},
 				// Missing secure.token
+			}},
+		},
+		{
+			name: "should accept a GH repo with empty branch",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-with-empty-branch",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Repo With Connection",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url": "https://github.com/a/path",
+						// Empty branch!
+						"branch": "",
+					},
+					// Empty workflows to not trigger a token check
+					"workflows": []string{},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": "someToken",
+					},
+				},
+			}},
+		},
+		{
+			name: "should accept GitHub Enterprise URL",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-github-enterprise",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "GitHub Enterprise Repository",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url":    "https://github.enterprise.example.com/org/repo",
+						"branch": "main",
+					},
+					"workflows": []string{},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": "someToken",
+					},
+				},
 			}},
 		},
 	} {
@@ -1138,11 +1242,13 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		c, err := helper.Connections.Resource.Get(ctx, "test-connection", metav1.GetOptions{})
+		c, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		conn := unstructuredToConnection(t, c)
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
@@ -1171,7 +1277,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 				"branch": "main",
 			},
 			"connection": map[string]any{
-				"name": "test-connection",
+				"name": connectionName,
 			},
 		},
 	}}
@@ -1181,7 +1287,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
-		require.NoError(collectT, err, "can list values")
+		require.NoError(collectT, err, "can get repository")
 		r := unstructuredToRepository(t, repo)
 		require.NotEqual(collectT, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
@@ -1199,6 +1305,67 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NotNil(collectT, val)
 		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
+
+	repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+	require.NoError(t, err, "can get repository")
+	firstReconciledRepo := unstructuredToRepository(t, repoUnstructured)
+	// Setting up main triggering conditions to verify token is re-generated when
+	// needed, even if all other conditions are not triggered
+	now := time.Now()
+	firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
+	firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
+		State:     provisioning.JobStateSuccess,
+		JobID:     firstReconciledRepo.Status.Sync.JobID,
+		Started:   now.UnixMilli(),
+		Finished:  now.UnixMilli(),
+		Scheduled: now.UnixMilli(),
+		LastRef:   firstReconciledRepo.Status.Sync.LastRef,
+	}
+	firstReconciledRepo.Status.Health = provisioning.HealthStatus{
+		Healthy: true,
+		Checked: now.UnixMilli(),
+	}
+	firstReconciledRepo.Status.Token = provisioning.TokenStatus{
+		LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
+		Expiration:  now.Add(-time.Minute).UnixMilli(),
+	}
+	firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
+	firstReconciledRepo.Status.Conditions = []metav1.Condition{
+		{
+			Type:               provisioning.ConditionTypeReady,
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: firstReconciledRepo.Generation,
+			LastTransitionTime: metav1.Time{Time: now},
+			Reason:             provisioning.ReasonAvailable,
+		},
+	}
+	updatedRepo := repositoryToUnstructured(t, firstReconciledRepo)
+	// This should also trigger a reconciliation loop
+	_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
+	require.NoError(t, err, "failed to update status")
+
+	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
+		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		require.NoError(collectT, err, "can get repository")
+		r := unstructuredToRepository(t, repo)
+		// Token should be there
+		require.False(collectT, r.Secure.Token.IsZero())
+		// and different from the previous one
+		require.NotEqual(collectT,
+			firstReconciledRepo.Secure.Token.Name,
+			r.Secure.Token.Name,
+			"token should be updated",
+		)
+
+		// Just checking the token is what is going to be returned by the mock GH API
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		require.NoError(collectT, err, "decryption error")
+		require.Len(collectT, decrypted, 1)
+
+		val := decrypted[r.Secure.Token.Name].Value()
+		require.NotNil(collectT, val)
+		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
+	}, time.Second*10, time.Second, "Expected repo token to be regenerated")
 }
 
 func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *testing.T) {
@@ -1238,11 +1405,13 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		},
 	}}
 
-	_, err = helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, "test-connection-invalid-repo", metav1.DeleteOptions{})
+		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 	})
 
 	t.Run("repository with non-existent branch becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1266,7 +1435,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "non-existent-branch-12345", // This branch doesn't exist
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}
@@ -1335,7 +1504,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "main",
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}
@@ -1520,5 +1689,87 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repoHealthyAgain.Status.Health.Healthy, "repository should be healthy")
 		assert.Empty(t, repoHealthyAgain.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
+	})
+}
+
+func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+	defaultBranchName := "defaultBranchName"
+
+	repoFactory := helper.GetEnv().GithubRepoFactory
+	repoFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				repo := &github.Repository{
+					ID:            github.Ptr(int64(12345)),
+					Name:          github.Ptr("name"),
+					DefaultBranch: &defaultBranchName,
+				}
+				_, _ = w.Write(ghmock.MustMarshal(repo))
+			}),
+		),
+	)
+	helper.SetGithubRepositoryFactory(repoFactory)
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+
+	t.Run("default branch gets retrieved for repository", func(t *testing.T) {
+		repoName := "repo-with-empty-branch"
+
+		// Create a repository that will be healthy initially
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-with-empty-branch",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo With Connection",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url": "https://github.com/a/path",
+					// Empty branch!
+					"branch": "",
+				},
+				// Empty workflows to not trigger a token check
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{
+					"create": "someToken",
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - repository should have branch name
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			require.NoError(collect, err, "issue getting repo")
+			require.Equal(collect, repo.Generation, repo.Status.ObservedGeneration, "repo should be reconciled")
+			require.Equal(collect, defaultBranchName, repo.Spec.GitHub.Branch, "default branch should be set")
+		}, 30*time.Second, 1*time.Second, "repository should have default branch")
 	})
 }

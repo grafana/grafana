@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"net/http"
@@ -36,14 +37,21 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
+	SearchServer
 	resourcepb.ResourceStoreServer
 	resourcepb.BulkStoreServer
+	resourcepb.BlobStoreServer
+	resourcepb.QuotasServer
+	resourcepb.DiagnosticsServer
+	ResourceServerStopper
+}
+
+// SearchServer implements the search-related gRPC services
+type SearchServer interface {
+	LifecycleHooks
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
-	resourcepb.QuotasServer
-	ResourceServerStopper
 }
 
 type ResourceServerStopper interface {
@@ -257,7 +265,7 @@ type ResourceServerOptions struct {
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
 
-	storageMetrics *StorageMetrics
+	StorageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
 
@@ -269,6 +277,40 @@ type ResourceServerOptions struct {
 	QOSConfig QueueConfig
 
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
+
+	QuotasConfig QuotasConfig
+}
+
+// NewSearchServer creates a standalone search server.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	if opts.Backend == nil {
+		return nil, fmt.Errorf("missing backend implementation")
+	}
+	if opts.Diagnostics == nil {
+		opts.Diagnostics = &noopService{}
+	}
+
+	// Initialize the blob storage
+	blobstore, err := initializeBlobStorage(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the search server using the search.go factory
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	if err != nil || searchServer == nil {
+		return nil, fmt.Errorf("search server could not be created: %w", err)
+	}
+	searchServer.lifecycle = opts.Lifecycle
+	searchServer.backendDiagnostics = opts.Diagnostics
+
+	// Initialize the search server
+	ctx := context.Background()
+	if err := searchServer.Init(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize search server: %w", err)
+	}
+
+	return searchServer, nil
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -313,25 +355,9 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	}
 
 	// Initialize the blob storage
-	blobstore := opts.Blob.Backend
-	if blobstore == nil {
-		if opts.Blob.URL != "" {
-			ctx := context.Background()
-			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-			if err != nil {
-				return nil, err
-			}
-
-			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-				Bucket: NewInstrumentedBucket(bucket, opts.Reg),
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// Check if the backend supports blob storage
-			blobstore, _ = opts.Backend.(BlobSupport)
-		}
+	blobstore, err := initializeBlobStorage(opts)
+	if err != nil {
+		return nil, err
 	}
 
 	logger := log.New("resource-server")
@@ -339,44 +365,67 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		log:              logger,
-		backend:          opts.Backend,
-		blob:             blobstore,
-		diagnostics:      opts.Diagnostics,
-		access:           opts.AccessClient,
-		secure:           opts.SecureValues,
-		writeHooks:       opts.WriteHooks,
-		lifecycle:        opts.Lifecycle,
-		now:              opts.Now,
-		ctx:              ctx,
-		cancel:           cancel,
-		storageMetrics:   opts.storageMetrics,
-		indexMetrics:     opts.IndexMetrics,
-		maxPageSizeBytes: opts.MaxPageSizeBytes,
-		reg:              opts.Reg,
-		queue:            opts.QOSQueue,
-		queueConfig:      opts.QOSConfig,
-		overridesService: opts.OverridesService,
-		storageEnabled:   true,
-
+		log:                            logger,
+		backend:                        opts.Backend,
+		blob:                           blobstore,
+		diagnostics:                    opts.Diagnostics,
+		access:                         opts.AccessClient,
+		secure:                         opts.SecureValues,
+		writeHooks:                     opts.WriteHooks,
+		lifecycle:                      opts.Lifecycle,
+		now:                            opts.Now,
+		ctx:                            ctx,
+		cancel:                         cancel,
+		storageMetrics:                 opts.StorageMetrics,
+		maxPageSizeBytes:               opts.MaxPageSizeBytes,
+		reg:                            opts.Reg,
+		queue:                          opts.QOSQueue,
+		queueConfig:                    opts.QOSConfig,
+		overridesService:               opts.OverridesService,
+		storageEnabled:                 true,
+		searchClient:                   opts.SearchClient,
+		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err := s.Init(ctx)
+	err = s.Init(ctx)
 	if err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
 
 	return s, nil
+}
+
+// initializeBlobStorage initializes blob storage from the provided options.
+func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
+	if opts.Blob.Backend != nil {
+		return opts.Blob.Backend, nil
+	}
+
+	if opts.Blob.URL != "" {
+		ctx := context.Background()
+		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+			Bucket: NewInstrumentedBucket(bucket, opts.Reg),
+		})
+	}
+
+	// Check if the backend supports blob storage
+	blobstore, _ := opts.Backend.(BlobSupport)
+	return blobstore, nil
 }
 
 var _ ResourceServer = &server{}
@@ -386,7 +435,8 @@ type server struct {
 	backend          StorageBackend
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
-	search           *searchSupport
+	search           *searchServer
+	searchClient     resourcepb.ResourceIndexClient
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -394,8 +444,8 @@ type server struct {
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
-	indexMetrics     *BleveIndexMetrics
 	overridesService *OverridesService
+	quotasConfig     QuotasConfig
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -677,12 +727,25 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
-	// check quotas and log for now
-	s.checkQuota(ctx, NamespacedResource{
+	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	})
+
+	if err != nil {
+		var quotaErr QuotaExceededError
+		msg := err.Error()
+		if errors.As(err, &quotaErr) {
+			msg = quotaErr.Message()
+		}
+		return &resourcepb.CreateResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: msg,
+				Code:    http.StatusForbidden,
+			},
+		}, nil
+	}
 
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
@@ -698,10 +761,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
-	var (
-		res *resourcepb.CreateResponse
-		err error
-	)
+	var res *resourcepb.CreateResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.create(queueCtx, user, req)
 	})
@@ -1020,8 +1080,10 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
+//nolint:gocyclo
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
 
 	// The history + trash queries do not yet support additional filters
@@ -1057,9 +1119,19 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
-	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
 	rsp := &resourcepb.ListResponse{}
+
+	req = filterFieldSelectors(req)
+	if s.useFieldSelectorSearch(req) {
+		// If we get here, we're doing list with selectable fields. Let's do search instead, since
+		// we index all selectable fields, and fetch resulting documents one by one.
+		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+		if s.storageMetrics != nil {
+			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		}
+		return s.listWithFieldSelectors(ctx, req)
+	}
 
 	key := req.Options.Key
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
@@ -1113,7 +1185,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 			pageBytes += len(item.Value)
 			rsp.Items = append(rsp.Items, item)
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
 				t := iter.ContinueToken()
 				if iter.Next() {
 					rsp.NextPageToken = t
@@ -1147,6 +1219,10 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		return rsp, nil
 	}
 	rsp.ResourceVersion = rv
+	gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+	if s.storageMetrics != nil {
+		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
+	}
 	return rsp, err
 }
 
@@ -1595,7 +1671,7 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 	return s.search.RebuildIndexes(ctx, req)
 }
 
-func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
+func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -1605,19 +1681,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 
 	if s.overridesService == nil {
 		s.log.FromContext(ctx).Debug("overrides service not configured, skipping quota check", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
-		return
+		return nil
 	}
 
 	quota, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		return
+		return nil
 	}
 
 	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		return
+		return nil
 	}
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
@@ -1627,5 +1703,15 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+		if s.quotasConfig.EnforceQuotas {
+			return QuotaExceededError{
+				Resource:       nsr.Resource,
+				Used:           stats[0].Count,
+				Limit:          quota.Limit,
+				SupportMessage: s.quotasConfig.SupportMessage,
+			}
+		}
 	}
+
+	return nil
 }

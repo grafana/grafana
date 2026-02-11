@@ -228,6 +228,10 @@ func (o *TeamLBACRule) DeepCopyInto(dst *TeamLBACRule) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (TeamLBACRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamLBACRule"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &TeamLBACRule{}
 
@@ -279,6 +283,10 @@ func (o *TeamLBACRuleList) DeepCopy() *TeamLBACRuleList {
 
 func (o *TeamLBACRuleList) DeepCopyInto(dst *TeamLBACRuleList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (TeamLBACRuleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamLBACRuleList"
 }
 
 // Interface compliance compile-time check
