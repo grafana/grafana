@@ -29,7 +29,7 @@
     "i18next-cli": "1.11.12",
     "ts-node": "10.9.2",
     "typescript": "5.9.2",
-    "webpack": "5.101.0"
+    "webpack": "^5.105.1"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
