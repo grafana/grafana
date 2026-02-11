@@ -80,6 +80,8 @@ Select an authentication method from the drop-down menu:
 
 - **No authentication** - Connect without credentials. Only use this option if your Elasticsearch instance doesn't require authentication.
 
+- **Serverless API Key** - Enter an API key for a Elastic serverless connection. To learn more finding your Elastic API key, refer to [Elastic Cloud API keys](https://www.elastic.co/docs/deploy-manage/api-keys/elastic-cloud-api-keys)
+
 ### API key authentication
 
 To authenticate using an Elasticsearch API key, select **No authentication** and configure the API key using HTTP headers:
