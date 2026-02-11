@@ -13,7 +13,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
@@ -146,16 +145,6 @@ export interface RemoveVariableActionHelperProps {
   source: SceneVariableSet;
 }
 
-export interface AddAnnotationActionHelperProps {
-  addedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
-  source: DashboardDataLayerSet;
-}
-
-export interface RemoveAnnotationActionHelperProps {
-  removedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
-  source: DashboardDataLayerSet;
-}
-
 export interface ChangeTitleActionHelperProps {
   oldTitle: string;
   newTitle: string;
@@ -260,34 +249,6 @@ export const dashboardEditActions = {
       },
     });
   },
-  addAnnotation({ source, addedObject }: AddAnnotationActionHelperProps) {
-    const layersBeforeAddition = [...source.state.annotationLayers];
-
-    dashboardEditActions.addElement({
-      source,
-      addedObject,
-      perform() {
-        source.setState({ annotationLayers: [...layersBeforeAddition, addedObject] });
-      },
-      undo() {
-        source.setState({ annotationLayers: layersBeforeAddition });
-      },
-    });
-  },
-  removeAnnotation({ source, removedObject }: RemoveAnnotationActionHelperProps) {
-    const layersBeforeRemoval = [...source.state.annotationLayers];
-
-    dashboardEditActions.removeElement({
-      source,
-      removedObject,
-      perform() {
-        source.setState({ annotationLayers: layersBeforeRemoval.filter((layer) => layer !== removedObject) });
-      },
-      undo() {
-        source.setState({ annotationLayers: layersBeforeRemoval });
-      },
-    });
-  },
   changeVariableName: makeEditAction<SceneVariable, 'name'>({
     description: t('dashboard.variable.name.action', 'Change variable name'),
     prop: 'name',
@@ -355,7 +316,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

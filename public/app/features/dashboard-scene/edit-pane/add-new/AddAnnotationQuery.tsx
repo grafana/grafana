@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 import { t } from '@grafana/i18n';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { annotationEditActions } from '../../settings/annotations/actions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { dashboardEditActions } from '../shared';
 
 import { AddNewSectionItem } from './AddNewSectionItem';
 
@@ -13,7 +13,7 @@ export function AddAnnotationQuery({ dashboardScene }: { dashboardScene: Dashboa
     const dataLayers = dashboardSceneGraph.getDataLayers(dashboardScene);
     const newAnnotation = dataLayers.createDefaultAnnotationLayer();
 
-    dashboardEditActions.addAnnotation({
+    annotationEditActions.addAnnotation({
       source: dataLayers,
       addedObject: newAnnotation,
     });

@@ -15,6 +15,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { partitionAnnotationLayers } from './AnnotationSetEditableElement';
+import { annotationEditActions } from './actions';
 
 export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
   const { annotationLayers } = dataLayerSet.useState();
@@ -32,7 +33,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
   const onAddAnnotation = useCallback(() => {
     const newAnnotation = dataLayerSet.createDefaultAnnotationLayer();
 
-    dashboardEditActions.addAnnotation({
+    annotationEditActions.addAnnotation({
       source: dataLayerSet,
       addedObject: newAnnotation,
     });

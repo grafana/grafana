@@ -5,7 +5,6 @@ import { dataLayers } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
@@ -18,6 +17,7 @@ import {
   AnnotationPanelFilterPicker,
 } from './AnnotationBasicOptions';
 import { AnnotationQueryEditorButton } from './AnnotationQueryOptions';
+import { annotationEditActions } from './actions';
 
 export type AnnotationLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
@@ -107,7 +107,7 @@ export class AnnotationEditableElement implements EditableDashboardElement {
     const dataLayerSet = this.layer.parent;
 
     if (dataLayerSet instanceof DashboardDataLayerSet) {
-      dashboardEditActions.removeAnnotation({
+      annotationEditActions.removeAnnotation({
         source: dataLayerSet,
         removedObject: this.layer,
       });
