@@ -599,6 +599,13 @@
       "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
+    "alerts-activity-banner": {
+      "description": "A brand new page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
+      "dma-note": "Some triage features may be limited on your stack.",
+      "open-button": "See Alert Activity",
+      "open-button-aria": "Open Alerts Activity",
+      "title": "Alert Activity is now available!"
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sort",
       "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
@@ -2649,6 +2656,13 @@
       "resample-to": "Resample to",
       "upsample": "Upsample"
     },
+    "revert-experience-modal": {
+      "description-line1": "Considering going back to the previous experience because you're missing more information on alert state?",
+      "description-line2": "The Alert Activity page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
+      "revert-button": "Revert to previous experience",
+      "see-activity-button": "See Alert Activity",
+      "title": "Revert to previous experience"
+    },
     "routing": {
       "routing": "Routing"
     },
@@ -2877,8 +2891,8 @@
       },
       "rulerrule-loading-error": "Failed to load the rule",
       "toggle": {
-        "go-back-to-old-look": "Go back to the old look",
-        "try-out-the-new-look": "Try out the new look!"
+        "use-new-experience": "Use new experience",
+        "view-previous-experience": "Revert to previous experience"
       },
       "unknown-rule-type": "Unknown rule type"
     },

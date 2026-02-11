@@ -1,48 +1,145 @@
-import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ButtonProps, Stack } from '@grafana/ui';
+import { useState } from 'react';
 
+import { t } from '@grafana/i18n';
+import { config, locationService } from '@grafana/runtime';
+import { Button, ButtonProps, Stack } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import {
+  getStackType,
+  getUserPlan,
+  trackViewExperienceToggleClick,
+  trackViewExperienceToggleConfirmed,
+} from '../Analytics';
 import { shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
+import { ALERTING_PATHS } from '../utils/navigation';
+
+import { RevertToOldExperienceModal } from './AlertsActivityOptOutModal';
 
 export function RuleListPageTitle({ title }: { title: string }) {
   const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
-
   const listViewV2Enabled = shouldUseAlertingListViewV2();
 
-  const toggleListView = () => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const stackType = getStackType();
+  const plan = getUserPlan();
+
+  const getEventPayload = () => ({
+    source: 'title_control' as const,
+    current_view: listViewV2Enabled ? ('new' as const) : ('old' as const),
+    target_view: listViewV2Enabled ? ('old' as const) : ('new' as const),
+    user_id: contextSrv.user.id,
+    org_id: contextSrv.user.orgId,
+    stack_type: stackType,
+    plan,
+  });
+
+  const handleToggleClick = () => {
+    trackViewExperienceToggleClick({
+      ...getEventPayload(),
+      action: 'clicked',
+    });
+
+    // Only show confirmation when switching from NEW to OLD
+    // When switching from OLD to NEW, just do it directly
     if (listViewV2Enabled) {
-      setPreviewToggle('alertingListViewV2', false);
-      reportInteraction('alerting.list_view.v2.disabled');
+      setShowConfirmModal(true);
     } else {
-      setPreviewToggle('alertingListViewV2', true);
-      reportInteraction('alerting.list_view.v2.enabled');
+      // Switching to new experience - no confirmation needed
+      switchToNewExperience();
     }
-    window.location.reload();
   };
 
+  const switchToNewExperience = () => {
+    try {
+      setPreviewToggle('alertingListViewV2', true);
+      trackViewExperienceToggleConfirmed({
+        ...getEventPayload(),
+        success: true,
+      });
+      window.location.reload();
+    } catch {
+      trackViewExperienceToggleConfirmed({
+        ...getEventPayload(),
+        success: false,
+      });
+    }
+  };
+
+  const handleRevert = () => {
+    trackViewExperienceToggleClick({
+      ...getEventPayload(),
+      action: 'confirmed',
+    });
+    setShowConfirmModal(false);
+
+    try {
+      setPreviewToggle('alertingListViewV2', false);
+      trackViewExperienceToggleConfirmed({
+        ...getEventPayload(),
+        success: true,
+      });
+      window.location.reload();
+    } catch {
+      trackViewExperienceToggleConfirmed({
+        ...getEventPayload(),
+        success: false,
+      });
+    }
+  };
+
+  const handleSeeAlertActivity = () => {
+    trackViewExperienceToggleClick({
+      ...getEventPayload(),
+      action: 'canceled',
+    });
+    setShowConfirmModal(false);
+    // Navigate to Alert Activity page (locationService auto-prefixes, no createRelativeUrl needed)
+    locationService.push(ALERTING_PATHS.ALERTS_ACTIVITY);
+  };
+
+  const handleDismiss = () => {
+    trackViewExperienceToggleClick({
+      ...getEventPayload(),
+      action: 'canceled',
+    });
+    setShowConfirmModal(false);
+  };
+
+  // Button configuration based on current view
   const configToUse: ButtonProps & { 'data-testid': string } = listViewV2Enabled
     ? {
         variant: 'secondary',
         icon: undefined,
-        children: t('alerting.rule-list.toggle.go-back-to-old-look', 'Go back to the old look'),
+        children: t('alerting.rule-list.toggle.view-previous-experience', 'Revert to previous experience'),
         'data-testid': 'alerting-list-view-toggle-v1',
       }
     : {
         variant: 'primary',
         icon: 'rocket',
-        children: t('alerting.rule-list.toggle.try-out-the-new-look', 'Try out the new look!'),
+        children: t('alerting.rule-list.toggle.use-new-experience', 'Use new experience'),
         'data-testid': 'alerting-list-view-toggle-v2',
       };
 
   return (
-    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
-      <h1>{title}</h1>
-      {shouldShowV2Toggle && (
-        <div>
-          <Button size="sm" fill="outline" {...configToUse} onClick={toggleListView} className="fs-unmask" />
-        </div>
-      )}
-    </Stack>
+    <>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+        <h1>{title}</h1>
+        {shouldShowV2Toggle && (
+          <div>
+            <Button size="sm" fill="outline" {...configToUse} onClick={handleToggleClick} className="fs-unmask" />
+          </div>
+        )}
+      </Stack>
+
+      <RevertToOldExperienceModal
+        isOpen={showConfirmModal}
+        onRevert={handleRevert}
+        onSeeAlertActivity={handleSeeAlertActivity}
+        onDismiss={handleDismiss}
+      />
+    </>
   );
 }

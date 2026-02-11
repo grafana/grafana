@@ -374,3 +374,121 @@ export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
 };
+
+// ============================================================================
+// Alerts Activity Banner & View Experience Telemetry
+// ============================================================================
+
+export type StackType = 'DMA' | 'GMA' | 'Unknown';
+export type UserPlan = 'Enterprise' | 'Advanced' | 'Free' | 'Unknown';
+
+/**
+ * Determine the stack type based on feature toggles
+ */
+export function getStackType(): StackType {
+  // alertingDisableDMAinUI === false means DMA is enabled
+  if (config.featureToggles.alertingDisableDMAinUI === false) {
+    return 'DMA';
+  }
+  return 'GMA';
+}
+
+/**
+ * Determine the user's plan from license info
+ */
+export function getUserPlan(): UserPlan {
+  const licenseInfo = config.licenseInfo;
+  if (!licenseInfo) {
+    return 'Unknown';
+  }
+
+  // Check edition from license info or build info
+  const edition = licenseInfo.edition || config.buildInfo?.edition;
+
+  if (edition === 'Enterprise') {
+    return 'Enterprise';
+  }
+  if (edition === 'Pro') {
+    return 'Advanced';
+  }
+  // Free/OSS edition
+  return 'Free';
+}
+
+export interface AlertsActivityBannerEventPayload {
+  banner_id: string;
+  page: string;
+  user_id?: number;
+  org_id?: number;
+  stack_type?: StackType;
+  plan?: UserPlan;
+  variant_id?: string | null;
+}
+
+/**
+ * Track banner impression - fired once per session when banner is first shown
+ */
+export function trackAlertsActivityBannerImpression(payload: AlertsActivityBannerEventPayload) {
+  reportInteraction('grafana_alerting_banner_impression', {
+    ...payload,
+    grafana_version: config.buildInfo.version,
+  });
+}
+
+/**
+ * Track when user clicks "Open Alerts Activity" CTA
+ */
+export function trackAlertsActivityBannerClickTry(payload: AlertsActivityBannerEventPayload & { referrer?: string }) {
+  reportInteraction('grafana_alerting_banner_click_try', {
+    ...payload,
+    grafana_version: config.buildInfo.version,
+  });
+}
+
+/**
+ * Track when user dismisses the banner
+ */
+export function trackAlertsActivityBannerDismiss(
+  payload: AlertsActivityBannerEventPayload & { dismissed_until: string }
+) {
+  reportInteraction('grafana_alerting_banner_dismiss', {
+    ...payload,
+    grafana_version: config.buildInfo.version,
+  });
+}
+
+// ============================================================================
+// View Experience Toggle Telemetry (persistent control near page title)
+// ============================================================================
+
+export interface ViewExperienceToggleEventPayload {
+  source: 'title_control';
+  current_view: 'new' | 'old';
+  target_view: 'new' | 'old';
+  user_id?: number;
+  org_id?: number;
+  stack_type?: StackType;
+  plan?: UserPlan;
+}
+
+/**
+ * Track when user clicks the view experience toggle (either direction)
+ */
+export function trackViewExperienceToggleClick(
+  payload: ViewExperienceToggleEventPayload & { action: 'clicked' | 'canceled' | 'confirmed' }
+) {
+  reportInteraction('grafana_alerting_view_experience_toggle', {
+    ...payload,
+    grafana_version: config.buildInfo.version,
+  });
+}
+
+/**
+ * Track when view experience preference is successfully persisted
+ */
+export function trackViewExperienceToggleConfirmed(payload: ViewExperienceToggleEventPayload & { success: boolean }) {
+  reportInteraction('grafana_alerting_view_experience_confirmed', {
+    ...payload,
+    grafana_version: config.buildInfo.version,
+  });
+}

@@ -31,3 +31,21 @@ export const shouldUseFullyCompatibleBackendFilters = () =>
  * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
  */
 export const shouldUseSavedSearches = () => config.featureToggles.alertingSavedSearches ?? false;
+
+/**
+ * Alerts Activity Banner - shows a promotional banner on the Rule List page
+ * directing users to try the new Alerts Activity (triage) view.
+ *
+ * The banner is only shown if:
+ * 1. This feature toggle is enabled (alertingAlertsActivityBanner)
+ * 2. The Alerts Activity feature itself is enabled (alertingTriage)
+ *
+ * Note: alertingAlertsActivityBanner is not yet in the generated FeatureToggles type.
+ * Once the backend toggle is registered and featureToggles.gen.ts is regenerated,
+ * this type assertion can be removed.
+ */
+export const shouldShowAlertsActivityBanner = () => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const featureToggles = config.featureToggles as Record<string, boolean | undefined>;
+  return (featureToggles.alertingAlertsActivityBanner && featureToggles.alertingTriage) ?? false;
+};

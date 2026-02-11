@@ -16,7 +16,7 @@ import { RuleListErrors } from '../components/rules/RuleListErrors';
 import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
-import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { shouldShowAlertsActivityBanner, shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
@@ -25,6 +25,7 @@ import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRul
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 
+import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
@@ -41,6 +42,7 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
+  const showBanner = shouldShowAlertsActivityBanner();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [expandAll, setExpandAll] = useState(false);
 
@@ -128,6 +130,7 @@ const RuleListV1 = () => {
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
+        {showBanner && <AlertsActivityBanner />}
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
