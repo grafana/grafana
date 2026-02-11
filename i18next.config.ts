@@ -1,7 +1,13 @@
 import { defineConfig } from 'i18next-cli';
 
+const collator = new Intl.Collator('en-US', {
+  sensitivity: 'variant',
+  ignorePunctuation: false,
+  numeric: false,
+});
+
 export default defineConfig({
-  locales: ['en-US'], // Only en-US  is updated - Crowdin will PR with other languages
+  locales: ['en-US'], // Only en-US is updated - Crowdin will PR with other languages
   extract: {
     ignore: [
       'public/lib/monaco/**/*',
@@ -14,5 +20,6 @@ export default defineConfig({
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    sort: (a, b) => collator.compare(a.key, b.key),
   },
 });

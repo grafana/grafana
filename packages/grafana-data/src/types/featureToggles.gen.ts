@@ -144,6 +144,11 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
+  * Enable Faro session replay for Grafana
+  * @default false
+  */
+  faroSessionReplay?: boolean;
+  /**
   * A table visualisation for logs in Explore
   * @default true
   */

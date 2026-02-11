@@ -139,6 +139,13 @@ export function QueryEditorContextWrapper({
     ]
   );
 
+  const findTransformationIndex = useCallback(
+    (transformId: string) => {
+      return transformations.findIndex((t) => t.transformId === transformId);
+    },
+    [transformations]
+  );
+
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
@@ -154,9 +161,21 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      deleteTransformation: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.deleteTransformation(index);
+        }
+      },
+      toggleTransformationDisabled: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.toggleTransformationDisabled(index);
+        }
+      },
       updateTransformation: dataPane.updateTransformation,
     }),
-    [dataPane]
+    [dataPane, findTransformationIndex]
   );
 
   return (

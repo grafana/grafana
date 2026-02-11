@@ -433,7 +433,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		// order of ORDER BY arguments match the order of a sql index for performance
 		orderBy := " ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC"
 		if query.Limit > 0 {
-			orderBy += r.db.GetDialect().Limit(query.Limit)
+			orderBy += r.db.GetDialect().LimitOffset(query.Limit, query.Offset)
 		}
 		sql.WriteString(orderBy + " ) dt on dt.id = annotation.id")
 

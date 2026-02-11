@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -192,7 +193,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				},
 			}
 
-			registrar := NewInstallRegistrar(&fakeClientGenerator{client: fakeClient})
+			registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
 
 			err := registrar.Register(ctx, "org-1", tt.install)
 			if tt.expectError {
@@ -590,7 +591,7 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 	t.Run("successfully creates client on first call", func(t *testing.T) {
 		fakeClient := &fakePluginInstallClient{}
 		generator := &fakeClientGenerator{client: fakeClient}
-		registrar := NewInstallRegistrar(generator)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, generator)
 
 		client, err := registrar.GetClient()
 		require.NoError(t, err)
@@ -600,7 +601,7 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 	t.Run("returns same client on subsequent calls", func(t *testing.T) {
 		fakeClient := &fakePluginInstallClient{}
 		generator := &fakeClientGenerator{client: fakeClient}
-		registrar := NewInstallRegistrar(generator)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, generator)
 
 		client1, err1 := registrar.GetClient()
 		require.NoError(t, err1)
@@ -613,7 +614,7 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 
 	t.Run("returns error when client generation fails", func(t *testing.T) {
 		generator := &fakeClientGenerator{client: nil, shouldError: true}
-		registrar := NewInstallRegistrar(generator)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, generator)
 
 		client, err := registrar.GetClient()
 		require.Error(t, err)
@@ -683,7 +684,7 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 			fakeClient := &fakePluginInstallClient{}
 			tt.setupClient(fakeClient)
 
-			registrar := NewInstallRegistrar(&fakeClientGenerator{client: fakeClient})
+			registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
 
 			err := registrar.Register(ctx, "org-1", tt.install)
 			if tt.expectError {
@@ -813,7 +814,7 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 				},
 			}
 
-			registrar := NewInstallRegistrar(&fakeClientGenerator{client: fakeClient})
+			registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
 
 			err := registrar.Unregister(ctx, tt.namespace, tt.pluginName, tt.source)
 
@@ -831,7 +832,7 @@ func TestInstallRegistrar_GetClientError(t *testing.T) {
 	t.Run("Register returns error with nil client", func(t *testing.T) {
 		ctx := context.Background()
 		generator := &fakeClientGenerator{client: nil, shouldError: true}
-		registrar := NewInstallRegistrar(generator)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, generator)
 
 		install := &PluginInstall{
 			ID:      "plugin-1",
@@ -846,7 +847,7 @@ func TestInstallRegistrar_GetClientError(t *testing.T) {
 	t.Run("Unregister returns error with nil client", func(t *testing.T) {
 		ctx := context.Background()
 		generator := &fakeClientGenerator{client: nil, shouldError: true}
-		registrar := NewInstallRegistrar(generator)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, generator)
 
 		err := registrar.Unregister(ctx, "org-1", "plugin-1", SourcePluginStore)
 		require.Error(t, err)
