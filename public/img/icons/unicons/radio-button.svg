@@ -1,0 +1,25 @@
+<svg
+  viewBox="0 0 16 24"
+  xmlns="http://www.w3.org/2000/svg"
+  fill="none"
+>
+  <!-- Outer circle -->
+  <circle
+    cx="8"
+    cy="12"
+    r="7.5"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1"
+  />
+
+  <!-- Inner white circle -->
+  <circle
+    cx="8"
+    cy="12"
+    r="3.59551"
+    fill="white"
+    stroke="currentColor"
+    stroke-width="0.808983"
+  />
+</svg>
