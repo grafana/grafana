@@ -71,7 +71,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 			return hs.handleK8sError(err)
 		}
 
-		converter := datasourceV0.NewConverter(hs.namespacer, conn.APIGroup, conn.APIVersion, []string{})
+		converter := datasourceV0.NewConverter(hs.namespacer, conn.APIGroup, conn.Plugin, []string{})
 		legacyDS, err := converter.AsLegacyDatasource(k8sDS)
 		if err != nil {
 			return hs.handleK8sError(err)
