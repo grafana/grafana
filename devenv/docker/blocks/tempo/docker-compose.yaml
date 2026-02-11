@@ -72,9 +72,10 @@
         labels: namespace
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
     command:
-      - --config.file=/etc/tempo.yaml
+      - -config.file=/etc/tempo.yaml
+      - -target=all
     volumes:
       - ./docker/blocks/tempo/tempo.yaml:/etc/tempo.yaml
       - ./docker/blocks/tempo/tempo-data:/tmp/tempo

@@ -327,8 +327,8 @@ datasources:
     jsonData:
       tracesToLogsV2:
         datasourceUid: gdev-loki
-        spanStartTimeShift: '5m'
-        spanEndTimeShift: '-5m'
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
         customQuery: true
         query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'
       tracesToProfiles:
@@ -336,8 +336,8 @@ datasources:
         profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
       tracesToMetrics:
         datasourceUid: gdev-prometheus
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags: [{ key: 'job' }]
         queries:
           - name: 'Metrics'
