@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import RCCascader from '@rc-component/cascader';
-import { memo, useCallback, useMemo, useState, useEffect } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -123,40 +123,48 @@ export const Cascader = memo(
     isClearable,
   }: CascaderProps) => {
     const searchableOptions = useMemo(() => flattenOptions(options, [], separator), [options, separator]);
-    const [isSearching, setIsSearching] = useState<boolean>(false);
-    const [focusCascade, setFocusCascade] = useState<boolean>(false);
-    const [rcValue, setRcValue] = useState<SelectableValue<string[]>>({ value: [], label: '' });
-    const [activeLabel, setActiveLabel] = useState<string>('');
-    const [inputValue, setInputValue] = useState<string>('');
-
-    const styles = useStyles2(getCascaderStyles);
-
-    const setInitialValue = useCallback(
+    const getInitialValue = useCallback(
       (searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) => {
         if (!initValue) {
-          setRcValue({ value: [], label: '' });
-          setActiveLabel('');
+          return {
+            initialRCValue: { value: [], label: '' },
+            initialActiveLabel: '',
+          };
         }
         for (const option of searchableOptions) {
           const optionPath = option.value || [];
 
           if (optionPath[optionPath.length - 1] === initValue) {
             const label = displayAllSelectedLevels ? option.label : option.singleLabel || '';
-            setRcValue({ value: optionPath, label: label });
-            setActiveLabel(label);
+            return {
+              initialRCValue: { value: optionPath, label },
+              initialActiveLabel: label,
+            };
           }
         }
         if (allowCustomValue) {
-          setRcValue({ value: [], label: initValue });
-          initValue && setActiveLabel(initValue);
+          return {
+            initialRCValue: { value: [], label: initValue },
+            initialActiveLabel: initValue,
+          };
         }
+        return {
+          initialRCValue: { value: [], label: '' },
+          initialActiveLabel: '',
+        };
       },
       [allowCustomValue, displayAllSelectedLevels]
     );
-
-    useEffect(() => {
-      setInitialValue(searchableOptions, initialValue);
-    }, [setInitialValue, searchableOptions, initialValue]);
+    const { initialRCValue, initialActiveLabel } = useMemo(
+      () => getInitialValue(searchableOptions, initialValue),
+      [getInitialValue, initialValue, searchableOptions]
+    );
+    const [isSearching, setIsSearching] = useState(false);
+    const [focusCascade, setFocusCascade] = useState(false);
+    const [rcValue, setRcValue] = useState<SelectableValue<string[]>>(initialRCValue);
+    const [activeLabel, setActiveLabel] = useState(initialActiveLabel);
+    const [inputValue, setInputValue] = useState(initialActiveLabel);
+    const styles = useStyles2(getCascaderStyles);
 
     // For rc-cascader
     const handleChange = (value: string[], selectedOptions: CascaderOption[]) => {
