@@ -192,7 +192,6 @@ function getStyles(
       gap: theme.spacing(1),
       padding: theme.spacing(1),
     }),
-
     hidden: css({
       opacity: 0.6,
     }),

@@ -24,7 +24,7 @@ export function DraggableList<T>({
     <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
       <Droppable droppableId={droppableId} direction="vertical">
         {(provided) => (
-          <Stack ref={provided.innerRef} {...provided.droppableProps} direction="column" gap={1}>
+          <Stack ref={provided.innerRef} {...provided.droppableProps} direction="column" gap={2.5}>
             {items.map((item, index) => {
               const key = keyExtractor(item);
               return (
