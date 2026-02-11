@@ -1,4 +1,4 @@
-import { ResourceDependencyDto } from '../api';
+import { ResourceDependencyDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 
 import { buildDependencyMaps, handleSelection, handleDeselection, ResourceTypeId } from './resourceDependency';
 

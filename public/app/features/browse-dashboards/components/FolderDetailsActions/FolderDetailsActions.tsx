@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 
-import { OwnerReference } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { OwnerReference as OwnerReferenceType } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
-import { TeamOwnerReferences } from 'app/core/components/OwnerReferences/OwnerReference';
+import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { getFolderPermissions } from '../../permissions';
@@ -25,10 +26,13 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
     });
   };
 
+  // For now, only admins can see folder owners
+  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+
   return (
     <Stack alignItems="center">
-      {config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
-        <FolderOwners ownerReferences={folderDTO.ownerReferences || []} />
+      {isAdmin && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
+        <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
       {config.featureToggles.restoreDashboards && (
         <LinkButton
@@ -53,7 +57,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   );
 };
 
-const FolderOwners = ({ ownerReferences }: { ownerReferences: OwnerReference[] }) => {
+const FolderOwners = ({ ownerReferences }: { ownerReferences?: OwnerReferenceType[] }) => {
   const styles = useStyles2(getStyles);
   const teamOwnerReferences = ownerReferences?.filter((ref) => ref.kind === 'Team');
 
@@ -66,7 +70,7 @@ const FolderOwners = ({ ownerReferences }: { ownerReferences: OwnerReference[] }
       <Text>
         <Trans i18nKey="browse-dashboards.folder-owners.owned-by">Owned by:</Trans>
       </Text>
-      <TeamOwnerReferences ownerReferences={teamOwnerReferences} />
+      <OwnerReference ownerReference={teamOwnerReferences[0]!} />
     </div>
   );
 };

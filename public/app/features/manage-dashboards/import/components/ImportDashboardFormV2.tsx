@@ -4,7 +4,7 @@ import { Controller, FieldErrors, FieldPath, UseFormReturn } from 'react-hook-fo
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input } from '@grafana/ui';
+import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -16,9 +16,19 @@ interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'cont
   errors: FieldErrors<ImportFormDataV2>;
   onCancel: () => void;
   onSubmit: FormsOnSubmit<ImportFormDataV2>;
+  hasFloatGridItems: boolean;
 }
 
-export const ImportDashboardFormV2 = ({ register, errors, control, inputs, getValues, onCancel, onSubmit }: Props) => {
+export const ImportDashboardFormV2 = ({
+  register,
+  errors,
+  control,
+  inputs,
+  getValues,
+  onCancel,
+  onSubmit,
+  hasFloatGridItems,
+}: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>({});
 
@@ -118,6 +128,19 @@ export const ImportDashboardFormV2 = ({ register, errors, control, inputs, getVa
             </Field>
           );
         })}
+
+      {hasFloatGridItems && (
+        <Alert
+          severity="warning"
+          title={t('dashboard-scene.import-dashboard-form-v2.float-grid-items-warning-title', 'Floating grid items')}
+          data-testid={selectors.components.ImportDashboardForm.floatGridItemsWarning}
+        >
+          <Trans i18nKey="dashboard-scene.import-dashboard-form-v2.float-grid-items-warning-body">
+            The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers
+            will be truncated to integers.
+          </Trans>
+        </Alert>
+      )}
 
       <Stack direction="row" gap={2}>
         <Button

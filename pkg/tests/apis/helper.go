@@ -30,6 +30,7 @@ import (
 
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -214,6 +215,10 @@ func (c *K8sTestHelper) GetEnv() server.TestEnv {
 
 func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFactory) {
 	c.env.GithubConnectionFactory = f
+}
+
+func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) {
+	c.env.GithubRepoFactory = f
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {

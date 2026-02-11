@@ -10,12 +10,13 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 var node, _ = snowflake.NewNode(1)
@@ -32,14 +33,28 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 	return db
 }
 
-func setupTestKV(t *testing.T) KV {
+func setupBadgerKV(t *testing.T) KV {
 	db := setupTestBadgerDB(t)
-	return kv.NewBadgerKV(db)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return NewBadgerKV(db)
+}
+
+func setupSqlKV(t *testing.T) kv.KV {
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	require.NoError(t, err)
+	return kv
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
-	kv := setupTestKV(t)
-	return newDataStore(kv)
+	return newDataStore(setupBadgerKV(t))
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -48,14 +63,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	dbConn, err := eDB.Init(context.Background())
-	require.NoError(t, err)
-	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	require.NoError(t, err)
-	return newDataStore(kv)
+	return newDataStore(setupSqlKV(t))
 }
 
 func TestDataKey_String(t *testing.T) {

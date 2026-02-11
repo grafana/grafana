@@ -15,3 +15,6 @@ type GetUsageBody struct {
 func NewGetUsageBody() *GetUsageBody {
 	return &GetUsageBody{}
 }
+func (GetUsageBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.quotas.pkg.apis.quotas.v0alpha1.GetUsageBody"
+}

@@ -42,3 +42,10 @@ const (
 	AlertRuleStatusOperatorStateStateInProgress AlertRuleStatusOperatorStateState = "in_progress"
 	AlertRuleStatusOperatorStateStateFailed     AlertRuleStatusOperatorStateState = "failed"
 )
+
+func (AlertRulestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulestatusOperatorState"
+}
+func (AlertRuleStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatus"
+}

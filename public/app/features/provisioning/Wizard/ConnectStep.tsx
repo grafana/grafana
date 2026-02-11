@@ -4,11 +4,9 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
-import { useBranchOptions } from '../hooks/useBranchOptions';
+import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
-import { RepositoryField } from './components/RepositoryField';
-import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
@@ -23,22 +21,16 @@ export const ConnectStep = memo(function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = ''] = watch([
-    'repository.url',
-    'repository.token',
-    'repository.tokenUser',
-  ]);
+  const [repositoryName = ''] = watch(['repositoryName']);
   const isGitBased = isGitProvider(type);
 
   const {
-    options: branchOptions,
-    loading: branchesLoading,
-    error: branchesError,
-  } = useBranchOptions({
+    options: repositoryRefsOptions,
+    loading: isRefsLoading,
+    error: refsError,
+  } = useGetRepositoryRefs({
     repositoryType: type,
-    repositoryUrl,
-    repositoryToken,
-    repositoryTokenUser,
+    repositoryName: repositoryName,
   });
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -46,22 +38,15 @@ export const ConnectStep = memo(function ConnectStep() {
 
   return (
     <Stack direction="column" gap={2}>
-      {isGitBased && type !== 'github' && (
-        <>
-          <RepositoryTokenInput />
-          <RepositoryField />
-        </>
-      )}
-
       {gitFields && (
         <>
           <Field
             noMargin
             label={gitFields.branchConfig.label}
             description={gitFields.branchConfig.description}
-            error={errors?.repository?.branch?.message}
+            error={errors?.repository?.branch?.message || refsError}
             required={gitFields.branchConfig.required}
-            invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+            invalid={Boolean(errors?.repository?.branch?.message || refsError)}
           >
             <Controller
               name="repository.branch"
@@ -69,11 +54,12 @@ export const ConnectStep = memo(function ConnectStep() {
               rules={gitFields.branchConfig.validation}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
-                  invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+                  invalid={Boolean(errors?.repository?.branch?.message || refsError)}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.branchConfig.placeholder}
-                  options={branchOptions}
-                  loading={branchesLoading}
+                  options={repositoryRefsOptions || []}
+                  loading={isRefsLoading}
+                  disabled={isRefsLoading}
                   createCustomValue
                   isClearable
                   {...field}

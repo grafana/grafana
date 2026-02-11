@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaDummy = resource.NewSimpleSchema("historian.alerting.grafana.app", "v0alpha1", &Dummy{}, &DummyList{}, resource.WithKind("Dummy"),
+	schemaDummy = resource.NewSimpleSchema("historian.alerting.grafana.app", "v0alpha1", NewDummy(), &DummyList{}, resource.WithKind("Dummy"),
 		resource.WithPlural("dummys"), resource.WithScope(resource.NamespacedScope))
 	kindDummy = resource.Kind{
 		Schema: schemaDummy,

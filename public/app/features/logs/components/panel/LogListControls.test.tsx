@@ -19,6 +19,9 @@ const OLDEST_LOGS_LABEL_COPY = 'Oldest logs first';
 const DEDUPE_LABEL_COPY = 'Deduplication';
 const SHOW_TIMESTAMP_LABEL_COPY = 'Show timestamps';
 const WRAP_LINES_LABEL_COPY = 'Wrap lines';
+const ENABLE_UNWRAPPED_COLUMNS_COPY = 'Enable columns';
+const DISABLE_UNWRAPPED_COLUMNS_COPY = 'Disable columns';
+const COLUMNS_DISABLED_COPY = 'Columns are not supported with line wrapping enabled';
 const WRAP_JSON_TOOLTIP_COPY = 'Enable line wrapping and prettify JSON';
 const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
 const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
@@ -71,6 +74,7 @@ const contextProps = {
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  unwrappedColumns: false,
 };
 
 const assertExpandedOptionsCopyVisible = () => {
@@ -99,6 +103,8 @@ describe('LogListControls', () => {
     expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
@@ -343,7 +349,47 @@ describe('LogListControls', () => {
     config.featureToggles.newLogsPanel = originalFlagState;
   });
 
-  test('Controls line wrapping and prettify JSON', async () => {
+  test('Enables column controls with unwrapped logs', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    const { rerender } = render(
+      <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    expect(screen.getByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
+
+    rerender(
+      <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
+  test('Disables column controls for wrapped logs', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    render(
+      <LogListContextProvider {...contextProps} wrapLogMessage unwrappedColumns>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    expect(screen.getByLabelText(COLUMNS_DISABLED_COPY)).toBeDisabled();
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
+  test('Controls timestamp resolution', async () => {
     const originalFlagState = config.featureToggles.newLogsPanel;
     config.featureToggles.newLogsPanel = true;
 

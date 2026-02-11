@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
@@ -6,6 +8,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardInputs, DashboardSource, ImportFormDataV2 } from '../../types';
+import { truncateFloatGridItems } from '../utils/floatingGridItems';
 import { applyV2Inputs } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
@@ -23,12 +26,21 @@ type Props = {
 };
 
 export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+  const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
+    () => truncateFloatGridItems(dashboard.layout),
+    [dashboard.layout]
+  );
+
   async function onSubmit(form: ImportFormDataV2) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
     try {
+      const dashboardToSave: DashboardV2Spec = hasFloatGridItems
+        ? { ...dashboard, layout: normalizedLayout }
+        : dashboard;
+
       const dashboardWithDataSources = {
-        ...applyV2Inputs(dashboard, form),
+        ...applyV2Inputs(dashboardToSave, form),
         title: form.dashboard.title,
       };
 
@@ -72,6 +84,7 @@ export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, o
             onCancel={onCancel}
             onSubmit={onSubmit}
             watch={watch}
+            hasFloatGridItems={hasFloatGridItems}
           />
         )}
       </Form>

@@ -213,6 +213,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		JwtUrlLogin:                          hs.Cfg.JWTAuth.URLLogin,
 		LiveEnabled:                          hs.Cfg.LiveMaxConnections != 0,
 		LiveMessageSizeLimit:                 hs.Cfg.LiveMessageSizeLimit,
+		LiveNamespaced:                       true, // frontend will select a namespaced channel vs orgId channel
 		AutoAssignOrg:                        hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                   hs.Cfg.VerifyEmailEnabled,
 		SigV4AuthEnabled:                     hs.Cfg.SigV4AuthEnabled,
@@ -316,6 +317,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
+		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{

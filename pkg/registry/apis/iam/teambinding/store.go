@@ -287,6 +287,13 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		if name, ok := options.FieldSelector.RequiresExactMatch("spec.subject.name"); ok {
 			query.UserUID = name
 		}
+		if externalStr, ok := options.FieldSelector.RequiresExactMatch("spec.external"); ok {
+			external, err := strconv.ParseBool(externalStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for field selector spec.external: %w", err)
+			}
+			query.External = &external
+		}
 	}
 
 	res, err := l.store.ListTeamBindings(ctx, ns, query)

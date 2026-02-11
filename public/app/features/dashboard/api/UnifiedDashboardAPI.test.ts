@@ -99,7 +99,7 @@ describe('UnifiedDashboardAPI', () => {
   describe('saveDashboard', () => {
     it('should use v1 client for v1 dashboard', async () => {
       const mockCommand = { dashboard: { title: 'test' } };
-      v1Client.saveDashboard.mockResolvedValue({ id: 1, status: 'success', slug: '', uid: '', url: '', version: 1 });
+      v1Client.saveDashboard.mockResolvedValue({ status: 'success', slug: '', uid: '', url: '', version: 1 });
 
       await api.saveDashboard(mockCommand as SaveDashboardCommand<Dashboard>);
 
@@ -135,7 +135,7 @@ describe('UnifiedDashboardAPI', () => {
         },
       };
 
-      v2Client.saveDashboard.mockResolvedValue({ id: 1, status: 'success', slug: '', uid: '', url: '', version: 1 });
+      v2Client.saveDashboard.mockResolvedValue({ status: 'success', slug: '', uid: '', url: '', version: 1 });
 
       await api.saveDashboard(mockCommand as SaveDashboardCommand<DashboardV2Spec>);
 

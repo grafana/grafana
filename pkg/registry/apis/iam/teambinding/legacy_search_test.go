@@ -135,7 +135,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -167,7 +167,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -205,7 +205,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -242,7 +242,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -279,7 +279,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -321,7 +321,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -361,7 +361,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 			Limit: 10,
 			Page:  1,
 			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 			},
@@ -373,7 +373,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -433,7 +433,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 			Limit: 10,
 			Page:  2,
 			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 			},
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -443,7 +443,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -478,7 +478,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 			Limit: 10,
 			Page:  3, // Requesting page 3 but only 1 page available
 			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
 			},
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -488,7 +488,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -526,7 +526,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -564,7 +564,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 						Values: []string{"user1"},
 					},
 				},
@@ -581,7 +581,7 @@ func Test_subjectUIDFromRequirements(t *testing.T) {
 	t.Run("should extract subject UID from fields.subject_name", func(t *testing.T) {
 		reqs := []*resourcepb.Requirement{
 			{
-				Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+				Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 				Values: []string{"user1"},
 			},
 		}
@@ -603,7 +603,7 @@ func Test_subjectUIDFromRequirements(t *testing.T) {
 	t.Run("should return empty string when requirement has no values", func(t *testing.T) {
 		reqs := []*resourcepb.Requirement{
 			{
-				Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+				Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 				Values: []string{},
 			},
 		}
@@ -615,7 +615,7 @@ func Test_subjectUIDFromRequirements(t *testing.T) {
 		reqs := []*resourcepb.Requirement{
 			nil,
 			{
-				Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+				Key:    resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
 				Values: []string{"user1"},
 			},
 		}

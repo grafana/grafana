@@ -102,7 +102,7 @@ export default function ConnectionFormPage() {
                 <Card noMargin>
                   <Card.Heading>
                     <Trans i18nKey="provisioning.connection-form.available-repositories">
-                      Other available repositories
+                      This connection has access to the following repositories
                     </Trans>
                   </Card.Heading>
                   <Card.Description>

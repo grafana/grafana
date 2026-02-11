@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -107,4 +110,53 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 		return commitHash[:maxLength]
 	}
 	return commitHash
+}
+
+// ApplyOverrides merges tenant-specific settings from ini.File with this configuration.
+// It mutates the existing config, so ensure this object is not reused across multiple requests.
+func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) {
+	// Apply overrides from the settings service ini to the config. Theoretically we could use setting.NewCfgFromINIFile, but
+	// because we only want overrides, and not default values, we need to manually get them out of the ini structure.
+
+	// TODO: We should apply all overrides for values in FSRequestConfig
+	applyBool(settings, "security", "content_security_policy", &c.CSPEnabled, logger)
+	applyString(settings, "security", "content_security_policy_template", &c.CSPTemplate, logger)
+	applyBool(settings, "security", "content_security_policy_report_only", &c.CSPReportOnlyEnabled, logger)
+	applyString(settings, "security", "content_security_policy_report_only_template", &c.CSPReportOnlyTemplate, logger)
+}
+
+func getValue(settings *ini.File, section, key string) *ini.Key {
+	if !settings.HasSection(section) {
+		return nil
+	}
+	sec := settings.Section(section)
+	if !sec.HasKey(key) {
+		return nil
+	}
+
+	return sec.Key(key)
+}
+
+// applyString applies a string value from ini settings to a target field if it exists.
+func applyString(settings *ini.File, sectionName, keyName string, target *string, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = key.String()
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
+}
+
+// applyBool applies a boolean value from ini settings to a target field if it exists.
+func applyBool(settings *ini.File, sectionName, keyName string, target *bool, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = key.MustBool(false)
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
 }

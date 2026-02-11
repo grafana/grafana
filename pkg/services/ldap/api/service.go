@@ -93,20 +93,16 @@ func ProvideService(
 // - basic:
 //
 // Responses:
-// 200: okResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
+// 410: goneError
 func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.Enabled {
-		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
-	}
+	s.log.Warn("Obsolete and Permanently moved API endpoint called", "path", c.Req.URL.Path)
 
-	if err := s.ldapService.ReloadConfig(); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
-	}
-
-	return response.Success("LDAP config reloaded")
+	// Respond with a 410 Gone status code
+	return response.Error(
+		http.StatusGone,
+		"This endpoint has been removed. LDAP configuration is now loaded from SSO settings.",
+		nil,
+	)
 }
 
 // swagger:route GET /admin/ldap/status admin_ldap getLDAPStatus

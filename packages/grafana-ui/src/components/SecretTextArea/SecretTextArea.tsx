@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import * as React from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
+import { IconButton } from '../IconButton/IconButton';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { TextArea } from '../TextArea/TextArea';
@@ -28,6 +30,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(0.5) /** Needed to mimic vertically centered text in an input box */,
       resize: 'none',
     }),
+    maskedTextArea: css({
+      WebkitTextSecurity: 'disc',
+    }),
+    textAreaWrapper: css({
+      position: 'relative',
+    }),
+    toggleButton: css({
+      position: 'absolute',
+      top: theme.spacing(1),
+      right: theme.spacing(3),
+      zIndex: 1,
+    }),
   };
 };
 
@@ -38,11 +52,28 @@ const getStyles = (theme: GrafanaTheme2) => {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-secrettextarea--docs
  */
 export const SecretTextArea = ({ isConfigured, onReset, grow, ...props }: Props) => {
+  const [contentVisible, setContentVisible] = useState(false);
   const styles = useStyles2(getStyles);
+  const toggleLabel = contentVisible
+    ? t('grafana-ui.secret-text-area.hide-content', 'Hide secret content')
+    : t('grafana-ui.secret-text-area.show-content', 'Show secret content');
+
   return (
     <Stack>
       <Box grow={grow ? 1 : undefined}>
-        {!isConfigured && <TextArea {...props} />}
+        {!isConfigured && (
+          <div className={styles.textAreaWrapper}>
+            <IconButton
+              className={styles.toggleButton}
+              name={contentVisible ? 'eye-slash' : 'eye'}
+              onClick={() => setContentVisible(!contentVisible)}
+              aria-label={toggleLabel}
+              tooltip={toggleLabel}
+              size="sm"
+            />
+            <TextArea {...props} className={cx(!contentVisible && styles.maskedTextArea, props.className)} />
+          </div>
+        )}
         {isConfigured && (
           <TextArea
             {...props}

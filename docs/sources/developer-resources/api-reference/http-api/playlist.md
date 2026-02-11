@@ -20,49 +20,20 @@ title: 'Playlist HTTP API '
 
 # Playlist API
 
-## Search Playlist
+To learn more about the API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
-`GET /api/playlists`
+## List Playlists
 
-Get all existing playlist for the current organization using pagination
+`GET /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists`
 
-**Example Request**:
+Lists all playlists in the specified namespace.
 
-```http
-GET /api/playlists HTTP/1.1
-Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-Querystring Parameters:
-
-These parameters are used as querystring parameters.
-
-- **query** - Limit response to playlist having a name like this value.
-- **limit** - Limit response to _X_ number of playlist.
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-[
-  {
-    "uid": "1",
-    "name": "my playlist",
-    "interval": "5m"
-  }
-]
-```
-
-## Get one playlist
-
-`GET /api/playlists/:uid`
+- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 **Example Request**:
 
 ```http
-GET /api/playlists/1 HTTP/1.1
+GET /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
@@ -72,39 +43,53 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
-  "uid" : "1",
-  "name": "my playlist",
-  "interval": "5m",
+  "kind": "PlaylistList",
+  "apiVersion": "playlist.grafana.app/v1",
+  "metadata": {},
   "items": [
     {
-      "id": 1,
-      "playlistUid": "1",
-      "type": "dashboard_by_uid",
-      "value": "3",
-      "order": 1,
-      "title":"my third dashboard"
-    },
-    {
-      "id": 2,
-      "playlistUid": "1",
-      "type": "dashboard_by_tag",
-      "value": "myTag",
-      "order": 2,
-      "title":"my other dashboard"
+      "kind": "Playlist",
+      "apiVersion": "playlist.grafana.app/v1",
+      "metadata": {
+        "name": "my-playlist-uid",
+        "namespace": "default",
+        "resourceVersion": "1234567890",
+        "creationTimestamp": "2024-01-15T10:30:00Z"
+      },
+      "spec": {
+        "title": "My Playlist",
+        "interval": "5m",
+        "items": [
+          {
+            "type": "dashboard_by_uid",
+            "value": "dashboard-uid-1"
+          },
+          {
+            "type": "dashboard_by_tag",
+            "value": "important"
+          }
+        ]
+      }
     }
   ]
 }
 ```
 
-## Get Playlist items
+## Get a Playlist
 
-`GET /api/playlists/:uid/items`
+`GET /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+
+Retrieves a specific playlist by name.
+
+- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `name`: The UID of the playlist.
 
 **Example Request**:
 
 ```http
-GET /api/playlists/1/items HTTP/1.1
+GET /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
@@ -114,140 +99,199 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
-[
-  {
-    "id": 1,
-    "playlistUid": "1",
-    "type": "dashboard_by_uid",
-    "value": "3",
-    "order": 1,
-    "title":"my third dashboard"
+
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v1",
+  "metadata": {
+    "name": "my-playlist-uid",
+    "namespace": "default",
+    "resourceVersion": "1234567890",
+    "creationTimestamp": "2024-01-15T10:30:00Z"
   },
-  {
-    "id": 2,
-    "playlistUid": "1",
-    "type": "dashboard_by_tag",
-    "value": "myTag",
-    "order": 2,
-    "title":"my other dashboard"
-  }
-]
-```
-
-## Create a playlist
-
-`POST /api/playlists/`
-
-**Example Request**:
-
-```http
-PUT /api/playlists/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-  {
-    "name": "my playlist",
+  "spec": {
+    "title": "My Playlist",
     "interval": "5m",
     "items": [
       {
         "type": "dashboard_by_uid",
-        "value": "3",
-        "order": 1,
-        "title":"my third dashboard"
+        "value": "dashboard-uid-1"
       },
       {
         "type": "dashboard_by_tag",
-        "value": "myTag",
-        "order": 2,
-        "title":"my other dashboard"
+        "value": "important"
       }
     ]
   }
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-  {
-    "uid": "1",
-    "name": "my playlist",
-    "interval": "5m"
-  }
-```
-
-## Update a playlist
-
-`PUT /api/playlists/:uid`
-
-**Example Request**:
-
-```http
-PUT /api/playlists/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-  {
-    "name": "my playlist",
-    "interval": "5m",
-    "items": [
-      {
-        "playlistUid": "1",
-        "type": "dashboard_by_uid",
-        "value": "3",
-        "order": 1,
-        "title":"my third dashboard"
-      },
-      {
-        "playlistUid": "1",
-        "type": "dashboard_by_tag",
-        "value": "myTag",
-        "order": 2,
-        "title":"my other dashboard"
-      }
-    ]
-  }
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-{
-  "uid" : "1",
-  "name": "my playlist",
-  "interval": "5m",
-  "items": [
-    {
-      "id": 1,
-      "playlistUid": "1",
-      "type": "dashboard_by_uid",
-      "value": "3",
-      "order": 1,
-      "title":"my third dashboard"
-    },
-    {
-      "id": 2,
-      "playlistUid": "1",
-      "type": "dashboard_by_tag",
-      "value": "myTag",
-      "order": 2,
-      "title":"my other dashboard"
-    }
-  ]
 }
 ```
 
-## Delete a playlist
+## Create a Playlist
 
-`DELETE /api/playlists/:uid`
+`POST /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists`
+
+Creates a new playlist.
+
+- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 **Example Request**:
 
 ```http
-DELETE /api/playlists/1 HTTP/1.1
+POST /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v1",
+  "metadata": {
+    "name": "my-new-playlist-uid"
+  },
+  "spec": {
+    "title": "My New Playlist",
+    "interval": "5m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "dashboard-uid-1"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "monitoring"
+      }
+    ]
+  }
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v1",
+  "metadata": {
+    "name": "my-new-playlist-uid",
+    "namespace": "default",
+    "resourceVersion": "1234567891",
+    "creationTimestamp": "2024-01-15T10:35:00Z"
+  },
+  "spec": {
+    "title": "My New Playlist",
+    "interval": "5m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "dashboard-uid-1"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "monitoring"
+      }
+    ]
+  }
+}
+```
+
+## Update a Playlist
+
+`PUT /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+
+Updates an existing playlist. The entire playlist spec must be provided.
+
+- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `name`: The UID of the playlist.
+
+**Example Request**:
+
+```http
+PUT /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v1",
+  "metadata": {
+    "name": "my-playlist-uid",
+    "namespace": "default",
+    "resourceVersion": "1234567890"
+  },
+  "spec": {
+    "title": "My Updated Playlist",
+    "interval": "10m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "dashboard-uid-1"
+      },
+      {
+        "type": "dashboard_by_uid",
+        "value": "dashboard-uid-2"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "updated-tag"
+      }
+    ]
+  }
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v1",
+  "metadata": {
+    "name": "my-playlist-uid",
+    "namespace": "default",
+    "resourceVersion": "1234567892",
+    "creationTimestamp": "2024-01-15T10:30:00Z"
+  },
+  "spec": {
+    "title": "My Updated Playlist",
+    "interval": "10m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "dashboard-uid-1"
+      },
+      {
+        "type": "dashboard_by_uid",
+        "value": "dashboard-uid-2"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "updated-tag"
+      }
+    ]
+  }
+}
+```
+
+## Delete a Playlist
+
+`DELETE /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+
+Deletes a playlist.
+
+- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `name`: The UID of the playlist.
+
+**Example Request**:
+
+```http
+DELETE /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
@@ -255,7 +299,22 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 200 OK
 Content-Type: application/json
-{}
+
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Success",
+  "code": 200
+}
 ```
+
+## Playlist Item Types
+
+Playlist items support three types:
+
+- `dashboard_by_uid`: Include a specific dashboard by its UID
+- `dashboard_by_tag`: Include all dashboards with a specific tag
+- `dashboard_by_id`: (Deprecated) Include a dashboard by internal ID

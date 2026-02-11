@@ -162,7 +162,6 @@
     },
     "ldap-settings-page": {
       "label-reset-to-default-values": "Сброс до значений по умолчанию",
-      "title-invalid-configuration": "Недопустимая конфигурация",
       "title-more-actions": "Другие действия",
       "tooltip-more-actions": "Другие действия"
     },
@@ -670,14 +669,17 @@
       "aria-label-group-by": "Группировать по",
       "aria-label-group-interval": "Интервал для группы",
       "aria-label-group-wait": "Время ожидания для группы",
+      "aria-label-name": "",
       "aria-label-repeat-interval": "Интервал повторения",
       "create-a-contact-point": "Создать точку контакта",
+      "description-unique-routing": "",
       "label-default-contact-point": "Точка контакта по умолчанию",
+      "label-name": "",
       "label-timing-options": "Параметры времени",
       "message": {
         "required": "Обязательно."
       },
-      "or": "или"
+      "validate-name": ""
     },
     "am-routes-expanded-form": {
       "add-matcher": "Добавить средство сопоставления",
@@ -866,7 +868,10 @@
     "common": {
       "cancel": "Отмена",
       "clear-filters": "Очистить фильтры",
+      "close": "",
+      "create": "",
       "delete": "Удалить",
+      "deleting": "",
       "edit": "Редактировать",
       "export": "Экспорт",
       "export-all": "Экспортировать всё",
@@ -1592,6 +1597,17 @@
       "action-button": "Импорт",
       "additional-settings": "Дополнительные параметры",
       "alert-rules": "Правила оповещения",
+      "confirm": {
+        "body": "",
+        "confirm": "",
+        "error-body": "",
+        "error-title": "",
+        "importing-body": "",
+        "importing-title": "",
+        "success-body": "",
+        "success-title": "",
+        "title": ""
+      },
       "confirm-modal": {
         "confirm": "Импорт",
         "loading": "Загрузка…",
@@ -1618,13 +1634,15 @@
         "label": "Источник данных",
         "required-message": "Выберите источник данных"
       },
-      "error": "Не удалось импортировать правила оповещения: {{error}}",
+      "error": "",
       "group": {
         "description": "Введите текст для поиска существующей группы.",
         "label": "Группа"
       },
       "import-location-and-filters": "Импортировать местоположение и фильтры",
       "import-source": "Импорт источника",
+      "info-description": "",
+      "info-title": "",
       "namespace": {
         "description": "Введите текст для поиска существующего пространства имен.",
         "label": "Пространство имен"
@@ -1636,17 +1654,163 @@
       "pause-recording": {
         "label": "Приостановить импортированные правила записи"
       },
+      "preview": {
+        "error": "",
+        "loading": "",
+        "notifications-title": "",
+        "rules-title": ""
+      },
       "recording-rules": "Правила записи",
+      "review": {
+        "back": "",
+        "filter": "",
+        "folder": "",
+        "heading": "",
+        "namespace": "",
+        "nothing": "",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
+        "pause": "",
+        "pause-alerting": "",
+        "pause-all": "",
+        "pause-none": "",
+        "pause-recording": "",
+        "policy-tree": "",
+        "routing": "",
+        "routing-none": "",
+        "routing-tree": "",
+        "rules-skipped": "",
+        "rules-title": "",
+        "skipped": "",
+        "source": "",
+        "start": "",
+        "subtitle": "",
+        "validation-error": "",
+        "validation-ok": "",
+        "validation-warning": "",
+        "will-import-config": "",
+        "will-import-rules": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_few": "",
+        "renamed-intervals_many": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_few": "",
+        "renamed-receivers_many": "",
+        "renamed-receivers_other": "",
+        "will-import-rules-count_one": "",
+        "will-import-rules-count_few": "",
+        "will-import-rules-count_many": "",
+        "will-import-rules-count_other": ""
+      },
+      "routing-tree": {
+        "default-policy": ""
+      },
       "source": {
         "datasource": "Существующие правила, управляемые источником данных",
         "datasource-description": "Импорт правил из существующих источников данных",
         "yaml": "YAML-файл Prometheus",
         "yaml-description": "Импорт правил из YAML-файла Prometheus."
       },
-      "success": "Правила оповещения импортированы в правила, управляемые Grafana.",
+      "step1": {
+        "datasource": "",
+        "extra-config-conflict-desc": "",
+        "extra-config-conflict-title": "",
+        "extra-config-overwrite-desc": "",
+        "extra-config-overwrite-title": "",
+        "heading": "",
+        "no-datasources": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "policy-tree-desc": "",
+        "policy-tree-name": "",
+        "policy-tree-placeholder": "",
+        "policy-tree-title": "",
+        "select-datasource": "",
+        "skip": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "upload": "",
+        "validating": "",
+        "validation-error": "",
+        "validation-error-desc": "",
+        "validation-success": "",
+        "validation-success-desc": "",
+        "validation-warning": "",
+        "validation-warning-desc": "",
+        "yaml-file": "",
+        "renamed-intervals_one": "",
+        "renamed-intervals_few": "",
+        "renamed-intervals_many": "",
+        "renamed-intervals_other": "",
+        "renamed-receivers_one": "",
+        "renamed-receivers_few": "",
+        "renamed-receivers_many": "",
+        "renamed-receivers_other": ""
+      },
+      "step2": {
+        "datasource": "",
+        "group": "",
+        "group-desc": "",
+        "heading": "",
+        "namespace": "",
+        "namespace-desc": "",
+        "no-permission-desc": "",
+        "no-permission-title": "",
+        "pause-alerting": "",
+        "pause-recording": "",
+        "policy-desc": "",
+        "policy-title": "",
+        "policy-tree": "",
+        "policy-tree-desc": "",
+        "select-group": "",
+        "select-namespace": "",
+        "select-policy": "",
+        "settings-title": "",
+        "skip": "",
+        "skipped-step1": "",
+        "skipped-step1-desc": "",
+        "source": {
+          "datasource": "",
+          "datasource-desc": "",
+          "yaml": "",
+          "yaml-desc": ""
+        },
+        "source-title": "",
+        "subtitle": "",
+        "target-datasource": "",
+        "target-datasource-desc": "",
+        "target-datasource-required": "",
+        "target-folder": "",
+        "target-folder-desc": "",
+        "upload": "",
+        "yaml-file": ""
+      },
+      "success": "",
       "target-folder": {
         "description": "Папка для импорта правил.",
         "label": "Целевая папка"
+      },
+      "wizard": {
+        "cancel": "",
+        "cancel-confirm-body": "",
+        "cancel-confirm-no": "",
+        "cancel-confirm-title": "",
+        "cancel-confirm-yes": "",
+        "skip": "",
+        "step-notifications": "",
+        "step-notifications-desc": "",
+        "step-review": "",
+        "step-review-desc": "",
+        "step-rules": "",
+        "step-rules-desc": ""
       },
       "yaml": {
         "description": "Выберите YAML-файл для импорта, совместимый с Prometheus",
@@ -1657,6 +1821,9 @@
         "target-datasource-required": "Выберите целевой источник данных"
       },
       "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": ""
     },
     "inhibition-rules": {
       "body": "",
@@ -1953,7 +2120,11 @@
     },
     "navigation": {
       "alert-rules": "",
-      "recently-deleted": ""
+      "contact-points": "",
+      "notification-policies": "",
+      "recently-deleted": "",
+      "templates": "",
+      "time-intervals": ""
     },
     "need-help-info": {
       "need-help": "Нужна помощь?"
@@ -2104,6 +2275,11 @@
       "aria-label-expand": "Развернуть",
       "aria-label-more": "другие действия для политики",
       "aria-label-more-default": "другие действия для стандартной политики",
+      "create-modal": {
+        "creating": "",
+        "please-wait": "",
+        "title-new-notification-policy": ""
+      },
       "default-policy": {
         "description": "Все экземпляры оповещений будут обрабатываться политикой по умолчанию, если не будут найдены другие подходящие политики.",
         "title": "Политика по умолчанию",
@@ -2113,6 +2289,14 @@
         "confirm": "Да, удалить политику",
         "warning-1": "Политика уведомления будет безвозвратно удалена.",
         "warning-2": "Действительно удалить политику?"
+      },
+      "delete-modal": {
+        "permanently-remove": "",
+        "title-delete-notification-policy": ""
+      },
+      "error-modal": {
+        "failed-to-update-your-configuration": "",
+        "title-something-went-wrong": ""
       },
       "filter-description": "Фильтруйте политики уведомления, используя список сопоставлений, разделенных запятыми, например, <1>серьезность=критическая, регион=EMEA</1>",
       "generated-policies": "Автоматически генерируемые политики",
@@ -2127,6 +2311,7 @@
         },
         "inherited": "Унаследованные",
         "mute-time": "Отключение звука, когда",
+        "subpolicies": "",
         "timingOptions": {
           "groupInterval": {
             "description": "Время ожидания перед отправкой уведомления о новых оповещениях, добавленных в группу тех, для которых уже было отправлено первоначальное уведомление.",
@@ -2150,6 +2335,16 @@
       "new-policy": "Добавить новую политику",
       "no-matchers": "Нет средств сопоставления",
       "reload-policies": "Перезагрузить политики",
+      "reset-modal": {
+        "permanently-reset": "",
+        "reset": "",
+        "resetting": "",
+        "title-reset-notification-policy": ""
+      },
+      "root-policy": {
+        "description": "",
+        "title": ""
+      },
       "save-policy": "Сохранить политику",
       "update": {
         "please-wait": "Подождите, пока мы обновляем ваши политики уведомления.",
@@ -2171,10 +2366,40 @@
       "n-more-policies_many": "{{count}} дополнительных политик",
       "n-more-policies_other": "{{count}} дополнительной политики"
     },
+    "policies-list": {
+      "create": {
+        "aria-label": "",
+        "text": ""
+      },
+      "delete-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "delete-text": "",
+      "empty-state": {
+        "message": ""
+      },
+      "fetch": {
+        "error": ""
+      },
+      "reset-reasons": {
+        "no-permissions": "",
+        "provisioned": ""
+      },
+      "reset-text": "",
+      "text-loading": ""
+    },
+    "policies-tree-wrapper": {
+      "sorry-routing-exist": "",
+      "title-routing-tree-not-found": ""
+    },
     "policy": {
       "label-new-child-policy": "Новая дочерняя политика",
       "label-new-sibling-above": "Новый элемент того же уровня выше",
       "label-new-sibling-below": "Новый элемент того же уровня ниже"
+    },
+    "policy-page": {
+      "text-subtitle": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Невозможно отобразить предварительный просмотр запроса. Некоторые источники данных, используемые в запросах, недоступны.",
@@ -2353,6 +2578,16 @@
       "label-override-grouping": "Переопределить группировку",
       "label-override-timings": "Переопределить временные рамки",
       "repeat-interval": ""
+    },
+    "routing-tree-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-routing-trees": "",
+      "clear": "",
+      "label-search-by-name-or-receiver": "",
+      "placeholder-search": ""
+    },
+    "routing-tree-header": {
+      "reset": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Редактировать",
@@ -2577,7 +2812,8 @@
       "expand-all": "Развернуть всё"
     },
     "rule-list-v2": {
-      "import-to-gma": "Импорт правил оповещения"
+      "import-to-gma": "Импорт правил оповещения",
+      "import-to-gma-tool": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Загрузка правила...",
@@ -2966,6 +3202,10 @@
       "misconfigured-warning": "Неправильно настроенный шаблон.",
       "misconfigured-warning-details": "Шаблоны должны задаваться в разделах <2></2> и <5></5> конфигурации вашего обработчика оповещений."
     },
+    "templates-page": {
+      "add-template": "",
+      "description": ""
+    },
     "templates-picker": {
       "button-edit": "Редактировать {{name}}",
       "title-drawer": "Редактирование {{name}}",
@@ -3010,7 +3250,8 @@
       "error-loading": {
         "description": "Не удалось загрузить временные интервалы. Повторите попытку позже.",
         "title": "Ошибка при загрузке временных интервалов"
-      }
+      },
+      "title": ""
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Временные интервалы",
@@ -3028,6 +3269,9 @@
     },
     "timestamp": {
       "time-ago": "({{time}} назад)"
+    },
+    "title": {
+      "aria-label-return-to": ""
     },
     "titles": {
       "group-view": {
@@ -3410,6 +3654,10 @@
       "hosted-domain-label": "Домен размещения",
       "id-token-attribute-name-description": "Имя ключа, используемого для извлечения идентификационного токена из возвращенного токена OAuth2.",
       "id-token-attribute-name-label": "Путь атрибута идентификационного токена",
+      "jwk-set-url-description": "",
+      "jwk-set-url-invalid": "",
+      "jwk-set-url-label": "",
+      "jwk-set-url-required": "",
       "login-attribute-path-description": "Выражение JMESPath, используемое для поиска логина в идентификационном токене пользователя.",
       "login-attribute-path-label": "Путь атрибута логина",
       "login-prompt-consent": "Согласие",
@@ -3476,6 +3724,8 @@
       "use-refresh-token-label": "Использовать токен обновления",
       "validate-hosted-domain-description": "Если этот параметр включен, Grafana будет сопоставлять домен размещения, полученный из токена Google ID, с заданным пользователем списком «{{ allowedDomainsLabel }}».",
       "validate-hosted-domain-label": "Проверять домен размещения",
+      "validate-id-token-description": "",
+      "validate-id-token-label": "",
       "workload-identity-token-file-description": "Путь к файлу токена, используемому для аутентификации через OAuth2. Требуется только в том случае, если для аутентификации клиента установлено значение workload_identity (удостоверение рабочей нагрузки). По умолчанию: /var/run/secrets/azure/tokens/azure-identity-token.",
       "workload-identity-token-file-label": "Файл токена {{ workloadIdentityLabel }}",
       "workload-identity-token-file-required": "Это поле необходимо настроить, если для аутентификации клиента установлено значение Workload identity (Удостоверение рабочей нагрузки)."
@@ -3771,6 +4021,9 @@
       "folder-actions": "Действия с папками",
       "manage-permissions": "Управление разрешениями",
       "move": ""
+    },
+    "folder-owners": {
+      "owned-by": ""
     },
     "folder-picker": {
       "accessible-label": "Выбрать папку: в данный момент выбрана {{ label }}",
@@ -4699,7 +4952,6 @@
       "paste-panel": "Вставка панели",
       "paste-row": "Вставить строку",
       "paste-tab": "Вставить вкладку",
-      "un-group-panels": "Разгруппировать",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -4827,12 +5079,6 @@
       "message": {
         "edit-dashboard-json": "Редактировать JSON-файл дашборда"
       }
-    },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Проверка выполняется для целей разработки и может быть пропущена. Если вы разработчик Grafana, попробуйте проверить и обновить схему дашборда",
-      "title-checking-dashboard-validity": "Проверка надежности дашборда",
-      "title-dashboard-failed-schema-validation": "Дашборд не прошел проверку схемы",
-      "title-error-checking-dashboard-validity": "Ошибка при проверке надежности дашборда"
     },
     "default-layout": {
       "description": "Расположение и размер каждой отдельной панели",
@@ -4985,6 +5231,7 @@
       },
       "variables": {
         "add-variable": "Добавление переменной",
+        "reorder": "",
         "select-type": "Выберите тип переменной",
         "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
         "select-variable": "Выбрать"
@@ -5852,7 +6099,7 @@
       "load": "Загрузить"
     },
     "gcom-field": {
-      "label": "Найти и импортировать дашборды для распространенных приложений по адресу <1></1>",
+      "label": "",
       "load-button": "Загрузить",
       "placeholder": "URL-адрес или идентификатор дашборда Grafana.com",
       "validation-required": "Требуется URL-адрес или идентификатор дашборда Grafana"
@@ -6277,6 +6524,8 @@
     },
     "import-dashboard-form-v2": {
       "cancel": "Отмена",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
       "label-folder": "Папка"
     },
     "inspect-data-tab": {
@@ -6361,6 +6610,11 @@
         "remove-panel": "Удалить панель"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Оповещение"
     },
@@ -6390,6 +6644,8 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Переключить табличное представление",
       "table-view-label-table-view": "Табличное представление"
     },
@@ -6730,6 +6986,16 @@
         }
       },
       "label": "Скрыть"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
     },
     "variable-type-select": {
       "name-variable-type": "Тип переменной"
@@ -7611,7 +7877,8 @@
       "loading-placeholder": "Загрузка…"
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Не выполнять запрос"
+      "aria-label-go-queryless": "Не выполнять запрос",
+      "drilldown": ""
     },
     "raw-list-container": {
       "item-count": "Ряды результатов: {{numItems}}",
@@ -9333,6 +9600,10 @@
     "secret-form-field": {
       "reset": "Сброс"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Не удалось загрузить параметры",
       "loading": "Загрузка параметров...",
@@ -9375,6 +9646,18 @@
       "csv-placeholder": "Ввести CSV...",
       "filter": {
         "add-all": "",
+        "button": "",
+        "operator": {
+          "contains": "",
+          "equals": "",
+          "expression": "",
+          "expression-description": "",
+          "greater": "",
+          "greater-or-equal": "",
+          "less": "",
+          "less-or-equal": "",
+          "not-equals": ""
+        },
         "remove-all": "",
         "select-all": "",
         "selected": "",
@@ -9850,7 +10133,6 @@
       "error-fetching": "Ошибка при получении параметров LDAP",
       "error-saving": "Ошибка при сохранении параметров LDAP",
       "error-validate-form": "Ошибка проверки параметров LDAP",
-      "feature-flag-disabled": "",
       "saved": "Параметры LDAP сохранены"
     },
     "bind-dn": {
@@ -10353,6 +10635,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Не переносить строки",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
@@ -10379,6 +10667,7 @@
     "name-show-controls": "Показывать элементы управления",
     "name-time": "Показать метки времени",
     "name-unique-labels": "Уникальные метки",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Переносить строки",
     "order-options": {
       "label-newest-first": "Сначала новые",
@@ -10419,6 +10708,17 @@
       "label-log-stats": "{{label}}: {{total}} из {{rowCount}} строк содержат эту метку"
     }
   },
+  "logstable": {
+    "category-table": "",
+    "show-copy-log": {
+      "description": "",
+      "name": ""
+    },
+    "show-inspect-button": {
+      "description": "",
+      "name": ""
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "Список существующих панелей библиотеки. Импорт не влияет на эти панели."
@@ -10438,9 +10738,15 @@
       "options": "Параметры"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Импорт дашборда с <2>Grafana.com</2>",
+      "importing-from": "",
       "published-by": "Кем опубликовано",
       "updated-on": "Дата обновления"
+    },
+    "import-resource-format-error": {
+      "cancel": "",
+      "title": "",
+      "v1-message": "",
+      "v2-message": ""
     },
     "snapshot-list-table": {
       "body-delete": "Действительно удалить «{{snapshotToRemove}}»?",
@@ -10462,6 +10768,16 @@
       "message-same-name-current-folder": "В текущей папке уже существует дашборд или папка с таким именем",
       "message-same-name-general": "В корневой папке уже существует папка или дашборд с таким именем"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Параметры не найдены"
@@ -11356,6 +11672,7 @@
     },
     "header-menu": {
       "copy": "Копировать",
+      "copy-styles": "",
       "create-library-panel": "Создать панель библиотеки",
       "duplicate": "Дублировать",
       "edit": "Редактировать",
@@ -11367,11 +11684,13 @@
       "inspect-json": "JSON-файл панели",
       "more": "Еще...",
       "new-alert-rule": "Новое правило оповещения",
+      "paste-styles": "",
       "query": "Запрос",
       "remove": "Удалить",
       "replace-library-panel": "Заменить панель библиотеки",
       "share": "Общий доступ",
       "show-legend": "Показать условные обозначения",
+      "styles": "",
       "time-settings": "",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "view": "Просмотр"
@@ -11807,6 +12126,7 @@
       "text-installed": "Установлено"
     },
     "version-list": {
+      "deprecated": "",
       "grafana-dependency": "Зависимость Grafana",
       "installed-version": "{{versionNumber}} (установленная версия)",
       "latest-compatible-version": "{{versionNumber}} (последняя совместимая версия)",
@@ -11862,19 +12182,21 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Добавить примечание с описанием изменений (необязательно)",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
+      "custom-value-description": "",
+      "description-branch": "",
+      "description-branch-restricted": "",
       "description-file-path": "",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "info-branch-disabled": "",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
       "label-path": "Путь",
-      "label-workflow": "Рабочий процесс",
       "placeholder-branch": "",
-      "placeholder-new-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "",
-      "suffix-pr-branch": ""
+      "suffix-pr-branch": "",
+      "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
@@ -11898,11 +12220,7 @@
       "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
     },
     "bitbucket": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "permissions": {
         "pull-requests-label": "Запросы на включение изменений",
         "pull-requests-read-write": "Чтение и запись",
@@ -11917,27 +12235,26 @@
       "token-label": "Пароль приложения",
       "token-required": "Требуется токен Bitbucket",
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с паролем приложения",
-      "token-user-label": "Имя пользователя",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория Bitbucket",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "bootstrap-step": {
-      "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
+      "description-clear-repository-connection": "",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
+      "error-quota-exceeded-message": "",
+      "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "",
       "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
+      "retry-action": "",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
-      "unavailable-options": {
-        "title": ""
-      },
       "unmanaged-resources-label": "",
+      "upgrade-action": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
       "dashboards-count_many": "{{count}} дашбордов",
@@ -11997,6 +12314,13 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connect-step": {
+      "text-repository-not-ready": ""
+    },
+    "connection": {
+      "disconnected-message": "",
+      "disconnected-title": ""
+    },
     "connection-form": {
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
@@ -12005,6 +12329,8 @@
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
+      "create-new-connection-button": "",
+      "creating-connection-button": "",
       "description-app-id": "",
       "description-description": "",
       "description-installation-id": "",
@@ -12174,46 +12500,31 @@
       "subtitle-provisioning-feature": "Просмотр подключений для подготовки и управлением ими"
     },
     "git": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "pr-workflow-description": "Позволяет пользователям выбрать, следует ли открывать запрос на включение изменений при их сохранении. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, всё равно может потребоваться запрос на включение изменений.",
       "pr-workflow-label": "Включить параметр запроса на включение изменений при сохранении",
       "token-description": "Токен или пароль доступа к репозиторию Git",
       "token-label": "Токен доступа",
       "token-required": "Требуется токен Git",
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном доступа",
-      "token-user-label": "Имя пользователя",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Git",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория Git",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "github": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "pr-workflow-description": "Позволяет пользователям выбрать, следует ли открывать запрос на включение изменений при их сохранении. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, всё равно может потребоваться запрос на включение изменений.",
       "pr-workflow-label": "Включить параметр запроса на включение изменений при сохранении",
       "token-description": "Персональный токен доступа GitHub с правами доступа к репозиторию",
       "token-label": "Персональный токен доступа",
       "token-required": "Требуется токен GitHub",
       "url-description": "URL-адрес репозитория GitHub",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория GitHub",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "gitlab": {
-      "branch-description": "Ветвь, используемая для подготовки",
-      "branch-label": "Ветвь",
       "branch-required": "Требуется указать ветвь",
-      "path-description": "Дополнительный путь к подкаталогу в репозитории",
-      "path-label": "Путь",
       "permissions": {
         "api": "API",
         "api-read-write": "Чтение и запись",
@@ -12228,7 +12539,6 @@
       "token-label": "Токен доступа к проекту",
       "token-required": "Требуется токен GitLab",
       "url-description": "URL-адрес репозитория GitLab",
-      "url-label": "URL-адрес репозитория",
       "url-pattern": "Должен быть действительным URL-адресом репозитория GitLab",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
@@ -12350,6 +12660,9 @@
         "view-repository": "Просмотр репозитория"
       }
     },
+    "repository-list": {
+      "no-repositories": ""
+    },
     "repository-overview": {
       "checked": "Проверено:",
       "connection-status": "",
@@ -12442,9 +12755,15 @@
       "previous": "Назад"
     },
     "shared": {
+      "branch-description": "",
+      "branch-label": "",
+      "path-description": "",
+      "path-label": "",
       "progress-bar": {
         "aria-label": ""
-      }
+      },
+      "token-user-label": "",
+      "url-label": ""
     },
     "sidebar-item": {
       "label-completed-step": "Выполненный шаг",
@@ -12469,12 +12788,9 @@
       "error-starting-job": "Ошибка при запуске задания"
     },
     "sync-repository": {
-      "body-edit-configuration": "Редактировать конфигурацию",
-      "button-edit": "Редактировать",
       "error-pulling-resources": "Ошибка при извлечении ресурсов",
       "pull": "Включение изменений",
       "success-pull-started": "Включение изменений начато",
-      "title-pull-not-enabled": "Включение изменений не включено",
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
@@ -12483,7 +12799,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "и нажать",
@@ -12496,7 +12813,7 @@
         "token-text": "Токен личного доступа GitLab"
       },
       "go-to": "Перейти к",
-      "make-sure": "Обязательно включите эти разрешения"
+      "make-sure": ""
     },
     "warning-title-default": "Предупреждение",
     "wizard": {
@@ -12510,23 +12827,25 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-description": "",
       "auth-type-github-app-description": "",
       "auth-type-github-app-label": "",
+      "auth-type-label": "",
       "auth-type-pat-description": "",
       "auth-type-pat-label": "",
-      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
-      "check-status-button": "",
-      "check-status-message": "",
+      "connect-step": "",
+      "connection-not-ready": "",
       "discard-modal": {
         "body": "Конфигурация репозитория будет удалена, и вы потеряете весь прогресс. Действительно отменить изменения?",
         "confirm": "Да, отменить",
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "github-app-connection-status": "",
       "github-app-creation-default-error": "",
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
@@ -12538,21 +12857,18 @@
       "github-app-mode-new": "",
       "github-app-no-connections": "",
       "github-app-no-connections-message": "",
-      "step-auth-type": "",
+      "github-app-select-connection": "",
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-configure-repo": "",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
-      "step-github-app": "",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
       "sync-option-migrate-resources": "",
-      "title-auth-type": "",
       "title-bootstrap": "Выберите, что синхронизировать",
       "title-configure-repo": "",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
-      "title-github-app": "",
       "title-synchronize": "Синхронизировать с внешним хранилищем"
     },
     "wizard-content": {
@@ -12562,14 +12878,7 @@
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует",
       "error-save-repository-setting": ""
-    },
-    "workflow-options-label": {
-      "push-to-a-new-branch": "",
-      "push-to-existing-branch": ""
     }
-  },
-  "provisioning-alert": {
-    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12735,6 +13044,9 @@
       "query-name-div-title-edit-query-name": "Редактирование названия запроса"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(Идентификатор трассировки: {{traceId}})"
     },
     "query-group": {
@@ -12779,9 +13091,65 @@
   },
   "query-editor": {
     "action": {
-      "inspector": ""
+      "coming-soon": "",
+      "duplicate": "",
+      "hide": "",
+      "hide-help": "",
+      "inspector": "",
+      "more-actions": "",
+      "remove-query": "",
+      "remove-transformation": "",
+      "show": "",
+      "show-help": ""
+    },
+    "details-sidebar": {
+      "cache-timeout": "",
+      "cache-timeout-tooltip": "",
+      "cache-ttl": "",
+      "cache-ttl-tooltip": "",
+      "collapse": "",
+      "interval": "",
+      "interval-tooltip": "",
+      "max-data-points": "",
+      "max-data-points-tooltip": "",
+      "min-interval": "",
+      "min-interval-tooltip": "",
+      "no-limit": "",
+      "relative-time": "",
+      "relative-time-tooltip": "",
+      "time-shift": "",
+      "time-shift-tooltip": "",
+      "title": ""
     },
     "edit-query-name": "",
+    "footer": {
+      "edit-option": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-options": ""
+    },
+    "header": {
+      "expression": "",
+      "transformation": "",
+      "warning-badges": {
+        "text_one": "",
+        "text_few": "",
+        "text_many": "",
+        "text_other": ""
+      }
+    },
+    "help": {
+      "close": "",
+      "close-aria": ""
+    },
     "validation": {
       "duplicate-name": "",
       "empty-name": ""
@@ -12800,6 +13168,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -13704,6 +14077,7 @@
     "name-wrap-header-text": "Перенос текста заголовка",
     "name-wrap-text": "",
     "placeholder-column-width": "авто",
+    "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
@@ -14015,6 +14389,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Данные в ответе не найдены"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

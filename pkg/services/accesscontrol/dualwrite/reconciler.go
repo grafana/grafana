@@ -45,6 +45,8 @@ type ZanzanaReconciler struct {
 }
 
 func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service, reg prometheus.Registerer) *ZanzanaReconciler {
+	pageSize := cfg.ZanzanaServer.ReadPageSize
+
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:      cfg,
 		log:      reconcilerLogger,
@@ -56,43 +58,43 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 			newResourceReconciler(
 				"team memberships",
 				teamMembershipCollector(store),
-				zanzanaCollector([]string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}),
+				zanzanaCollector([]string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}, pageSize),
 				client,
 			),
 			newResourceReconciler(
 				"folder tree",
 				folderTreeCollector(folderService),
-				zanzanaCollector([]string{zanzana.RelationParent}),
+				zanzanaCollector([]string{zanzana.RelationParent}, pageSize),
 				client,
 			),
 			newResourceReconciler(
 				"managed folder permissions",
 				managedPermissionsCollector(store, zanzana.KindFolders),
-				zanzanaCollector(zanzana.RelationsFolder),
+				zanzanaCollector(zanzana.RelationsFolder, pageSize),
 				client,
 			),
 			newResourceReconciler(
 				"managed dashboard permissions",
 				managedPermissionsCollector(store, zanzana.KindDashboards),
-				zanzanaCollector(zanzana.RelationsResouce),
+				zanzanaCollector(zanzana.RelationsResouce, pageSize),
 				client,
 			),
 			newResourceReconciler(
 				"role permissions",
 				rolePermissionsCollector(store),
-				zanzanaCollector(zanzana.RelationsFolder),
+				zanzanaCollector(zanzana.RelationsFolder, pageSize),
 				client,
 			),
 			newResourceReconciler(
 				"basic role bindings",
 				basicRoleBindingsCollector(store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				zanzanaCollector([]string{zanzana.RelationAssignee}, pageSize),
 				client,
 			),
 			newResourceReconciler(
 				"role bindings",
 				roleBindingsCollector(store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				zanzanaCollector([]string{zanzana.RelationAssignee}, pageSize),
 				client,
 			),
 		},
@@ -110,7 +112,7 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 			newResourceReconciler(
 				"anonymous role binding",
 				anonymousRoleBindingsCollector(cfg, store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				zanzanaCollector([]string{zanzana.RelationAssignee}, pageSize),
 				client,
 			),
 		)

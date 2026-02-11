@@ -83,7 +83,6 @@ import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
-import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
@@ -95,6 +94,7 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
@@ -190,8 +190,6 @@ export class GrafanaApp {
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 
-      initAuthConfig();
-
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
 
@@ -261,6 +259,8 @@ export class GrafanaApp {
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
         preloadPlugins(await getAppPluginsToPreload());
       }
+
+      getPluginExtensionRegistries();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);

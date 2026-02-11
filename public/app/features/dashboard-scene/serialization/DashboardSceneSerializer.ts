@@ -216,7 +216,6 @@ export class V1DashboardSerializer
   onSaveComplete(saveModel: Dashboard, result: SaveDashboardResponseDTO): void {
     this.initialSaveModel = {
       ...saveModel,
-      id: result.id,
       uid: result.uid,
       version: result.version,
     };

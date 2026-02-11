@@ -10,9 +10,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -32,10 +34,19 @@ type legacyStorage struct {
 	service        playlistsvc.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	gvk            schema.GroupVersionKind
+}
+
+func (s *legacyStorage) getGVK() schema.GroupVersionKind {
+	return s.gvk
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return playlist.PlaylistKind().ZeroValue()
+	// return the appropriate versioned Kind (v0alpha1 and v1 are aliases, but have different metadata)
+	if s.getGVK().Version == "v1" {
+		return playlistv1.PlaylistKind().ZeroValue()
+	}
+	return playlistv0alpha1.PlaylistKind().ZeroValue()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -45,11 +56,15 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return strings.ToLower(playlist.PlaylistKind().Kind())
+	return strings.ToLower(playlistv1.PlaylistKind().Kind())
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return playlist.PlaylistKind().ZeroListValue()
+	// return the appropriate versioned Kind (v0alpha1 and v1 are aliases, but have different metadata)
+	if s.getGVK().Version == "v1" {
+		return playlistv1.PlaylistKind().ZeroListValue()
+	}
+	return playlistv0alpha1.PlaylistKind().ZeroListValue()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -67,9 +82,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &playlist.PlaylistList{}
+	// v0alpha1 and v1 are aliases, so we can use a single type for list construction,
+	// the version metadata is set in each object by convertToK8sResourceWithVersion
+	list := &playlistv1.PlaylistList{}
 	for idx := range res {
-		list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
+		obj := convertToK8sResourceWithVersion(&res[idx], s.namespacer, s.getGVK())
+		if p, ok := obj.(*playlistv1.Playlist); ok {
+			list.Items = append(list.Items, *p)
+		}
 	}
 	return list, nil
 }
@@ -86,12 +106,14 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(playlist.PlaylistKind().GroupVersionResource().GroupResource(), name)
+			gvk := s.getGVK()
+			gr := schema.GroupResource{Group: gvk.Group, Resource: "playlists"}
+			err = k8serrors.NewNotFound(gr, name)
 		}
 		return nil, err
 	}
 
-	return convertToK8sResource(dto, s.namespacer), nil
+	return convertToK8sResourceWithVersion(dto, s.namespacer, s.getGVK()), nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -104,16 +126,19 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*playlist.Playlist)
+	// v0alpha1 and v1 are aliases, we can just use v1
+	p, ok := obj.(*playlistv1.Playlist)
 	if !ok {
-		return nil, fmt.Errorf("expected playlist?")
+		return nil, fmt.Errorf("expected playlist, got %T", obj)
 	}
-	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
+	name := p.Name
+
+	cmd, err := convertToLegacyUpdateCommand(obj, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
 	out, err := s.service.Create(ctx, &playlistsvc.CreatePlaylistCommand{
-		UID:      p.Name,
+		UID:      name,
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
 		Items:    cmd.Items,
@@ -148,12 +173,8 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, created, err
 	}
-	p, ok := obj.(*playlist.Playlist)
-	if !ok {
-		return nil, created, fmt.Errorf("expected playlist after update")
-	}
 
-	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
+	cmd, err := convertToLegacyUpdateCommand(obj, info.OrgID)
 	if err != nil {
 		return old, created, err
 	}
@@ -176,15 +197,12 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*playlist.Playlist)
-	if !ok {
-		return v, false, fmt.Errorf("expected a playlist response from Get")
-	}
+
 	err = s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
 		UID:   name,
 		OrgId: info.OrgID,
 	})
-	return p, true, err // true is instant delete
+	return v, true, err // true is instant delete
 }
 
 // CollectionDeleter

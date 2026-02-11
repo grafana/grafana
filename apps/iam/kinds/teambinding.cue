@@ -20,5 +20,6 @@ teambindingv0alpha1: teambindingKind & {
 	SelectableFields: [
 		"spec.teamRef.name",
 		"spec.subject.name",
+		"spec.external",
 	],
 }
