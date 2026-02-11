@@ -1,3 +1,4 @@
+import { OpenFeature } from '@openfeature/web-sdk';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -32,6 +33,7 @@ import {
 } from '../services';
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
+import { isQueryServiceCompatible } from './qscheck';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -144,6 +146,7 @@ class DataSourceWithBackend<
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
+    const datasources: DataSourceInstanceSettings[] = [];
     const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
@@ -163,6 +166,8 @@ class DataSourceWithBackend<
         if (!ds) {
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
+
+        datasources.push(ds);
 
         const dsRef = ds.rawRef ?? getDataSourceRef(ds);
         const dsId = ds.id;
@@ -210,7 +215,12 @@ class DataSourceWithBackend<
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
-      url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      const allowedTypes = OpenFeature.getClient().getObjectValue('datasources.querier.fe-allowed-types', {
+        types: [],
+      });
+      if (isQueryServiceCompatible(datasources, allowedTypes)) {
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      }
     }
 
     if (hasExpr) {

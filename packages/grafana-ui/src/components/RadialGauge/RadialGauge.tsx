@@ -1,7 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useId, ReactNode } from 'react';
 
-import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
+import {
+  DisplayValueAlignmentFactors,
+  FALLBACK_COLOR,
+  FieldDisplay,
+  GrafanaTheme2,
+  ThresholdsMode,
+  TimeRange,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -15,6 +22,7 @@ import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { buildGradientColors } from './colors';
+import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
@@ -110,8 +118,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
   }
 
-  const startAngle = shape === 'gauge' ? 250 : 0;
-  const endAngle = shape === 'gauge' ? 110 : 360;
+  const startAngle = shape === 'gauge' ? ARC_START : 0;
+  const endAngle = shape === 'gauge' ? ARC_END : 360;
 
   const defs: ReactNode[] = [];
   const graphics: ReactNode[] = [];
@@ -224,14 +232,18 @@ export function RadialGauge(props: RadialGaugeProps) {
       );
 
       if (showScaleLabels || thresholdsBar) {
-        const decimals = displayValue.field.decimals ?? 2;
-        const thresholds = getFormattedThresholds(decimals, displayValue.field, theme);
+        const thresholds = getFormattedThresholds(
+          displayValue.field.decimals ?? DEFAULT_DECIMALS,
+          displayValue.field,
+          theme
+        );
 
         if (showScaleLabels) {
           graphics.push(
             <RadialScaleLabels
               key="radial-scale-labels"
               thresholds={thresholds}
+              thresholdsMode={displayValue.field.thresholds?.mode ?? ThresholdsMode.Absolute}
               fieldDisplay={displayValue}
               angleRange={angleRange}
               theme={theme}
@@ -248,6 +260,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             <ThresholdsBar
               key="thresholds-bar"
               thresholds={thresholds}
+              thresholdsMode={displayValue.field.thresholds?.mode}
               dimensions={dimensions}
               fieldDisplay={displayValue}
               startAngle={startAngle}
@@ -279,7 +292,13 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   const body = (
     <>
-      <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width={width}
+        height={height}
+        role="img"
+        aria-label={t('gauge.category-gauge', 'Gauge')}
+      >
         {defs.length > 0 && <defs>{defs}</defs>}
         {graphics}
       </svg>

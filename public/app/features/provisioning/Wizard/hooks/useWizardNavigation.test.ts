@@ -45,7 +45,6 @@ describe('useWizardNavigation', () => {
   const mockGetValues = jest.fn(() => mockFormData);
 
   const defaultParams: UseWizardNavigationParams = {
-    initialStep: 'connection',
     steps: mockSteps,
     canSkipSync: false,
     setStepStatusInfo: mockSetStepStatusInfo,
@@ -66,9 +65,9 @@ describe('useWizardNavigation', () => {
   }
 
   describe('initial state', () => {
-    it('should initialize with the provided initial step', () => {
-      const { result } = setup({ initialStep: 'bootstrap' });
-      expect(result.current.activeStep).toBe('bootstrap');
+    it('should initialize with authType step', () => {
+      const { result } = setup();
+      expect(result.current.activeStep).toBe('authType');
     });
 
     it('should initialize with empty completed steps', () => {
@@ -77,109 +76,138 @@ describe('useWizardNavigation', () => {
     });
 
     it('should calculate currentStepIndex correctly', () => {
-      const { result } = setup({ initialStep: 'connection' });
-      expect(result.current.currentStepIndex).toBe(1);
+      const { result } = setup();
+      expect(result.current.currentStepIndex).toBe(0); // authType is the first step, setup initializes with it
     });
 
     it('should calculate currentStepConfig correctly', () => {
-      const { result } = setup({ initialStep: 'connection' });
-      expect(result.current.currentStepConfig?.id).toBe('connection');
-      expect(result.current.currentStepConfig?.name).toBe('Connection');
-    });
-
-    it('should calculate visibleStepIndex excluding authType step', () => {
-      const { result } = setup({ initialStep: 'connection' });
-      // authType is filtered out, so connection is at index 0
-      expect(result.current.visibleStepIndex).toBe(0);
+      const { result } = setup();
+      expect(result.current.currentStepConfig?.id).toBe('authType');
+      expect(result.current.currentStepConfig?.name).toBe('Auth Type');
     });
   });
 
   describe('goToNextStep', () => {
-    it('should advance to the next step', async () => {
-      const { result } = setup({ initialStep: 'connection' });
+    it('should advance to the next step', () => {
+      const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep();
       });
 
-      expect(result.current.activeStep).toBe('bootstrap');
-      expect(result.current.completedSteps).toContain('connection');
+      expect(result.current.activeStep).toBe('connection');
+      expect(result.current.completedSteps).toContain('authType');
     });
 
     it('should reset step status info when advancing', async () => {
-      const { result } = setup({ initialStep: 'connection' });
+      const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep();
       });
 
       expect(mockSetStepStatusInfo).toHaveBeenCalledWith({ status: 'idle' });
     });
 
     it('should navigate to provisioning URL on last step', async () => {
-      const { result } = setup({ initialStep: 'finish' });
+      const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
-      });
+      const go = (times: number) => {
+        for (let i = 0; i < times; i++) {
+          act(() => {
+            result.current.goToNextStep();
+          });
+        }
+      };
 
+      go(5); // Go through all steps to reach last step
       expect(mockNavigate).toHaveBeenCalledWith(PROVISIONING_URL);
     });
 
-    it('should skip sync step and create job when canSkipSync is true', async () => {
+    it('should skip sync step and create job in background when canSkipSync is true', async () => {
       mockCreateSyncJob.mockResolvedValue({ success: true });
       const { result } = setup({
-        initialStep: 'bootstrap',
         canSkipSync: true,
       });
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
+      });
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
+      });
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> finish (skip sync)
       });
 
-      expect(mockCreateSyncJob).toHaveBeenCalledWith(false);
+      // Job is created in background with skipStatusUpdates
+      expect(mockCreateSyncJob).toHaveBeenCalledWith(false, { skipStatusUpdates: true });
       expect(result.current.activeStep).toBe('finish');
     });
 
-    it('should not advance if createSyncJob returns falsy', async () => {
+    it('should navigate immediately even if createSyncJob fails', async () => {
       mockCreateSyncJob.mockResolvedValue(null);
       const { result } = setup({
-        initialStep: 'bootstrap',
         canSkipSync: true,
       });
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
+      });
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
+      });
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> finish (skip sync)
       });
 
-      expect(result.current.activeStep).toBe('bootstrap');
+      // Job creation is attempted but navigation happens regardless
+      expect(mockCreateSyncJob).toHaveBeenCalledWith(false, { skipStatusUpdates: true });
+      // Navigation still proceeds (fire-and-forget)
+      expect(result.current.activeStep).toBe('finish');
     });
 
     it('should navigate to provisioning URL if next step exceeds steps length', async () => {
       mockCreateSyncJob.mockResolvedValue({ success: true });
       // Create steps without finish step to test edge case
       const shortSteps: Array<Step<WizardStep>> = [
+        { id: 'authType', name: 'Connect', title: 'Authentication method' },
         { id: 'connection', name: 'Connection', title: 'Connection' },
         { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap' },
       ];
 
       const { result } = setup({
         steps: shortSteps,
-        initialStep: 'bootstrap',
         canSkipSync: true,
       });
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
+      });
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
+      });
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> navigate (no next step)
       });
 
+      // Navigation proceeds to provisioning URL since finish step doesn't exist
+      // Note: Job creation is tested in the "should skip sync step" test above
       expect(mockNavigate).toHaveBeenCalledWith(PROVISIONING_URL);
     });
   });
 
   describe('goToPreviousStep', () => {
     it('should go back to the previous step', async () => {
-      const { result } = setup({ initialStep: 'bootstrap' });
+      const { result } = setup();
+
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
+      });
+
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
+      });
 
       act(() => {
         result.current.goToPreviousStep();
@@ -189,31 +217,34 @@ describe('useWizardNavigation', () => {
     });
 
     it('should remove current step from completed steps', async () => {
-      const { result } = setup({ initialStep: 'connection' });
+      const { result } = setup();
 
-      await act(async () => {
-        await result.current.goToNextStep();
+      act(() => {
+        result.current.goToNextStep();
       });
-      expect(result.current.completedSteps).toContain('connection');
+      expect(result.current.completedSteps).toContain('authType');
 
       act(() => {
         result.current.goToPreviousStep();
       });
-      expect(result.current.completedSteps).not.toContain('bootstrap');
+      expect(result.current.completedSteps).not.toContain('connection');
     });
 
     it('should reset step status info when going back', () => {
-      const { result } = setup({ initialStep: 'bootstrap' });
+      const { result } = setup();
 
       act(() => {
-        result.current.goToPreviousStep();
+        result.current.goToNextStep(); // authType -> connection
+      });
+      act(() => {
+        result.current.goToPreviousStep(); // connection -> authType
       });
 
       expect(mockSetStepStatusInfo).toHaveBeenCalledWith({ status: 'idle' });
     });
 
     it('should not go back if already on first step', () => {
-      const { result } = setup({ initialStep: 'authType' });
+      const { result } = setup();
 
       act(() => {
         result.current.goToPreviousStep();
@@ -224,8 +255,17 @@ describe('useWizardNavigation', () => {
 
     it('should skip sync step when going back from finish if canSkipSync is true', () => {
       const { result } = setup({
-        initialStep: 'finish',
         canSkipSync: true,
+      });
+
+      act(() => {
+        result.current.goToNextStep(); // authType -> connection
+      });
+      act(() => {
+        result.current.goToNextStep(); // connection -> bootstrap
+      });
+      act(() => {
+        result.current.goToNextStep(); // bootstrap -> finish (skip sync)
       });
 
       act(() => {
@@ -233,20 +273,6 @@ describe('useWizardNavigation', () => {
       });
 
       expect(result.current.activeStep).toBe('bootstrap');
-    });
-  });
-
-  describe('visibleSteps', () => {
-    it('should return steps excluding authType', () => {
-      const { result } = setup();
-
-      expect(result.current.visibleSteps).toHaveLength(4);
-      expect(result.current.visibleSteps.map((s) => s.id)).toEqual([
-        'connection',
-        'bootstrap',
-        'synchronize',
-        'finish',
-      ]);
     });
   });
 });

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -18,6 +19,11 @@ type FakeDataSourceService struct {
 
 	// UID -> Headers
 	DataSourceHeaders map[string]http.Header
+}
+
+// ListConnections implements datasources.DataSourceService.
+func (s *FakeDataSourceService) ListConnections(ctx context.Context, query v0alpha1.DataSourceConnectionQuery) (*v0alpha1.DataSourceConnectionList, error) {
+	return &v0alpha1.DataSourceConnectionList{}, nil
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}

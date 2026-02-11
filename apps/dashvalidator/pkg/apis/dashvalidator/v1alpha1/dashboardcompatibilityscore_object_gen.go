@@ -243,6 +243,10 @@ func (o *DashboardCompatibilityScore) DeepCopyInto(dst *DashboardCompatibilitySc
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (DashboardCompatibilityScore) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScore"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &DashboardCompatibilityScore{}
 
@@ -294,6 +298,10 @@ func (o *DashboardCompatibilityScoreList) DeepCopy() *DashboardCompatibilityScor
 
 func (o *DashboardCompatibilityScoreList) DeepCopyInto(dst *DashboardCompatibilityScoreList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (DashboardCompatibilityScoreList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreList"
 }
 
 // Interface compliance compile-time check
