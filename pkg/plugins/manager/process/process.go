@@ -2,21 +2,47 @@ package process
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const defaultKeepPluginAliveTickerDuration = time.Second
 
+const (
+	eventStart        = "start"
+	eventDecommission = "decommission"
+	eventStop         = "stop"
+	eventRestart      = "restart"
+
+	eventStatusError = "error"
+	eventStatusOk    = "ok"
+)
+
 type Service struct {
 	keepPluginAliveTickerDuration time.Duration
+	statusChangeCounter           *prometheus.CounterVec
 }
 
-func ProvideService() *Service {
+func ProvideService(registerer prometheus.Registerer) (*Service, error) {
+	statusChangeCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Subsystem: "plugin",
+		Name:      "status_change_total",
+	}, []string{"plugin_id", "event", "status"})
+	err := registerer.Register(statusChangeCounter)
+	alreadyRegistered := prometheus.AlreadyRegisteredError{}
+	if errors.As(err, &alreadyRegistered) {
+		if alreadyRegistered.ExistingCollector != alreadyRegistered.NewCollector {
+			return nil, err
+		}
+	}
 	return &Service{
 		keepPluginAliveTickerDuration: defaultKeepPluginAliveTickerDuration,
-	}
+		statusChangeCounter:           statusChangeCounter,
+	}, nil
 }
 
 func (s *Service) Start(ctx context.Context, p *plugins.Plugin) error {
@@ -32,23 +58,29 @@ func (s *Service) Start(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (*Service) Stop(ctx context.Context, p *plugins.Plugin) error {
+func (s *Service) Stop(ctx context.Context, p *plugins.Plugin) error {
 	p.Logger().Debug("Stopping plugin process")
 	if err := p.Decommission(); err != nil {
+		s.statusChange(p.ID, eventDecommission, eventStatusError)
 		return err
 	}
+	s.statusChange(p.ID, eventDecommission, eventStatusOk)
 
 	if err := p.Stop(ctx); err != nil {
+		s.statusChange(p.ID, eventStop, eventStatusError)
 		return err
 	}
 
+	s.statusChange(p.ID, eventStop, eventStatusOk)
 	return nil
 }
 
 func (s *Service) startPluginAndKeepItAlive(ctx context.Context, p *plugins.Plugin) error {
 	if err := p.Start(ctx); err != nil {
+		s.statusChange(p.ID, eventStart, eventStatusError)
 		return err
 	}
+	s.statusChange(p.ID, eventStart, eventStatusOk)
 
 	if p.IsCorePlugin() {
 		return nil
@@ -80,9 +112,15 @@ func (s *Service) keepPluginAlive(p *plugins.Plugin) error {
 
 		p.Logger().Debug("Restarting plugin")
 		if err := p.Start(context.Background()); err != nil {
+			s.statusChange(p.ID, eventRestart, eventStatusError)
 			p.Logger().Error("Failed to restart plugin", "error", err)
 			continue
 		}
+		s.statusChange(p.ID, eventRestart, eventStatusOk)
 		p.Logger().Debug("Plugin restarted")
 	}
+}
+
+func (s *Service) statusChange(pid string, event string, status string) {
+	s.statusChangeCounter.WithLabelValues(pid, event, status).Inc()
 }

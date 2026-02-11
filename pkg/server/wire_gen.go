@@ -428,7 +428,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	jaegerService := jaeger.ProvideService(httpclientProvider)
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
-	processService := process.ProvideService()
+	processService, err := process.ProvideService(registerer)
+	if err != nil {
+		return nil, err
+	}
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -1114,7 +1117,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	jaegerService := jaeger.ProvideService(httpclientProvider)
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
-	processService := process.ProvideService()
+	processService, err := process.ProvideService(registerer)
+	if err != nil {
+		return nil, err
+	}
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err

@@ -3,6 +3,7 @@ package pluginsintegration
 import (
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -47,7 +48,8 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 
 	reg := registry.ProvideService()
 	angularInspector := angularinspector.NewStaticInspector()
-	proc := process.ProvideService()
+	proc, err := process.ProvideService(prometheus.NewRegistry())
+	require.NoError(t, err)
 
 	disc := pipeline.ProvideDiscoveryStage(pCfg, reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), pluginassets.NewLocalProvider(), pluginscdn.ProvideService(pCfg))
@@ -62,6 +64,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 		Validator:    valid,
 		Initializer:  init,
 		Terminator:   term,
+		Process:      proc,
 	})
 
 	ps, err := pluginstore.NewPluginStoreForTest(reg, l, pluginsources.ProvideService(cfg, pCfg))
@@ -80,6 +83,7 @@ type LoaderOpts struct {
 	Validator    validation.Validator
 	Terminator   termination.Terminator
 	Initializer  initialization.Initializer
+	Process      *process.Service
 }
 
 func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
@@ -98,13 +102,13 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 	if opts.Initializer == nil {
 		reg := registry.ProvideService()
 		coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
-		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, coreplugin.ProvideCoreProvider(coreRegistry), process.ProvideService(), &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
+		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, coreplugin.ProvideCoreProvider(coreRegistry), opts.Process, &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
 	}
 
 	if opts.Terminator == nil {
 		var err error
 		reg := registry.ProvideService()
-		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, reg, process.ProvideService())
+		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, reg, opts.Process)
 		require.NoError(t, err)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -68,8 +69,9 @@ func TestProcessManager_Start(t *testing.T) {
 					plugin.Error = tc.Error
 				})
 
-				m := ProvideService()
-				err := m.Start(context.Background(), p)
+				m, err := ProvideService(prometheus.NewRegistry())
+				require.NoError(t, err)
+				err = m.Start(context.Background(), p)
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedStartCount, bp.StartCount)
 
@@ -90,11 +92,12 @@ func TestProcessManager_Start(t *testing.T) {
 			plugin.Backend = true
 		})
 
-		m := ProvideService()
+		m, err := ProvideService(prometheus.NewRegistry())
+		require.NoError(t, err)
 		m.keepPluginAliveTickerDuration = 1
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
-		err := m.Start(ctx, p)
+		err = m.Start(ctx, p)
 		require.NoError(t, err)
 		require.Equal(t, 1, bp.StartCount)
 		cancel()
@@ -119,8 +122,9 @@ func TestProcessManager_Stop(t *testing.T) {
 			plugin.Backend = true
 		})
 
-		m := ProvideService()
-		err := m.Stop(context.Background(), p)
+		m, err := ProvideService(prometheus.NewRegistry())
+		require.NoError(t, err)
+		err = m.Stop(context.Background(), p)
 		require.NoError(t, err)
 
 		require.True(t, p.IsDecommissioned())
@@ -139,9 +143,10 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 			plugin.Backend = true
 		})
 
-		m := ProvideService()
+		m, err := ProvideService(prometheus.NewRegistry())
+		require.NoError(t, err)
 
-		err := m.Start(context.Background(), p)
+		err = m.Start(context.Background(), p)
 		require.NoError(t, err)
 		require.Equal(t, 1, bp.StartCount)
 
