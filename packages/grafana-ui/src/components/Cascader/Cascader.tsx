@@ -163,7 +163,7 @@ export const Cascader = memo(
     const [focusCascade, setFocusCascade] = useState(false);
     const [rcValue, setRcValue] = useState<SelectableValue<string[]>>(initialRCValue);
     const [activeLabel, setActiveLabel] = useState(initialActiveLabel);
-    const [inputValue, setInputValue] = useState(initialActiveLabel);
+    const [inputValue, setInputValue] = useState('');
     const styles = useStyles2(getCascaderStyles);
 
     // For rc-cascader
