@@ -272,6 +272,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         name: uid,
       },
       message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 
