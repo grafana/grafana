@@ -132,7 +132,7 @@ function getStyles(
           zIndex: 1,
         },
 
-        '&:hover [data-add-button], [data-menu-open]': {
+        '&:hover [data-add-button], & [data-menu-open]': {
           opacity: 1,
           pointerEvents: 'auto',
         },
