@@ -478,10 +478,6 @@ func (ng *AlertNG) init() error {
 		false, // imported resources are not exposed via provisioning APIs
 	)
 
-	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
-
 	// Create limits provider based on alertmanager mode.
 	// The provider is used for both template and silence limit validation.
 	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
@@ -514,7 +510,11 @@ func (ng *AlertNG) init() error {
 		limitsProvider = &provisioning.NoopLimitsProvider{}
 	}
 
-	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log, limitsProvider)
+	// Provisioning
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
+	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
+	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -543,7 +543,7 @@ func (ng *AlertNG) init() error {
 		ReceiverService:       receiverService,
 		ReceiverTestService:   receiverTestService,
 		ContactPointService:   contactPointService,
-		Templates:             templateService,
+		Templates:             templateServiceWithLimits,
 		MuteTimings:           muteTimingService,
 		AlertRules:            alertRuleService,
 		AlertsRouter:          alertsRouter,

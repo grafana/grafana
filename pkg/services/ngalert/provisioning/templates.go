@@ -29,14 +29,13 @@ type TemplateService struct {
 	includeImported bool
 }
 
-func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, limits LimitsProvider) *TemplateService {
+func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
 	return &TemplateService{
 		configStore:     config,
 		provenanceStore: prov,
 		xact:            xact,
 		validator:       validation.ValidateProvenanceRelaxed,
 		log:             log,
-		limitsProvider:  limits,
 		includeImported: false,
 	}
 }
@@ -50,6 +49,20 @@ func (t *TemplateService) WithIncludeImported() *TemplateService {
 		log:             t.log,
 		limitsProvider:  t.limitsProvider,
 		includeImported: true,
+	}
+}
+
+// WithLimitsProvider returns a new TemplateService with the given limits provider.
+// This is used for remote alertmanager mode to validate template limits before creation/update.
+func (t *TemplateService) WithLimitsProvider(limits LimitsProvider) *TemplateService {
+	return &TemplateService{
+		configStore:     t.configStore,
+		provenanceStore: t.provenanceStore,
+		xact:            t.xact,
+		validator:       t.validator,
+		log:             t.log,
+		limitsProvider:  limits,
+		includeImported: t.includeImported,
 	}
 }
 
