@@ -19,6 +19,7 @@ type ListTeamBindingsQuery struct {
 	OrgID      int64
 	TeamUID    string
 	UserUID    string
+	External   *bool
 	Pagination common.Pagination
 }
 
@@ -61,6 +62,13 @@ type listTeamBindingsQuery struct {
 
 func (r listTeamBindingsQuery) Validate() error {
 	return nil // TODO
+}
+
+func (r listTeamBindingsQuery) ExternalValue() bool {
+	if r.Query.External != nil {
+		return *r.Query.External
+	}
+	return false
 }
 
 func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) listTeamBindingsQuery {

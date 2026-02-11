@@ -35,6 +35,11 @@ function hasErrorsArray(data: object): data is { errors: ErrorDetails[] } {
  * Returns errors in ErrorDetails[] format.
  */
 export function extractFormErrors(data: ErrorDetails[] | Status): ErrorDetails[] {
+  // If data is already an ErrorDetails array, return it directly
+  if (Array.isArray(data)) {
+    return data;
+  }
+
   const causes = extractStatusCauses<StatusCause>(data);
   if (causes.length > 0) {
     return causes.map(statusCauseToErrorDetails);

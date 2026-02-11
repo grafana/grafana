@@ -29,7 +29,7 @@ func withChannelNotifier(opts *KVBackendOptions) {
 }
 
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
-	kv := setupTestKV(t)
+	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore:    kv,
 		WithPruner: true,
@@ -46,7 +46,7 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 }
 
 func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
-	kv := setupTestKV(t)
+	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore:                      kv,
 		WithPruner:                   true,

@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-import { SidebarSize } from '../../constants';
+import { QueryEditorType, SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockQueryOptionsState } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryEditorSidebar } from './QueryEditorSidebar';
@@ -35,6 +35,12 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
+          queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -56,6 +62,12 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
+          queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -85,6 +97,12 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
+          queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -99,7 +117,7 @@ describe('QueryEditorSidebar', () => {
     // Count total transformation cards (should be 2)
     const transformCards = screen.getAllByRole('button').filter((button) => {
       const label = button.getAttribute('aria-label') || '';
-      return label.includes('organize') || label.includes('reduce');
+      return label.startsWith('Select card') && (label.includes('organize') || label.includes('reduce'));
     });
     expect(transformCards).toHaveLength(2);
   });
@@ -124,6 +142,12 @@ describe('QueryEditorSidebar', () => {
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
+          queryOptions: mockQueryOptionsState,
+          selectedQueryDsData: null,
+          selectedQueryDsLoading: false,
+          showingDatasourceHelp: false,
+          toggleDatasourceHelp: jest.fn(),
+          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >

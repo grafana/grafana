@@ -6,7 +6,7 @@ import {
   RowsLayoutRowKind,
   TabsLayoutTabKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_STYLES_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 
 import { deserializeAutoGridItem } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { deserializeGridItem } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
@@ -24,6 +24,7 @@ export function clearClipboard() {
   store.delete(LS_PANEL_COPY_KEY);
   store.delete(LS_ROW_COPY_KEY);
   store.delete(LS_TAB_COPY_KEY);
+  store.delete(LS_STYLES_COPY_KEY);
 }
 
 export interface RowStore {

@@ -87,14 +87,6 @@ func TestIsMigrationEnabled(t *testing.T) {
 
 // TestRegisterMigrations exercises registerMigrations with various EnableMigration configs using a table-driven test.
 func TestRegisterMigrations(t *testing.T) {
-	// Save original registry and restore after test
-	origDefinitions := Registry.definitions
-	origOrder := Registry.order
-	t.Cleanup(func() {
-		Registry.definitions = origDefinitions
-		Registry.order = origOrder
-	})
-
 	// Use fake resource names that are NOT in setting.AutoMigratedUnifiedResources
 	// to avoid triggering the auto-migrate code path which requires a non-nil sqlStore.
 	const (
@@ -104,25 +96,25 @@ func TestRegisterMigrations(t *testing.T) {
 	)
 
 	// helper to build a fake registry with test migration definitions
-	setupFakeRegistry := func() {
-		Registry.definitions = make(map[string]MigrationDefinition)
-		Registry.order = make([]string, 0)
+	setupFakeRegistry := func() *MigrationRegistry {
+		registry := NewMigrationRegistry()
 
 		// Create fake GroupResources that map to our fake config resources
 		playlistGR := schema.GroupResource{Resource: "fake", Group: "playlists.resource"}
 		folderGR := schema.GroupResource{Resource: "fake", Group: "folders.resource"}
 		dashboardGR := schema.GroupResource{Resource: "fake", Group: "dashboards.resource"}
 
-		Registry.Register(MigrationDefinition{
+		registry.Register(MigrationDefinition{
 			ID:          "test-playlists",
 			MigrationID: "playlists migration",
 			Resources:   []ResourceInfo{{GroupResource: playlistGR}},
 		})
-		Registry.Register(MigrationDefinition{
+		registry.Register(MigrationDefinition{
 			ID:          "test-folders-dashboards",
 			MigrationID: "folders and dashboards migration",
 			Resources:   []ResourceInfo{{GroupResource: folderGR}, {GroupResource: dashboardGR}},
 		})
+		return registry
 	}
 
 	// Build a minimal cfg with UnifiedStorage entries used by registerMigrations
@@ -137,67 +129,67 @@ func TestRegisterMigrations(t *testing.T) {
 	}
 
 	// Helper to run registerMigrations and capture the registered migration IDs
-	runAndGetMigrationIDs := func(cfg *setting.Cfg) ([]string, error) {
+	runAndGetMigrationIDs := func(cfg *setting.Cfg, registry *MigrationRegistry) ([]string, error) {
 		var ids []string
 		var capturedErr error
 		_ = sqlstoremigrator.CheckExpectedMigrations(sqlstoremigrator.SQLite,
 			[]sqlstoremigrator.ExpectedMigration{},
 			func(mg *sqlstoremigrator.Migrator) {
-				capturedErr = registerMigrations(context.Background(), cfg, mg, nil, nil, nil)
+				capturedErr = registerMigrations(context.Background(), cfg, mg, nil, nil, nil, registry)
 				ids = mg.GetMigrationIDs(false)
 			})
 		return ids, capturedErr
 	}
 
 	t.Run("playlists enabled registers migration", func(t *testing.T) {
-		setupFakeRegistry()
+		registry := setupFakeRegistry()
 		cfg := makeCfg(map[string]bool{
 			fakePlaylistResource:  true,
 			fakeFolderResource:    false,
 			fakeDashboardResource: false,
 		})
 
-		ids, err := runAndGetMigrationIDs(cfg)
+		ids, err := runAndGetMigrationIDs(cfg, registry)
 		require.NoError(t, err)
 		require.Contains(t, ids, "playlists migration")
 		require.NotContains(t, ids, "folders and dashboards migration")
 	})
 
 	t.Run("folders+dashboards both enabled registers migration", func(t *testing.T) {
-		setupFakeRegistry()
+		registry := setupFakeRegistry()
 		cfg := makeCfg(map[string]bool{
 			fakePlaylistResource:  false,
 			fakeFolderResource:    true,
 			fakeDashboardResource: true,
 		})
 
-		ids, err := runAndGetMigrationIDs(cfg)
+		ids, err := runAndGetMigrationIDs(cfg, registry)
 		require.NoError(t, err)
 		require.Contains(t, ids, "folders and dashboards migration")
 		require.NotContains(t, ids, "playlists migration")
 	})
 
 	t.Run("mismatched enablement returns error", func(t *testing.T) {
-		setupFakeRegistry()
+		registry := setupFakeRegistry()
 		cfg := makeCfg(map[string]bool{
 			fakePlaylistResource:  false,
 			fakeFolderResource:    true,
 			fakeDashboardResource: false,
 		})
 
-		_, err := runAndGetMigrationIDs(cfg)
+		_, err := runAndGetMigrationIDs(cfg, registry)
 		require.Error(t, err, "expected error for mismatched enablement")
 	})
 
 	t.Run("all disabled registers nothing", func(t *testing.T) {
-		setupFakeRegistry()
+		registry := setupFakeRegistry()
 		cfg := makeCfg(map[string]bool{
 			fakePlaylistResource:  false,
 			fakeFolderResource:    false,
 			fakeDashboardResource: false,
 		})
 
-		ids, err := runAndGetMigrationIDs(cfg)
+		ids, err := runAndGetMigrationIDs(cfg, registry)
 		require.NoError(t, err)
 		require.Empty(t, ids)
 	})

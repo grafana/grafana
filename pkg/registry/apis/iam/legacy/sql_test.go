@@ -271,6 +271,17 @@ func TestIdentityQueries(t *testing.T) {
 						},
 					}),
 				},
+				{
+					Name: "team_bindings_external_true",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						Pagination: common.Pagination{
+							Limit:    1,
+							Continue: 2,
+						},
+						External: boolPtr(true),
+					}),
+				},
 			},
 			sqlUpdateTeamMemberQuery: {
 				{
@@ -616,4 +627,8 @@ func TestIdentityQueries(t *testing.T) {
 			},
 		},
 	})
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

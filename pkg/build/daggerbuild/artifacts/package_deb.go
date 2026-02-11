@@ -130,6 +130,10 @@ func (d *Deb) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *d
 	panic("not implemented") // TODO: Implement
 }
 
+func (d *Deb) String() string {
+	return "deb"
+}
+
 func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	tarball, err := NewTarballFromString(ctx, log, artifact, state)
 	if err != nil {

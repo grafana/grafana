@@ -191,6 +191,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&datasourceV0.DataSourceList{},
 		&datasourceV0.HealthCheckResult{},
 		&unstructured.Unstructured{},
+		&datasourceV0.DatasourceAccessInfo{},
 
 		// Query handler
 		&queryV0.QueryDataRequest{},
@@ -263,6 +264,10 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		storage[ds.StoragePath("access")] = &subAccessREST{
+			builder: b,
+			getter:  legacyStore,
+		}
 		if err != nil {
 			return err
 		}

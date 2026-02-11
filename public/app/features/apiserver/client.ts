@@ -57,7 +57,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       return getGrafanaLiveSrv()
         .getStream<ResourceEvent<T, S, K>>({
           scope: LiveChannelScope.Watch,
-          namespace: this.gvr.group,
+          stream: this.gvr.group,
           path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid}`,
         })
         .pipe(

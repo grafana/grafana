@@ -280,7 +280,7 @@ You can also update these parameters in the [image rendering configuration](http
 The following example shows a link to a server-side rendered PNG:
 
 ```bash
-https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&__feature.dashboardSceneSolo&width=1000&height=500&tz=UTC
+https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&__feature.dashboardScene&width=1000&height=500&tz=UTC
 ```
 
 ### Share an embed

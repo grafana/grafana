@@ -13,7 +13,6 @@ import { VariableStaticOptionsFormItems } from './VariableStaticOptionsFormItems
 interface VariableStaticOptionsFormProps {
   options: VariableValueOption[];
   onChange: (options: VariableValueOption[]) => void;
-
   allowEmptyValue?: boolean;
   isInModal?: boolean;
 }

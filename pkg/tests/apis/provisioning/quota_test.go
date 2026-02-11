@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				if !ok {
 					continue
 				}
-				if cond["type"] == provisioning.ConditionTypeQuota {
+				if cond["type"] == provisioning.ConditionTypeResourceQuota {
 					quotaCondition = cond
 					break
 				}
@@ -111,7 +111,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				if !ok {
 					continue
 				}
-				if cond["type"] == provisioning.ConditionTypeQuota {
+				if cond["type"] == provisioning.ConditionTypeResourceQuota {
 					quotaCondition = cond
 					break
 				}
@@ -123,7 +123,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			}
 
 			assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"], "Quota condition should be False when exceeded")
-			assert.Equal(collect, provisioning.ReasonResourceQuotaExceeded, quotaCondition["reason"], "Quota reason should be ResourceQuotaExceeded")
+			assert.Equal(collect, provisioning.ReasonQuotaExceeded, quotaCondition["reason"], "Quota reason should be ResourceQuotaExceeded")
 			assert.Contains(collect, quotaCondition["message"], "exceeded", "Message should mention exceeded")
 		}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should be set to ResourceQuotaExceeded")
 	})
@@ -169,7 +169,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				if !ok {
 					continue
 				}
-				if cond["type"] == provisioning.ConditionTypeQuota {
+				if cond["type"] == provisioning.ConditionTypeResourceQuota {
 					quotaCondition = cond
 					break
 				}

@@ -110,6 +110,29 @@ TableFooterOptions: {
   reducers?: [...string]
 } @cuetsy(kind="interface")
 
+TableOptions: {
+  // Represents the index of the selected frame
+  frameIndex: number | *0
+  // Controls whether the panel should show the header
+  showHeader: bool | *true
+  // Controls whether the header should show icons for the column types
+  showTypeIcons?: bool | *false
+  // Used to control row sorting
+  sortBy?: [...TableSortByFieldState]
+  // Enable pagination on the table
+  enablePagination?: bool
+  // Controls the height of the rows
+  cellHeight?: TableCellHeight & (*"sm" | _)
+  // limits the maximum height of a row, if text wrapping or dynamic height is enabled
+  maxRowHeight?: number
+  // Defines the number of columns to freeze on the left side of the table
+  frozenColumns?: {
+    left?: number | *0
+  }
+  // If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+  disableKeyboardEvents?: bool
+} @cuetsy(kind="interface")
+
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
 TableFieldOptions: {
@@ -127,10 +150,10 @@ TableFieldOptions: {
   wrapText?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
+  // options for the footer for this field
+  footer?: TableFooterOptions
   // Selecting or hovering this field will show a tooltip containing the content within the target field
   tooltip?: TableCellTooltipOptions
   // The name of the field which contains styling overrides for this cell
   styleField?: string
-  // options for the footer for this field
-  footer?: TableFooterOptions
 } & HideableFieldConfig @cuetsy(kind="interface")

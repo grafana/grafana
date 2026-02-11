@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel, SceneVariableSet } from '@grafana/scenes';
 
@@ -18,30 +19,43 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { DashboardLayoutSelector } from './DashboardLayoutSelector';
 
-const switchLayoutMock = jest.fn();
-
 setPluginImportUtils({
   importPanelPlugin: (_) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (_) => undefined,
 });
 
 describe('DashboardLayoutSelector', () => {
-  it('should show confirmation modal when switching layouts', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should not show confirmation modal when switching tabs and rows layouts', async () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
     const layoutManager = scene.state.body;
-    (layoutManager.parent as LayoutParent).switchLayout = switchLayoutMock;
+    const spy = jest.spyOn(layoutManager.parent as LayoutParent, 'switchLayout');
 
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 
     await user.click(screen.getByLabelText('layout-selection-option-Tabs'));
+    expect(screen.queryByTestId(selectors.pages.ConfirmModal.delete)).not.toBeInTheDocument();
+    expect(spy).toHaveBeenCalled();
+  });
 
-    const confirmButton = screen.getByRole('button', { name: 'Change layout' });
+  it('should show confirmation modal when switching grid layouts', async () => {
+    const user = userEvent.setup();
+    const scene = buildTestScene();
+    const layoutManager = (scene.state.body as RowsLayoutManager).state.rows[0].state.layout;
+    const spy = jest.spyOn(layoutManager.parent as LayoutParent, 'switchLayout');
 
+    render(<DashboardLayoutSelector layoutManager={layoutManager} />);
+
+    await user.click(screen.getByLabelText('layout-selection-option-Auto grid'));
+    let confirmButton = screen.getByTestId(selectors.pages.ConfirmModal.delete);
     expect(confirmButton).toBeInTheDocument();
 
     await user.click(confirmButton);
-    expect(switchLayoutMock).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
   });
 
   it('should disable tabs option when a row contains tabs layout and show correct message', async () => {

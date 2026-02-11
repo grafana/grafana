@@ -981,6 +981,33 @@ export const versionedPages = {
       },
     },
     toolbar: {
+      bar: {
+        '12.4.0': 'data-testid explore-toolbar',
+      },
+      contentOutline: {
+        '12.4.0': 'data-testid explore-toolbar-content-outline-button',
+      },
+      goQueryless: {
+        '12.4.0': 'data-testid explore-toolbar-go-queryless-button',
+      },
+      split: {
+        '12.4.0': 'data-testid explore-toolbar-split-button',
+      },
+      addTo: {
+        '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
+      },
+      share: {
+        '12.4.0': 'data-testid explore-toolbar-share-button',
+      },
+      copyLink: {
+        '12.4.0': 'data-testid explore-toolbar-copy-link-button',
+      },
+      live: {
+        '12.4.0': 'data-testid explore-toolbar-live-button',
+      },
+      refreshPicker: {
+        '12.4.0': 'data-testid explore-toolbar-refresh-picker',
+      },
       add: {
         '12.4.0': (key: string) => `data-testid explore-toolbar-add-button ${key}`,
       },

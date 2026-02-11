@@ -25,7 +25,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch,
+    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
     path: data.path,
   };
 
@@ -47,7 +47,10 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       spec.gitlab = baseConfig;
       break;
     case 'bitbucket':
-      spec.bitbucket = baseConfig;
+      spec.bitbucket = {
+        ...baseConfig,
+        tokenUser: data.tokenUser,
+      };
       break;
     case 'git':
       spec.git = baseConfig;
@@ -66,6 +69,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+  const tokenUser = spec.bitbucket?.tokenUser;
 
   return structuredClone({
     ...spec,
@@ -73,6 +77,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec.local,
     branch: remoteConfig?.branch || '',
     url: remoteConfig?.url || '',
+    tokenUser: tokenUser || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
@@ -84,17 +89,12 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
 export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
   switch (repository.type) {
     case 'github':
-      const name = repository.url ?? 'github';
-      return name.replace('https://github.com/', '');
     case 'gitlab':
-      const gitlabName = repository.url ?? 'gitlab';
-      return gitlabName.replace('https://gitlab.com/', '');
     case 'bitbucket':
-      const bitbucketName = repository.url ?? 'bitbucket';
-      return bitbucketName.replace('https://bitbucket.org/', '');
-    case 'git':
-      const gitName = repository.url ?? 'git';
-      return gitName.replace(/^https?:\/\/[^\/]+\//, '');
+    case 'git': {
+      const repoUrl = repository.url ?? repository.type;
+      return repoUrl.replace(/^https?:\/\/[^\/]+\//, '');
+    }
     case 'local':
       return repository.path ?? 'local';
     default:

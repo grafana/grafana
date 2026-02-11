@@ -25,7 +25,11 @@ export function InviteUserButton() {
   // Check if org_user quota is reached
   const userQuota = quotas?.find((quota) => quota.target === 'org_user');
   const isQuotaReached =
-    userQuota != null && userQuota.used != null && userQuota.limit != null && userQuota.used >= userQuota.limit;
+    userQuota !== undefined &&
+    userQuota.used !== undefined &&
+    userQuota.limit !== undefined &&
+    userQuota.limit >= 0 &&
+    userQuota.used >= userQuota.limit;
 
   // Show upgrade button if: should check quota (Cloud + upgrade URL configured) AND quota is reached
   const showUpgrade = shouldCheckQuota && isQuotaReached;

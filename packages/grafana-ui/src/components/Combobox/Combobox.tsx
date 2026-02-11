@@ -33,6 +33,11 @@ interface ComboboxStaticProps<T extends string | number>
    */
   createCustomValue?: boolean;
   /**
+   * Custom description text for the "create custom value" option.
+   * Defaults to "Use custom value".
+   */
+  customValueDescription?: string;
+  /**
    * Custom container for rendering the dropdown menu via Portal
    */
   portalContainer?: HTMLElement;
@@ -133,6 +138,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     placeholder: placeholderProp,
     isClearable, // this should be default false, but TS can't infer the conditional type if you do
     createCustomValue = false,
+    customValueDescription,
     id,
     width,
     minWidth,
@@ -158,7 +164,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     updateOptions,
     asyncLoading,
     asyncError,
-  } = useOptions(props.options, createCustomValue);
+  } = useOptions(props.options, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
   const selectedItemIndex = useMemo(() => {

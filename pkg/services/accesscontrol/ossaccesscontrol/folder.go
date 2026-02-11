@@ -44,7 +44,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
 	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
 		return nil
 	}
@@ -55,7 +55,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 			DisplayName: "Viewer",
 			Description: "View all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(getDashboardViewActions(features), FolderViewActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardViewActions, FolderViewActions...), dashboards.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Viewer"},
@@ -67,7 +67,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 			DisplayName: "Editor",
 			Description: "Edit all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(getDashboardEditActions(features), FolderEditActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardEditActions, FolderEditActions...), dashboards.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Editor"},
@@ -79,7 +79,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 			DisplayName: "Admin",
 			Description: "Administer all folders and dashboards",
 			Group:       "folders",
-			Permissions: accesscontrol.PermissionsForActions(append(getDashboardAdminActions(features), FolderAdminActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardAdminActions, FolderAdminActions...), dashboards.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Admin"},
@@ -139,9 +139,9 @@ func ProvideFolderPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(getDashboardViewActions(features), FolderViewActions...),
-			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
-			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
+			"View":  append(DashboardViewActions, FolderViewActions...),
+			"Edit":  append(DashboardEditActions, FolderEditActions...),
+			"Admin": append(DashboardAdminActions, FolderAdminActions...),
 		},
 		ReaderRoleName:     "Permission reader",
 		WriterRoleName:     "Permission writer",

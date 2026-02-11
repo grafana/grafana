@@ -7,24 +7,15 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupTestEventStore(t *testing.T) *eventStore {
-	db := setupTestBadgerDB(t)
-	t.Cleanup(func() {
-		err := db.Close()
-		require.NoError(t, err)
-	})
-	kv := NewBadgerKV(db)
-	return newEventStore(kv)
+	return newEventStore(setupBadgerKV(t))
 }
 
 func TestMain(m *testing.M) {
@@ -32,14 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupTestEventStoreSqlKv(t *testing.T) *eventStore {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	dbConn, err := eDB.Init(context.Background())
-	require.NoError(t, err)
-	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	require.NoError(t, err)
-	return newEventStore(kv)
+	return newEventStore(setupSqlKV(t))
 }
 
 func TestNewEventStore(t *testing.T) {

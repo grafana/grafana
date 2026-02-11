@@ -19,6 +19,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -36,6 +37,17 @@ type LegacyStatusProvider interface {
 
 type AuthorizerProvider interface {
 	GetAuthorizer() authorizer.Authorizer
+}
+
+// ClusterScopedStorageAuthorizerProvider allows apps to provide custom storage-level
+// authorizers for cluster-scoped resources.
+// Apps with cluster-scoped resources MUST implement this interface to explicitly
+// opt-in to cluster-scoped storage handling.
+type ClusterScopedStorageAuthorizerProvider interface {
+	// GetClusterScopedStorageAuthorizer returns the storage-level authorizer
+	// for a given cluster-scoped GroupResource.
+	// Return nil to use the default deny authorizer.
+	GetClusterScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
 }
 
 type AppInstallerConfig struct {

@@ -20,16 +20,16 @@ func NewFrameStorage() *FrameStorage {
 	}
 }
 
-func (s *FrameStorage) Set(orgID int64, channel string, frame *data.Frame) error {
-	key := orgchannel.PrependOrgID(orgID, channel)
+func (s *FrameStorage) Set(ns string, channel string, frame *data.Frame) error {
+	key := orgchannel.PrependK8sNamespace(ns, channel)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.frames[key] = frame
 	return nil
 }
 
-func (s *FrameStorage) Get(orgID int64, channel string) (*data.Frame, bool, error) {
-	key := orgchannel.PrependOrgID(orgID, channel)
+func (s *FrameStorage) Get(ns string, channel string) (*data.Frame, bool, error) {
+	key := orgchannel.PrependK8sNamespace(ns, channel)
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	f, ok := s.frames[key]

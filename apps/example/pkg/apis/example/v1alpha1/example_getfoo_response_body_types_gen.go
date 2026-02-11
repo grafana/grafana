@@ -12,3 +12,6 @@ type GetFooBody struct {
 func NewGetFooBody() *GetFooBody {
 	return &GetFooBody{}
 }
+func (GetFooBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetFooBody"
+}

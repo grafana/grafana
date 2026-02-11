@@ -558,6 +558,25 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.HARedisAddr != "" {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_redis_address", opts.HARedisAddr)
+		require.NoError(t, err)
+	}
+	if opts.HARedisPeerName != "" {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_redis_peer_name", opts.HARedisPeerName)
+		require.NoError(t, err)
+	}
+	if opts.HASingleNodeEvaluation {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_single_node_evaluation", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.GrafanaComAPIURL != "" {
 		grafanaComSection, err := getOrCreateSection("grafana_com")
 		require.NoError(t, err)
@@ -781,6 +800,11 @@ type GrafanaOpts struct {
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string
+
+	// Alerting High Availability configuration
+	HARedisAddr            string
+	HARedisPeerName        string
+	HASingleNodeEvaluation bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
