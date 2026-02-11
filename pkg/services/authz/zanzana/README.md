@@ -274,16 +274,6 @@ token_namespace = *
   - In embedded Grafana: uses local apiserver automatically
 - `mode = disabled` - No reconciler runs
 
-**Legacy reconciler interval:**
-The legacy reconciler's tick rate is configured separately in the `[rbac]` section:
-
-```ini
-[rbac]
-zanzana_reconciliation_interval = 1h
-```
-
-This setting only applies when `[zanzana.reconciler] mode = legacy`.
-
 Now you can run zanzana server:
 
 ```sh
