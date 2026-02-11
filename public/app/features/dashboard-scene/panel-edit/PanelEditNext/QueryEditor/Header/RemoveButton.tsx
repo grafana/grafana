@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
+import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 /**
@@ -9,7 +10,10 @@ import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContex
  */
 export function RemoveButton() {
   const { deleteQuery } = useActionsContext();
+  const { cardType } = useQueryEditorUIContext();
   const { selectedQuery } = useQueryEditorUIContext();
+
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
 
   if (!selectedQuery) {
     return null;
@@ -22,7 +26,7 @@ export function RemoveButton() {
       icon="trash-alt"
       variant="secondary"
       onClick={() => deleteQuery(selectedQuery.refId)}
-      tooltip={t('query-editor.action.remove-query', 'Remove query')}
+      tooltip={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
     />
   );
 }

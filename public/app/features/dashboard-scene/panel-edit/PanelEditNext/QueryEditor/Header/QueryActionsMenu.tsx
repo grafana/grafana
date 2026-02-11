@@ -52,7 +52,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
         <Menu>
           <Menu.Item
             className={styles.menuItem}
-            label={t('query-editor.action.duplicate', 'Duplicate query')}
+            label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
             icon="copy"
             onClick={() => duplicateQuery(selectedQuery.refId)}
           />
@@ -63,8 +63,8 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
               className={styles.menuItem}
               label={
                 showingDatasourceHelp
-                  ? t('query-editor.action.hide-help', 'Hide data source help')
-                  : t('query-editor.action.show-help', 'Show data source help')
+                  ? t('query-editor-next.action.hide-help', 'Hide data source help')
+                  : t('query-editor-next.action.show-help', 'Show data source help')
               }
               icon="question-circle"
               onClick={toggleDatasourceHelp}
@@ -74,7 +74,7 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
 
           <Menu.Item
             className={styles.menuItem}
-            label={t('query-editor.action.inspector', 'Query inspector')}
+            label={t('query-editor-next.action.inspector', 'Query inspector')}
             icon="brackets-curly"
             onClick={onOpenInspector}
           />
