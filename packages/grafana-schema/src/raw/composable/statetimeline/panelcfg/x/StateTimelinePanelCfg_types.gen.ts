@@ -14,11 +14,26 @@ import * as ui from '@grafana/schema';
 
 export const pluginVersion = "12.4.0-pre";
 
-export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
+export enum StateTimelineLegendReducers {
+  Count = 'count',
+  Duration = 'duration',
+  Percentage = 'percentage',
+}
+
+export interface StateTimelineLegendOptions extends ui.VizLegendOptions {
+  reducers: Array<StateTimelineLegendReducers>;
+}
+
+export const defaultStateTimelineLegendOptions: Partial<StateTimelineLegendOptions> = {
+  reducers: [],
+};
+
+export interface Options extends ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
   /**
    * Controls value alignment on the timelines
    */
   alignValue?: ui.TimelineValueAlignment;
+  legend: StateTimelineLegendOptions;
   /**
    * Merge equal consecutive values
    */
