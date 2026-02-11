@@ -1,7 +1,10 @@
 package migrations
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
@@ -29,7 +32,7 @@ func addDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("create dashboard table", NewAddTableMigration(dashboardV1))
 
-	//-------  indexes ------------------
+	// -------  indexes ------------------
 	mg.AddMigration("add index dashboard.account_id", NewAddIndexMigration(dashboardV1, dashboardV1.Indices[0]))
 	mg.AddMigration("add unique index dashboard_account_id_slug", NewAddIndexMigration(dashboardV1, dashboardV1.Indices[1]))
 
@@ -51,9 +54,9 @@ func addDashboardMigration(mg *Migrator) {
 	// ---------------------
 	// account -> org changes
 
-	//-------  drop dashboard indexes ------------------
+	// -------  drop dashboard indexes ------------------
 	addDropAllIndicesMigrations(mg, "v1", dashboardTagV1)
-	//------- rename table ------------------
+	// ------- rename table ------------------
 	addTableRenameMigration(mg, "dashboard", "dashboard_v1", "v1")
 
 	// dashboard v2
@@ -266,6 +269,8 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"dashboard_uid"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Fix dashboard variable quotes in PostgreSQL panels", &FixDashboardVariableQuotesMigration{})
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {
@@ -308,6 +313,153 @@ func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
 	if _, err := sess.Exec(sql); err != nil {
 		return fmt.Errorf("failed to set dashboard_uid and org_id in dashboard_tag: %w", err)
 	}
+
+	return nil
+}
+
+type FixDashboardVariableQuotesMigration struct {
+	MigrationBase
+}
+
+func (m *FixDashboardVariableQuotesMigration) SQL(dialect Dialect) string {
+	return "code migration"
+}
+
+func (m *FixDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+	return RunFixDashboardVariableQuotesMigration(sess, mg)
+}
+
+// RunFixDashboardVariableQuotesMigration performs the migration
+func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) error {
+	type dashboard struct {
+		ID         int64  `xorm:"id"`
+		Version    int    `xorm:"version"`
+		UID        string `xorm:"uid"`
+		OrgID      int64  `xorm:"org_id"`
+		Data       string `xorm:"data"`
+		APIVersion string `xorm:"api_version"`
+	}
+
+	var dashboards []dashboard
+	if err := sess.Table("dashboard").Where("is_folder = 0").Cols("id", "version", "uid", "org_id", "data", "api_version").Find(&dashboards); err != nil {
+		return fmt.Errorf("failed to fetch dashboards: %w", err)
+	}
+
+	mg.Logger.Info("Starting dashboard variable quotes fix migration", "total_dashboards", len(dashboards))
+
+	modifiedCount := 0
+	errorCount := 0
+
+	for _, dash := range dashboards {
+		// Skip empty data
+		if strings.TrimSpace(dash.Data) == "" {
+			continue
+		}
+
+		// Parse dashboard as generic map to preserve all fields
+		var dashboardMap map[string]any
+		if err := json.Unmarshal([]byte(dash.Data), &dashboardMap); err != nil {
+			mg.Logger.Warn("Failed to parse dashboard JSON", "dashboard_id", dash.ID, "error", err)
+			errorCount++
+			continue
+		}
+
+		// Process dashboard using shared logic
+		// This directly modifies the dashboardMap in place
+		modified := ProcessDashboardOrResourceSpecShared(dashboardMap)
+
+		// If modified, update the dashboard
+		if modified {
+			// Increment version for this change
+			parentVersion := dash.Version
+			newVersion := dash.Version + 1
+
+			// Update the version field in the dashboard JSON to match the new database version
+			dashboardMap["version"] = newVersion
+
+			// Add a revision note about this migration
+			// Check if there's a description field, and if so, add a note
+			// (But don't override user's description - add a revision field instead)
+			updateMessage := "Fixed PostgreSQL dashboard variable quotes in repeated panels"
+
+			// Add or update revision information
+			// This is stored in the dashboard JSON for audit purposes
+			if revision, ok := dashboardMap["revision"]; ok {
+				if revInt, ok := revision.(float64); ok {
+					dashboardMap["revision"] = int(revInt) + 1
+				}
+			}
+
+			// Store migration info in a meta field (Grafana sometimes uses this)
+			// This won't be displayed to users but is useful for debugging
+			if meta, ok := dashboardMap["meta"].(map[string]any); ok {
+				meta["updatedBy"] = "migration"
+				meta["updateMessage"] = updateMessage
+			}
+
+			// Marshal the entire map back to JSON with updated version
+			updatedData, err := json.Marshal(dashboardMap)
+			if err != nil {
+				mg.Logger.Warn("Failed to marshal updated dashboard JSON", "dashboard_id", dash.ID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the dashboard in the database with incremented version
+			sqlUpdate := "UPDATE dashboard SET data = ?, version = ? WHERE id = ?"
+			if mg.Dialect.DriverName() == Postgres {
+				sqlUpdate = "UPDATE dashboard SET data = $1, version = $2 WHERE id = $3"
+			}
+
+			_, err = sess.Exec(sqlUpdate, string(updatedData), newVersion, dash.ID)
+			if err != nil {
+				mg.Logger.Warn("Failed to update dashboard", "dashboard_id", dash.ID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Create a dashboard_version entry for this change
+			sqlInsertVersion := `
+				INSERT INTO dashboard_version
+				(dashboard_id, parent_version, restored_from, version, created, created_by, message, data, api_version)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			if mg.Dialect.DriverName() == Postgres {
+				sqlInsertVersion = `
+					INSERT INTO dashboard_version
+					(dashboard_id, parent_version, restored_from, version, created, created_by, message, data, api_version)
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+			}
+
+			createdBy := int64(-1) // System user for migrations
+
+			_, err = sess.Exec(sqlInsertVersion,
+				dash.ID,
+				parentVersion,
+				0, // restored_from
+				newVersion,
+				time.Now(),
+				createdBy,
+				updateMessage,
+				string(updatedData),
+				dash.APIVersion,
+			)
+			if err != nil {
+				mg.Logger.Warn("Failed to create dashboard_version entry", "dashboard_id", dash.ID, "error", err)
+				// Don't fail the migration if history creation fails, but log it
+			}
+
+			modifiedCount++
+			mg.Logger.Debug("Fixed dashboard variable quotes and created history entry",
+				"dashboard_id", dash.ID,
+				"old_version", parentVersion,
+				"new_version", newVersion)
+		}
+	}
+
+	mg.Logger.Info("Completed dashboard variable quotes fix migration",
+		"total_dashboards", len(dashboards),
+		"modified", modifiedCount,
+		"errors", errorCount)
 
 	return nil
 }

@@ -1,10 +1,13 @@
 package migrations
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -231,6 +234,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "IDX_resource_history_resource_action_version_name",
 	}))
 
+	mg.AddMigration("Fix resource dashboard variable quotes in PostgreSQL panels", &FixResourceDashboardVariableQuotesMigration{})
+
 	return marker
 }
 
@@ -367,4 +372,346 @@ func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueR
 	}
 
 	return rows, nil
+}
+
+type FixResourceDashboardVariableQuotesMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *FixResourceDashboardVariableQuotesMigration) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *FixResourceDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	return RunFixResourceDashboardVariableQuotesMigration(sess, mg)
+}
+
+// RunFixResourceDashboardVariableQuotesMigration performs the migration on resource and resource_history tables
+func RunFixResourceDashboardVariableQuotesMigration(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Process resource table
+	if err := processResourceTable(sess, mg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
+	mg.Logger.Info("Starting resource dashboard variable quotes fix migration")
+
+	totalModified := 0
+	totalErrors := 0
+	totalProcessed := 0
+	batchNumber := 0
+	lastGUID := ""
+
+	for {
+		batchNumber++
+		resources, err := getResourceBatch(sess, mg, lastGUID)
+		if err != nil {
+			return err
+		}
+
+		// Exit if no more resources
+		if len(resources) == 0 {
+			break
+		}
+
+		mg.Logger.Info("Processing resource batch", "batch_number", batchNumber, "batch_size", len(resources), "total_processed", totalProcessed)
+
+		modifiedCount, errorCount, err := processResourceBatch(sess, mg, resources)
+		if err != nil {
+			return err
+		}
+
+		totalModified += modifiedCount
+		totalErrors += errorCount
+		totalProcessed += len(resources)
+
+		// Update cursor for next batch
+		lastGUID = resources[len(resources)-1].GUID
+	}
+
+	mg.Logger.Info("Completed resource dashboard variable quotes fix migration",
+		"total_processed", totalProcessed,
+		"modified", totalModified,
+		"errors", totalErrors)
+
+	return nil
+}
+
+type resourceRow struct {
+	GUID                    string `xorm:"guid"`
+	Group                   string `xorm:"group"`
+	Resource                string `xorm:"resource"`
+	Namespace               string `xorm:"namespace"`
+	Name                    string `xorm:"name"`
+	Folder                  string `xorm:"folder"`
+	ResourceVersion         int64  `xorm:"resource_version"`
+	PreviousResourceVersion int64  `xorm:"previous_resource_version"`
+	LabelSet                string `xorm:"label_set"`
+	Value                   string `xorm:"value"`
+}
+
+func getResourceBatch(sess *xorm.Session, mg *migrator.Migrator, lastGUID string) ([]resourceRow, error) {
+	var resources []resourceRow
+	cols := fmt.Sprintf(
+		"%s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
+		mg.Dialect.Quote("guid"),
+		mg.Dialect.Quote("group"),
+		mg.Dialect.Quote("resource"),
+		mg.Dialect.Quote("namespace"),
+		mg.Dialect.Quote("name"),
+		mg.Dialect.Quote("folder"),
+		mg.Dialect.Quote("resource_version"),
+		mg.Dialect.Quote("previous_resource_version"),
+		mg.Dialect.Quote("label_set"),
+		mg.Dialect.Quote("value"))
+
+	whereClause := ""
+	if lastGUID != "" {
+		whereClause = fmt.Sprintf("AND guid > '%s'", lastGUID)
+	}
+
+	sql := fmt.Sprintf(`
+		SELECT %s
+		FROM resource
+		WHERE "group" = 'dashboard.grafana.app'
+		AND resource = 'dashboards'
+		%s
+		ORDER BY guid ASC
+		LIMIT 100;
+	`, cols, whereClause)
+
+	if err := sess.SQL(sql).Find(&resources); err != nil {
+		return nil, fmt.Errorf("failed to fetch resource batch: %w", err)
+	}
+
+	return resources, nil
+}
+
+// reserveResourceVersionBatch reserves a batch of resource versions using SELECT FOR UPDATE
+// to prevent race conditions with other components updating resource_version concurrently.
+// Returns the starting resource version for the batch.
+func reserveResourceVersionBatch(sess *xorm.Session, mg *migrator.Migrator, group, resource string, batchSize int) (int64, error) {
+	// Use SELECT FOR UPDATE to lock the row during transaction
+	var currentRV int64
+	sqlGetRV := `SELECT resource_version FROM resource_version WHERE "group" = ? AND resource = ? FOR UPDATE`
+	if mg.Dialect.DriverName() == migrator.Postgres {
+		sqlGetRV = `SELECT resource_version FROM resource_version WHERE "group" = $1 AND resource = $2 FOR UPDATE`
+	}
+
+	exists, err := sess.SQL(sqlGetRV, group, resource).Get(&currentRV)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get resource_version with lock: %w", err)
+	}
+
+	if !exists {
+		return 0, fmt.Errorf("no resource_version entry found for group=%s, resource=%s", group, resource)
+	}
+
+	// Reserve batch of resource versions
+	// We reserve worst-case (full batch size) even if not all resources need updates
+	// This is acceptable for a one-time migration and dramatically reduces DB round-trips
+	newRV := currentRV + int64(batchSize)
+
+	// Update the global resource_version counter once for the entire batch
+	sqlUpdateRV := `UPDATE resource_version SET resource_version = ? WHERE "group" = ? AND resource = ?`
+	if mg.Dialect.DriverName() == migrator.Postgres {
+		sqlUpdateRV = `UPDATE resource_version SET resource_version = $1 WHERE "group" = $2 AND resource = $3`
+	}
+
+	_, err = sess.Exec(sqlUpdateRV, newRV, group, resource)
+	if err != nil {
+		return 0, fmt.Errorf("failed to update resource_version: %w", err)
+	}
+
+	mg.Logger.Debug("Reserved resource version batch", "group", group, "resource", resource, "base_rv", currentRV+1, "count", batchSize, "new_max_rv", newRV)
+
+	// Return the first RV in the reserved batch (currentRV + 1)
+	return currentRV + 1, nil
+}
+
+func processResourceBatch(sess *xorm.Session, mg *migrator.Migrator, resources []resourceRow) (int, int, error) {
+	if len(resources) == 0 {
+		return 0, 0, nil
+	}
+
+	// Reserve a batch of resource versions upfront using SELECT FOR UPDATE
+	// This prevents race conditions and reduces database updates from O(n) to O(1) per batch
+	baseRV, err := reserveResourceVersionBatch(sess, mg, "dashboard.grafana.app", "dashboards", len(resources))
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to reserve resource version batch: %w", err)
+	}
+
+	modifiedCount := 0
+	errorCount := 0
+	nextRV := baseRV // Track the next available RV from our reserved batch
+
+	for _, res := range resources {
+		// Skip empty value
+		if strings.TrimSpace(res.Value) == "" {
+			continue
+		}
+
+		// Parse resource wrapper as generic map to preserve all fields
+		var wrapperMap map[string]any
+		if err := json.Unmarshal([]byte(res.Value), &wrapperMap); err != nil {
+			mg.Logger.Warn("Failed to parse resource wrapper JSON", "resource_guid", res.GUID, "error", err)
+			errorCount++
+			continue
+		}
+
+		// Get the spec field as a map
+		specInterface, ok := wrapperMap["spec"]
+		if !ok {
+			mg.Logger.Debug("Resource has no spec field, skipping", "resource_guid", res.GUID)
+			continue
+		}
+
+		specMap, ok := specInterface.(map[string]any)
+		if !ok {
+			mg.Logger.Warn("Spec field is not an object", "resource_guid", res.GUID)
+			errorCount++
+			continue
+		}
+
+		// Process the spec (dashboard) using shared logic
+		// This directly modifies the specMap in place
+		modified := migrator.ProcessDashboardOrResourceSpecShared(specMap)
+
+		// If modified, update the resource
+		if modified {
+			// Get metadata to extract and increment generation
+			metadataInterface, ok := wrapperMap["metadata"]
+			if !ok {
+				mg.Logger.Warn("Resource has no metadata field", "resource_guid", res.GUID)
+				errorCount++
+				continue
+			}
+
+			metadataMap, ok := metadataInterface.(map[string]any)
+			if !ok {
+				mg.Logger.Warn("Metadata field is not an object", "resource_guid", res.GUID)
+				errorCount++
+				continue
+			}
+
+			// Extract current generation
+			oldGeneration := int64(0)
+			if gen, ok := metadataMap["generation"].(float64); ok {
+				oldGeneration = int64(gen)
+			}
+
+			// Increment generation since we're modifying the spec
+			newGeneration := oldGeneration + 1
+			metadataMap["generation"] = newGeneration
+
+			updateMessage := "Fixed PostgreSQL dashboard variable quotes in repeated panels"
+
+			// Update annotations with migration message
+			annotationsInterface, ok := metadataMap["annotations"]
+			if !ok {
+				// Create annotations if it doesn't exist
+				metadataMap["annotations"] = map[string]any{
+					"grafana.app/updatedBy": "migration",
+					"grafana.app/message":   updateMessage,
+				}
+			} else {
+				annotationsMap, ok := annotationsInterface.(map[string]any)
+				if ok {
+					annotationsMap["grafana.app/updatedBy"] = "migration"
+					annotationsMap["grafana.app/message"] = updateMessage
+				} else {
+					// If annotations is not a map, replace it
+					metadataMap["annotations"] = map[string]any{
+						"grafana.app/updatedBy": "migration",
+						"grafana.app/message":   updateMessage,
+					}
+				}
+			}
+
+			// Use next available resource version from our reserved batch
+			oldResourceVersion := res.ResourceVersion
+			newResourceVersion := nextRV
+			nextRV++ // Consume this RV from the reserved batch
+
+			// Update metadata.resourceVersion to match the new resource_version
+			metadataMap["resourceVersion"] = fmt.Sprintf("%d", newResourceVersion)
+
+			// Now marshal the entire wrapper with updated metadata (generation and resourceVersion)
+			updatedValue, err := json.Marshal(wrapperMap)
+			if err != nil {
+				mg.Logger.Warn("Failed to marshal updated resource wrapper JSON", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the resource in the database with new version
+			sqlUpdate := `UPDATE resource SET value = ?, resource_version = ?, previous_resource_version = ? WHERE guid = ?`
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlUpdate = `UPDATE resource SET value = $1, resource_version = $2, previous_resource_version = $3 WHERE guid = $4`
+			}
+
+			_, err = sess.Exec(sqlUpdate, string(updatedValue), newResourceVersion, oldResourceVersion, res.GUID)
+			if err != nil {
+				mg.Logger.Warn("Failed to update resource", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Create a resource_history entry for this change
+			historyGUID := uuid.New().String()
+			action := int64(2) // MODIFIED = 2
+
+			// Compute key_path using the new resource version
+			actionStr := "updated"
+			keyPath := fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s",
+				res.Group, res.Resource, res.Namespace, res.Name,
+				snowflakeFromRv(newResourceVersion), actionStr, res.Folder)
+
+			sqlInsertHistory := `
+				INSERT INTO resource_history
+				(guid, "group", resource, namespace, name, folder, resource_version, previous_resource_version,
+				 label_set, value, action, generation, key_path)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlInsertHistory = `
+					INSERT INTO resource_history
+					(guid, "group", resource, namespace, name, folder, resource_version, previous_resource_version,
+					 label_set, value, action, generation, key_path)
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+			}
+
+			_, err = sess.Exec(sqlInsertHistory,
+				historyGUID,
+				res.Group,
+				res.Resource,
+				res.Namespace,
+				res.Name,
+				res.Folder,
+				newResourceVersion,
+				oldResourceVersion,
+				res.LabelSet,
+				string(updatedValue),
+				action,
+				newGeneration,
+				keyPath,
+			)
+			if err != nil {
+				mg.Logger.Warn("Failed to create resource_history entry", "resource_guid", res.GUID, "error", err)
+				// Don't fail the migration if history creation fails, but log it
+			}
+
+			modifiedCount++
+			mg.Logger.Debug("Fixed resource dashboard variable quotes and created history entry",
+				"resource_guid", res.GUID,
+				"old_version", oldResourceVersion,
+				"new_version", newResourceVersion,
+				"old_generation", oldGeneration,
+				"new_generation", newGeneration)
+		}
+	}
+
+	return modifiedCount, errorCount, nil
 }
