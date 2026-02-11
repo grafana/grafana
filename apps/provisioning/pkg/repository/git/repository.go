@@ -175,6 +175,16 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 	t := string(r.config.Spec.Type)
 
+	// In case the branch is empty
+	if r.GetCurrentBranch() == "" {
+		branch, err := r.GetDefaultBranch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		r.SetBranch(branch)
+	}
+
 	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
 		detail := "not authorized"
 		if err != nil {
