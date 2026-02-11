@@ -10,7 +10,7 @@ import { GrafanaLiveService } from './live';
 export function initGrafanaLive() {
   const centrifugeServiceDeps = {
     appUrl: `${window.location.origin}${config.appSubUrl}`,
-    namespace: config.liveEnabled ? config.namespace : `${contextSrv.user.orgId}`,
+    namespace: config.liveNamespaced ? config.namespace : `${contextSrv.user.orgId}`,
     orgRole: contextSrv.user.orgRole,
     liveEnabled: config.liveEnabled,
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),
