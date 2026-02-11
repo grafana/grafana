@@ -3,24 +3,30 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping struct {
+type GetGroupsExternalGroupMapping struct {
 	Name          string `json:"name"`
 	ExternalGroup string `json:"externalGroup"`
 }
 
-// NewVersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping creates a new VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping object.
-func NewVersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping() *VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping {
-	return &VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping{}
+// NewGetGroupsExternalGroupMapping creates a new GetGroupsExternalGroupMapping object.
+func NewGetGroupsExternalGroupMapping() *GetGroupsExternalGroupMapping {
+	return &GetGroupsExternalGroupMapping{}
 }
 
 // +k8s:openapi-gen=true
 type GetGroupsBody struct {
-	Items []VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping `json:"items"`
+	Items []GetGroupsExternalGroupMapping `json:"items"`
 }
 
 // NewGetGroupsBody creates a new GetGroupsBody object.
 func NewGetGroupsBody() *GetGroupsBody {
 	return &GetGroupsBody{
-		Items: []VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping{},
+		Items: []GetGroupsExternalGroupMapping{},
 	}
+}
+func (GetGroupsExternalGroupMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsExternalGroupMapping"
+}
+func (GetGroupsBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsBody"
 }

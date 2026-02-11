@@ -220,6 +220,7 @@ export class K8sDashboardV2API
         name: uid,
       },
       message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 

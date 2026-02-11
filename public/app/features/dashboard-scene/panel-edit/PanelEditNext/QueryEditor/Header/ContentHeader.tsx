@@ -107,7 +107,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor.header.expression">Expression</Trans>
+              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
             <Separator />
           </>
@@ -116,7 +116,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Transformation && selectedTransformation && (
           <>
             <Text weight="light" variant="body" color="primary">
-              <Trans i18nKey="query-editor.header.transformation">Transformation</Trans>
+              <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <Separator />
             <Text weight="light" variant="code" color="primary">

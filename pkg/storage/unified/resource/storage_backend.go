@@ -497,6 +497,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if err != nil {
 		// Clean up the data we wrote since event save failed
 		_ = k.dataStore.Delete(ctx, dataKey)
+		if k.rvManager != nil {
+			if err := k.dataStore.applyBackwardsCompatibleOptimisticLockFailure(ctx, k.rvManager.DB(), dataKey); err != nil {
+				k.log.Error("Failed to restore resource table after optimistic lock failure", "group", dataKey.Group, "resource", dataKey.Resource, "namespace", dataKey.Namespace, "name", dataKey.Name, "error", err)
+			}
+		}
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
 

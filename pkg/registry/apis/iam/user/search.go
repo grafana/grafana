@@ -327,13 +327,13 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	}
 }
 
-func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsers, error) {
+func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
 	if result == nil {
-		return iamv0.NewGetSearchUsers(), nil
+		return iamv0.NewGetSearchUsersResponse(), nil
 	} else if result.Error != nil {
-		return iamv0.NewGetSearchUsers(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	} else if result.Results == nil {
-		return iamv0.NewGetSearchUsers(), nil
+		return iamv0.NewGetSearchUsersResponse(), nil
 	}
 
 	titleIDX := -1
@@ -357,15 +357,15 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		}
 	}
 
-	sr := iamv0.NewGetSearchUsers()
+	sr := iamv0.NewGetSearchUsersResponse()
 	sr.TotalHits = result.TotalHits
 	sr.QueryCost = result.QueryCost
 	sr.MaxScore = result.MaxScore
-	sr.Hits = make([]iamv0.UserHit, 0, len(result.Results.Rows))
+	sr.Hits = make([]iamv0.GetSearchUsersUserHit, 0, len(result.Results.Rows))
 
 	for _, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0.NewGetSearchUsers(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
+			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
 		}
 
 		var login string
@@ -373,7 +373,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 			login = string(row.Cells[loginIDX])
 		}
 
-		hit := iamv0.UserHit{
+		hit := iamv0.GetSearchUsersUserHit{
 			Name:  row.Key.Name,
 			Login: login,
 		}

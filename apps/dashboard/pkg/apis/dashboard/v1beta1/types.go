@@ -12,6 +12,10 @@ type DashboardWithAccessInfo struct {
 	Access DashboardAccess `json:"access"`
 }
 
+func (DashboardWithAccessInfo) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DashboardWithAccessInfo"
+}
+
 // +k8s:deepcopy-gen=true
 type DashboardAccess struct {
 	// Metadata fields
@@ -28,10 +32,18 @@ type DashboardAccess struct {
 	AnnotationsPermissions *AnnotationPermission `json:"annotationsPermissions"`
 }
 
+func (DashboardAccess) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DashboardAccess"
+}
+
 // +k8s:deepcopy-gen=true
 type AnnotationPermission struct {
 	Dashboard    AnnotationActions `json:"dashboard"`
 	Organization AnnotationActions `json:"organization"`
+}
+
+func (AnnotationPermission) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AnnotationPermission"
 }
 
 // +k8s:deepcopy-gen=true
@@ -39,4 +51,8 @@ type AnnotationActions struct {
 	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
 	CanDelete bool `json:"canDelete"`
+}
+
+func (AnnotationActions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AnnotationActions"
 }
