@@ -809,4 +809,8 @@ const (
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagKubernetesUserSync
+	// Use the new APIs for user sync
+	FlagKubernetesUserSync = "kubernetesUserSync"
 )
