@@ -1,40 +1,43 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
 import {
-  SplitOpen,
-  LogRowModel,
-  LogsMetaItem,
-  DataFrame,
   AbsoluteTimeRange,
-  GrafanaTheme2,
-  LoadingState,
-  TimeZone,
-  RawTimeRange,
-  DataQueryResponse,
-  LogRowContextOptions,
-  EventBus,
-  ExplorePanelsState,
-  TimeRange,
-  LogsDedupStrategy,
-  LogsSortOrder,
   CoreApp,
-  LogsDedupDescription,
-  rangeUtil,
-  ExploreLogsPanelState,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  serializeStateToUrlParam,
-  urlUtil,
+  DataQueryResponse,
+  EventBus,
+  ExploreLogsPanelState,
+  ExplorePanelsState,
+  FieldConfigSource,
+  GrafanaTheme2,
+  LoadingState,
   LogLevel,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsDedupDescription,
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsSortOrder,
+  PanelData,
+  rangeUtil,
+  RawTimeRange,
+  serializeStateToUrlParam,
   shallowCompare,
+  SplitOpen,
   store,
+  TimeRange,
+  TimeZone,
+  toUtc,
+  urlUtil,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { t, Trans } from '@grafana/i18n';
+import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataTopic } from '@grafana/schema';
 import {
   Button,
@@ -56,11 +59,15 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
-import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
+import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
+import { Options } from 'app/plugins/panel/logstable/options/types';
+import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
+import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
@@ -80,7 +87,7 @@ import { changeQueries, runQueries } from '../state/query';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getExploreBaseUrl } from './utils/url';
@@ -627,6 +634,49 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );
 
+  const onTablePermalinkClick: BuildLinkToLogLine = useCallback(
+    (logId: string) => {
+      // this is an extra check, to be sure that we are not
+      // creating permalinks for logs without an id-field.
+      // normally it should never happen, because we do not
+      // display the permalink button in such cases.
+      if (logId === undefined) {
+        return null;
+      }
+
+      // get explore state, add log-row-id and make timerange absolute
+      const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
+      urlState.panelsState = {
+        ...panelState,
+        logs: {
+          id: logId,
+          visualisationType: visualisationType ?? getDefaultVisualisationType(),
+          displayedFields,
+          sortOrder: logsSortOrder,
+        },
+      };
+
+      urlState.range = {
+        from: toUtc(props.range.from).valueOf().toString(),
+        to: toUtc(props.range.to).valueOf().toString(),
+      };
+
+      // append changed urlState to baseUrl
+      const serializedState = serializeStateToUrlParam(urlState);
+      const baseUrl = getExploreBaseUrl();
+      const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+
+      createAndCopyShortLink(url);
+
+      reportInteraction('grafana_explore_logs_table_permalink_clicked', {
+        logRowUid: logId,
+      });
+
+      return url;
+    },
+    [displayedFields, exploreId, logsSortOrder, panelState, props.range.from, props.range.to, visualisationType]
+  );
+
   const scrollToTopLogs = useCallback(() => {
     if (logsContainerRef.current) {
       logsContainerRef.current.scroll({
@@ -759,6 +809,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
+
+  const enableNewLogsTable = config.featureToggles.logsTablePanel;
+  const panelData: PanelData = {
+    state: loading ? LoadingState.Loading : LoadingState.Done,
+    series: props.logsFrames ?? [],
+    timeRange: props.range,
+  };
 
   return (
     <>
@@ -981,30 +1038,81 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
-            <div className={styles.logRows} data-testid="logRowsTable">
-              {/* Width should be full width minus logs navigation and padding */}
-              <LogsTableWrap
-                logsSortOrder={logsSortOrder}
-                range={props.range}
-                splitOpen={splitOpen}
-                timeZone={timeZone}
-                width={width - 80}
-                logsFrames={props.logsFrames ?? []}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                panelState={panelState?.logs}
-                updatePanelState={updatePanelState}
-                datasourceType={props.datasourceType}
-                displayedFields={displayedFields}
-                exploreId={props.exploreId}
-                absoluteRange={props.absoluteRange}
-                logRows={props.logRows}
-              />
-            </div>
+          {!enableNewLogsTable &&
+            !config.featureToggles.logsPanelControls &&
+            visualisationType === 'table' &&
+            hasData && (
+              <div className={styles.logRows} data-testid="logRowsTable">
+                <LogsTableWrap
+                  logsSortOrder={logsSortOrder}
+                  range={props.range}
+                  splitOpen={splitOpen}
+                  timeZone={timeZone}
+                  // Width should be full width minus logs navigation and padding
+                  width={width - 80}
+                  logsFrames={props.logsFrames ?? []}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  panelState={panelState?.logs}
+                  updatePanelState={updatePanelState}
+                  datasourceType={props.datasourceType}
+                  displayedFields={displayedFields}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
+                  logRows={props.logRows}
+                />
+              </div>
+            )}
+
+          {enableNewLogsTable && visualisationType === 'table' && (
+            <LogsTable
+              data={panelData}
+              id={0}
+              timeRange={props.range}
+              timeZone={timeZone}
+              options={{
+                ...logsTablePanelDefaultOptions,
+                showHeader: true,
+                showControls: true,
+                showCopyLogLink: true,
+                frameIndex: 0,
+                buildLinkToLogLine: onTablePermalinkClick,
+                displayedFields,
+                permalinkedLogId: panelState?.logs?.id,
+                sortOrder: logsSortOrder,
+              }}
+              transparent={false}
+              width={width}
+              height={tableHeight}
+              fieldConfig={{
+                defaults: {},
+                overrides: [],
+              }}
+              renderCounter={0}
+              title={''}
+              eventBus={props.eventBus}
+              onOptionsChange={(options: Options) => {
+                if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
+                  setDisplayedFields(options.displayedFields);
+                }
+                if (options.sortOrder && options.sortOrder !== logsSortOrder) {
+                  onChangeLogsSortOrder(options.sortOrder);
+                  onLogOptionsChange('sortOrder', options.sortOrder);
+                }
+
+                console.log('on options change', options);
+              }}
+              onFieldConfigChange={function (config: FieldConfigSource): void {
+                throw new Error('onFieldConfigChange not implemented.');
+              }}
+              replaceVariables={getTemplateSrv().replace}
+              onChangeTimeRange={onChangeTime}
+            />
           )}
-          {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
+
+          {(!config.featureToggles.newLogsPanel || (visualisationType === 'table' && !enableNewLogsTable)) &&
             config.featureToggles.logsPanelControls &&
+            !enableNewLogsTable &&
             hasData && (
               <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows

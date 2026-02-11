@@ -25,6 +25,7 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
+					permalinkedLogId?:   string
 					showInspectLogLine?: bool | *true
 					showCopyLogLink?:    bool | *false
 					showControls?:       bool | *true
