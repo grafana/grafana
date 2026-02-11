@@ -11,26 +11,6 @@ const mockUpdateQueries = jest.fn();
 const mockReorderTransformations = jest.fn();
 const mockSetSelectedQuery = jest.fn();
 const mockSetSelectedTransformation = jest.fn();
-const mockReportInteraction = jest.fn();
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
-}));
-
-jest.mock('../QueryEditorContext', () => ({
-  useDatasourceContext: () => ({
-    dsSettings: { type: 'prometheus' },
-  }),
-  useActionsContext: () => ({
-    updateQueries: mockUpdateQueries,
-    reorderTransformations: mockReorderTransformations,
-  }),
-  useQueryEditorUIContext: () => ({
-    setSelectedQuery: mockSetSelectedQuery,
-    setSelectedTransformation: mockSetSelectedTransformation,
-  }),
-}));
 
 const queries: DataQuery[] = [
   { refId: 'A', datasource: { type: 'prometheus', uid: 'prom1' } },
@@ -43,6 +23,23 @@ const transformations: Transformation[] = [
   { transformId: 't2', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
   { transformId: 't3', registryItem: undefined, transformConfig: { id: 'filter', options: {} } },
 ];
+
+jest.mock('../QueryEditorContext', () => ({
+  useQueryRunnerContext: () => ({
+    queries,
+  }),
+  usePanelContext: () => ({
+    transformations,
+  }),
+  useActionsContext: () => ({
+    updateQueries: mockUpdateQueries,
+    reorderTransformations: mockReorderTransformations,
+  }),
+  useQueryEditorUIContext: () => ({
+    setSelectedQuery: mockSetSelectedQuery,
+    setSelectedTransformation: mockSetSelectedTransformation,
+  }),
+}));
 
 function makeDropResult(sourceIndex: number, destinationIndex: number | null): DropResult {
   return {
@@ -61,69 +58,43 @@ describe('useSidebarDragAndDrop', () => {
     jest.clearAllMocks();
   });
 
-  describe('onQueryDragStart', () => {
-    it('should report query_row_reorder_started interaction', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
-
-      result.current.onQueryDragStart();
-
-      expect(mockReportInteraction).toHaveBeenCalledWith('query_row_reorder_started', {
-        numberOfQueries: 3,
-        datasourceType: 'prometheus',
-      });
-    });
-  });
-
   describe('onQueryDragEnd', () => {
-    it('should reorder queries and report interaction on successful drag', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+    it('should reorder queries on successful drag', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onQueryDragEnd(makeDropResult(0, 2));
 
       expect(mockUpdateQueries).toHaveBeenCalledWith([queries[1], queries[2], queries[0]]);
-      expect(mockReportInteraction).toHaveBeenCalledWith('query_row_reorder_ended', {
-        startIndex: 0,
-        endIndex: 2,
-        numberOfQueries: 3,
-        datasourceType: 'prometheus',
-      });
-    });
-
-    it('should not reorder when dropped outside droppable area', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
-
-      result.current.onQueryDragEnd(makeDropResult(0, null));
-
-      expect(mockUpdateQueries).not.toHaveBeenCalled();
-      expect(mockReportInteraction).not.toHaveBeenCalled();
     });
 
     it('should select the dragged query after reorder', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+      const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onQueryDragEnd(makeDropResult(0, 2));
 
       expect(mockSetSelectedQuery).toHaveBeenCalledWith(queries[0]);
     });
 
-    it('should report canceled interaction when dropped at same index', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+    it('should not reorder when dropped outside droppable area', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop());
+
+      result.current.onQueryDragEnd(makeDropResult(0, null));
+
+      expect(mockUpdateQueries).not.toHaveBeenCalled();
+    });
+
+    it('should not reorder when dropped at same index', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onQueryDragEnd(makeDropResult(1, 1));
 
       expect(mockUpdateQueries).not.toHaveBeenCalled();
-      expect(mockReportInteraction).toHaveBeenCalledWith('query_row_reorder_canceled', {
-        startIndex: 1,
-        endIndex: 1,
-        numberOfQueries: 3,
-        datasourceType: 'prometheus',
-      });
     });
   });
 
   describe('onTransformationDragEnd', () => {
     it('should reorder transformations on successful drag', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+      const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onTransformationDragEnd(makeDropResult(0, 2));
 
@@ -134,24 +105,8 @@ describe('useSidebarDragAndDrop', () => {
       ]);
     });
 
-    it('should not reorder when dropped outside droppable area', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
-
-      result.current.onTransformationDragEnd(makeDropResult(0, null));
-
-      expect(mockReorderTransformations).not.toHaveBeenCalled();
-    });
-
-    it('should not reorder when dropped at same index', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
-
-      result.current.onTransformationDragEnd(makeDropResult(1, 1));
-
-      expect(mockReorderTransformations).not.toHaveBeenCalled();
-    });
-
     it('should select the dragged transformation with updated index-based id after reorder', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+      const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onTransformationDragEnd(makeDropResult(0, 2));
 
@@ -161,12 +116,20 @@ describe('useSidebarDragAndDrop', () => {
       });
     });
 
-    it('should not report analytics on transformation reorder', () => {
-      const { result } = renderHook(() => useSidebarDragAndDrop({ queries, transformations }));
+    it('should not reorder when dropped outside droppable area', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop());
 
-      result.current.onTransformationDragEnd(makeDropResult(0, 1));
+      result.current.onTransformationDragEnd(makeDropResult(0, null));
 
-      expect(mockReportInteraction).not.toHaveBeenCalled();
+      expect(mockReorderTransformations).not.toHaveBeenCalled();
+    });
+
+    it('should not reorder when dropped at same index', () => {
+      const { result } = renderHook(() => useSidebarDragAndDrop());
+
+      result.current.onTransformationDragEnd(makeDropResult(1, 1));
+
+      expect(mockReorderTransformations).not.toHaveBeenCalled();
     });
   });
 });

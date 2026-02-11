@@ -18,6 +18,8 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick }: Sideb
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
 
+  // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
+  // so we manually handle Enter and Space key activation.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();

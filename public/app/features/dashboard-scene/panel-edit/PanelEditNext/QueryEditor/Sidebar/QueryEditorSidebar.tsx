@@ -27,10 +27,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
-  const { onQueryDragStart, onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop({
-    queries,
-    transformations,
-  });
+  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
@@ -58,7 +55,6 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           items={queries}
           keyExtractor={(query) => query.refId}
           renderItem={(query) => <QueryCard query={query} />}
-          onDragStart={onQueryDragStart}
           onDragEnd={onQueryDragEnd}
         />
       </QuerySidebarCollapsableHeader>
