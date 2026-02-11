@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -147,7 +148,7 @@ func TestSyncer_Sync(t *testing.T) {
 				},
 			}
 			clientGen := &fakeClientGenerator{client: fakeClient}
-			registrar := install.NewInstallRegistrar(clientGen)
+			registrar := install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen)
 
 			// Create syncer
 			s := newSyncer(
@@ -320,7 +321,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			}
 
 			clientGen := &fakeClientGenerator{client: fakeClient}
-			registrar := install.NewInstallRegistrar(clientGen)
+			registrar := install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen)
 
 			// Create syncer
 			s := newSyncer(
@@ -379,7 +380,7 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 			s := newSyncer(
 				featuremgmt.NewMockFeatureToggles(t),
 				clientGen,
-				install.NewInstallRegistrar(clientGen),
+				install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen),
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },
 				&fakeServerLock{},

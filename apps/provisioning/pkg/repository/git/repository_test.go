@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -402,6 +403,108 @@ func TestGitRepository_Test(t *testing.T) {
 			},
 			wantError: nil,
 		},
+		{
+			name: "success - empty branch uses default branch (main)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs for GetDefaultBranch
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/main", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+				}, nil)
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - empty branch uses default branch (master)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs for GetDefaultBranch - no main, but master exists
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/master", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+				}, nil)
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/master",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - empty branch uses first branch alphabetically",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs for GetDefaultBranch - no main or master
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/feature", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+					{Name: "refs/heads/alpha", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
+				}, nil)
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/alpha",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - empty branch and GetDefaultBranch fails (no branches)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs returns no branches
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/tags/v1.0", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: nil,
+			wantError:   errors.New("no branches found in repository"),
+		},
+		{
+			name: "failure - empty branch and GetDefaultBranch fails (list refs error)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs returns an error
+				mockClient.ListRefsReturns(nil, errors.New("network error"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: nil,
+			wantError:   errors.New("list refs: network error"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -420,22 +523,33 @@ func TestGitRepository_Test(t *testing.T) {
 			}
 
 			results, err := gitRepo.Test(context.Background())
-			require.NoError(t, err, "Test method should not return an error")
 
-			require.Equal(t, tt.wantResults, results, "Test results mismatch")
-			require.Equal(t, tt.wantError, err, "Test error mismatch")
+			if tt.wantError != nil {
+				require.Error(t, err, "Test method should return an error")
+				require.Contains(t, err.Error(), tt.wantError.Error(), "Error message mismatch")
+				require.Nil(t, results, "Results should be nil when error occurs")
+			} else {
+				require.NoError(t, err, "Test method should not return an error")
+				require.Equal(t, tt.wantResults, results, "Test results mismatch")
 
-			// Verify the mock calls
-			require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+				// Verify the mock calls only when no error
+				require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
 
-			if mockClient.RepoExistsCallCount() > 0 {
-				require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
-			}
+				if mockClient.RepoExistsCallCount() > 0 {
+					require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
+				}
 
-			if mockClient.GetRefCallCount() > 0 {
-				require.Equal(t, 1, mockClient.GetRefCallCount(), "GetRef should be called at most once")
-				_, ref := mockClient.GetRefArgsForCall(0)
-				require.Equal(t, "refs/heads/"+tt.gitConfig.Branch, ref, "GetRef should be called with correct branch reference")
+				if mockClient.GetRefCallCount() > 0 {
+					require.Equal(t, 1, mockClient.GetRefCallCount(), "GetRef should be called at most once")
+					_, ref := mockClient.GetRefArgsForCall(0)
+					// When branch is empty, GetDefaultBranch is called which sets the branch
+					// In that case, we just verify the format but not the exact branch name
+					if tt.gitConfig.Branch == "" {
+						require.True(t, strings.HasPrefix(ref, "refs/heads/"), "GetRef should be called with correct branch reference format")
+					} else {
+						require.Equal(t, "refs/heads/"+tt.gitConfig.Branch, ref, "GetRef should be called with correct branch reference")
+					}
+				}
 			}
 		})
 	}
