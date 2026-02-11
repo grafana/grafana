@@ -68,7 +68,16 @@ function renderSidebarCard({
       }}
       actions={actions}
     >
-      <SidebarCard config={config} isSelected={isSelected} id={id} onClick={onClick}>
+      <SidebarCard
+        config={config}
+        isSelected={isSelected}
+        id={id}
+        onClick={onClick}
+        onDelete={jest.fn()}
+        onToggleHide={jest.fn()}
+        isHidden={false}
+        onDuplicate={jest.fn()}
+      >
         <span>Card content</span>
       </SidebarCard>
     </QueryEditorProvider>
