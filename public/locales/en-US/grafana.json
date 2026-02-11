@@ -3393,6 +3393,7 @@
           "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
+          "notifications": "Notifications",
           "query-and-conditions": "Query and conditions",
           "versions": "Versions"
         }
