@@ -2204,6 +2204,20 @@
     },
     {
       "metadata": {
+        "name": "influxDBConfigValidation",
+        "resourceVersion": "1770837437373",
+        "creationTimestamp": "2026-02-11T19:17:17Z"
+      },
+      "spec": {
+        "description": "Enables validation on the InfluxDB data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "influxdbBackendMigration",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2022-02-09T18:26:16Z",
