@@ -65,7 +65,7 @@ func (p *grpcPlugin) Logger() log.Logger {
 	return p.logger
 }
 
-func (p *grpcPlugin) Start(_ context.Context) (retErr error) {
+func (p *grpcPlugin) Start(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
