@@ -218,6 +218,20 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
+	// Validate permissions from the app
+	permissionErrors := validateAppPermissions(app.Permissions)
+	if len(permissionErrors) > 0 {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors:  permissionErrors,
+		}, nil
+	}
+
 	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		// Check for specific error types
@@ -414,6 +428,64 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 
 	// For the token to be valid, the issuer must be equal to the object appID
 	return claims.Issuer == c.obj.Spec.GitHub.AppID
+}
+
+// validateAppPermissions checks if the given app has required permissions
+func validateAppPermissions(permissions AppPermissions) []provisioning.ErrorDetails {
+	var errors []provisioning.ErrorDetails
+
+	requiredPerms := map[string]struct {
+		current  AppPermission
+		required AppPermission
+	}{
+		"contents": {
+			current:  permissions.Contents,
+			required: AppPermissionWrite,
+		},
+		"metadata": {
+			current:  permissions.Metadata,
+			required: AppPermissionRead,
+		},
+		"pull_requests": {
+			current:  permissions.PullRequests,
+			required: AppPermissionWrite,
+		},
+		"webhooks": {
+			current:  permissions.Webhooks,
+			required: AppPermissionWrite,
+		},
+	}
+
+	for name, perm := range requiredPerms {
+		if perm.current < perm.required {
+			detail := fmt.Sprintf(
+				"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
+				name,
+				toAppPermissionString(perm.required),
+				toAppPermissionString(perm.current),
+			)
+			errors = append(errors, provisioning.ErrorDetails{
+				Type:   metav1.CauseTypeForbidden,
+				Field:  field.NewPath("spec", "github", "appID").String(),
+				Detail: detail,
+			})
+		}
+	}
+
+	return errors
+}
+
+func toAppPermissionString(permissions AppPermission) string {
+	switch permissions {
+	case AppPermissionNone:
+		return ""
+	case AppPermissionRead:
+		return "read"
+	case AppPermissionWrite:
+		return "write"
+	}
+
+	return ""
 }
 
 var (
