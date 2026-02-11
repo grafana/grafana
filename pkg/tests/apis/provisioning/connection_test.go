@@ -1515,6 +1515,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 					_, _ = w.Write(ghmock.MustMarshal(github.App{
 						ID:   &appID,
 						Slug: &appSlug,
+						Permissions: &github.InstallationPermissions{
+							Contents:        github.Ptr("write"),
+							Metadata:        github.Ptr("read"),
+							PullRequests:    github.Ptr("write"),
+							RepositoryHooks: github.Ptr("write"),
+						},
 					}))
 				}),
 			),
@@ -1623,6 +1629,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 					_, _ = w.Write(ghmock.MustMarshal(github.App{
 						ID:   &appID,
 						Slug: &appSlug,
+						Permissions: &github.InstallationPermissions{
+							Contents:        github.Ptr("write"),
+							Metadata:        github.Ptr("read"),
+							PullRequests:    github.Ptr("write"),
+							RepositoryHooks: github.Ptr("write"),
+						},
 					}))
 				}),
 			),
