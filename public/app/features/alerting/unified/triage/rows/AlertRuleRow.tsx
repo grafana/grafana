@@ -10,7 +10,7 @@ import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
-import { InstanceCountBadges } from './InstanceCountBadges';
+import { RowActions } from './InstanceCountBadges';
 import { OpenDrawerButton } from './OpenDrawerButton';
 
 interface AlertRuleRowProps {
@@ -46,13 +46,15 @@ export const AlertRuleRow = ({
         width={leftColumnWidth}
         title={<Text variant="body">{title}</Text>}
         actions={
-          <Stack direction="row" gap={2} alignItems="center">
-            <InstanceCountBadges counts={row.instanceCounts} />
-            <OpenDrawerButton
-              aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
-              onClick={handleDrawerOpen}
-            />
-          </Stack>
+          <RowActions
+            counts={row.instanceCounts}
+            actionButton={
+              <OpenDrawerButton
+                aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
+                onClick={handleDrawerOpen}
+              />
+            }
+          />
         }
         metadata={
           enableFolderMeta ? (

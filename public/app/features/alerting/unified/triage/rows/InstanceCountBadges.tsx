@@ -1,25 +1,22 @@
 import { css } from '@emotion/css';
+import { ReactNode } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
 
 import { InstanceCounts } from '../types';
 
-interface InstanceCountBadgesProps {
+interface RowActionsProps {
   counts: InstanceCounts;
+  actionButton?: ReactNode;
 }
 
-function CountText({ value }: { value: number }) {
-  const styles = useStyles2(getStyles);
-  return <span className={styles.countText}>{value}</span>;
-}
-
-export function InstanceCountBadges({ counts }: InstanceCountBadgesProps) {
+export function RowActions({ counts, actionButton }: RowActionsProps) {
   const styles = useStyles2(getStyles);
   const { firing, pending } = counts;
 
   return (
-    <div className={styles.container}>
+    <div className={styles.grid}>
       <div className={styles.slot}>
         {pending > 0 && (
           <Text color="warning">
@@ -40,38 +37,30 @@ export function InstanceCountBadges({ counts }: InstanceCountBadgesProps) {
           </Text>
         )}
       </div>
+      <div className={styles.slot}>{actionButton}</div>
     </div>
   );
 }
 
-/**
- * Invisible placeholder that matches the layout width of the OpenDrawerButton (sm outline Button with "Details" text).
- * Used in group rows to align badges with rule rows that have the drawer button.
- */
-export function DrawerButtonSpacer() {
-  return (
-    <Button variant="secondary" fill="outline" size="sm" style={{ visibility: 'hidden' }}>
-      <Trans i18nKey="alerting.open-drawer-icon-button.details">Details</Trans>
-    </Button>
-  );
+function CountText({ value }: { value: number }) {
+  const styles = useStyles2(getStyles);
+  return <span className={styles.countText}>{value}</span>;
 }
 
-const getStyles = () => ({
-  container: css({
-    display: 'flex',
-    gap: 8,
+const getStyles = (theme: GrafanaTheme2) => ({
+  grid: css({
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 2fr',
     alignItems: 'center',
   }),
   slot: css({
     display: 'flex',
-    // Reserve space even when empty so badges align across rows.
-    minWidth: 42,
     justifyContent: 'flex-end',
   }),
   badge: css({
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 2,
+    gap: theme.spacing(0.25),
   }),
   countText: css({
     display: 'inline-block',
