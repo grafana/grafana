@@ -158,7 +158,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
       $data: new DashboardDataLayerSet({ annotationLayers: createAnnotationLayers() }),
-      id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -1058,7 +1057,6 @@ describe('getVizPanelQueries', () => {
 
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
   return {
-    id: 1,
     title: 'Test Dashboard',
     description: 'Test Description',
     preload: true,

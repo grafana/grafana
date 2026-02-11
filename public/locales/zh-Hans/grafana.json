@@ -10622,6 +10622,16 @@
       "message-same-name-general": "根文件夹中已存在同名的文件夹或数据面板"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
   },
@@ -11459,9 +11469,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "未找到组织",
     "select-placeholder": "选择组织"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12607,12 +12614,9 @@
       "error-starting-job": "启动作业时出错"
     },
     "sync-repository": {
-      "body-edit-configuration": "编辑配置",
-      "button-edit": "编辑",
       "error-pulling-resources": "拉取资源时出错",
       "pull": "拉取",
       "success-pull-started": "拉取已开始",
-      "title-pull-not-enabled": "拉取未启用",
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
@@ -12863,6 +12867,9 @@
       "query-name-div-title-edit-query-name": "编辑查询名称"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "（跟踪 ID：{{traceId}}）"
     },
     "query-group": {
@@ -12981,6 +12988,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14185,6 +14197,9 @@
     "traces-panel": {
       "no-data-found-in-response": "回复中未找到数据"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

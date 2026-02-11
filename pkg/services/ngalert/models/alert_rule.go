@@ -400,10 +400,30 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.FolderReference
+// NamespacedWithFullpath extends Namespaced with pre-computed folder path UIDs.
+type NamespacedWithFullpath interface {
+	Namespaced
+	GetFullpathUIDs() string
+}
+
+// Namespace represents a folder that can contain alert rules.
+type Namespace struct {
+	folder.FolderReference
+	FullpathUIDs string
+}
 
 func NewNamespace(f *folder.Folder) Namespace {
-	return Namespace(*f.ToFolderReference())
+	return Namespace{
+		FolderReference: *f.ToFolderReference(),
+		FullpathUIDs:    f.FullpathUIDs,
+	}
+}
+
+// NewNamespaceUID creates a Namespace with just a UID (no fullpath for optimized checks).
+func NewNamespaceUID(uid string) Namespace {
+	return Namespace{
+		FolderReference: folder.FolderReference{UID: uid},
+	}
 }
 
 func (n Namespace) ValidateForRuleStorage() error {
@@ -418,6 +438,10 @@ func (n Namespace) ValidateForRuleStorage() error {
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
+}
+
+func (n Namespace) GetFullpathUIDs() string {
+	return n.FullpathUIDs
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
