@@ -2,12 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -120,8 +121,9 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 
 // handleK8sError converts K8s API errors to HTTP responses
 func (hs *HTTPServer) handleK8sError(err error) response.Response {
-	statusError, ok := err.(*errors.StatusError)
-	if ok {
+	statusError := new(k8serrors.StatusError)
+
+	if errors.As(err, &statusError) {
 		code := int(statusError.Status().Code)
 		switch code {
 		case http.StatusNotFound:
