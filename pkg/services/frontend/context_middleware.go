@@ -6,7 +6,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/open-feature/go-sdk/openfeature"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -63,6 +66,26 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	if hostname != "" {
 		reqContext.Logger = reqContext.Logger.New("hostname", hostname)
 	}
+
+	// Parse namespace from W3C baggage header
+	var namespace string
+	if baggageHeader := r.Header.Get("baggage"); baggageHeader != "" {
+		if bag, err := baggage.Parse(baggageHeader); err == nil {
+			if member := bag.Member("namespace"); member.Value() != "" {
+				namespace = member.Value()
+			}
+		}
+	}
+	ctx = request.WithNamespace(ctx, namespace)
+
+	ns := "default"
+	if namespace != "" {
+		ns = namespace
+	}
+	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
+		"namespace": ns,
+	})
+	ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 
 	return ctx
 }

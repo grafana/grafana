@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -56,12 +55,10 @@ type frontendService struct {
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	logger := log.New("frontend-service")
-	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
-	if err != nil {
-		return nil, err
-	}
+	// Note: OpenFeature is already initialized by target.go before this service starts.
+	// The frontend service only needs to set evaluation context per request (done in context_middleware.go)
 
-	index, err := NewIndexProvider(cfg, assetsManifest, license, hooksService)
+	index, err := NewIndexProvider(cfg, license, hooksService)
 	if err != nil {
 		return nil, err
 	}
