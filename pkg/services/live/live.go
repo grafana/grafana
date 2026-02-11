@@ -22,7 +22,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -683,9 +682,8 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
 
-	ok := strings.HasPrefix(e.Channel, "1/") && user.GetOrgID() == 1 // Temporary fix for orgID paths
 	ns := user.GetNamespace()
-	if !ok && ns != info.Value {
+	if ns != info.Value {
 		logger.Info("Error subscribing: wrong orgId", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
@@ -1012,12 +1010,7 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user identity.R
 
 // Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(ns string, channel string, data []byte) error {
-	// Temporarily publish to BOTH channel prefix in cloud
-	info, err := authlib.ParseNamespace(ns)
-	if err == nil {
-		_, _ = g.node.Publish(fmt.Sprintf("%d/%s", info.OrgID, channel), data) // legacy numeric format
-	}
-	_, err = g.node.Publish(orgchannel.PrependK8sNamespace(ns, channel), data)
+	_, err := g.node.Publish(orgchannel.PrependK8sNamespace(ns, channel), data)
 	return err
 }
 
@@ -1103,7 +1096,8 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 }
 
 type streamChannelListResponse struct {
-	Channels []*managedstream.ManagedChannel `json:"channels"`
+	Namespaced bool                            `json:"namespaced"`
+	Channels   []*managedstream.ManagedChannel `json:"channels"`
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
@@ -1119,7 +1113,8 @@ func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 	}
 	info := streamChannelListResponse{
-		Channels: channels,
+		Namespaced: true, // the channel prefix is namespaced (not orgId)
+		Channels:   channels,
 	}
 	return response.JSONStreaming(http.StatusOK, info)
 }

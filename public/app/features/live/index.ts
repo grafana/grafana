@@ -5,16 +5,17 @@ import { contextSrv } from '../../core/services/context_srv';
 import { loadUrlToken } from '../../core/utils/urlToken';
 
 import { CentrifugeService } from './centrifuge/service';
+import { ManagedChannels } from './info';
 import { GrafanaLiveService } from './live';
 
-export function initGrafanaLive() {
-  let namespace = config.namespace;
-  if (namespace.startsWith('stack')) {
-    // namespace = `${contextSrv.user.orgId}`; // use OrgID until this is fully rolled out in cloud
-  }
+export async function initGrafanaLive() {
+  // Select the namespace based on backend capabilities
+  // This can be removed after the slow RRC has been updated everywhere
+  const info = await getBackendSrv().get<ManagedChannels>('api/live/list');
+
   const centrifugeServiceDeps = {
     appUrl: `${window.location.origin}${config.appSubUrl}`,
-    namespace,
+    namespace: info.namespaced ? config.namespace : `${contextSrv.user.orgId}`,
     orgRole: contextSrv.user.orgRole,
     liveEnabled: config.liveEnabled,
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),

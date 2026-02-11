@@ -7,7 +7,8 @@ interface ChannelInfo {
   data: unknown; // the last payload
 }
 
-interface ManagedChannels {
+export interface ManagedChannels {
+  namespaced?: boolean; // channels are namespaced (this can be removed when the slow RRC is namespaced)
   channels: ChannelInfo[];
 }
 
