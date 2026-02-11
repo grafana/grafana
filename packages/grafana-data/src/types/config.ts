@@ -337,7 +337,6 @@ export interface GrafanaConfig {
   namespace: string;
   caching: {
     enabled: boolean;
-    cleanCacheEnabled: boolean;
   };
   recordedQueries: {
     enabled: boolean;
