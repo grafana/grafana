@@ -4,3 +4,55 @@ import { RoutingTreeSelector } from './RoutingTreeSelector';
 # RoutingTreeSelector
 
 A component for selecting notification policy routing trees in Grafana. Only works with the built-in Grafana Alertmanager.
+
+## Basic usage
+
+```tsx
+import { RoutingTreeSelector } from '@grafana/alerting/unstable';
+
+function MyComponent() {
+  return <RoutingTreeSelector onChange={(tree) => console.log('Selected:', tree.metadata.name)} />;
+}
+```
+
+## With routing preview
+
+Combine with `useMatchInstancesToSpecificRouteTree` to preview which routes match a set of labels:
+
+```tsx
+import { RoutingTreeSelector, useMatchInstancesToSpecificRouteTree } from '@grafana/alerting/unstable';
+import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import type { Label } from '@grafana/alerting';
+
+function RoutingPreview() {
+  const [selectedTree, setSelectedTree] = useState<RoutingTree | null>(null);
+
+  const labels: Label[] = [
+    ['severity', 'critical'],
+    ['team', 'platform'],
+  ];
+  const preview = useMatchInstancesToSpecificRouteTree(selectedTree, [labels]);
+  // preview?.matchedPolicies → Map of routes that matched
+  // preview?.expandedTree → full tree with inherited properties
+
+  return (
+    <>
+      <RoutingTreeSelector onChange={(tree) => setSelectedTree(tree)} />
+      {preview && (
+        <ul>
+          {Array.from(preview.matchedPolicies.entries()).map(([route]) => (
+            <li key={route.id}>
+              Receiver: {route.receiver} — Matchers:{' '}
+              {route.matchers?.map((m) => `${m.label}${m.type}${m.value}`).join(', ') || 'catch-all'}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+```
+
+## Props
+
+<ArgTypes of={RoutingTreeSelector} />

@@ -10,6 +10,7 @@ export { getContactPointDescription } from './grafana/contactPoints/utils';
 
 // Notification Policies / Routing Trees
 export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
 export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
 
