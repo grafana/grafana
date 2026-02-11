@@ -21,7 +21,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const queryConfig = QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Query];
-const transformationConfig = QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation];
 
 interface RenderSidebarCardProps {
   id?: string;
@@ -30,6 +29,7 @@ interface RenderSidebarCardProps {
   addQuery?: jest.Mock;
   setSelectedQuery?: jest.Mock;
   config?: typeof queryConfig;
+  showAddButton?: boolean;
 }
 
 function renderSidebarCard({
@@ -39,6 +39,7 @@ function renderSidebarCard({
   addQuery = jest.fn().mockReturnValue('B'),
   setSelectedQuery = jest.fn(),
   config = queryConfig,
+  showAddButton = true,
 }: RenderSidebarCardProps = {}) {
   // The add button starts with pointer-events: none (visible only on hover).
   // JSDOM can't simulate CSS :hover, so we skip the pointer-events check.
@@ -77,6 +78,7 @@ function renderSidebarCard({
         onToggleHide={jest.fn()}
         isHidden={false}
         onDuplicate={jest.fn()}
+        showAddButton={showAddButton}
       >
         <span>Card content</span>
       </SidebarCard>
@@ -182,8 +184,8 @@ describe('SidebarCard', () => {
       expect(screen.getByText('Card content')).toBeInTheDocument();
     });
 
-    it('does not render the add button for transformation cards', () => {
-      renderSidebarCard({ config: transformationConfig });
+    it('does not render the add button when showAddButton is false', () => {
+      renderSidebarCard({ showAddButton: false });
 
       expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /add below A/i })).not.toBeInTheDocument();

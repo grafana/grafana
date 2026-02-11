@@ -21,6 +21,7 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
       onDelete={() => deleteTransformation(transformation.transformId)}
       onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
       isHidden={!!transformation.transformConfig.disabled}
+      showAddButton={false}
     >
       <Text weight="light" variant="code" color="secondary">
         {transformationName}

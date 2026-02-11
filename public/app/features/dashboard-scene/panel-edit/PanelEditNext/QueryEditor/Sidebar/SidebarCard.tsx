@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_TYPE_HAS_ADD_BUTTON, QueryEditorTypeConfig } from '../../constants';
+import { QueryEditorTypeConfig } from '../../constants';
 
 import { AddCardButton } from './AddCardButton';
 import { HoverActions } from './HoverActions';
@@ -19,6 +19,7 @@ interface SidebarCardProps {
   onDelete: () => void;
   onToggleHide: () => void;
   isHidden: boolean;
+  showAddButton: boolean;
 }
 
 export const SidebarCard = ({
@@ -31,8 +32,9 @@ export const SidebarCard = ({
   onDelete,
   onToggleHide,
   isHidden,
+  showAddButton = true,
 }: SidebarCardProps) => {
-  const hasAddButton = QUERY_EDITOR_TYPE_HAS_ADD_BUTTON[config.__type__];
+  const hasAddButton = showAddButton;
   const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
   const typeText = config.getLabel();
 
