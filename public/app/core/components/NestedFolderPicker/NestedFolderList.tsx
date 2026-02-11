@@ -7,7 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { IconButton, useStyles2, Text } from '@grafana/ui';
+import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -22,7 +22,7 @@ const CHEVRON_SIZE = 'md';
 
 export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id || 'root'}`;
 
-interface NestedFolderListProps {
+export interface NestedFolderListProps {
   items: DashboardsTreeItem[];
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
@@ -33,6 +33,7 @@ interface NestedFolderListProps {
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
   emptyFolders: Set<string>;
+  teamFolderOwnersByUid?: Record<string, { name: string; avatarUrl?: string }>;
 }
 
 export function NestedFolderList({
@@ -46,6 +47,7 @@ export function NestedFolderList({
   isItemLoaded,
   requestLoadMore,
   emptyFolders,
+  teamFolderOwnersByUid,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -60,6 +62,7 @@ export function NestedFolderList({
       onFolderSelect,
       idPrefix,
       emptyFolders,
+      teamFolderOwnersByUid,
     }),
     [
       items,
@@ -70,6 +73,7 @@ export function NestedFolderList({
       onFolderSelect,
       idPrefix,
       emptyFolders,
+      teamFolderOwnersByUid,
     ]
   );
 
@@ -140,6 +144,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     onFolderSelect,
     idPrefix,
     emptyFolders,
+    teamFolderOwnersByUid,
   } = data;
   const { item, isOpen, level, parentUID, disabled } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
@@ -197,6 +202,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   // approximation as when searching all items will be at top level, while things that are actually in the top level
   // when just looking at a folders tree should not have parent.
   const isSearchItem = level === 0 && item.parentUID !== undefined;
+  const teamOwner = teamFolderOwnersByUid?.[item.uid];
 
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
@@ -248,6 +254,14 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
+        {teamOwner && (
+          <div className={styles.teamOwner}>
+            {teamOwner.avatarUrl && <Avatar src={teamOwner.avatarUrl} alt={teamOwner.name} />}
+            <Text truncate color="secondary" variant="bodySmall">
+              {teamOwner.name}
+            </Text>
+          </div>
+        )}
         {isSearchItem && <FolderParent item={items[index]} />}
       </div>
     </div>
@@ -256,6 +270,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowBody = css({
+    label: 'rowBody',
     height: ROW_HEIGHT,
     display: 'flex',
     position: 'relative',
@@ -311,6 +326,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowBody,
 
     label: css({
+      label: 'label',
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
@@ -323,6 +339,18 @@ const getStyles = (theme: GrafanaTheme2) => {
         textDecoration: 'underline',
         cursor: 'pointer',
       },
+    }),
+    teamOwner: css({
+      label: 'teamOwner',
+      display: 'flex',
+      marginLeft: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flex: '0 1 auto',
+      pointerEvents: 'none', // avoid interfering with folder selection
     }),
   };
 };
