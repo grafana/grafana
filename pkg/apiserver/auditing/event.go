@@ -3,6 +3,9 @@ package auditing
 import (
 	"encoding/json"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Event struct {
@@ -84,3 +87,20 @@ const (
 	EventOutcomeFailureNotFound     EventOutcome = "failure_not_found"
 	EventOutcomeFailureGeneric      EventOutcome = "failure_generic"
 )
+
+func OutcomeFromGRPCStatus(status *status.Status) EventOutcome {
+	if status == nil {
+		return EventOutcomeSuccess
+	}
+
+	switch status.Code() {
+	case codes.Unauthenticated, codes.PermissionDenied:
+		return EventOutcomeFailureUnauthorized
+	case codes.NotFound:
+		return EventOutcomeFailureNotFound
+	case codes.OK:
+		return EventOutcomeSuccess
+	default:
+		return EventOutcomeFailureGeneric
+	}
+}
