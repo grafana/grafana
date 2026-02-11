@@ -75,6 +75,7 @@ export const SidebarCard = ({
             />
           </div>
         </div>
+        <div className={styles.cardContent}>{children}</div>
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
