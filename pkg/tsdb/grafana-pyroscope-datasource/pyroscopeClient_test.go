@@ -40,7 +40,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 		series := &SeriesResponse{
 			Series: []*Series{
-				{Labels: []*LabelPair{{Name: "foo", Value: "bar"}}, Points: []*Point{{Timestamp: int64(1000), Value: 30, Exemplars: []*Exemplar{{Id: "id1", Value: 3, Timestamp: 1000}}}, {Timestamp: int64(2000), Value: 10, Exemplars: []*Exemplar{{Id: "id2", Value: 1, Timestamp: 2000}}}}},
+				{Labels: []*LabelPair{{Name: "foo", Value: "bar"}}, Points: []*Point{{Timestamp: int64(1000), Value: 30, Exemplars: []*Exemplar{{ProfileId: "id1", SpanId: "", Value: 3, Timestamp: 1000, Labels: []*LabelPair{}}}}, {Timestamp: int64(2000), Value: 10, Exemplars: []*Exemplar{{ProfileId: "id2", SpanId: "", Value: 1, Timestamp: 2000, Labels: []*LabelPair{}}}}}},
 			},
 			Units: "short",
 			Label: "alloc_objects",
@@ -152,6 +152,22 @@ func (f *FakePyroscopeConnectClient) SelectSeries(ctx context.Context, req *conn
 				{
 					Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}},
 					Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}},
+				},
+			},
+		},
+	}, nil
+}
+
+func (f *FakePyroscopeConnectClient) SelectHeatmap(ctx context.Context, req *connect.Request[querierv1.SelectHeatmapRequest]) (*connect.Response[querierv1.SelectHeatmapResponse], error) {
+	f.Req = req
+	return &connect.Response[querierv1.SelectHeatmapResponse]{
+		Msg: &querierv1.SelectHeatmapResponse{
+			Series: []*typesv1.HeatmapSeries{
+				{
+					Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}},
+					Slots: []*typesv1.HeatmapSlot{
+						{Timestamp: int64(1000), YMin: []float64{0, 100, 200}, Counts: []int32{5, 10, 3}},
+					},
 				},
 			},
 		},

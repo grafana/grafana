@@ -809,4 +809,8 @@ const (
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagProfilesHeatmap
+	// Enables heatmap visualization support for Pyroscope profiles
+	FlagProfilesHeatmap = "profilesHeatmap"
 )

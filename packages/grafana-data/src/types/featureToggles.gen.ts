@@ -1467,4 +1467,8 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Enables heatmap visualization support for Pyroscope profiles
+  */
+  profilesHeatmap?: boolean;
 }
