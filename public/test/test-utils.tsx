@@ -43,6 +43,10 @@ interface ExtendedRenderOptions extends RenderOptions {
    * Props to pass to `createMemoryHistory`, if being used
    */
   historyOptions?: MemoryHistoryBuildOptions;
+
+  grafanaContext?: GrafanaContextType;
+
+  queries?: { [key: string]: any };
 }
 
 /**

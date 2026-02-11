@@ -22,12 +22,11 @@ export function CorrelationsPageLegacy() {
   );
 }
 
-function CorrelationsPageAppPlatform() {
+export function CorrelationsPageAppPlatform() {
   const [page, setPage] = useState(1);
   const limit = 100;
   const { currentData, isLoading, error, doesContinue } = useCorrelationsK8s(limit, page);
   const [deleteCorrelation] = useDeleteCorrelationMutation();
-
   // we cant do a straight refetch, we have to pass in new pages if necessary
   const enhRefetch = (params: GetCorrelationsParams) => {
     return { correlations: currentData, page: params.page, limit, totalCount: 0 };
