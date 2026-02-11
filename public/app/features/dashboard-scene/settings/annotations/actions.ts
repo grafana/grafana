@@ -1,24 +1,15 @@
-/* eslint-disable @grafana/i18n/no-translation-top-level */
-
 import { t } from '@grafana/i18n';
-import { dataLayers, SceneVariable } from '@grafana/scenes';
+import { dataLayers } from '@grafana/scenes';
+import { AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
-import { dashboardEditActions, makeEditAction } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 
-export interface AddAnnotationActionHelperProps {
-  addedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
-  source: DashboardDataLayerSet;
-}
-
-export interface RemoveAnnotationActionHelperProps {
-  removedObject: dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
-  source: DashboardDataLayerSet;
-}
+type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
 export const annotationEditActions = {
-  addAnnotation({ source, addedObject }: AddAnnotationActionHelperProps) {
+  addAnnotation({ source, addedObject }: { addedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeAddition = [...source.state.annotationLayers];
 
     dashboardEditActions.addElement({
@@ -32,7 +23,7 @@ export const annotationEditActions = {
       },
     });
   },
-  removeAnnotation({ source, removedObject }: RemoveAnnotationActionHelperProps) {
+  removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeRemoval = [...source.state.annotationLayers];
 
     dashboardEditActions.removeElement({
@@ -46,39 +37,174 @@ export const annotationEditActions = {
       },
     });
   },
-  // changeAnnotationName: makeEditAction<SceneVariable, 'name'>({
-  //   description: t('dashboard.annotation.name.action', 'Change annotation name'),
-  //   prop: 'name',
-  // }),
-  // changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
-  //   description: t('dashboard.variable.label.action', 'Change variable label'),
-  //   prop: 'label',
-  // }),
-  // changeVariableDescription: makeEditAction<SceneVariable, 'description'>({
-  //   description: t('dashboard.variable.description.action', 'Change variable description'),
-  //   prop: 'description',
-  // }),
-  // changeVariableHideValue({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'hide'>) {
-  //   const variableSet = source.parent;
-  //   const variablesBeforeChange =
-  //     variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;
+  changeAnnotationName({ source, oldValue, newValue }: { source: DataLayer; oldValue: string; newValue: string }) {
+    if (oldValue === newValue) {
+      return;
+    }
 
-  //   dashboardEditActions.edit({
-  //     description: t('dashboard.variable.hide.action', 'Change variable hide option'),
-  //     source,
-  //     perform: () => {
-  //       source.setState({ hide: newValue });
-  //       // Updating the variables set since components that show/hide variables subscribe to the variable set, not the individual variables.
-  //       if (variableSet instanceof SceneVariableSet) {
-  //         variableSet.setState({ variables: [...(variableSet.state.variables ?? [])] });
-  //       }
-  //     },
-  //     undo: () => {
-  //       source.setState({ hide: oldValue });
-  //       if (variableSet instanceof SceneVariableSet && variablesBeforeChange) {
-  //         variableSet.setState({ variables: variablesBeforeChange });
-  //       }
-  //     },
-  //   });
-  // },
+    dashboardEditActions.edit({
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-name',
+        'Change annotation name'
+      ),
+      source,
+      perform() {
+        source.setState({
+          name: newValue,
+          query: {
+            ...source.state.query,
+            name: newValue,
+          },
+        });
+      },
+      undo() {
+        source.setState({
+          name: oldValue,
+          query: {
+            ...source.state.query,
+            name: oldValue,
+          },
+        });
+      },
+    });
+  },
+  changeAnnotationEnabled({ source, oldValue, newValue }: { source: DataLayer; oldValue: boolean; newValue: boolean }) {
+    dashboardEditActions.edit({
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-enabled-state',
+        'Change annotation enabled state'
+      ),
+      source,
+      perform() {
+        source.setState({
+          isEnabled: newValue,
+          query: {
+            ...source.state.query,
+            enable: newValue,
+          },
+        });
+      },
+      undo() {
+        source.setState({
+          isEnabled: oldValue,
+          query: {
+            ...source.state.query,
+            enable: oldValue,
+          },
+        });
+      },
+    });
+  },
+  changeAnnotationColor({ source, oldValue, newValue }: { source: DataLayer; oldValue: string; newValue: string }) {
+    dashboardEditActions.edit({
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-color',
+        'Change annotation color'
+      ),
+      source,
+      perform() {
+        source.setState({
+          query: {
+            ...source.state.query,
+            iconColor: newValue,
+          },
+        });
+        source.runLayer();
+      },
+      undo() {
+        source.setState({
+          query: {
+            ...source.state.query,
+            iconColor: oldValue,
+          },
+        });
+        source.runLayer();
+      },
+    });
+  },
+  changeAnnotationControlsDisplay({
+    source,
+    oldValue,
+    newValue,
+  }: {
+    source: DataLayer;
+    oldValue: { isHidden: boolean; placement?: 'inControlsMenu' };
+    newValue: { isHidden: boolean; placement?: 'inControlsMenu' };
+  }) {
+    const forceReRender = () => {
+      // force parent DashboardDataLayerSet to update its state so components that filter
+      // annotationLayers (like DashboardDataLayerControls and DashboardControlsMenu) re-render
+      const dataLayerSet = source.parent;
+      if (dataLayerSet instanceof DashboardDataLayerSet) {
+        dataLayerSet.setState({ annotationLayers: [...dataLayerSet.state.annotationLayers] });
+      }
+    };
+
+    dashboardEditActions.edit({
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-controls-display',
+        'Change annotation controls display'
+      ),
+      source,
+      perform() {
+        source.setState({
+          isHidden: newValue.isHidden,
+          placement: newValue.placement,
+          query: {
+            ...source.state.query,
+            hide: newValue.isHidden,
+            placement: newValue.placement,
+          },
+        });
+        forceReRender();
+      },
+      undo() {
+        source.setState({
+          isHidden: oldValue.isHidden,
+          placement: oldValue.placement,
+          query: {
+            ...source.state.query,
+            hide: oldValue.isHidden,
+            placement: oldValue.placement,
+          },
+        });
+        forceReRender();
+      },
+    });
+  },
+  changeAnnotationPanelFilter({
+    source,
+    oldValue,
+    newValue,
+  }: {
+    source: DataLayer;
+    oldValue?: AnnotationPanelFilter;
+    newValue?: AnnotationPanelFilter;
+  }) {
+    dashboardEditActions.edit({
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-panel-filter',
+        'Change annotation panel filter'
+      ),
+      source,
+      perform() {
+        source.setState({
+          query: {
+            ...source.state.query,
+            filter: newValue,
+          },
+        });
+        source.runLayer();
+      },
+      undo() {
+        source.setState({
+          query: {
+            ...source.state.query,
+            filter: oldValue,
+          },
+        });
+        source.runLayer();
+      },
+    });
+  },
 };

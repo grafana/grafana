@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { AppEvents, CoreApp, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Box, Button, ButtonGroup, Dropdown, Field, Menu, Modal, Stack } from '@grafana/ui';
+import { Box, Button, ButtonGroup, Field, Modal, Stack } from '@grafana/ui';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -34,9 +34,7 @@ export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer 
           >
             <Trans i18nKey="dashboard.edit-pane.annotation.open-query-editor">Open query editor</Trans>
           </Button>
-          {queryLibraryEnabled && (
-            <AnnotationQueryLibraryDropdown layer={layer} onQuerySelected={() => setIsModalOpen(true)} />
-          )}
+          {queryLibraryEnabled && <QueryLibraryButton layer={layer} />}
         </ButtonGroup>
       </Box>
       <Modal
@@ -62,14 +60,7 @@ export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer 
   );
 }
 
-function AnnotationQueryLibraryDropdown({
-  layer,
-  onQuerySelected,
-}: {
-  layer: AnnotationLayer;
-  onQuerySelected: () => void;
-}) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer; onQuerySelected?: () => void }) {
   const { openDrawer, closeDrawer } = useQueryLibraryContext();
 
   const { query } = layer.useState();
@@ -96,39 +87,19 @@ function AnnotationQueryLibraryDropdown({
           return;
         }
         closeDrawer();
-        onQuerySelected();
+        onQuerySelected?.();
       },
     });
   }, [closeDrawer, layer, onQuerySelected, openDrawer, query]);
-
-  const menuOverlay = useMemo(
-    () => (
-      <Menu>
-        <Menu.Item
-          icon="book-open"
-          label={t(
-            'dashboard-scene.annotation-query-library-dropdown.menu-overlay.label-use-saved-query',
-            'Use saved query'
-          )}
-          onClick={onSelectFromQueryLibrary}
-        />
-      </Menu>
-    ),
-    [onSelectFromQueryLibrary]
-  );
 
   if (!datasource) {
     return null;
   }
 
   return (
-    <Dropdown overlay={menuOverlay} placement="bottom-end" onVisibleChange={setIsDropdownOpen}>
-      <Button
-        aria-label={t('dashboard-scene.annotation-query-editor-button.aria-label-toggle-menu', 'Toggle menu')}
-        icon={isDropdownOpen ? 'angle-up' : 'angle-down'}
-        size="sm"
-      />
-    </Dropdown>
+    <Button variant="secondary" tooltip="" onClick={onSelectFromQueryLibrary} size="sm" fullWidth>
+      <Trans i18nKey="dashboard-scene.annotation-query-library-dropdown.use-saved-query">Use saved query</Trans>
+    </Button>
   );
 }
 

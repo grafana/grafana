@@ -3,27 +3,15 @@ import { useCallback, useMemo, useRef } from 'react';
 import { t } from '@grafana/i18n';
 import { usePanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { AnnotationPanelFilter } from '@grafana/schema';
 import { Checkbox, Combobox, ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
 import { AnnotationLayer } from './AnnotationEditableElement';
-
-/** Helper to update the layer's query and optionally re-run the layer */
-function updateLayerQuery(
-  layer: AnnotationLayer,
-  queryUpdate: Partial<AnnotationLayer['state']['query']>,
-  runLayer = false
-) {
-  layer.setState({ query: { ...layer.state.query, ...queryUpdate } });
-  if (runLayer) {
-    layer.runLayer();
-  }
-}
+import { annotationEditActions } from './actions';
 
 export function AnnotationNameInput({ layer }: { layer: AnnotationLayer }) {
   const { name } = layer.useState();
@@ -40,15 +28,11 @@ export function AnnotationNameInput({ layer }: { layer: AnnotationLayer }) {
           layer.setState({ name: e.currentTarget.value });
         }}
         onBlur={() => {
-          // Update the query name as well to keep them in sync
-          if (oldName.current !== name) {
-            layer.setState({
-              query: {
-                ...layer.state.query,
-                name,
-              },
-            });
-          }
+          annotationEditActions.changeAnnotationName({
+            source: layer,
+            oldValue: oldName.current,
+            newValue: name,
+          });
         }}
       />
     </Field>
@@ -56,22 +40,15 @@ export function AnnotationNameInput({ layer }: { layer: AnnotationLayer }) {
 }
 
 export function AnnotationEnabledCheckbox({ layer }: { layer: AnnotationLayer }) {
-  const { isEnabled, query } = layer.useState();
+  const { isEnabled } = layer.useState();
 
-  const onChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const enabled = e.currentTarget.checked;
-
-      layer.setState({
-        isEnabled: enabled,
-        query: {
-          ...query,
-          enable: enabled,
-        },
-      });
-    },
-    [layer, query]
-  );
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    annotationEditActions.changeAnnotationEnabled({
+      source: layer,
+      oldValue: Boolean(isEnabled),
+      newValue: e.currentTarget.checked,
+    });
+  };
 
   return (
     <Field
@@ -93,10 +70,14 @@ export function AnnotationColorPicker({ layer }: { layer: AnnotationLayer }) {
   const onColorChange = useCallback(
     (color: string | undefined) => {
       if (color) {
-        updateLayerQuery(layer, { iconColor: color }, true);
+        annotationEditActions.changeAnnotationColor({
+          source: layer,
+          oldValue: query.iconColor,
+          newValue: color,
+        });
       }
     },
-    [layer]
+    [layer, query.iconColor]
   );
 
   return (
@@ -109,7 +90,7 @@ export function AnnotationColorPicker({ layer }: { layer: AnnotationLayer }) {
       noMargin
     >
       <Stack>
-        <ColorValueEditor value={query?.iconColor ?? 'red'} onChange={onColorChange} />
+        <ColorValueEditor value={query.iconColor ?? 'red'} onChange={onColorChange} />
       </Stack>
     </Field>
   );
@@ -123,6 +104,20 @@ enum AnnotationControlsDisplay {
 
 export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLayer }) {
   const { isHidden, placement } = layer.useState();
+
+  const onChange = useCallback(
+    (option: ComboboxOption<AnnotationControlsDisplay>) => {
+      const newIsHidden = option.value === AnnotationControlsDisplay.Hidden;
+      const newPlacement = option.value === AnnotationControlsDisplay.InControlsMenu ? 'inControlsMenu' : undefined;
+
+      annotationEditActions.changeAnnotationControlsDisplay({
+        source: layer,
+        oldValue: { isHidden: Boolean(isHidden), placement },
+        newValue: { isHidden: newIsHidden, placement: newPlacement },
+      });
+    },
+    [isHidden, layer, placement]
+  );
 
   const options = useMemo(
     () => [
@@ -160,31 +155,6 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
     return AnnotationControlsDisplay.AboveDashboard;
   }, [isHidden, placement]);
 
-  const onChange = useCallback(
-    (option: ComboboxOption<AnnotationControlsDisplay>) => {
-      const newPlacement = option.value === AnnotationControlsDisplay.InControlsMenu ? 'inControlsMenu' : undefined;
-      const newIsHidden = option.value === AnnotationControlsDisplay.Hidden;
-
-      layer.setState({
-        placement: newPlacement,
-        isHidden: newIsHidden,
-        query: {
-          ...layer.state.query,
-          hide: newIsHidden,
-          placement: newPlacement,
-        },
-      });
-
-      // Force parent DashboardDataLayerSet to update its state so components that filter
-      // annotationLayers (like DashboardDataLayerControls and DashboardControlsMenu) re-render
-      const dataLayerSet = layer.parent;
-      if (dataLayerSet instanceof DashboardDataLayerSet) {
-        dataLayerSet.setState({ annotationLayers: [...dataLayerSet.state.annotationLayers] });
-      }
-    },
-    [layer]
-  );
-
   return (
     <Field label={t('dashboard.edit-pane.annotation.display', 'Show annotation controls in')} noMargin>
       <Combobox options={options} value={currentValue} onChange={onChange} width="auto" minWidth={100} />
@@ -212,6 +182,8 @@ export function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer 
     <Field label={t('dashboard.edit-pane.annotation.show-in', 'Show in')} noMargin>
       <Stack direction="column" gap={1}>
         <Combobox
+          // hack to force re-render when undoing to "All panels" (value=0)
+          key={panelFilter}
           options={panelFilterOptions}
           value={panelFilter}
           onChange={onPanelFilterChange}
@@ -297,11 +269,11 @@ function useAnnotationPanelFilterPicker(layer: AnnotationLayer) {
   );
 
   const panelFilter = useMemo(() => {
-    if (!query?.filter) {
+    if (!query.filter) {
       return PanelFilterType.AllPanels;
     }
     return query.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
-  }, [query?.filter]);
+  }, [query.filter]);
 
   const onPanelFilterChange = useCallback(
     (option: ComboboxOption<PanelFilterType>) => {
@@ -310,11 +282,16 @@ function useAnnotationPanelFilterPicker(layer: AnnotationLayer) {
           ? undefined
           : {
               exclude: option.value === PanelFilterType.ExcludePanels,
-              ids: query?.filter?.ids ?? [],
+              ids: query.filter?.ids ?? [],
             };
-      updateLayerQuery(layer, { filter }, true);
+
+      annotationEditActions.changeAnnotationPanelFilter({
+        source: layer,
+        oldValue: query.filter,
+        newValue: filter,
+      });
     },
-    [layer, query?.filter?.ids]
+    [layer, query.filter]
   );
 
   const onSelectedPanelsChange = useCallback(
@@ -323,9 +300,14 @@ function useAnnotationPanelFilterPicker(layer: AnnotationLayer) {
         exclude: panelFilter === PanelFilterType.ExcludePanels,
         ids: selections.map((selection) => selection.value).filter(Boolean),
       };
-      updateLayerQuery(layer, { filter }, true);
+
+      annotationEditActions.changeAnnotationPanelFilter({
+        source: layer,
+        oldValue: query.filter,
+        newValue: filter,
+      });
     },
-    [layer, panelFilter]
+    [layer, panelFilter, query.filter]
   );
 
   const selectablePanels = useSelectablePanelOptions(layer);
@@ -335,7 +317,7 @@ function useAnnotationPanelFilterPicker(layer: AnnotationLayer) {
     panelFilter,
     onPanelFilterChange,
     selectablePanels,
-    selectedPanels: query?.filter?.ids ?? [],
+    selectedPanels: query.filter?.ids ?? [],
     onSelectedPanelsChange,
   };
 }

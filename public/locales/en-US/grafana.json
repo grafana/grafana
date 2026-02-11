@@ -4966,6 +4966,15 @@
       "label-annotation-query": "Annotation query",
       "tooltip-add-new-annotation-query": "Add new annotation query"
     },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "Change annotation color",
+        "change-annotation-controls-display": "Change annotation controls display",
+        "change-annotation-enabled-state": "Change annotation enabled state",
+        "change-annotation-name": "Change annotation name",
+        "change-annotation-panel-filter": "Change annotation panel filter"
+      }
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -4976,13 +4985,8 @@
         "aria-label-annotation": "Annotation"
       }
     },
-    "annotation-query-editor-button": {
-      "aria-label-toggle-menu": "Toggle menu"
-    },
     "annotation-query-library-dropdown": {
-      "menu-overlay": {
-        "label-use-saved-query": "Use saved query"
-      }
+      "use-saved-query": "Use saved query"
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
