@@ -165,6 +165,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
 			Suggestions:     panel.Suggestions,
+			Presets:         panel.Presets,
 			HideFromList:    panel.HideFromList,
 			ReleaseState:    string(panel.State),
 			Signature:       string(panel.Signature),

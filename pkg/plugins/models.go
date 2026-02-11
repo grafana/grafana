@@ -320,6 +320,7 @@ type PanelDTO struct {
 	Sort            int               `json:"sort"`
 	SkipDataQuery   bool              `json:"skipDataQuery"`
 	Suggestions     bool              `json:"suggestions,omitempty"`
+	Presets         bool              `json:"presets,omitempty"`
 	ReleaseState    string            `json:"state"`
 	BaseURL         string            `json:"baseUrl"`
 	Signature       string            `json:"signature"`

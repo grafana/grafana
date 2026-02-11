@@ -106,6 +106,7 @@ type JSONData struct {
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
 	Suggestions   bool `json:"suggestions,omitempty"`
+	Presets       bool `json:"presets,omitempty"`
 
 	// App settings
 	AutoEnabled bool       `json:"autoEnabled"`

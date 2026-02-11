@@ -68,6 +68,7 @@ metaV0Alpha1: {
 	state?:         "alpha" | "beta" | "stable" | "deprecated"
 	streaming?:     bool
 	suggestions?:   bool
+	presets?:       bool
 	tracing?:       bool
 	iam?:           #IAM
 	// +listType=atomic
