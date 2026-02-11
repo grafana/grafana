@@ -39,10 +39,13 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
         <time className={styles.date} dateTime={dateTimeFormat(newsItem.date, { format: 'MMM DD' })}>
           {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
-        <a className={styles.link} href={textUtil.sanitizeUrl(newsItem.link)} target="_blank" rel="noopener noreferrer">
-          <h3 className={styles.title} id={titleId}>
-            {newsItem.title}
-          </h3>
+        <a
+          className={cx(styles.link, styles.title)}
+          href={textUtil.sanitizeUrl(newsItem.link)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {newsItem.title}
         </a>
         <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
       </div>
@@ -128,6 +131,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   title: css({
+    ...theme.typography.h3,
     fontSize: '16px',
     marginBottom: theme.spacing(0.5),
   }),
