@@ -144,7 +144,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}
                     component={
-                      <TextLink href={makeFolderAlertsLink(folderUid, folderName)} inline={false}>
+                      <TextLink href={makeFolderAlertsLink(folderUid, folderName)} inline={false} color="primary">
                         {folderName}
                       </TextLink>
                     }
