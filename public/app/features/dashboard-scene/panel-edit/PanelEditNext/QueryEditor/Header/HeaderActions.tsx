@@ -3,6 +3,7 @@ import { RefObject, useCallback } from 'react';
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
+import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { Actions } from '../Sidebar/Actions';
 
@@ -19,15 +20,12 @@ interface HeaderActionsProps {
  * Container for all action buttons in the query editor header.
  *
  * @remarks
- * Each child component is responsible for determining its own visibility
- * by reading cardType from QueryEditorUIContext. This keeps the logic
- * decentralized and each component self-contained.
- *
- * HeaderActions simply renders all components and lets them decide whether
- * to show or hide themselves based on context.
+ * Manages actions (hide, delete) for the currently selected query or transformation.
+ * Child components like WarningBadges, SaveButton, and ActionsMenu determine their
+ * own visibility by reading from QueryEditorUIContext.
  */
 export function HeaderActions({ containerRef }: HeaderActionsProps) {
-  const { selectedQuery, selectedTransformation } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
   const { toggleQueryHide, toggleTransformationDisabled, deleteQuery, deleteTransformation } = useActionsContext();
 
   const onToggleHide = useCallback(() => {
@@ -47,13 +45,20 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
   }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
 
   const isHidden = selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false;
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
 
   return (
     <Stack gap={1} alignItems="center">
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
-      <Actions contentHeader={true} onToggleHide={onToggleHide} onDelete={onDelete} isHidden={isHidden} />
+      <Actions
+        contentHeader={true}
+        isHidden={isHidden}
+        onDelete={onDelete}
+        onToggleHide={onToggleHide}
+        typeLabel={typeLabel}
+      />
       <ActionsMenu app={CoreApp.PanelEditor} />
     </Stack>
   );

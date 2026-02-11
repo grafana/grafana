@@ -61,7 +61,13 @@ export const SidebarCard = ({
           </Text>
         </Stack>
         <div className={styles.hoverActions}>
-          <Actions onDuplicate={onDuplicate} onDelete={onDelete} onToggleHide={onToggleHide} isHidden={isHidden} />
+          <Actions
+            isHidden={isHidden}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onToggleHide={onToggleHide}
+            typeLabel={typeText}
+          />
         </div>
       </div>
       <div className={styles.cardContent}>{children}</div>
