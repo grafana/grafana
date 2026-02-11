@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -750,6 +751,243 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
 				require.NoError(t, err, tt.description)
+			}
+		})
+	}
+}
+
+func createdChanges(n int) []ResourceFileChange {
+	changes := make([]ResourceFileChange, n)
+	for i := range changes {
+		changes[i] = ResourceFileChange{
+			Path:   fmt.Sprintf("file-%d.json", i),
+			Action: repository.FileActionCreated,
+		}
+	}
+	return changes
+}
+
+func deletedChanges(n int) []ResourceFileChange {
+	changes := make([]ResourceFileChange, n)
+	for i := range changes {
+		changes[i] = ResourceFileChange{
+			Path:   fmt.Sprintf("file-%d.json", i),
+			Action: repository.FileActionDeleted,
+		}
+	}
+	return changes
+}
+
+func TestCheckQuotaBeforeSync(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+
+	tests := []struct {
+		name          string
+		changes       []ResourceFileChange
+		config        *provisioning.Repository
+		expectedError string
+	}{
+		{
+			name:    "no resource quota condition - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+		},
+		{
+			name:    "resource quota condition with status True - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionTrue,
+							Reason: "WithinLimit",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "resource quota exceeded but quota limit is zero (unlimited) - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 0,
+					},
+				},
+			},
+		},
+		{
+			name:    "final count within quota - proceeds",
+			changes: createdChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50},
+						{Group: "alerting.grafana.app", Resource: "rules", Count: 40},
+					},
+				},
+			},
+		},
+		{
+			name:    "final count exactly at quota limit - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+					},
+				},
+			},
+		},
+		{
+			name:    "final count exceeds quota - returns error",
+			changes: createdChanges(20),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+					},
+				},
+			},
+			expectedError: "repository is over quota (current: 90 resources) and sync would add 20 resources, resulting in 110 resources exceeding the quota limit of 100. sync cannot proceed",
+		},
+		{
+			name:    "negative net change brings count below quota - proceeds",
+			changes: deletedChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
+					},
+				},
+			},
+		},
+		{
+			name:    "multiple resource types - counts summed",
+			changes: createdChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 40},
+						{Group: "folders.grafana.app", Resource: "folders", Count: 56},
+					},
+				},
+			},
+			expectedError: "repository is over quota (current: 96 resources) and sync would add 5 resources, resulting in 101 resources exceeding the quota limit of 100. sync cannot proceed",
+		},
+		{
+			name:    "condition reason is not QuotaExceeded - proceeds",
+			changes: createdChanges(1000),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: "SomeOtherReason",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "net change would exceed max int64 - returns error",
+			changes: createdChanges(2),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 10,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: math.MaxInt64 - 1},
+					},
+				},
+			},
+
+			expectedError: "checking quota: total resources would exceed max int64",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockConfigRepository(t)
+			repo.EXPECT().Config().Return(tt.config)
+
+			err := checkQuotaBeforeSync(context.Background(), repo, tt.changes, tracer)
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

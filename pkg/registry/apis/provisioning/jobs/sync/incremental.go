@@ -45,37 +45,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
-
-	// Calculate net change from sync operations
-	var netChange int64
-	for _, change := range diff {
-		// Skip folders
-		if safepath.IsDir(change.Path) {
-			continue
-		}
-
-		switch change.Action {
-		case repository.FileActionCreated:
-			netChange++
-		case repository.FileActionDeleted:
-			netChange--
-		case repository.FileActionUpdated, repository.FileActionRenamed:
-			// Updates and renames don't change resource count
-		case repository.FileActionIgnored:
-			// Ignored changes don't affect count
-		}
-	}
-
-	// Check quota before applying changes
-	// Check if repo implements Repository interface (needed for Config())
-	if repoWithConfig, ok := repo.(repository.Repository); ok {
-		if err := checkQuotaBeforeSync(ctx, repoWithConfig, netChange, repositoryResources, tracer); err != nil {
-			progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
-			progress.SetFinalMessage(ctx, "repository is over quota and sync would add resources, resulting in resources exceeding the quota limit. sync cannot proceed")
-			return tracing.Error(span, err)
-		}
-	}
-
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()

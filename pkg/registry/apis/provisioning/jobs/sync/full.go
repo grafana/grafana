@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -72,28 +74,8 @@ func FullSync(
 		return nil
 	}
 
-	// Calculate net change from sync operations
-	var netChange int64
-	for _, change := range changes {
-		// Skip folders
-		if safepath.IsDir(change.Path) {
-			continue
-		}
-
-		switch change.Action {
-		case repository.FileActionCreated:
-			netChange++
-		case repository.FileActionDeleted:
-			netChange--
-		case repository.FileActionUpdated:
-			// Updates don't change resource count
-		default:
-			// Ignore other actions (e.g., FileActionRenamed, FileActionIgnored)
-		}
-	}
-
 	// Check quota before applying changes
-	if err := checkQuotaBeforeSync(ctx, repo, netChange, repositoryResources, tracer); err != nil {
+	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
 		progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
 		progress.SetFinalMessage(ctx, "repository is over quota and sync would add resources, resulting in resources exceeding the quota limit. sync cannot proceed")
 		return tracing.Error(span, err)
@@ -375,4 +357,54 @@ func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context
 	defer cancel()
 
 	fn(timeoutCtx)
+}
+
+// checkQuotaBeforeSync checks if the repository is over quota and if the sync would exceed the quota limit.
+// It calculates the net change in resource count from the changes and validates it against the quota limit.
+func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, changes []ResourceFileChange, tracer tracing.Tracer) error {
+	if !quotas.IsQuotaExceeded(repo.Config().Status.Conditions) {
+		return nil
+	}
+
+	cfg := repo.Config()
+	quotaUsage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+
+	// Calculate the net change in resource count (positive for additions, negative for deletions)
+	var netChange int64
+	for _, change := range changes {
+		switch change.Action {
+		case repository.FileActionCreated:
+			netChange++
+		case repository.FileActionDeleted:
+			netChange--
+		case repository.FileActionUpdated, repository.FileActionRenamed, repository.FileActionIgnored:
+			// change does not affect quota
+		default:
+			logger.Error("unknown change action", "action", change.Action)
+		}
+	}
+
+	shouldSync, err := quotas.WouldStayWithinQuota(cfg.Status.Quota, quotaUsage, netChange)
+	if err != nil {
+		return fmt.Errorf("checking quota: %w", err)
+	}
+
+	if shouldSync {
+		return nil
+	}
+
+	// not allowed to sync — record telemetry and return error
+	finalCount := quotaUsage.TotalResources + netChange
+
+	_, checkSpan := tracer.Start(ctx, "provisioning.sync.check_quota")
+	defer checkSpan.End()
+
+	checkSpan.SetAttributes(
+		attribute.Int64("current_count", quotaUsage.TotalResources),
+		attribute.Int64("net_change", netChange),
+		attribute.Int64("final_count", finalCount),
+		attribute.Int64("quota_limit", cfg.Status.Quota.MaxResourcesPerRepository),
+	)
+
+	return fmt.Errorf("repository is over quota (current: %d resources) and sync would add %d resources, resulting in %d resources exceeding the quota limit of %d. sync cannot proceed", quotaUsage.TotalResources, netChange, finalCount, cfg.Status.Quota.MaxResourcesPerRepository)
 }

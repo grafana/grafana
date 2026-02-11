@@ -2,9 +2,11 @@ package quotas
 
 import (
 	"context"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -169,6 +171,222 @@ func TestFixedQuotaGetter(t *testing.T) {
 
 			assert.Equal(t, tt.expectedMaxRepositories, status.MaxRepositories)
 			assert.Equal(t, tt.expectedMaxResourcesPerRepository, status.MaxResourcesPerRepository)
+		})
+	}
+}
+
+func TestIsQuotaExceeded(t *testing.T) {
+	tests := []struct {
+		name       string
+		conditions []metav1.Condition
+		expected   bool
+	}{
+		{
+			name:       "no conditions returns false",
+			conditions: nil,
+			expected:   false,
+		},
+		{
+			name:       "empty conditions returns false",
+			conditions: []metav1.Condition{},
+			expected:   false,
+		},
+		{
+			name: "quota exceeded returns true",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionFalse,
+					Reason: provisioning.ReasonQuotaExceeded,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "within quota returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonWithinQuota,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "quota reached returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonQuotaReached,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "quota unlimited returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonQuotaUnlimited,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "false status but wrong reason returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionFalse,
+					Reason: provisioning.ReasonWithinQuota,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "unrelated condition is ignored",
+			conditions: []metav1.Condition{
+				{
+					Type:   "SomeOtherCondition",
+					Status: metav1.ConditionFalse,
+					Reason: provisioning.ReasonQuotaExceeded,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "quota exceeded among multiple conditions",
+			conditions: []metav1.Condition{
+				{
+					Type:   "SomeOtherCondition",
+					Status: metav1.ConditionTrue,
+					Reason: "Ready",
+				},
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionFalse,
+					Reason: provisioning.ReasonQuotaExceeded,
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsQuotaExceeded(tt.conditions)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestWouldStayWithinQuota(t *testing.T) {
+	tests := []struct {
+		name      string
+		quota     provisioning.QuotaStatus
+		usage     Usage
+		netChange int64
+		expected  bool
+		expectErr bool
+	}{
+		{
+			name:      "unlimited quota always allows",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 0},
+			usage:     Usage{TotalResources: 500},
+			netChange: 100,
+			expected:  true,
+		},
+		{
+			name:      "within quota with positive change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 50},
+			netChange: 30,
+			expected:  true,
+		},
+		{
+			name:      "exactly at quota with positive change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 50},
+			netChange: 50,
+			expected:  true,
+		},
+		{
+			name:      "exceeds quota with positive change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 50},
+			netChange: 51,
+			expected:  false,
+		},
+		{
+			name:      "already at quota with zero change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 100},
+			netChange: 0,
+			expected:  true,
+		},
+		{
+			name:      "already at quota with positive change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 100},
+			netChange: 1,
+			expected:  false,
+		},
+		{
+			name:      "already over quota with zero change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 150},
+			netChange: 0,
+			expected:  false,
+		},
+		{
+			name:      "negative change brings within quota",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 110},
+			netChange: -20,
+			expected:  true,
+		},
+		{
+			name:      "negative change still over quota",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 150},
+			netChange: -10,
+			expected:  false,
+		},
+		{
+			name:      "overflow with large positive change returns error",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: math.MaxInt64},
+			netChange: 1,
+			expectErr: true,
+		},
+		{
+			name:      "no overflow with negative change on large usage",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: math.MaxInt64},
+			usage:     Usage{TotalResources: math.MaxInt64},
+			netChange: -1,
+			expected:  true,
+		},
+		{
+			name:      "zero usage with zero change",
+			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			usage:     Usage{TotalResources: 0},
+			netChange: 0,
+			expected:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := WouldStayWithinQuota(tt.quota, tt.usage, tt.netChange)
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }

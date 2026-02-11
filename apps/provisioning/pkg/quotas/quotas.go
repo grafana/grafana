@@ -3,6 +3,7 @@ package quotas
 import (
 	"context"
 	"fmt"
+	"math"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -69,6 +70,28 @@ func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.
 			Message: fmt.Sprintf("Within quota: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	}
+}
+
+// IsQuotaExceeded checks if the resource quota condition indicates the quota has been exceeded.
+func IsQuotaExceeded(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionFalse &&
+				conditions[i].Reason == provisioning.ReasonQuotaExceeded
+		}
+	}
+	return false
+}
+
+func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) (bool, error) {
+	if usage.TotalResources > math.MaxInt64-max(netChange, 0) {
+		return false, fmt.Errorf("total resources would exceed max int64")
+	}
+
+	if quota.MaxResourcesPerRepository == 0 {
+		return true, nil
+	}
+	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository, nil
 }
 
 // calculateTotalResources sums up all resource counts from the stats.

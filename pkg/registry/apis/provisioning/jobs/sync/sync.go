@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -57,13 +58,11 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 			return "", fmt.Errorf("get latest ref: %w", err)
 		}
 
-		if cfg.Status.Sync.LastRef != "" && options.Incremental {
+		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
 			progress.SetMessage(ctx, "incremental sync")
 			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress, r.tracer, r.metrics)
 		}
 	}
-
 	progress.SetMessage(ctx, "full sync")
-
 	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics)
 }
