@@ -1,5 +1,5 @@
 import { DataTransformerConfig } from '@grafana/data';
-import { sceneGraph, SceneDataTransformer, SceneQueryRunner, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
@@ -241,29 +241,93 @@ describe('PanelDataPaneNext', () => {
     });
   });
 
-  describe('reorderTransformations', () => {
-    it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
-      const transformer = new SceneDataTransformer({ transformations: [] });
-      jest.spyOn(transformer, 'setState').mockImplementation(() => {});
-      jest.spyOn(transformer, 'reprocessTransformations').mockImplementation(() => {});
+  describe('transformations', () => {
+    const mockTransformations: DataTransformerConfig[] = [
+      { id: 'organize', options: {} },
+      { id: 'reduce', options: {} },
+      { id: 'filter', options: {} },
+    ];
 
-      mockPanel.state.$data = transformer;
+    let mockTransformer: SceneDataTransformer;
 
-      const newOrder: DataTransformerConfig[] = [
-        { id: 'reduce', options: {} },
-        { id: 'organize', options: {} },
-      ];
+    beforeEach(() => {
+      mockTransformer = new SceneDataTransformer({
+        transformations: mockTransformations,
+        $data: mockQueryRunner,
+      });
 
-      dataPane.reorderTransformations(newOrder);
-
-      expect(transformer.setState).toHaveBeenCalledWith({ transformations: newOrder });
-      expect(transformer.reprocessTransformations).toHaveBeenCalled();
+      jest.spyOn(mockTransformer, 'setState');
+      mockPanel.state.$data = mockTransformer;
     });
 
-    it('should not throw when $data is not SceneDataTransformer', () => {
-      const newOrder: DataTransformerConfig[] = [{ id: 'reduce', options: {} }];
+    describe('reorderTransformations', () => {
+      it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
 
-      expect(() => dataPane.reorderTransformations(newOrder)).not.toThrow();
+        const newOrder: DataTransformerConfig[] = [
+          { id: 'reduce', options: {} },
+          { id: 'organize', options: {} },
+        ];
+
+        dataPane.reorderTransformations(newOrder);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({ transformations: newOrder });
+        expect(mockTransformer.reprocessTransformations).toHaveBeenCalled();
+      });
+
+      it('should not throw when $data is not SceneDataTransformer', () => {
+        mockPanel.state.$data = undefined;
+        const newOrder: DataTransformerConfig[] = [{ id: 'reduce', options: {} }];
+
+        expect(() => dataPane.reorderTransformations(newOrder)).not.toThrow();
+      });
+    });
+
+    describe('deleteTransformation', () => {
+      it('should delete a transformation', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'filter', options: {} },
+          ],
+        });
+        expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+      });
+
+      it('should not delete a transformation if the index is out of bounds', () => {
+        dataPane.deleteTransformation(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(3);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('toggleTransformationDisabled', () => {
+      it('should toggle the disabled state of a transformation', () => {
+        dataPane.toggleTransformationDisabled(1);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'reduce', options: {}, disabled: true },
+            { id: 'filter', options: {} },
+          ],
+        });
+      });
+
+      it('should not toggle if the index is out of bounds', () => {
+        dataPane.toggleTransformationDisabled(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.toggleTransformationDisabled(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
     });
   });
 });
