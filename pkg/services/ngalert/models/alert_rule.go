@@ -365,7 +365,7 @@ type AlertRule struct {
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
-	NotificationSettings []NotificationSettings
+	NotificationSettings *NotificationSettings
 	Metadata             AlertRuleMetadata
 	// MissingSeriesEvalsToResolve specifies the number of consecutive evaluation intervals
 	// required before resolving an alert state (a dimension) when data is missing.
@@ -806,14 +806,12 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
-	if len(alertRule.NotificationSettings) > 0 {
-		if len(alertRule.NotificationSettings) != 1 {
-			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
-		}
-		if err := alertRule.NotificationSettings[0].Validate(); err != nil {
+	if alertRule.NotificationSettings != nil {
+		if err := alertRule.NotificationSettings.Validate(); err != nil {
 			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid notification settings: %w", err))
 		}
 	}
+
 	return nil
 }
 
@@ -845,6 +843,13 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	ClearRecordingRuleIgnoredFields(rule)
 
 	return nil
+}
+
+func (alertRule *AlertRule) ContactPointRouting() *ContactPointRouting {
+	if alertRule.NotificationSettings == nil {
+		return nil
+	}
+	return alertRule.NotificationSettings.ContactPointRouting
 }
 
 func (alertRule *AlertRule) ResourceType() string {
@@ -950,8 +955,8 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		result.Metadata.PrometheusStyleRule = &prometheusStyleRule
 	}
 
-	for _, s := range alertRule.NotificationSettings {
-		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
+	if alertRule.NotificationSettings != nil {
+		result.NotificationSettings = util.Pointer(CopyNotificationSettings(*alertRule.NotificationSettings))
 	}
 
 	return &result

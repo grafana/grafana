@@ -97,6 +97,7 @@ import {
   getSummaryCellTextAlign,
   parseStyleJson,
   IS_SAFARI_26,
+  rowKeyGetter,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -186,6 +187,7 @@ export function TableNG(props: TableNGProps) {
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
+  const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   // vt scrollbar accounting for column auto-sizing
 
@@ -260,12 +262,8 @@ export function TableNG(props: TableNGProps) {
       gridRef.current.scrollToCell({
         rowIdx,
       });
-      // Select the first cell so there's something visually different about the row
-      gridRef.current.selectCell({
-        rowIdx,
-        idx: 0,
-      });
       setScrollToIndex(undefined);
+      setSelectedRows(new Set<string>([rowKeyGetter(sortedRows[rowIdx])]));
     }
   }, [scrollToIndex, sortedRows]);
 
@@ -829,12 +827,16 @@ export function TableNG(props: TableNGProps) {
 
   let rendered = (
     <>
-      <DataGrid<TableRow, TableSummaryRow>
+      <DataGrid<TableRow, TableSummaryRow, string>
         {...commonDataGridProps}
         ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
+        rowKeyGetter={rowKeyGetter}
+        isRowSelectionDisabled={() => initialRowIndex !== undefined}
+        selectedRows={selectedRows}
+        onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
