@@ -68,7 +68,7 @@ func TranslateRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.
 	subjectKind := string(rb.Spec.Subject.Kind)
 	subjectName := rb.Spec.Subject.Name
 
-	var tuples []*openfgav1.TupleKey
+	tuples := make([]*openfgav1.TupleKey, 0, len(rb.Spec.RoleRefs))
 	for _, roleRef := range rb.Spec.RoleRefs {
 		tuple, err := server.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
 		if err != nil {
@@ -93,7 +93,7 @@ func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*ope
 		Name:     rp.Spec.Resource.Name,
 	}
 
-	var tuples []*openfgav1.TupleKey
+	tuples := make([]*openfgav1.TupleKey, 0, len(rp.Spec.Permissions))
 	for _, perm := range rp.Spec.Permissions {
 		tuple, err := server.GetResourcePermissionWriteTuple(&authzextv1.CreatePermissionOperation{
 			Resource: resource,
