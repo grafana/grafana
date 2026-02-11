@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,8 +23,6 @@ import (
 )
 
 func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("use request time range when time selection is enabled, dashboard time range when disabled", func(t *testing.T) {
 		dash := dashboards.NewDashboard("test")
 		grafanaAnnotation := DashAnnotation{
