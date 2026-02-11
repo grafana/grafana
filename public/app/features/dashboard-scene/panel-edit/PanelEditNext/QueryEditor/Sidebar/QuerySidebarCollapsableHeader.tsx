@@ -38,5 +38,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   queryStackCardsContainer: css({
     paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(2.5), // Prevents clipping of the last card's absolutely-positioned AddCardButton
   }),
 });
