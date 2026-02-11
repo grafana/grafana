@@ -41,6 +41,7 @@ export interface DataSourceSettingsK8s {
   apiVersion: string;
   metadata: K8sMetadata;
   spec: DatasourceInstanceK8sSpec;
+  secure?: Record<string, Record<string, string>>;
 }
 
 export const getDataSourceK8sGroup = (uid: string): string => {
@@ -81,6 +82,11 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     readOnly: false,
     withCredentials: false,
   };
+  if (dsK8sSettings.secure) {
+    for (let k of Object.keys(dsK8sSettings.secure)) {
+      dsSettings.secureJsonFields[k] = true;
+    }
+  }
   return dsSettings;
 };
 
