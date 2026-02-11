@@ -25,6 +25,7 @@ When contributing code, prioritize:
 - Writing tests for new functionality
 - Keeping changes focused and minimal (avoid over-engineering)
 - Security (prevent XSS, SQL injection, command injection, etc.)
+- We need to create seperate pull requests for frontend and backend changes since they are deployed at different frequences.
 
 ## Common Development Commands
 
