@@ -309,12 +309,16 @@ func deleteInhibitionRule(rev *legacy_storage.ConfigRevision, rule models.Inhibi
 // Both UID and Version are calculated from the rule's content since inhibition rules
 // have no stable name identifier
 func newInhibitionRule(ir *config.InhibitRule, uid string, prov models.Provenance) models.InhibitionRule {
+	origin := models.ResourceOriginGrafana
+	if prov == models.ProvenanceConvertedPrometheus {
+		origin = models.ResourceOriginImported
+	}
 	return models.InhibitionRule{
 		InhibitRule: *ir,
 		UID:         uid,
 		Version:     uid,
 		Provenance:  prov,
-		Origin:      models.ResourceOriginGrafana,
+		Origin:      origin,
 	}
 }
 
