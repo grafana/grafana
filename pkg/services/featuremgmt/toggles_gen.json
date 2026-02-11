@@ -1052,15 +1052,15 @@
     {
       "metadata": {
         "name": "cloudWatchBatchQueries",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770245027852",
         "creationTimestamp": "2023-10-20T19:09:41Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-04 22:43:47.852872 +0000 UTC"
         }
       },
       "spec": {
         "description": "Runs CloudWatch metrics queries as separate batches",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
         "expression": "false"
       }
@@ -1717,6 +1717,23 @@
     },
     {
       "metadata": {
+        "name": "excludeRedundantManagedPermissions",
+        "resourceVersion": "1770369876002",
+        "creationTimestamp": "2026-02-06T09:11:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-06 09:24:36.002647042 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "experimentRecentlyViewedDashboards",
         "resourceVersion": "1768214542023",
         "creationTimestamp": "2026-01-13T15:22:20Z"
@@ -1853,6 +1870,20 @@
         "description": "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
         "stage": "preview",
         "codeowner": "@grafana/app-o11y",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "faroSessionReplay",
+        "resourceVersion": "1770723918514",
+        "creationTimestamp": "2026-02-10T11:45:18Z"
+      },
+      "spec": {
+        "description": "Enable Faro session replay for Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/session-replay",
         "frontend": true,
         "expression": "false"
       }
@@ -4896,6 +4927,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizPresets",
+        "resourceVersion": "1770650117614",
+        "creationTimestamp": "2026-02-09T15:15:17Z"
+      },
+      "spec": {
+        "description": "Enable visualization presets",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

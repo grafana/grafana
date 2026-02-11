@@ -8,7 +8,6 @@ import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
@@ -20,7 +19,6 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-import { useUserActivity } from './useUserActivity';
 
 interface Props {
   dashboard: DashboardScene;
@@ -59,8 +57,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-  const isUserActive = useUserActivity(10000);
-  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -86,7 +82,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
-    isHidden: !isUserActive || (!isEditing && isSmallScreen),
   });
 
   /**
@@ -132,7 +127,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={cx(styles.scrollContainer, !isUserActive && styles.scrollContainerNoSidebar)}
+          className={styles.scrollContainer}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
@@ -219,12 +214,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flex: '1 1 0',
       overflow: 'hidden',
 
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: theme.transitions.create('padding', {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
-
       [theme.breakpoints.down('sm')]: {
         flex: 1,
 
@@ -247,12 +236,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
-
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: theme.transitions.create('padding', {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
     }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),

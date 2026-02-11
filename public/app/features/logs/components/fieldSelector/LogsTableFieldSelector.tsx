@@ -4,16 +4,14 @@ import { DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
+import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 
-import { FieldNameMetaStore } from '../../../explore/Logs/LogsTableWrap';
-import { SETTING_KEY_ROOT } from '../../../explore/Logs/utils/logs';
-import { LogListModel } from '../panel/processing';
-
-import { FIELD_SELECTOR_DEFAULT_WIDTH, FieldSelector, FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH, FieldSelector, FieldWithStats, getDefaultFieldSelectorWidth } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
+import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';
 import { logsFieldSelectorWrapperStyles } from './styles';
-import { getSuggestedFields } from './suggestedFields';
 
 /**
  * FieldSelector wrapper for the LogsTable visualization.
@@ -22,29 +20,29 @@ interface LogsTableFieldSelectorProps {
   columnsWithMeta: FieldNameMetaStore;
   clear(): void;
   dataFrames: DataFrame[];
-  logs: LogListModel[];
   reorder(columns: string[]): void;
-  setSidebarWidth(width: number): void;
-  sidebarWidth: number;
+  setWidth(width: number): void;
+  width: number;
   toggle(key: string): void;
+  getSuggestedFields?: (dataFrame: DataFrame, columns: string[], defaultColumns: string[]) => FieldWithStats[];
 }
 
 export const LogsTableFieldSelector = ({
   columnsWithMeta,
   clear: clearProp,
   dataFrames,
-  logs,
   reorder,
-  setSidebarWidth,
-  sidebarWidth,
+  setWidth,
+  width,
   toggle,
+  getSuggestedFields = getSuggestedFieldsFromTable,
 }: LogsTableFieldSelectorProps) => {
   const setSidebarWidthWrapper = useCallback(
     (width: number) => {
-      setSidebarWidth(width);
+      setWidth(width);
       store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, width);
     },
-    [setSidebarWidth]
+    [setWidth]
   );
 
   const collapse = useCallback(() => {
@@ -56,7 +54,7 @@ export const LogsTableFieldSelector = ({
 
   const expand = useCallback(() => {
     const width = getFieldSelectorWidth(SETTING_KEY_ROOT);
-    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? FIELD_SELECTOR_DEFAULT_WIDTH : width);
+    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? getDefaultFieldSelectorWidth() : width);
     reportInteraction('logs_field_selector_expand_clicked', {
       mode: 'table',
     });
@@ -96,13 +94,12 @@ export const LogsTableFieldSelector = ({
     [columnsWithMeta]
   );
 
-  const suggestedFields = useMemo(
-    () => getSuggestedFields(logs, displayedColumns, defaultColumns),
-    [defaultColumns, displayedColumns, logs]
-  );
+  const suggestedFields = useMemo(() => {
+    return getSuggestedFields(dataFrames[0], displayedColumns, defaultColumns);
+  }, [dataFrames, defaultColumns, displayedColumns, getSuggestedFields]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
-  return sidebarWidth > FIELD_SELECTOR_MIN_WIDTH * 2 ? (
+  return width > FIELD_SELECTOR_MIN_WIDTH * 2 ? (
     <FieldSelector
       activeFields={displayedColumns}
       clear={clear}

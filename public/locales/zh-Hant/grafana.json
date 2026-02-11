@@ -4880,7 +4880,6 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9478,6 +9477,10 @@
     "secret-form-field": {
       "reset": "重設"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "無法載入選項",
       "loading": "正在載入選項…",
@@ -10485,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "取消換行",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "換行"
     },
     "logs-navigation": {
@@ -10511,6 +10520,7 @@
     "name-show-controls": "顯示控制項",
     "name-time": "顯示時間戳記",
     "name-unique-labels": "唯一標籤",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "換行",
     "order-options": {
       "label-newest-first": "最新排前",
@@ -10611,6 +10621,16 @@
       "message-same-name-current-folder": "目前資料夾中已存在同名的儀表板或資料夾",
       "message-same-name-general": "根資料夾中已存在同名的資料夾或儀表板"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到選項"
@@ -11450,9 +11470,6 @@
     "noOptionsMessage-no-organizations-found": "未找到組織",
     "select-placeholder": "選取組織"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "編輯標題"
@@ -12080,7 +12097,6 @@
       "placeholder-my-repository-connection": "我的儲存庫連線",
       "retry-action": "",
       "text-loading-resource-information": "正在載入資源資訊…",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} 個儀表板",
@@ -12598,12 +12614,9 @@
       "error-starting-job": "開始作業時發生錯誤"
     },
     "sync-repository": {
-      "body-edit-configuration": "編輯設定",
-      "button-edit": "編輯",
       "error-pulling-resources": "拉取資源時發生錯誤",
       "pull": "拉取",
       "success-pull-started": "拉取已開始",
-      "title-pull-not-enabled": "拉取未啟用",
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
@@ -12612,7 +12625,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "然後按一下",
@@ -12649,8 +12663,6 @@
       "button-cancelling": "",
       "button-next": "結束",
       "button-start": "開始同步處理",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12855,6 +12867,9 @@
       "query-name-div-title-edit-query-name": "編輯查詢名稱"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "（追蹤 ID：{{traceId}}）"
     },
     "query-group": {
@@ -12973,6 +12988,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14177,6 +14197,9 @@
     "traces-panel": {
       "no-data-found-in-response": "回應中找不到資料"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {
