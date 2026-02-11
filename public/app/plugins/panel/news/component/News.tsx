@@ -40,6 +40,7 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
           {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
         <a
+          id={titleId}
           className={cx(styles.link, styles.title)}
           href={textUtil.sanitizeUrl(newsItem.link)}
           target="_blank"
