@@ -6,5 +6,4 @@ export interface VizTypeChangeDetails {
   fieldConfig?: FieldConfigSource;
   withModKey?: boolean;
   fromSuggestions?: boolean;
-  isAutoSelected?: boolean;
 }

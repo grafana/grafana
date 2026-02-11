@@ -153,7 +153,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
           fieldConfig: suggestion.fieldConfig,
           withModKey: !shouldCloseVizPicker,
           fromSuggestions: true,
-          isAutoSelected,
         },
         undefined
       );
@@ -175,7 +174,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
       return;
     }
-  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, applySuggestion]);
+  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
   if (loading || !data) {
     return (
