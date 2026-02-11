@@ -52,7 +52,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       const panelId = getPanelIdForVizPanel(vizPanel);
-      DashboardInteractions.panelActionClicked('view', panelId, 'panel');
+      DashboardInteractions.panelActionClicked('view', panelId, 'keyboard');
       if (scene.state.viewPanel) {
         locationService.partial({ viewPanel: undefined });
       } else {
@@ -215,7 +215,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         const panelId = getPanelIdForVizPanel(vizPanel);
-        DashboardInteractions.panelActionClicked('edit', panelId, 'panel');
+        DashboardInteractions.panelActionClicked('edit', panelId, 'keyboard');
         const sceneRoot = vizPanel.getRoot();
         if (sceneRoot instanceof DashboardScene) {
           if (scene.state.editPanel) {
@@ -250,7 +250,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
         if (scene.state.isEditing) {
           const panelId = getPanelIdForVizPanel(vizPanel);
-          DashboardInteractions.panelActionClicked('delete', panelId, 'panel');
+          DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
           onRemovePanel(scene, vizPanel);
         }
       }),
@@ -260,7 +260,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p d',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'panel');
+        DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
         if (scene.state.isEditing) {
           scene.duplicatePanel(vizPanel);
         }
