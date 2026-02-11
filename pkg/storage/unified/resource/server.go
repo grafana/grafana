@@ -1061,7 +1061,6 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
-//nolint:gocyclo
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
@@ -1076,8 +1075,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
+	if _, ok := claims.AuthInfoFrom(ctx); !ok {
 		return &resourcepb.ListResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "no user found in context",
@@ -1100,8 +1098,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
-	pageBytes := 0
-	rsp := &resourcepb.ListResponse{}
 
 	req = filterFieldSelectors(req)
 	if s.useFieldSelectorSearch(req) {
@@ -1114,30 +1110,24 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		return s.listWithFieldSelectors(ctx, req)
 	}
 
-	key := req.Options.Key
-
-	// Determine the verb for authorization
-	verb := utils.VerbGet
-	if req.Source == resourcepb.ListRequest_TRASH {
-		verb = utils.VerbSetPermissions // Basically Admin for trash
+	switch req.Source {
+	case resourcepb.ListRequest_STORE:
+		return s.listAuthorized(ctx, req, s.backend.ListIterator)
+	case resourcepb.ListRequest_HISTORY:
+		return s.listAuthorized(ctx, req, s.backend.ListHistory)
+	case resourcepb.ListRequest_TRASH:
+		return s.listFromTrash(ctx, req)
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
 	}
+}
 
-	// For trash, also determine if user is admin upfront so we can combine
-	// with "user deleted the object" check per item.
-	var isTrashAdmin bool
-	if req.Source == resourcepb.ListRequest_TRASH {
-		adminResp, err := s.access.Check(ctx, user, claims.CheckRequest{
-			Verb:      utils.VerbSetPermissions,
-			Group:     key.Group,
-			Resource:  key.Resource,
-			Namespace: key.Namespace,
-		}, "")
-		if err != nil {
-			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-		}
-		isTrashAdmin = adminResp.Allowed
-	}
+// listBackendFunc is the signature shared by ListIterator and ListHistory.
+type listBackendFunc func(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
+// listAuthorized lists resources using batch authorization via FilterAuthorized.
+// The backendList parameter selects the backend method (ListIterator or ListHistory).
+func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest, backendList listBackendFunc) (*resourcepb.ListResponse, error) {
 	// candidateItem holds metadata from the ListIterator for batch authorization.
 	type candidateItem struct {
 		name            string
@@ -1147,10 +1137,15 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		continueToken   string
 	}
 
-	var nextToken string
+	key := req.Options.Key
+	rsp := &resourcepb.ListResponse{}
+	var (
+		pageBytes int
+		nextToken string
+	)
 	maxPageBytes := s.maxPageSizeBytes
 
-	iterFunc := func(iter ListIterator) error {
+	rv, err := backendList(ctx, req, func(iter ListIterator) error {
 		// Convert ListIterator to iter.Seq for FilterAuthorized
 		candidates := func(yield func(candidateItem) bool) {
 			for iter.Next() {
@@ -1173,7 +1168,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			return authz.BatchCheckItem{
 				Name:      c.name,
 				Folder:    c.folder,
-				Verb:      verb,
+				Verb:      utils.VerbGet,
 				Group:     key.Group,
 				Resource:  key.Resource,
 				Namespace: key.Namespace,
@@ -1184,14 +1179,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn, authz.WithTracer(tracer)) {
 			if err != nil {
 				return err
-			}
-
-			// Trash items need an additional check: provisioned objects excluded,
-			// and either the user deleted the object or the user is admin.
-			if req.Source == resourcepb.ListRequest_TRASH {
-				if !s.isTrashItemAuthorizedByValue(ctx, item.value, isTrashAdmin) {
-					continue
-				}
 			}
 
 			// If the page is already full, this extra authorized item confirms
@@ -1210,21 +1197,79 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 
 		return iter.Error()
+	})
+
+	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+}
+
+// listFromTrash lists deleted resources. Trash uses a different authorization
+// model: the user must be admin OR the user who deleted the object.
+func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ListResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}}, nil
 	}
 
+	key := req.Options.Key
+
+	// Determine if user is admin upfront so we can combine with
+	// "user deleted the object" check per item.
+	adminResp, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbSetPermissions,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	}, "")
+	if err != nil {
+		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+	}
+	isTrashAdmin := adminResp.Allowed
+
+	rsp := &resourcepb.ListResponse{}
 	var (
-		rv  int64
-		err error
+		pageBytes int
+		nextToken string
 	)
-	switch req.Source {
-	case resourcepb.ListRequest_STORE:
-		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
-	case resourcepb.ListRequest_HISTORY, resourcepb.ListRequest_TRASH:
-		rv, err = s.backend.ListHistory(ctx, req, iterFunc)
-	default:
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
-	}
+	maxPageBytes := s.maxPageSizeBytes
 
+	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+
+			if !s.isTrashItemAuthorizedByValue(ctx, iter.Value(), isTrashAdmin) {
+				continue
+			}
+
+			item := &resourcepb.ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
+			}
+
+			pageBytes += len(item.Value)
+			rsp.Items = append(rsp.Items, item)
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				t := iter.ContinueToken()
+				if iter.Next() {
+					nextToken = t
+				}
+				return iter.Error()
+			}
+		}
+		return iter.Error()
+	})
+
+	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+}
+
+// finalizeListResponse validates the resource version, sets pagination token,
+// and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
+func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -1237,9 +1282,10 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 		return rsp, nil
 	}
+
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
-	gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+	gr := key.Group + "/" + key.Resource
 	if s.storageMetrics != nil {
 		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	}
