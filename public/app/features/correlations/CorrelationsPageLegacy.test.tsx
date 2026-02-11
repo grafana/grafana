@@ -1,4 +1,4 @@
-import { waitFor, within, Matcher, getByRole } from '@testing-library/react';
+import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
 import { openMenu } from 'react-select-event';
@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
-import { render, screen } from 'test/test-utils';
 
 import { SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -41,7 +40,7 @@ setAppEvents(appEvents);
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
   correlations: Correlation[] = []
-): Promise<any> => {
+) => {
   const backend = {
     delete: async (url: string) => {
       const matches = url.match(
@@ -111,71 +110,79 @@ const renderWithContext = async (
 
   setDataSourceSrv(dsServer);
 
-  const renderResult = render(<CorrelationsPageLegacy />, {
-    store: configureStore({}),
-    grafanaContext: grafanaContext,
-    queries: {
-      /**
-       * Gets all the rows in the table having the given text in the given column
-       */
-      queryRowsByCellValue: (
-        container: HTMLElement,
-        columnName: Matcher,
-        textValue: Matcher
-      ): HTMLTableRowElement[] => {
-        const table = within(container).getByRole('table');
-        const headers = within(table).getAllByRole('columnheader');
-        const headerIndex = headers.findIndex((h) => {
-          return within(h).queryByText(columnName);
-        });
-
-        // the first rowgroup is the header
-        const tableBody = within(table).getAllByRole('rowgroup')[1];
-
-        return within(tableBody)
-          .getAllByRole<HTMLTableRowElement>('row')
-          .filter((row) => {
-            const rowCells = within(row).getAllByRole('cell');
-            const cell = rowCells[headerIndex];
-            return within(cell).queryByText(textValue);
+  /**
+   * TestProvider cannot be deprecated yet - the render function in test/test-utils can handle
+   * the store and grafana context fine, but the custom queries we use here is something not extended yet
+   * so having them passed to the render function will not work.
+   */
+  const renderResult = render(
+    <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
+      <CorrelationsPageLegacy />
+    </TestProvider>,
+    {
+      queries: {
+        /**
+         * Gets all the rows in the table having the given text in the given column
+         */
+        queryRowsByCellValue: (
+          container: HTMLElement,
+          columnName: Matcher,
+          textValue: Matcher
+        ): HTMLTableRowElement[] => {
+          const table = within(container).getByRole('table');
+          const headers = within(table).getAllByRole('columnheader');
+          const headerIndex = headers.findIndex((h) => {
+            return within(h).queryByText(columnName);
           });
-      },
-      /**
-       * Gets all the cells in the table for the given column name
-       */
-      queryCellsByColumnName: (container: HTMLElement, columnName: Matcher) => {
-        const table = within(container).getByRole('table');
-        const headers = within(table).getAllByRole('columnheader');
-        const headerIndex = headers.findIndex((h) => {
-          return within(h).queryByText(columnName);
-        });
-        const tbody = table.querySelector('tbody');
-        if (!tbody) {
-          return [];
-        }
-        return within(tbody)
-          .getAllByRole('row')
-          .map((r) => {
-            const cells = within(r).getAllByRole<HTMLTableCellElement>('cell');
-            return cells[headerIndex];
+
+          // the first rowgroup is the header
+          const tableBody = within(table).getAllByRole('rowgroup')[1];
+
+          return within(tableBody)
+            .getAllByRole<HTMLTableRowElement>('row')
+            .filter((row) => {
+              const rowCells = within(row).getAllByRole('cell');
+              const cell = rowCells[headerIndex];
+              return within(cell).queryByText(textValue);
+            });
+        },
+        /**
+         * Gets all the cells in the table for the given column name
+         */
+        queryCellsByColumnName: (container: HTMLElement, columnName: Matcher) => {
+          const table = within(container).getByRole('table');
+          const headers = within(table).getAllByRole('columnheader');
+          const headerIndex = headers.findIndex((h) => {
+            return within(h).queryByText(columnName);
           });
+          const tbody = table.querySelector('tbody');
+          if (!tbody) {
+            return [];
+          }
+          return within(tbody)
+            .getAllByRole('row')
+            .map((r) => {
+              const cells = within(r).getAllByRole<HTMLTableCellElement>('cell');
+              return cells[headerIndex];
+            });
+        },
+        /**
+         * Gets the table header cell matching the given name
+         */
+        getHeaderByName: (container: HTMLElement, columnName: Matcher): HTMLTableCellElement => {
+          const table = within(container).getByRole('table');
+          const headers = within(table).getAllByRole<HTMLTableCellElement>('columnheader');
+          const header = headers.find((h) => {
+            return within(h).queryByText(columnName);
+          });
+          if (!header) {
+            throw new Error(`Could not find header with name ${columnName}`);
+          }
+          return header;
+        },
       },
-      /**
-       * Gets the table header cell matching the given name
-       */
-      getHeaderByName: (container: HTMLElement, columnName: Matcher): HTMLTableCellElement => {
-        const table = within(container).getByRole('table');
-        const headers = within(table).getAllByRole<HTMLTableCellElement>('columnheader');
-        const header = headers.find((h) => {
-          return within(h).queryByText(columnName);
-        });
-        if (!header) {
-          throw new Error(`Could not find header with name ${columnName}`);
-        }
-        return header;
-      },
-    },
-  });
+    }
+  );
 
   await waitFor(() => {
     expect(screen.queryByText('Loading')).not.toBeInTheDocument();
