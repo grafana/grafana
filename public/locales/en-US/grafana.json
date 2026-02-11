@@ -673,7 +673,8 @@
       "message": {
         "required": "Required."
       },
-      "validate-name": "Name is required"
+      "validate-name": "Name is required",
+      "validate-name-duplicate": "A notification policy with this name already exists"
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",

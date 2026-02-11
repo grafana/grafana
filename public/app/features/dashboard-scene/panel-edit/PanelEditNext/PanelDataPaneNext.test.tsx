@@ -260,6 +260,29 @@ describe('PanelDataPaneNext', () => {
       mockPanel.state.$data = mockTransformer;
     });
 
+    describe('reorderTransformations', () => {
+      it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        const newOrder: DataTransformerConfig[] = [
+          { id: 'reduce', options: {} },
+          { id: 'organize', options: {} },
+        ];
+
+        dataPane.reorderTransformations(newOrder);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({ transformations: newOrder });
+        expect(mockTransformer.reprocessTransformations).toHaveBeenCalled();
+      });
+
+      it('should not throw when $data is not SceneDataTransformer', () => {
+        mockPanel.state.$data = undefined;
+        const newOrder: DataTransformerConfig[] = [{ id: 'reduce', options: {} }];
+
+        expect(() => dataPane.reorderTransformations(newOrder)).not.toThrow();
+      });
+    });
+
     describe('deleteTransformation', () => {
       it('should delete a transformation', () => {
         dataPane.deleteTransformation(1);
