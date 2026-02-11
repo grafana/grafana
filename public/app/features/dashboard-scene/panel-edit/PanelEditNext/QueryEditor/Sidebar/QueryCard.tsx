@@ -1,9 +1,9 @@
 import { DataQuery } from '@grafana/schema';
-import { Text } from '@grafana/ui';
+import { Icon, Text } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
-import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
@@ -28,7 +28,13 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       isHidden={!!query.hide}
       showAddButton={true}
     >
-      <DataSourceLogo dataSource={queryDsSettings} />
+      {editorType === QueryEditorType.Expression && (
+        <Icon
+          name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].icon}
+          color={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].color}
+        />
+      )}
+      {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} />}
       <Text weight="light" variant="code" color="secondary">
         {query.refId}
       </Text>

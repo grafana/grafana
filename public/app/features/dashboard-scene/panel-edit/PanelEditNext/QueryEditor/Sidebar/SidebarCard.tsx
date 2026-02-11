@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { QueryEditorTypeConfig } from '../../constants';
 
@@ -58,13 +58,8 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={styles.cardHeader}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Icon name={config.icon} />
-            <Text weight="light" variant="body">
-              {typeText}
-            </Text>
-          </Stack>
+        <div className={styles.cardContent}>
+          {children}
           <div className={styles.hoverActions}>
             <HoverActions
               onDuplicate={onDuplicate}
@@ -74,7 +69,6 @@ export const SidebarCard = ({
             />
           </div>
         </div>
-        <div className={styles.cardContent}>{children}</div>
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
@@ -99,8 +93,9 @@ function getStyles(
   return {
     wrapper: css({
       position: 'relative',
-      marginInline: theme.spacing(2),
+      marginInlineStart: theme.spacing(2),
 
+      // TODO: changing the spacing of the stack in DraggableList causes the hover-zone to not work as well
       // The hover-zone pseudo-elements and add-button visibility rules are
       // only needed when the card has an AddCardButton.
       ...(hasAddButton && {
@@ -142,12 +137,13 @@ function getStyles(
       display: 'flex',
       flexDirection: 'column',
       width: '100%',
-      background: isSelected ? theme.colors.action.selected : theme.colors.background.secondary,
-      border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      background: isSelected ? '#314158' : theme.colors.background.secondary,
+      // border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
+      borderLeft: `1px solid ${config.color}`,
+      // borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
       padding: 0,
-      boxShadow: isSelected ? `0 0 9px 0 rgba(58, 139, 255, 0.3)` : 'none',
+      // boxShadow: isSelected ? `0 0 9px 0 rgba(58, 139, 255, 0.3)` : 'none',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color'], {
@@ -156,10 +152,8 @@ function getStyles(
       },
 
       '&:hover': {
-        background: isSelected
-          ? theme.colors.action.selected
-          : theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-        borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
+        background: '#1D293D',
+        // borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
       },
 
       [`&:hover .${hoverActions}`]: {
@@ -190,7 +184,7 @@ function getStyles(
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(1),
+      padding: `4px 8px`,
     }),
     hidden: css({
       opacity: 0.6,
