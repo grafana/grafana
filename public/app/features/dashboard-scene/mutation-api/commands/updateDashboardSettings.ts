@@ -141,10 +141,6 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
 
       return {
         success: true,
-        inverseMutation: {
-          type: 'UPDATE_DASHBOARD_SETTINGS',
-          payload: previousState,
-        },
         changes,
       };
     } catch (error) {

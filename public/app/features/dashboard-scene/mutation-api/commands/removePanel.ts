@@ -51,10 +51,6 @@ export const removePanelCommand: MutationCommand<RemovePanelPayload> = {
 
       return {
         success: true,
-        inverseMutation: {
-          type: 'ADD_PANEL',
-          payload: { panel: panelKind },
-        },
         changes,
       };
     } catch (error) {

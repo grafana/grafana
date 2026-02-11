@@ -136,20 +136,6 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
       return {
         success: true,
-        inverseMutation: {
-          type: 'UPDATE_PANEL',
-          payload: {
-            elementName,
-            panelId,
-            updates: {
-              title: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.title : undefined,
-              description: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.description : undefined,
-              transparent: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.transparent : undefined,
-              vizConfig: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.vizConfig : undefined,
-              data: previousPanelKind.kind === 'Panel' ? previousPanelKind.spec.data : undefined,
-            },
-          },
-        },
         changes,
       };
     } catch (error) {

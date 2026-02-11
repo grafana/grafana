@@ -73,10 +73,6 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       return {
         success: true,
         data: { layoutItem },
-        inverseMutation: {
-          type: 'MOVE_PANEL',
-          payload: { elementName, position: previousPosition },
-        },
         changes,
       };
     } catch (error) {

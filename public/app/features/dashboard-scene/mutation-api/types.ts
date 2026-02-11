@@ -25,13 +25,9 @@ export interface Mutation {
 export type MutationChange = DashboardMutationAPI.MutationChange;
 
 /**
- * Internal MutationResult extends the public type with undo support.
- * The `inverseMutation` field is not exposed to plugin consumers.
+ * Internal MutationResult re-exports the public type for internal use.
  */
-export interface MutationResult extends DashboardMutationAPI.MutationResult {
-  /** Mutation to apply to undo this change */
-  inverseMutation?: Mutation;
-}
+export type MutationResult = DashboardMutationAPI.MutationResult;
 
 export interface MutationTransaction {
   id: string;
