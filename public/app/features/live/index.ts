@@ -5,13 +5,12 @@ import { contextSrv } from '../../core/services/context_srv';
 import { loadUrlToken } from '../../core/utils/urlToken';
 
 import { CentrifugeService } from './centrifuge/service';
-import { ManagedChannels } from './info';
 import { GrafanaLiveService } from './live';
 
 export async function initGrafanaLive() {
   // Select the namespace based on backend capabilities
   // This can be removed after the slow RRC has been updated everywhere
-  const info = await getBackendSrv().get<ManagedChannels>('api/live/list');
+  const info = await getBackendSrv().get('api/live/list');
 
   const centrifugeServiceDeps = {
     appUrl: `${window.location.origin}${config.appSubUrl}`,
