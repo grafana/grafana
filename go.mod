@@ -675,26 +675,26 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0
-	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana/apps/alerting/historian v0.0.0
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0
-	github.com/grafana/grafana/apps/alerting/rules v0.0.0
-	github.com/grafana/grafana/apps/annotation v0.0.0
-	github.com/grafana/grafana/apps/collections v0.0.0
-	github.com/grafana/grafana/apps/correlations v0.0.0
-	github.com/grafana/grafana/apps/dashboard v0.0.0
-	github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260127080522-461c3f3f9fb6
-	github.com/grafana/grafana/apps/folder v0.0.0
-	github.com/grafana/grafana/apps/iam v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana/apps/live v0.0.0
-	github.com/grafana/grafana/apps/logsdrilldown v0.0.0
-	github.com/grafana/grafana/apps/playlist v0.0.0
-	github.com/grafana/grafana/apps/plugins v0.0.0
-	github.com/grafana/grafana/apps/preferences v0.0.0
-	github.com/grafana/grafana/apps/provisioning v0.0.0
-	github.com/grafana/grafana/apps/secret v0.0.0
-	github.com/grafana/grafana/apps/shorturl v0.0.0
+	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-00010101000000-000000000000 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/historian v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/annotation v0.0.0 // @grafana/grafana-backend-services-squad
+	github.com/grafana/grafana/apps/collections v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
+	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
+	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260127080522-461c3f3f9fb6 // @grafana/sharing-squad
+	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/iam v0.0.0-00010101000000-000000000000 // @grafana/access-squad
+	github.com/grafana/grafana/apps/live v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs
+	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
+	github.com/grafana/grafana/apps/provisioning v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/secret v0.0.0 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/apps/shorturl v0.0.0 // @grafana/sharing-squad
 )
 
 require (
