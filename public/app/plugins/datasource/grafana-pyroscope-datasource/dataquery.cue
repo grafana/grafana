@@ -46,6 +46,11 @@ composableKinds: DataQuery: {
 				annotations?: bool
 				// If set to true, exemplars will be requested
 				includeExemplars: bool | *false
+				// If set to true, heatmap data will be requested
+				includeHeatmap: bool | *false
+				// Specifies the type of heatmap query
+				heatmapType: #HeatmapQueryType | *"individual"
+				#HeatmapQueryType: "individual" | "span" @cuetsy(kind="type")
 			}
 		}]
 		lenses: []

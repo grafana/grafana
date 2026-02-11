@@ -133,6 +133,8 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
               uid: profilesDataSourceSettings.uid,
             },
             includeExemplars: false,
+            includeHeatmap: false,
+            heatmapType: 'individual' as const,
           },
         ],
       };

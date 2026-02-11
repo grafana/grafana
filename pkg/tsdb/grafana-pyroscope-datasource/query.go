@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/heatmap"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
 
@@ -41,6 +43,7 @@ const (
 	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 
 	exemplarsFeatureToggle = "profilesExemplars"
+	heatmapFeatureToggle   = "profilesHeatmap"
 )
 
 var identityTransformation = func(value float64) float64 { return value }
@@ -84,6 +87,20 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
+
+			// Heatmap handling
+			if qm.IncludeHeatmap && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(heatmapFeatureToggle) {
+				stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
+				frames, err := d.queryHeatmap(gCtx, span, profileTypeId, labelSelector, query, qm, stepDuration)
+				if err != nil {
+					return err
+				}
+				responseMutex.Lock()
+				defer responseMutex.Unlock()
+				response.Frames = append(response.Frames, frames...)
+				return nil
+			}
+
 			exemplarType := typesv1.ExemplarType_EXEMPLAR_TYPE_NONE
 			if qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle) {
 				exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_INDIVIDUAL
@@ -107,6 +124,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
+			defer responseMutex.Unlock()
 			withAnnotations := qm.Annotations != nil && *qm.Annotations
 			stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
 			frames, err := seriesToDataFrames(seriesResp, withAnnotations, stepDuration, profileTypeId)
@@ -117,7 +135,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				return err
 			}
 			response.Frames = append(response.Frames, frames...)
-			responseMutex.Unlock()
+
 			return nil
 		})
 	}
@@ -198,6 +216,78 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	}
 
 	return response
+}
+
+// queryHeatmap handles heatmap query execution and frame construction.
+func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span, profileTypeId string, labelSelector string, query backend.DataQuery, qm queryModel, stepDuration float64) ([]*data.Frame, error) {
+	heatmapType := querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_INDIVIDUAL
+	if qm.HeatmapType == "span" {
+		heatmapType = querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN
+	}
+
+	includeExemplars := qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle)
+
+	heatmapResp, err := d.client.GetHeatmap(
+		ctx,
+		profileTypeId,
+		labelSelector,
+		query.TimeRange.From.UnixMilli(),
+		query.TimeRange.To.UnixMilli(),
+		qm.GroupBy,
+		stepDuration,
+		heatmapType,
+		qm.Limit,
+		includeExemplars,
+	)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		logger.Error("Querying SelectHeatmap()", "err", err, "function", logEntrypoint())
+		return nil, err
+	}
+
+	exemplarType := exemplar.ExemplarTypeProfile
+	if heatmapType == querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN {
+		exemplarType = exemplar.ExemplarTypeSpan
+	}
+
+	var frames []*data.Frame
+	for _, series := range heatmapResp.Series {
+		labels := make(map[string]string)
+		for _, label := range series.Labels {
+			labels[label.Name] = label.Value
+		}
+		points := make([]*heatmap.Point, len(series.Points))
+		exemplars := []*exemplar.Exemplar{}
+		for i, p := range series.Points {
+			points[i] = &heatmap.Point{
+				Timestamp: p.Timestamp,
+				YMin:      p.YMin,
+				Counts:    p.Counts,
+			}
+			for _, e := range p.Exemplars {
+				exemplarLabels := make(map[string]string)
+				for _, l := range e.Labels {
+					exemplarLabels[l.Name] = l.Value
+				}
+				exemplars = append(exemplars, &exemplar.Exemplar{
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
+					Value:     float64(e.Value),
+					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
+				})
+			}
+		}
+		heatmapFrame := heatmap.CreateHeatmapFrame(labels, points, heatmapResp.Units, stepDuration)
+		frames = append(frames, heatmapFrame)
+
+		if len(exemplars) > 0 {
+			exemplarFrame := exemplar.CreateExemplarFrame(labels, exemplars, exemplarType, heatmapResp.Units)
+			frames = append(frames, exemplarFrame)
+		}
+	}
+	return frames, nil
 }
 
 // responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
@@ -553,10 +643,17 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 				}
 			}
 			for _, e := range point.Exemplars {
+				// Convert exemplar labels from slice to map
+				exemplarLabels := make(map[string]string)
+				for _, l := range e.Labels {
+					exemplarLabels[l.Name] = l.Value
+				}
 				exemplars = append(exemplars, &exemplar.Exemplar{
-					Id:        e.Id,
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
 					Value:     transformation(float64(e.Value)),
 					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
 				})
 			}
 		}
@@ -565,7 +662,8 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 		frames = append(frames, frame)
 
 		if len(exemplars) > 0 {
-			frame := exemplar.CreateExemplarFrame(labels, exemplars)
+			// Series queries always use individual profiles
+			frame := exemplar.CreateExemplarFrame(labels, exemplars, exemplar.ExemplarTypeProfile, displayUnit)
 			frames = append(frames, frame)
 		}
 	}

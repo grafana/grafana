@@ -108,6 +108,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     nodeGraphFrames: [],
     customFrames: [],
     flameGraphFrames: [],
+    heatmapFrames: [],
     rawPrometheusFrames: [],
     rawPrometheusResult: null,
   };

@@ -55,9 +55,11 @@ type Point struct {
 }
 
 type Exemplar struct {
-	Id        string
-	Value     uint64
+	ProfileId string
+	SpanId    string
+	Value     int64
 	Timestamp int64
+	Labels    []*LabelPair
 }
 
 type ProfileResponse struct {
@@ -69,6 +71,23 @@ type SeriesResponse struct {
 	Series []*Series
 	Units  string
 	Label  string
+}
+
+type HeatmapPoint struct {
+	Timestamp int64
+	YMin      []float64
+	Counts    []int64
+	Exemplars []*Exemplar
+}
+
+type HeatmapSeries struct {
+	Labels []*LabelPair
+	Points []*HeatmapPoint
+}
+
+type HeatmapResponse struct {
+	Series []*HeatmapSeries
+	Units  string
 }
 
 type PyroscopeClient struct {
@@ -150,10 +169,20 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 			if len(p.Exemplars) > 0 {
 				points[i].Exemplars = make([]*Exemplar, len(p.Exemplars))
 				for j, e := range p.Exemplars {
+					// Convert API labels to our LabelPair type
+					exemplarLabels := make([]*LabelPair, len(e.Labels))
+					for k, l := range e.Labels {
+						exemplarLabels[k] = &LabelPair{
+							Name:  l.Name,
+							Value: l.Value,
+						}
+					}
 					points[i].Exemplars[j] = &Exemplar{
-						Id:        e.ProfileId,
+						ProfileId: e.ProfileId,
+						SpanId:    e.SpanId,
 						Value:     e.Value,
 						Timestamp: e.Timestamp,
+						Labels:    exemplarLabels,
 					}
 				}
 			}
@@ -171,6 +200,100 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Series: series,
 		Units:  getUnits(profileTypeID),
 		Label:  parts[1],
+	}, nil
+}
+
+func (c *PyroscopeClient) GetHeatmap(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, queryType querierv1.HeatmapQueryType, limit *int64, includeExemplars bool) (*HeatmapResponse, error) {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetHeatmap", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
+	defer span.End()
+
+	// Determine exemplar type based on includeExemplars flag and query type
+	exemplarType := typesv1.ExemplarType_EXEMPLAR_TYPE_NONE
+	if includeExemplars {
+		switch queryType {
+		case querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN:
+			exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_SPAN
+		case querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_INDIVIDUAL:
+			exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_INDIVIDUAL
+		case querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_UNSPECIFIED:
+			// default to no exemplars for unspecified query type
+		}
+	}
+
+	req := connect.NewRequest(&querierv1.SelectHeatmapRequest{
+		ProfileTypeID: profileTypeID,
+		LabelSelector: labelSelector,
+		Start:         start,
+		End:           end,
+		Step:          step,
+		GroupBy:       groupBy,
+		QueryType:     queryType,
+		Limit:         limit,
+		ExemplarType:  exemplarType,
+	})
+
+	resp, err := c.connectClient.SelectHeatmap(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, backend.DownstreamErrorf("received error from client while getting heatmap: %w", err)
+	}
+
+	series := make([]*HeatmapSeries, len(resp.Msg.Series))
+	for i, s := range resp.Msg.Series {
+		labels := make([]*LabelPair, len(s.Labels))
+		for j, l := range s.Labels {
+			labels[j] = &LabelPair{
+				Name:  l.Name,
+				Value: l.Value,
+			}
+		}
+
+		points := make([]*HeatmapPoint, len(s.Slots))
+		for j, slot := range s.Slots {
+			// Convert []int32 to []int64
+			counts := make([]int64, len(slot.Counts))
+			for k, c := range slot.Counts {
+				counts[k] = int64(c)
+			}
+
+			// Process exemplars if present
+			exemplars := make([]*Exemplar, len(slot.Exemplars))
+			for k, e := range slot.Exemplars {
+				// Convert API labels to our LabelPair type
+				exemplarLabels := make([]*LabelPair, len(e.Labels))
+				for i, l := range e.Labels {
+					exemplarLabels[i] = &LabelPair{
+						Name:  l.Name,
+						Value: l.Value,
+					}
+				}
+				exemplars[k] = &Exemplar{
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
+					Value:     e.Value,
+					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
+				}
+			}
+
+			points[j] = &HeatmapPoint{
+				Timestamp: slot.Timestamp,
+				YMin:      slot.YMin,
+				Counts:    counts,
+				Exemplars: exemplars,
+			}
+		}
+
+		series[i] = &HeatmapSeries{
+			Labels: labels,
+			Points: points,
+		}
+	}
+
+	return &HeatmapResponse{
+		Series: series,
+		Units:  getUnits(profileTypeID),
 	}, nil
 }
 

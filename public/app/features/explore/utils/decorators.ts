@@ -37,6 +37,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
+  const heatmapFrames: DataFrame[] = [];
   const customFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
@@ -44,6 +45,13 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
       customFrames.push(frame);
       continue;
     }
+
+    // Check for heatmap-cells type BEFORE the switch statement
+    if (frame.meta?.type === 'heatmap-cells') {
+      heatmapFrames.push(frame);
+      continue;
+    }
+
     switch (frame.meta?.preferredVisualisationType) {
       case 'logs':
         logsFrames.push(frame);
@@ -87,6 +95,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     customFrames,
     flameGraphFrames,
     rawPrometheusFrames,
+    heatmapFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,

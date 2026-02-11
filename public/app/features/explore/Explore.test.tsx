@@ -95,6 +95,7 @@ const dummyProps: Props = {
   showCustom: true,
   showNodeGraph: true,
   showFlameGraph: true,
+  showHeatmap: false,
   splitOpen: jest.fn(),
   splitted: false,
   eventBus: new EventBusSrv(),

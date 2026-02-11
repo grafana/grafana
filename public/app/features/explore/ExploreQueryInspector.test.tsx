@@ -62,6 +62,7 @@ const setup = (propOverrides = {}) => {
       customFrames: [],
       nodeGraphFrames: [],
       flameGraphFrames: [],
+      heatmapFrames: [],
       rawPrometheusFrames: [],
       graphResult: null,
       logsResult: null,
