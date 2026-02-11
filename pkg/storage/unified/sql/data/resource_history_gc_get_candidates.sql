@@ -1,4 +1,6 @@
-{{/* Find resources that have been deleted before the cutoff timestamp. */}}
+{{/* Find resources that have been deleted before the cutoff timestamp.
+     Note: Supports both namespace-scoped and cluster-scoped resources.
+     For cluster-scoped resources, namespace will be an empty string. */}}
 SELECT DISTINCT {{ .Ident "namespace" | .Into .Response.Namespace }},
                 {{ .Ident "name" | .Into .Response.Name }}
 FROM {{ .Ident "resource_history" }} h
