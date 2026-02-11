@@ -27,15 +27,13 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
 ---
 
+
+
 # View alert rules
 
-The Alert rules list view page lists all existing recording and alert rules, including those created in Grafana and those available in configured data sources.
+The Alert rules list view page lists all existing recording and alert rules. The rules are organized in a hierarchical structure, from folder -> rule group -> rules.
 
 To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
-
-By default, alert rules are grouped in separate sections—one for Grafana-managed alerts, and another for data source-managed alerts.
-Inside the Grafana-managed alert rules section, the rules are organized in a hierarchical structure, from folder -> rule group -> rules.
-Inside the data source-managed alert rules section, the rules are organized from namespace ->rule group -> rules.
 
 Select a group to expand it and view the list of alert rules within that group.
 
@@ -53,9 +51,9 @@ Click the **Saved searches** button to open the list of previously saved searche
 
 You can also change how the rule list is displayed using the **View as** option.
 
-- **Grouped**: Displays Grafana rules grouped in a hierarchical structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
+- **Grouped**: Displays rules grouped in a hierarchical structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
 
-- **List**: Displays all rules from all data sources in a flat, unpaginated list.
+- **List**: Displays all rules in a flat, unpaginated list.
 
 {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions-2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 

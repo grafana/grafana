@@ -8,8 +8,6 @@ title: 'Alerting Provisioning HTTP API '
 
 The Alerting Provisioning HTTP API can be used to create, modify, and delete resources relevant to Grafana-managed alerts. This API is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-For more information on the differences between Grafana-managed and data source-managed alerts, refer to [Introduction to alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/).
-
 > If you are running Grafana Enterprise, you need to add specific permissions for some endpoints. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Grafana-managed endpoints
@@ -395,15 +393,12 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 ## Data source-managed resources
 
-The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/), consider the following tools:
+{{< admonition type="caution" >}}
+Starting March 2026 in Alerting, datasource-managed alerts can not be created in new stacks for Grafana Cloud.
+New Grafana Cloud stacks use Grafana-managed alerting (GMA) by default.Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
+{{< /admonition >}}
 
-- [mimirtool](https://grafana.com/docs/mimir/<MIMIR_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
-- [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
-- [lokitool](https://grafana.com/docs/loki/<LOKI_VERSION>/alert/#lokitool): to configure the Loki Ruler.
-
-Alternatively, the [Grafana Alerting API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json) can be used to access data from data source-managed alerts. This API is primarily intended for internal usage, with the exception of the `/api/v1/provisioning/` endpoints. It's important to note that internal APIs may undergo changes without prior notice and are not officially supported for user consumption.
-
-For Prometheus, `amtool` can also be used to interact with the [AlertManager API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/prometheus/alertmanager/main/api/v2/openapi.yaml#/).
+The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To migrate legacy data source-managed alerts to Grafana-managed alerts, see the documentation for how to[import data source-managed alerts to Grafana-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
 
 ## Paths
 
