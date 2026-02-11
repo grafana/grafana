@@ -237,7 +237,7 @@ address = localhost:4317
 
 There are two reconcilers for syncing authorization data to Zanzana. Only one should be active at a time:
 
-**1. Multi-tenant (MT) reconciler** - reads from CRDs in Unistore. Can run in standalone Zanzana server or embedded in Grafana.
+**1. Multi-tenant (MT) reconciler** - reads from CRDs. Can run in standalone Zanzana server or embedded in Grafana.
 
 **2. Legacy RBAC reconciler** - reads from Grafana's SQL database. Runs in the main Grafana process.
 

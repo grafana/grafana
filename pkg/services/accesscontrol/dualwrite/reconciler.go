@@ -129,7 +129,7 @@ func (r *ZanzanaReconciler) Run(ctx context.Context) error {
 	}
 
 	if r.cfg.ZanzanaReconciler.Mode != setting.ZanzanaReconcilerModeLegacy {
-		r.log.Info("Legacy RBAC reconciler is not selected",
+		r.log.Info("Legacy RBAC reconciler is disabled",
 			"mode", r.cfg.ZanzanaReconciler.Mode)
 		return nil
 	}
