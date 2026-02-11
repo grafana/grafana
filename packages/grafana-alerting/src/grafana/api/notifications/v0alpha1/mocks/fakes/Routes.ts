@@ -1,7 +1,16 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
+import {
+  API_GROUP,
+  API_VERSION,
+  ListRoutingTreeApiResponse,
+  RoutingTree,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { LabelMatcher } from '../../../../../matchers/types';
+import { DEFAULT_NAMESPACE, generateResourceVersion } from '../../../../../mocks/util';
+import { USER_DEFINED_TREE_NAME } from '../../../../../notificationPolicies/consts';
 import { Route } from '../../../../../notificationPolicies/types';
 
 export const LabelMatcherFactory = Factory.define<LabelMatcher>(() => {
@@ -25,4 +34,37 @@ export const RouteFactory = Factory.define<Route>(() => ({
   active_time_intervals: faker.helpers.arrayElements(['business-hours', 'weekends', 'maintenance'], { min: 1, max: 2 }),
   mute_time_intervals: faker.helpers.arrayElements(['lunch-break', 'night-hours'], { min: 1, max: 2 }),
   routes: [],
+}));
+
+export const RoutingTreeFactory = Factory.define<RoutingTree>(({ sequence }) => {
+  const name = sequence === 1 ? USER_DEFINED_TREE_NAME : `policy-tree-${sequence}`;
+
+  return {
+    kind: 'RoutingTree',
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
+    metadata: {
+      name,
+      namespace: DEFAULT_NAMESPACE,
+      resourceVersion: generateResourceVersion(),
+    },
+    spec: {
+      defaults: {
+        receiver: faker.helpers.arrayElement(['web-team', 'api-team', 'critical-alerts', 'dev-team']),
+        group_by: ['alertname'],
+        group_wait: '30s',
+        group_interval: '5m',
+        repeat_interval: '4h',
+      },
+      routes: [],
+    },
+  };
+});
+
+export const ListRoutingTreeApiResponseFactory = Factory.define<ListRoutingTreeApiResponse>(() => ({
+  kind: 'RoutingTreeList',
+  apiVersion: `${API_GROUP}/${API_VERSION}`,
+  metadata: {
+    resourceVersion: generateResourceVersion(),
+  },
+  items: RoutingTreeFactory.buildList(3),
 }));
