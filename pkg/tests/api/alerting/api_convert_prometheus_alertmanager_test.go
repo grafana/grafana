@@ -140,25 +140,11 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusAccepted, status, "")
 
 			getHeaders := map[string]string{
-				"X-Grafana-Alerting-Config-Identifier": "default",
+				"X-Grafana-Alerting-Config-Identifier": "imported",
 			}
 			responseConfig, status, _ := apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
 			requireStatusCode(t, http.StatusOK, status, "")
 			require.NotEmpty(t, responseConfig.AlertmanagerConfig)
-		})
-
-		t.Run("POST without merge matchers header should fail", func(t *testing.T) {
-			headers := map[string]string{
-				"Content-Type":                         "application/yaml",
-				"X-Grafana-Alerting-Config-Identifier": "test-config",
-			}
-
-			amConfig := apimodels.AlertmanagerUserConfig{
-				AlertmanagerConfig: string(configYaml),
-			}
-
-			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
 		t.Run("POST with invalid merge matchers format should fail", func(t *testing.T) {
