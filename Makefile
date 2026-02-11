@@ -172,8 +172,12 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 # Alternatively use an explicit list of apps:
 # APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
+# Optional app variable to specify a single app to generate
+# Usage: make gen-apps app=dashboard
+app ?=
+
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt
+gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
 ## for now, we revert the zz_openapi_gen.go files before comparison  	  
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
@@ -182,7 +186,7 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
     git checkout HEAD -- apps/secret/pkg/apis/secret/v1beta1/zz_openapi_gen.go; \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
-			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
+			echo "Error: Generated code is not up to date. Please run 'make gen-apps' (optionally with app=<name>), 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
 			git diff --name-only; \
 			exit 1; \
 		fi; \
@@ -191,10 +195,20 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 
 .PHONY: do-gen-apps
 do-gen-apps: ## Generate code for Grafana App SDK apps
-	for dir in $(APPS_DIRS); do \
-		$(MAKE) -C $$dir generate; \
-	done
-	./hack/update-codegen.sh
+	@if [ -n "$(app)" ]; then \
+		app_dir="./apps/$(app)"; \
+		if [ ! -f "$$app_dir/Makefile" ]; then \
+			echo "Error: App '$(app)' not found or does not have a Makefile at $$app_dir"; \
+			exit 1; \
+		fi; \
+		echo "Generating code for app: $(app)"; \
+		$(MAKE) -C $$app_dir generate; \
+	else \
+		for dir in $(APPS_DIRS); do \
+			$(MAKE) -C $$dir generate; \
+		done; \
+		./hack/update-codegen.sh; \
+	fi
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
