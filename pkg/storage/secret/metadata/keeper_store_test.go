@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -188,15 +187,11 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "initial description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID: secretv1beta1.KeeperCredentialValue{
-							ValueFromEnv: "AWS_ACCESS_KEY_ID_1",
-						},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{
-							ValueFromEnv: "AWS_SECRET_ACCESS_KEY_1",
-						},
+					Region: "us-east-1",
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn",
+						ExternalID:    "external-id",
 					},
-					KmsKeyID: ptr.To("kms-key-id-1"),
 				},
 			},
 		}
@@ -210,24 +205,20 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// Verify initial AWS config
 		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, "AWS_ACCESS_KEY_ID_1", keeper.Spec.Aws.AccessKey.AccessKeyID.ValueFromEnv)
-		require.Equal(t, "AWS_SECRET_ACCESS_KEY_1", keeper.Spec.Aws.AccessKey.SecretAccessKey.ValueFromEnv)
-		require.Equal(t, "kms-key-id-1", *keeper.Spec.Aws.KmsKeyID)
+		require.Equal(t, "us-east-1", keeper.Spec.Aws.Region)
+		require.Equal(t, "arn", keeper.Spec.Aws.AssumeRole.AssumeRoleArn)
+		require.Equal(t, "external-id", keeper.Spec.Aws.AssumeRole.ExternalID)
 
 		// Update with new AWS config
 		updatedKeeper := &secretv1beta1.Keeper{
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "updated description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID: secretv1beta1.KeeperCredentialValue{
-							ValueFromEnv: "AWS_ACCESS_KEY_ID_2",
-						},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{
-							ValueFromEnv: "AWS_SECRET_ACCESS_KEY_2",
-						},
+					Region: "us-east-2",
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn-2",
+						ExternalID:    "external-id-2",
 					},
-					KmsKeyID: ptr.To("kms-key-id-2"),
 				},
 			},
 		}
@@ -241,9 +232,9 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// Verify updated AWS config
 		updatedKeeper, err = keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, "AWS_ACCESS_KEY_ID_2", updatedKeeper.Spec.Aws.AccessKey.AccessKeyID.ValueFromEnv)
-		require.Equal(t, "AWS_SECRET_ACCESS_KEY_2", updatedKeeper.Spec.Aws.AccessKey.SecretAccessKey.ValueFromEnv)
-		require.Equal(t, "kms-key-id-2", *updatedKeeper.Spec.Aws.KmsKeyID)
+		require.Equal(t, "us-east-2", updatedKeeper.Spec.Aws.Region)
+		require.Equal(t, "arn-2", updatedKeeper.Spec.Aws.AssumeRole.AssumeRoleArn)
+		require.Equal(t, "external-id-2", updatedKeeper.Spec.Aws.AssumeRole.ExternalID)
 	})
 
 	t.Run("list keepers in empty namespace", func(t *testing.T) {
@@ -282,13 +273,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "initial description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
-					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
-						AccessKeyID: secretv1beta1.KeeperCredentialValue{
-							ValueFromEnv: "AWS_ACCESS_KEY_ID",
-						},
-						SecretAccessKey: secretv1beta1.KeeperCredentialValue{
-							ValueFromEnv: "AWS_SECRET_ACCESS_KEY",
-						},
+					Region: "us-east-1",
+					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRoleArn: "arn",
+						ExternalID:    "external-id",
 					},
 				},
 			},

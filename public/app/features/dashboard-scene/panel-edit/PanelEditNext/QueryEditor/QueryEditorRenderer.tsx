@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { CoreApp, DataSourcePluginContextProvider } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -16,6 +16,11 @@ export function QueryEditorRenderer() {
 
   const selectedRefId = selectedQuery?.refId;
 
+  // Ref updated during render (not in an effect) so handleChange can detect
+  // and discard stale onChange calls from downstream editors on query switch.
+  const selectedRefIdRef = useRef(selectedRefId);
+  selectedRefIdRef.current = selectedRefId;
+
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
     return selectedRefId && data ? filterPanelDataToQuery(data, selectedRefId) : undefined;
@@ -23,12 +28,17 @@ export function QueryEditorRenderer() {
 
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
-      if (!selectedRefId) {
+      const currentRefId = selectedRefIdRef.current;
+      if (!currentRefId) {
         return;
       }
-      updateSelectedQuery(updatedQuery, selectedRefId);
+      // Discard stale onChange calls targeting a previously selected query.
+      if (updatedQuery.refId !== currentRefId) {
+        return;
+      }
+      updateSelectedQuery(updatedQuery, currentRefId);
     },
-    [updateSelectedQuery, selectedRefId]
+    [updateSelectedQuery]
   );
 
   if (!selectedQuery) {

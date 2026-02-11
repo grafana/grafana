@@ -5329,7 +5329,6 @@
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
@@ -5868,6 +5867,7 @@
       "title": "Variables"
     },
     "versions": {
+      "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
       "title": "Versions"
     }
   },
@@ -8264,7 +8264,6 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
   },
   "folders": {
@@ -10650,6 +10649,7 @@
   },
   "logstable": {
     "category-table": "Logs Table",
+    "description-show-controls": "Display table controls",
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
@@ -12171,7 +12171,6 @@
       "token-user-description": "The username that will be used to access the repository with the app password",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
-      "url-pattern": "Must be a valid Bitbucket repository URL",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
@@ -12442,7 +12441,6 @@
       "token-label": "Personal Access Token",
       "token-required": "GitHub token is required",
       "url-description": "The GitHub repository URL",
-      "url-pattern": "Must be a valid GitHub repository URL",
       "url-required": "Repository URL is required"
     },
     "gitlab": {
@@ -12461,7 +12459,6 @@
       "token-label": "Project Access Token",
       "token-required": "GitLab token is required",
       "url-description": "The GitLab repository URL",
-      "url-pattern": "Must be a valid GitLab repository URL",
       "url-required": "Repository URL is required"
     },
     "history-view": {
@@ -12475,8 +12472,8 @@
       "success-all-repositories-deleted": "All configured repositories deleted",
       "tab-connections": "Connections",
       "tab-connections-title": "List of connections",
-      "tab-getting-started": "Getting started",
-      "tab-getting-started-title": "Getting started",
+      "tab-getting-started": "Get started",
+      "tab-getting-started-title": "Get started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
@@ -12484,10 +12481,8 @@
     "http-utils": {
       "access-denied": "Access denied. Please check your token permissions.",
       "authentication-failed": "Authentication failed. Please check your access token.",
-      "http-error": "HTTP {{status}}: {{statusText}}",
       "request-failed": "Request failed",
-      "resource-not-found": "Resource not found. Please check the URL or repository.",
-      "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
+      "resource-not-found": "Resource not found. Please check the URL or repository."
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
@@ -12514,6 +12509,8 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-by-repository-tooltip": "Managed by: Repository",
+    "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
@@ -12685,7 +12682,8 @@
         "aria-label": "Progress Bar"
       },
       "token-user-label": "Username",
-      "url-label": "Repository URL"
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
     },
     "sidebar-item": {
       "label-completed-step": "Completed step",
@@ -12960,35 +12958,15 @@
     }
   },
   "query-editor-next": {
-    "labels": {
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
-    },
-    "sidebar": {
-      "card-click": "Select card {{id}}",
-      "queries-expressions": "Queries & Expressions",
-      "query-stack": "Query Stack",
-      "toggle-size": "Toggle sidebar size",
-      "transformations": "Transformations"
-    }
-  },
-  "query-editor-renderer": {
-    "datasource-load-error-title": "Failed to load datasource for this query",
-    "loading-datasource": "Loading datasource",
-    "no-query-editor-component": "Data source plugin does not export any query editor component"
-  },
-  "query-editor": {
     "action": {
       "coming-soon": "Transformation actions coming soon",
-      "duplicate": "Duplicate query",
-      "hide": "Hide response",
+      "duplicate": "Duplicate {{type}}",
+      "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "inspector": "Query inspector",
-      "more-actions": "More actions",
-      "remove-query": "Remove query",
-      "remove-transformation": "Remove transformation",
-      "show": "Show response",
+      "more-actions": "More {{type}} actions",
+      "remove": "Remove {{type}}",
+      "show": "Show {{type}}",
       "show-help": "Show data source help"
     },
     "details-sidebar": {
@@ -13037,10 +13015,27 @@
       "close": "Close help",
       "close-aria": "Close help panel"
     },
+    "labels": {
+      "expression": "Expression",
+      "query": "Query",
+      "transformation": "Transformation"
+    },
+    "sidebar": {
+      "card-click": "Select card {{id}}",
+      "queries-expressions": "Queries & Expressions",
+      "query-stack": "Query Stack",
+      "toggle-size": "Toggle sidebar size",
+      "transformations": "Transformations"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "Failed to load datasource for this query",
+    "loading-datasource": "Loading datasource",
+    "no-query-editor-component": "Data source plugin does not export any query editor component"
   },
   "query-library": {
     "exposed-compoment": {
