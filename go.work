@@ -19,6 +19,7 @@ use (
 	./apps/folder
 	./apps/iam
 	./apps/logsdrilldown
+	./apps/myresource
 	./apps/playlist
 	./apps/plugins
 	./apps/preferences

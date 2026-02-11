@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
+	"github.com/grafana/grafana/pkg/registry/apps/myresource"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
@@ -49,12 +50,14 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
+	myresourceAppInstaller *myresource.MyResourceAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsAppInstaller,
 		exampleAppInstaller,
+		myresourceAppInstaller,
 	}
 	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
 		installers = append(installers, quotasAppInstaller)

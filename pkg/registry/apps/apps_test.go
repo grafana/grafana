@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/myresource"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
@@ -31,6 +32,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	historianAppInstaller := &historian.AppInstaller{}
 	quotasAppInstaller := &quotas.QuotasAppInstaller{}
 	dashvalidatorAppInstaller := &dashvalidator.DashValidatorAppInstaller{}
+	myresourceAppInstaller := &myresource.MyResourceAppInstaller{}
 
 	tests := []struct {
 		name           string
@@ -62,6 +64,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				historianAppInstaller,
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
+				myresourceAppInstaller,
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
