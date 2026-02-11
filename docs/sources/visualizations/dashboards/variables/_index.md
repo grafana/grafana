@@ -81,10 +81,12 @@ https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolati
 
 In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
 
-You can prevent a variable from being synced to the URL by enabling the **Skip URL sync** option in the variable settings. When enabled, the variable value won't appear as a `var-` query parameter in the URL. This is useful when you want to keep URLs clean or prevent users from overriding a variable value through the URL. All variable types support this option.
+You can prevent a variable from being synced to the URL by setting `skipUrlSync` to `true` in the variable definition within the dashboard JSON model. When set, the variable value won't appear as a `var-` query parameter in the URL.
+
+This is useful when you want to keep URLs clean, prevent users from overriding a variable value through the URL, or avoid exposing sensitive values in shared links.
 
 {{< admonition type="note">}}
-Constant variables have **Skip URL sync** enabled by default, since their value is fixed and not intended to be changed through the URL.
+Constant variables have `skipUrlSync` set to `true` by default, since their value is fixed and not intended to be changed through the URL.
 {{< /admonition >}}
 
 ## Additional examples
