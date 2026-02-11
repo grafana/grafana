@@ -127,7 +127,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
       <table className={styles.table}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
-            let html = "";
+            let html = '';
             if (row.type === 'code') {
               html = `<pre style="border: none; background: none">${row.value}</pre>`;
             } else if (row.type === 'text') {
@@ -136,7 +136,9 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               html = jsonMarkup(parseIfComplexJson(row.value));
             }
 
-            const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html)}} />;
+            const jsonTable = (
+              <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
+            );
             const links = linksGetter?.(data, i);
             let valueMarkup;
             if (links && links.length) {
