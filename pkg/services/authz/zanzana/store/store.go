@@ -22,6 +22,10 @@ import (
 )
 
 func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
+	if cfg.ZanzanaServer.StorageMode == setting.ZanzanaStorageModeCustom {
+		return NewTupleStorageAdapter(cfg, logger, nil)
+	}
+
 	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
@@ -57,6 +61,10 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 }
 
 func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
+	if cfg.ZanzanaServer.StorageMode == setting.ZanzanaStorageModeCustom {
+		return NewTupleStorageAdapter(cfg, logger, nil)
+	}
+
 	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
