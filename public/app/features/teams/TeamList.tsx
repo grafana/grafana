@@ -11,7 +11,7 @@ import {
   Column,
   DeleteButton,
   EmptyState,
-  FilterInput,
+  FilterInput, Icon,
   InlineField,
   InteractiveTable,
   LinkButton,
@@ -32,8 +32,8 @@ import { appEvents } from '../../core/app_events';
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { ShowModalReactEvent } from '../../types/events';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
-import { DeleteModal } from '../browse-dashboards/components/BrowseActions/DeleteModal';
 
+import { TeamDeleteModal } from './TeamDeleteModal';
 import { useDeleteTeam, useGetTeams } from './hooks';
 
 type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
@@ -205,10 +205,9 @@ const TeamList = () => {
           const showDeleteModal = () => {
             appEvents.publish(
               new ShowModalReactEvent({
-                component: DeleteModal,
+                component: TeamDeleteModal,
                 props: {
-                  selectedItems,
-                  onConfirm: onDelete,
+                  onConfirm: () => deleteTeam({ uid: original.uid }),
                 },
               })
             );
@@ -227,16 +226,16 @@ const TeamList = () => {
                   tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
                 />
               )}
-              <DeleteButton
-                aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
-                  teamName: original.name,
-                })}
-                size="sm"
-                disabled={!canDelete}
-                onConfirm={() => deleteTeam({ uid: original.uid })}
-              />
+              {/*<DeleteButton*/}
+              {/*  aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {*/}
+              {/*    teamName: original.name,*/}
+              {/*  })}*/}
+              {/*  size="sm"*/}
+              {/*  disabled={!canDelete}*/}
+              {/*  onConfirm={() => deleteTeam({ uid: original.uid })}*/}
+              {/*/>*/}
               <Button onClick={showDeleteModal} variant="destructive">
-                <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+                <Icon name="times" size="sm" />
               </Button>
             </Stack>
           );
