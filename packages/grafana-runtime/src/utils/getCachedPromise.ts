@@ -121,7 +121,7 @@ function cachePromiseWithCallback<T>({ key, promise, onError }: CachePromiseWith
  * @param options - Options object for error behaviors
  * @param options.cacheKey - Optional cache key to use as key instead of the function name
  * @param options.defaultValue - Optional default value to return if the promise rejects
- * @param options.invalidate - Optional invalidates cache for given function name or cacheKey
+ * @param options.invalidate - Optionally invalidates the cache for the given function name or cacheKey
  * @param options.onError - Optional error handler that receives the error and an invalidate function
  * @returns A promise that resolves to the cached or newly computed value
  */
