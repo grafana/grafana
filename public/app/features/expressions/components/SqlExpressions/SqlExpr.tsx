@@ -11,6 +11,8 @@ import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { formatSQL } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
+import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
+
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
@@ -71,7 +73,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const initialQuery = `SELECT
   *
 FROM
-  ${vars[0]}
+  ${quoteIdentifierIfNecessary(vars[0])}
 LIMIT
   10`;
 

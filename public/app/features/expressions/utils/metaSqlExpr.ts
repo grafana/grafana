@@ -14,7 +14,7 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(query.table)} LIMIT 1`;
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
