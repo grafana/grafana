@@ -322,7 +322,7 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       flexWrap: 'wrap-reverse',
       ...(isQueryEditorNext && {
         padding: 0,
-        marginBottom: theme.spacing(1),
+        marginBottom: theme.spacing(-1),
       }),
       paddingRight: 0,
     }),

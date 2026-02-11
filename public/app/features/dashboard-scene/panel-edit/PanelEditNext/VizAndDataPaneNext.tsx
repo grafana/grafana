@@ -29,14 +29,13 @@ export function VizAndDataPaneNext({
 
   const vizSizeClass = css({
     height: layout.vizResize.height,
-    maxHeight: containerHeight - 80,
   });
   const sidebarSizeClass = css({
-    height: layout.sidebarSize === SidebarSize.Mini ? layout.bottomPaneHeight : layout.expandedSidebarHeight,
+    height: layout.sidebarSize === SidebarSize.Mini ? '100%' : layout.expandedSidebarHeight,
     width: layout.sidebarResize.width,
   });
   const dataPaneSizeClass = css({
-    height: layout.bottomPaneHeight,
+    height: '100%',
   });
 
   return (
@@ -110,7 +109,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       gridArea: 'viz',
       overflow: 'visible',
       height: '100%',
-      minHeight: 100,
       position: 'relative',
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
