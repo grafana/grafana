@@ -785,6 +785,7 @@ var (
 	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
 	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
+	sqlKVRestoreLegacyResourceDelete = mustTemplate("sqlkv_restore_legacy_resource_delete.sql")
 	sqlKVRestoreLegacyResource       = mustTemplate("sqlkv_restore_legacy_resource.sql")
 )
 
@@ -937,14 +938,35 @@ func (d *dataStore) applyBackwardsCompatibleOptimisticLockFailure(ctx context.Co
 		return nil
 	}
 
-	_, err := dbutil.Exec(ctx, x, sqlKVRestoreLegacyResource, sqlKVLegacyRestoreRequest{
-		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		Group:       key.Group,
-		Resource:    key.Resource,
-		Namespace:   key.Namespace,
-		Name:        key.Name,
-	})
-	if err != nil {
+	execRestore := func(execCtx context.Context, x db.ContextExecer) error {
+		restoreReq := sqlKVLegacyRestoreRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+		}
+		_, err := dbutil.Exec(execCtx, x, sqlKVRestoreLegacyResourceDelete, restoreReq)
+		if err != nil {
+			return err
+		}
+
+		_, err = dbutil.Exec(execCtx, x, sqlKVRestoreLegacyResource, restoreReq)
+		return err
+	}
+
+	if xdb, ok := x.(db.DB); ok {
+		err := xdb.WithTx(ctx, nil, func(txCtx context.Context, tx db.Tx) error {
+			return execRestore(txCtx, tx)
+		})
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to restore resource after optimistic lock failure: %w", err)
+		}
+
+		return nil
+	}
+
+	if err := execRestore(ctx, x); err != nil {
 		return fmt.Errorf("compatibility layer: failed to restore resource after optimistic lock failure: %w", err)
 	}
 
