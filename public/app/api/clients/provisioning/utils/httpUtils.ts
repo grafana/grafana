@@ -1,7 +1,7 @@
+// Provisioning-specific error message helpers for HTTP and fetch errors.
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-
-import { isHttpError } from '../guards';
+import { isHttpError } from 'app/features/provisioning/guards';
 
 export function getErrorMessage(err: unknown) {
   let errorMessage = t('provisioning.http-utils.request-failed', 'Request failed');
