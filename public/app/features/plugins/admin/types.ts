@@ -66,6 +66,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
+  category?: string;
 }
 export interface Screenshots {
   path: string;
@@ -154,6 +155,7 @@ export type RemotePlugin = {
   id: number;
   internal: boolean;
   keywords: string[];
+  category?: string;
   json?: {
     dependencies: PluginDependencies;
     iam?: IdentityAccessManagement;
