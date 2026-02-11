@@ -4,9 +4,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { Actions } from '../../Actions';
 import { QueryEditorTypeConfig } from '../../constants';
 
-import { Actions } from './Actions';
 import { AddCardButton } from './AddCardButton';
 
 interface SidebarCardProps {

@@ -3,9 +3,9 @@ import { RefObject, useCallback } from 'react';
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
+import { Actions } from '../../Actions';
 import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { Actions } from '../Sidebar/Actions';
 
 import { ActionsMenu } from './ActionsMenu';
 import { PluginActions } from './PluginActions';
