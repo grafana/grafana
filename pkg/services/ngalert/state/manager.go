@@ -502,11 +502,10 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		oldReason := s.StateReason
 
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
-		// 'Error' and 'NoData' states (including Pending with Error/NoData reason) should be resolved
-		// after 1 missing evaluation instead of waiting for the configured missing series evaluations.
-		// This ensures these transient error conditions are cleaned up promptly when the series disappears.
-		if s.State == eval.Error || s.State == eval.NoData ||
-			(s.State == eval.Pending && (s.StateReason == ngModels.StateReasonError || s.StateReason == ngModels.StateReasonNoData)) {
+		// 'Error' and 'NoData' states should be resolved after 1 missing evaluation instead of waiting
+		// for the configured missing series evaluations. This ensures resolved notifications are sent
+		// immediately when the alert transitions from these states.
+		if s.State == eval.Error || s.State == eval.NoData {
 			missingEvalsToResolve = 1
 		}
 		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
