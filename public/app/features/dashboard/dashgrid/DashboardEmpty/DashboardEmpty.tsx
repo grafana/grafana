@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
   useRepositoryStatus,
   useOnAddVisualization,
@@ -36,14 +35,17 @@ const DashboardEmpty = (props: Props) => {
     [onAddVisualization, onAddLibraryPanel, onImportDashboard, props.dashboard]
   );
 
-  return (
-    <DashboardEmptyExtensionPoint
-      renderDefaultUI={renderDefaultUI}
-      onAddVisualization={onAddVisualization}
-      onAddLibraryPanel={onAddLibraryPanel}
-      onImportDashboard={onImportDashboard}
-    />
-  );
+  // Commented out for testing purposes
+  // return (
+  //   <DashboardEmptyExtensionPoint
+  //     renderDefaultUI={renderDefaultUI}
+  //     onAddVisualization={onAddVisualization}
+  //     onAddLibraryPanel={onAddLibraryPanel}
+  //     onImportDashboard={onImportDashboard}
+  //   />
+  // );
+
+  return renderDefaultUI();
 };
 
 export default DashboardEmpty;
