@@ -92,6 +92,8 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
 	if err != nil {
+		p.log.Error("unable to get web assets", "err", err)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
