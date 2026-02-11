@@ -36,6 +36,7 @@ import (
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -45,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -148,7 +148,6 @@ func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
-	roleBindingsStorage RoleBindingStorageBackend,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
@@ -172,14 +171,12 @@ func NewAPIService(
 		iamauthorizer.Versions,
 	)
 
-	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
-
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		coreRolesStorage:           coreRoleStorage,
-		roleBindingsStorage:        roleBindingsStorage,
+		roleBindingsStorage:        noopstorage.ProvideStorageBackend(), // TODO: add a proper storage backend
 		logger:                     log.New("iam.apis"),
 		features:                   features,
 		accessClient:               accessClient,
@@ -226,22 +223,6 @@ func NewAPIService(
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return roleAuthorizer.Authorize(ctx, a)
-				}
-
-				switch a.GetResource() {
-				case
-					iamv0.RoleBindingInfo.GetName(),
-					iamv0.UserResourceInfo.GetName(),
-					iamv0.ServiceAccountResourceInfo.GetName(),
-					iamv0.TeamResourceInfo.GetName():
-					return resourceAuthorizer.Authorize(ctx, a)
-				}
-
-				switch a.GetResource() {
-				case
-					iamv0.TeamBindingResourceInfo.GetName(),
-					iamv0.ExternalGroupMappingResourceInfo.GetName():
-					return authorizer.DecisionAllow, "", nil
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
