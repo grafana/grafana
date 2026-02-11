@@ -90,6 +90,7 @@ import (
 	live2 "github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/myresource"
+	migrator5 "github.com/grafana/grafana/pkg/registry/apps/myresource/migrator"
 	playlist2 "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
@@ -589,7 +590,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	foldersDashboardsMigrator := migrator2.ProvideFoldersDashboardsMigrator(legacyMigrator)
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
-	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
+	myResourceMigrator := migrator5.ProvideMyResourceMigrator(legacyDatabaseProvider)
+	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, myResourceMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
@@ -1282,7 +1284,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	foldersDashboardsMigrator := migrator2.ProvideFoldersDashboardsMigrator(legacyMigrator)
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
-	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
+	myResourceMigrator := migrator5.ProvideMyResourceMigrator(legacyDatabaseProvider)
+	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, myResourceMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
@@ -1898,10 +1901,12 @@ func provideMigrationRegistry(
 	dashMigrator migrator2.FoldersDashboardsMigrator,
 	playlistMigrator playlist.PlaylistMigrator,
 	shortURLMigrator migrator3.ShortURLMigrator,
+	myResourceMigrator migrator5.MyResourceMigrator,
 ) *migrations2.MigrationRegistry {
 	r := migrations2.NewMigrationRegistry()
 	r.Register(dashboard.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlist2.PlaylistMigration(playlistMigrator))
 	r.Register(shorturl.ShortURLMigration(shortURLMigrator))
+	r.Register(myresource.MyResourceMigration(myResourceMigrator))
 	return r
 }
