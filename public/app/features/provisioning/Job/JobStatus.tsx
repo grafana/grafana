@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StepStatusInfo } from '../Wizard/types';
-import { getErrorMessage } from '../utils/httpUtils';
 
 import { FinishedJobStatus } from './FinishedJobStatus';
 import { JobContent } from './JobContent';

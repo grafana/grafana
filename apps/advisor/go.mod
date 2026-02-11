@@ -8,16 +8,16 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.49.1
-	github.com/grafana/grafana-app-sdk/logging v0.49.0
+	github.com/grafana/grafana-app-sdk v0.50.2
+	github.com/grafana/grafana-app-sdk/logging v0.50.2
 	github.com/grafana/grafana-plugin-sdk-go v0.287.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/stretchr/testify v1.11.1
-	k8s.io/apimachinery v0.34.3
-	k8s.io/apiserver v0.34.3
-	k8s.io/client-go v0.34.3
-	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
+	k8s.io/apimachinery v0.35.0
+	k8s.io/apiserver v0.35.0
+	k8s.io/client-go v0.35.0
+	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 )
 
 // transitive dependencies that need replaced
@@ -172,7 +172,7 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173 // indirect
+	github.com/grafana/alerting v0.0.0-20260206150146-b5f69c55f91a // indirect
 	github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
@@ -240,16 +240,16 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
-	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/open-feature/go-sdk v1.16.0 // indirect
+	github.com/open-feature/go-sdk v1.17.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.6 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.23 // indirect
@@ -324,7 +324,7 @@ require (
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
-	gonum.org/v1/gonum v0.16.0 // indirect
+	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.78.0 // indirect
@@ -339,16 +339,16 @@ require (
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.3 // indirect
-	k8s.io/apiextensions-apiserver v0.34.3 // indirect
-	k8s.io/component-base v0.34.3 // indirect
+	k8s.io/api v0.35.0 // indirect
+	k8s.io/apiextensions-apiserver v0.35.0 // indirect
+	k8s.io/component-base v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kms v0.34.3 // indirect
+	k8s.io/kms v0.35.0 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
-	modernc.org/libc v1.66.10 // indirect
+	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.40.1 // indirect
+	modernc.org/sqlite v1.44.3 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect

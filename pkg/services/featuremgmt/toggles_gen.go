@@ -255,10 +255,6 @@ const (
 	// Enable audit logging with Kubernetes under app platform
 	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
 
-	// FlagSecretsManagementAppPlatform
-	// Enable the secrets management API and services under app platform
-	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
-
 	// FlagSecretsManagementAppPlatformUI
 	// Enable the secrets management app platform UI
 	FlagSecretsManagementAppPlatformUI = "secretsManagementAppPlatformUI"
@@ -757,6 +753,10 @@ const (
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagExcludeRedundantManagedPermissions
+	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
+	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
 
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer

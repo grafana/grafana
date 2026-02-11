@@ -4952,7 +4952,6 @@
       "paste-panel": "Vložit panel",
       "paste-row": "Vložit řádek",
       "paste-tab": "Vložit záložku",
-      "un-group-panels": "Zrušit seskupení",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9601,6 +9600,10 @@
     "secret-form-field": {
       "reset": "Resetovat"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Možnosti se nepodařilo načíst",
       "loading": "Načítání možností…",
@@ -10632,6 +10635,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Rozbalit řádky",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Zalomit řádky"
     },
     "logs-navigation": {
@@ -10658,6 +10667,7 @@
     "name-show-controls": "Zobrazit ovládací prvky",
     "name-time": "Zobrazit časová razítka",
     "name-unique-labels": "Jedinečné štítky",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Zalomit řádky",
     "order-options": {
       "label-newest-first": "Seřadit od nejnovějších",
@@ -10758,6 +10768,16 @@
       "message-same-name-current-folder": "V aktuální složce již existuje nástěnka nebo složka se stejným názvem",
       "message-same-name-general": "V kořenové složce již existuje složka nebo nástěnka se stejným názvem"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nebyly nalezeny žádné možnosti"
@@ -11606,9 +11626,6 @@
     "noOptionsMessage-no-organizations-found": "Nebyly nalezeny žádné organizace",
     "select-placeholder": "Vyberte organizaci"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Upravit název"
@@ -12236,7 +12253,6 @@
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "retry-action": "",
       "text-loading-resource-information": "Načítání informací o zdroji…",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} nástěnka",
@@ -12772,12 +12788,9 @@
       "error-starting-job": "Chyba při spouštění úlohy"
     },
     "sync-repository": {
-      "body-edit-configuration": "Upravit konfiguraci",
-      "button-edit": "Upravit",
       "error-pulling-resources": "Chyba při stahování zdrojů",
       "pull": "Stáhnout",
       "success-pull-started": "Stažení zahájeno",
-      "title-pull-not-enabled": "Stažení není povoleno",
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
@@ -12786,7 +12799,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "a klikněte",
@@ -12823,8 +12837,6 @@
       "button-cancelling": "",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -13032,6 +13044,9 @@
       "query-name-div-title-edit-query-name": "Upravit název dotazu"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID trasování: {{traceId}})"
     },
     "query-group": {
@@ -13153,6 +13168,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14369,6 +14389,9 @@
     "traces-panel": {
       "no-data-found-in-response": "V odpovědi nebyla nalezena žádná data"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

@@ -23,9 +23,9 @@ export function InspectorButton() {
       icon="brackets-curly"
       variant="secondary"
       onClick={onOpenInspector}
-      tooltip={t('query-editor.action.inspector', 'Query inspector')}
+      tooltip={t('query-editor-next.action.inspector', 'Query inspector')}
     >
-      <Trans i18nKey="query-editor.action.inspector">Inspector</Trans>
+      <Trans i18nKey="query-editor-next.action.inspector">Inspector</Trans>
     </Button>
   );
 }

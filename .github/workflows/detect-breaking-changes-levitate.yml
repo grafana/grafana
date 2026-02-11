@@ -300,10 +300,10 @@ jobs:
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && github.repository == 'grafana/grafana'
         uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
         with:
-          channel-id: "C031SLFH6G0"
+          channel-id: "C08QATP6AE9"
           payload:  |
             {
-              "channel": "C031SLFH6G0",
+              "channel": "C08QATP6AE9",
               "text": ":warning: Possible breaking changes detected in *PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} :warning:",
               "icon_emoji": ":grot:",
               "username": "Levitate Bot",
@@ -366,7 +366,7 @@ jobs:
       # Add reviewers
       # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
-      - name: Add "grafana/plugins-platform-frontend" as a reviewer
+      - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
         uses: actions/github-script@v8
         env:
@@ -379,11 +379,11 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               reviewers: [],
-              team_reviewers: ['plugins-platform-frontend']
+              team_reviewers: ['grafana-frontend-platform']
             });
 
       # Remove reviewers (no more breaking changes)
-      - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
+      - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
         uses: actions/github-script@v8
         env:
@@ -396,7 +396,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               reviewers: [],
-              team_reviewers: ['plugins-platform-frontend']
+              team_reviewers: ['grafana-frontend-platform']
             });
 
       - name: Exit
