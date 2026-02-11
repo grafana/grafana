@@ -19,6 +19,11 @@ DashboardSpec: {
 	// Whether a dashboard is editable or not.
 	editable?: bool | *true
 
+	// The default grid to use in edit mode
+	// This is here only for PoC purposes as this should be a custom resource
+	// However the dashboards API is using manual API registration and the custom resources are not exposed automatically
+	defaultGrid: "GridLayout" | "AutoGridLayout" | *"AutoGridLayout"
+
 	elements: [ElementReference.name]: Element | *{}
 
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind

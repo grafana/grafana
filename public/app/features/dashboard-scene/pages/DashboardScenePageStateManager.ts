@@ -39,7 +39,6 @@ import {
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
-import { resetDefaultGrid } from '../scene/layouts-shared/defaultGridUtils';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
@@ -921,7 +920,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     if (cachedDashboard) {
       return cachedDashboard;
     }
-    resetDefaultGrid();
 
     let rsp: DashboardWithAccessInfo<DashboardV2Spec>;
     try {

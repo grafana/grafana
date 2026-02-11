@@ -1,6 +1,6 @@
 import { ChangeEvent } from 'react';
 
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
@@ -113,6 +113,10 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ editable: value });
   };
 
+  public onDefaultGridChange = (value: 'AutoGridLayout' | 'GridLayout') => {
+    this._dashboard.setDefaultGrid(value, false);
+  };
+
   public onTimeZoneChange = (value: TimeZone) => {
     this.getTimeRange().setState({
       timeZone: value,
@@ -198,7 +202,7 @@ export class GeneralSettingsEditView
 function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<GeneralSettingsEditView>) {
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const { title, description, tags, meta, editable } = dashboard.useState();
+  const { title, description, tags, meta, editable, defaultGrid } = dashboard.useState();
   const { showMoveModal, moveModalProps } = model.useState();
   const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
   const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
@@ -213,6 +217,16 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
     {
       label: t('dashboard-scene.general-settings-edit-view.editable_options.label.readonly', 'Read-only'),
       value: false,
+    },
+  ];
+  const DEFAULT_GRID_OPTIONS: Array<SelectableValue<'AutoGridLayout' | 'GridLayout'>> = [
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
+      value: 'AutoGridLayout',
+    },
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
+      value: 'GridLayout',
     },
   ];
 
@@ -303,6 +317,17 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             )}
           >
             <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
+          </Field>
+
+          <Field
+            noMargin
+            label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+            description={t(
+              'dashboard-settings.general.default-grid-description',
+              'Pick what grid type to be used for new rows and tabs'
+            )}
+          >
+            <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
           </Field>
         </Box>
 

@@ -9,6 +9,8 @@ import {
   defaultTimeSettingsSpec,
   GroupByVariableKind,
   Spec as DashboardV2Spec,
+  defaultGridLayoutKind,
+  defaultAutoGridLayoutKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -16,7 +18,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types/dashboard';
 
 import { contextSrv } from '../../../core/services/context_srv';
-import { createDefaultGridLayoutKind } from '../scene/layouts-shared/defaultGridUtils';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
@@ -44,6 +45,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
         type: 'groupby',
       };
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       variablesList = (variablesList || []).concat([filterVariable as VariableModel, groupByVariable]);
     }
   }
@@ -81,7 +83,8 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
 export async function buildNewDashboardSaveModelV2(
   urlFolderUid?: string
 ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
-  let variablesList = defaultDashboardV2Spec().variables;
+  const defaultSpec = defaultDashboardV2Spec();
+  let variablesList = defaultSpec.variables;
 
   if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
     // Add filter and group by variables if the datasource supports it
@@ -122,8 +125,8 @@ export async function buildNewDashboardSaveModelV2(
     apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
     spec: {
-      ...defaultDashboardV2Spec(),
-      layout: createDefaultGridLayoutKind(),
+      ...defaultSpec,
+      layout: defaultSpec.defaultGrid === 'GridLayout' ? defaultGridLayoutKind() : defaultAutoGridLayoutKind(),
       title: t('dashboard-scene.build-new-dashboard-save-model-v2.data.title.new-dashboard', 'New dashboard'),
       timeSettings: {
         ...defaultTimeSettingsSpec(),

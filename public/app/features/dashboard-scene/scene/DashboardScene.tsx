@@ -89,9 +89,15 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
-import { createDefaultGridLayoutManager } from './layouts-shared/defaultGridUtils';
+import {
+  calculateDefaultGrid,
+  createDefaultGridLayoutManager,
+  setDefaultGrid,
+} from './layouts-shared/defaultGridUtils';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
@@ -160,6 +166,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator?: DashboardLayoutOrchestrator;
+  defaultGrid: 'GridLayout' | 'AutoGridLayout';
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -203,16 +210,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   >;
 
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
+    const defaultGrid = state.defaultGrid ?? calculateDefaultGrid();
+
     super({
       title: t('dashboard-scene.dashboard-scene.title.dashboard', 'Dashboard'),
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? createDefaultGridLayoutManager(),
+      body: state.body ?? createDefaultGridLayoutManager(defaultGrid),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
+      defaultGrid,
     });
 
     this.serializer =
@@ -226,6 +236,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
     const isNew = locationService.getLocation().pathname === '/dashboard/new';
+
+    setDefaultGrid(this.state.defaultGrid);
 
     window.__grafanaSceneContext = this;
 
@@ -1208,6 +1220,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private hasVariableErrors(): boolean {
     return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
+  }
+
+  public setDefaultGrid(defaultGrid: 'GridLayout' | 'AutoGridLayout', changeBody: boolean) {
+    const newState: Partial<Pick<DashboardSceneState, 'body' | 'defaultGrid'>> = {};
+
+    if (defaultGrid !== this.state.defaultGrid) {
+      newState.defaultGrid = defaultGrid;
+    }
+
+    if (changeBody && this.state.body.descriptor.id !== defaultGrid) {
+      newState.body =
+        defaultGrid === 'GridLayout'
+          ? DefaultGridLayoutManager.createFromLayout(this.state.body)
+          : AutoGridLayoutManager.createFromLayout(this.state.body);
+    }
+
+    this.setState(newState);
+    setDefaultGrid(defaultGrid);
   }
 }
 

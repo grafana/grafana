@@ -1540,6 +1540,10 @@ export interface Spec {
 	description?: string;
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
+	// The default grid to use in edit mode
+	// This is here only for PoC purposes as this should be a custom resource
+	// However the dashboards API is using manual API registration and the custom resources are not exposed automatically
+	defaultGrid: "GridLayout" | "AutoGridLayout";
 	elements: Record<string, Element>;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
@@ -1566,6 +1570,7 @@ export const defaultSpec = (): Spec => ({
 	annotations: [],
 	cursorSync: "Off",
 	editable: true,
+	defaultGrid: "AutoGridLayout",
 	elements: {},
 	layout: defaultGridLayoutKind(),
 	links: [],

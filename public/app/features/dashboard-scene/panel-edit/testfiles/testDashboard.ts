@@ -777,6 +777,7 @@ export const testDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
     links: [],
     variables: [],
     annotations: [],
+    defaultGrid: 'AutoGridLayout',
     timeSettings: {
       from: 'now-6h',
       to: 'now',

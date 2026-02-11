@@ -1,23 +1,38 @@
 import { css, cx } from '@emotion/css';
-import { MouseEventHandler } from 'react';
+import { MouseEventHandler, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, PopoverContent, Tooltip, useStyles2 } from '@grafana/ui';
 
 export interface FilterPillProps {
-  selected?: boolean;
   label: string;
+  selected?: boolean;
   onClick?: MouseEventHandler<HTMLElement>;
+  tooltip?: PopoverContent;
 }
 
-export const NewDashboardEmptyPill = ({ label, selected = false, onClick }: FilterPillProps) => {
+export const NewDashboardEmptyPill = ({ label, selected = false, tooltip, onClick }: FilterPillProps) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
+
+  const body = useMemo(
+    () => (
+      <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
+        {selected && <Icon name="check" className={styles.icon} />}
+        <span>{label}</span>
+      </button>
+    ),
+    [styles.wrapper, styles.selected, styles.icon, clearButton, selected, label, onClick]
+  );
+
+  if (!tooltip) {
+    return body;
+  }
+
   return (
-    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
-      {selected && <Icon name="check" className={styles.icon} />}
-      <span>{label}</span>
-    </button>
+    <Tooltip content={tooltip} placement="bottom">
+      {body}
+    </Tooltip>
   );
 };
 

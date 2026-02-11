@@ -190,6 +190,7 @@ export function ensureV2Response(
     liveNow: dashboard.liveNow ?? Boolean(dashboardDefaults.liveNow),
     editable: dashboard.editable ?? dashboardDefaults.editable,
     ...(dashboard.revision !== undefined && { revision: dashboard.revision }),
+    defaultGrid: config.featureToggles.dashboardNewLayouts ? dashboardDefaults.defaultGrid : 'GridLayout',
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
       to: dashboard.time?.to || timeSettingsDefaults.to,

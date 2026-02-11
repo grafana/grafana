@@ -207,6 +207,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       title: dashboard.title,
       uid: metadata.name,
       version: metadata.generation,
+      defaultGrid: dashboard.defaultGrid,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
         // Use defaults when time is empty to match DashboardModel behavior

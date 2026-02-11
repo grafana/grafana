@@ -1937,9 +1937,13 @@ type DashboardSpec struct {
 	// Description of dashboard.
 	Description *string `json:"description,omitempty"`
 	// Whether a dashboard is editable or not.
-	Editable *bool                                                                       `json:"editable,omitempty"`
-	Elements map[string]DashboardElement                                                 `json:"elements"`
-	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Editable *bool `json:"editable,omitempty"`
+	// The default grid to use in edit mode
+	// This is here only for PoC purposes as this should be a custom resource
+	// However the dashboards API is using manual API registration and the custom resources are not exposed automatically
+	DefaultGrid DashboardSpecDefaultGrid                                                    `json:"defaultGrid"`
+	Elements    map[string]DashboardElement                                                 `json:"elements"`
+	Layout      DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	// Links with references to other dashboards or external websites.
 	Links []DashboardDashboardLink `json:"links"`
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -1966,6 +1970,7 @@ func NewDashboardSpec() *DashboardSpec {
 		Annotations:  []DashboardAnnotationQueryKind{},
 		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
+		DefaultGrid:  DashboardSpecDefaultGridAutoGridLayout,
 		Elements:     map[string]DashboardElement{},
 		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
 		Links:        []DashboardDashboardLink{},
@@ -2157,6 +2162,14 @@ type DashboardCustomVariableSpecValuesFormat string
 const (
 	DashboardCustomVariableSpecValuesFormatCsv  DashboardCustomVariableSpecValuesFormat = "csv"
 	DashboardCustomVariableSpecValuesFormatJson DashboardCustomVariableSpecValuesFormat = "json"
+)
+
+// +k8s:openapi-gen=true
+type DashboardSpecDefaultGrid string
+
+const (
+	DashboardSpecDefaultGridGridLayout     DashboardSpecDefaultGrid = "GridLayout"
+	DashboardSpecDefaultGridAutoGridLayout DashboardSpecDefaultGrid = "AutoGridLayout"
 )
 
 // +k8s:openapi-gen=true
