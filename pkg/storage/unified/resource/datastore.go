@@ -13,13 +13,20 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 // Templates setup for backward-compatibility queries
@@ -785,8 +792,6 @@ var (
 	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
 	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
-	sqlKVRestoreLegacyResourceDelete = mustTemplate("sqlkv_restore_legacy_resource_delete.sql")
-	sqlKVRestoreLegacyResource       = mustTemplate("sqlkv_restore_legacy_resource.sql")
 )
 
 // TODO: remove when backwards compatibility is no longer needed.
@@ -815,19 +820,6 @@ type sqlKVLegacyUpdateHistoryRequest struct {
 }
 
 func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
-	return nil
-}
-
-// TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacyRestoreRequest struct {
-	sqltemplate.SQLTemplate
-	Group     string
-	Resource  string
-	Namespace string
-	Name      string
-}
-
-func (req sqlKVLegacyRestoreRequest) Validate() error {
 	return nil
 }
 
@@ -893,10 +885,13 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		})
 
 		if err != nil {
+			if isRowAlreadyExistsError(err) {
+				return ErrResourceAlreadyExists
+			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}
 	case DataActionUpdated:
-		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			GUID:        key.GUID,
 			Group:       key.Group,
@@ -911,60 +906,69 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
+		if err := checkLegacyCASConflict(res, key); err != nil {
+			return err
+		}
 	case DataActionDeleted:
-		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 			Namespace:   key.Namespace,
 			Name:        key.Name,
+			PreviousRV:  previousRV,
 		})
 
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
+		}
+		if err := checkLegacyCASConflict(res, key); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// applyBackwardsCompatibleOptimisticLockFailure updates the latest state of the object to the `resource` table
-// after an optimistic locking failure. When a losing write's resource_history entry is deleted, the resource table
-// may still point to the deleted GUID. This method restores the resource row to match the latest (winning) entry
-// in resource_history for the given (group, resource, namespace, name).
-// TODO: remove when backwards compatibility is no longer needed
-func (d *dataStore) applyBackwardsCompatibleOptimisticLockFailure(ctx context.Context, x db.ContextExecer, key DataKey) error {
-	if d.legacyDialect == nil {
+func checkLegacyCASConflict(res db.Result, key DataKey) error {
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+	}
+	if rows == 1 {
 		return nil
 	}
-
-	execRestore := func(execCtx context.Context, x db.ContextExecer) error {
-		_, err := dbutil.Exec(execCtx, x, sqlKVRestoreLegacyResourceDelete, sqlKVLegacyRestoreRequest{
-			SQLTemplate: sqltemplate.New(d.legacyDialect),
-			Group:       key.Group,
-			Resource:    key.Resource,
-			Namespace:   key.Namespace,
-			Name:        key.Name,
-		})
-		if err != nil {
-			return err
-		}
-
-		_, err = dbutil.Exec(execCtx, x, sqlKVRestoreLegacyResource, sqlKVLegacyRestoreRequest{
-			SQLTemplate: sqltemplate.New(d.legacyDialect),
-			Group:       key.Group,
-			Resource:    key.Resource,
-			Namespace:   key.Namespace,
-			Name:        key.Name,
-		})
-		return err
+	if rows > 1 {
+		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
 	}
 
-	if err := execRestore(ctx, x); err != nil {
-		return fmt.Errorf("compatibility layer: failed to restore resource after optimistic lock failure: %w", err)
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
+}
+
+func isRowAlreadyExistsError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
 	}
 
-	return nil
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) {
+		return pg.Code == "23505"
+	}
+
+	var pqerr *pq.Error
+	if errors.As(err, &pqerr) {
+		return pqerr.Code == "23505"
+	}
+
+	var mysqlerr *mysql.MySQLError
+	if errors.As(err, &mysqlerr) {
+		return mysqlerr.Number == 1062
+	}
+
+	return false
 }
 
 // isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).

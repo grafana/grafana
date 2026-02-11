@@ -8,4 +8,5 @@ SET
 WHERE {{ .Ident "group" }} = {{ .Arg .Group }}
 AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
 AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-AND {{ .Ident "name" }} = {{ .Arg .Name }};
+AND {{ .Ident "name" }} = {{ .Arg .Name }}
+AND {{ .Ident "resource_version" }} = {{ .Arg .PreviousRV }};
