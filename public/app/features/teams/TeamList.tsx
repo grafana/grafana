@@ -9,9 +9,9 @@ import {
   Button,
   CellProps,
   Column,
-  DeleteButton,
   EmptyState,
-  FilterInput, Icon,
+  FilterInput,
+  Icon,
   InlineField,
   InteractiveTable,
   LinkButton,
@@ -234,7 +234,7 @@ const TeamList = () => {
               {/*  disabled={!canDelete}*/}
               {/*  onConfirm={() => deleteTeam({ uid: original.uid })}*/}
               {/*/>*/}
-              <Button onClick={showDeleteModal} variant="destructive">
+              <Button onClick={showDeleteModal} variant="destructive" disabled={!canDelete}>
                 <Icon name="times" size="sm" />
               </Button>
             </Stack>
