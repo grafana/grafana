@@ -197,7 +197,6 @@ func TestConverter(t *testing.T) {
 						_ = os.WriteFile(fpath, out, 0600)
 					}
 				}
-
 			})
 		}
 	})

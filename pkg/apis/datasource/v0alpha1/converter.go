@@ -221,7 +221,6 @@ func toSecureJsonData(ds *DataSource) map[string]string {
 }
 
 func (r Converter) AsLegacyDatasource(ds *DataSource) (*datasources.DataSource, error) {
-
 	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}

@@ -53,7 +53,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 		uid := web.Params(c.Req)[":uid"]
 
 		// fetch the datasource type so we know which api group to call
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, uid)
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, uid) // nolint:staticcheck
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				return response.Error(http.StatusNotFound, "Data source not found", nil)

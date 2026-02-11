@@ -72,7 +72,7 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 		return nil, fmt.Errorf("failed to get connection: %w", err)
 	}
 
-	body, err := result.Raw()
+	body, _ := result.Raw() // err has already been checked
 
 	var conn queryV0.DataSourceConnectionList
 	if err := json.Unmarshal(body, &conn); err != nil {
