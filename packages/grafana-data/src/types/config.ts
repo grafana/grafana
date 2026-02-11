@@ -271,6 +271,7 @@ export interface GrafanaConfig {
   expressionsEnabled: boolean;
   liveEnabled: boolean;
   liveMessageSizeLimit: number;
+  liveNamespaced: boolean; // use namespace or orgId prefix
   anonymousEnabled: boolean;
   anonymousDeviceLimit: number;
   featureToggles: FeatureToggles;
