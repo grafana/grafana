@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue, StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
+import { InlineFieldRow, InlineField, RadioButtonGroup, Select, Switch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { GeomapInstanceState, Options, MapViewConfig } from '../types';
@@ -64,24 +64,46 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
     </InlineFieldRow>
   );
 
+  const onChangeRefitOnDataChange = useCallback(
+    (event: React.FormEvent<HTMLInputElement>) => {
+      onChange({ ...value, refitOnDataChange: event.currentTarget.checked });
+    },
+    [value, onChange]
+  );
+
   const onChangePadding = (padding: number | undefined) => {
     onChange({ ...value, padding: padding });
   };
 
   const lastOnlyEditorFragment = (
-    <InlineFieldRow>
-      <InlineField
-        label={t('geomap.fit-map-view-editor.last-only-editor-fragment.label-padding', 'Padding')}
-        labelWidth={labelWidth}
-        grow={true}
-        tooltip={t(
-          'geomap.fit-map-view-editor.last-only-editor-fragment.tooltip-padding-relative-percent-beyond-extent',
-          'Sets padding in relative percent beyond data extent'
-        )}
-      >
-        <NumberInput value={value?.padding ?? 5} min={0} step={1} onChange={onChangePadding} />
-      </InlineField>
-    </InlineFieldRow>
+    <>
+      <InlineFieldRow>
+        <InlineField
+          label={t('geomap.fit-map-view-editor.label-refit-on-data-change', 'Re-fit on data change')}
+          labelWidth={labelWidth}
+          grow={true}
+          tooltip={t(
+            'geomap.fit-map-view-editor.tooltip-refit-on-data-change',
+            'When enabled, the map will re-fit to data extent on every data update. Useful for tracking moving assets or fleets.'
+          )}
+        >
+          <Switch value={value?.refitOnDataChange ?? false} onChange={onChangeRefitOnDataChange} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField
+          label={t('geomap.fit-map-view-editor.last-only-editor-fragment.label-padding', 'Padding')}
+          labelWidth={labelWidth}
+          grow={true}
+          tooltip={t(
+            'geomap.fit-map-view-editor.last-only-editor-fragment.tooltip-padding-relative-percent-beyond-extent',
+            'Sets padding in relative percent beyond data extent'
+          )}
+        >
+          <NumberInput value={value?.padding ?? 5} min={0} step={1} onChange={onChangePadding} />
+        </InlineField>
+      </InlineFieldRow>
+    </>
   );
 
   const currentDataScope = value.allLayers
