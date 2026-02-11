@@ -3,6 +3,7 @@ package jobs
 import (
 	"errors"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,11 +18,14 @@ func isWarningError(err error) bool {
 
 	var validationErr *resources.ResourceValidationError
 	var ownershipErr *resources.ResourceOwnershipConflictError
+	var quotaExceededErr *quotas.QuotaExceededError
 
 	switch {
 	case errors.As(err, &validationErr):
 		return true
 	case errors.As(err, &ownershipErr):
+		return true
+	case errors.As(err, &quotaExceededErr):
 		return true
 	default:
 		return false

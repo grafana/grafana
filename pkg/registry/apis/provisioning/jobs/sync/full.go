@@ -406,5 +406,7 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, chang
 		attribute.Int64("quota_limit", cfg.Status.Quota.MaxResourcesPerRepository),
 	)
 
-	return fmt.Errorf("repository is over quota (current: %d resources) and sync would add %d resources, resulting in %d resources exceeding the quota limit of %d. sync cannot proceed", quotaUsage.TotalResources, netChange, finalCount, cfg.Status.Quota.MaxResourcesPerRepository)
+	return &quotas.QuotaExceededError{
+		Err: fmt.Errorf("repository is over quota (current: %d resources) and sync would add %d resources, resulting in %d resources exceeding the quota limit of %d. sync cannot proceed", quotaUsage.TotalResources, netChange, finalCount, cfg.Status.Quota.MaxResourcesPerRepository),
+	}
 }

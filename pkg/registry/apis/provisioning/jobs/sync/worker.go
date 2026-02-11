@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -173,10 +174,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	if syncStatus.State != provisioning.JobStateError {
+	// If we exceeded the quota, we need to preserve the lastRef to avoid losing the changes
+	var quotaErr *quotas.QuotaExceededError
+	if syncStatus.State != provisioning.JobStateError && !errors.As(syncError, &quotaErr) {
 		syncStatus.LastRef = currentRef
 	} else {
-		// Preserve the original lastRef on error
+		// Preserve the original lastRef on error or quota exceeded
 		syncStatus.LastRef = lastRef
 	}
 

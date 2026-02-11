@@ -2,6 +2,8 @@ package quotas
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math"
 	"testing"
 
@@ -389,6 +391,82 @@ func TestWouldStayWithinQuota(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestQuotaExceededError(t *testing.T) {
+	t.Run("Error method returns inner error message", func(t *testing.T) {
+		inner := fmt.Errorf("repository is over quota (current: 110 resources)")
+		quotaErr := &QuotaExceededError{Err: inner}
+
+		require.Equal(t, "repository is over quota (current: 110 resources)", quotaErr.Error())
+	})
+
+	t.Run("Error method returns default message when inner error is nil", func(t *testing.T) {
+		quotaErr := &QuotaExceededError{}
+
+		require.Equal(t, "quota exceeded", quotaErr.Error())
+	})
+
+	t.Run("Unwrap returns underlying error", func(t *testing.T) {
+		inner := fmt.Errorf("some inner error")
+		quotaErr := &QuotaExceededError{Err: inner}
+
+		unwrapped := quotaErr.Unwrap()
+		require.NotNil(t, unwrapped)
+		require.Equal(t, inner, unwrapped)
+	})
+
+	t.Run("Unwrap returns nil when inner error is nil", func(t *testing.T) {
+		quotaErr := &QuotaExceededError{}
+
+		unwrapped := quotaErr.Unwrap()
+		require.Nil(t, unwrapped)
+	})
+
+	t.Run("errors.As extracts QuotaExceededError", func(t *testing.T) {
+		inner := fmt.Errorf("quota limit reached")
+		quotaErr := &QuotaExceededError{Err: inner}
+
+		var extractedErr *QuotaExceededError
+		require.True(t, errors.As(quotaErr, &extractedErr))
+		require.NotNil(t, extractedErr)
+		require.NotNil(t, extractedErr.Err)
+		require.Equal(t, inner, extractedErr.Err)
+	})
+
+	t.Run("errors.As extracts QuotaExceededError from wrapped error", func(t *testing.T) {
+		inner := fmt.Errorf("quota limit reached")
+		quotaErr := &QuotaExceededError{Err: inner}
+		wrapped := fmt.Errorf("sync failed: %w", quotaErr)
+
+		var extractedErr *QuotaExceededError
+		require.True(t, errors.As(wrapped, &extractedErr))
+		require.NotNil(t, extractedErr)
+		require.Equal(t, inner, extractedErr.Err)
+	})
+
+	t.Run("errors.As returns false for non-QuotaExceededError", func(t *testing.T) {
+		regularErr := errors.New("regular error")
+
+		var extractedErr *QuotaExceededError
+		require.False(t, errors.As(regularErr, &extractedErr))
+		require.Nil(t, extractedErr)
+	})
+
+	t.Run("errors.Is finds underlying error", func(t *testing.T) {
+		inner := fmt.Errorf("inner error")
+		quotaErr := &QuotaExceededError{Err: inner}
+
+		require.True(t, errors.Is(quotaErr, inner), "errors.Is should find the inner error")
+	})
+
+	t.Run("errors.Is does not match unrelated error", func(t *testing.T) {
+		inner := fmt.Errorf("inner error")
+		quotaErr := &QuotaExceededError{Err: inner}
+		unrelated := fmt.Errorf("unrelated error")
+
+		require.False(t, errors.Is(quotaErr, unrelated), "errors.Is should not match unrelated error")
+	})
 }
 
 func TestFixedQuotaGetter_ImplementsInterface(t *testing.T) {

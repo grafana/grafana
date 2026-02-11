@@ -135,3 +135,20 @@ func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string)
 
 // Ensure FixedQuotaGetter implements QuotaGetter interface.
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+
+type QuotaExceededError struct {
+	Err error
+}
+
+// Error implements the error interface
+func (e *QuotaExceededError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "quota exceeded"
+}
+
+// Unwrap implements error unwrapping to support errors.Is and errors.As
+func (e *QuotaExceededError) Unwrap() error {
+	return e.Err
+}

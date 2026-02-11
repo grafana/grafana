@@ -19,6 +19,7 @@ import (
 	k8testing "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -991,4 +992,45 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckQuotaBeforeSync_ReturnsQuotaExceededError(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+
+	t.Run("returns QuotaExceededError when quota exceeded", func(t *testing.T) {
+		repo := repository.NewMockConfigRepository(t)
+		repo.EXPECT().Config().Return(&provisioning.Repository{
+			Status: provisioning.RepositoryStatus{
+				Conditions: []metav1.Condition{
+					{
+						Type:   provisioning.ConditionTypeResourceQuota,
+						Status: metav1.ConditionFalse,
+						Reason: provisioning.ReasonQuotaExceeded,
+					},
+				},
+				Quota: provisioning.QuotaStatus{
+					MaxResourcesPerRepository: 100,
+				},
+				Stats: []provisioning.ResourceCount{
+					{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+				},
+			},
+		})
+
+		err := checkQuotaBeforeSync(context.Background(), repo, createdChanges(20), tracer)
+		require.Error(t, err)
+
+		var quotaErr *quotas.QuotaExceededError
+		require.True(t, errors.As(err, &quotaErr), "error should be a *quotas.QuotaExceededError")
+		require.NotNil(t, quotaErr.Err, "inner error should not be nil")
+		require.Contains(t, quotaErr.Error(), "repository is over quota")
+	})
+
+	t.Run("QuotaExceededError Unwrap returns inner error", func(t *testing.T) {
+		inner := fmt.Errorf("inner error message")
+		qErr := &quotas.QuotaExceededError{Err: inner}
+
+		require.Equal(t, "inner error message", qErr.Error())
+		require.Equal(t, inner, qErr.Unwrap())
+	})
 }
