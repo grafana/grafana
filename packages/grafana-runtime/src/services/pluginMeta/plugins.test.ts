@@ -2,7 +2,7 @@ import { evaluateBooleanFlag } from '../../internal/openFeature';
 import { invalidateCache, setLogger } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
 
-import { initPluginMetas } from './plugins';
+import { initPluginMetas, refetchPluginMetas } from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 jest.mock('../../internal/openFeature', () => ({
@@ -49,6 +49,38 @@ describe('when useMTPlugins toggle is enabled and cache is not initialized', () 
     expect(response.items).toHaveLength(1);
     expect(response.items[0]).toBe(v0alpha1Meta);
     expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+  });
+});
+
+describe('when useMTPlugins toggle is enabled and cache is initialized', () => {
+  it('initPluginMetas should call loadPluginMetas once', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+    });
+
+    await initPluginMetas();
+    await initPluginMetas();
+    await initPluginMetas();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+  });
+
+  it('initPluginMetas should call loadPluginMetas again if refetchPluginMetas is called', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+    });
+
+    await initPluginMetas();
+    await refetchPluginMetas();
+    await initPluginMetas();
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
   });
 });

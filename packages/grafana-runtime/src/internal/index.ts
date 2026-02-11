@@ -38,4 +38,9 @@ export {
 } from '../services/pluginMeta/hooks';
 export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
 export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
-export { getPanelPluginMeta, getPanelPluginMetas, setPanelPluginMetas } from '../services/pluginMeta/panels';
+export {
+  getPanelPluginMeta,
+  getPanelPluginMetas,
+  setPanelPluginMetas,
+  refetchPanelPluginMetas,
+} from '../services/pluginMeta/panels';

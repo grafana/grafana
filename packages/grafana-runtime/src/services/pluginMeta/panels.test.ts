@@ -1,4 +1,5 @@
 import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { BackendSrv, setBackendSrv } from '../backendSrv';
 
 import {
   getListedPanelPluginIds,
@@ -6,18 +7,26 @@ import {
   getPanelPluginMetas,
   getPanelPluginVersion,
   isPanelPluginInstalled,
+  refetchPanelPluginMetas,
   setPanelPluginMetas,
 } from './panels';
-import { initPluginMetas } from './plugins';
-import { panel } from './test-fixtures/config.panels';
+import { initPluginMetas, refetchPluginMetas } from './plugins';
+import { panel, panels } from './test-fixtures/config.panels';
+import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
 
-jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
+jest.mock('./plugins', () => ({
+  ...jest.requireActual('./plugins'),
+  initPluginMetas: jest.fn(),
+  refetchPluginMetas: jest.fn(),
+}));
+
 jest.mock('../../internal/openFeature', () => ({
   ...jest.requireActual('../../internal/openFeature'),
   evaluateBooleanFlag: jest.fn(),
 }));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
+const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
 
 describe('when useMTPlugins flag is enabled and panels is not initialized', () => {
@@ -283,5 +292,125 @@ describe('immutability', () => {
     expect(result).toBeDefined();
     expect(result!.info.author.name).toEqual('Grafana');
     expect(result!.info.links).toHaveLength(0);
+  });
+});
+
+describe('when useMTPlugins flag is enabled and refetchPanelPluginMetas is called', () => {
+  let backendSrv: BackendSrv;
+  beforeEach(() => {
+    setPanelPluginMetas({});
+    jest.resetAllMocks();
+    refetchPluginMetasMock.mockResolvedValue(v0alpha1Response);
+    evaluateBooleanFlagMock.mockReturnValue(true);
+    backendSrv = {
+      chunked: jest.fn(),
+      delete: jest.fn(),
+      fetch: jest.fn(),
+      patch: jest.fn(),
+      post: jest.fn(),
+      put: jest.fn(),
+      get: jest.fn().mockResolvedValue({ panels }),
+      request: jest.fn(),
+      datasourceRequest: jest.fn(),
+    };
+    setBackendSrv(backendSrv);
+  });
+
+  it('should call refetchPluginMetas', async () => {
+    await refetchPanelPluginMetas();
+
+    expect(refetchPluginMetasMock).toHaveBeenCalledTimes(1);
+    expect(backendSrv.get).not.toHaveBeenCalled();
+  });
+
+  it('should set correct panels', async () => {
+    await refetchPanelPluginMetas();
+
+    const actual = await getPanelPluginMetas();
+
+    const actualIds = actual.map((a) => a.id).sort();
+    const expectedIds = Object.keys(panels).sort();
+
+    expect(actual).toHaveLength(Object.keys(panels).length);
+    expect(actualIds).toStrictEqual(expectedIds);
+  });
+
+  it('should return the last result for concurrent calls', async () => {
+    refetchPluginMetasMock
+      .mockResolvedValueOnce(v0alpha1Response)
+      .mockResolvedValue({ items: [v0alpha1Response.items[0]] });
+
+    const promise1 = refetchPanelPluginMetas();
+    const promise2 = refetchPanelPluginMetas();
+
+    await Promise.all([promise1, promise2]);
+
+    const actual = await getPanelPluginMetas();
+
+    const actualIds = actual.map((a) => a.id).sort();
+
+    expect(actual).toHaveLength(1);
+    expect(actualIds).toStrictEqual([v0alpha1Response.items[0].spec.pluginJson.id]);
+  });
+});
+
+describe('when useMTPlugins flag is disabled and refetchPanelPluginMetas is called', () => {
+  let backendSrv: BackendSrv;
+  beforeEach(() => {
+    setPanelPluginMetas({});
+    jest.resetAllMocks();
+    refetchPluginMetasMock.mockResolvedValue({ items: [] });
+    evaluateBooleanFlagMock.mockReturnValue(false);
+    backendSrv = {
+      chunked: jest.fn(),
+      delete: jest.fn(),
+      fetch: jest.fn(),
+      patch: jest.fn(),
+      post: jest.fn(),
+      put: jest.fn(),
+      get: jest.fn().mockResolvedValue({ panels }),
+      request: jest.fn(),
+      datasourceRequest: jest.fn(),
+    };
+    setBackendSrv(backendSrv);
+  });
+
+  it('should call /api/frontend/settings', async () => {
+    await refetchPanelPluginMetas();
+
+    expect(backendSrv.get).toHaveBeenCalledTimes(1);
+    expect(backendSrv.get).toHaveBeenCalledWith('/api/frontend/settings');
+    expect(refetchPluginMetasMock).not.toHaveBeenCalled();
+  });
+
+  it('should set correct panels', async () => {
+    await refetchPanelPluginMetas();
+
+    const actual = await getPanelPluginMetas();
+
+    const actualIds = actual.map((a) => a.id).sort();
+    const expectedIds = Object.keys(panels).sort();
+
+    expect(actual).toHaveLength(Object.keys(panels).length);
+    expect(actualIds).toStrictEqual(expectedIds);
+  });
+
+  it('should return the last result for concurrent calls', async () => {
+    backendSrv.get = jest
+      .fn()
+      .mockResolvedValueOnce({ panels })
+      .mockResolvedValue({ panels: { alertlist: panels.alertlist } });
+
+    const promise1 = refetchPanelPluginMetas();
+    const promise2 = refetchPanelPluginMetas();
+
+    await Promise.all([promise1, promise2]);
+
+    const actual = await getPanelPluginMetas();
+
+    const actualIds = actual.map((a) => a.id).sort();
+
+    expect(actual).toHaveLength(1);
+    expect(actualIds).toStrictEqual(['alertlist']);
   });
 });

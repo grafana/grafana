@@ -2,9 +2,10 @@ import type { PanelPluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { getBackendSrv } from '../backendSrv';
 
 import { getPanelPluginMapper } from './mappers/mappers';
-import { initPluginMetas } from './plugins';
+import { initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas } from './types';
 
 let panels: PanelPluginMetas = {};
@@ -77,4 +78,16 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
   }
 
   panels = structuredClone(override);
+}
+
+export async function refetchPanelPluginMetas(): Promise<void> {
+  if (!evaluateBooleanFlag('useMTPlugins', false)) {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    panels = settings.panels;
+    return;
+  }
+
+  const metas = await refetchPluginMetas();
+  const mapper = getPanelPluginMapper();
+  panels = mapper(metas);
 }
