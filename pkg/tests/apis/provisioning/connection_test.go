@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  "github",
+				"type":  provisioning.GitHubRepositoryType,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -87,13 +87,15 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 		}}
 		// CREATE
-		_, err := helper.CreateGithubConnection(t, ctx, connection)
+		c, err := helper.CreateGithubConnection(t, ctx, connection)
 		require.NoError(t, err, "failed to create resource")
 
+		connectionName := c.GetName()
+
 		// READ
-		output, err := helper.Connections.Resource.Get(ctx, "connection", metav1.GetOptions{})
+		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to read back resource")
-		assert.Equal(t, "connection", output.GetName(), "name should be equal")
+		assert.Equal(t, connectionName, output.GetName(), "name should be equal")
 		assert.Equal(t, "default", output.GetNamespace(), "namespace should be equal")
 		spec := output.Object["spec"].(map[string]any)
 		assert.Equal(t, "github", spec["type"], "type should be equal")
@@ -109,14 +111,14 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "failed to list resource")
 		assert.Equal(t, 1, len(list.Items), "should have one connection")
-		assert.Equal(t, "connection", list.Items[0].GetName(), "name should be equal")
+		assert.Equal(t, connectionName, list.Items[0].GetName(), "name should be equal")
 
 		// UPDATE
 		updatedConnection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      "connection",
+				"name":      connectionName,
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -143,7 +145,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		// DELETE - Retry delete to handle resource version conflicts
 		// The controller may have updated the resource after our update, changing the resource version
 		require.Eventually(t, func() bool {
-			err := helper.Connections.Resource.Delete(ctx, "connection", metav1.DeleteOptions{})
+			err := helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 			if err != nil {
 				if k8serrors.IsConflict(err) {
 					// Resource version conflict - retry
@@ -173,7 +175,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  "github",
+				"type":  provisioning.GitHubRepositoryType,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -210,6 +212,345 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		assert.Equal(t, metav1.StatusReasonForbidden, err.Status().Reason)
 		assert.Contains(t, err.Status().Message, "User \"viewer\" cannot get resource \"connections\"")
 		assert.Contains(t, err.Status().Message, "admin role is required")
+	})
+}
+
+func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("should update connection name with type prefix", func(t *testing.T) {
+		connectionType := provisioning.GithubConnectionType
+		namePrefix := fmt.Sprintf("%s-", connectionType)
+
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  connectionType,
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), namePrefix, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should update connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
+
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"namespace":    "default",
+				"generateName": generateName,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GithubConnectionType,
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should keep connection name if already given", func(t *testing.T) {
+		name := "some-name"
+
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GithubConnectionType,
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		c, err := helper.CreateGithubConnection(t, ctx, connection)
+		require.NoError(t, err, "failed to create resource")
+		require.Equal(t, name, c.GetName(), "name should be identical")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+}
+
+func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !extensions.IsEnterprise {
+		t.Skip("Skipping integration test when not enterprise")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
+	bitbucketNamePrefix := fmt.Sprintf("%s-", provisioning.BitbucketConnectionType)
+
+	t.Run("should update gitlab connection name with type prefix", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GitlabConnectionType,
+				"gitlab": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), gitlabNamePrefix, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should update gitlab connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"namespace":    "default",
+				"generateName": generateName,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GitlabConnectionType,
+				"gitlab": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should keep gitlab connection name if name is already given", func(t *testing.T) {
+		name := "some-name"
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GitlabConnectionType,
+				"gitlab": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Equal(t, name, c.GetName(), "name should be identical")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should update bitbucket connection name with type prefix", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.BitbucketConnectionType,
+				"bitbucket": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), bitbucketNamePrefix, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should update bitbucket connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"namespace":    "default",
+				"generateName": generateName,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.BitbucketConnectionType,
+				"bitbucket": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
+	})
+
+	t.Run("should keep bitbucket connection name if name is already given", func(t *testing.T) {
+		name := "some-name"
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.BitbucketConnectionType,
+				"bitbucket": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Equal(t, name, c.GetName(), "name should be identical")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, waitTimeoutDefault, waitIntervalDefault)
+		})
 	})
 }
 
@@ -1174,6 +1515,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 					_, _ = w.Write(ghmock.MustMarshal(github.App{
 						ID:   &appID,
 						Slug: &appSlug,
+						Permissions: &github.InstallationPermissions{
+							Contents:        github.Ptr("write"),
+							Metadata:        github.Ptr("read"),
+							PullRequests:    github.Ptr("write"),
+							RepositoryHooks: github.Ptr("write"),
+						},
 					}))
 				}),
 			),
@@ -1282,6 +1629,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 					_, _ = w.Write(ghmock.MustMarshal(github.App{
 						ID:   &appID,
 						Slug: &appSlug,
+						Permissions: &github.InstallationPermissions{
+							Contents:        github.Ptr("write"),
+							Metadata:        github.Ptr("read"),
+							PullRequests:    github.Ptr("write"),
+							RepositoryHooks: github.Ptr("write"),
+						},
 					}))
 				}),
 			),
@@ -1397,6 +1750,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				ghmock.GetApp, github.App{
 					ID:   &appID,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				},
 			),
 			ghmock.WithRequestMatchHandler(
@@ -1452,6 +1811,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				ghmock.GetApp, github.App{
 					ID:   &appID,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				},
 			),
 			ghmock.WithRequestMatch(
@@ -1522,8 +1887,10 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
+
+	connectionName := c.GetName()
 
 	t.Cleanup(func() {
 		// Clean up repositories first
@@ -1531,7 +1898,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		_ = helper.Repositories.Resource.Delete(ctx, "repo-without-connection", metav1.DeleteOptions{})
 		_ = helper.Repositories.Resource.Delete(ctx, "repo-with-different-connection", metav1.DeleteOptions{})
 		// Then clean up the connection
-		_ = helper.Connections.Resource.Delete(ctx, "test-conn-for-field-selector", metav1.DeleteOptions{})
+		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 	})
 
 	// Create a repository WITH the connection
@@ -1553,7 +1920,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 				"path": helper.ProvisioningPath,
 			},
 			"connection": map[string]any{
-				"name": "test-conn-for-field-selector",
+				"name": connectionName,
 			},
 		},
 	}}
@@ -1615,7 +1982,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 	t.Run("filter repositories by spec.connection.name", func(t *testing.T) {
 		// List repositories with field selector for the specific connection
 		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.connection.name=test-conn-for-field-selector",
+			FieldSelector: "spec.connection.name=" + connectionName,
 		})
 		require.NoError(t, err, "failed to list repositories with field selector")
 
@@ -1697,8 +2064,10 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		},
 	}}
 
-	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	c, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 	require.NoError(t, err, "failed to create connection")
+
+	connectionName := c.GetName()
 
 	// Create a repository that references the connection
 	repo := &unstructured.Unstructured{Object: map[string]any{
@@ -1719,7 +2088,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 				"path": helper.ProvisioningPath,
 			},
 			"connection": map[string]any{
-				"name": "test-conn-delete-blocked",
+				"name": connectionName,
 			},
 		},
 	}}
@@ -1728,7 +2097,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 	require.NoError(t, err, "failed to create repository referencing connection")
 
 	t.Run("should block connection deletion when referenced by repository", func(t *testing.T) {
-		err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+		err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
 		require.Error(t, err, "expected deletion to be blocked")
 
 		// Verify it's an Invalid error (containing Forbidden field error)
@@ -1750,13 +2119,13 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 
 		// Now deletion should succeed
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+			err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
 			require.NoError(collect, err, "failed to delete connection")
 		}, 10*time.Second, 100*time.Millisecond, "deletion should succeed")
 
 		// Verify connection is actually deleted
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
+			_, err = helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 			require.True(collect, k8serrors.IsNotFound(err), "connection should be deleted")
 		}, 10*time.Second, 100*time.Millisecond, "connection should be deleted")
 	})
@@ -1794,15 +2163,17 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 		},
 	}}
 
-	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	c, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	t.Run("should allow deletion of connection with no repository references", func(t *testing.T) {
-		err := helper.Connections.Resource.Delete(ctx, "test-conn-no-refs", deleteOptions)
+		err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
 		require.NoError(t, err, "expected deletion to succeed for unreferenced connection")
 
 		// Verify connection is deleted
-		_, err = helper.Connections.Resource.Get(ctx, "test-conn-no-refs", metav1.GetOptions{})
+		_, err = helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
 	})
 }
@@ -1925,4 +2296,246 @@ func verifyToken(t *testing.T, appID, token string) (bool, error) {
 	}
 
 	return claims.VerifyIssuer(appID, true), nil
+}
+
+// createInstallationWithPermissions creates a GitHub installation with specific permissions
+func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
+	app := &github.App{
+		ID:   github.Ptr(id),
+		Slug: github.Ptr("test-app"),
+		Owner: &github.User{
+			Login: github.Ptr("test-owner"),
+		},
+	}
+
+	// Set permissions based on the map
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = github.Ptr(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = github.Ptr(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = github.Ptr(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
+		}
+
+		app.Permissions = installationPerms
+	}
+
+	return app
+}
+
+func TestIntegrationProvisioning_GithubPermissionValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	// Base64 encoded test private key
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	testCases := []struct {
+		name                string
+		permissions         map[string]string
+		expectHealthy       bool
+		expectedErrorCount  int
+		expectedErrorFields []string
+		expectedErrorDetail string // substring to check in error detail
+	}{
+		{
+			name: "success - all permissions present",
+			permissions: map[string]string{
+				"contents":      "write",
+				"metadata":      "read",
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:      true,
+			expectedErrorCount: 0,
+		},
+		{
+			name: "failure - missing contents permission",
+			permissions: map[string]string{
+				"contents":      "", // missing
+				"metadata":      "read",
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:       false,
+			expectedErrorCount:  1,
+			expectedErrorFields: []string{"spec.github.appID"},
+			expectedErrorDetail: "lacks required 'contents' permission",
+		},
+		{
+			name: "failure - insufficient contents permission",
+			permissions: map[string]string{
+				"contents":      "read", // insufficient
+				"metadata":      "read",
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:       false,
+			expectedErrorCount:  1,
+			expectedErrorFields: []string{"spec.github.appID"},
+			expectedErrorDetail: "requires 'write', has 'read'",
+		},
+		{
+			name: "failure - missing metadata permission",
+			permissions: map[string]string{
+				"contents":      "write",
+				"metadata":      "", // missing
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:       false,
+			expectedErrorCount:  1,
+			expectedErrorFields: []string{"spec.github.appID"},
+			expectedErrorDetail: "lacks required 'metadata' permission",
+		},
+		{
+			name: "failure - multiple missing permissions",
+			permissions: map[string]string{
+				"contents":      "read", // insufficient
+				"metadata":      "",     // missing
+				"pull_requests": "",     // missing
+				"webhooks":      "write",
+			},
+			expectHealthy:      false,
+			expectedErrorCount: 3, // all three failures
+		},
+		{
+			name: "success - write satisfies read requirement",
+			permissions: map[string]string{
+				"contents":      "write",
+				"metadata":      "write", // write satisfies read
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:      true,
+			expectedErrorCount: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+			app := createAppWithPermissions(123456, tc.permissions)
+			installation := &github.Installation{
+				ID: github.Ptr(int64(454545)),
+			}
+
+			connectionFactory.Client = ghmock.NewMockedHTTPClient(
+				ghmock.WithRequestMatchHandler(
+					ghmock.GetApp,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write(ghmock.MustMarshal(app))
+					}),
+				),
+				ghmock.WithRequestMatchHandler(
+					ghmock.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write(ghmock.MustMarshal(installation))
+					}),
+				),
+			)
+			helper.SetGithubConnectionFactory(connectionFactory)
+
+			// Create connection
+			connection := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name":      fmt.Sprintf("test-conn-%s", strings.ReplaceAll(tc.name, " ", "-")),
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			}}
+
+			c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, c)
+			t.Cleanup(func() {
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+					require.NoError(collect, err)
+				}, waitTimeoutDefault, waitIntervalDefault)
+			})
+
+			restConfig := helper.Org1.Admin.NewRestConfig()
+			provisioningClient, err := clientset.NewForConfig(restConfig)
+			require.NoError(t, err)
+			connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+
+			// Wait for health check to complete
+			var conn *provisioning.Connection
+			require.Eventually(t, func() bool {
+				var err error
+				conn, err = connClient.Get(ctx, c.GetName(), metav1.GetOptions{})
+				if err != nil {
+					return false
+				}
+				// Health check should have run
+				return conn.Status.ObservedGeneration == conn.Generation &&
+					conn.Status.Health.Checked > 0
+			}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and health checked")
+
+			// Validate health status
+			if tc.expectHealthy {
+				assert.True(t, conn.Status.Health.Healthy, "connection should be healthy with valid permissions")
+				assert.Empty(t, conn.Status.FieldErrors, "should have no field errors when healthy")
+
+				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+			} else {
+				assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy with invalid permissions")
+				assert.Len(t, conn.Status.FieldErrors, tc.expectedErrorCount,
+					"should have expected number of field errors")
+
+				// Validate error details
+				if tc.expectedErrorCount > 0 {
+					for _, fieldError := range conn.Status.FieldErrors {
+						assert.Equal(t, metav1.CauseTypeForbidden, fieldError.Type,
+							"error type should be Forbidden for permission issues")
+
+						if len(tc.expectedErrorFields) > 0 {
+							assert.Contains(t, tc.expectedErrorFields, fieldError.Field,
+								"error should reference expected field")
+						}
+
+						if tc.expectedErrorDetail != "" {
+							assert.Contains(t, fieldError.Detail, tc.expectedErrorDetail,
+								"error detail should contain expected message")
+						}
+					}
+				}
+
+				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False")
+				assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCondition.Reason,
+					"Ready condition should have InvalidSpec reason")
+			}
+		})
+	}
 }

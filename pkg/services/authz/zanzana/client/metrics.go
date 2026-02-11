@@ -15,6 +15,8 @@ type shadowClientMetrics struct {
 	evaluationsSeconds *prometheus.HistogramVec
 	// compileSeconds is a summary for compiling item checker for a specific engine (RBAC and zanzana)
 	compileSeconds *prometheus.HistogramVec
+	// batchCheckSeconds is a summary for batch check time for a specific engine (RBAC and zanzana)
+	batchCheckSeconds *prometheus.HistogramVec
 	// evaluationStatusTotal is a metric for zanzana evaluation status
 	evaluationStatusTotal *prometheus.CounterVec
 }
@@ -40,6 +42,16 @@ func newShadowClientMetrics(reg prometheus.Registerer) *shadowClientMetrics {
 			prometheus.HistogramOpts{
 				Name:      "engine_compile_seconds",
 				Help:      "Histogram for item checker compilation time for the specific access control engine (RBAC and zanzana).",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
+			},
+			[]string{"engine"},
+		),
+		batchCheckSeconds: promauto.With(reg).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:      "engine_batch_check_seconds",
+				Help:      "Histogram for batch check time for the specific access control engine (RBAC and zanzana).",
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
 				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),

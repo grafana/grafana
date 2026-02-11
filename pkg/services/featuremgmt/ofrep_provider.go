@@ -13,7 +13,7 @@ type contentTypeTransport struct {
 }
 
 func (t *contentTypeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// OFREP requires Content-Type: application/json
+	// OFREP requires Content-Type: application/json, but the SDK doesn't set it
 	if req.Body != nil && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
 	}

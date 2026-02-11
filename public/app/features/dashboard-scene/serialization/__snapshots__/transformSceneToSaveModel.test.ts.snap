@@ -66,7 +66,6 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
   "editable": true,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 1,
-  "id": 1351,
   "links": [],
   "panels": [
     {
@@ -784,7 +783,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "editable": false,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 1,
-  "id": 1351,
   "links": [
     {
       "asDropdown": false,
@@ -1157,7 +1155,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "editable": true,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 1,
-  "id": 1351,
   "links": [],
   "panels": [
     {

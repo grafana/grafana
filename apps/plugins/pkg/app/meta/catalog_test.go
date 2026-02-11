@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -66,7 +67,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -118,7 +119,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "nonexistent-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
@@ -132,7 +133,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
@@ -148,7 +149,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
@@ -157,7 +158,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("returns error for invalid API URL", func(t *testing.T) {
-		provider := NewCatalogProvider("://invalid-url", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, "://invalid-url", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
@@ -178,6 +179,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
 				JSON:       expectedMeta,
+				CDNURL:     "https://cdn.grafana.com",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -186,7 +188,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProviderWithTTL(server.URL+"/api/plugins", "", customTTL)
+		provider := NewCatalogProviderWithTTL(&logging.NoOpLogger{}, server.URL+"/api/plugins", "", customTTL)
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
@@ -204,7 +206,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
@@ -230,6 +232,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
 				JSON:       expectedMeta,
+				CDNURL:     "https://cdn.grafana.com",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -238,7 +241,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", expectedToken)
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", expectedToken)
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
@@ -250,11 +253,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	t.Run("handles missing module hash gracefully", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				CDNURL:     "https://cdn.grafana.com",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{},
 				},
@@ -266,13 +268,12 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result.Meta.Module)
-		require.NotNil(t, result.Meta.Module.Hash)
-		assert.Equal(t, "", *result.Meta.Module.Hash)
+		assert.Nil(t, result.Meta.Module.Hash)
 	})
 
 	t.Run("calculates loading strategy correctly", func(t *testing.T) {
@@ -298,7 +299,9 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 						CDNURL:              "https://cdn.grafana.com",
 						CreatePluginVersion: tc.createPluginVersion,
 						Manifest: grafanaComPluginManifest{
-							Files: map[string]string{"/module.js": "hash123"},
+							Files: map[string]string{
+								"module.js": "hash123",
+							},
 						},
 					}
 
@@ -308,7 +311,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				}))
 				defer server.Close()
 
-				provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+				provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 				result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 				require.NoError(t, err)
@@ -325,15 +328,11 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	t.Run("handles empty children list", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{"/module.js": "hash123"},
-				},
-				Children: []grafanaComChildPluginVersion{},
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				CDNURL:     "https://cdn.grafana.com",
+				Children:   []grafanaComChildPluginVersion{},
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -342,7 +341,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
@@ -352,14 +351,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	t.Run("handles missing translations gracefully", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          "test-plugin",
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Languages: []string{"en", "fr"}},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{"/module.js": "hash123"},
-				},
+				PluginSlug: "test-plugin",
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Languages: []string{"en", "fr"}},
+				CDNURL:     "https://cdn.grafana.com",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -368,7 +363,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
@@ -381,14 +376,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := grafanaComPluginVersionMeta{
-				PluginSlug:          parentID,
-				Version:             "1.0.0",
-				JSON:                pluginsv0alpha1.MetaJSONData{Id: parentID},
-				CDNURL:              "https://cdn.grafana.com",
-				CreatePluginVersion: "4.15.0",
-				Manifest: grafanaComPluginManifest{
-					Files: map[string]string{"/module.js": "hash123"},
-				},
+				PluginSlug: parentID,
+				Version:    "1.0.0",
+				JSON:       pluginsv0alpha1.MetaJSONData{Id: parentID},
+				CDNURL:     "https://cdn.grafana.com",
 				Children: []grafanaComChildPluginVersion{
 					{Slug: "other-child", JSON: pluginsv0alpha1.MetaJSONData{Id: "other-child"}},
 				},
@@ -400,7 +391,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
 		parentIDPtr := parentID
 		result, err := provider.GetMeta(ctx, PluginRef{
 			ID:       childID,
@@ -416,14 +407,14 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 func TestNewCatalogProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
-		provider := NewCatalogProvider("https://grafana.com/api/plugins", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, "https://grafana.com/api/plugins", "")
 		assert.Equal(t, defaultCatalogTTL, provider.ttl)
 		assert.NotNil(t, provider.httpClient)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 
 	t.Run("uses default URL when empty", func(t *testing.T) {
-		provider := NewCatalogProvider("", "")
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, "", "")
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 }
@@ -431,17 +422,17 @@ func TestNewCatalogProvider(t *testing.T) {
 func TestNewCatalogProviderWithTTL(t *testing.T) {
 	t.Run("creates provider with custom TTL", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", "", customTTL)
+		provider := NewCatalogProviderWithTTL(&logging.NoOpLogger{}, "https://grafana.com/api/plugins", "", customTTL)
 		assert.Equal(t, customTTL, provider.ttl)
 	})
 
 	t.Run("accepts zero TTL", func(t *testing.T) {
-		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", "", 0)
+		provider := NewCatalogProviderWithTTL(&logging.NoOpLogger{}, "https://grafana.com/api/plugins", "", 0)
 		assert.Equal(t, time.Duration(0), provider.ttl)
 	})
 
 	t.Run("uses default URL when empty", func(t *testing.T) {
-		provider := NewCatalogProviderWithTTL("", "", defaultCatalogTTL)
+		provider := NewCatalogProviderWithTTL(&logging.NoOpLogger{}, "", "", defaultCatalogTTL)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 }
