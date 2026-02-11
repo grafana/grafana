@@ -8,19 +8,16 @@ interface ZodSchema {
 
 export interface DashboardMutationResult {
   success: boolean;
-  error?: string;
+  error?: string; // structured validation/execution error message
   changes: Array<{ path: string; previousValue: unknown; newValue: unknown }>;
   warnings?: string[];
-  data?: unknown;
+  data?: unknown; // command-specific return data
 }
 
 export interface DashboardMutationAPI {
-  /**
-   * Execute a mutation on the active dashboard.
-   * Throws if no dashboard is currently loaded.
-   */
+  // Execute a mutation on the active dashboard. Rejects if no dashboard is loaded.
   execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
-  /** Get the Zod payload schema for a command (e.g. "ADD_VARIABLE"). */
+  // Get the Zod payload schema for a command (e.g. "ADD_VARIABLE"). Returns null if unknown.
   getPayloadSchema(commandId: string): ZodSchema | null;
 }
 
@@ -68,6 +65,8 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
         (apiAllowList[api].includes(pluginId) ||
           apiAllowList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId)))
       ) {
+        // We use Object.assign below because direct assignmentfails when the type has multiple optional properties
+        // of different types (TS can't correlate the key-value pair through a dynamic index).
         Object.assign(allowedApis, { [api]: apis[api] });
         continue;
       }
@@ -82,6 +81,8 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
           apiBlockList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId))
         )
       ) {
+        // We use Object.assign below because direct assignmentfails when the type has multiple optional properties
+        // of different types (TS can't correlate the key-value pair through a dynamic index).
         Object.assign(allowedApis, { [api]: apis[api] });
       }
     }
