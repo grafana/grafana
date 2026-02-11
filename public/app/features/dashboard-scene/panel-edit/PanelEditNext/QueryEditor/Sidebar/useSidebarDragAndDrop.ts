@@ -7,6 +7,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
+import { getTransformId } from '../types';
 
 function getDropIndices(result: DropResult): { startIndex: number; endIndex: number } | null {
   if (!result.destination || result.source.index === result.destination.index) {
@@ -50,10 +51,9 @@ export function useSidebarDragAndDrop() {
       const { startIndex, endIndex } = drop;
       const draggedTransformation = transformations[startIndex];
       reorderTransformations(reorder(transformations, startIndex, endIndex).map((t) => t.transformConfig));
-      // transformId is index-based (see useTransformations), so use the new index
       setSelectedTransformation({
         ...draggedTransformation,
-        transformId: `${draggedTransformation.transformConfig.id}-${endIndex}`,
+        transformId: getTransformId(draggedTransformation.transformConfig.id, endIndex),
       });
     },
     [transformations, reorderTransformations, setSelectedTransformation]
