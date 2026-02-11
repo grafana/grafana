@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -37,10 +38,25 @@ export const SidebarCard = ({
   const hasAddButton = showAddButton;
   const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
   const typeText = config.getLabel();
+  const [hasFocusWithin, setHasFocusWithin] = useState(false);
+
+  const handleFocus = useCallback(() => {
+    setHasFocusWithin(true);
+  }, []);
+
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+      setHasFocusWithin(false);
+    }
+  }, []);
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) {
+      return;
+    }
+
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick();
@@ -53,6 +69,8 @@ export const SidebarCard = ({
         className={cx(styles.card, { [styles.hidden]: isHidden })}
         onClick={onClick}
         onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         role="button"
         tabIndex={0}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
@@ -65,7 +83,7 @@ export const SidebarCard = ({
               {typeText}
             </Text>
           </Stack>
-          <div className={styles.hoverActions}>
+          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
             <Actions
               isHidden={isHidden}
               onDelete={onDelete}
@@ -186,6 +204,9 @@ function getStyles(
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     hoverActions,
+    hoverActionsVisible: css({
+      opacity: 1,
+    }),
     cardContent: css({
       display: 'flex',
       flexDirection: 'row',
