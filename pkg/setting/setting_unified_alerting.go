@@ -597,8 +597,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.BacktestingMaxEvaluations = 100
 	}
 
-	uaCfg.SkipPendingForNoDataAndError = ua.Key("skip_pending_for_no_data_and_error").MustBool(false)
-
 	cfg.UnifiedAlerting = uaCfg
 	return nil
 }

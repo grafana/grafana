@@ -2318,6 +2318,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "alertingSkipPendingForNoDataAndError",
+			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
