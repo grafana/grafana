@@ -29,7 +29,9 @@ export type PluginExtensionLink = PluginExtensionBase & {
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
+  /** @deprecated in favor of group property */
   category?: string;
+  group?: { name: string; icon?: IconName };
   openInNewTab?: boolean;
 };
 
@@ -138,8 +140,11 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
 
-  // (Optional) A category to be used when grouping the options in the ui.
+  // @deprecated in favor of group
   category?: string;
+
+  // (Optional) A group to be used when grouping the options in the ui.
+  group?: { name: string; icon?: IconName };
 
   // (Optional) If true, opens the link in a new tab (renders with target="_blank")
   // (Important: this is not guaranteed, depends on the extension point if it implements it.)
