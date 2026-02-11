@@ -56,6 +56,9 @@ func NewGlobalRoleSpec() *GlobalRoleSpec {
 func (GlobalRolespecPermission) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecPermission"
 }
+func (GlobalRolespecRoleRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecRoleRef"
+}
 func (GlobalRoleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleSpec"
 }

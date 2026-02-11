@@ -56,6 +56,9 @@ func NewRoleSpec() *RoleSpec {
 func (RolespecPermission) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecPermission"
 }
+func (RolespecRoleRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecRoleRef"
+}
 func (RoleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleSpec"
 }
