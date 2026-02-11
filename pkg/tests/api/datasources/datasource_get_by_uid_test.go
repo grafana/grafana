@@ -103,15 +103,15 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, err)
 
 		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s", grafanaListeningAddr, uid)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var dto dtos.DataSource
 		err = json.NewDecoder(resp.Body).Decode(&dto)
 		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, uid, dto.UID)
 		assert.Equal(t, "Test Prometheus", dto.Name)
@@ -130,10 +130,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 
 	t.Run("GET - not found", func(t *testing.T) {
 		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s-nonexistent-get", grafanaListeningAddr, modePrefix)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
-
+		require.NoError(t, resp.Body.Close())
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
@@ -152,10 +151,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		})
 
 		url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
-
+		require.NoError(t, resp.Body.Close())
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -185,10 +183,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 
 		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
 			login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
-
+		require.NoError(t, resp.Body.Close())
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -218,10 +215,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 
 		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
 			login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
-
+		require.NoError(t, resp.Body.Close())
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
@@ -246,9 +242,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 
 		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
 			login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -259,9 +255,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin GET")
 
 		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s", grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -280,9 +276,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		})
 
 		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -301,9 +297,9 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		})
 
 		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -350,13 +346,13 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var result map[string]any
 		err = json.NewDecoder(resp.Body).Decode(&result)
 		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
 
 		fmt.Printf("result: %+v\n", result["datasource"])
 
@@ -390,7 +386,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
@@ -434,7 +430,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -478,7 +474,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -522,7 +518,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -566,7 +562,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -603,7 +599,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -636,7 +632,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -668,7 +664,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -700,7 +696,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -738,13 +734,13 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		getResp, err := http.Get(url)
+		getResp, err := http.Get(url) // nolint:gosec
 		require.NoError(t, err)
-		defer getResp.Body.Close()
+		require.NoError(t, getResp.Body.Close())
 
 		assert.Equal(t, http.StatusNotFound, getResp.StatusCode)
 	})
@@ -755,7 +751,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
@@ -790,7 +786,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -825,7 +821,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -860,7 +856,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -895,7 +891,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -923,7 +919,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -947,7 +943,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
@@ -970,7 +966,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -993,7 +989,7 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -1049,8 +1045,7 @@ func createUserWithPermissions(
 	// Reload permission cache
 	cacheURL := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions?reloadcache=true",
 		login, password, grafanaListeningAddr)
-	cacheResp, err := http.Get(cacheURL)
+	cacheResp, err := http.Get(cacheURL) // nolint:gosec
 	require.NoError(t, err)
-	cacheResp.Body.Close()
-
+	require.NoError(t, cacheResp.Body.Close())
 }
