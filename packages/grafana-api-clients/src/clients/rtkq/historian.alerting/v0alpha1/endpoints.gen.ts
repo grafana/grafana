@@ -173,7 +173,7 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetAlertstatehistoryApiResponse = /** status 200 OK */ GetAlertstatehistory;
+export type GetAlertstatehistoryApiResponse = /** status 200 OK */ GetAlertstatehistoryBody;
 export type GetAlertstatehistoryApiArg = void;
 export type ListDummyApiResponse = /** status 200 OK */ DummyList;
 export type ListDummyApiArg = {
@@ -377,7 +377,7 @@ export type UpdateDummyStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationquery;
+export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryBody;
 export type CreateNotificationqueryApiArg = {
   createNotificationqueryRequestBody: CreateNotificationqueryRequestBody;
 };
@@ -413,7 +413,7 @@ export type ApiResourceList = {
   /** resources contains the name of the resources and if they are namespaced. */
   resources: ApiResource[];
 };
-export type GetAlertstatehistory = {
+export type GetAlertstatehistoryBody = {
   body: {
     [key: string]: {
       [key: string]: any;
@@ -644,7 +644,7 @@ export type CreateNotificationqueryNotificationEntry = {
   /** Timestamp is the time at which the notification attempt completed. */
   timestamp: string;
 };
-export type CreateNotificationquery = {
+export type CreateNotificationqueryBody = {
   entries: CreateNotificationqueryNotificationEntry[];
 };
 export type CreateNotificationqueryMatcher = object;

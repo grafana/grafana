@@ -104,3 +104,19 @@ const (
 	CheckStatusOperatorStateStateInProgress CheckStatusOperatorStateState = "in_progress"
 	CheckStatusOperatorStateStateFailed     CheckStatusOperatorStateState = "failed"
 )
+
+func (CheckReport) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport"
+}
+func (CheckReportFailure) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
+}
+func (CheckErrorLink) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckErrorLink"
+}
+func (CheckstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckstatusOperatorState"
+}
+func (CheckStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus"
+}

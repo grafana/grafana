@@ -34,3 +34,9 @@ type DashboardStatus struct {
 func NewDashboardStatus() *DashboardStatus {
 	return &DashboardStatus{}
 }
+func (DashboardConversionStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardConversionStatus"
+}
+func (DashboardStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardStatus"
+}
