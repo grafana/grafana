@@ -934,10 +934,10 @@
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
-      "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
-      "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rules"
+      "used-by_one": "Used by {{count}} notification policy",
+      "used-by_other": "Used by {{count}} notification policies",
+      "used-by-rules_one": "Used by {{count}} alert rule",
+      "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
       "aria-label-clear": "clear",
@@ -5855,6 +5855,7 @@
       "title": "Variables"
     },
     "versions": {
+      "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
       "title": "Versions"
     }
   },
