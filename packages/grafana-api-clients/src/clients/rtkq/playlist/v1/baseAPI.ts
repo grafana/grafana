@@ -22,12 +22,8 @@ function createBaseQueryWithFallback(): BaseQueryFn<RequestOptions> {
   return async (args, api, extraOptions) => {
     const result = await v1BaseQuery(args, api, extraOptions);
 
-    if (result.error) {
-      const error = result.error;
-      const status = typeof error === 'object' && error !== null && 'status' in error ? error.status : undefined;
-      if (status === 404) {
+    if (result.error && isFetchError(result.error) && result.error.status === 404) {
         return v0alpha1BaseQuery(args, api, extraOptions);
-      }
     }
 
     return result;
