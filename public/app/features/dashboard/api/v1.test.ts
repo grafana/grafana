@@ -563,5 +563,33 @@ describe('v1 dashboard API', () => {
       expect(dashboardToRestore.metadata.resourceVersion).toBe('');
       expect(mockPost).toHaveBeenCalled();
     });
+
+    it('should preserve dashboard folder metadata', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          annotations: {
+            ...(mockDashboardDto.metadata.annotations || {}),
+            [AnnoKeyFolder]: 'randomFolderUid',
+          },
+        },
+      };
+
+      const api = new K8sDashboardAPI();
+      await api.restoreDashboard(dashboardToRestore);
+
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/v1beta1/'),
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: expect.objectContaining({
+              [AnnoKeyFolder]: 'randomFolderUid',
+            }),
+          }),
+        }),
+        expect.anything()
+      );
+    });
   });
 });
