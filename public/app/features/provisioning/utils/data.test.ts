@@ -2,7 +2,7 @@ import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryFormData } from '../types';
 
-import { dataToSpec, specToData } from './data';
+import { dataToSpec, generateRepositoryTitle, specToData } from './data';
 
 const baseSync = {
   enabled: true,
@@ -53,5 +53,28 @@ describe('provisioning data mapping', () => {
 
     const data = specToData(spec);
     expect(data.tokenUser).toBe('x-token-auth');
+  });
+});
+
+describe('generateRepositoryTitle', () => {
+  it.each([
+    { type: 'github' as const, url: 'https://github.com/owner/repo', expected: 'owner/repo' },
+    { type: 'gitlab' as const, url: 'https://gitlab.com/owner/repo', expected: 'owner/repo' },
+    { type: 'bitbucket' as const, url: 'https://bitbucket.org/owner/repo', expected: 'owner/repo' },
+    { type: 'git' as const, url: 'https://git.example.com/owner/repo.git', expected: 'owner/repo.git' },
+  ])('strips SaaS domain from $type URL', ({ type, url, expected }) => {
+    expect(generateRepositoryTitle({ type, url })).toBe(expected);
+  });
+
+  it.each([
+    { type: 'github' as const, url: 'https://github.enterprise.com/org/repo', expected: 'org/repo' },
+    { type: 'gitlab' as const, url: 'https://gitlab.self-hosted.com/org/repo', expected: 'org/repo' },
+    { type: 'bitbucket' as const, url: 'https://bitbucket.self-hosted.com/org/repo', expected: 'org/repo' },
+  ])('strips self-hosted domain from $type URL', ({ type, url, expected }) => {
+    expect(generateRepositoryTitle({ type, url })).toBe(expected);
+  });
+
+  it('returns path for local type', () => {
+    expect(generateRepositoryTitle({ type: 'local', path: '/path/to/repo' })).toBe('/path/to/repo');
   });
 });
