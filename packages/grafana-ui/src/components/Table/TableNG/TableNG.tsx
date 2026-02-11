@@ -434,7 +434,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const fromFields = useCallback(
-    (f: Field[], widths: number[]): FromFieldsResult => {
+    (f: Field[], widths: number[], frame = data): FromFieldsResult => {
       const result: FromFieldsResult = {
         columns: [],
         cellRootRenderers: {},
@@ -509,7 +509,7 @@ export function TableNG(props: TableNGProps) {
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
         const styleFieldValue = field.config.custom?.styleField;
-        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleField = styleFieldValue ? frame.fields.find(predicateByName(styleFieldValue)) : undefined;
         const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
         const hasValidStyleField = Boolean(styleFieldName);
 
@@ -567,7 +567,6 @@ export function TableNG(props: TableNGProps) {
           // NOTE: some cell types still require a height to be passed down, so that's why string-based
           // cell types are going to just pass down the max cell height as a numeric height for those cells.
           const height = rowHeightFn(props.row);
-          const frame = data;
 
           let result = (
             <>
@@ -614,7 +613,7 @@ export function TableNG(props: TableNGProps) {
 
         const tooltipFieldName = field.config.custom?.tooltip?.field;
         if (tooltipFieldName) {
-          const tooltipField = data.fields.find(predicateByName(tooltipFieldName));
+          const tooltipField = frame.fields.find(predicateByName(tooltipFieldName));
           if (tooltipField) {
             const tooltipDisplayName = getDisplayName(tooltipField);
             const tooltipCellOptions = getCellOptions(tooltipField);
@@ -652,7 +651,7 @@ export function TableNG(props: TableNGProps) {
                 tooltipSpecificStyles,
                 tooltipLinkStyles
               ),
-              data,
+              data: frame,
               disableSanitizeHtml,
               field: tooltipField,
               getActions: getCellActions,
@@ -785,7 +784,9 @@ export function TableNG(props: TableNGProps) {
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const nestedColumnsMatrix = rows.filter((r) => !!r.data).map((r) => fromFields(r.data!.fields, nestedFieldWidths));
+    const nestedColumnsMatrix = rows
+      .filter((r) => !!r.data)
+      .map((r) => fromFields(getVisibleFields(r.data!.fields), nestedFieldWidths, r.data));
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;

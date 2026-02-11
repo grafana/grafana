@@ -61,7 +61,6 @@ export function getFrameFieldsDisplayNames(
         continue;
       }
       const disp = getFieldDisplayName(field, frame, parentData);
-      console.log('disp', disp, field.name);
       names.display.add(disp);
       names.fields.set(disp, field);
       if (field.name && disp !== field.name) {
