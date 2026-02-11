@@ -7,6 +7,7 @@ import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { QueryEditorTypeConfig } from '../../constants';
 
 import { Actions } from './Actions';
+import { AddCardButton } from './AddCardButton';
 
 interface SidebarCardProps {
   config: QueryEditorTypeConfig;
@@ -18,6 +19,7 @@ interface SidebarCardProps {
   onDelete: () => void;
   onToggleHide: () => void;
   isHidden: boolean;
+  showAddButton: boolean;
 }
 
 export const SidebarCard = ({
@@ -30,8 +32,10 @@ export const SidebarCard = ({
   onDelete,
   onToggleHide,
   isHidden,
+  showAddButton = true,
 }: SidebarCardProps) => {
-  const styles = useStyles2(getStyles, { config, isSelected });
+  const hasAddButton = showAddButton;
+  const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
   const typeText = config.getLabel();
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -44,40 +48,43 @@ export const SidebarCard = ({
   };
 
   return (
-    <div
-      className={cx(styles.card, { [styles.hidden]: isHidden })}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
-      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-      aria-pressed={isSelected}
-    >
-      <div className={styles.cardHeader}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name={config.icon} />
-          <Text weight="light" variant="body">
-            {typeText}
-          </Text>
-        </Stack>
-        <div className={styles.hoverActions}>
-          <Actions
-            isHidden={isHidden}
-            onDelete={onDelete}
-            onDuplicate={onDuplicate}
-            onToggleHide={onToggleHide}
-            typeLabel={typeText}
-          />
+    <div className={styles.wrapper}>
+      <div
+        className={cx(styles.card, { [styles.hidden]: isHidden })}
+        onClick={onClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+        aria-pressed={isSelected}
+      >
+        <div className={styles.cardHeader}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Icon name={config.icon} />
+            <Text weight="light" variant="body">
+              {typeText}
+            </Text>
+          </Stack>
+          <div className={styles.hoverActions}>
+            <Actions
+              isHidden={isHidden}
+              onDelete={onDelete}
+              onDuplicate={onDuplicate}
+              onToggleHide={onToggleHide}
+              typeLabel={typeText}
+            />
+          </div>
+          <div className={styles.cardContent}>{children}</div>
         </div>
+        {hasAddButton && <AddCardButton afterRefId={id} />}
       </div>
-      <div className={styles.cardContent}>{children}</div>
     </div>
   );
 };
 
 function getStyles(
   theme: GrafanaTheme2,
-  { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
+  { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
 ) {
   const hoverActions = css({
     opacity: 0,
@@ -91,9 +98,51 @@ function getStyles(
   });
 
   return {
+    wrapper: css({
+      position: 'relative',
+      marginInline: theme.spacing(2),
+
+      // The hover-zone pseudo-elements and add-button visibility rules are
+      // only needed when the card has an AddCardButton.
+      ...(hasAddButton && {
+        // Two slim pseudo-element strips extend the hover zone to the left and
+        // below the card, covering the path to the "+" button without overlapping
+        // the card's clickable area.
+
+        // Left strip: narrow gutter running along the card's left edge and below.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: `calc(-1 * ${theme.spacing(1.5)})`,
+          width: theme.spacing(1.5),
+          height: `calc(100% + ${theme.spacing(1.5)})`,
+        },
+
+        // Bottom strip: runs along the card's bottom edge extending to the left.
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: '100%',
+          left: `calc(-1 * ${theme.spacing(1.5)})`,
+          width: `calc(100% + ${theme.spacing(1.5)})`,
+          height: theme.spacing(1.5),
+        },
+
+        '&:hover': {
+          zIndex: 1,
+        },
+
+        '&:hover [data-add-button], & [data-menu-open]': {
+          opacity: 1,
+          pointerEvents: 'auto',
+        },
+      }),
+    }),
     card: css({
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
       background: isSelected ? theme.colors.action.selected : theme.colors.background.secondary,
       border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
@@ -144,7 +193,6 @@ function getStyles(
       gap: theme.spacing(1),
       padding: theme.spacing(1),
     }),
-
     hidden: css({
       opacity: 0.6,
     }),

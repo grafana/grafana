@@ -1,5 +1,6 @@
 import { IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { QueryOptionField } from './QueryEditor/types';
 
@@ -126,3 +127,12 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
     inputType: 'number',
   },
 };
+
+export const EXPRESSION_ICON_MAP = {
+  [ExpressionQueryType.math]: 'calculator-alt',
+  [ExpressionQueryType.reduce]: 'compress-arrows',
+  [ExpressionQueryType.resample]: 'sync',
+  [ExpressionQueryType.classic]: 'cog',
+  [ExpressionQueryType.threshold]: 'sliders-v-alt',
+  [ExpressionQueryType.sql]: 'database',
+} as const satisfies Record<ExpressionQueryType, string>;
