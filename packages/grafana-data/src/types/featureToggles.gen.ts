@@ -459,6 +459,11 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatformUI?: boolean;
   /**
+  * Enable the Secrets Keeper management UI for configuring external secret storage
+  * @default false
+  */
+  secretsKeeperUI?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   * @default false
   */

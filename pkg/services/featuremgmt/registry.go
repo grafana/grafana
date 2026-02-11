@@ -708,6 +708,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "secretsKeeperUI",
+			Description:  "Enable the Secrets Keeper management UI for configuring external secret storage",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
