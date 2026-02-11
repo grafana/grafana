@@ -71,31 +71,31 @@ describe('FolderRepo', () => {
   it('returns null when folder is undefined', () => {
     setup({ folder: undefined });
     expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTitle('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('returns null when folder has parentUID', () => {
     setup({ folder: { ...MOCK_FOLDER, parentUID: 'repo-123' } });
     expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTitle('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('returns null when folder is not managed', () => {
     setup({ folder: { ...MOCK_FOLDER, managedBy: undefined } });
     expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTitle('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('returns null when whole instance is provisioned', () => {
     setup({ folder: MOCK_FOLDER, settingsMock: [{ target: 'instance' }] });
     expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTitle('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('renders Read only badge when repo is read-only (empty workflows)', () => {
     setup({ folder: MOCK_FOLDER, repoViewMock: { isReadOnlyRepo: true, repoType: 'github' } });
     expect(screen.getByText('Read only')).toBeInTheDocument();
-    expect(screen.queryByTitle('Provisioned')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('renders Provisioned badge when repository has title (tooltip shows repository title)', async () => {
@@ -104,7 +104,7 @@ describe('FolderRepo', () => {
       folder: MOCK_FOLDER,
       repoViewMock: { repository: { title: 'My Repo', name: 'repo-1' } },
     });
-    const provisionedBadge = screen.getByTitle('Provisioned');
+    const provisionedBadge = screen.getByTestId('icon-exchange-alt');
     await user.hover(provisionedBadge);
     expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
   });
@@ -115,7 +115,7 @@ describe('FolderRepo', () => {
       folder: MOCK_FOLDER,
       repoViewMock: { repository: { name: 'repo-1' } },
     });
-    const provisionedBadge = screen.getByTitle('Provisioned');
+    const provisionedBadge = screen.getByTestId('icon-exchange-alt');
     await user.hover(provisionedBadge);
     expect(await screen.findByText('Managed by: Repository repo-1')).toBeInTheDocument();
   });
@@ -123,7 +123,7 @@ describe('FolderRepo', () => {
   it('renders Provisioned badge when repository is undefined (tooltip has empty title)', async () => {
     const user = userEvent.setup();
     setup({ folder: MOCK_FOLDER, repoViewMock: {} });
-    const provisionedBadge = screen.getByTitle('Provisioned');
+    const provisionedBadge = screen.getByTestId('icon-exchange-alt');
     await user.hover(provisionedBadge);
     const tooltip = await screen.findByRole('tooltip');
     expect(tooltip).toHaveTextContent('Managed by: Repository');
