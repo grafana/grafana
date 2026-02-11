@@ -37,6 +37,12 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     url: {
       label: t('provisioning.shared.url-label', 'Repository URL'),
+      validation: {
+        pattern: {
+          value: /^https:\/\/[^\/]+\/[^\/]+\/[^\/]+\/?$/,
+          message: t('provisioning.shared.url-pattern', 'Must be a valid repository URL (https://hostname/owner/repo)'),
+        },
+      },
     },
     tokenUser: {
       label: t('provisioning.shared.token-user-label', 'Username'),
@@ -67,11 +73,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://github.com/owner/repository',
         required: true,
         validation: {
+          ...shared.url.validation,
           required: t('provisioning.github.url-required', 'Repository URL is required'),
-          pattern: {
-            value: /^https:\/\/github\.com\/[^\/]+\/[^\/]+\/?$/,
-            message: t('provisioning.github.url-pattern', 'Must be a valid GitHub repository URL'),
-          },
         },
       },
       branch: {
@@ -114,11 +117,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://gitlab.com/owner/repository',
         required: true,
         validation: {
+          ...shared.url.validation,
           required: t('provisioning.gitlab.url-required', 'Repository URL is required'),
-          pattern: {
-            value: /^https:\/\/gitlab\.com\/[^\/]+\/[^\/]+\/?$/,
-            message: t('provisioning.gitlab.url-pattern', 'Must be a valid GitLab repository URL'),
-          },
         },
       },
       branch: {
@@ -172,11 +172,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
+          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
-          pattern: {
-            value: /^https:\/\/bitbucket\.org\/[^\/]+\/[^\/]+\/?$/,
-            message: t('provisioning.bitbucket.url-pattern', 'Must be a valid Bitbucket repository URL'),
-          },
         },
       },
       branch: {

@@ -43,7 +43,6 @@ func main() {
 	})
 
 	pluginKindGen.Append(
-		&codegen.PluginRegistryJenny{},
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)

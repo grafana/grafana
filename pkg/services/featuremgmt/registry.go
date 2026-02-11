@@ -701,18 +701,19 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "secretsManagementAppPlatform",
-			Description: "Enable the secrets management API and services under app platform",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "secretsManagementAppPlatformUI",
 			Description: "Enable the secrets management app platform UI",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "secretsKeeperUI",
+			Description:  "Enable the Secrets Keeper management UI for configuring external secret storage",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
 		},
 		{
 			Name:         "alertingSaveStatePeriodic",

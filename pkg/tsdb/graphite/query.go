@@ -226,7 +226,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 			}
 		}
 
-		frames = append(frames, data.NewFrame(refId,
+		frames = append(frames, data.NewFrame("",
 			data.NewField("time", nil, timeVector),
 			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: series.Target})).SetMeta(
 			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}))
