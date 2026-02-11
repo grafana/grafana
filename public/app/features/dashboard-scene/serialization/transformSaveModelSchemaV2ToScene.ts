@@ -202,7 +202,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   let defaultGrid = dashboard.defaultGrid;
 
   if (!defaultGrid) {
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (!config.featureToggles.dashboardNewLayouts) {
       defaultGrid = 'GridLayout';
     } else {
       const { auto, custom } = countGridUsage(dashboard.layout, { auto: 0, custom: 0 });
