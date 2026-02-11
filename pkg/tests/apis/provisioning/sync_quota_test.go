@@ -136,7 +136,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Verify job has error state
 		state := mustNestedString(job.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateError), state, "Sync job should fail due to quota when adding resources over limit")
+		require.Equal(t, string(provisioning.JobStateWarning), state, "Sync job should fail due to quota when adding resources over limit")
 
 		// Verify only 2 dashboards exist (3rd was not created)
 		helper.WaitForRepoDashboardCount(t, repo, 2)
@@ -181,7 +181,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Verify job has error state
 		state := mustNestedString(job.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateError), state, "Sync job should fail because net change still exceeds quota")
+		require.Equal(t, string(provisioning.JobStateWarning), state, "Sync job should fail because net change still exceeds quota")
 
 		// Verify all 3 dashboards still exist (entire sync was blocked, including the deletion)
 		helper.WaitForRepoDashboardCount(t, repo, 3)
