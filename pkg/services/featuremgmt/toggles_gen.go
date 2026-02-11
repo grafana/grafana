@@ -809,4 +809,8 @@ const (
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagLogsTablePanel
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanel = "logsTablePanel"
 )

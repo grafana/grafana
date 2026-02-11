@@ -2976,6 +2976,20 @@
     },
     {
       "metadata": {
+        "name": "logsTablePanel",
+        "resourceVersion": "1770817283435",
+        "creationTimestamp": "2026-02-11T13:41:23Z"
+      },
+      "spec": {
+        "description": "Enables the logs tableNG panel to replace existing tableRT",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiExperimentalStreaming",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-06-19T10:03:51Z",
