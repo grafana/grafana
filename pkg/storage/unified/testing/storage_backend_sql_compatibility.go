@@ -840,11 +840,12 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
 			require.LessOrEqual(t, len(history), 1, "expected at most one resource_history record after concurrent create for %s", name)
 
-			resourceRow, _ := queryResourceRow(t, db, namespace, group, resourceName, name)
-			require.Len(t, history, 1, "resource and resource_history existence mismatch for %s", name)
+			resourceRow, resourceExists := queryResourceRow(t, db, namespace, group, resourceName, name)
 			if len(history) == 0 {
+				require.False(t, resourceExists, "resource row should not exist when history is empty after create race for %s", name)
 				continue
 			}
+			require.True(t, resourceExists, "resource row should exist when one history row exists for %s", name)
 
 			require.Equal(t, 1, history[0].Action, "create action should be persisted for %s", name)
 			_, titleWasSent := sentTitles[extractSpecValue(t, history[0].Value)]
