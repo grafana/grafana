@@ -119,7 +119,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                    | Description                                                                   |
-| -------------------------------------- | ----------------------------------------------------------------------------- |
-| `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources |
-| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                   |
+| Feature toggle name                    | Description                                                                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alertRuleUseFiredAtForStartsAt`       | Enables setting the `Alert.StartsAt` value used for notifications to the moment the alert first fired, fixing incorrect values in edge cases |
+| `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources                                                                |
+| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                                                                                  |
