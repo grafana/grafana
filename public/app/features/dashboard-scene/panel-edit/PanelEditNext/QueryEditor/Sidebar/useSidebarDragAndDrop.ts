@@ -7,7 +7,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
-import { getTransformId } from '../types';
+import { getTransformId } from '../utils';
 
 function getDropIndices(result: DropResult): { startIndex: number; endIndex: number } | null {
   if (!result.destination || result.source.index === result.destination.index) {

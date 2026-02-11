@@ -1,9 +1,5 @@
 import { DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
 
-export function getTransformId(transformConfigId: string, index: number): string {
-  return `${transformConfigId}-${index}`;
-}
-
 export type Transformation = {
   registryItem: TransformerRegistryItem | undefined;
   transformId: string;

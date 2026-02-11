@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 import { standardTransformersRegistry } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 
-import { getTransformId, Transformation } from '../types';
-import { filterDataTransformerConfigs } from '../utils';
+import { Transformation } from '../types';
+import { filterDataTransformerConfigs, getTransformId } from '../utils';
 
 /**
  * Hook to subscribe to transformations from a SceneDataTransformer.
