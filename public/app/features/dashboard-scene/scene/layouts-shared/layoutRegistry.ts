@@ -8,8 +8,8 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 export const layoutRegistry: Registry<LayoutRegistryItem> = new Registry<LayoutRegistryItem>(() => {
   return [
-    DefaultGridLayoutManager.descriptor,
     AutoGridLayoutManager.descriptor,
+    DefaultGridLayoutManager.descriptor,
     RowsLayoutManager.descriptor,
     TabsLayoutManager.descriptor,
   ];

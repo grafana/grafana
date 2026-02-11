@@ -53,6 +53,7 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { getDefaultGrid } from '../scene/layouts-shared/defaultGridUtils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
@@ -93,6 +94,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
+    defaultGrid: getDefaultGrid(),
     links: (sceneDash.links || []).map((link) => ({
       title: link.title ?? defaultDashboardLink().title,
       url: link.url ?? defaultDashboardLink().url,

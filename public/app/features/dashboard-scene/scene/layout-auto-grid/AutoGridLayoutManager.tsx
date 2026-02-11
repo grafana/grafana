@@ -7,10 +7,12 @@ import {
   SceneObjectState,
   VizPanel,
   SceneGridItemLike,
+  useSceneObjectState,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
@@ -21,6 +23,7 @@ import {
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getVizPanelKeyForPanelId,
+  useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
@@ -425,6 +428,16 @@ export class AutoGridLayoutManager
 }
 
 function AutoGridLayoutManagerRenderer({ model }: SceneComponentProps<AutoGridLayoutManager>) {
+  const { children } = useSceneObjectState(model.state.layout, { shouldActivateOrKeepAlive: true });
+  const dashboard = useDashboard(model);
+
+  // If we are top level layout and we have no children, show empty state
+  if (model.parent === dashboard && children.length === 0) {
+    return (
+      <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
+    );
+  }
+
   return <model.state.layout.Component model={model.state.layout} />;
 }
 
