@@ -98,7 +98,10 @@ export function prepareHeatmapData({
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
   exemplars?.fields.forEach((field) => {
-    field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+    // Preserve existing getLinks if already set (e.g., from Explore with custom data link post processor)
+    if (!field.getLinks) {
+      field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+    }
   });
 
   if (options.calculate) {
