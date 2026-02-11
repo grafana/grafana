@@ -4,19 +4,20 @@ import { Button, Stack } from '@grafana/ui';
 import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
 
-interface HoverActionsProps {
+interface ActionsProps {
   onDuplicate?: () => void;
   onDelete: () => void;
   onToggleHide: () => void;
   isHidden: boolean;
+  contentHeader?: boolean;
 }
 
-export function HoverActions({ onDuplicate, onDelete, onToggleHide, isHidden }: HoverActionsProps) {
+export function Actions({ onDuplicate, onDelete, onToggleHide, isHidden, contentHeader = false }: ActionsProps) {
   const { cardType } = useQueryEditorUIContext();
   const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
 
   return (
-    <Stack direction="row" gap={0}>
+    <Stack direction="row" gap={contentHeader ? 1 : 0}>
       {onDuplicate && (
         <Button
           size="sm"

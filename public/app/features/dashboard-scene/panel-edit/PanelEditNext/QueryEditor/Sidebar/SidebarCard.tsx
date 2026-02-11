@@ -6,7 +6,7 @@ import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorTypeConfig } from '../../constants';
 
-import { HoverActions } from './HoverActions';
+import { Actions } from './Actions';
 
 interface SidebarCardProps {
   config: QueryEditorTypeConfig;
@@ -61,7 +61,7 @@ export const SidebarCard = ({
           </Text>
         </Stack>
         <div className={styles.hoverActions}>
-          <HoverActions onDuplicate={onDuplicate} onDelete={onDelete} onToggleHide={onToggleHide} isHidden={isHidden} />
+          <Actions onDuplicate={onDuplicate} onDelete={onDelete} onToggleHide={onToggleHide} isHidden={isHidden} />
         </div>
       </div>
       <div className={styles.cardContent}>{children}</div>
