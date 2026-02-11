@@ -1,19 +1,9 @@
-import {
-  type AngularMeta,
-  type AppPluginConfig,
-  type PluginDependencies,
-  type PluginExtensions,
-  PluginLoadingStrategy,
-  type PluginType,
-} from '@grafana/data';
+import { type AppPluginConfig, type PluginDependencies, type PluginExtensions, type PluginType } from '@grafana/data';
 
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
 
-function angularyMapper(spec: v0alpha1Spec): AngularMeta {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return {} as AngularMeta;
-}
+import { angularMapper, loadingStrategyMapper } from './shared';
 
 function dependenciesMapper(spec: v0alpha1Spec): PluginDependencies {
   const plugins = (spec.pluginJson.dependencies?.plugins ?? []).map((v) => ({
@@ -62,18 +52,9 @@ function extensionsMapper(spec: v0alpha1Spec): PluginExtensions {
   return extensions;
 }
 
-function loadingStrategyMapper(spec: v0alpha1Spec): PluginLoadingStrategy {
-  const loadingStrategy = spec.module?.loadingStrategy ?? PluginLoadingStrategy.fetch;
-  if (loadingStrategy === PluginLoadingStrategy.script) {
-    return PluginLoadingStrategy.script;
-  }
-
-  return PluginLoadingStrategy.fetch;
-}
-
 function specMapper(spec: v0alpha1Spec): AppPluginConfig {
   const { id, info, preload = false } = spec.pluginJson;
-  const angular = angularyMapper(spec);
+  const angular = angularMapper(spec);
   const dependencies = dependenciesMapper(spec);
   const extensions = extensionsMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);

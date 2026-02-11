@@ -12,3 +12,6 @@ type DummySpec struct {
 func NewDummySpec() *DummySpec {
 	return &DummySpec{}
 }
+func (DummySpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummySpec"
+}

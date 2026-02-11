@@ -1,5 +1,5 @@
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { sceneGraph, SceneQueryRunner, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { DataTransformerConfig } from '@grafana/data';
+import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
@@ -241,91 +241,70 @@ describe('PanelDataPaneNext', () => {
     });
   });
 
-  describe('buildQueryOptions', () => {
-    it('should return options from SceneQueryRunner state', () => {
-      mockQueryRunnerState.queries = [{ refId: 'A' }];
-      mockQueryRunnerState.maxDataPoints = 1000;
-      mockQueryRunnerState.minInterval = '10s';
+  describe('transformations', () => {
+    const mockTransformations: DataTransformerConfig[] = [
+      { id: 'organize', options: {} },
+      { id: 'reduce', options: {} },
+      { id: 'filter', options: {} },
+    ];
 
-      const options = dataPane.buildQueryOptions();
+    let mockTransformer: SceneDataTransformer;
 
-      expect(options.queries).toEqual([{ refId: 'A' }]);
-      expect(options.maxDataPoints).toBe(1000);
-      expect(options.minInterval).toBe('10s');
-    });
-
-    it('should extract time range from PanelTimeRange', () => {
-      const mockPanelTimeRange = new PanelTimeRange({
-        timeFrom: '1h',
-        timeShift: '2h',
-        hideTimeOverride: true,
+    beforeEach(() => {
+      mockTransformer = new SceneDataTransformer({
+        transformations: mockTransformations,
+        $data: mockQueryRunner,
       });
 
-      jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue(mockPanelTimeRange);
-
-      const options = dataPane.buildQueryOptions();
-
-      expect(options.timeRange?.from).toBe('1h');
-      expect(options.timeRange?.shift).toBe('2h');
-      expect(options.timeRange?.hide).toBe(true);
+      jest.spyOn(mockTransformer, 'setState');
+      mockPanel.state.$data = mockTransformer;
     });
 
-    it('should return undefined time range when no PanelTimeRange exists', () => {
-      // Reset to non-PanelTimeRange object
-      jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({} as ReturnType<typeof sceneGraph.getTimeRange>);
+    describe('deleteTransformation', () => {
+      it('should delete a transformation', () => {
+        dataPane.deleteTransformation(1);
 
-      const options = dataPane.buildQueryOptions();
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'filter', options: {} },
+          ],
+        });
+        expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+      });
 
-      expect(options.timeRange?.from).toBeUndefined();
-      expect(options.timeRange?.shift).toBeUndefined();
-      expect(options.timeRange?.hide).toBeUndefined();
+      it('should not delete a transformation if the index is out of bounds', () => {
+        dataPane.deleteTransformation(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(3);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
     });
 
-    it('should include cacheTimeout when datasource supports it', () => {
-      mockQueryRunnerState.cacheTimeout = '60';
+    describe('toggleTransformationDisabled', () => {
+      it('should toggle the disabled state of a transformation', () => {
+        dataPane.toggleTransformationDisabled(1);
 
-      const dsSettings: DataSourceInstanceSettings = {
-        id: 1,
-        uid: 'test',
-        name: 'Test DS',
-        type: 'test',
-        meta: {
-          id: 'test',
-          name: 'Test',
-          type: PluginType.datasource,
-          info: {
-            author: { name: '' },
-            description: '',
-            links: [],
-            logos: { small: '', large: '' },
-            screenshots: [],
-            updated: '',
-            version: '',
-          },
-          module: '',
-          baseUrl: '',
-          queryOptions: { cacheTimeout: true },
-        },
-        access: 'proxy',
-        readOnly: false,
-        jsonData: {},
-      };
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'reduce', options: {}, disabled: true },
+            { id: 'filter', options: {} },
+          ],
+        });
+      });
 
-      dataPane.setState({ dsSettings });
+      it('should not toggle if the index is out of bounds', () => {
+        dataPane.toggleTransformationDisabled(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
 
-      const options = dataPane.buildQueryOptions();
-
-      expect(options.cacheTimeout).toBe('60');
-    });
-
-    it('should return empty options when no queryRunner exists', () => {
-      // Mock getQueryRunnerFor to return undefined
-      jest.requireMock('../../utils/utils').getQueryRunnerFor = () => undefined;
-
-      const options = dataPane.buildQueryOptions();
-
-      expect(options.queries).toEqual([]);
-      expect(options.dataSource).toEqual({ type: undefined, uid: undefined });
+        dataPane.toggleTransformationDisabled(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
     });
   });
 });

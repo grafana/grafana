@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -49,6 +49,23 @@ type App struct {
 	Slug string
 	// Owner represents the GH account/org owning the app
 	Owner string
+	// Permissions granted to the GitHub App
+	Permissions AppPermissions
+}
+type AppPermission int
+
+const (
+	AppPermissionNone AppPermission = iota
+	AppPermissionRead
+	AppPermissionWrite
+)
+
+// AppPermissions represents the permissions granted to a GitHub App installation
+type AppPermissions struct {
+	Contents     AppPermission
+	Metadata     AppPermission
+	PullRequests AppPermission
+	Webhooks     AppPermission
 }
 
 // AppInstallation represents a Github App Installation.
@@ -97,6 +114,12 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
 		Owner: app.GetOwner().GetLogin(),
+		Permissions: AppPermissions{
+			Contents:     toAppPermission(app.GetPermissions().GetContents()),
+			Metadata:     toAppPermission(app.GetPermissions().GetMetadata()),
+			PullRequests: toAppPermission(app.GetPermissions().GetPullRequests()),
+			Webhooks:     toAppPermission(app.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
 }
 
@@ -127,6 +150,17 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
 	}, nil
+}
+
+func toAppPermission(permissions string) AppPermission {
+	switch permissions {
+	case "read":
+		return AppPermissionRead
+	case "write":
+		return AppPermissionWrite
+	default:
+		return AppPermissionNone
+	}
 }
 
 const (

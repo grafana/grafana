@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -6,25 +6,48 @@ import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorTypeConfig } from '../../constants';
 
+import { HoverActions } from './HoverActions';
+
 interface SidebarCardProps {
   config: QueryEditorTypeConfig;
   isSelected: boolean;
   id: string;
   children: React.ReactNode;
   onClick: () => void;
+  onDuplicate?: () => void;
+  onDelete: () => void;
+  onToggleHide: () => void;
+  isHidden: boolean;
 }
 
-export const SidebarCard = ({ config, isSelected, id, children, onClick }: SidebarCardProps) => {
+export const SidebarCard = ({
+  config,
+  isSelected,
+  id,
+  children,
+  onClick,
+  onDuplicate,
+  onDelete,
+  onToggleHide,
+  isHidden,
+}: SidebarCardProps) => {
   const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
 
   return (
-    <button
-      className={styles.card}
+    <div
+      className={cx(styles.card, { [styles.hidden]: isHidden })}
       onClick={onClick}
-      type="button"
+      role="button"
+      tabIndex={0}
       aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
       aria-pressed={isSelected}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <div className={styles.cardHeader}>
         <Stack direction="row" alignItems="center" gap={1}>
@@ -33,9 +56,12 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick }: Sideb
             {typeText}
           </Text>
         </Stack>
+        <div className={styles.hoverActions}>
+          <HoverActions onDuplicate={onDuplicate} onDelete={onDelete} onToggleHide={onToggleHide} isHidden={isHidden} />
+        </div>
       </div>
       <div className={styles.cardContent}>{children}</div>
-    </button>
+    </div>
   );
 };
 
@@ -43,6 +69,17 @@ function getStyles(
   theme: GrafanaTheme2,
   { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
 ) {
+  const hoverActions = css({
+    opacity: 0,
+    marginLeft: 'auto',
+
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  });
+
   return {
     card: css({
       display: 'flex',
@@ -67,6 +104,10 @@ function getStyles(
         borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
       },
 
+      [`&:hover .${hoverActions}`]: {
+        opacity: 1,
+      },
+
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
@@ -85,12 +126,17 @@ function getStyles(
       borderTopLeftRadius: theme.shape.radius.default,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
+    hoverActions,
     cardContent: css({
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
+    }),
+
+    hidden: css({
+      opacity: 0.6,
     }),
   };
 }

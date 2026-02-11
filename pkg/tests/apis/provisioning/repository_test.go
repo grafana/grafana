@@ -12,8 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,6 +26,7 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -71,16 +71,25 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			returnedRepo := unstructuredToRepository(t, output)
 			require.Equal(t, expectedRepo.Spec, returnedRepo.Spec)
 
-			// A viewer should not be able to see the same thing
+			// A viewer should be able to read the repository
 			var statusCode int
 			rsp := helper.ViewerREST.Get().
 				Namespace("default").
 				Resource("repositories").
 				Name(name).
 				Do(context.Background())
-			require.Error(t, rsp.Error())
+			require.NoError(t, rsp.Error(), "viewer should be able to read repository")
 			rsp.StatusCode(&statusCode)
-			require.Equal(t, http.StatusForbidden, statusCode)
+			require.Equal(t, http.StatusOK, statusCode)
+
+			viewerOutput, err := rsp.Get()
+			require.NoError(t, err, "should get repository object")
+			viewerUnstruct, ok := viewerOutput.(*unstructured.Unstructured)
+			require.True(t, ok, "expecting unstructured object")
+
+			// Verify viewer gets the same repository data
+			viewerRepo := unstructuredToRepository(t, viewerUnstruct)
+			require.Equal(t, expectedRepo.Spec, viewerRepo.Spec, "viewer should see same repository spec")
 
 			// Viewer can see file listing
 			rsp = helper.AdminREST.Get().
@@ -170,6 +179,39 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}, settings.AvailableRepositoryTypes)
 			}
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
+	})
+
+	// Viewer can list repositories
+	t.Run("viewer can list repositories", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			rsp := helper.ViewerREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Do(context.Background())
+			if !assert.NoError(collect, rsp.Error(), "viewer should be able to list repositories") {
+				return
+			}
+
+			repos := &unstructured.UnstructuredList{}
+			err := rsp.Into(repos)
+			if !assert.NoError(collect, err, "should parse repository list") {
+				return
+			}
+
+			// Should see the repositories created in this test
+			assert.Len(collect, repos.Items, len(inputFiles), "viewer should see all repositories")
+
+			// Verify each repository has expected data
+			for _, repo := range repos.Items {
+				name := repo.GetName()
+				assert.NotEmpty(collect, name, "repository should have a name")
+
+				spec, found, err := unstructured.NestedMap(repo.Object, "spec")
+				assert.NoError(collect, err, "should have spec")
+				assert.True(collect, found, "spec should be found")
+				assert.NotEmpty(collect, spec, "spec should not be empty")
+			}
+		}, time.Second*10, time.Millisecond*100, "Expected viewer to list repositories")
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
@@ -288,6 +330,35 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 						"branch": "",
 					},
 					// Empty workflows to not trigger a token check
+					"workflows": []string{},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": "someToken",
+					},
+				},
+			}},
+		},
+		{
+			name: "should accept GitHub Enterprise URL",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-github-enterprise",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "GitHub Enterprise Repository",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url":    "https://github.enterprise.example.com/org/repo",
+						"branch": "main",
+					},
 					"workflows": []string{},
 				},
 				"secure": map[string]any{
@@ -1171,11 +1242,13 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		c, err := helper.Connections.Resource.Get(ctx, "test-connection", metav1.GetOptions{})
+		c, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		conn := unstructuredToConnection(t, c)
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
@@ -1204,7 +1277,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 				"branch": "main",
 			},
 			"connection": map[string]any{
-				"name": "test-connection",
+				"name": connectionName,
 			},
 		},
 	}}
@@ -1332,11 +1405,13 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		},
 	}}
 
-	_, err = helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, "test-connection-invalid-repo", metav1.DeleteOptions{})
+		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 	})
 
 	t.Run("repository with non-existent branch becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1360,7 +1435,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "non-existent-branch-12345", // This branch doesn't exist
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}
@@ -1429,7 +1504,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "main",
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}

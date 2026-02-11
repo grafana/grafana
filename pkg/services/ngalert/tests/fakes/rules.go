@@ -361,7 +361,7 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
-		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
+		if cpr := r.ContactPointRouting(); q.ReceiverName != "" && (cpr == nil || cpr.Receiver != q.ReceiverName) {
 			continue
 		}
 

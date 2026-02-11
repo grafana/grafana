@@ -5,11 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { QUERY_EDITOR_COLORS, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { QueryOptionField } from '../types';
 
 interface FooterLabelValue {
-  id: string;
+  id: QueryOptionField;
   label: string;
   value: string;
   isActive?: boolean;
@@ -19,7 +20,7 @@ export function QueryEditorFooter() {
   const styles = useStyles2(getStyles);
 
   const { queryOptions } = useQueryEditorUIContext();
-  const { options, setIsQueryOptionsOpen } = queryOptions;
+  const { options, openSidebar } = queryOptions;
   const { data } = useQueryRunnerContext();
   const { datasource } = useDatasourceContext();
 
@@ -28,57 +29,65 @@ export function QueryEditorFooter() {
   const items: FooterLabelValue[] = useMemo(() => {
     const realMaxDataPoints = data?.request?.maxDataPoints;
     const realInterval = data?.request?.interval;
-    const minIntervalOnDs = datasource?.interval ?? t('query-editor.footer.placeholder.no-limit', 'No limit');
+    const minIntervalOnDs = datasource?.interval ?? t('query-editor-next.footer.placeholder.no-limit', 'No limit');
 
     return [
       {
-        id: 'maxDataPoints',
-        label: t('query-editor.footer.label.max-data-points', 'Max data points'),
+        id: QueryOptionField.maxDataPoints,
+        label: t('query-editor-next.footer.label.max-data-points', 'Max data points'),
         value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
         isActive: options.maxDataPoints != null,
       },
       {
-        id: 'minInterval',
-        label: t('query-editor.footer.label.min-interval', 'Min interval'),
+        id: QueryOptionField.minInterval,
+        label: t('query-editor-next.footer.label.min-interval', 'Min interval'),
         value: options.minInterval ?? minIntervalOnDs,
         isActive: options.minInterval != null,
       },
       {
-        id: 'interval',
-        label: t('query-editor.footer.label.interval', 'Interval'),
+        id: QueryOptionField.interval,
+        label: t('query-editor-next.footer.label.interval', 'Interval'),
         value: realInterval ?? '-',
         isActive: false, // Interval is always computed, never user-set
       },
       {
-        id: 'relativeTime',
-        label: t('query-editor.footer.label.relative-time', 'Relative time'),
+        id: QueryOptionField.relativeTime,
+        label: t('query-editor-next.footer.label.relative-time', 'Relative time'),
         value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.from != null,
       },
       {
-        id: 'timeShift',
-        label: t('query-editor.footer.label.time-shift', 'Time shift'),
+        id: QueryOptionField.timeShift,
+        label: t('query-editor-next.footer.label.time-shift', 'Time shift'),
         value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.shift != null,
       },
     ];
   }, [options, data, datasource]);
 
-  const handleOpenSidebar = () => {
-    setIsQueryOptionsOpen(true);
+  const handleItemClick = (event: React.MouseEvent, fieldId?: QueryOptionField) => {
+    // Stop propagation to prevent ClickOutsideWrapper from immediately closing
+    event.stopPropagation();
+
+    // Don't focus interval since it's read-only
+    if (fieldId && fieldId !== QueryOptionField.interval) {
+      openSidebar(fieldId);
+    } else {
+      openSidebar();
+    }
   };
 
   return (
     <div className={styles.container}>
       <ul className={styles.itemsList}>
         {items.map((item) => (
-          <li key={item.id} className={styles.item}>
+          <li key={item.id}>
             <Button
               fill="text"
               size="sm"
               className={styles.itemButton}
-              onClick={handleOpenSidebar}
-              aria-label={t('query-editor.footer.edit-option', 'Edit {{label}}', { label: item.label })}
+              onClick={(e) => handleItemClick(e, item.id)}
+              aria-label={t('query-editor-next.footer.edit-option', 'Edit {{label}}', { label: item.label })}
             >
               {item.isActive && <span className={styles.activeIndicator} />}
               <span className={styles.label}>{item.label}</span>
@@ -87,16 +96,18 @@ export function QueryEditorFooter() {
           </li>
         ))}
       </ul>
-      <Button
-        fill="text"
-        size="sm"
-        icon="angle-left"
-        iconPlacement="right"
-        onClick={handleOpenSidebar}
-        aria-label={t('query-editor.footer.query-options', 'Query Options')}
-      >
-        <Trans i18nKey="query-editor.footer.query-options">Query Options</Trans>
-      </Button>
+      <div className={styles.queryOptionsWrapper}>
+        <Button
+          fill="text"
+          size="sm"
+          icon="angle-left"
+          iconPlacement="right"
+          onClick={(e) => handleItemClick(e)}
+          aria-label={t('query-editor-next.footer.query-options', 'Query Options')}
+        >
+          <Trans i18nKey="query-editor-next.footer.query-options">Query Options</Trans>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -106,33 +117,27 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       position: 'sticky',
       bottom: 0,
-      left: 0,
-      right: 0,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing(2),
-      backgroundColor: theme.colors.background.secondary,
+      backgroundColor: QUERY_EDITOR_COLORS.footerBackground,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
       padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
-      zIndex: 1,
+      zIndex: theme.zIndex.modal,
       minHeight: 26,
+      overflow: 'hidden',
     }),
     itemsList: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       listStyle: 'none',
       margin: 0,
       padding: 0,
-      flexWrap: 'wrap',
       flex: 1,
-    }),
-    item: css({
-      display: 'flex',
-      alignItems: 'center',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
     }),
     itemButton: css({
       // Override Button's default padding and add gap for children
@@ -149,6 +154,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     value: css({
       color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
     }),
     valueActive: css({
       color: theme.colors.success.text,
@@ -159,6 +166,23 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.circle,
       backgroundColor: theme.colors.success.text,
       flexShrink: 0,
+    }),
+    queryOptionsWrapper: css({
+      position: 'relative',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        right: '100%',
+        top: 0,
+        bottom: 0,
+        width: theme.spacing(4),
+        background: `linear-gradient(to right, transparent, ${QUERY_EDITOR_COLORS.footerBackground})`,
+        pointerEvents: 'none',
+      },
     }),
   };
 }

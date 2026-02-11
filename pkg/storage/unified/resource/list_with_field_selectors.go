@@ -3,11 +3,17 @@ package resource
 import (
 	"context"
 	"net/http"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
+	defer span.End()
+
 	if req.Options.Key.Namespace == "" {
 		return &resourcepb.ListResponse{
 			Error: NewBadRequestError("namespace must be specified for list with filter"),
@@ -25,6 +31,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 
 	var listRv int64
 	if req.NextPageToken != "" {
+		span.AddEvent("continue token present")
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return &resourcepb.ListResponse{
@@ -36,10 +43,20 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		srq.SearchBefore = token.SearchBefore
 	}
 
-	searchResp, err := s.searchClient.Search(ctx, srq)
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.search != nil {
+		// Use local search service
+		searchResp, err = s.search.Search(ctx, srq)
+	} else {
+		// Use remote search service
+		// useFieldSelectorSearch() already checks that either s.search or s.searchClient is set
+		searchResp, err = s.searchClient.Search(ctx, srq)
+	}
 	if err != nil {
 		return nil, err
 	}
+	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
 
 	// If it's the first page, set the listRv to the search response RV
 	if listRv <= 0 {
@@ -51,6 +68,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		ResourceVersion: listRv,
 	}
 
+	s.log.Info("Search used for List with field selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields)
 	// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
 	for _, row := range searchResp.GetResults().GetRows() {
 		// TODO: use batch reads
@@ -102,7 +120,16 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	if s.searchClient == nil || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
+	// Excluded groups have no Versions.Kinds[] in its app manifest, so we cant index anything for search.
+	excludedGroups := []string{
+		"provisioning.grafana.app",
+		"scope.grafana.app",
+	}
+	if slices.Contains(excludedGroups, req.Options.Key.Group) {
+		return false
+	}
+
+	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
 

@@ -524,7 +524,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	pauseRecordingRules bool,
 	pauseAlertRules bool,
 	keepOriginalRuleDefinition bool,
-	notificationSettings []models.NotificationSettings,
+	notificationSettings *models.NotificationSettings,
 	extraLabels map[string]string,
 	logger log.Logger,
 ) (*models.AlertRuleGroup, error) {
@@ -791,8 +791,8 @@ func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
 	return models.ProvenanceConvertedPrometheus
 }
 
-func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) ([]models.NotificationSettings, error) {
-	var notificationSettings []models.NotificationSettings
+func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) (*models.NotificationSettings, error) {
+	var notificationSettings *models.NotificationSettings
 	notificationSettingsJSON := ctx.Req.Header.Get(notificationSettingsHeader)
 
 	if notificationSettingsJSON != "" {

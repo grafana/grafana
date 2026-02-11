@@ -44,6 +44,8 @@ You can use gauges if you need to track:
 
 The following video provides beginner steps for creating gauge panels. You'll learn the data requirements and caveats, special customizations, and much more:
 
+<!-- FIXME: we should make a new video for G13 -->
+
 {{< youtube id="QwXj3y_YpnE" >}}
 
 {{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
@@ -145,23 +147,51 @@ Adjust how the gauge is displayed.
 
 | Option | Description |
 | ------ | ----------- |
+| Style | Choose a gauge shape:<ul><li>**Circle** - Fills clockwise around a circle, starting from the 12 o'clock position.</li><li>**Arc** - Fills from left to right around an arc.</li></ul> |
 | Orientation | Choose a stacking direction:<ul><li>**Auto** - Gauges display in rows and columns.</li><li>**Horizontal** - Gauges display top to bottom.</li><li>**Vertical** - Gauges display left to right.</li></ul> |
-| Show threshold labels | Controls if threshold values are shown. |
-| [Show threshold markers](#show-threshold-markers) | Controls if a threshold band is shown outside the inner gauge value band. |
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Neutral | Set the starting value from which every gauge will be filled. |
+| Bar width | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
+| Segments | Enter a value between 1 and 100 to break the gauge into equal segments. Segments are always fully filled, even if the gauge's current value falls within a segment. |
+| Segment spacing | Enter a value between 0 and 1 to set the factor that controls the size of the gap between each segment. This option is only applies when the **Segments** value is more than `1`. |
+| Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - Renders both the value and series name.</li><li>**Value** - Renders only the value.</li><li>**Name** - Renders only the series name.</li><li>**None** - Renders the gauge with no labels.</li></ul> |
+| [Neutral value](#neutral-value) | Set the starting value from which every gauge will be filled. |
+| [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |
+| [Show thresholds](#show-threshold-markers) | Control whether a threshold band is shown outside the inner gauge value band. |
+| Show labels | Control whether threshold, neutral and min/max labels are shown outside of the gauge. |
+| Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value.</li><li>**Bar glow** - Adds a glowing shadow outside the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
-#### Show threshold markers
+#### Neutral value
 
-Controls if a threshold band is shown around the inner gauge value band.
+Set the starting value from which every gauge will be filled when it shouldn't be the minimum value.
+This option is especially useful in cases where the range of data values includes negative numbers.
+
+For example, you want to display the storage of several batteries and the power range is from -2.5 kW (discharging) to 2.5 kW.
+When the minimum value is used as the starting point for the gauges, the visualization looks like this:
+
+![Gauge using min as neutral](/media/docs/grafana/panels-visualizations/screenshot-gauge-neutral-min-v12.4.png)
+
+If you enter a neutral value of `0`, the visualization looks like this and is easier to reason about:
+
+![Gauge with zero as neutral](/media/docs/grafana/panels-visualizations/screenshot-gauge-neutral-0-v12.4.png)
+
+#### Show sparkline
+
+If you want to visualize the list of values as a time series along with the calculated gauge value, toggle on the **Show sparkline** switch.
+Each gauge displays the sparkline inside the circle or arc:
+
+![Gauge with a sparkline](/media/docs/grafana/panels-visualizations/screenshot-gauge-w-sparkline-v12.4.png)
+
+#### Show thresholds {#show-threshold-markers}
+
+Control whether a threshold band is shown outside the inner gauge value band.
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
 
-### Text size
+### Text size options {#text-size}
 
 Adjust the sizes of the gauge text.
 

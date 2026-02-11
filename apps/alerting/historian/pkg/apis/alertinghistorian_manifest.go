@@ -453,8 +453,8 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistory{},
-	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationquery{},
+	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistoryResponse{},
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

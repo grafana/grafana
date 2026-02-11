@@ -50,3 +50,10 @@ const (
 	SecureValueStatusOperatorStateStateInProgress SecureValueStatusOperatorStateState = "in_progress"
 	SecureValueStatusOperatorStateStateFailed     SecureValueStatusOperatorStateState = "failed"
 )
+
+func (SecureValuestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValuestatusOperatorState"
+}
+func (SecureValueStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueStatus"
+}
