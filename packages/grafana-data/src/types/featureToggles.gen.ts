@@ -1477,4 +1477,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Makes NoData and Error alerts fire immediately, without 'pending' stage
+  * @default false
+  */
+  alertingIgnorePendingForNoDataAndError?: boolean;
 }
