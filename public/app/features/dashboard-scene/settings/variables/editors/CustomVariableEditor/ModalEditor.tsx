@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CustomVariableModel } from '@grafana/data';
@@ -7,13 +7,12 @@ import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
+import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 
-import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
-import { buildCustomVariablePreviewOptions, parseAndValidateJsonQuery } from './customVariableQueryUtils';
 
 interface ModalEditorProps {
   variable: CustomVariable;
@@ -31,7 +30,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
     previewOptions,
     valuesFormat,
-    activeQuery,
+    query,
     queryValidationError,
     onCloseModal,
     onValuesFormatChange,
@@ -54,7 +53,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
             id={valuesFormat}
             key={valuesFormat}
             rows={4}
-            defaultValue={activeQuery}
+            defaultValue={query}
             onChange={onQueryChange}
             placeholder={
               valuesFormat === 'json'
@@ -94,61 +93,47 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
   );
 }
 
+export function useDraftVariable(variable: CustomVariable) {
+  const draftVariableRef = useRef<CustomVariable>();
+  if (!draftVariableRef.current) {
+    draftVariableRef.current = new CustomVariable(variable.state);
+  }
+  const initialStateRef = useRef({ ...variable.state });
+  return { draftVariable: draftVariableRef.current, initialState: initialStateRef.current };
+}
+
 function useModalEditor({ variable, onClose }: ModalEditorProps) {
-  const initialValuesFormatRef = useRef(variable.state.valuesFormat);
-  const initialQueryRef = useRef(variable.state.query);
-  const initialJsonValidationRef = useRef(
-    variable.state.valuesFormat === 'json' ? parseAndValidateJsonQuery(variable.state.query) : undefined
-  );
-  const [valuesFormat, setValuesFormat] = useState(() => variable.state.valuesFormat);
-  const [activeQuery, setActiveQuery] = useState(() => variable.state.query);
+  const { draftVariable, initialState } = useDraftVariable(variable);
+  const { valuesFormat, query, options } = draftVariable.useState();
+  const [queryValidationError, setQueryValidationError] = useState<Error>();
   const [stashedQuery, setStashedQuery] = useState('');
-  const [queryValidationError, setQueryValidationError] = useState<Error | undefined>(
-    initialJsonValidationRef.current?.error
-  );
-  const [parsedJsonOptions, setParsedJsonOptions] = useState(initialJsonValidationRef.current?.parsedOptions);
-  const previewOptions = useMemo(
-    () => buildCustomVariablePreviewOptions({ variable, valuesFormat, query: activeQuery, parsedJsonOptions }),
-    [activeQuery, parsedJsonOptions, valuesFormat, variable]
-  );
+
+  const updateDraftState = async (newState: Partial<typeof draftVariable.state>) => {
+    draftVariable.setState(newState);
+    try {
+      await lastValueFrom(draftVariable.validateAndUpdate());
+      setQueryValidationError(undefined);
+    } catch (error) {
+      setQueryValidationError(error instanceof Error ? error : new Error(String(error)));
+    }
+  };
 
   return {
-    previewOptions,
+    previewOptions: options,
     valuesFormat,
-    activeQuery,
+    query,
     queryValidationError,
     onCloseModal: onClose,
-    onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
-      setValuesFormat(newFormat);
-
-      if (newFormat === 'json') {
-        const validationResult = parseAndValidateJsonQuery(stashedQuery);
-        setQueryValidationError(validationResult.error);
-        setParsedJsonOptions(validationResult.parsedOptions);
-      } else {
-        setQueryValidationError(undefined);
-        setParsedJsonOptions(undefined);
+    async onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
+      const nextQuery = stashedQuery;
+      if (query !== stashedQuery) {
+        setStashedQuery(query);
       }
-
-      setActiveQuery(stashedQuery);
-      if (activeQuery !== stashedQuery) {
-        setStashedQuery(activeQuery);
-      }
+      await updateDraftState({ valuesFormat: newFormat, query: nextQuery });
     },
-    onQueryChange(event: FormEvent<HTMLTextAreaElement>) {
-      const newQuery = event.currentTarget.value;
+    async onQueryChange(event: FormEvent<HTMLTextAreaElement>) {
       setStashedQuery('');
-
-      if (valuesFormat === 'json') {
-        const validationResult = parseAndValidateJsonQuery(newQuery);
-        setQueryValidationError(validationResult.error);
-        if (validationResult.error) {
-          return;
-        }
-        setParsedJsonOptions(validationResult.parsedOptions);
-      }
-
-      setActiveQuery(newQuery);
+      await updateDraftState({ query: event.currentTarget.value });
     },
     onSaveOptions() {
       dashboardEditActions.edit({
@@ -156,9 +141,9 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
           if (!config.featureToggles.multiPropsVariables) {
-            variable.setState({ valuesFormat: 'csv', query: activeQuery });
+            variable.setState({ valuesFormat: 'csv', query });
           } else {
-            variable.setState({ valuesFormat, query: activeQuery });
+            variable.setState({ valuesFormat, query });
           }
 
           if (valuesFormat === 'json') {
@@ -166,21 +151,13 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
           }
 
           await lastValueFrom(variable.validateAndUpdate!());
+          onClose();
         },
         undo: async () => {
-          variable.setState({
-            valuesFormat: initialValuesFormatRef.current,
-            query: initialQueryRef.current,
-          });
-
-          if (initialValuesFormatRef.current === 'json') {
-            variable.setState({ allowCustomValue: false, allValue: undefined });
-          }
-
+          variable.setState(initialState);
           await lastValueFrom(variable.validateAndUpdate!());
         },
       });
-      onClose();
     },
   };
 }
