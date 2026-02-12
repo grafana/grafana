@@ -10984,9 +10984,17 @@
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "View alerts and active notifications",
+      "title": "Alert activity"
+    },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
+    },
+    "alerting-alerts": {
+      "subtitle": "Visualize active and pending alerts",
+      "title": "Alert activity"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
