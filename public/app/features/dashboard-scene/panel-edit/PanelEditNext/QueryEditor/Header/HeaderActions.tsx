@@ -1,38 +1,64 @@
-import { RefObject } from 'react';
+import { RefObject, useCallback } from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 
+import { Actions } from '../../Actions';
+import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
+import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+
 import { ActionsMenu } from './ActionsMenu';
-import { AssistantButton } from './AssistantButton';
-import { InspectorButton } from './InspectorButton';
+import { PluginActions } from './PluginActions';
 import { SaveButton } from './SaveButton';
 import { WarningBadges } from './WarningBadges';
 
 interface HeaderActionsProps {
   containerRef?: RefObject<HTMLDivElement>;
-  queries: DataQuery[];
 }
 
 /**
  * Container for all action buttons in the query editor header.
  *
  * @remarks
- * Each child component is responsible for determining its own visibility
- * by reading cardType from QueryEditorUIContext. This keeps the logic
- * decentralized and each component self-contained.
- *
- * HeaderActions simply renders all components and lets them decide whether
- * to show or hide themselves based on context.
+ * Manages actions (hide, delete) for the currently selected query or transformation.
+ * Child components like WarningBadges, SaveButton, and ActionsMenu determine their
+ * own visibility by reading from QueryEditorUIContext.
  */
-export function HeaderActions({ containerRef, queries }: HeaderActionsProps) {
+export function HeaderActions({ containerRef }: HeaderActionsProps) {
+  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { toggleQueryHide, toggleTransformationDisabled, deleteQuery, deleteTransformation } = useActionsContext();
+
+  const onToggleHide = useCallback(() => {
+    if (selectedQuery) {
+      toggleQueryHide(selectedQuery.refId);
+    } else if (selectedTransformation) {
+      toggleTransformationDisabled(selectedTransformation.transformId);
+    }
+  }, [selectedQuery, selectedTransformation, toggleQueryHide, toggleTransformationDisabled]);
+
+  const onDelete = useCallback(() => {
+    if (selectedQuery) {
+      deleteQuery(selectedQuery.refId);
+    } else if (selectedTransformation) {
+      deleteTransformation(selectedTransformation.transformId);
+    }
+  }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
+
+  const isHidden = selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false;
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
+
   return (
     <Stack gap={1} alignItems="center">
-      <AssistantButton queries={queries} />
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
-      <InspectorButton />
+      <PluginActions app={CoreApp.PanelEditor} />
+      <Actions
+        contentHeader={true}
+        isHidden={isHidden}
+        onDelete={onDelete}
+        onToggleHide={onToggleHide}
+        typeLabel={typeLabel}
+      />
       <ActionsMenu app={CoreApp.PanelEditor} />
     </Stack>
   );
