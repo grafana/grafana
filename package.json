@@ -84,6 +84,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
+    "@axe-core/playwright": "^4.11.1",
     "@babel/core": "7.28.0",
     "@babel/preset-env": "7.28.0",
     "@babel/runtime": "7.28.2",

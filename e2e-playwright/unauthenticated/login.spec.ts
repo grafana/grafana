@@ -1,5 +1,29 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { runA11yAudit } from '../utils/a11y';
+
+test('Is accessible', { tag: ['@acceptance', '@a11y'] }, async ({ selectors, page }) => {
+  await page.goto(selectors.pages.Login.url);
+  await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
+  await runA11yAudit('Login page', page, 1); // there are several contrast color issues.
+});
+
+test(
+  'Is accessible on password change prompt',
+  { tag: ['@acceptance', '@a11y'] },
+  async ({ selectors, page, grafanaAPICredentials }) => {
+    await page.goto(selectors.pages.Login.url);
+
+    await page.getByTestId(selectors.pages.Login.username).fill(grafanaAPICredentials.user);
+    await page.getByTestId(selectors.pages.Login.password).fill(grafanaAPICredentials.password);
+
+    await page.getByTestId(selectors.pages.Login.submit).click();
+    await expect(page.getByTestId(selectors.pages.Login.skip)).toBeVisible();
+
+    await runA11yAudit('Password change prompt', page);
+  }
+);
+
 test(
   'Can login successfully',
   {
