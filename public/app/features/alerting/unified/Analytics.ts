@@ -458,7 +458,7 @@ export interface ViewExperienceToggleEventPayload {
 export function trackViewExperienceToggleClick(
   payload: ViewExperienceToggleEventPayload & { action: 'clicked' | 'canceled' | 'confirmed' }
 ) {
-  reportInteraction('grafana_alerting_view_experience_toggle', payload);
+  reportInteraction('grafana_alerting_view_experience_toggle', { ...payload });
 }
 
 /**
@@ -467,5 +467,5 @@ export function trackViewExperienceToggleClick(
 export function trackViewExperienceToggleConfirmed(
   payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
 ) {
-  reportInteraction('grafana_alerting_view_experience_confirmed', payload);
+  reportInteraction('grafana_alerting_view_experience_confirmed', { ...payload });
 }
