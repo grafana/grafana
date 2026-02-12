@@ -304,9 +304,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    console.log('[changeDataSource] Changing datasource for query', queryRefId, 'to', dsRef);
-    console.log('[changeDataSource] Current panel datasource:', queryRunner.state.datasource);
-
     const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
     if (!newDataSource) {
       throw new Error(`Failed to get datasource ${dsRef.uid ?? dsRef.type}`);
@@ -319,7 +316,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const targetQuery = queries[targetIndex];
-    console.log('[changeDataSource] Old query datasource:', targetQuery.datasource);
 
     const previousDataSource = targetQuery.datasource
       ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
@@ -339,7 +335,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       updatedQuery = { ...targetQuery, datasource: dsRef };
     }
 
-    console.log('[changeDataSource] New query datasource:', updatedQuery.datasource);
     queries[targetIndex] = updatedQuery;
 
     // Set panel datasource to mixed since the query has an explicit datasource
