@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,20 +27,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
+const (
+	subscriberCheckInterval = 5 * time.Second
+	maxZeroSubscriberChecks = 3 // 15 seconds with no subscribers before cleanup
+)
+
 // WatchRunner will start a watch task and broadcast results
 type WatchRunner struct {
-	publisher      model.ChannelPublisher
-	configProvider apiserver.RestConfigProvider
+	publisher       model.ChannelPublisher
+	configProvider  apiserver.RestConfigProvider
+	subscriberCount model.ChannelClientCount
 
 	watchingMu sync.Mutex
 	watching   map[string]*watcher
 }
 
-func NewWatchRunner(publisher model.ChannelPublisher, configProvider apiserver.RestConfigProvider) *WatchRunner {
+func NewWatchRunner(publisher model.ChannelPublisher, configProvider apiserver.RestConfigProvider, subscriberCount model.ChannelClientCount) *WatchRunner {
 	return &WatchRunner{
-		publisher:      publisher,
-		configProvider: configProvider,
-		watching:       make(map[string]*watcher),
+		publisher:       publisher,
+		configProvider:  configProvider,
+		subscriberCount: subscriberCount,
+		watching:        make(map[string]*watcher),
 	}
 }
 
@@ -68,7 +77,7 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 	defer b.watchingMu.Unlock()
 
 	current, ok := b.watching[e.Channel]
-	if ok && !current.done {
+	if ok && !current.done.Load() {
 		return model.SubscribeReply{
 			JoinLeave: false,
 			Presence:  false,
@@ -95,9 +104,12 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 	}
 
 	// add user to both requester and authInfo context keys, older implementations are still using requester
-	ctx := identity.WithRequester(types.WithAuthInfo(context.Background(), u), u)
+	ctx, cancel := context.WithCancel(
+		identity.WithRequester(types.WithAuthInfo(context.Background(), u), u),
+	)
 	uclient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
+		cancel()
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
 	client := uclient.Resource(gvr).Namespace(u.GetNamespace())
@@ -119,6 +131,7 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 
 	watch, err := client.Watch(ctx, opts)
 	if err != nil {
+		cancel()
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
 
@@ -127,10 +140,12 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		channel:   e.Channel,
 		publisher: b.publisher,
 		watch:     watch,
+		cancel:    cancel,
 	}
 
 	b.watching[e.Channel] = current
 	go current.run(ctx)
+	go b.watchSubscribers(ctx, cancel, u.GetNamespace(), e.Channel)
 
 	return model.SubscribeReply{
 		JoinLeave: false, // need unsubscribe envents
@@ -170,16 +185,54 @@ func (b *WatchRunner) OnPublish(_ context.Context, u identity.Requester, e model
 	return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("watch does not support publish")
 }
 
+// watchSubscribers periodically checks if a channel still has active subscribers.
+// When no subscribers are detected for maxZeroSubscriberChecks consecutive checks,
+// it cancels the watcher context and removes the entry from the watching map.
+func (b *WatchRunner) watchSubscribers(ctx context.Context, cancel context.CancelFunc, ns string, channel string) {
+	ticker := time.NewTicker(subscriberCheckInterval)
+	defer func() {
+		ticker.Stop()
+		cancel()
+		b.watchingMu.Lock()
+		delete(b.watching, channel)
+		b.watchingMu.Unlock()
+	}()
+
+	zeroChecks := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			count, err := b.subscriberCount(ns, channel)
+			if err != nil || count > 0 {
+				zeroChecks = 0
+				continue
+			}
+			zeroChecks++
+			if zeroChecks >= maxZeroSubscriberChecks {
+				return
+			}
+		}
+	}
+}
+
 type watcher struct {
 	ns        string
 	channel   string
 	publisher model.ChannelPublisher
-	done      bool
+	done      atomic.Bool
 	watch     watch.Interface
+	cancel    context.CancelFunc
 }
 
 func (b *watcher) run(ctx context.Context) {
 	logger := logging.FromContext(ctx).With("channel", b.channel)
+
+	defer func() {
+		b.done.Store(true)
+		b.cancel()
+	}()
 
 	ch := b.watch.ResultChan()
 	for {
@@ -188,7 +241,6 @@ func (b *watcher) run(ctx context.Context) {
 		case <-ctx.Done():
 			logger.Info("context done", "channel", b.channel)
 			b.watch.Stop()
-			b.done = true
 			return
 
 		// Each watch event
@@ -196,7 +248,6 @@ func (b *watcher) run(ctx context.Context) {
 			if !ok {
 				logger.Info("watch stream broken", "channel", b.channel)
 				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
 				return
 			}
 
@@ -210,8 +261,7 @@ func (b *watcher) run(ctx context.Context) {
 			if err != nil {
 				logger.Error("publish error", "channel", b.channel, "err", err)
 				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
-				continue
+				return
 			}
 		}
 	}
