@@ -5,11 +5,11 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { commonAlertProps } from '../Dashboards/DashboardPreviewBanner';
 import { getBranchUrl } from '../utils/url';
 
 interface Props {
-  prParam?: string;
+  /* PR url either from url param or BE response. It is used to open the pull request in a new tab. */
+  prURL?: string;
   isNewPr?: boolean;
   behindBranch?: boolean;
   repoUrl?: string;
@@ -22,10 +22,15 @@ export type PreviewBranchInfo = {
   repoBaseUrl?: string;
 };
 
+const commonAlertProps = {
+  severity: 'info' as const,
+  style: { flex: 0 } as const,
+};
+
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
   const { repoType } = usePullRequestParam();
   const { targetBranch, configuredBranch, repoBaseUrl } = branchInfo || {};
 
@@ -98,7 +103,7 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, b
           <Icon name="external-link-alt" />
         </Stack>
       }
-      onRemove={prParam ? () => window.open(textUtil.sanitizeUrl(prParam), '_blank') : undefined}
+      onRemove={prURL ? () => window.open(textUtil.sanitizeUrl(prURL), '_blank') : undefined}
     >
       <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
         The rest of Grafana users in your organization will still see the current version saved to configured default

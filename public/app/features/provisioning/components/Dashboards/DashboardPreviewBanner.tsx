@@ -1,4 +1,4 @@
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -21,17 +21,17 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
 
 interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {}
 
-export const commonAlertProps = {
-  severity: 'info' as const,
-  style: { flex: 0 } as const,
-};
-
 function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
-  const { prURL } = usePullRequestParam();
+  const { prURL: prURLParam } = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
   const { repository } = useGetResourceRepositoryView({ name: slug });
+
+  // Vars
   const targetRef = file.data?.ref;
-  const repoBaseUrl = file.data?.urls?.repositoryURL;
+  const repoBaseUrl = file.data?.urls?.repositoryURL || repository?.url;
+  const isExistingPR = !!prURLParam?.length; // if the PR URL is not empty, it means the dashboard is loaded from a pull request
+  const prOrCompareUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL; // Check if pull request URLs are available from the repository file data
+  const prURL = isExistingPR ? prURLParam : prOrCompareUrl; // if PR URL is provided, use it, otherwise use BE response url
 
   const branchInfo: PreviewBranchInfo = {
     targetBranch: targetRef,
@@ -53,30 +53,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     );
   }
 
-  // This page was loaded with a `pull_request_url` in the URL
-  if (prURL?.length) {
-    return <PreviewBannerViewPR prParam={prURL} branchInfo={branchInfo} />;
-  }
-
-  // Check if pull request URLs are available from the repository file data
-  const prOrCompareUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
-  if (prOrCompareUrl) {
-    return <PreviewBannerViewPR prParam={prOrCompareUrl} isNewPr branchInfo={branchInfo} />;
-  }
-
-  return (
-    <Alert
-      {...commonAlertProps}
-      title={t(
-        'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-external-repository',
-        'This dashboard is loaded from an external repository'
-      )}
-    >
-      <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-yet-saved">
-        The value is not saved in the Grafana database
-      </Trans>
-    </Alert>
-  );
+  return <PreviewBannerViewPR prURL={prURL} isNewPr={!isExistingPR} branchInfo={branchInfo} />;
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
