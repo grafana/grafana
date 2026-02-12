@@ -199,6 +199,10 @@ const (
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
 
+	// FlagDatasourcesRerouteLegacyCRUDAPIs
+	// Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesRerouteLegacyCRUDAPIs = "datasourcesRerouteLegacyCRUDAPIs"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -254,10 +258,6 @@ const (
 	// FlagAuditLoggingAppPlatform
 	// Enable audit logging with Kubernetes under app platform
 	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
-
-	// FlagSecretsManagementAppPlatform
-	// Enable the secrets management API and services under app platform
-	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
 	// FlagSecretsManagementAppPlatformUI
 	// Enable the secrets management app platform UI

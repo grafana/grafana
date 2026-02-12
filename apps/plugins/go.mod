@@ -15,8 +15,8 @@ replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.50.1
-	github.com/grafana/grafana-app-sdk/logging v0.50.1
+	github.com/grafana/grafana-app-sdk v0.50.2
+	github.com/grafana/grafana-app-sdk/logging v0.50.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/prometheus/client_golang v1.23.2
@@ -163,9 +163,9 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/open-feature/go-sdk v1.16.0 // indirect
+	github.com/open-feature/go-sdk v1.17.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.6 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.23 // indirect

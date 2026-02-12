@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LogsSortOrder } from '@grafana/schema/dist/esm/common/common.gen';
+import { LogsSortOrder } from '@grafana/data';
 
 import { LogTableControls } from './LogTableControls';
 
@@ -9,6 +9,7 @@ describe('LogTableControls', () => {
   it.each([LogsSortOrder.Descending, LogsSortOrder.Ascending])('should render descending', (sortOrder) => {
     render(
       <LogTableControls
+        logOptionsStorageKey={''}
         controlsExpanded={false}
         setControlsExpanded={jest.fn()}
         sortOrder={sortOrder}
@@ -29,6 +30,7 @@ describe('LogTableControls', () => {
 
     render(
       <LogTableControls
+        logOptionsStorageKey={''}
         controlsExpanded={expanded}
         setControlsExpanded={setControlsExpanded}
         sortOrder={LogsSortOrder.Ascending}
@@ -49,6 +51,7 @@ describe('LogTableControls', () => {
       const sortOrderText = `Sorted by ${sortOrder === LogsSortOrder.Ascending ? 'oldest' : 'newest'}`;
       render(
         <LogTableControls
+          logOptionsStorageKey={''}
           controlsExpanded={false}
           setControlsExpanded={jest.fn()}
           sortOrder={sortOrder}

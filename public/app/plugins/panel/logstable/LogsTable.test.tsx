@@ -12,7 +12,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { defaultTableOptions } from '@grafana/schema/dist/esm/common/common.gen';
+import { defaultTableOptions } from '@grafana/schema';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -150,7 +150,7 @@ describe('LogsTable', () => {
     it('should publish app event', async () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
       setUp({ onOptionsChange }, { showControls: true });
-      await waitFor(() => expect(screen.getByLabelText('Expand')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByLabelText('Collapse sidebar')).toBeInTheDocument());
 
       // Expand the options
       expect(publishMockFn).toHaveBeenCalledTimes(0);

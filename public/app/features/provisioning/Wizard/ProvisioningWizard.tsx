@@ -26,7 +26,7 @@ import { useWizardButtons } from './hooks/useWizardButtons';
 import { useWizardCancellation } from './hooks/useWizardCancellation';
 import { useWizardNavigation } from './hooks/useWizardNavigation';
 import { useWizardSubmission } from './hooks/useWizardSubmission';
-import { ConnectionCreationResult, RepoType, WizardFormData, WizardStep } from './types';
+import { ConnectionCreationResult, RepoType, WizardFormData } from './types';
 import { getSteps } from './utils/getSteps';
 
 const appEvents = getAppEvents();
@@ -38,7 +38,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   type: RepoType;
   settingsData?: RepositoryViewList;
 }) {
-  const initialStep: WizardStep = type === 'github' ? 'authType' : 'connection';
   const navigate = useNavigate();
   const styles = useStyles2(getStyles);
 
@@ -75,7 +74,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     'githubAppMode',
   ]);
 
-  const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
+  const steps = useMemo(() => getSteps(repoType), [repoType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
@@ -99,7 +98,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     goToNextStep,
     goToPreviousStep,
   } = useWizardNavigation({
-    initialStep,
     steps,
     canSkipSync,
     setStepStatusInfo,

@@ -42,8 +42,8 @@ replace (
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.50.1
-	github.com/grafana/grafana-app-sdk/logging v0.50.1
+	github.com/grafana/grafana-app-sdk v0.50.2
+	github.com/grafana/grafana-app-sdk/logging v0.50.2
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/client_golang v1.23.2
@@ -330,9 +330,9 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/open-feature/go-sdk v1.16.0 // indirect
+	github.com/open-feature/go-sdk v1.17.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.6 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/openfga/api/proto v0.0.0-20260122164422-25e22cb1875b // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251027165255-0f8f255e5f6c // indirect
 	github.com/openfga/openfga v1.11.3 // indirect

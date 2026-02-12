@@ -8,7 +8,7 @@ import {
   Spec as DashboardV2Spec,
   TextVariableSpec,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
