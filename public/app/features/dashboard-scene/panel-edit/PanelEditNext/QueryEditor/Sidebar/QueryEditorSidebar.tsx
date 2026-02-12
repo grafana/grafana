@@ -45,7 +45,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
             aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
           />
           <Text weight="medium" variant="h6">
-            {t('query-editor-next.sidebar.query-stack', 'Query Stack')}
+            {t('query-editor-next.sidebar.data', 'Data')}
           </Text>
         </Stack>
       </div>
