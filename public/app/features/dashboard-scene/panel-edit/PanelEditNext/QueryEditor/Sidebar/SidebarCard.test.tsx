@@ -51,6 +51,7 @@ function renderSidebarCard({
     <QueryEditorProvider
       dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
       qrState={{ queries, data: undefined, isLoading: false }}
+      alertingState={{ alertRules: [], loading: false }}
       panelState={{
         panel: new VizPanel({ key: 'panel-1' }),
         transformations: [],
@@ -66,6 +67,8 @@ function renderSidebarCard({
         showingDatasourceHelp: false,
         toggleDatasourceHelp: jest.fn(),
         cardType: QueryEditorType.Query,
+        selectedAlert: null,
+        setSelectedAlert: jest.fn(),
       }}
       actions={actions}
     >
@@ -108,6 +111,7 @@ describe('SidebarCard', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries: [query], data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [transformation] }}
         uiState={{
           selectedQuery: null,
@@ -120,6 +124,8 @@ describe('SidebarCard', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -149,6 +155,7 @@ describe('SidebarCard', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries: [query], data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [transformation] }}
         uiState={{
           selectedQuery: query,
@@ -161,6 +168,8 @@ describe('SidebarCard', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Transformation,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >

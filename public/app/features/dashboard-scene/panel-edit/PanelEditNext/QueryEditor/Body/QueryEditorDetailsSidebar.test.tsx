@@ -44,6 +44,7 @@ describe('QueryEditorDetailsSidebar', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: ds1SettingsMock, dsError: undefined }}
         qrState={qrState}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
           selectedQuery: null,
@@ -56,6 +57,8 @@ describe('QueryEditorDetailsSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >

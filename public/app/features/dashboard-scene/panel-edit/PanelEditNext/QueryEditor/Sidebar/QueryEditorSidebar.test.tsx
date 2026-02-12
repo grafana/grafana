@@ -29,6 +29,7 @@ describe('QueryEditorSidebar', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries, data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
           selectedQuery: queries[0],
@@ -41,6 +42,8 @@ describe('QueryEditorSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -56,6 +59,7 @@ describe('QueryEditorSidebar', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries: [], data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
           selectedQuery: null,
@@ -68,6 +72,8 @@ describe('QueryEditorSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -91,6 +97,7 @@ describe('QueryEditorSidebar', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries, data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
           selectedQuery: queries[0],
@@ -103,6 +110,8 @@ describe('QueryEditorSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -137,6 +146,7 @@ describe('QueryEditorSidebar', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries, data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
           selectedQuery: queries[0],
@@ -149,6 +159,8 @@ describe('QueryEditorSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -178,6 +190,7 @@ describe('QueryEditorSidebar', () => {
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries, data: undefined, isLoading: false }}
+        alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
           selectedQuery: queries[0],
@@ -190,6 +203,8 @@ describe('QueryEditorSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          selectedAlert: null,
+          setSelectedAlert: jest.fn(),
         }}
         actions={mockActions}
       >
