@@ -292,8 +292,8 @@ export class ElasticDatasource
     const dateRanges = [];
     const rangeStart: RangeMap = {};
     rangeStart[timeField] = {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
+      gte: options.range.from.valueOf(),
+      lte: options.range.to.valueOf(),
       format: 'epoch_millis',
     };
     dateRanges.push({ range: rangeStart });
@@ -301,8 +301,8 @@ export class ElasticDatasource
     if (timeEndField) {
       const rangeEnd: RangeMap = {};
       rangeEnd[timeEndField] = {
-        from: options.range.from.valueOf(),
-        to: options.range.to.valueOf(),
+        gte: options.range.from.valueOf(),
+        lte: options.range.to.valueOf(),
         format: 'epoch_millis',
       };
       dateRanges.push({ range: rangeEnd });
