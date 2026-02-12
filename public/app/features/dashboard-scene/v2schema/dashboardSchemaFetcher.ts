@@ -98,6 +98,9 @@ async function doFetchSchema(): Promise<JSONSchema> {
   // Convert all $ref paths from OpenAPI format to JSON Schema definitions format
   replaceRefs(jsonSchema);
 
+  // Inject const constraints for kind fields that the OpenAPI generator doesn't emit
+  injectKindConstraints(definitions);
+
   return jsonSchema;
 }
 
@@ -126,6 +129,34 @@ function convertOpenAPIToJSONSchema(schema: JSONSchema): JSONSchema {
 function convertRefToDefinitionKey(key: string): string {
   // Use the full key but replace dots with underscores for valid JSON pointer
   return key.replace(/\./g, '_');
+}
+
+// Kind values that are dynamic (e.g. plugin ID), not fixed strings.
+const DYNAMIC_KIND_DEFINITIONS = new Set(['TransformationKind']);
+
+/**
+ * Injects `const` on `kind` properties. The Go generator emits `type: string`,
+ * but `Dashboard<Name>Kind` types always have a fixed kind value derived from the type name.
+ */
+function injectKindConstraints(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    const kindProp = schema.properties?.kind;
+    if (!kindProp || kindProp.type !== 'string') {
+      continue;
+    }
+
+    const match = key.match(/_Dashboard(\w+Kind)$/);
+    if (match) {
+      if (!DYNAMIC_KIND_DEFINITIONS.has(match[1])) {
+        kindProp.const = match[1].replace(/Kind$/, '');
+      }
+      continue;
+    }
+
+    if (key.endsWith('_DashboardElementReference')) {
+      kindProp.const = 'ElementReference';
+    }
+  }
 }
 
 function isRecord(obj: unknown): obj is Record<string, unknown> {
