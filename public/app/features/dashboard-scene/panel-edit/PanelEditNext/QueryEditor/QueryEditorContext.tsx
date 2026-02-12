@@ -9,12 +9,16 @@ import {
 } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
 import { QueryOptionField, Transformation } from './types';
+
+export interface PendingExpression {
+  afterRefId: string;
+}
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -56,6 +60,9 @@ export interface QueryEditorUIState {
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
   cardType: QueryEditorType;
+  pendingExpression: PendingExpression | null;
+  setPendingExpression: (pending: PendingExpression | null) => void;
+  finalizePendingExpression: (type: ExpressionQueryType) => void;
 }
 
 export interface QueryEditorActions {

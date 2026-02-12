@@ -1,28 +1,16 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
-import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { EXPRESSION_ICON_MAP } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
-
-function isExpressionType(
-  item: SelectableValue<ExpressionQueryType>
-): item is SelectableValue<ExpressionQueryType> & { value: ExpressionQueryType } {
-  return typeof item.value === 'string' && item.value in EXPRESSION_ICON_MAP;
-}
-
-type MenuView = 'main' | 'expressionTypes';
 
 interface AddCardButtonProps {
   /** The refId of the card this button belongs to; new items are inserted after it. */
@@ -33,13 +21,10 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
-  const { setSelectedQuery } = useQueryEditorUIContext();
+  const { setSelectedQuery, setPendingExpression } = useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuView, setMenuView] = useState<MenuView>('main');
-
-  const focusOnMount = useCallback((el: HTMLDivElement | null) => el?.focus(), []);
 
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
   // library is governed by fine-grained RBAC permissions. Otherwise, any
@@ -59,84 +44,45 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
     [addQuery, afterRefId, setSelectedQuery]
   );
 
-  const addExpressionOfType = useCallback(
-    (type: ExpressionQueryType) => {
-      const baseQuery = expressionDatasource.newQuery();
-      const queryWithType = { ...baseQuery, type };
-      const queryWithDefaults = getDefaults(queryWithType);
-      addAndSelect(queryWithDefaults);
-    },
-    [addAndSelect]
-  );
-
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
     setMenuOpen(visible);
-    if (!visible) {
-      setMenuView('main');
-    }
   }, []);
 
-  const menus: Record<MenuView, React.ReactElement> = useMemo(
-    () => ({
-      main: (
-        <Menu key="main">
+  const menu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('query-editor-next.sidebar.add-query', 'Add query')}
+          icon="question-circle"
+          onClick={() => addAndSelect()}
+        />
+        {queryLibraryEnabled && canReadQueries && (
           <Menu.Item
-            label={t('query-editor-next.sidebar.add-query', 'Add query')}
-            icon="question-circle"
-            onClick={() => addAndSelect()}
+            label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
+            icon="book-open"
+            onClick={() =>
+              openDrawer({
+                onSelectQuery: (query) => addAndSelect(query),
+                options: { context: CoreApp.PanelEditor },
+              })
+            }
           />
-          {queryLibraryEnabled && canReadQueries && (
-            <Menu.Item
-              label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
-              icon="book-open"
-              onClick={() =>
-                openDrawer({
-                  onSelectQuery: (query) => addAndSelect(query),
-                  options: { context: CoreApp.PanelEditor },
-                })
-              }
-            />
-          )}
-          <Menu.Item
-            label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
-            icon="calculator-alt"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenuView('expressionTypes');
-            }}
-          />
-        </Menu>
-      ),
-      expressionTypes: (
-        <Menu key="expressionTypes" ref={focusOnMount}>
-          <Menu.Item
-            label={t('query-editor-next.sidebar.back', 'Back')}
-            icon="arrow-left"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenuView('main');
-            }}
-          />
-          <Menu.Divider />
-          {expressionTypes.filter(isExpressionType).map((item) => (
-            <Menu.Item
-              key={item.value}
-              label={item.label ?? ''}
-              icon={EXPRESSION_ICON_MAP[item.value]}
-              onClick={() => addExpressionOfType(item.value)}
-            />
-          ))}
-        </Menu>
-      ),
-    }),
-    [addAndSelect, addExpressionOfType, canReadQueries, focusOnMount, openDrawer, queryLibraryEnabled]
+        )}
+        <Menu.Item
+          label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+          icon="calculator-alt"
+          onClick={() => {
+            setPendingExpression({ afterRefId });
+          }}
+        />
+      </Menu>
+    ),
+    [addAndSelect, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterRefId]
   );
 
   return (
     <Dropdown
-      overlay={menus[menuView]}
+      overlay={menu}
       placement="right-start"
       offset={[theme.spacing.gridSize, 0]}
       onVisibleChange={handleMenuVisibleChange}

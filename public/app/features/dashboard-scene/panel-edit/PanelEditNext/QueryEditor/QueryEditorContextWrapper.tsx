@@ -3,13 +3,16 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
+import { QueryEditorType } from '../constants';
 
-import { QueryEditorProvider } from './QueryEditorContext';
+import { PendingExpression, QueryEditorProvider } from './QueryEditorContext';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
@@ -37,6 +40,7 @@ export function QueryEditorContextWrapper({
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
+  const [pendingExpression, setPendingExpressionState] = useState<PendingExpression | null>(null);
 
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
   const transformations = useTransformations(dataTransformer);
@@ -96,6 +100,33 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
+  const setPendingExpression = useCallback((pending: PendingExpression | null) => {
+    setPendingExpressionState(pending);
+    if (pending) {
+      // Deselect any currently selected card so the content area shows the picker
+      setSelectedQueryRefId(null);
+      setSelectedTransformationId(null);
+    }
+  }, []);
+
+  const finalizePendingExpression = useCallback(
+    (type: ExpressionQueryType) => {
+      const afterRefId = pendingExpression?.afterRefId;
+      setPendingExpressionState(null);
+
+      const baseQuery = expressionDatasource.newQuery();
+      const queryWithType = { ...baseQuery, type };
+      const queryWithDefaults = getDefaults(queryWithType);
+
+      const newRefId = dataPane.addQuery(queryWithDefaults, afterRefId);
+      if (newRefId) {
+        setSelectedQueryRefId(newRefId);
+        setSelectedTransformationId(null);
+      }
+    },
+    [pendingExpression, dataPane]
+  );
+
   const uiState = useMemo(
     () => ({
       selectedQuery,
@@ -106,11 +137,15 @@ export function QueryEditorContextWrapper({
         setSelectedTransformationId(null);
         // Reset datasource help when switching queries
         setShowingDatasourceHelp(false);
+        // Abandon pending expression flow when selecting a card
+        setPendingExpressionState(null);
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
+        // Abandon pending expression flow when selecting a card
+        setPendingExpressionState(null);
       },
       queryOptions: {
         options: queryOptions,
@@ -123,7 +158,10 @@ export function QueryEditorContextWrapper({
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
-      cardType: getEditorType(selectedQuery || selectedTransformation),
+      cardType: pendingExpression ? QueryEditorType.Expression : getEditorType(selectedQuery || selectedTransformation),
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
     }),
     [
       selectedQuery,
@@ -136,6 +174,9 @@ export function QueryEditorContextWrapper({
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
     ]
   );
 

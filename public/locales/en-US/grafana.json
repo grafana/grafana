@@ -12977,6 +12977,9 @@
       "title": "Query Options"
     },
     "edit-query-name": "Edit query name",
+    "expression-type-picker": {
+      "title": "Choose expression type"
+    },
     "footer": {
       "edit-option": "Edit {{label}}",
       "label": {
@@ -12993,6 +12996,7 @@
     },
     "header": {
       "expression": "Expression",
+      "pending-expression": "Please, select type of expression below",
       "transformation": "Transformation"
     },
     "help": {
@@ -13009,7 +13013,6 @@
       "add-expression": "Add expression",
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
-      "back": "Back",
       "card-click": "Select card {{id}}",
       "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",

@@ -1,6 +1,18 @@
 import { IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ExpressionQueryType } from 'app/features/expressions/types';
+import classicConditionDarkImage from 'app/features/transformers/images/dark/classicCondition.svg';
+import mathDarkImage from 'app/features/transformers/images/dark/math.svg';
+import reduceDarkImage from 'app/features/transformers/images/dark/reduce.svg';
+import resampleDarkImage from 'app/features/transformers/images/dark/resample.svg';
+import sqlDarkImage from 'app/features/transformers/images/dark/sqlExpression.svg';
+import thresholdDarkImage from 'app/features/transformers/images/dark/threshold.svg';
+import classicConditionLightImage from 'app/features/transformers/images/light/classicCondition.svg';
+import mathLightImage from 'app/features/transformers/images/light/math.svg';
+import reduceLightImage from 'app/features/transformers/images/light/reduce.svg';
+import resampleLightImage from 'app/features/transformers/images/light/resample.svg';
+import sqlLightImage from 'app/features/transformers/images/light/sqlExpression.svg';
+import thresholdLightImage from 'app/features/transformers/images/light/threshold.svg';
 
 import { QueryOptionField } from './QueryEditor/types';
 
@@ -128,11 +140,11 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
   },
 };
 
-export const EXPRESSION_ICON_MAP = {
-  [ExpressionQueryType.math]: 'calculator-alt',
-  [ExpressionQueryType.reduce]: 'compress-arrows',
-  [ExpressionQueryType.resample]: 'sync',
-  [ExpressionQueryType.classic]: 'cog',
-  [ExpressionQueryType.threshold]: 'sliders-v-alt',
-  [ExpressionQueryType.sql]: 'database',
-} as const satisfies Record<ExpressionQueryType, string>;
+export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; light: string }> = {
+  [ExpressionQueryType.sql]: { dark: sqlDarkImage, light: sqlLightImage },
+  [ExpressionQueryType.math]: { dark: mathDarkImage, light: mathLightImage },
+  [ExpressionQueryType.reduce]: { dark: reduceDarkImage, light: reduceLightImage },
+  [ExpressionQueryType.resample]: { dark: resampleDarkImage, light: resampleLightImage },
+  [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
+  [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
+};

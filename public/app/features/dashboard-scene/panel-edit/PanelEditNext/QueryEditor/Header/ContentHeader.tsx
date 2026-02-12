@@ -150,9 +150,13 @@ export function ContentHeaderSceneWrapper({
 }: {
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
-  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation, cardType, pendingExpression } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
+
+  if (pendingExpression) {
+    return <PendingExpressionHeader />;
+  }
 
   return (
     <ContentHeader
@@ -164,6 +168,21 @@ export function ContentHeaderSceneWrapper({
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}
     />
+  );
+}
+
+function PendingExpressionHeader() {
+  const styles = useStyles2(getStyles, { cardType: QueryEditorType.Expression });
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.leftSection}>
+        <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].icon} size="sm" />
+        <Text weight="light" variant="body" color="secondary">
+          <Trans i18nKey="query-editor-next.header.pending-expression">Please, select type of expression below</Trans>
+        </Text>
+      </div>
+    </div>
   );
 }
 
