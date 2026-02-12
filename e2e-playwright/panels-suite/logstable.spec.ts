@@ -181,7 +181,6 @@ test.describe.only('Panels test: LogsTable', { tag: ['@panels', '@logstable'] },
       await expect(inspectLogLineButton, 'Inspect button is no longer in the logs table viz').toHaveCount(0);
     });
     test('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
-      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
