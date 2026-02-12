@@ -29,11 +29,11 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
     });
   };
 
-  const canReadTeamFolders = contextSrv.hasPermission(AccessControlAction.ActionTeamsRead);
+  const canReadTeams = contextSrv.hasPermission(AccessControlAction.ActionTeamsRead);
 
   return (
     <Stack alignItems="center">
-      {canReadTeamFolders && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
+      {canReadTeams && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
       {config.featureToggles.restoreDashboards && (
