@@ -114,8 +114,8 @@ interface ManagedSortProps {
 
 export function useManagedSort({ sortByBehavior, setSortColumns, sortBy }: ManagedSortProps) {
   useEffect(() => {
-    if (sortByBehavior === 'managed' && setSortColumns && sortBy) {
-      setSortColumns?.(
+    if (sortByBehavior === 'managed' && sortBy) {
+      setSortColumns(
         sortBy.map(({ displayName, desc }) => ({
           columnKey: displayName,
           direction: desc === true ? 'DESC' : 'ASC',
