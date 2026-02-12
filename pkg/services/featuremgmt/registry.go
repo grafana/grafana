@@ -960,6 +960,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingSyncNotifiersApiMigration",
+			Description:  "Use the new k8s API for fetching integration type schemas",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "preserveDashboardStateWhenNavigating",
 			Description:  "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
 			Stage:        FeatureStageExperimental,
@@ -2329,6 +2337,14 @@ var (
 		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingIgnorePendingForNoDataAndError",
+			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
