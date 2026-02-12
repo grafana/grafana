@@ -1,7 +1,6 @@
-import { isObject } from 'lodash';
 import { FormEvent, useCallback, useState } from 'react';
 
-import { CustomVariableModel, shallowCompare } from '@grafana/data';
+import { CustomVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
@@ -10,6 +9,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { CustomVariableForm } from '../../components/CustomVariableForm';
 
 import { PaneItem } from './PaneItem';
+import { validateJsonQuery } from './customVariableQueryUtils';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
@@ -120,46 +120,3 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
     }),
   ];
 }
-
-export const validateJsonQuery = (query: string): Error | undefined => {
-  if (!query) {
-    return;
-  }
-
-  try {
-    const options = JSON.parse(query);
-
-    if (!Array.isArray(options)) {
-      throw new Error('Enter a valid JSON array of objects');
-    }
-
-    if (!options.length) {
-      return;
-    }
-
-    let errorIndex = options.findIndex((item) => !isObject(item));
-    if (errorIndex !== -1) {
-      throw new Error(`All items must be objects. The item at index ${errorIndex} is not an object.`);
-    }
-
-    const keys = Object.keys(options[0]);
-    if (!keys.includes('value')) {
-      throw new Error('Each object in the array must include at least a "value" property');
-    }
-    if (keys.includes('')) {
-      throw new Error('Object property names cannot be empty strings');
-    }
-
-    errorIndex = options.findIndex((o) => !shallowCompare(keys, Object.keys(o)));
-    if (errorIndex !== -1) {
-      throw new Error(
-        `All objects must have the same set of properties. The object at index ${errorIndex} does not match the expected properties`
-      );
-    }
-
-    return;
-  } catch (error) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return error as Error;
-  }
-};

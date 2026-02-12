@@ -3,13 +3,15 @@ import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import { CustomVariable } from '@grafana/scenes';
 import { Alert, Button, Modal, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
+
+import { transformCsvQueryToFormOptions, transformFormOptionsToCsvQuery } from './customVariableQueryUtils';
 
 interface ModalEditorProps {
   variable: CustomVariable;
@@ -69,7 +71,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
 
 function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const { query, valuesFormat } = variable.state;
-  const [options, setOptions] = useState(() => transformQueryToOptions(variable, query));
+  const [options, setOptions] = useState(() => transformCsvQueryToFormOptions(variable, query));
   const initialQueryRef = useRef(query);
   const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
 
@@ -88,7 +90,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         source: variable,
         description: t('dashboard.edit-pane.variable.custom-options.change-value', 'Change variable value'),
         perform: () => {
-          variable.setState({ query: transformOptionsToQuery(options) });
+          variable.setState({ query: transformFormOptionsToCsvQuery(options) });
           lastValueFrom(variable.validateAndUpdate!());
         },
         undo: () => {
@@ -101,20 +103,3 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
     },
   };
 }
-
-const transformQueryToOptions = (variable: ModalEditorProps['variable'], query: string) =>
-  variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
-    value,
-    label: value === label ? '' : label,
-  }));
-
-const formatOption = (option: VariableValueOption) => {
-  if (!option.label || option.label === option.value) {
-    return escapeEntities(option.value);
-  }
-  return `${escapeEntities(option.label)} : ${escapeEntities(String(option.value))}`;
-};
-
-const escapeEntities = (text: VariableValueSingle) => String(text).trim().replaceAll(',', '\\,');
-
-const transformOptionsToQuery = (options: VariableValueOption[]) => options.map(formatOption).join(', ');

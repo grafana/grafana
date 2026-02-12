@@ -1,4 +1,4 @@
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useMemo, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CustomVariableModel } from '@grafana/data';
@@ -10,10 +10,10 @@ import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
-import { useGetAllVariableOptions, VariableValuesPreview } from '../../components/VariableValuesPreview';
+import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
-import { validateJsonQuery } from './CustomVariableEditor';
 import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
+import { buildCustomVariablePreviewOptions, parseAndValidateJsonQuery } from './customVariableQueryUtils';
 
 interface ModalEditorProps {
   variable: CustomVariable;
@@ -29,10 +29,9 @@ export function ModalEditor(props: ModalEditorProps) {
 
 function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
-    options,
-    staticOptions,
+    previewOptions,
     valuesFormat,
-    query,
+    activeQuery,
     queryValidationError,
     onCloseModal,
     onValuesFormatChange,
@@ -55,7 +54,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
             id={valuesFormat}
             key={valuesFormat}
             rows={4}
-            defaultValue={query}
+            defaultValue={activeQuery}
             onChange={onQueryChange}
             placeholder={
               valuesFormat === 'json'
@@ -70,7 +69,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>
-          <VariableValuesPreview options={options} staticOptions={staticOptions} />
+          <VariableValuesPreview options={previewOptions} staticOptions={[]} />
         </div>
       </Stack>
       <Modal.ButtonRow>
@@ -98,37 +97,58 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
 function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const initialValuesFormatRef = useRef(variable.state.valuesFormat);
   const initialQueryRef = useRef(variable.state.query);
+  const initialJsonValidationRef = useRef(
+    variable.state.valuesFormat === 'json' ? parseAndValidateJsonQuery(variable.state.query) : undefined
+  );
   const [valuesFormat, setValuesFormat] = useState(() => variable.state.valuesFormat);
-  const [query, setQuery] = useState(() => variable.state.query);
-  const [prevQuery, setPrevQuery] = useState('');
-  const [queryValidationError, setQueryValidationError] = useState<Error>();
-  const { options, staticOptions } = useGetAllVariableOptions(variable);
+  const [activeQuery, setActiveQuery] = useState(() => variable.state.query);
+  const [stashedQuery, setStashedQuery] = useState('');
+  const [queryValidationError, setQueryValidationError] = useState<Error | undefined>(
+    initialJsonValidationRef.current?.error
+  );
+  const [parsedJsonOptions, setParsedJsonOptions] = useState(initialJsonValidationRef.current?.parsedOptions);
+  const previewOptions = useMemo(
+    () => buildCustomVariablePreviewOptions({ variable, valuesFormat, query: activeQuery, parsedJsonOptions }),
+    [activeQuery, parsedJsonOptions, valuesFormat, variable]
+  );
 
   return {
-    options,
-    staticOptions,
+    previewOptions,
     valuesFormat,
-    query,
+    activeQuery,
     queryValidationError,
     onCloseModal: onClose,
     onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
-      setQuery(prevQuery);
       setValuesFormat(newFormat);
-      setQueryValidationError(undefined);
-      if (query !== prevQuery) {
-        setPrevQuery(query);
+
+      if (newFormat === 'json') {
+        const validationResult = parseAndValidateJsonQuery(stashedQuery);
+        setQueryValidationError(validationResult.error);
+        setParsedJsonOptions(validationResult.parsedOptions);
+      } else {
+        setQueryValidationError(undefined);
+        setParsedJsonOptions(undefined);
+      }
+
+      setActiveQuery(stashedQuery);
+      if (activeQuery !== stashedQuery) {
+        setStashedQuery(activeQuery);
       }
     },
     onQueryChange(event: FormEvent<HTMLTextAreaElement>) {
-      setPrevQuery('');
+      const newQuery = event.currentTarget.value;
+      setStashedQuery('');
+
       if (valuesFormat === 'json') {
-        const validationError = validateJsonQuery(event.currentTarget.value);
-        setQueryValidationError(validationError);
-        if (validationError) {
+        const validationResult = parseAndValidateJsonQuery(newQuery);
+        setQueryValidationError(validationResult.error);
+        if (validationResult.error) {
           return;
         }
+        setParsedJsonOptions(validationResult.parsedOptions);
       }
-      setQuery(event.currentTarget.value);
+
+      setActiveQuery(newQuery);
     },
     onSaveOptions() {
       dashboardEditActions.edit({
@@ -136,9 +156,9 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
           if (!config.featureToggles.multiPropsVariables) {
-            variable.setState({ valuesFormat: 'csv', query });
+            variable.setState({ valuesFormat: 'csv', query: activeQuery });
           } else {
-            variable.setState({ valuesFormat, query });
+            variable.setState({ valuesFormat, query: activeQuery });
           }
 
           if (valuesFormat === 'json') {
