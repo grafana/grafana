@@ -1141,10 +1141,35 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher": {
+        "type": "object",
+        "required": [
+          "type",
+          "label",
+          "value"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "=",
+              "!=",
+              "=~",
+              "!~"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers": {
         "type": "array",
         "items": {
-          "$ref": "#/components/schemas/createNotificationqueryMatcher"
+          "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher"
         }
       },
       "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry": {

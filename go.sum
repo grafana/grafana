@@ -1626,6 +1626,8 @@ github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNc
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/grafana/grafana-app-sdk v0.50.2 h1:cMZAlCI1OBpVfB0/wbXNwaYpFMIVmVOYZpHsGTJmJkM=
 github.com/grafana/grafana-app-sdk v0.50.2/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
+github.com/grafana/grafana-app-sdk v0.50.3-1 h1:FugJQB3f1rugZ8AWeaMtJNtnj2kAXCt+7gdnCCR9hZQ=
+github.com/grafana/grafana-app-sdk v0.50.3-1/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
 github.com/grafana/grafana-app-sdk/logging v0.50.2 h1:vUwmjh6vb/UpbEBe/HmgMTT7zRWRtPwRo1dQRxkApEM=
 github.com/grafana/grafana-app-sdk/logging v0.50.2/go.mod h1:5u3KalezoBAAo2Y3ytDYDAIIPvEqFLLDSxeiK99QxDU=
 github.com/grafana/grafana-aws-sdk v1.4.3 h1:Gwm7f2zyVTfVRmYS0GuZPe46aoQxVejb2/9c/woYgEw=
