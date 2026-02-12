@@ -112,6 +112,71 @@ describe('config from data', () => {
   });
 });
 
+describe('preserves frame properties', () => {
+  const config = toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [1, 2] },
+      { name: 'Max', type: FieldType.number, values: [1, 10, 50] },
+      { name: 'Min', type: FieldType.number, values: [1, 10, 5] },
+    ],
+    refId: 'A',
+  });
+
+  it('should preserve frame name on output frames', () => {
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [2, 3, 4] },
+      ],
+    });
+    seriesB.name = 'cpu-utilization';
+    seriesB.refId = 'B';
+
+    const seriesC = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [5, 6, 7] },
+      ],
+    });
+    seriesC.name = 'memory-usage';
+    seriesC.refId = 'B';
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesB, seriesC]);
+
+    expect(results.length).toBe(2);
+    expect(results[0].name).toBe('cpu-utilization');
+    expect(results[1].name).toBe('memory-usage');
+  });
+
+  it('should preserve frame meta on output frames', () => {
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [2, 3, 4] },
+      ],
+    });
+    seriesB.name = 'request-rate';
+    seriesB.refId = 'B';
+    seriesB.meta = { executedQueryString: 'SELECT rate FROM requests' };
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesB]);
+
+    expect(results.length).toBe(1);
+    expect(results[0].name).toBe('request-rate');
+    expect(results[0].meta?.executedQueryString).toBe('SELECT rate FROM requests');
+  });
+});
+
 describe('value mapping from data', () => {
   const config = toDataFrame({
     fields: [
