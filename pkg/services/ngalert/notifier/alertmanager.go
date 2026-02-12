@@ -405,7 +405,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	// Add inhibition rules to the configuration using the same pattern as managed routes.
 	managedInhibitionRules := maps.Clone(cfg.ManagedInhibitionRules)
 	if managedInhibitionRules == nil {
-		managedInhibitionRules = make(definitions.ManagedInhibitionRules)
+		managedInhibitionRules = make(apimodels.ManagedInhibitionRules)
 	}
 
 	amConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(
