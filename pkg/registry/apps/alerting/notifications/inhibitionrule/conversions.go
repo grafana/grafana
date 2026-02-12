@@ -79,7 +79,7 @@ func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRule
 func convertToDomainModel(rule *model.InhibitionRule) (ngmodels.InhibitionRule, error) {
 	result := ngmodels.InhibitionRule{
 		Version:    rule.ResourceVersion,
-		UID:        rule.Name,
+		Name:       rule.Name,
 		Provenance: ngmodels.ProvenanceNone,
 		Origin:     ngmodels.ResourceOriginGrafana,
 	}

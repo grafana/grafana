@@ -24,10 +24,10 @@ var (
 // InhibitionRuleService defines the interface for inhibition rule operations
 type InhibitionRuleService interface {
 	GetInhibitionRules(ctx context.Context, orgID int64) ([]ngmodels.InhibitionRule, error)
-	GetInhibitionRule(ctx context.Context, uid string, orgID int64) (ngmodels.InhibitionRule, error)
+	GetInhibitionRule(ctx context.Context, name string, orgID int64) (ngmodels.InhibitionRule, error)
 	CreateInhibitionRule(ctx context.Context, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
 	UpdateInhibitionRule(ctx context.Context, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
-	DeleteInhibitionRule(ctx context.Context, uid string, orgID int64, provenance ngmodels.Provenance, version string) error
+	DeleteInhibitionRule(ctx context.Context, name string, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -72,16 +72,16 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
 }
 
-func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
+func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	rule, err := s.service.GetInhibitionRule(ctx, uid, info.OrgID)
+	rule, err := s.service.GetInhibitionRule(ctx, name, info.OrgID)
 	if err != nil {
 		if stderrors.Is(err, ngmodels.ErrInhibitionRuleNotFound) {
-			return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
+			return nil, errors.NewNotFound(ResourceInfo.GroupResource(), name)
 		}
 		return nil, err
 	}
@@ -107,9 +107,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected inhibition-rule but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	if p.Name != "" { // TODO remove when metadata.name can be defined by user
-		return nil, errors.NewBadRequest("object's metadata.name should be empty")
-	}
+
 	domainModel, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
@@ -122,7 +120,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
-	uid string,
+	name string,
 	objInfo rest.UpdatedObjectInfo,
 	createValidation rest.ValidateObjectFunc,
 	updateValidation rest.ValidateObjectUpdateFunc,
@@ -134,7 +132,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	old, err := s.Get(ctx, uid, nil)
+	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return old, false, err
 	}
@@ -151,13 +149,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if !ok {
 		return nil, false, fmt.Errorf("expected inhibition-rule but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
+
 	rule, err := convertToDomainModel(p)
 	if err != nil {
 		return old, false, err
-	}
-
-	if p.Name != rule.UID {
-		return nil, false, errors.NewBadRequest("name cannot be changed. Consider creating a new resource.")
 	}
 
 	updated, err := s.service.UpdateInhibitionRule(ctx, rule, info.OrgID)
@@ -170,12 +165,12 @@ func (s *legacyStorage) Update(ctx context.Context,
 }
 
 // GracefulDeleter
-func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
 	}
-	old, err := s.Get(ctx, uid, nil)
+	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return old, false, err
 	}
