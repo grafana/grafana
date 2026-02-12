@@ -4067,6 +4067,7 @@
       "view-dashboard": "View dashboard",
       "view-folder": "View folder"
     },
+    "shared-with-me": "Shared with me",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {
