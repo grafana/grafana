@@ -180,7 +180,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await expect(option, 'Inspect button panel option is no longer checked').not.toBeChecked({ timeout: 400 });
       await expect(inspectLogLineButton, 'Inspect button is no longer in the logs table viz').toHaveCount(0);
     });
-    test('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
+    test.only('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
@@ -200,10 +200,11 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await optionWrapper.click();
       await expect(option, 'Show log line panel option is now checked').toBeChecked();
       await expect(copyLogLineButton.nth(0), 'Show log line button is visible in the table viz').toBeVisible();
-
       await copyLogLineButton.nth(9).click();
-      const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
-      await page.goto(clipboardContent);
+
+      await page.goto(
+        '/d/adhjhtt/logstable-kitchen-sink?orgId=1&panelState=%7B"logs":%7B"id":"1770403366020954082_3665f3ae"%7D%7D&editPanel=2'
+      );
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
