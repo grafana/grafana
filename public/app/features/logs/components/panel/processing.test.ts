@@ -190,6 +190,22 @@ describe('preProcessLogs', () => {
       expect(logListModel.body).not.toBe(entry);
     });
 
+    test('Prettifies JSON with duplicate keys', () => {
+      const entry = '{"key": "value", "key": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).not.toBe(entry);
+    });
+
     test('Prettifies and escapes wrapped JSON', () => {
       const entry = '{"key": "value", "otherKey": "other\\nValue"}';
       const logListModel = createLogLine(

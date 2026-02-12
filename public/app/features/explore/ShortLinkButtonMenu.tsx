@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
@@ -139,6 +140,7 @@ export function ShortLinkButtonMenu({ hideText }: { hideText: boolean }) {
           const url = lastSelected.getUrl();
           onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
         }}
+        data-testid={selectors.pages.Explore.toolbar.share}
         aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
       >
         {!hideText && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
@@ -147,6 +149,7 @@ export function ShortLinkButtonMenu({ hideText }: { hideText: boolean }) {
         <Button
           variant={'secondary'}
           icon={isOpen ? 'angle-up' : 'angle-down'}
+          data-testid={selectors.pages.Explore.toolbar.copyLink}
           aria-label={t('explore.toolbar.copy-shortened-link-menu', 'Open copy link options')}
         />
       </Dropdown>

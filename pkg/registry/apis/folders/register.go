@@ -28,6 +28,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -134,6 +135,10 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	//   return err
 	// }
 	metav1.AddToGroupVersion(scheme, gv)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gv, folders.FolderKind())
+	if err != nil {
+		return err
+	}
 	return scheme.SetVersionPriority(gv)
 }
 
@@ -148,7 +153,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		Permissions:                 b.setDefaultFolderPermissions,
 	})
 
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(folders.FolderKind()),
+	}
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, resourceInfo, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}

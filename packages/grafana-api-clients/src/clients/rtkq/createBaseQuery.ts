@@ -21,19 +21,24 @@ export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryF
         ...requestOptions.headers,
       };
 
-      // Add Content-Type header for PATCH requests to /apis/ endpoints if not already set
-      if (
-        requestOptions.method?.toUpperCase() === 'PATCH' &&
-        baseURL?.startsWith('/apis/') &&
-        !headers['Content-Type']
-      ) {
-        headers['Content-Type'] = 'application/strategic-merge-patch+json';
+      if (requestOptions.method?.toUpperCase() === 'PATCH' && baseURL?.startsWith('/apis/')) {
+        // If we're trying to do some `json-patch` operation, set Content-Type header accordingly
+        if (requestOptions.body && Array.isArray(requestOptions.body) && requestOptions.body.some((item) => item.op)) {
+          headers['Content-Type'] = 'application/json-patch+json';
+        }
+
+        // Add Content-Type header if not already set
+        if (!headers['Content-Type']) {
+          headers['Content-Type'] = 'application/strategic-merge-patch+json';
+        }
       }
 
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
           ...requestOptions,
           url: baseURL + requestOptions.url,
+          // Default to GET so backend_srv correctly skips success alerts for queries
+          method: requestOptions.method ?? 'GET',
           showErrorAlert: requestOptions.showErrorAlert ?? false,
           data: requestOptions.body,
           headers,

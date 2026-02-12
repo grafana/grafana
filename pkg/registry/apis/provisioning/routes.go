@@ -13,6 +13,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -148,10 +149,18 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: check if lister could list too many repositories or resources
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
+	ns := u.GetNamespace()
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, ns)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	ctx = request.WithNamespace(ctx, ns)
+
+	// TODO: check if lister could list too many repositories or resources
+	all, err := b.repoLister.List(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
@@ -160,6 +169,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
+		MaxRepositories:          b.quotaLimits.MaxRepositories,
 	}
 
 	for i, val := range all {

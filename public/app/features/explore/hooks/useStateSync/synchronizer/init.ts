@@ -11,7 +11,7 @@ import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ThunkDispatch } from 'app/types/store';
 
-import { getUrlStateFromPaneState } from '../index';
+import { getUrlStateFromPaneState } from '../external.utils';
 import {
   getDefaultQuery,
   getPaneDatasource,

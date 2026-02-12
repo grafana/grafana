@@ -71,6 +71,18 @@ allow_idp_initiated = true
 org_mapping = admin:1:Admin, editor:1:Editor, viewer:1:Viewer
 ```
 
+# SCIM with SAML
+
+The devenv also configures a SCIM provider and application in Authentik that allows Grafana to synchronize users and groups. By default, it only synchronizes users that are members of the "SCIM Users" group in Authentik. However, it does not synchronize the group itself, so if you also would like to synchronize the group, you need to add it to the [Provisioned Groups](http://localhost:9000/if/admin/#/core/providers/4;%7B%22page%22%3A%22page-groups%22%7D) in the SCIM provider configuration in Authentik.
+
+The provider is available [here](http://localhost:9000/if/admin/#/core/providers/4) and it uses "host.docker.internal:3000" to access Grafana from within the Authentik container. Make sure to update this if your Grafana instance is running elsewhere.
+
+Before you start the synchronization, ensure that you have configured the service account token in the provider settings. Go to [Providers](http://localhost:9000/if/admin/#/core/providers), open the `grafana-scim` provider's settings, and set the Token field to the service account token you generated in Grafana for SCIM access.
+
+To synchronize users from the `SCIM Users` group, you need to manually trigger the synchronization in Authentik. You can do this by navigating to the [SCIM provider page](http://localhost:9000/if/admin/#/core/providers/4) and on the `Schedules` panel you can find a `Full sync for SCIM provider` entry in the list. Click the play button to start the synchronization. It should synchronize all users from the `SCIM Users` group to Grafana.
+
+You also need to setup Authentik SAML (above) for Grafana login to work for the synchronized users.
+
 # OAuth Setup
 
 ```ini
@@ -106,11 +118,14 @@ _grafana logins_:
 - username: authentik-viewer
 - password: grafana
 
+- username: scim-user-1
+- password: grafana
+
 ## Backing up DB
 
 In case you want to make changes to the devenv setup, you can dump keycloak's DB:
 
 ```bash
 cd devenv;
-docker-compose exec -T authentikdb bash -c "pg_dump -U authentik authentik" > docker/blocks/auth/authentik/cloak.sql
+docker compose exec -T authentikdb bash -c "pg_dump -U authentik authentik" > docker/blocks/auth/authentik/cloak.sql
 ```

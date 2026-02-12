@@ -108,7 +108,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     }),
 
     grafanaNotifiers: build.query<NotifierDTO[], void>({
-      query: () => ({ url: '/api/alert-notifiers' }),
+      // NOTE: version=2 parameter required for versioned schema (PR #109969)
+      // This parameter will be removed in future when v2 becomes default
+      query: () => ({ url: '/api/alert-notifiers?version=2' }),
       transformResponse: (response: NotifierDTO[]) => {
         const populateSecureFieldKey = (
           option: NotificationChannelOption,
@@ -121,11 +123,16 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           ),
         });
 
+        // Keep versions array intact for version-specific options lookup
+        // Transform options with secureFieldKey population
         return response.map((notifier) => ({
           ...notifier,
-          options: notifier.options.map((option) => {
-            return populateSecureFieldKey(option, '');
-          }),
+          options: (notifier.options || []).map((option) => populateSecureFieldKey(option, '')),
+          // Also transform options within each version
+          versions: notifier.versions?.map((version) => ({
+            ...version,
+            options: (version.options || []).map((option) => populateSecureFieldKey(option, '')),
+          })),
         }));
       },
     }),

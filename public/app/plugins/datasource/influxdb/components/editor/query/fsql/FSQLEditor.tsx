@@ -25,7 +25,6 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
       {
         url: influxDatasource.urls[0],
         access: influxDatasource.access,
-        id: influxDatasource.id,
 
         jsonData: {
           // TODO Clean this

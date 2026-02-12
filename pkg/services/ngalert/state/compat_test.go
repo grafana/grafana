@@ -9,13 +9,15 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -371,4 +373,47 @@ func randomTransition(from, to eval.State) StateTransition {
 			Values:             make(map[string]float64),
 		},
 	}
+}
+
+func TestAlertInstanceToState(t *testing.T) {
+	instance := ngModels.AlertInstanceGen(
+		ngModels.InstanceMuts.WithState(ngModels.InstanceStateFiring),
+		ngModels.InstanceMuts.WithResultFingerprint("deadbeef"),
+		ngModels.InstanceMuts.WithLastError("some error"),
+		ngModels.InstanceMuts.WithLastResult(ngModels.LastResult{
+			Values:    map[string]float64{"A": 1.5},
+			Condition: "A",
+		}),
+	)
+
+	state := AlertInstanceToState(instance, log.NewNopLogger())
+
+	expected := &State{
+		AlertRuleUID:         instance.RuleUID,
+		OrgID:                instance.RuleOrgID,
+		CacheID:              instance.Labels.Fingerprint(),
+		Labels:               map[string]string(instance.Labels),
+		State:                eval.Alerting,
+		StateReason:          instance.CurrentReason,
+		LastEvaluationString: "",
+		StartsAt:             instance.CurrentStateSince,
+		EndsAt:               instance.CurrentStateEnd,
+		FiredAt:              instance.FiredAt,
+		LastEvaluationTime:   instance.LastEvalTime,
+		EvaluationDuration:   instance.EvaluationDuration,
+		Annotations:          instance.Annotations,
+		ResultFingerprint:    data.Fingerprint(0xdeadbeef),
+		ResolvedAt:           instance.ResolvedAt,
+		LastSentAt:           instance.LastSentAt,
+		Values:               instance.LastResult.Values,
+		LatestResult: &Evaluation{
+			EvaluationTime:  instance.LastEvalTime,
+			EvaluationState: eval.Alerting,
+			Values:          instance.LastResult.Values,
+			Condition:       instance.LastResult.Condition,
+		},
+	}
+
+	require.Empty(t, cmp.Diff(expected, state, cmpopts.IgnoreFields(State{}, "Error")))
+	require.EqualError(t, state.Error, "some error")
 }

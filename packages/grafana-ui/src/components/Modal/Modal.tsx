@@ -9,6 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
@@ -98,7 +99,7 @@ export function Modal(props: PropsWithChildren<Props>) {
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
-      <FloatingFocusManager context={context} modal={trapFocus}>
+      <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
         <div
           className={cx(styles.modal, className)}
           ref={refs.setFloating}

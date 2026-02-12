@@ -37,6 +37,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  queriesChangedIndexAtRun?: number;
 }
 
 export const GraphContainer = ({
@@ -53,6 +54,7 @@ export const GraphContainer = ({
   thresholdsStyle,
   loadingState,
   statusMessage,
+  queriesChangedIndexAtRun,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -108,6 +110,7 @@ export const GraphContainer = ({
           thresholdsConfig={thresholdsConfig}
           thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
+          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
         />
       )}
     </PanelChrome>

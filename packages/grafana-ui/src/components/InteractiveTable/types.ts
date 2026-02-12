@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { CellProps, DefaultSortTypes, IdType, SortByFn } from 'react-table';
+import { CellProps, DefaultSortTypes, HeaderProps, IdType, Renderer, SortByFn } from 'react-table';
 
 export interface Column<TableData extends object> {
   /**
@@ -11,9 +11,9 @@ export interface Column<TableData extends object> {
    */
   cell?: (props: CellProps<TableData>) => ReactNode;
   /**
-   * Header name. if `undefined` the header will be empty. Useful for action columns.
+   * Header name. Can be a string, renderer function, or undefined. If `undefined` the header will be empty. Useful for action columns.
    */
-  header?: string;
+  header?: Renderer<HeaderProps<TableData>>;
   /**
    * Column sort type. If `undefined` the column will not be sortable.
    * */
@@ -26,4 +26,8 @@ export interface Column<TableData extends object> {
    * If the provided function returns `false` the column will be hidden.
    */
   visible?: (data: TableData[]) => boolean;
+  /**
+   * Determines starting sort direction when the column header is clicked.
+   */
+  sortDescFirst?: boolean;
 }

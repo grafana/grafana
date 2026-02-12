@@ -1,4 +1,4 @@
-import { PipelineVariable } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+import { PipelineVariable } from '../../../../../dataquery.gen';
 
 export const defaultPipelineVariable = (name: string): PipelineVariable => ({ name, pipelineAgg: '' });
 

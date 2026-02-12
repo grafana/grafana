@@ -2,16 +2,24 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/google/go-github/v82/github"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -34,6 +42,14 @@ func TestIntegrationHealth(t *testing.T) {
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
 	require.Empty(t, originalRepo.Status.Health.Error, "should be empty")
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
+	// When healthy, fieldErrors should be empty
+	require.Empty(t, originalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
+	// Verify Ready condition is set
+	require.NotEmpty(t, originalRepo.Status.Conditions, "conditions should be set")
+	readyCondition := findCondition(originalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+	require.NotNil(t, readyCondition, "Ready condition should exist")
+	require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+	require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 
 	t.Run("test endpoint with new repository configuration works", func(t *testing.T) {
 		newRepoConfig := map[string]any{
@@ -106,6 +122,14 @@ func TestIntegrationHealth(t *testing.T) {
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
 		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
+		// When healthy, fieldErrors should be empty
+		require.Empty(t, afterTest.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
+		// Verify Ready condition is set
+		require.NotEmpty(t, afterTest.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(afterTest.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 		// For healthy repositories, timestamp may not change immediately as it can take up to 30 seconds to update
 	})
 
@@ -152,6 +176,8 @@ func TestIntegrationHealth(t *testing.T) {
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
 		require.NotEqual(t, beforeTest.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp for unhealthy repository check")
+		// When unhealthy, fieldErrors may be populated if there are validation errors
+		// Note: fieldErrors are only populated from testResults, so they may not always be present for runtime errors
 
 		// Recreate the repository directory to restore healthy state
 		err = os.MkdirAll(repoPath, 0o750)
@@ -181,6 +207,14 @@ func TestIntegrationHealth(t *testing.T) {
 		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
 		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
 		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
+		// When healthy again, fieldErrors should be empty
+		require.Empty(t, finalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy again")
+		// Verify Ready condition is set
+		require.NotEmpty(t, finalRepo.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(finalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 
 		// Timestamp should have changed again due to the health check
 		require.NotEqual(t, afterTest.Status.Health.Checked, finalRepo.Status.Health.Checked, "timestamp should change when repository becomes healthy again")
@@ -202,4 +236,162 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 	require.NoError(t, err)
 
 	return &testResults
+}
+
+func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("test endpoint returns 403 for insufficient permissions", func(t *testing.T) {
+		// Setup mock with insufficient permissions
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+		app := createAppWithPermissions(123456, map[string]string{
+			"contents":      "read", // needs write
+			"metadata":      "read",
+			"pull_requests": "read", // needs write
+			"webhooks":      "read", // needs write
+		})
+		installation := &github.Installation{
+			ID: github.Ptr(int64(454545)),
+		}
+
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(app))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		// Create connection config for test
+		config := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name": "test",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			},
+		}
+
+		// Create with dryRun - that would test the connection
+		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+			DryRun: []string{"All"},
+		})
+		require.Error(t, err)
+		require.Nil(t, c)
+
+		var k8sErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &k8sErr))
+
+		require.Equal(t, metav1.StatusReasonInvalid, k8sErr.Status().Reason)
+		require.NotNil(t, k8sErr.Status().Details)
+
+		for _, reason := range k8sErr.Status().Details.Causes {
+			require.Equal(t, metav1.CauseTypeFieldValueInvalid, reason.Type)
+			require.Equal(t, "spec.github.appID", reason.Field)
+
+			switch {
+			case strings.Contains(reason.Message, "pull_requests"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "webhooks"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "contents"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "metadata"):
+				t.Fatalf("should not error on metadata")
+			}
+		}
+	})
+
+	t.Run("test endpoint succeeds with all permissions", func(t *testing.T) {
+		// Setup mock with all required permissions
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+		app := createAppWithPermissions(123456, map[string]string{
+			"contents":      "write",
+			"metadata":      "read",
+			"pull_requests": "write",
+			"webhooks":      "write",
+		})
+		installation := &github.Installation{
+			ID: github.Ptr(int64(454545)),
+		}
+
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(app))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		config := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name": "test",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			},
+		}
+
+		// Create with dryRun - that would test the connection
+		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+			DryRun: []string{"All"},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, c)
+	})
 }

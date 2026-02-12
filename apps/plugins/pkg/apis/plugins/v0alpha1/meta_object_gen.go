@@ -243,6 +243,10 @@ func (o *Meta) DeepCopyInto(dst *Meta) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (Meta) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.Meta"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Meta{}
 
@@ -294,6 +298,10 @@ func (o *MetaList) DeepCopy() *MetaList {
 
 func (o *MetaList) DeepCopyInto(dst *MetaList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (MetaList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaList"
 }
 
 // Interface compliance compile-time check

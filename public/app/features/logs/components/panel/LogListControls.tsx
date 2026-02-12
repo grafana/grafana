@@ -69,11 +69,13 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
+    setUnwrappedColumns,
     setWrapLogMessage,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
@@ -167,6 +169,17 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     });
     setSyntaxHighlighting(!syntaxHighlighting);
   }, [setSyntaxHighlighting, syntaxHighlighting]);
+
+  const onSetUnwrappedColumnsClick = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      reportInteraction('logs_log_list_controls_unwrapped_columns_clicked', {
+        state: !unwrappedColumns,
+      });
+      setUnwrappedColumns(!unwrappedColumns);
+    },
+    [setUnwrappedColumns, unwrappedColumns]
+  );
 
   const onWrapLogMessageClick = useCallback(
     (e: MouseEvent) => {
@@ -402,6 +415,28 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                     wrapLogMessage
                       ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
                       : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+                  }
+                  size="lg"
+                />
+              )}
+              {config.featureToggles.newLogsPanel && (
+                <LogListControlsOption
+                  expanded={controlsExpanded}
+                  disabled={wrapLogMessage}
+                  name="columns"
+                  aria-pressed={unwrappedColumns}
+                  className={unwrappedColumns ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onSetUnwrappedColumnsClick}
+                  label={t('logs.logs-controls.unwrapped-columns.disabled-label', 'Columns not suported')}
+                  tooltip={
+                    wrapLogMessage
+                      ? t(
+                          'logs.logs-controls.unwrapped-columns.disabled',
+                          'Columns are not supported with line wrapping enabled'
+                        )
+                      : unwrappedColumns
+                        ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns')
+                        : t('logs.logs-controls.unwrapped-columns.enable', 'Enable columns')
                   }
                   size="lg"
                 />

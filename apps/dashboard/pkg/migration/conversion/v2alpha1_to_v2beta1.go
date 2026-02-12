@@ -310,6 +310,9 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 		Links:             in.Links,
 		NoValue:           in.NoValue,
 		Custom:            in.Custom,
+		FieldMinMax:       in.FieldMinMax,
+		NullValueMode:     (*dashv2beta1.DashboardNullValueMode)(in.NullValueMode),
+		Actions:           convertActions_V2alpha1_to_V2beta1(in.Actions),
 	}
 
 	// Convert thresholds
@@ -1019,5 +1022,61 @@ func convertAnnotationMappings_V2alpha1_to_V2beta1(in map[string]dashv2alpha1.Da
 			Regex:  mapping.Regex,
 		}
 	}
+	return out
+}
+
+func convertActions_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardAction) []dashv2beta1.DashboardAction {
+	if len(in) == 0 {
+		return nil
+	}
+
+	out := make([]dashv2beta1.DashboardAction, len(in))
+	for i, action := range in {
+		out[i] = dashv2beta1.DashboardAction{
+			Type:         dashv2beta1.DashboardActionType(action.Type),
+			Title:        action.Title,
+			Confirmation: action.Confirmation,
+			OneClick:     action.OneClick,
+		}
+
+		if action.Fetch != nil {
+			out[i].Fetch = &dashv2beta1.DashboardFetchOptions{
+				Method:      dashv2beta1.DashboardHttpRequestMethod(action.Fetch.Method),
+				Url:         action.Fetch.Url,
+				Body:        action.Fetch.Body,
+				QueryParams: action.Fetch.QueryParams,
+				Headers:     action.Fetch.Headers,
+			}
+		}
+
+		if action.Infinity != nil {
+			out[i].Infinity = &dashv2beta1.DashboardInfinityOptions{
+				Method:        dashv2beta1.DashboardHttpRequestMethod(action.Infinity.Method),
+				Url:           action.Infinity.Url,
+				Body:          action.Infinity.Body,
+				QueryParams:   action.Infinity.QueryParams,
+				Headers:       action.Infinity.Headers,
+				DatasourceUid: action.Infinity.DatasourceUid,
+			}
+		}
+
+		if len(action.Variables) > 0 {
+			out[i].Variables = make([]dashv2beta1.DashboardActionVariable, len(action.Variables))
+			for j, v := range action.Variables {
+				out[i].Variables[j] = dashv2beta1.DashboardActionVariable{
+					Key:  v.Key,
+					Name: v.Name,
+					Type: v.Type,
+				}
+			}
+		}
+
+		if action.Style != nil {
+			out[i].Style = &dashv2beta1.DashboardV2beta1ActionStyle{
+				BackgroundColor: action.Style.BackgroundColor,
+			}
+		}
+	}
+
 	return out
 }

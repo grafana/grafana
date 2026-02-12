@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
+import testV2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
 import {
   checkRepeatedPanelTitles,
@@ -10,11 +11,14 @@ import {
   saveDashboard,
   importTestDashboard,
   goToEmbeddedPanel,
+  goToPanelSnapshot,
 } from './utils';
 
 const repeatTitleBase = 'repeat - ';
 const newTitleBase = 'edited rep - ';
 const repeatOptions = [1, 2, 3, 4];
+const getTitleInRepeatRow = (rowIndex: number, panelIndex: number) =>
+  `repeated-row-${rowIndex}-repeated-panel-${panelIndex}`;
 
 test.use({
   featureToggles: {
@@ -39,7 +43,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).first().click();
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
@@ -94,6 +98,7 @@ test.describe(
         )
       ).toBeHidden();
     });
+
     test('can update repeats in edit pane', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -107,6 +112,7 @@ test.describe(
       // select first/original repeat panel to activate edit pane
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
+        .getByTestId(selectors.components.Panels.Panel.headerContainer)
         .click();
 
       await dashboardPage
@@ -133,9 +139,10 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       // selecting last repeat
-      const panel = dashboardPage.getByGrafanaSelector(
-        selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`)
-      );
+      const panel = dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`))
+        .getByTestId(selectors.components.Panels.Panel.headerContainer);
+
       await panel.hover();
       await page.keyboard.press('e');
 
@@ -165,9 +172,7 @@ test.describe(
         )
       ).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
@@ -217,9 +222,7 @@ test.describe(
         )
       ).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
@@ -353,6 +356,7 @@ test.describe(
         )
       ).toBeVisible();
     });
+
     test('can remove repeats', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -370,6 +374,7 @@ test.describe(
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
+        .getByTestId(selectors.components.Panels.Panel.headerContainer)
         .click();
 
       const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(
@@ -404,6 +409,144 @@ test.describe(
       expect(
         await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).all()
       ).toHaveLength(3);
+    });
+
+    test('can view repeated panel in a repeated row', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(
+        page,
+        selectors,
+        'Custom grid repeats - view repeated panel in a repeated row',
+        JSON.stringify(testV2DashWithRowRepeats)
+      );
+
+      // make sure the repeated panel is present in multiple rows
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+      ).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
+      ).toBeVisible();
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+        .hover();
+
+      await page.keyboard.press('v');
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
+      ).not.toBeVisible();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+      ).toBeVisible();
+
+      const repeatedPanelUrl = page.url();
+
+      await page.keyboard.press('Escape');
+
+      // load view panel directly
+      await page.goto(repeatedPanelUrl);
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+      ).toBeVisible();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
+      ).not.toBeVisible();
+    });
+
+    test('can view embedded panel in a repeated row', async ({ dashboardPage, selectors, page }) => {
+      const embedPanelTitle = 'embedded-panel';
+      await importTestDashboard(
+        page,
+        selectors,
+        'Custom grid repeats - view embedded repeated panel in a repeated row',
+        JSON.stringify(testV2DashWithRowRepeats)
+      );
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+        .hover();
+      await page.keyboard.press('p+e');
+
+      await goToEmbeddedPanel(page);
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+      ).toBeVisible();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
+      ).not.toBeVisible();
+    });
+
+    // there is a bug in the Snapshot feature that prevents the next two tests from passing
+    // tracking issue: https://github.com/grafana/grafana/issues/114509
+    test.skip('can view repeated panel inside snapshot', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(
+        page,
+        selectors,
+        'Custom grid repeats - view repeated panel inside snapshot',
+        JSON.stringify(testV2DashWithRowRepeats)
+      );
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+        .hover();
+      await page.keyboard.press('p+s');
+
+      // click "Publish snapshot"
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot)
+        .click();
+
+      // click "Copy link" button in the snapshot drawer
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.copyUrlButton)
+        .click();
+
+      await goToPanelSnapshot(page);
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+      ).toBeVisible();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
+      ).not.toBeVisible();
+    });
+    test.skip('can view single panel in a repeated row inside snapshot', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(
+        page,
+        selectors,
+        'Custom grid repeats - view single panel inside snapshot',
+        JSON.stringify(testV2DashWithRowRepeats)
+      );
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1')).hover();
+      // open panel snapshot
+      await page.keyboard.press('p+s');
+
+      // click "Publish snapshot"
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot)
+        .click();
+
+      // click "Copy link" button
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.copyUrlButton)
+        .click();
+
+      await goToPanelSnapshot(page);
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1'))
+      ).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
+      ).toBeHidden();
     });
   }
 );

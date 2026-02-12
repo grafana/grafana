@@ -71,7 +71,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		stream, err := s.managedStreamRunner.GetOrCreateStream(user.GetOrgID(), liveDto.ScopeStream, streamID)
+		stream, err := s.managedStreamRunner.GetOrCreateStream(user.GetNamespace(), liveDto.ScopeStream, streamID)
 		if err != nil {
 			logger.Error("Error getting stream", "error", err)
 			continue

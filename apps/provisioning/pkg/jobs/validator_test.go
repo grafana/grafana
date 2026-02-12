@@ -1,10 +1,15 @@
 package jobs
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -589,4 +594,226 @@ func TestValidateJob(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAdmissionValidator_Validate(t *testing.T) {
+	tests := []struct {
+		name            string
+		obj             interface{}
+		operation       admission.Operation
+		wantErr         bool
+		wantErrContains string
+	}{
+		{
+			name: "valid job passes validation",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPull,
+					Repository: "test-repo",
+					Pull:       &provisioning.SyncJobOptions{Incremental: true},
+				},
+			},
+			operation: admission.Create,
+			wantErr:   false,
+		},
+		{
+			name: "invalid job fails validation",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					// Missing action
+					Repository: "test-repo",
+				},
+			},
+			operation: admission.Create,
+			wantErr:   true,
+		},
+		{
+			name:    "returns nil for nil object",
+			obj:     nil,
+			wantErr: false,
+		},
+		{
+			name: "returns error for non-job object",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "expected job",
+		},
+		{
+			name: "skips validation for objects being deleted",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-job",
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+				Spec: provisioning.JobSpec{
+					// Invalid - missing action
+					Repository: "test-repo",
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := NewAdmissionValidator()
+
+			var obj runtime.Object
+			if tt.obj != nil {
+				obj = tt.obj.(runtime.Object)
+			}
+
+			attr := newAdmissionTestAttributes(obj, tt.operation)
+
+			err := v.Validate(context.Background(), attr, nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.wantErrContains != "" {
+					require.Contains(t, err.Error(), tt.wantErrContains)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func newAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {
+	return admission.NewAttributesRecord(
+		obj,
+		nil,
+		provisioning.JobResourceInfo.GroupVersionKind(),
+		"default",
+		"test",
+		provisioning.JobResourceInfo.GroupVersionResource(),
+		"",
+		op,
+		nil,
+		false,
+		&user.DefaultInfo{},
+	)
+}
+
+func TestHistoricJobAdmissionValidator_Validate(t *testing.T) {
+	tests := []struct {
+		name            string
+		obj             interface{}
+		operation       admission.Operation
+		wantErr         bool
+		wantErrContains string
+	}{
+		{
+			name: "valid historic job passes validation",
+			obj: &provisioning.HistoricJob{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-historic-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPull,
+					Repository: "test-repo",
+				},
+			},
+			operation: admission.Create,
+			wantErr:   false,
+		},
+		{
+			name: "historic job missing action fails validation",
+			obj: &provisioning.HistoricJob{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-historic-job"},
+				Spec: provisioning.JobSpec{
+					Repository: "test-repo",
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "action must be specified",
+		},
+		{
+			name: "historic job missing repository fails validation",
+			obj: &provisioning.HistoricJob{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-historic-job"},
+				Spec: provisioning.JobSpec{
+					Action: provisioning.JobActionPull,
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "repository must be specified",
+		},
+		{
+			name:    "returns nil for nil object",
+			obj:     nil,
+			wantErr: false,
+		},
+		{
+			name: "returns error for non-historic-job object",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "expected historic job",
+		},
+		{
+			name: "skips validation for objects being deleted",
+			obj: &provisioning.HistoricJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-historic-job",
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+				Spec: provisioning.JobSpec{
+					// Invalid - missing action and repository
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := NewHistoricJobAdmissionValidator()
+
+			var obj runtime.Object
+			if tt.obj != nil {
+				obj = tt.obj.(runtime.Object)
+			}
+
+			attr := newHistoricJobAdmissionTestAttributes(obj, tt.operation)
+
+			err := v.Validate(context.Background(), attr, nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.wantErrContains != "" {
+					require.Contains(t, err.Error(), tt.wantErrContains)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {
+	return admission.NewAttributesRecord(
+		obj,
+		nil,
+		provisioning.HistoricJobResourceInfo.GroupVersionKind(),
+		"default",
+		"test",
+		provisioning.HistoricJobResourceInfo.GroupVersionResource(),
+		"",
+		op,
+		nil,
+		false,
+		&user.DefaultInfo{},
+	)
 }

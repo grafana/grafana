@@ -14,18 +14,6 @@ func NewPreferencesQueryHistoryPreference() *PreferencesQueryHistoryPreference {
 }
 
 // +k8s:openapi-gen=true
-type PreferencesCookiePreferences struct {
-	Analytics   interface{} `json:"analytics,omitempty"`
-	Performance interface{} `json:"performance,omitempty"`
-	Functional  interface{} `json:"functional,omitempty"`
-}
-
-// NewPreferencesCookiePreferences creates a new PreferencesCookiePreferences object.
-func NewPreferencesCookiePreferences() *PreferencesCookiePreferences {
-	return &PreferencesCookiePreferences{}
-}
-
-// +k8s:openapi-gen=true
 type PreferencesNavbarPreference struct {
 	BookmarkUrls []string `json:"bookmarkUrls"`
 }
@@ -54,8 +42,6 @@ type PreferencesSpec struct {
 	RegionalFormat *string `json:"regionalFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
-	// Cookie preferences
-	CookiePreferences *PreferencesCookiePreferences `json:"cookiePreferences,omitempty"`
 	// Navigation preferences
 	Navbar *PreferencesNavbarPreference `json:"navbar,omitempty"`
 }
@@ -63,4 +49,13 @@ type PreferencesSpec struct {
 // NewPreferencesSpec creates a new PreferencesSpec object.
 func NewPreferencesSpec() *PreferencesSpec {
 	return &PreferencesSpec{}
+}
+func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
+}
+func (PreferencesNavbarPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
+}
+func (PreferencesSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
 }

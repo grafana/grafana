@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
+import { Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { getIconForItem } from 'app/features/search/service/utils';
 
@@ -12,8 +12,7 @@ import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { DashboardsTreeCellProps } from '../types';
-
-import { makeRowID } from './utils';
+import { makeRowID } from '../utils/dashboards';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';

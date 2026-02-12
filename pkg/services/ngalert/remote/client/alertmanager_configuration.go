@@ -29,6 +29,10 @@ func (u *GrafanaAlertmanagerConfig) MarshalJSON() ([]byte, error) {
 	return definition.MarshalJSONWithSecrets((*cfg)(u))
 }
 
+type RuntimeConfig struct {
+	DispatchTimer string `json:"dispatch_timer"`
+}
+
 type UserGrafanaConfig struct {
 	GrafanaAlertmanagerConfig GrafanaAlertmanagerConfig `json:"configuration"`
 	Hash                      string                    `json:"configuration_hash"`
@@ -37,6 +41,7 @@ type UserGrafanaConfig struct {
 	Promoted                  bool                      `json:"promoted"`
 	ExternalURL               string                    `json:"external_url"`
 	SmtpConfig                SmtpConfig                `json:"smtp_config"`
+	RuntimeConfig             RuntimeConfig             `json:"runtime_config"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {

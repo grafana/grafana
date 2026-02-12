@@ -5,6 +5,7 @@ import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { DOCS_URL_ALERT_RULE_TYPES } from '../../../utils/docs';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { useGetCanSwitch } from './utils';
@@ -75,7 +76,7 @@ export function SmartAlertTypeDetector({ editingExistingRule, queries, onClickSw
                 </p>
               </>
             }
-            externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/"
+            externalLink={DOCS_URL_ALERT_RULE_TYPES}
             linkText="Read about alert rule types"
             title={t('alerting.smart-alert-type-detector.title-alert-rule-types', 'Alert rule types')}
           />

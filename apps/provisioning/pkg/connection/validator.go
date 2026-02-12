@@ -1,104 +1,134 @@
 package connection
 
 import (
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"context"
+	"fmt"
+	"strings"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func ValidateConnection(connection *provisioning.Connection) error {
-	list := field.ErrorList{}
-
-	if connection.Spec.Type == "" {
-		list = append(list, field.Required(field.NewPath("spec", "type"), "type must be specified"))
-	}
-
-	switch connection.Spec.Type {
-	case provisioning.GithubConnectionType:
-		list = append(list, validateGithubConnection(connection)...)
-	case provisioning.BitbucketConnectionType:
-		list = append(list, validateBitbucketConnection(connection)...)
-	case provisioning.GitlabConnectionType:
-		list = append(list, validateGitlabConnection(connection)...)
-	default:
-		list = append(
-			list, field.NotSupported(
-				field.NewPath("spec", "type"),
-				connection.Spec.Type,
-				[]provisioning.ConnectionType{
-					provisioning.GithubConnectionType,
-					provisioning.BitbucketConnectionType,
-					provisioning.GitlabConnectionType,
-				}),
-		)
-	}
-
-	return toError(connection.GetName(), list)
+// AdmissionValidator handles validation for Connection resources during admission.
+//
+// Validation during admission is limited to structural checks that do not require
+// decrypting secrets or calling external services (e.g., GitHub API). This ensures
+// fast, synchronous validation without side effects.
+//
+// For runtime validation that requires secrets or external service checks, use the
+// Test() method on the Connection interface instead.
+type AdmissionValidator struct {
+	factory Factory
 }
 
-func validateGithubConnection(connection *provisioning.Connection) field.ErrorList {
-	list := field.ErrorList{}
-
-	if connection.Spec.GitHub == nil {
-		list = append(
-			list, field.Required(field.NewPath("spec", "github"), "github info must be specified for GitHub connection"),
-		)
+// NewAdmissionValidator creates a new connection admission validator
+func NewAdmissionValidator(factory Factory) *AdmissionValidator {
+	return &AdmissionValidator{
+		factory: factory,
 	}
-
-	if connection.Secure.PrivateKey.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
-	}
-	if !connection.Secure.ClientSecret.IsZero() {
-		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), "clientSecret is forbidden in GitHub connection"))
-	}
-
-	return list
 }
 
-func validateBitbucketConnection(connection *provisioning.Connection) field.ErrorList {
-	list := field.ErrorList{}
-
-	if connection.Spec.Bitbucket == nil {
-		list = append(
-			list, field.Required(field.NewPath("spec", "bitbucket"), "bitbucket info must be specified in Bitbucket connection"),
-		)
-	}
-	if connection.Secure.ClientSecret.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "clientSecret"), "clientSecret must be specified for Bitbucket connection"))
-	}
-	if !connection.Secure.PrivateKey.IsZero() {
-		list = append(list, field.Forbidden(field.NewPath("secure", "privateKey"), "privateKey is forbidden in Bitbucket connection"))
-	}
-
-	return list
-}
-
-func validateGitlabConnection(connection *provisioning.Connection) field.ErrorList {
-	list := field.ErrorList{}
-
-	if connection.Spec.Gitlab == nil {
-		list = append(
-			list, field.Required(field.NewPath("spec", "gitlab"), "gitlab info must be specified in Gitlab connection"),
-		)
-	}
-	if connection.Secure.ClientSecret.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "clientSecret"), "clientSecret must be specified for Gitlab connection"))
-	}
-	if !connection.Secure.PrivateKey.IsZero() {
-		list = append(list, field.Forbidden(field.NewPath("secure", "privateKey"), "privateKey is forbidden in Gitlab connection"))
-	}
-
-	return list
-}
-
-// toError converts a field.ErrorList to an error, returning nil if the list is empty
-func toError(name string, list field.ErrorList) error {
-	if len(list) == 0 {
+// Validate validates Connection resources during admission
+func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	// AdmissionValidator is only for CREATE and UPDATE operations
+	if a.GetOperation() == admission.Delete {
 		return nil
 	}
-	return apierrors.NewInvalid(
-		provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
-		name,
-		list,
-	)
+
+	obj := a.GetObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	c, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return fmt.Errorf("expected connection configuration, got %T", obj)
+	}
+
+	// Copy previous values if they exist
+	if a.GetOldObject() != nil {
+		if oldConn, ok := a.GetOldObject().(*provisioning.Connection); ok {
+			CopySecureValues(c, oldConn)
+		}
+	}
+
+	// Structural validation without decryption
+	if list := v.factory.Validate(ctx, c); len(list) > 0 {
+		return apierrors.NewInvalid(
+			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
+			c.GetName(), list)
+	}
+
+	// If dryRun, also run runtime validation (external systems, internal state)
+	// This allows full validation without persisting the resource
+	if a.IsDryRun() {
+		return v.validateRuntime(ctx, c) // Return errors immediately - resource won't be created
+	}
+
+	return nil
+}
+
+// validateRuntime performs runtime validation by building the connection and testing it
+// This checks external systems (e.g., GitHub API) to validate appID and installationID
+func (v *AdmissionValidator) validateRuntime(ctx context.Context, conn *provisioning.Connection) error {
+	// Build the connection to get a Connection interface
+	connection, err := v.factory.Build(ctx, conn)
+	if err != nil {
+		// If build fails, return an error (this might happen if secrets are invalid)
+		return apierrors.NewInvalid(
+			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
+			conn.GetName(),
+			field.ErrorList{
+				field.Invalid(
+					field.NewPath(""),
+					"",
+					fmt.Sprintf("failed to build connection: %v", err),
+				),
+			},
+		)
+	}
+
+	// Run runtime validation via Test() method
+	testResults, err := connection.Test(ctx)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to test connection: %w", err))
+	}
+
+	// If test failed, convert TestResults.Errors to field.ErrorList
+	if !testResults.Success && len(testResults.Errors) > 0 {
+		var list field.ErrorList
+		for _, testError := range testResults.Errors {
+			fieldPath := field.NewPath("")
+			if testError.Field != "" {
+				// Convert dot-separated path to field.Path
+				parts := strings.Split(testError.Field, ".")
+				fieldPath = field.NewPath(parts[0])
+				for _, part := range parts[1:] {
+					fieldPath = fieldPath.Child(part)
+				}
+			}
+			list = append(list, field.Invalid(
+				fieldPath,
+				"",
+				testError.Detail,
+			))
+		}
+		return apierrors.NewInvalid(
+			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
+			conn.GetName(),
+			list,
+		)
+	}
+
+	return nil
 }

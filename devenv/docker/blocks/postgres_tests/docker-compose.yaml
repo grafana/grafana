@@ -6,6 +6,7 @@
     environment:
       POSTGRES_USER: grafanatest
       POSTGRES_PASSWORD: grafanatest
+    command: ["postgres", "-c", "max_connections=200"]
     ports:
       - "5432:5432"
     tmpfs: /var/lib/postgresql/data:rw

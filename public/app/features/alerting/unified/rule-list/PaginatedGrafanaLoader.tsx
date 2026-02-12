@@ -1,6 +1,7 @@
 import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -9,6 +10,7 @@ import { FolderActionsButton } from '../components/folder-actions/FolderActionsB
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
+import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
@@ -19,22 +21,32 @@ import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
 import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
+import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
 interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
   const key = `${groupFilter}-${namespaceFilter}`;
 
   // Key is crucial. It resets the generator when filters change.
-  return <PaginatedGroupsLoader key={key} groupFilter={groupFilter} namespaceFilter={namespaceFilter} />;
+  return (
+    <PaginatedGroupsLoader
+      key={key}
+      groupFilter={groupFilter}
+      namespaceFilter={namespaceFilter}
+      onLoadingStateChange={onLoadingStateChange}
+    />
+  );
 }
 
-function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
   // When backend filters are enabled, groupFilter is handled on the backend
   const filterState = { namespace: namespaceFilter, groupName: groupFilter };
   const { backendFilter } = getGrafanaFilter(filterState);
@@ -89,8 +101,21 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
     filterFn
   );
 
+  // Report state changes to parent using custom hook
+  useDataSourceLoadingReporter(
+    GRAFANA_RULES_SOURCE_NAME,
+    { isLoading, rulesCount: groups.length, error },
+    onLoadingStateChange
+  );
+
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
+
+  // if we are loading and there are filters configured – we shouldn't show any data source headers
+  // until we have at least one result. This will provide a cleaner UI whent he user wants to find a specific folder or group.
+  if (hasFilters && isEmpty(groups)) {
+    return null;
+  }
 
   return (
     <DataSourceSection
@@ -161,10 +186,15 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 
   const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
+  const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+  const groupDisplayName = isUngroupedRuleGroup(group.name)
+    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: firstRuleName })
+    : group.name;
+
   return (
     <ListGroup
       key={group.name}
-      name={group.name}
+      name={groupDisplayName}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
       href={detailsLink}
       isOpen={false}

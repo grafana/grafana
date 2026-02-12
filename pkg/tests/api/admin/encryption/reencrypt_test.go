@@ -174,10 +174,10 @@ func addAlertingConfig(t *testing.T, env *server.TestEnv) {
 		{
 			"alertmanager_config": {
 				"route": {
-					"receiver": "grafana-default-email"
+					"receiver": "empty"
 				},
 				"receivers": [{
-					"name": "grafana-default-email",
+					"name": "empty",
 					"grafana_managed_receiver_configs": [{
 						"uid": "",
 						"name": "email receiver",

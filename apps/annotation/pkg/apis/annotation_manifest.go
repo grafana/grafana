@@ -40,6 +40,12 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaAnnotationv0alpha1,
+					SelectableFields: []string{
+						"spec.time",
+						"spec.timeEnd",
+						"spec.dashboardUID",
+						"spec.panelID",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -77,6 +83,28 @@ var appManifestData = app.ManifestData{
 																		"tags": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							Properties: map[string]spec.Schema{
+																								"count": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"number"},
+																									},
+																								},
+																								"tag": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																							Required: []string{
+																								"tag",
+																								"count",
+																							},
+																						}},
+																				},
 																			},
 																		},
 																	},
@@ -122,7 +150,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/tags|GET": v0alpha1.GetTags{},
+	"v0alpha1||<namespace>/tags|GET": v0alpha1.GetTagsResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

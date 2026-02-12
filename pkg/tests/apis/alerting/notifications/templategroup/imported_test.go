@@ -6,6 +6,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -35,7 +35,8 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		},
 	})
 
-	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
+	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
@@ -57,7 +58,7 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	response := alertingApi.ConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
 	require.Equal(t, "success", response.Status)
 
-	templates, err := client.List(context.Background(), metav1.ListOptions{})
+	templates, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
 
 	require.NoError(t, err)
 	require.Len(t, templates.Items, 3)
@@ -90,12 +91,12 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	t.Run("should not be able to update", func(t *testing.T) {
 		tpl := templates.Items[1]
 		tpl.Spec.Content = "new content"
-		_, err := client.Update(context.Background(), &tpl, metav1.UpdateOptions{})
+		_, err := client.Update(context.Background(), &tpl, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 	})
 
 	t.Run("should not be able to delete", func(t *testing.T) {
-		err := client.Delete(context.Background(), templates.Items[1].Name, metav1.DeleteOptions{})
+		err := client.Delete(context.Background(), templates.Items[1].GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 	})
 
@@ -108,14 +109,14 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		}
 		tpl.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
 
-		created, err := client.Create(context.Background(), &tpl, metav1.CreateOptions{})
+		created, err := client.Create(context.Background(), &tpl, resource.CreateOptions{})
 		require.NoError(t, err)
 
 		assert.NotEqual(t, templates.Items[1].Name, created.Name)
 	})
 
 	t.Run("sort by kind and then name", func(t *testing.T) {
-		templates, err := client.List(context.Background(), metav1.ListOptions{})
+		templates, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
 
 		require.NoError(t, err)
 		require.Len(t, templates.Items, 4)

@@ -279,16 +279,21 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
+export function getDefaultPluginId(): string {
+  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+    ? UNCONFIGURED_PANEL_PLUGIN_ID
+    : 'timeseries';
+}
+
 export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId =
-    config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
-      ? UNCONFIGURED_PANEL_PLUGIN_ID
-      : 'timeseries';
+  const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle =
     config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
       ? ''
       : t('dashboard.new-panel-title', 'New panel');
+
+  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
 
   return new VizPanel({
     title: newPanelTitle,
@@ -307,14 +312,16 @@ export function getDefaultVizPanel(): VizPanel {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
-    $data: new SceneDataTransformer({
-      $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
-        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
-        $behaviors: [new DashboardDatasourceBehaviour({})],
-      }),
-      transformations: [],
-    }),
+    $data: datasourceSettings
+      ? new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            queries: [{ refId: 'A' }],
+            datasource: getDataSourceRef(datasourceSettings),
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+          transformations: [],
+        })
+      : undefined,
   });
 }
 
@@ -486,4 +493,12 @@ export const dashboardLog = createLogger('Dashboard');
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
   return !!changes.diffCount;
+}
+
+export function isDashboardSceneEnabled(): boolean {
+  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
+}
+
+export function isPublicDashboardsSceneEnabled(): boolean {
+  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
 }

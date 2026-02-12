@@ -75,27 +75,58 @@ func FullSync(
 	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
 }
 
+// shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
+// If there is a previous failure on the path, we don't need to process the change as it will fail anyway.
+func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) bool {
+	if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
+		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_nested_resource")
+		skipSpan.SetAttributes(attribute.String("path", change.Path))
+
+		progress.Record(skipCtx, jobs.NewPathOnlyResult(change.Path).
+			WithError(fmt.Errorf("resource was not processed because the parent folder could not be created")).
+			AsSkipped().
+			Build())
+		skipSpan.End()
+		return true
+	}
+
+	if change.Action == repository.FileActionDeleted && safepath.IsDir(change.Path) && progress.HasDirPathFailedDeletion(change.Path) {
+		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_folder_with_failed_deletions")
+		skipSpan.SetAttributes(attribute.String("path", change.Path))
+		progress.Record(skipCtx, jobs.NewResourceResult().
+			WithGroup(resources.FolderKind.Group).
+			WithKind(resources.FolderKind.Kind).
+			WithPath(change.Path).
+			WithError(fmt.Errorf("folder was not processed because children resources in its path could not be deleted")).
+			AsSkipped().
+			Build())
+		skipSpan.End()
+		return true
+	}
+
+	return false
+}
+
 func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
 	if ctx.Err() != nil {
 		return
 	}
 
+	if shouldSkipChange(ctx, change, progress, tracer) {
+		return
+	}
+
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
-		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-		}
+		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
 		if change.Existing == nil || change.Existing.Name == "" {
-			result.Error = fmt.Errorf("processing deletion for file %s: missing existing reference", change.Path)
+			result := resultBuilder.WithError(fmt.Errorf("processing deletion for file %s: missing existing reference", change.Path)).Build()
 			progress.Record(deleteCtx, result)
-			deleteSpan.RecordError(result.Error)
+			deleteSpan.RecordError(result.Error())
 			deleteSpan.End()
 			return
 		}
-		result.Name = change.Existing.Name
-		result.Group = change.Existing.Group
 
 		versionlessGVR := schema.GroupVersionResource{
 			Group:    change.Existing.Group,
@@ -105,18 +136,22 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		// TODO: should we use the clients or the resource manager instead?
 		client, gvk, err := clients.ForResource(deleteCtx, versionlessGVR)
 		if err != nil {
-			result.Kind = versionlessGVR.Resource // could not find a kind
-			result.Error = fmt.Errorf("get client for deleted object: %w", err)
-			progress.Record(deleteCtx, result)
+			resultBuilder.WithError(fmt.Errorf("get client for deleted object: %w", err)).
+				WithName(change.Existing.Name).
+				WithGroup(change.Existing.Group).
+				WithKind(versionlessGVR.Resource) // could not find a kind
+			progress.Record(deleteCtx, resultBuilder.Build())
 			deleteSpan.End()
 			return
 		}
-		result.Kind = gvk.Kind
+
+		resultBuilder.WithName(change.Existing.Name).
+			WithGVK(gvk)
 
 		if err := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
-			result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err)
+			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		}
-		progress.Record(deleteCtx, result)
+		progress.Record(deleteCtx, resultBuilder.Build())
 		deleteSpan.End()
 		return
 	}
@@ -125,43 +160,33 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	if safepath.IsDir(change.Path) {
 		// For non-deletions, ensure folder exists
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
-		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-			Group:  resources.FolderKind.Group,
-			Kind:   resources.FolderKind.Kind,
-		}
+		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
 		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
 		if err != nil {
-			result.Error = fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err)
+			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
 			ensureFolderSpan.RecordError(err)
 			ensureFolderSpan.End()
-			progress.Record(ctx, result)
+			progress.Record(ctx, resultBuilder.Build())
+
 			return
 		}
 
-		result.Name = folder
-		progress.Record(ensureFolderCtx, result)
+		resultBuilder.WithName(folder)
+		progress.Record(ensureFolderCtx, resultBuilder.Build())
 		ensureFolderSpan.End()
 		return
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
-	result := jobs.JobResourceResult{
-		Path:   change.Path,
-		Action: change.Action,
-		Name:   name,
-		Group:  gvk.Group,
-		Kind:   gvk.Kind,
-	}
+	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {
 		writeSpan.RecordError(err)
-		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 	}
 
-	progress.Record(writeCtx, result)
+	progress.Record(writeCtx, resultBuilder.Build())
 	writeSpan.End()
 }
 
@@ -253,8 +278,6 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 }
 
 func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
-	logger := logging.FromContext(ctx)
-
 	for _, folder := range folders {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -264,23 +287,9 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 			return err
 		}
 
-		folderCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-
-		applyChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
-
-		if folderCtx.Err() == context.DeadlineExceeded {
-			logger.Error("operation timed out after 15 seconds", "path", folder.Path, "action", folder.Action)
-
-			recordCtx, recordCancel := context.WithTimeout(context.Background(), 15*time.Second)
-			progress.Record(recordCtx, jobs.JobResourceResult{
-				Path:   folder.Path,
-				Action: folder.Action,
-				Error:  fmt.Errorf("operation timed out after 15 seconds"),
-			})
-			recordCancel()
-		}
-
-		cancel()
+		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer)
+		})
 	}
 
 	return nil
@@ -318,7 +327,9 @@ loop:
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			applyChangeWithTimeout(ctx, change, clients, repositoryResources, progress, tracer, logger)
+			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer)
+			})
 		}(change)
 	}
 
@@ -331,21 +342,10 @@ loop:
 	return ctx.Err()
 }
 
-func applyChangeWithTimeout(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, logger logging.Logger) {
-	changeCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+// wrapWithTimeout wraps a function call with a timeout context
+func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
-
-	if changeCtx.Err() == context.DeadlineExceeded {
-		logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
-
-		recordCtx, recordCancel := context.WithTimeout(context.Background(), 15*time.Second)
-		progress.Record(recordCtx, jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-			Error:  fmt.Errorf("operation timed out after 15 seconds"),
-		})
-		recordCancel()
-	}
+	fn(timeoutCtx)
 }

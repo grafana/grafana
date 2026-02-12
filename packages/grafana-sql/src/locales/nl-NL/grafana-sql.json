@@ -69,6 +69,12 @@
         "placeholder-select-format": "Selecteer het formaat",
         "run-query": "Query uitvoeren"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Druk op CTRL/CMD+Return om de query uit te voeren",
         "tooltip-collapse": "Editor samenvouwen",

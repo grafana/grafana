@@ -1,10 +1,10 @@
 import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
+import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import store from 'app/core/store';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
 import {
@@ -227,22 +227,22 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     // Only dashboards have additional properties
     if (q.sort?.length && !q.sort.includes('name')) {
-      q.kind = ['dashboard', 'folder']; // skip panels
+      q.kind = ['dashboard', 'folder'];
     }
 
     if (!q.query?.length) {
       q.query = '*';
       if (!q.location) {
-        q.kind = ['dashboard', 'folder']; // skip panels
+        q.kind = ['dashboard', 'folder'];
       }
     }
 
-    if (!this.state.includePanels && !q.kind) {
-      q.kind = ['dashboard', 'folder']; // skip panels
+    if (!q.kind) {
+      q.kind = ['dashboard', 'folder'];
     }
 
-    if (q.panel_type?.length) {
-      q.kind = ['panel'];
+    if (this.state.includePanels && q.kind.includes('dashboard')) {
+      q.panelTitleSearch = true;
     }
 
     return q;

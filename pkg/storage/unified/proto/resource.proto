@@ -585,6 +585,10 @@ message ResourceTableRow {
   // they may be lost in the conversion to k8s resource
   // +optional
   bytes object = 4;
+
+  // Sort fields for the hit, encoded as strings. This can be used in ResourceSearchRequest search_after or search_before fields.
+  // +optional
+  repeated string sort_fields = 5;
 }
 
 message QuotaUsageRequest {

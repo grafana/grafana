@@ -29,7 +29,6 @@
       "@grafana-app/source": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
-      "@grafana-app/source": "./src/eslint/index.cjs",
       "types": "./src/eslint/index.d.ts",
       "default": "./src/eslint/index.cjs"
     }

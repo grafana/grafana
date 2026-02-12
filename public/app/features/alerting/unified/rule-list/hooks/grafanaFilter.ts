@@ -96,6 +96,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
     ruleMatchers: ruleMatchersBackendFilter,
     plugins: ruleFilterConfig.plugins ? undefined : normalizedFilterState.plugins,
+    searchFolder: groupFilterConfig.namespace ? undefined : normalizedFilterState.namespace,
   };
 
   return {
@@ -134,7 +135,7 @@ function buildGrafanaFilterConfigs() {
   };
 
   const groupFilterConfig: GroupFilterConfig = {
-    namespace: namespaceFilter,
+    namespace: useBackendFilters ? null : namespaceFilter,
     groupName: useBackendFilters ? null : groupNameFilter,
   };
 

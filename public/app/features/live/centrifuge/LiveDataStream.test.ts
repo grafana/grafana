@@ -155,7 +155,7 @@ describe('LiveDataStream', () => {
 
   const dummyLiveChannelAddress: LiveChannelAddress = {
     scope: LiveChannelScope.Grafana,
-    namespace: 'stream',
+    stream: 'stream',
     path: 'abc',
   };
 

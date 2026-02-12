@@ -43,3 +43,10 @@ const (
 	ExampleStatusOperatorStateStateInProgress ExampleStatusOperatorStateState = "in_progress"
 	ExampleStatusOperatorStateStateFailed     ExampleStatusOperatorStateState = "failed"
 )
+
+func (ExamplestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExamplestatusOperatorState"
+}
+func (ExampleStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExampleStatus"
+}

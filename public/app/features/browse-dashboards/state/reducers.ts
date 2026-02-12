@@ -3,8 +3,8 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { GENERAL_FOLDER_UID } from '../../search/constants';
-import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
+import { isSharedWithMe } from '../utils/dashboards';
 
 import { fetchNextChildrenPage, refetchChildren } from './actions';
 import { findItem } from './utils';

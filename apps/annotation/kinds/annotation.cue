@@ -13,5 +13,11 @@ annotationv0alpha1: {
       tags?: [...string]
 		}
 	}
+  selectableFields: [
+    "spec.time",
+    "spec.timeEnd",
+    "spec.dashboardUID",
+    "spec.panelID",
+  ]
 }
 

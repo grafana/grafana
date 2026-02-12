@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import uPlot, { TypedArray, Scale } from 'uplot';
+import { useLayoutEffect, useState, useCallback, memo } from 'react';
+import uPlot from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -10,23 +10,34 @@ interface ThresholdControlsPluginProps {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const plotInstance = useRef<uPlot>();
-  const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
-  const [timeRange, setTimeRange] = useState<Scale | undefined>();
+export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
+  const [data, setData] = useState<uPlot['data']>([]);
+  const [timeRange, setTimeRange] = useState<uPlot['scales']['x']>();
 
   useLayoutEffect(() => {
-    config.addHook('init', (u) => {
-      plotInstance.current = u;
-    });
-
     config.addHook('setScale', (u) => {
-      setTimeValues(u.data?.[0] ?? []);
-      setTimeRange(u.scales['x'] ?? undefined);
+      setData(u.data ?? []);
+      setTimeRange(u.scales['x']);
     });
   }, [config]);
 
-  if (timevalues.length < 2 || !onChangeTimeRange) {
+  /**
+   * returns true if all non-time series are null at the given index
+   */
+  const allValuesNullAtIndex = useCallback(
+    (idx: number): boolean => {
+      for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
+        if (data[seriesIdx][idx] != null) {
+          return false;
+        }
+      }
+      return true;
+    },
+    [data]
+  );
+
+  const timeValues = data[0];
+  if (!timeValues || timeValues.length < 1 || !onChangeTimeRange) {
     return null;
   }
 
@@ -36,28 +47,35 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
 
   // Time values are always sorted for uPlot to work
   let i = 0,
-    j = timevalues.length - 1;
+    j = timeValues.length - 1;
 
-  while (i <= j && timevalues[i] == null) {
+  while (i <= j && allValuesNullAtIndex(i)) {
     i++;
   }
 
-  while (j >= 0 && timevalues[j] == null) {
+  while (j >= 0 && allValuesNullAtIndex(j)) {
     j--;
   }
 
-  const first = timevalues[i];
-  const last = timevalues[j];
-  const fromX = timeRange.min;
-  const toX = timeRange.max;
-
-  if (first == null || last == null) {
+  // never found any non null values
+  if (allValuesNullAtIndex(i) || allValuesNullAtIndex(j)) {
     return null;
   }
 
+  let first = timeValues[i];
+  let last = timeValues[j];
+
   // (StartA <= EndB) and (EndA >= StartB)
-  if (first <= toX && last >= fromX) {
+  if (first <= timeRange.max && last >= timeRange.min) {
     return null;
+  }
+
+  // if only one point is outside the range, we will use a timerange which
+  // is of the same width as the current timerange around the point.
+  if (first === last) {
+    const delta = timeRange.max - timeRange.min;
+    first -= delta / 2;
+    last += delta / 2;
   }
 
   return (
@@ -84,6 +102,6 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
       </div>
     </div>
   );
-};
+});
 
 OutsideRangePlugin.displayName = 'OutsideRangePlugin';

@@ -2,20 +2,28 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 )
 
-type connectionRepositoriesConnector struct{}
+type connectionRepositoriesConnector struct {
+	getter ConnectionGetter
+}
 
-func NewConnectionRepositoriesConnector() *connectionRepositoriesConnector {
-	return &connectionRepositoriesConnector{}
+func NewConnectionRepositoriesConnector(getter ConnectionGetter) *connectionRepositoriesConnector {
+	return &connectionRepositoriesConnector{
+		getter: getter,
+	}
 }
 
 func (*connectionRepositoriesConnector) New() runtime.Object {
@@ -42,24 +50,49 @@ func (*connectionRepositoriesConnector) NewConnectOptions() (runtime.Object, boo
 
 func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "connection-repositories-connector", "connection_name", name)
+	ctx = logging.Context(ctx, logger)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			responder.Error(apierrors.NewMethodNotSupported(provisioning.ConnectionResourceInfo.GroupResource(), r.Method))
 			return
 		}
 
-		logger.Debug("repositories endpoint called but not yet implemented")
+		logger.Debug("listing repositories from connection")
 
-		// TODO: Implement repository listing from external git provider
-		// This will require:
-		// 1. Get the Connection object using logging.Context(r.Context(), logger)
-		// 2. Use the connection credentials to authenticate with the git provider
-		// 3. List repositories from the provider (GitHub, GitLab, Bitbucket)
-		// 4. Return ExternalRepositoryList with Name, Owner, and URL for each repository
+		// Use the context from Connect which has namespace information
+		conn, err := c.getter.GetConnection(ctx, name)
+		if err != nil {
+			logger.Error("failed to get connection", "error", err)
+			responder.Error(err)
+			return
+		}
 
-		responder.Error(apierrors.NewMethodNotSupported(provisioning.ConnectionResourceInfo.GroupResource(), "repositories endpoint not yet implemented"))
-	}), nil
+		repos, err := conn.ListRepositories(ctx)
+		if err != nil {
+			if errors.Is(err, connection.ErrNotImplemented) {
+				logger.Debug("list repositories not implemented for connection type")
+				responder.Error(&apierrors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    http.StatusNotImplemented,
+						Reason:  "NotImplemented",
+						Message: "list repositories not implemented for given connection type",
+					},
+				})
+				return
+			}
+			logger.Error("failed to list repositories", "error", err)
+			responder.Error(apierrors.NewInternalError(err))
+			return
+		}
+
+		result := &provisioning.ExternalRepositoryList{
+			Items: repos,
+		}
+
+		responder.Object(http.StatusOK, result)
+	}), 30*time.Second), nil
 }
 
 var (

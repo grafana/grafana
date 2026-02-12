@@ -5,13 +5,13 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
-import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
-import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
+import { NotificationChannelOption, NotifierDTO, NotifierType } from 'app/features/alerting/unified/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
-import { usePluginBridge } from '../../../../hooks/usePluginBridge';
+import { useIrmPlugin } from '../../../../hooks/usePluginBridge';
+import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
@@ -39,16 +39,17 @@ enum OnCallIntegrationStatus {
 
 function useOnCallPluginStatus() {
   const {
+    pluginId,
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
     error: pluginError,
-  } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
+  } = useIrmPlugin(SupportedPlugin.OnCall);
 
   const {
     data: onCallFeatures = [],
     error: onCallFeaturesError,
     isLoading: isOnCallFeaturesLoading,
-  } = onCallApi.endpoints.features.useQuery(undefined, { skip: !isOnCallEnabled });
+  } = onCallApi.endpoints.features.useQuery({ pluginId }, { skip: !isOnCallEnabled });
 
   const integrationStatus = useMemo((): OnCallIntegrationStatus => {
     if (!isOnCallEnabled) {
@@ -67,6 +68,7 @@ function useOnCallPluginStatus() {
   );
 
   return {
+    pluginId,
     isOnCallEnabled,
     integrationStatus,
     isAlertingV2IntegrationEnabled,
@@ -78,8 +80,14 @@ function useOnCallPluginStatus() {
 export function useOnCallIntegration() {
   const notifyApp = useAppNotification();
 
-  const { isOnCallEnabled, integrationStatus, isAlertingV2IntegrationEnabled, isOnCallStatusLoading, onCallError } =
-    useOnCallPluginStatus();
+  const {
+    pluginId,
+    isOnCallEnabled,
+    integrationStatus,
+    isAlertingV2IntegrationEnabled,
+    isOnCallStatusLoading,
+    onCallError,
+  } = useOnCallPluginStatus();
 
   const { useCreateIntegrationMutation, useGrafanaOnCallIntegrationsQuery, useLazyValidateIntegrationNameQuery } =
     onCallApi;
@@ -91,13 +99,13 @@ export function useOnCallIntegration() {
     data: grafanaOnCallIntegrations = [],
     isLoading: isLoadingOnCallIntegrations,
     isError: isIntegrationsQueryError,
-  } = useGrafanaOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
+  } = useGrafanaOnCallIntegrationsQuery({ pluginId }, { skip: !isAlertingV2IntegrationEnabled });
 
   const onCallFormValidators = useMemo(() => {
     return {
       integration_name: async (value: string) => {
         try {
-          await validateIntegrationNameQuery(value).unwrap();
+          await validateIntegrationNameQuery({ name: value, pluginId }).unwrap();
           return true;
         } catch (error) {
           if (isFetchError(error) && error.status === 409) {
@@ -126,7 +134,7 @@ export function useOnCallIntegration() {
           : t('alerting.irm-integration.integration-required', 'Selection of existing IRM integration is required');
       },
     };
-  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp]);
+  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp, pluginId]);
 
   const extendOnCallReceivers = useCallback(
     (receiver: Receiver): Receiver => {
@@ -159,6 +167,7 @@ export function useOnCallIntegration() {
 
       const createNewOnCallIntegrationJobs = newOnCallIntegrations.map(async (c) => {
         const newIntegration = await createIntegrationMutation({
+          pluginId,
           integration: GRAFANA_ONCALL_INTEGRATION_TYPE,
           verbal_name: c.settings[OnCallIntegrationSetting.IntegrationName],
         }).unwrap();
@@ -180,11 +189,11 @@ export function useOnCallIntegration() {
         });
       });
     },
-    [isAlertingV2IntegrationEnabled, createIntegrationMutation]
+    [isAlertingV2IntegrationEnabled, createIntegrationMutation, pluginId]
   );
 
   const extendOnCallNotifierFeatures = useCallback(
-    (notifier: NotifierDTO): NotifierDTO => {
+    <T extends NotifierType>(notifier: NotifierDTO<T>): NotifierDTO<T> => {
       // If V2 integration is not enabled the receiver will not be extended
       // We still allow users to use this contact point but they need to provide URL manually
       // As they do for webhook integration
@@ -192,8 +201,6 @@ export function useOnCallIntegration() {
       // if someone turned off or downgraded the OnCall plugin but had some receivers configured with OnCall notifier
       // By falling back to plain URL input we allow users to change the config with OnCall disabled/not supporting V2 integration
       if (notifier.type === ReceiverTypes.OnCall && isAlertingV2IntegrationEnabled) {
-        const options = notifier.options.filter((o) => o.propertyName !== 'url');
-
         const newIntegrationOption: SelectableValue<string> = {
           value: OnCallIntegrationType.NewIntegration,
           label: t('alerting.irm-integration.new-integration', 'New IRM integration'),
@@ -211,7 +218,7 @@ export function useOnCallIntegration() {
           ),
         };
 
-        options.unshift(
+        const enhancedOptions = [
           option(
             OnCallIntegrationSetting.IntegrationType,
             t('alerting.irm-integration.connection-method', 'How to connect to IRM'),
@@ -246,10 +253,23 @@ export function useOnCallIntegration() {
                 value: i.integration_url,
               })),
             }
-          )
-        );
+          ),
+        ];
 
-        return { ...notifier, options };
+        const enhanceOptions = (originalOptions: NotificationChannelOption[]) => {
+          const filteredOptions = originalOptions.filter((o) => o.propertyName !== 'url');
+          return [...enhancedOptions, ...filteredOptions];
+        };
+
+        return {
+          ...notifier,
+          options: enhanceOptions(notifier.options),
+          // Also enhance versions[].options so getOptionsForVersion() returns the enhanced options
+          versions: notifier.versions?.map((version) => ({
+            ...version,
+            options: enhanceOptions(version.options),
+          })),
+        };
       }
 
       return notifier;

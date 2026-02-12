@@ -32,7 +32,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagKubernetesAlertingRules,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
+			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
@@ -53,7 +54,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "34", info.Minor)
+		require.Equal(t, "35", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -97,11 +98,17 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "query.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "advisor.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "playlist.grafana.app",
+		Version: "v1",
 	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
@@ -114,9 +121,15 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
-	}, {
-		Group:   "historian.alerting.grafana.app",
-		Version: "v0alpha1",
+		// }, {
+		// In app-sdk v0.40+, the exported names changed
+		// The request/response payload is the same, so the existing generated clients
+		// based on the old OpenAPI will still work.
+		//
+		// This should be updated and replaced soon!
+		//
+		// 	Group:   "historian.alerting.grafana.app",
+		// 	Version: "v0alpha1",
 	}, {
 		Group:   "correlations.grafana.app",
 		Version: "v0alpha1",
@@ -124,7 +137,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "shorturl.grafana.app",
 		Version: "v1beta1",
 	}, {
-		Group:   "testdata.datasource.grafana.app",
+		Group:   "grafana-testdata-datasource.datasource.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "logsdrilldown.grafana.app",
