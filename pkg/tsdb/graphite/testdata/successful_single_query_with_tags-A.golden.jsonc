@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: A
+//  Name: 
 //  Dimensions: 2 Fields by 2 Rows
 //  +-------------------------------+--------------------------------------------------------------------+
 //  | Name: time                    | Name: value                                                        |
@@ -25,7 +25,7 @@
   "frames": [
     {
       "schema": {
-        "name": "A",
+        "refId": "A",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
