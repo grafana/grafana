@@ -3,7 +3,7 @@ import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 
 import { NewsItem } from '../types';
@@ -35,12 +35,12 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
           <img src={newsItem.ogImage} alt={newsItem.title} />
         </a>
       )}
-      <div className={styles.body}>
+      <Stack gap={0.5} direction="column">
         <time className={styles.date} dateTime={dateTimeFormat(newsItem.date, { format: 'MMM DD' })}>
           {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
 
-        <h1 className={styles.title} id={titleId}>
+        <Text variant="h5" element="h1" id={titleId}>
           <a
             className={styles.link}
             href={textUtil.sanitizeUrl(newsItem.link)}
@@ -49,9 +49,10 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
           >
             {newsItem.title}
           </a>
-        </h1>
+        </Text>
+
         <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
-      </div>
+      </Stack>
     </article>
   );
 }
@@ -73,11 +74,11 @@ const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>
           height={useWideLayout ? '150px' : width * 0.5}
         />
       )}
-      <div className={styles.body}>
-        <Skeleton containerClassName={styles.date} width={60} />
-        <Skeleton containerClassName={styles.title} width={250} />
-        <Skeleton containerClassName={styles.content} width="100%" count={6} />
-      </div>
+      <Stack gap={0.5} direction="column">
+        <Skeleton width={60} />
+        <Skeleton width={250} />
+        <Skeleton width="100%" count={6} />
+      </Stack>
     </div>
   );
 };
@@ -103,11 +104,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     itemWide: css({
       flexDirection: 'row',
-    }),
-    body: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flex: 1,
     }),
     socialImage: css({
       display: 'flex',
@@ -135,9 +131,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         textDecoration: 'underline',
       },
     }),
-    title: css({
-      ...theme.typography.h5,
-    }),
     content: css({
       p: {
         marginBottom: theme.spacing(0.5),
@@ -145,7 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     date: css({
-      marginBottom: theme.spacing(0.5),
       fontWeight: 500,
       borderRadius: `0 0 0 ${theme.shape.radius.default}`,
       color: theme.colors.text.secondary,
