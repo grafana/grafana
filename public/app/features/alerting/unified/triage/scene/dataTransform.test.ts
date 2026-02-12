@@ -875,6 +875,147 @@ describe('convertToWorkbenchRows', () => {
     });
   });
 
+  describe('alphabetical sorting', () => {
+    it('should sort flat alert rule rows alphabetically by title', () => {
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Zebra', 'Alpha', 'Middle'], config: {} },
+            {
+              name: 'grafana_folder',
+              type: FieldType.string,
+              values: ['Folder1', 'Folder2', 'Folder3'],
+              config: {},
+            },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid3'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing', 'firing'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [1, 1, 1], config: {} },
+          ],
+          length: 3,
+        },
+      ]);
+
+      expect(result.map((r) => r.type === 'alertRule' && r.metadata.title)).toEqual(['Alpha', 'Middle', 'Zebra']);
+    });
+
+    it('should sort alert rule rows alphabetically within groups', () => {
+      const result = convertToWorkbenchRows(
+        [
+          {
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'alertname', type: FieldType.string, values: ['Zebra', 'Alpha', 'Middle'], config: {} },
+              {
+                name: 'grafana_folder',
+                type: FieldType.string,
+                values: ['Folder1', 'Folder2', 'Folder3'],
+                config: {},
+              },
+              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid3'], config: {} },
+              { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing', 'firing'], config: {} },
+              { name: 'Value', type: FieldType.number, values: [1, 1, 1], config: {} },
+              { name: 'team', type: FieldType.string, values: ['backend', 'backend', 'backend'], config: {} },
+            ],
+            length: 3,
+          },
+        ],
+        ['team']
+      );
+
+      expect(result).toHaveLength(1);
+      if (result[0].type === 'group') {
+        expect(result[0].rows.map((r) => r.type === 'alertRule' && r.metadata.title)).toEqual([
+          'Alpha',
+          'Middle',
+          'Zebra',
+        ]);
+      }
+    });
+
+    it('should sort groups alphabetically by value', () => {
+      const result = convertToWorkbenchRows(
+        [
+          {
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert3'], config: {} },
+              {
+                name: 'grafana_folder',
+                type: FieldType.string,
+                values: ['Folder1', 'Folder2', 'Folder3'],
+                config: {},
+              },
+              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid3'], config: {} },
+              { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing', 'firing'], config: {} },
+              { name: 'Value', type: FieldType.number, values: [1, 1, 1], config: {} },
+              { name: 'team', type: FieldType.string, values: ['zebra', 'alpha', 'middle'], config: {} },
+            ],
+            length: 3,
+          },
+        ],
+        ['team']
+      );
+
+      expect(result).toHaveLength(3);
+      const groupValues = result.map((r) => r.type === 'group' && r.metadata.value);
+      expect(groupValues).toEqual(['alpha', 'middle', 'zebra']);
+    });
+
+    it('should sort case-insensitively', () => {
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['banana', 'Cherry', 'Apple'], config: {} },
+            {
+              name: 'grafana_folder',
+              type: FieldType.string,
+              values: ['Folder1', 'Folder2', 'Folder3'],
+              config: {},
+            },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid3'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing', 'firing'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [1, 1, 1], config: {} },
+          ],
+          length: 3,
+        },
+      ]);
+
+      // Without case-insensitive sorting, uppercase 'C' would sort before lowercase 'a'/'b'
+      expect(result.map((r) => r.type === 'alertRule' && r.metadata.title)).toEqual(['Apple', 'banana', 'Cherry']);
+    });
+
+    it('should sort groups alphabetically with empty groups at the end', () => {
+      const result = convertToWorkbenchRows(
+        [
+          {
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert3'], config: {} },
+              {
+                name: 'grafana_folder',
+                type: FieldType.string,
+                values: ['Folder1', 'Folder2', 'Folder3'],
+                config: {},
+              },
+              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid3'], config: {} },
+              { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing', 'firing'], config: {} },
+              { name: 'Value', type: FieldType.number, values: [1, 1, 1], config: {} },
+              { name: 'team', type: FieldType.string, values: ['zebra', '', 'alpha'], config: {} },
+            ],
+            length: 3,
+          },
+        ],
+        ['team']
+      );
+
+      expect(result).toHaveLength(3);
+      const groupValues = result.map((r) => r.type === 'group' && r.metadata.value);
+      expect(groupValues).toEqual(['alpha', 'zebra', EmptyLabelValue]);
+    });
+  });
+
   describe('instance counts', () => {
     it('should use latest timestamp value for each (ruleUID, alertstate) pair', () => {
       const result = convertToWorkbenchRows([

@@ -3,6 +3,7 @@ import { DataFrame } from '@grafana/data';
 import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, InstanceCounts, WorkbenchRow } from '../types';
 
 const EMPTY_COUNTS: InstanceCounts = { firing: 0, pending: 0 };
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 function sumCounts(rows: WorkbenchRow[]): InstanceCounts {
   let firing = 0;
@@ -150,6 +151,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
         });
       }
     }
+    result.sort((a, b) => collator.compare(a.metadata.title, b.metadata.title));
     return result;
   }
 
@@ -212,6 +214,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
         }
       }
 
+      result.sort((a, b) => collator.compare(a.metadata.title, b.metadata.title));
       return result;
     }
 
@@ -237,6 +240,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
       }
     }
 
+    result.sort((a, b) => collator.compare(String(a.metadata.value), String(b.metadata.value)));
     return [...result, ...emptyGroups];
   }
 
