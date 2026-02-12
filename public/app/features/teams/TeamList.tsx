@@ -5,6 +5,7 @@ import { SortingRule } from 'react-table';
 
 import { useListFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
   CellProps,
@@ -209,11 +210,17 @@ const TeamList = () => {
           );
 
           const showDeleteModal = () => {
+            reportInteraction('grafana_teams_list_delete_button_clicked', {
+              ownedFolder: ownedFolders && ownedFolders.length > 0,
+            });
             appEvents.publish(
               new ShowModalReactEvent({
                 component: TeamDeleteModal,
                 props: {
-                  onConfirm: () => deleteTeam({ uid: original.uid }),
+                  onConfirm: () => {
+                    reportInteraction('grafana_teams_list_delete_modal_confirm_clicked');
+                    deleteTeam({ uid: original.uid });
+                  },
                   teamName: original.name,
                   ownedFolder: ownedFolders && ownedFolders.length > 0,
                 },
