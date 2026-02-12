@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { SortingRule } from 'react-table';
 
+import { useListFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
@@ -61,11 +62,13 @@ const TeamList = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<string>();
-  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort });
+  const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
 
-  const teams = data?.teams || [];
-  const totalPages = Math.ceil((data?.totalCount || 0) / pageSize) || 0;
+  const { data: folderData } = useListFolderQuery({});
+
+  const teams = teamData?.teams || [];
+  const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
   const noTeams = teams?.length === 0;
   const changeSort = useCallback(
     (sort: SortingRule<unknown>) => {
@@ -201,12 +204,18 @@ const TeamList = () => {
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
 
+          const ownedFolders = folderData?.items.filter((folder) =>
+            folder.metadata.ownerReferences?.some((ref) => ref.uid === original.uid)
+          );
+
           const showDeleteModal = () => {
             appEvents.publish(
               new ShowModalReactEvent({
                 component: TeamDeleteModal,
                 props: {
                   onConfirm: () => deleteTeam({ uid: original.uid }),
+                  teamName: original.name,
+                  ownedFolder: ownedFolders && ownedFolders.length > 0,
                 },
               })
             );
@@ -243,7 +252,7 @@ const TeamList = () => {
         },
       },
     ],
-    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, folderData]
   );
 
   return (

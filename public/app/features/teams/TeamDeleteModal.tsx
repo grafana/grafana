@@ -1,28 +1,51 @@
 import { t, Trans } from '@grafana/i18n';
-import { ConfirmModal, Space, Text } from '@grafana/ui';
+import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
 
 export interface Props {
   isOpen: boolean;
   onConfirm: () => Promise<void>;
   onDismiss: () => void;
+  teamName: string;
+  ownedFolder: boolean;
 }
 
-export const TeamDeleteModal = ({ isOpen, onConfirm, onDismiss }: Props) => {
+export const TeamDeleteModal = ({ isOpen, onConfirm, onDismiss, teamName, ownedFolder }: Props) => {
   return (
     <ConfirmModal
       isOpen={isOpen}
+      title={t('teams.team-list.columns.delete-modal.title', 'Delete')}
       body={
         <>
           <Text element="p">
-            <Trans i18nKey="teams.team-list.columns.delete-modal.text">This action will delete the team</Trans>
+            <Trans i18nKey="teams.team-list.columns.delete-modal-text" values={{ teamName: teamName }}>
+              This action will delete the team &quot;
+              <Text variant="code" weight="bold">
+                {'{{ teamName }}'}
+              </Text>
+              &quot;.
+            </Trans>
           </Text>
           <Space v={2} />
         </>
       }
-      title={t('teams.team-list.columns.delete-modal.title', 'Delete')}
+      description={
+        <>
+          {ownedFolder ? (
+            <Alert
+              severity="warning"
+              title={t('teams.team-list.columns.delete-modal-invalid-title', 'Cannot delete team')}
+            >
+              <Trans i18nKey="teams.team-list.columns.delete-modal-invalid-text">
+                This team is owner of one or more folders. Remove ownership first in order to proceed.
+              </Trans>
+            </Alert>
+          ) : null}
+        </>
+      }
       onDismiss={onDismiss}
       onConfirm={onConfirm}
       confirmText={t('teams.team-list.columns.delete-modal.confirm-button', 'Delete')}
+      disabled={ownedFolder}
     />
   );
 };
