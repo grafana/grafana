@@ -7,7 +7,7 @@ func AddAlertRuleFolderFullpath(mg *migrator.Migrator) {
 	column := &migrator.Column{
 		Name:     "folder_fullpath",
 		Type:     migrator.DB_NVarchar,
-		Length:   1024, // Should accommodate deep folder hierarchies
+		Length:   512,  // Must fit within MySQL's 3072-byte index key limit (512 * 4 + 8 = 2056 bytes)
 		Nullable: true, // Nullable for backward compatibility
 	}
 
