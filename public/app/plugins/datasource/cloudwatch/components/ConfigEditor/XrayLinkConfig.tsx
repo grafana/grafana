@@ -38,7 +38,11 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
           severity="info"
         />
       )}
-      <Field htmlFor="data-source-picker" label="Data source" description="Application Signals data source containing traces">
+      <Field
+        htmlFor="data-source-picker"
+        label="Data source"
+        description="Application Signals data source containing traces"
+      >
         <DataSourcePicker
           pluginId={xRayDsId}
           onChange={(ds: DataSourceInstanceSettings) => onChange(ds.uid)}
@@ -52,7 +56,8 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
       <h3 className="page-heading">Application Signals trace link</h3>
 
       <div className={styles.infoText}>
-        Grafana will automatically create a link to a trace in Application Signals data source if logs contain @xrayTraceId field
+        Grafana will automatically create a link to a trace in Application Signals data source if logs contain
+        @xrayTraceId field
       </div>
 
       {!hasXrayDatasource && (

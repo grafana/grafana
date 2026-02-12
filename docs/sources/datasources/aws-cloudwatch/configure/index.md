@@ -97,8 +97,8 @@ You must use both an access key ID and a secret access key to authenticate.
 
 **Application Signals trace link:**
 
-| Setting         | Description                                           |
-| --------------- | ----------------------------------------------------- |
+| Setting         | Description                                                         |
+| --------------- | ------------------------------------------------------------------- |
 | **Data source** | Select the Application Signals data source from the drop-down menu. |
 
 Grafana automatically creates a link to a trace in Application Signals data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an Application Signals data source configured. For details, see the [Application Signals data source docs](/docs/plugins/grafana-x-ray-datasource/). To view the Application Signals link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) to view the log details section.
