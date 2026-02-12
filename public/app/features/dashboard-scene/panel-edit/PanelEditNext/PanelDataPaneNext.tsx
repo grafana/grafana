@@ -316,7 +316,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const targetQuery = queries[targetIndex];
-
     const previousDataSource = targetQuery.datasource
       ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
       : undefined;
