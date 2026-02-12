@@ -1,17 +1,8 @@
-import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import {
-  DataSourceApi,
-  getDefaultTimeRange,
-  LoadingState,
-  PanelData,
-  SelectableValue,
-  TimeRange,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import {
   EditorRow,
   LabelFilters,
@@ -24,7 +15,7 @@ import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
 } from '@grafana/plugin-ui';
-import { useTheme2 } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
@@ -53,7 +44,6 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
   const prevQuery = usePrevious(query);
   const prevTimeRange = usePrevious(timeRange);
-  const styles = getStyles(useTheme2());
 
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
@@ -143,7 +133,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
 
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
-    <div className={styles.container} data-testid={testIds.editor}>
+    <Stack direction="column" gap={0.5} data-testid={testIds.editor}>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -211,18 +201,8 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
           showExplain={showExplain}
         />
       )}
-    </div>
+    </Stack>
   );
 });
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(0.5),
-    }),
-  };
-};
 
 LokiQueryBuilder.displayName = 'LokiQueryBuilder';

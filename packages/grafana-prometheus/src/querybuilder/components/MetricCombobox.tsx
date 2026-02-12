@@ -152,12 +152,16 @@ export function MetricCombobox({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css({ display: 'flex' }),
-    combobox: css({
-      borderRadius: `${theme.shape.radius.default} ` + `0px 0px ` + `${theme.shape.radius.default}`,
+    wrapper: css({
+      display: 'flex',
+      input: {
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
+      },
     }),
     button: css({
-      borderRadius: `0px ` + `${theme.shape.radius.default} ${theme.shape.radius.default} ` + `0px`,
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
     }),
   };
 };

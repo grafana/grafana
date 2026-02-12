@@ -47,8 +47,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     stepNumber: css({
       fontWeight: theme.typography.fontWeightMedium,
       background: theme.colors.secondary.main,
-      minWidth: '20px',
-      minHeight: '20px',
+      minWidth: theme.spacing(2.5),
+      minHeight: theme.spacing(2.5),
       borderRadius: theme.shape.radius.circle,
       display: 'flex',
       alignItems: 'center',
