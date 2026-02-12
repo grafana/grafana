@@ -13,6 +13,13 @@ describe('onSortOrderChange', () => {
     });
   });
 
+  it('should handle undefined sortOrder', () => {
+    const options = { sortBy: [], sortOrder: undefined } as unknown as Options;
+    expect(onSortOrderChange(options, undefined, timeFieldName)).toEqual({
+      sortBy: [],
+    });
+  });
+
   it('should not update', () => {
     const options = {
       sortBy: [{ desc: false, displayName: timeFieldName }],

@@ -31,7 +31,7 @@ import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
 import { Options } from './options/types';
-import { defaultOptions, Options as LogsTableOptions } from './panelcfg.gen';
+import { Options as LogsTableOptions } from './panelcfg.gen';
 import { getInitialRowIndex } from './props/getInitialRowIndex';
 import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
@@ -68,7 +68,6 @@ export const LogsTable = ({
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
-  const sortOrder = options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending;
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
@@ -79,10 +78,10 @@ export const LogsTable = ({
   // Callbacks
   const handleTableOptionsChange = useCallback(
     (newOptions: Options) => {
-      const options = onSortOrderChange(newOptions, sortOrder, timeFieldName);
-      onLogsTableOptionsChange?.(options);
+      const pendingOptions = onSortOrderChange(newOptions, options.sortOrder, timeFieldName);
+      onLogsTableOptionsChange?.(pendingOptions);
     },
-    [onLogsTableOptionsChange, sortOrder, timeFieldName]
+    [onLogsTableOptionsChange, options.sortOrder, timeFieldName]
   );
 
   const handleLogsTableOptionsChange = useCallback(
@@ -183,7 +182,11 @@ export const LogsTable = ({
             id={id}
             timeRange={timeRange}
             timeZone={timeZone}
-            options={options}
+            options={{
+              sortOrder: LogsSortOrder.Descending,
+              sortBy: [{ displayName: timeFieldName, desc: true }],
+              ...options,
+            }}
             transparent={transparent}
             fieldConfig={fieldConfig}
             renderCounter={renderCounter}
@@ -195,7 +198,6 @@ export const LogsTable = ({
             onChangeTimeRange={onChangeTimeRange}
             logOptionsStorageKey={SETTING_KEY_ROOT}
             fieldSelectorWidth={fieldSelectorWidth}
-            sortOrder={sortOrder}
           />
         </>
       )}

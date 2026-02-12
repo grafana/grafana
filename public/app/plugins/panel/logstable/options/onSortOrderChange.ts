@@ -2,8 +2,12 @@ import { LogsSortOrder } from '@grafana/data';
 
 import { Options } from './types';
 
-export const onSortOrderChange = (pendingOptions: Options, currentSortOrder: LogsSortOrder, timeFieldName: string) => {
-  if (pendingOptions.sortOrder !== currentSortOrder) {
+export const onSortOrderChange = (
+  pendingOptions: Options,
+  currentSortOrder: LogsSortOrder | undefined,
+  timeFieldName: string
+) => {
+  if (pendingOptions.sortOrder && pendingOptions.sortOrder !== currentSortOrder) {
     const newSortBy = {
       desc: pendingOptions.sortOrder === LogsSortOrder.Descending,
       displayName: timeFieldName,
