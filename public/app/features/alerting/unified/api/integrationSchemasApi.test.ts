@@ -12,12 +12,12 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
 
 describe('useIntegrationTypeSchemas', () => {
   afterEach(() => {
-    config.featureToggles.alertingNotifiersApiMigration = false;
+    config.featureToggles.alertingSyncNotifiersApiMigration = false;
   });
 
-  describe('with alertingNotifiersApiMigration flag disabled', () => {
+  describe('with alertingSyncNotifiersApiMigration flag disabled', () => {
     beforeEach(() => {
-      config.featureToggles.alertingNotifiersApiMigration = false;
+      config.featureToggles.alertingSyncNotifiersApiMigration = false;
     });
 
     it('should return data from legacy API', async () => {
@@ -34,9 +34,9 @@ describe('useIntegrationTypeSchemas', () => {
     });
   });
 
-  describe('with alertingNotifiersApiMigration flag enabled', () => {
+  describe('with alertingSyncNotifiersApiMigration flag enabled', () => {
     beforeEach(() => {
-      config.featureToggles.alertingNotifiersApiMigration = true;
+      config.featureToggles.alertingSyncNotifiersApiMigration = true;
     });
 
     it('should return data from new k8s API', async () => {
