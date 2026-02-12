@@ -7,9 +7,7 @@ const STORAGE_KEY_DISMISSED_UNTIL = 'grafana.alerting.alerts_activity_banner.dis
 const DISMISSAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface AlertsActivityBannerPrefs {
-  /** Whether the banner is currently dismissed (within dismissal period) */
   isDismissed: boolean;
-  /** Dismiss the banner for the default duration (30 days). Returns the dismissal expiry date. */
   dismissBanner: () => string;
 }
 

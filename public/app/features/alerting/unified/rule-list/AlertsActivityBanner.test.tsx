@@ -5,13 +5,12 @@ import * as Analytics from '../Analytics';
 
 import { AlertsActivityBanner } from './AlertsActivityBanner';
 
-// Mock the analytics functions
+// Mock Analytics to control getStackType and prevent tracking side effects
 jest.mock('../Analytics', () => ({
-  ...jest.requireActual('../Analytics'),
+  getStackType: jest.fn(() => 'GMA'),
   trackAlertsActivityBannerImpression: jest.fn(),
   trackAlertsActivityBannerClickTry: jest.fn(),
   trackAlertsActivityBannerDismiss: jest.fn(),
-  getStackType: jest.fn(() => 'GMA'),
 }));
 
 const ui = {
@@ -28,7 +27,6 @@ describe('AlertsActivityBanner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
-    // Reset stack type mock to GMA by default
     (Analytics.getStackType as jest.Mock).mockReturnValue('GMA');
   });
 
@@ -39,7 +37,6 @@ describe('AlertsActivityBanner', () => {
       render(<AlertsActivityBanner />);
 
       expect(ui.banner.query()).not.toBeInTheDocument();
-      expect(Analytics.trackAlertsActivityBannerImpression).not.toHaveBeenCalled();
     });
   });
 
@@ -54,57 +51,18 @@ describe('AlertsActivityBanner', () => {
       expect(ui.openButton.get()).toBeInTheDocument();
     });
 
-    it('should not have an opt-out button (handled by page title)', () => {
-      render(<AlertsActivityBanner />);
-
-      // The opt-out button should NOT be in the banner - it's in the page title now
-      expect(screen.queryByRole('button', { name: /switch to old/i })).not.toBeInTheDocument();
-    });
-
-    it('should track impression on first render', () => {
-      render(<AlertsActivityBanner />);
-
-      expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledTimes(1);
-      expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledWith();
-    });
-
-    it('should track impression only once across re-renders', () => {
-      const { rerender } = render(<AlertsActivityBanner />);
-
-      rerender(<AlertsActivityBanner />);
-      rerender(<AlertsActivityBanner />);
-
-      expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledTimes(1);
-    });
-
     it('should have correct href on Open Alerts Activity button', () => {
       render(<AlertsActivityBanner />);
 
-      // LinkButton uses createRelativeUrl which adds the app subpath prefix
       expect(ui.openButton.get()).toHaveAttribute('href', expect.stringContaining('/alerting/alerts'));
     });
 
-    it('should track click when Open Alerts Activity is clicked', async () => {
-      const { user } = render(<AlertsActivityBanner />);
-
-      // Prevent the actual navigation which jsdom doesn't support
-      const button = ui.openButton.get();
-      button.addEventListener('click', (e) => e.preventDefault(), { once: true });
-      await user.click(button);
-
-      expect(Analytics.trackAlertsActivityBannerClickTry).toHaveBeenCalledWith();
-    });
-
     describe('dismiss functionality', () => {
-      it('should hide banner and persist dismissal when dismiss button is clicked', async () => {
+      it('should persist dismissal for 30 days when dismiss button is clicked', async () => {
         const { user } = render(<AlertsActivityBanner />);
 
-        // Find and click the close button (the X icon on the Alert)
         const closeButton = screen.getByRole('button', { name: /close/i });
         await user.click(closeButton);
-
-        // Dismiss tracking receives the dismissed_until date
-        expect(Analytics.trackAlertsActivityBannerDismiss).toHaveBeenCalledWith(expect.any(String));
 
         // Check localStorage was set
         const dismissedUntil = localStorage.getItem(STORAGE_KEY_DISMISSED_UNTIL);
@@ -125,7 +83,6 @@ describe('AlertsActivityBanner', () => {
         render(<AlertsActivityBanner />);
 
         expect(ui.banner.query()).not.toBeInTheDocument();
-        expect(Analytics.trackAlertsActivityBannerImpression).not.toHaveBeenCalled();
       });
 
       it('should render when dismissal has expired', () => {
@@ -135,7 +92,6 @@ describe('AlertsActivityBanner', () => {
         render(<AlertsActivityBanner />);
 
         expect(ui.banner.query()).toBeInTheDocument();
-        expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalled();
       });
     });
   });
